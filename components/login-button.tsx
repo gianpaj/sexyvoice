@@ -17,8 +17,11 @@ export function LoginButton({
   showGithubIcon = true,
   className,
   ...props
-}: LoginButtonProps) {
+}: Readonly<LoginButtonProps>) {
   const [isLoading, setIsLoading] = React.useState(false)
+
+  const githubIcon = showGithubIcon ? <IconGitHub className="mr-2" /> : null
+
   return (
     <Button
       variant="outline"
@@ -31,11 +34,8 @@ export function LoginButton({
       className={cn(className)}
       {...props}
     >
-      {isLoading ? (
-        <IconSpinner className="mr-2 animate-spin" />
-      ) : showGithubIcon ? (
-        <IconGitHub className="mr-2" />
-      ) : null}
+      {isLoading ? <IconSpinner className="mr-2 animate-spin" /> : githubIcon}
+
       {text}
     </Button>
   )
