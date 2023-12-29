@@ -2,6 +2,7 @@ import { Toaster } from 'react-hot-toast'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Analytics } from '@vercel/analytics/react'
 
 import '@/app/globals.css'
 import { cn } from '@/lib/utils'
@@ -12,10 +13,11 @@ import { Header } from '@/components/header'
 export const metadata = {
   metadataBase: new URL(`https://${process.env.VERCEL_URL}`),
   title: {
-    default: 'Next.js AI Chatbot',
-    template: `%s - Next.js AI Chatbot`
+    default: 'SexyVoice.ai',
+    template: `%s - SexyVoice.ai`
   },
-  description: 'An AI-powered chatbot template built with Next.js and Vercel.',
+  description:
+    'An AI-powered chatbot for your pleasure. AI Girlfriend. AI Boyfriend. AI Friend. AI Lover. AI Companion. AI Virtual Girlfriend. AI Virtual Boyfriend. AI Virtual Friend.',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon-16x16.png',
@@ -59,6 +61,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           <TailwindIndicator />
         </Providers>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   )
