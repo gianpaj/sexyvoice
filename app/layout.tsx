@@ -1,6 +1,7 @@
 import { Toaster } from 'react-hot-toast'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import '@/app/globals.css'
 import { cn } from '@/lib/utils'
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </div>
           <TailwindIndicator />
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   )
