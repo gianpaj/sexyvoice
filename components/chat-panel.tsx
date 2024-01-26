@@ -34,7 +34,7 @@ export function ChatPanel({
   input,
   setInput,
   messages
-}: ChatPanelProps) {
+}: Readonly<ChatPanelProps>) {
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
 
   return (

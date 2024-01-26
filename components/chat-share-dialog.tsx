@@ -31,7 +31,7 @@ export function ChatShareDialog({
   shareChat,
   onCopy,
   ...props
-}: ChatShareDialogProps) {
+}: Readonly<ChatShareDialogProps>) {
   const { copyToClipboard } = useCopyToClipboard({ timeout: 1000 })
   const [isSharePending, startShareTransition] = React.useTransition()
 
@@ -80,7 +80,6 @@ export function ChatShareDialog({
           <Button
             disabled={isSharePending}
             onClick={() => {
-              // @ts-ignore
               startShareTransition(async () => {
                 const result = await shareChat(chat.id)
 

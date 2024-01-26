@@ -15,7 +15,7 @@ export function ChatMessageActions({
   message,
   className,
   ...props
-}: ChatMessageActionsProps) {
+}: Readonly<ChatMessageActionsProps>) {
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
 
   const onCopy = () => {
