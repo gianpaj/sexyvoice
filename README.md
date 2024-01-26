@@ -1,7 +1,9 @@
-<a href="https://sexyvoice.ai">
-  <img alt="SexyVoice.ai Chatbot" src="./repo-imgs/a circle logo 500px.jpg" style="margin: 0 auto; width:256px">
+<p align="center">
+  <a href="https://sexyvoice.ai">
+  <img alt="SexyVoice.ai Chatbot" src="./repo-imgs/a circle logo 500px.jpg" width="256">
   <h1 align="center">SexyVoice.ai Chatbot</h1>
-</a>
+  </a>
+</p>
 
 <p align="center">
   An AI chatbot app with a voice you can't resist!
