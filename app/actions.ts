@@ -44,14 +44,16 @@ export async function removeChat({ id, path }: { id: string; path: string }) {
   const session = await auth()
 
   if (!session) {
+    console.error('Unauthorized', { id, session, path })
     return {
       error: 'Unauthorized'
     }
   }
 
-  const uid = await kv.hget<string>(`chat:${id}`, 'userId')
+  const uid = await kv.hget<number>(`chat:${id}`, 'userId')
 
-  if (uid !== session?.user?.id) {
+  if (uid !== parseInt(session?.user?.id)) {
+    console.error('Unauthorized', { uid, id, session, path })
     return {
       error: 'Unauthorized'
     }
