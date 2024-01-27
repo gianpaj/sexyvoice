@@ -1,7 +1,6 @@
 import { Toaster } from 'react-hot-toast'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Analytics } from '@vercel/analytics/react'
 
 import '@/app/globals.css'
@@ -17,7 +16,7 @@ export const metadata = {
     template: `%s - SexyVoice.ai`
   },
   description:
-    'An AI-powered chatbot for your pleasure. AI Girlfriend. AI Boyfriend. AI Friend. AI Lover. AI Companion. AI Virtual Girlfriend. AI Virtual Boyfriend. AI Virtual Friend.',
+    'An AI-powered chatbot for your pleasure ;) AI Girlfriend. AI Boyfriend. AI Friend. AI Lover. AI Companion. AI Virtual Girlfriend. AI Virtual Boyfriend. AI Virtual Friend.',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon-16x16.png',
@@ -60,8 +59,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </div>
           <TailwindIndicator />
         </Providers>
-        <SpeedInsights />
-        <Analytics />
+        <Analytics
+        // beforeSend={(event) => {
+        //   // TODO
+        //   if (event.url.includes('/private')) {
+        //     return null;
+        //   }
+        //   return event;
+        // }}
+        />
       </body>
     </html>
   )
