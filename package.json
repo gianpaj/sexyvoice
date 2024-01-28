@@ -32,7 +32,7 @@
     "geist": "^1.2.1",
     "nanoid": "^5.0.4",
     "next": "14.1.0",
-    "next-auth": "5.0.0-beta.4",
+    "next-auth": "5.0.0-beta.5",
     "next-themes": "^0.2.1",
     "openai": "^4.26.0",
     "react": "^18.2.0",
@@ -43,7 +43,9 @@
     "react-syntax-highlighter": "^15.5.0",
     "react-textarea-autosize": "^8.5.3",
     "remark-gfm": "^3.0.1",
-    "remark-math": "^5.1.1"
+    "remark-math": "^5.1.1",
+    "resend": "^3.1.0",
+    "root": "github:nextauthjs/next-auth"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.10",
@@ -57,6 +59,7 @@
     "eslint-config-next": "14.1.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-tailwindcss": "^3.14.0",
+    "nodemailer": "^6.9.8",
     "postcss": "^8.4.33",
     "prettier": "^3.2.4",
     "tailwind-merge": "^2.2.1",
