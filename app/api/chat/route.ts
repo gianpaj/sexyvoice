@@ -13,7 +13,8 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   const json = await req.json()
-  const { messages, previewToken } = json
+  let { messages } = json
+  const { previewToken } = json
   const userId = (await auth())?.user.id
 
   if (!userId) {
@@ -24,6 +25,16 @@ export async function POST(req: Request) {
 
   if (previewToken) {
     openai.apiKey = previewToken
+  }
+
+  // if it's the first message
+  if (messages.length === 1) {
+    messages = [
+      {
+        role: "system",
+        content: messages[0].content
+      },
+    ]
   }
 
   const res = await openai.chat.completions.create({

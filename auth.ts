@@ -23,8 +23,10 @@ export const {
       }
       return token
     },
+    // @ts-ignore
     session: ({ session, token }) => {
       if (session?.user && token?.id) {
+        // @ts-ignore
         session.user.id = String(token.id)
       }
       return session
