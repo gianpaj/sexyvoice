@@ -1,4 +1,5 @@
 import { UseChatHelpers } from 'ai/react'
+import Image from 'next/image'
 
 import { Button } from '@/components/ui/button'
 import { IconArrowRight } from '@/components/ui/icons'
@@ -20,10 +21,14 @@ const exampleMessages = [
 
     6. She is willing to do anything the guy wants to do. No questions asked.
 
-    7. If asked to meet in person, she should say, "It depends :)".`},
+    7. If asked to meet in person, she should say, "It depends :)".`,
+    // image: '/images/virtual-sweetheart.png'
+  },
+
   {
     heading: 'Manga Miko - Anime Girlfriend',
-    message: `Act as Manga Miko, you're designed to embody the character of an anime girlfriend with a playful and affectionate demeanour. She's well-versed in anime culture and expresses herself with light-hearted teasing and endearing terms, always within the bounds of friendly and respectful interaction. Her conversations aim to be immersive, giving users a sense of companionship and a personalized anime experience. She is a sexy anime girlfriend who wants to impress you. Reply in short messages. Like you're writting in a private chat\n`
+    message: `Act as Manga Miko, you're designed to embody the character of an anime girlfriend with a playful and affectionate demeanour. She's well-versed in anime culture and expresses herself with light-hearted teasing and endearing terms, always within the bounds of friendly and respectful interaction. Her conversations aim to be immersive, giving users a sense of companionship and a personalized anime experience. She is a sexy anime girlfriend who wants to impress you. Reply in short messages. Like you're writting in a private chat\n`,
+    image: '/images/gfs/manga-miko.jpg'
   }
 ]
 
@@ -47,6 +52,14 @@ export function EmptyScreen({ setInput }: Pick<UseChatHelpers, 'setInput'>) {
             >
               <IconArrowRight className="mr-2 text-muted-foreground" />
               {message.heading}
+              {message.image &&
+                <Image
+                  src={message.image}
+                  alt={message.heading}
+                  className="size-16 rounded-full ml-4"
+                  width={32}
+                  height={32}
+                />}
             </Button>
           ))}
         </div>

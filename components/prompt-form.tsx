@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation'
 
 export interface PromptProps
   extends Pick<UseChatHelpers, 'input' | 'setInput'> {
-  onSubmit: (value: string) => void
+  onSubmit: (value: string) => Promise<void>
   isLoading: boolean
 }
 
@@ -45,8 +45,8 @@ export function PromptForm({
       }}
       ref={formRef}
     >
-      <div className="relative flex flex-col w-full px-8 overflow-hidden max-h-60 grow bg-background sm:rounded-md sm:border sm:px-12">
-        <Tooltip>
+      <div className="relative flex flex-col w-full px-8 overflow-hidden max-h-60 grow bg-background sm:rounded-md sm:border sm:px-4">
+        {/* <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={e => {
@@ -64,7 +64,7 @@ export function PromptForm({
             </button>
           </TooltipTrigger>
           <TooltipContent>New Chat</TooltipContent>
-        </Tooltip>
+        </Tooltip> */}
         <Textarea
           ref={inputRef}
           tabIndex={0}
@@ -72,7 +72,7 @@ export function PromptForm({
           rows={1}
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Send a message."
+          placeholder="Type a message :)"
           spellCheck={false}
           className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
         />
