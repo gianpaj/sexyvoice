@@ -31,14 +31,14 @@ export async function POST(req: Request) {
   if (messages.length === 1) {
     messages = [
       {
-        role: "system",
+        role: 'system',
         content: messages[0].content
-      },
+      }
     ]
   }
 
   const res = await openai.chat.completions.create({
-    model: 'gpt-4-1106-preview',
+    model: 'gpt-4-turbo-preview',
     messages,
     temperature: 0.7,
     stream: true
@@ -53,9 +53,9 @@ export async function POST(req: Request) {
       if (messages.length === 1) {
         messages = [
           {
-            role: "system",
+            role: 'system',
             content: messages[0].content
-          },
+          }
         ]
       }
       if (messages.length !== 1) {

@@ -1,22 +1,25 @@
 .uploadPage {
-    h1 {
-        line-height: 3;
-    }
-    h2 {
-        line-height: 3;
-    }
+  h1 {
+    line-height: 3;
+  }
+  h2 {
+    line-height: 3;
+  }
 
-    .rt-TextFieldChrome {
-margin:0;padding:0;
-    }
+  .rt-TextFieldChrome {
+    margin: 0;
+    padding: 0;
+  }
 
- a {
+  a {
     color: #fff;
     text-decoration-line: underline;
     display: inline-block;
     &:hover {
-        background: #333;
+      background: #333;
     }
+  }
 
-}
+  .uploaded-section {
+  }
 }

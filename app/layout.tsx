@@ -3,7 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/react'
 
-import '@/app/globals.css'
+import '@/app/globals.scss'
 import { cn } from '@/lib/utils'
 import { TailwindIndicator } from '@/components/tailwind-indicator'
 import { Providers } from '@/components/providers'
@@ -44,6 +44,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           GeistSans.variable,
           GeistMono.variable
         )}
+        suppressHydrationWarning={true}
       >
         <Toaster />
         <Providers
