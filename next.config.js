@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -6,14 +8,21 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
         port: '',
-        pathname: '**',
+        pathname: '**'
       },
       {
         protocol: 'https',
         hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
-        port: '',
-      },
-    ],
+        port: ''
+      }
+    ]
   },
-};
-module.exports = nextConfig;
+  sassOptions: {
+    includePaths: [path.join(__dirname, 'styles')]
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['oslo']
+    // typedRoutes: true
+  }
+}
+module.exports = nextConfig
