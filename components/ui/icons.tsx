@@ -425,6 +425,32 @@ function IconUsers({ className, ...props }: React.ComponentProps<'svg'>) {
   )
 }
 
+function IconPlay({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+      className={cn('size-4', className)}
+      viewBox="0 0 512 512"
+      {...props}
+    >
+      <g>
+        <g>
+          <path
+            d="M256,0C114.608,0,0,114.608,0,256s114.608,256,256,256s256-114.608,256-256S397.392,0,256,0z M256,496
+			C123.664,496,16,388.336,16,256S123.664,16,256,16s240,107.664,240,240S388.336,496,256,496z"
+          />
+        </g>
+      </g>
+      <g>
+        <g>
+          <path d="M176.416,129.792v252.416L395.024,256L176.416,129.792z M192.416,157.504L363.024,256l-170.608,98.496V157.504z" />
+        </g>
+      </g>
+    </svg>
+  )
+}
+
 function IconExternalLink({
   className,
   ...props
@@ -484,6 +510,7 @@ export {
   IconClose,
   IconShare,
   IconUsers,
+  IconPlay,
   IconExternalLink,
   IconChevronUpDown
 }
