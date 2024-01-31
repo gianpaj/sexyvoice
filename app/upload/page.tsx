@@ -7,34 +7,10 @@ import * as Form from '@radix-ui/react-form'
 import { Theme } from '@radix-ui/themes'
 
 import { Button } from '@/components/ui/button'
+import { IconTrash } from '@/components/ui/icons'
 
 import styles from './upload.module.scss'
 import '@radix-ui/themes/styles.css'
-import { IconTrash } from '@/components/ui/icons'
-
-// export async function Upload() {
-//   // async function uploadImage(formData: FormData) {
-//   //   // 'use server';
-//   //   const imageFile = formData.get('image') as File;
-//   //   const blob = await put(imageFile.name, imageFile, {
-//   //     access: 'public',
-//   //   });
-//   //   revalidatePath('/');
-//   //   return blob;
-//   // }
-
-//   return (
-//     <div>
-//       {/* <form action={uploadImage}> */}
-//       <form action={}>
-//         <label htmlFor="image">Image</label>
-//         <input type="file" id="image" name="image" required />
-//         <button>Upload</button>
-//       </form>
-//       <Images />
-//     </div>
-//   );
-// }
 
 export default function UploadPage() {
   const inputFileRef = useRef<HTMLInputElement>(null)
