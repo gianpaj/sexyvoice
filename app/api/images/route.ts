@@ -64,8 +64,11 @@ export async function DELETE(request: Request) {
   try {
     await del(filename)
     return NextResponse.json({ ok: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error(error)
-    return NextResponse.json({ error: error.message }, { status: 400 })
+    return NextResponse.json(
+      { error: error.message || 'error deleting file' },
+      { status: 500 }
+    )
   }
 }
