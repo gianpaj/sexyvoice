@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { revalidatePath } from 'next/cache'
 import Image from 'next/image'
-import type { PutBlobResult } from '@vercel/blob'
 import { TextField } from '@radix-ui/themes'
 import * as Form from '@radix-ui/react-form'
 import { Theme } from '@radix-ui/themes'
@@ -40,7 +38,6 @@ import { IconTrash } from '@/components/ui/icons'
 
 export default function UploadPage() {
   const inputFileRef = useRef<HTMLInputElement>(null)
-  const [blob, setBlob] = useState<PutBlobResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [images, setImages] = useState<Image[] | null>(null)
 

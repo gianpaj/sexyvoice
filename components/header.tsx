@@ -32,7 +32,7 @@ async function UserOrLogin() {
           <UserMenu user={session.user} />
         ) : (
           <Button variant="link" asChild className="-ml-2">
-            <Link href="/sign-in?callbackUrl=/">Login</Link>
+            <Link href="/sign-in?callbackUrl=/">SexyVoice.ai - Login</Link>
           </Button>
         )}
       </div>

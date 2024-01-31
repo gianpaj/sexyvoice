@@ -5,7 +5,7 @@ declare module 'next-auth' {
   interface Session {
     user: {
       /** The user's id. */
-      id: number,
+      id: number
     } & DefaultSession['user']
   }
 }
@@ -31,8 +31,18 @@ export const {
       }
       return session
     },
-    authorized({ auth }) {
-      return !!auth?.user // this ensures there is a logged in user for -every- request
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user
+
+      if (nextUrl.pathname.startsWith('/upload')) {
+        // only allow Gianfranco to upload images
+        if (!isLoggedIn || !['899175'].includes(auth?.user?.id)) {
+          const redirectUrl = new URL('sign-in', nextUrl.origin)
+          redirectUrl.searchParams.append('callbackUrl', nextUrl.href)
+          return Response.redirect(redirectUrl)
+        }
+      }
+      return isLoggedIn // this ensures there is a logged in user for -every- request
     }
   },
   pages: {
