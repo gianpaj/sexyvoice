@@ -3,11 +3,28 @@ import { type NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+interface TTSPostBody {
+  text: string
+  voice?: string
+  languageCode?: 'en-GB' | 'en-US' | 'en-ES' | 'es-US'
+}
+
 export async function POST(request: NextRequest) {
-  let { text } = await request.json()
+  let {
+    text,
+    voice = 'female',
+    languageCode = 'en-US'
+  } = (await request.json()) as TTSPostBody
 
   if (!text) {
     return NextResponse.json({ error: 'Missing text' }, { status: 400 })
+  }
+
+  if (!['male', 'female'].includes(voice)) {
+    return NextResponse.json({ error: 'Invalid voice' }, { status: 400 })
+  }
+  if (!['en-ES', 'en-GB'].includes(languageCode)) {
+    return NextResponse.json({ error: 'Invalid voice' }, { status: 400 })
   }
 
   // remove any non-ascii characters
@@ -39,8 +56,14 @@ export async function POST(request: NextRequest) {
 
   const formdata = new FormData()
   formdata.append('text', text)
-  formdata.append('name', 'en-GB-Neural2-A')
-  formdata.append('languageCode', 'en-GB')
+  let voiceName = 'Neural2-A'
+  // voiceName = 'Neural2-C' //female
+  if (voice == 'male') {
+    voiceName = 'Neural2-B'
+  }
+
+  formdata.append('name', `${languageCode}-${voiceName}`)
+  formdata.append('languageCode', languageCode)
   formdata.append('speakingRate', '1')
   formdata.append('pitch', '1')
   formdata.append('isp', '0')

@@ -21,6 +21,7 @@ export function ChatMessageActions({
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
   const [isPlaying, setPlaying] = useState(false)
   const { load } = useAudioPlayer()
+  const voice = 'female'
 
   const onCopy = () => {
     if (isCopied) return
@@ -35,7 +36,7 @@ export function ChatMessageActions({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ text: message.content })
+        body: JSON.stringify({ text: message.content, voice })
       })
       const { data } = await res.json()
       load(data.file, {
