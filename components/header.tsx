@@ -8,6 +8,7 @@ import { UserMenu } from '@/components/user-menu'
 import { SidebarMobile } from '@/components/sidebar-mobile'
 import { SidebarToggle } from '@/components/sidebar-toggle'
 import { ChatHistory } from '@/components/chat-history'
+import { ThemeToggle } from './theme-toggle'
 
 async function UserOrLogin() {
   const session = await auth()
@@ -35,6 +36,9 @@ async function UserOrLogin() {
             <Link href="/sign-in?callbackUrl=/">SexyVoice.ai - Login</Link>
           </Button>
         )}
+        <div className="flex justify-self-end">
+          <ThemeToggle />
+        </div>
       </div>
     </>
   )
