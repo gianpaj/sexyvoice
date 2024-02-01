@@ -42,10 +42,12 @@ export const {
           return Response.redirect(redirectUrl)
         }
       }
-      return isLoggedIn // this ensures there is a logged in user for -every- request
+      // this ensures there is a logged in user for -every- request
+      return isLoggedIn
     }
   },
   pages: {
-    signIn: '/sign-in' // overrides the next-auth default signin page https://authjs.dev/guides/basics/pages
+    // overrides the next-auth default signin page https://authjs.dev/guides/basics/pages
+    signIn: '/sign-in'
   }
 })
