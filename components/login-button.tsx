@@ -16,6 +16,7 @@ export function LoginButton({
   text = 'Login with GitHub',
   showGithubIcon = true,
   className,
+  variant,
   ...props
 }: Readonly<LoginButtonProps>) {
   const [isLoading, setIsLoading] = React.useState(false)

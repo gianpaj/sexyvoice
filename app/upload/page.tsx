@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { TextField } from '@radix-ui/themes'
+import { TextField, Theme } from '@radix-ui/themes'
 import * as Form from '@radix-ui/react-form'
-import { Theme } from '@radix-ui/themes'
 
 import { Button } from '@/components/ui/button'
 import { IconTrash } from '@/components/ui/icons'
