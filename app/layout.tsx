@@ -2,6 +2,7 @@ import { Toaster } from 'react-hot-toast'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/react'
+import type { Metadata } from 'next'
 
 import '@/app/globals.scss'
 import { cn } from '@/lib/utils'
@@ -9,7 +10,7 @@ import { TailwindIndicator } from '@/components/tailwind-indicator'
 import { Providers } from '@/components/providers'
 import { Header } from '@/components/header'
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(`https://${process.env.VERCEL_URL}`),
   title: {
     default: 'SexyVoice.ai',
@@ -21,6 +22,9 @@ export const metadata = {
     icon: '/favicon.ico',
     shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png'
+  },
+  alternates: {
+    canonical: 'https://sexyvoice.ai'
   }
 }
 
@@ -37,14 +41,14 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body
         className={cn(
           'font-sans antialiased',
           GeistSans.variable,
           GeistMono.variable
         )}
-        suppressHydrationWarning={true}
+        suppressHydrationWarning
       >
         <Toaster />
         <Providers

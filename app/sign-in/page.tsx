@@ -1,6 +1,7 @@
 import { auth } from '@/auth'
 import { LoginButton } from '@/components/login-button'
 import { Welcome } from '@/components/welcome'
+import { Footer } from '@/components/footer'
 import { SEOText } from '@/components/seo-text'
 import { redirect } from 'next/navigation'
 
@@ -15,12 +16,15 @@ export default async function SignInPage() {
       <div className="grid grid-rows-[auto_auto_auto] grid-flow-col gap-4 justify-center max-w-xl px-4">
         <div className="flex flex-col items-center justify-center">
           <Welcome />
-          <LoginButton className="max-w-[16rem] bg-black text-secondary" />
+          <LoginButton />
         </div>
         <SEOText />
         <div className="mt-4 m-auto">
-          <LoginButton className="max-w-[16rem] bg-black text-secondary" />
+          <LoginButton />
         </div>
+      </div>
+      <div className="mt-4 m-auto">
+        <Footer />
       </div>
     </div>
   )

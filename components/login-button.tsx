@@ -32,7 +32,9 @@ export function LoginButton({
         signIn('github', { callbackUrl: `/` })
       }}
       disabled={isLoading}
-      className={cn(className)}
+      className={cn(
+        `${className} max-w-[16rem] dark:bg-white bg-black text-secondary`
+      )}
       {...props}
     >
       {isLoading ? <IconSpinner className="mr-2 animate-spin" /> : githubIcon}
