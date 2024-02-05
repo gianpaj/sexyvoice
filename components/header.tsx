@@ -1,9 +1,10 @@
 import * as React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { auth } from '@/auth'
 import { Button } from '@/components/ui/button'
-import { IconNextChat, IconSeparator } from '@/components/ui/icons'
+import { IconSeparator } from '@/components/ui/icons'
 import { UserMenu } from '@/components/user-menu'
 import { SidebarMobile } from '@/components/sidebar-mobile'
 import { SidebarToggle } from '@/components/sidebar-toggle'
@@ -23,8 +24,14 @@ async function UserOrLogin() {
         </>
       ) : (
         <Link href="/" target="_blank" rel="nofollow">
-          <IconNextChat className="size-6 mr-2 dark:hidden" inverted />
-          <IconNextChat className="hidden size-6 mr-2 dark:block" />
+          <Image
+            src="/favicon-32x32.png"
+            alt="SexyVoice.ai"
+            className="size-4"
+            width={16}
+            height={16}
+            priority
+          />
         </Link>
       )}
       <div className="flex items-center">
