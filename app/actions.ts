@@ -128,3 +128,7 @@ export async function shareChat(id: string) {
 
   return payload
 }
+
+export async function refreshHistory(path: string) {
+  redirect(path)
+}
