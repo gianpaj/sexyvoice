@@ -1,6 +1,6 @@
 'use client'
 
-import * as React from 'react'
+import { Suspense } from 'react'
 
 import Link from 'next/link'
 
@@ -11,16 +11,17 @@ import { IconPlus } from '@/components/ui/icons'
 
 interface ChatHistoryProps {
   userId?: string
-  setSidebar?: (bool: boolean) => void
 }
 
-export function ChatHistory({ userId, setSidebar }: ChatHistoryProps) {
+export function ChatHistory({ userId }: ChatHistoryProps) {
   return (
-    <div className="flex flex-col h-full bg-secondary">
-      <div className="px-2 my-4">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between p-4">
+        <h4 className="text-sm font-medium">Chat History</h4>
+      </div>
+      <div className="mb-2 px-2">
         <Link
           href="/"
-          onClick={() => setSidebar?.(false)}
           className={cn(
             buttonVariants({ variant: 'outline' }),
             'h-10 w-full justify-start bg-zinc-50 px-4 shadow-none transition-colors hover:bg-zinc-200/40 dark:bg-zinc-900 dark:hover:bg-zinc-300/10'
@@ -30,7 +31,7 @@ export function ChatHistory({ userId, setSidebar }: ChatHistoryProps) {
           New Chat
         </Link>
       </div>
-      <React.Suspense
+      <Suspense
         fallback={
           <div className="flex flex-col flex-1 px-4 space-y-4 overflow-auto">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -43,7 +44,7 @@ export function ChatHistory({ userId, setSidebar }: ChatHistoryProps) {
         }
       >
         <SidebarList userId={userId} />
-      </React.Suspense>
+      </Suspense>
     </div>
   )
 }
