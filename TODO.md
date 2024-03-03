@@ -1,8 +1,9 @@
 # TODO
 
+- [ ] Emoji in the HTML title?
 - [ ] add email login
 - [ ] add guest login?
-    - [ ] try lucia + oslo <https://github.com/lucia-auth/examples/blob/main/nextjs-app/github-oauth/tsconfig.json>
+  - [ ] try lucia + oslo <https://github.com/lucia-auth/examples/blob/main/nextjs-app/github-oauth/tsconfig.json>
 - [ ] add supabase-adapter <https://authjs.dev/reference/adapter/supabase>
 - [ ] update twitter-image.png and opengraph-image.png
 - [ ] add link and integrate <https://sexyvoice.featurebase.app> + <https://developers.featurebase.app/install>
