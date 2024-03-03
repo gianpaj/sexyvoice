@@ -8,14 +8,12 @@ import { cn } from '@/lib/utils'
 import { SidebarList } from '@/components/sidebar-list'
 import { buttonVariants } from '@/components/ui/button'
 import { IconPlus } from '@/components/ui/icons'
-import { useSidebar } from '@/lib/hooks/use-sidebar'
 
 interface ChatHistoryProps {
   userId?: string
 }
 
 export function ChatHistory({ userId }: ChatHistoryProps) {
-  const { setIsNewChat } = useSidebar()
   return (
     <div className="flex flex-col h-full">
       <div className="px-2 my-4">
@@ -23,7 +21,6 @@ export function ChatHistory({ userId }: ChatHistoryProps) {
           href="/"
           onClick={e => {
             // e.preventDefault()
-            setIsNewChat(true)
           }}
           className={cn(
             buttonVariants({ variant: 'outline' }),

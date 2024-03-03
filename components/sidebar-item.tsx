@@ -17,7 +17,6 @@ import {
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 import { type Chat } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { useSidebar } from '@/lib/hooks/use-sidebar'
 
 interface SidebarItemProps {
   index: number
@@ -27,7 +26,6 @@ interface SidebarItemProps {
 
 export function SidebarItem({ index, chat, children }: SidebarItemProps) {
   const pathname = usePathname()
-  const { setIsNewChat } = useSidebar()
   const isActive = pathname === chat.path
   const [newChatId, setNewChatId] = useLocalStorage('newChatId', null)
   const shouldAnimate = index === 0 && isActive && newChatId
@@ -71,9 +69,6 @@ export function SidebarItem({ index, chat, children }: SidebarItemProps) {
       </div>
       <Link
         href={chat.path}
-        onClick={() => {
-          setIsNewChat(false)
-        }}
         className={cn(
           buttonVariants({ variant: 'ghost' }),
           'group w-full px-8 transition-colors hover:bg-zinc-200/40 dark:hover:bg-zinc-300/10',

@@ -21,7 +21,6 @@ import { ChatScrollAnchor } from '@/components/chat-scroll-anchor'
 // import { Input } from './ui/input'
 import { toast } from 'react-hot-toast'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSidebar } from '@/lib/hooks/use-sidebar'
 
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
@@ -31,7 +30,6 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 export function Chat({ id, initialMessages, className }: Readonly<ChatProps>) {
   const router = useRouter()
   const path = usePathname()
-  const { setIsNewChat, isNewChat } = useSidebar()
   // const [previewToken, setPreviewToken] = useLocalStorage<string | null>(
   //   'ai-token',
   //   null
@@ -55,17 +53,15 @@ export function Chat({ id, initialMessages, className }: Readonly<ChatProps>) {
     })
 
   const startPredeterminedChat = async (inputMsg: string) => {
-    await append({ id, content: inputMsg, role: 'user' })
-    setIsNewChat(true)
+    await append({ id, content: inputMsg, role: 'system' })
   }
-  console.log({ isNewChat })
 
   return (
     <>
       <div className={cn('pb-[200px] pt-4 md:pt-10', className)}>
         {messages.length ? (
           <>
-            <ChatList messages={messages} isNewChat={isNewChat} />
+            <ChatList messages={messages} />
             <ChatScrollAnchor trackVisibility={isLoading} />
           </>
         ) : (

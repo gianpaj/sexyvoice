@@ -7,8 +7,6 @@ const LOCAL_STORAGE_KEY = 'sidebar'
 interface SidebarContext {
   isSidebarOpen: boolean
   toggleSidebar: () => void
-  setIsNewChat: (bool: boolean) => void
-  isNewChat: boolean
   isLoading: boolean
 }
 
@@ -28,7 +26,6 @@ interface SidebarProviderProps {
 
 export function SidebarProvider({ children }: SidebarProviderProps) {
   const [isSidebarOpen, setSidebarOpen] = useState(true)
-  const [isNewChat, setIsNewChatState] = useState(false)
   const [isLoading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -47,10 +44,6 @@ export function SidebarProvider({ children }: SidebarProviderProps) {
     })
   }
 
-  const setIsNewChat = (bool: boolean) => {
-    setIsNewChatState(bool)
-  }
-
   if (isLoading) {
     return null
   }
@@ -60,9 +53,7 @@ export function SidebarProvider({ children }: SidebarProviderProps) {
       value={{
         isSidebarOpen,
         toggleSidebar,
-        setIsNewChat,
-        isLoading,
-        isNewChat
+        isLoading
       }}
     >
       {children}
