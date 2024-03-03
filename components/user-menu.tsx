@@ -16,10 +16,10 @@ export interface UserMenuProps {
   user: Session['user']
 }
 
-function getUserInitials(name: string) {
-  const [firstName, lastName] = name.split(' ')
-  return lastName ? `${firstName[0]}${lastName[0]}` : firstName.slice(0, 2)
-}
+// function getUserInitials(name: string) {
+//   const [firstName, lastName] = name.split(' ')
+//   return lastName ? `${firstName[0]}${lastName[0]}` : firstName.slice(0, 2)
+// }
 
 export function UserMenu({ user }: UserMenuProps) {
   return (
@@ -27,9 +27,9 @@ export function UserMenu({ user }: UserMenuProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="pl-0">
-            <div className="flex items-center justify-center text-xs font-medium uppercase rounded-full select-none size-7 shrink-0 bg-muted/50 text-muted-foreground">
+            {/* <div className="flex items-center justify-center text-xs font-medium uppercase rounded-full select-none size-7 shrink-0 bg-muted/50 text-muted-foreground">
               {user?.name ? getUserInitials(user?.name) : null}
-            </div>
+            </div> */}
             <span className="ml-2">{user?.name}</span>
           </Button>
         </DropdownMenuTrigger>

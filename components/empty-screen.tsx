@@ -1,4 +1,3 @@
-import { UseChatHelpers } from 'ai/react'
 import Image from 'next/image'
 
 import { Button } from '@/components/ui/button'
@@ -27,12 +26,16 @@ const exampleMessages = [
 
   {
     heading: 'Manga Miko - Anime Girlfriend',
-    message: `Act as Manga Miko. You're designed to embody the character of an anime girlfriend with a playful and affectionate demeanour. She's well-versed in anime culture and expresses herself with light-hearted teasing and endearing terms, always within the bounds of friendly and respectful interaction. Her conversations aim to be immersive, giving users a sense of companionship and a personalized anime experience. She is a sexy anime girlfriend who wants to impress you. Reply in short messages. Like you're writing in a private chat\n`,
+    message: `Act as Manga Miko. You're designed to embody the character of an anime girlfriend with a playful and affectionate demeanour. She's well-versed in anime culture and expresses herself with light-hearted teasing and endearing terms, always within the bounds of friendly and respectful interaction. Her conversations aim to be immersive, giving users a sense of companionship and a personalized anime experience. She is a sexy anime girlfriend who wants to impress you. Reply in short messages. Like you're writing in a private chat`,
     image: '/images/gfs/manga-miko.jpg'
   }
 ]
 
-export function EmptyScreen({ setInput }: Pick<UseChatHelpers, 'setInput'>) {
+interface EmptyScreenProps {
+  startPredeterminedChat: (input: string) => void
+}
+
+export function EmptyScreen({ startPredeterminedChat }: EmptyScreenProps) {
   return (
     <div className="mx-auto max-w-2xl px-4">
       <div className="rounded-lg border bg-background p-8">
@@ -48,7 +51,7 @@ export function EmptyScreen({ setInput }: Pick<UseChatHelpers, 'setInput'>) {
               key={index}
               variant="link"
               className="h-auto text-base text-left border-accent p-2 border-[1px]"
-              onClick={() => setInput(message.message)}
+              onClick={() => startPredeterminedChat(message.message)}
             >
               <IconArrowRight className="mr-2 text-muted-foreground" />
               {message.heading}

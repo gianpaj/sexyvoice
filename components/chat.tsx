@@ -7,22 +7,22 @@ import { ChatList } from '@/components/chat-list'
 import { ChatPanel } from '@/components/chat-panel'
 import { EmptyScreen } from '@/components/empty-screen'
 import { ChatScrollAnchor } from '@/components/chat-scroll-anchor'
-import { useLocalStorage } from '@/lib/hooks/use-local-storage'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import { useState } from 'react'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
+// import { useLocalStorage } from '@/lib/hooks/use-local-storage'
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle
+// } from '@/components/ui/dialog'
+// import { useState } from 'react'
+// import { Button } from './ui/button'
+// import { Input } from './ui/input'
 import { toast } from 'react-hot-toast'
 import { usePathname, useRouter } from 'next/navigation'
+import { useSidebar } from '@/lib/hooks/use-sidebar'
 
-const IS_PREVIEW = process.env.VERCEL_ENV === 'preview'
 export interface ChatProps extends React.ComponentProps<'div'> {
   initialMessages?: Message[]
   id?: string
@@ -31,20 +31,16 @@ export interface ChatProps extends React.ComponentProps<'div'> {
 export function Chat({ id, initialMessages, className }: Readonly<ChatProps>) {
   const router = useRouter()
   const path = usePathname()
-  const [previewToken, setPreviewToken] = useLocalStorage<string | null>(
-    'ai-token',
-    null
-  )
-  const [previewTokenDialog, setPreviewTokenDialog] = useState(IS_PREVIEW)
-  const [previewTokenInput, setPreviewTokenInput] = useState(previewToken ?? '')
+  const { setIsNewChat, isNewChat } = useSidebar()
+  // const [previewToken, setPreviewToken] = useLocalStorage<string | null>(
+  //   'ai-token',
+  //   null
+  // )
   const { messages, append, reload, stop, isLoading, input, setInput } =
     useChat({
       initialMessages,
       id,
-      body: {
-        id,
-        previewToken
-      },
+      body: { id },
       onResponse(response) {
         if (response.status === 401) {
           toast.error(response.statusText)
@@ -57,16 +53,23 @@ export function Chat({ id, initialMessages, className }: Readonly<ChatProps>) {
         }
       }
     })
+
+  const startPredeterminedChat = async (inputMsg: string) => {
+    await append({ id, content: inputMsg, role: 'user' })
+    setIsNewChat(true)
+  }
+  console.log({ isNewChat })
+
   return (
     <>
       <div className={cn('pb-[200px] pt-4 md:pt-10', className)}>
         {messages.length ? (
           <>
-            <ChatList messages={messages} />
+            <ChatList messages={messages} isNewChat={isNewChat} />
             <ChatScrollAnchor trackVisibility={isLoading} />
           </>
         ) : (
-          <EmptyScreen setInput={setInput} />
+          <EmptyScreen startPredeterminedChat={startPredeterminedChat} />
         )}
       </div>
       <ChatPanel
@@ -79,7 +82,7 @@ export function Chat({ id, initialMessages, className }: Readonly<ChatProps>) {
         input={input}
         setInput={setInput}
       />
-
+      {/*
       <Dialog open={previewTokenDialog} onOpenChange={setPreviewTokenDialog}>
         <DialogContent>
           <DialogHeader>
@@ -114,7 +117,7 @@ export function Chat({ id, initialMessages, className }: Readonly<ChatProps>) {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </>
   )
 }

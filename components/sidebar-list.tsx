@@ -8,9 +8,7 @@ interface SidebarListProps {
   children?: React.ReactNode
 }
 
-const loadChats = cache(async (userId?: string) => {
-  return await getChats(userId)
-})
+const loadChats = cache((userId?: string) => getChats(userId))
 
 export async function SidebarList({ userId }: SidebarListProps) {
   const chats = await loadChats(userId)
