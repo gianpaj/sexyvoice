@@ -14,7 +14,7 @@ export function SEOText() {
         </li>
 
         <li>
-          🎭 Fun: Let&apos;s <b>spice things up</b> with hot conversations and
+          🎭 Fun: Let&apos;s <b>spice things up</b> with hot conversations and{' '}
           <b>roleplay</b>. Life is an adventure, and I&apos;m here to make sure
           you enjoy every bit of it.
         </li>
