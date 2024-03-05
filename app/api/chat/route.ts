@@ -1,6 +1,7 @@
 import { kv } from '@vercel/kv'
 import { OpenAIStream, StreamingTextResponse } from 'ai'
 import OpenAI from 'openai'
+import { Ratelimit } from '@upstash/ratelimit'
 
 import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
@@ -17,6 +18,30 @@ export async function POST(req: Request) {
   let { messages } = json
   const { previewToken } = json
   const userId = (await auth())?.user.id
+
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    const ip = req.headers.get('x-forwarded-for')
+    const ratelimit = new Ratelimit({
+      redis: kv,
+      // rate limit to 5 requests per 10 seconds
+      limiter: Ratelimit.slidingWindow(5, '10s')
+    })
+
+    const { success, limit, reset, remaining } = await ratelimit.limit(
+      `ratelimit_${ip}`
+    )
+
+    if (!success) {
+      return new Response('You have reached your request limit for the day.', {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': limit.toString(),
+          'X-RateLimit-Remaining': remaining.toString(),
+          'X-RateLimit-Reset': reset.toString()
+        }
+      })
+    }
+  }
 
   if (!userId) {
     return new Response('Unauthorized', {

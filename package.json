@@ -24,6 +24,7 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@radix-ui/themes": "^2.0.3",
     "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@upstash/ratelimit": "^1.0.1",
     "@vercel/analytics": "^1.1.2",
     "@vercel/blob": "^0.19.0",
     "@vercel/kv": "^1.0.1",

@@ -11,6 +11,10 @@
 
 - cache images <https://github.com/civitai/cf-images-r2-cache>
 
+## later
+
+- improve UI see https://github.com/janhq/jan/blob/dev/web/screens/Chat/ThreadList/index.tsx
+
 ## For images
 
 - use <https://www.npmjs.com/package/react-insta-stories>
