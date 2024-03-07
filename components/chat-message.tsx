@@ -27,7 +27,7 @@ export function ChatMessage({ message, ...props }: Readonly<ChatMessageProps>) {
       >
         {message.role === 'user' ? <IconUser /> : <IconOpenAI />}
       </div>
-      <div className="flex-1 px-1 ml-4 space-y-2 overflow-hidden">
+      <div className="flex-1 px-1 ml-4 space-y-2 overflow-hidden whitespace-pre-wrap">
         {message.content}
         <ChatMessageActions message={message} />
       </div>
