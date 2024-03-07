@@ -13,8 +13,8 @@ import { Header } from '@/components/header'
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${process.env.VERCEL_URL}`),
   title: {
-    default: 'SexyVoice.ai',
-    template: `%s - SexyVoice.ai`
+    default: "SexyVoice.ai - The only girlfriend you'll ever need",
+    template: `%s - SexyVoice.ai - The only girlfriend you'll ever need`
   },
   description:
     'An AI-powered chatbot for your pleasure ;) AI Girlfriend. AI Boyfriend. AI Friend. AI Lover. AI Companion. AI Virtual Girlfriend. AI Virtual Boyfriend. AI Virtual Friend.',
@@ -58,7 +58,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
           <div className="flex flex-col min-h-screen">
-            {/* @ts-ignore */}
             <Header />
             <main className="flex flex-col flex-1 bg-muted/50">{children}</main>
           </div>

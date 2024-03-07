@@ -21,7 +21,7 @@ const nextConfig = {
     includePaths: [path.join(__dirname, 'styles')]
   },
   experimental: {
-    serverComponentsExternalPackages: ['oslo']
+    // serverComponentsExternalPackages: ['oslo']
     // typedRoutes: true
   }
 }
