@@ -1,5 +1,3 @@
-'use client'
-
 import { Chat } from '@/lib/types'
 import { AnimatePresence, motion } from 'framer-motion'
 

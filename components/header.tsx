@@ -1,4 +1,4 @@
-'use client'
+// 'use client'
 
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
@@ -14,28 +14,34 @@ import { ChatHistory } from '@/components/chat-history'
 import { ThemeToggle } from './theme-toggle'
 
 async function UserOrLogin() {
+  // const { data: session } = useSession()
   const session = await auth()
-  const [isSidebarOpened, setSidebar] = useState(false)
+  // const [isSidebarOpened, setSidebar] = useState(false)
   return (
     <>
       {session?.user ? (
         <>
+          <SidebarMobile>
+            <ChatHistory userId={session.user.id} />
+          </SidebarMobile>
           <SidebarToggle />
         </>
       ) : (
-        <SidebarMobile isOpened={isSidebarOpened} setSidebar={setSidebar}>
-          <ChatHistory setSidebar={setSidebar} />
-        </SidebarMobile>
-        <Link href="/" target="_blank" rel="nofollow">
-          <Image
-            src="/favicon-32x32.png"
-            alt="SexyVoice.ai"
-            className="size-4"
-            width={16}
-            height={16}
-            priority
-          />
-        </Link>
+        <>
+          <SidebarMobile>
+            <ChatHistory />
+          </SidebarMobile>
+          <Link href="/" target="_blank" rel="nofollow">
+            <Image
+              src="/favicon-32x32.png"
+              alt="SexyVoice.ai"
+              className="size-4"
+              width={16}
+              height={16}
+              priority
+            />
+          </Link>
+        </>
       )}
       <div className="flex items-center">
         <IconSeparator className="size-6 text-muted-foreground/50" />

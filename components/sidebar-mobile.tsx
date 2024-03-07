@@ -9,23 +9,17 @@ import { IconSidebar } from '@/components/ui/icons'
 
 interface SidebarMobileProps {
   children: React.ReactNode
-  isOpened?: boolean
-  setSidebar: (value: boolean) => void
 }
 
 export function SidebarMobile({
-  children,
-  isOpened,
-  setSidebar
+  children
+  // isOpened,
+  // setSidebar
 }: SidebarMobileProps) {
   return (
-    <Sheet open={isOpened}>
+    <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          className="-ml-2 flex size-9 p-0 lg:hidden"
-          onClick={() => setSidebar(!isOpened)}
-        >
+        <Button variant="ghost" className="-ml-2 flex size-9 p-0 lg:hidden">
           <IconSidebar className="size-6" />
           <span className="sr-only">Toggle Sidebar</span>
         </Button>
