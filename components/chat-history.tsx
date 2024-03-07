@@ -11,17 +11,16 @@ import { IconPlus } from '@/components/ui/icons'
 
 interface ChatHistoryProps {
   userId?: string
+  setSidebar?: (bool: boolean) => void
 }
 
-export function ChatHistory({ userId }: ChatHistoryProps) {
+export function ChatHistory({ userId, setSidebar }: ChatHistoryProps) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-secondary">
       <div className="px-2 my-4">
         <Link
           href="/"
-          onClick={e => {
-            // e.preventDefault()
-          }}
+          onClick={() => setSidebar?.(false)}
           className={cn(
             buttonVariants({ variant: 'outline' }),
             'h-10 w-full justify-start bg-zinc-50 px-4 shadow-none transition-colors hover:bg-zinc-200/40 dark:bg-zinc-900 dark:hover:bg-zinc-300/10'

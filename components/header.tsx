@@ -1,4 +1,6 @@
-import * as React from 'react'
+'use client'
+
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -13,16 +15,17 @@ import { ThemeToggle } from './theme-toggle'
 
 async function UserOrLogin() {
   const session = await auth()
+  const [isSidebarOpened, setSidebar] = useState(false)
   return (
     <>
       {session?.user ? (
         <>
-          <SidebarMobile>
-            <ChatHistory userId={session.user.id} />
-          </SidebarMobile>
           <SidebarToggle />
         </>
       ) : (
+        <SidebarMobile isOpened={isSidebarOpened} setSidebar={setSidebar}>
+          <ChatHistory setSidebar={setSidebar} />
+        </SidebarMobile>
         <Link href="/" target="_blank" rel="nofollow">
           <Image
             src="/favicon-32x32.png"
@@ -55,9 +58,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 border-b shrink-0 bg-gradient-to-b from-background/10 via-background/50 to-background/80 backdrop-blur-xl">
       <div className="flex items-center">
-        <React.Suspense fallback={<div className="flex-1 overflow-auto" />}>
+        <Suspense fallback={<div className="flex-1 overflow-auto" />}>
           <UserOrLogin />
-        </React.Suspense>
+        </Suspense>
       </div>
       {/* <div className="flex items-center justify-end space-x-2">
         <a
