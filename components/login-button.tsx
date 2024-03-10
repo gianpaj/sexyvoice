@@ -27,12 +27,12 @@ export function LoginButton({
     case 'github':
       icon = <IconGitHub className="mr-2" />
       classes =
-        'text-white bg-[#24292F] hover:bg-[#24292F]/90 focus:ring-[#24292F]/50 dark:focus:ring-gray-500 dark:hover:bg-[#050708]/30'
+        'bg-[#24292F] hover:bg-[#24292F]/90 focus:ring-[#24292F]/50 dark:focus:ring-gray-500 dark:hover:bg-[#050708]/30'
       break
     case 'google':
       icon = <IconGoogle className="mr-2" />
       classes =
-        'text-white bg-[#4285F4] hover:bg-[#4285F4]/90 focus:ring-[#4285F4]/50 dark:focus:ring-[#4285F4]/55'
+        'bg-[#4285F4] hover:bg-[#4285F4]/90 focus:ring-[#4285F4]/50 dark:focus:ring-[#4285F4]/55'
       break
     default:
       return null
@@ -48,7 +48,7 @@ export function LoginButton({
       }}
       disabled={isLoading}
       className={cn(
-        `${className} ${classes} focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center me-2 mb-2`
+        `${className} ${classes} text-white focus:ring-4 focus:outline-none font-medium rounded-lg text-md px-8 py-6 mb-2`
       )}
       {...props}
     >
