@@ -16,11 +16,17 @@ export default async function SignInPage() {
       <div className="grid grid-rows-[auto_auto_auto] grid-flow-col gap-4 justify-center max-w-xl px-4">
         <div className="flex flex-col items-center justify-center">
           <Welcome />
-          <LoginButton />
+          <LoginButton text="Login with GitHub" provider="github" />
+          <p className="text-center mt-2 text-gray-400">
+            <small>No credit card required.</small>
+          </p>
         </div>
         <SEOText />
         <div className="mt-4 m-auto">
-          <LoginButton />
+          <LoginButton text="Login with GitHub" provider="github" />
+          <p className="text-center mt-2 text-gray-400">
+            <small>No credit card required.</small>
+          </p>
         </div>
       </div>
       <div className="mt-4 m-auto">

@@ -81,8 +81,8 @@ dependencies:
     specifier: 14.1.0
     version: 14.1.0(react-dom@18.2.0)(react@18.2.0)(sass@1.70.0)
   next-auth:
-    specifier: 5.0.0-beta.5
-    version: 5.0.0-beta.5(next@14.1.0)(nodemailer@6.9.8)(react@18.2.0)
+    specifier: 5.0.0-beta.15
+    version: 5.0.0-beta.15(next@14.1.0)(nodemailer@6.9.8)(react@18.2.0)
   next-themes:
     specifier: ^0.2.1
     version: 0.2.1(next@14.1.0)(react-dom@18.2.0)(react@18.2.0)
@@ -119,9 +119,6 @@ dependencies:
   remark-math:
     specifier: ^5.1.1
     version: 5.1.1
-  root:
-    specifier: github:nextauthjs/next-auth
-    version: github.com/nextauthjs/next-auth/9724c208f3eee09bf625e7fd4cd91f3a80fa28b1
 
 devDependencies:
   '@tailwindcss/typography':
@@ -205,11 +202,17 @@ packages:
       '@jridgewell/trace-mapping': 0.3.20
     dev: false
 
-  /@auth/core@0.21.0(nodemailer@6.9.8):
-    resolution: {integrity: sha512-jUWYs8gjy2GvtP9dd/4S9KcwZ660Cm/IkybiAq96/2Ooku9SKk5SUG+UTEwkyLuaQ38ZgfwggfpDOgzsXEcufA==}
+  /@auth/core@0.28.0(nodemailer@6.9.8):
+    resolution: {integrity: sha512-/fh/tb/L4NMSYcyPoo4Imn8vN6MskcVfgESF8/ndgtI4fhD/7u7i5fTVzWgNRZ4ebIEGHNDbWFRxaTu1NtQgvA==}
     peerDependencies:
+      '@simplewebauthn/browser': ^9.0.1
+      '@simplewebauthn/server': ^9.0.2
       nodemailer: ^6.8.0
     peerDependenciesMeta:
+      '@simplewebauthn/browser':
+        optional: true
+      '@simplewebauthn/server':
+        optional: true
       nodemailer:
         optional: true
     dependencies:
@@ -4480,17 +4483,23 @@ packages:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
     dev: true
 
-  /next-auth@5.0.0-beta.5(next@14.1.0)(nodemailer@6.9.8)(react@18.2.0):
-    resolution: {integrity: sha512-tEYIPhm/i0byW4xf9Ldlsnh7ckBQfNvMjOA3B3eXQX9taAQWb8earravSn1fjk4fKfKvaOApFJkks0VeI7Vy/A==}
+  /next-auth@5.0.0-beta.15(next@14.1.0)(nodemailer@6.9.8)(react@18.2.0):
+    resolution: {integrity: sha512-UQggNq8CDu3/w8CYkihKLLnRPNXel98K0j7mtjj9a6XTNYo4Hni8xg/2h1YhElW6vXE8mgtvmH11rU8NKw86jQ==}
     peerDependencies:
+      '@simplewebauthn/browser': ^9.0.1
+      '@simplewebauthn/server': ^9.0.2
       next: ^14
       nodemailer: ^6.6.5
       react: ^18.2.0
     peerDependenciesMeta:
+      '@simplewebauthn/browser':
+        optional: true
+      '@simplewebauthn/server':
+        optional: true
       nodemailer:
         optional: true
     dependencies:
-      '@auth/core': 0.21.0(nodemailer@6.9.8)
+      '@auth/core': 0.28.0(nodemailer@6.9.8)
       next: 14.1.0(react-dom@18.2.0)(react@18.2.0)(sass@1.70.0)
       nodemailer: 6.9.8
       react: 18.2.0
@@ -6103,11 +6112,4 @@ packages:
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
-    dev: false
-
-  github.com/nextauthjs/next-auth/9724c208f3eee09bf625e7fd4cd91f3a80fa28b1:
-    resolution: {tarball: https://codeload.github.com/nextauthjs/next-auth/tar.gz/9724c208f3eee09bf625e7fd4cd91f3a80fa28b1}
-    name: root
-    version: 0.0.0
-    engines: {node: ^18.18.0 || ^20.8.0}
     dev: false
