@@ -64,7 +64,7 @@
     "eslint-config-next": "14.1.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-tailwindcss": "^3.14.0",
-    "nodemailer": "^6.9.8",
+    "nodemailer": "^6.9.9",
     "postcss": "^8.4.33",
     "prettier": "^3.2.4",
     "sass": "^1.70.0",
