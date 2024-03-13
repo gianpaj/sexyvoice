@@ -8,15 +8,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - opengraph-image.png
-     * - android-chrome-192x192.png
-     * - android-chrome-384x384.png
-     * - apple-touch-icon.png
-     * - favicon-16x16.png
-     * - favicon-32x32.png
-     * FIXME: find regex -https://github.com/pillarjs/path-to-regexp
+     * - *.png
+     * - *.jpg
      * - site.webmanifest
      */
-    '/((?!api|_next/static|_next/image|images|favicon.ico|opengraph-image.png|android-chrome-192x192.png|android-chrome-384x384.png|apple-touch-icon.png|favicon-16x16.png|favicon-32x32.png|site.webmanifest).*)'
+    '/((?!api|_next/static|_next/image|images|favicon.ico|.*\\.png$|.*\\.jpg$|site.webmanifest).*)'
   ]
 }

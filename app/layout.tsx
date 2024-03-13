@@ -13,8 +13,8 @@ import { Header } from '@/components/header'
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${process.env.VERCEL_URL}`),
   title: {
-    default: "SexyVoice.ai - The only girlfriend you'll ever need",
-    template: `%s - SexyVoice.ai - The only girlfriend you'll ever need`
+    default: "SexyVoice.ai - The last girlfriend you'll need",
+    template: `%s - SexyVoice.ai - The last girlfriend you'll need`
   },
   description:
     'An AI-powered chatbot for your pleasure ;) AI Girlfriend. AI Boyfriend. AI Friend. AI Lover. AI Companion. AI Virtual Girlfriend. AI Virtual Boyfriend. AI Virtual Friend.',
@@ -22,6 +22,16 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png'
+  },
+  openGraph: {
+    images: [
+      {
+        url: '/sexyvoice.ai-og-image.jpg',
+        width: 1200,
+        height: 711,
+        alt: 'SexyVoice.ai - The last girlfriend you will need'
+      }
+    ]
   },
   alternates: {
     canonical: 'https://sexyvoice.ai'

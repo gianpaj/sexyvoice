@@ -33,7 +33,7 @@ async function UserOrLogin() {
           </SidebarMobile>
           <Link href="/" target="_blank" rel="nofollow">
             <Image
-              src="/favicon-32x32.png"
+              src="/favicon-16x16.png"
               alt="SexyVoice.ai"
               className="size-4"
               width={16}
