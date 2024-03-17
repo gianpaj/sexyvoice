@@ -18,6 +18,7 @@ export function Footer({ className, ...props }: React.ComponentProps<'p'>) {
       <ExternalLink href="https://www.instagram.com/sexyvoice.ai">
         Instagram
       </ExternalLink>
+      <ExternalLink href="mailto:info@sexyvoice.ai">Email</ExternalLink>
     </p>
   )
 }
