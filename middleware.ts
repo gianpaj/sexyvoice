@@ -10,8 +10,9 @@ export const config = {
      * - favicon.ico (favicon file)
      * - *.png
      * - *.jpg
+     * - *.jpeg
      * - site.webmanifest
      */
-    '/((?!api|_next/static|_next/image|images|favicon.ico|.*\\.png$|.*\\.jpg$|site.webmanifest).*)'
+    '/((?!api|_next/static|_next/image|images|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|site.webmanifest).*)'
   ]
 }

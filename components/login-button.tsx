@@ -5,7 +5,7 @@ import { signIn } from 'next-auth/react'
 
 import { cn } from '@/lib/utils'
 import { Button, type ButtonProps } from '@/components/ui/button'
-import { IconGitHub, IconGoogle, IconSpinner } from '@/components/ui/icons'
+import { IconGitHub, IconSpinner } from '@/components/ui/icons'
 
 interface LoginButtonProps extends ButtonProps {
   text: string
@@ -29,11 +29,11 @@ export function LoginButton({
       classes =
         'bg-[#24292F] hover:bg-[#24292F]/90 focus:ring-[#24292F]/50 dark:focus:ring-gray-500 dark:hover:bg-[#050708]/30'
       break
-    case 'google':
-      icon = <IconGoogle className="mr-2" />
-      classes =
-        'bg-[#4285F4] hover:bg-[#4285F4]/90 focus:ring-[#4285F4]/50 dark:focus:ring-[#4285F4]/55'
-      break
+    // case 'google':
+    //   icon = <IconGoogle className="mr-2" />
+    //   classes =
+    //     'bg-[#4285F4] hover:bg-[#4285F4]/90 focus:ring-[#4285F4]/50 dark:focus:ring-[#4285F4]/55'
+    //   break
     default:
       return null
   }
