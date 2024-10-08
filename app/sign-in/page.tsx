@@ -13,23 +13,23 @@ export default async function SignInPage() {
   }
   return (
     <div className="flex flex-col items-center justify-center py-10">
-      <div className="grid grid-rows-[auto_auto_auto] grid-flow-col gap-4 justify-center max-w-xl px-4">
+      <div className="grid max-w-xl grid-flow-col grid-rows-[auto_auto_auto] justify-center gap-4 px-4">
         <div className="flex flex-col items-center justify-center">
           <Welcome />
           <LoginButton text="Login with GitHub" provider="github" />
-          <p className="text-center mt-2 text-gray-400">
+          <p className="mt-2 text-center text-gray-400">
             <small>No credit card required.</small>
           </p>
         </div>
         <SEOText />
-        <div className="mt-4 m-auto">
+        <div className="m-auto mt-4">
           <LoginButton text="Login with GitHub" provider="github" />
-          <p className="text-center mt-2 text-gray-400">
+          <p className="mt-2 text-center text-gray-400">
             <small>No credit card required.</small>
           </p>
         </div>
       </div>
-      <div className="mt-4 m-auto">
+      <div className="m-auto mt-4">
         <Footer />
       </div>
     </div>

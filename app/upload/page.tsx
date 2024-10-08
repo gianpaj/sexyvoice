@@ -57,7 +57,7 @@ export default function UploadPage() {
   return (
     <Theme>
       <div className={`${styles.uploadPage} mt-4`}>
-        <h1 className="text-center text-2xl my-8">Upload images</h1>
+        <h1 className="my-8 text-center text-2xl">Upload images</h1>
         <h2 className="text-center">
           Upload an image and get a public URL to it. (Vercel Blob)
         </h2>
@@ -73,7 +73,7 @@ export default function UploadPage() {
             </Button>
           </Form.Submit>
         </Form.Root>
-        <div className="flex justify-center mt-6">
+        <div className="mt-6 flex justify-center">
           {isLoading ? (
             <p>Loading...</p>
           ) : (
@@ -121,7 +121,7 @@ function Images({
           <Button
             title="Delete"
             variant="outline"
-            className="justify-self-center self-center ml-2"
+            className="ml-2 self-center justify-self-center"
             onClick={() => onDelete(image.url)}
           >
             <IconTrash aria-label="Delete" />
