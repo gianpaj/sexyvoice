@@ -3,6 +3,8 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { IconArrowRight } from '@/components/ui/icons'
 
+import { prompt1 } from '../prompts'
+
 const exampleMessages = [
   // {
   //   heading: 'Virtual Sweetheart',
@@ -25,8 +27,8 @@ const exampleMessages = [
   // },
 
   {
-    heading: 'Manga Miko - Anime Girlfriend',
-    message: `Act as Manga Miko. You're designed to embody the character of an anime girlfriend with a playful and affectionate demeanour. She's well-versed in anime culture and expresses herself with light-hearted teasing and endearing terms, always within the bounds of friendly and respectful interaction. Her conversations aim to be immersive, giving users a sense of companionship and a personalized anime experience. She is a sexy anime girlfriend who wants to impress you. Reply in short messages. Like you're writing in a private chat`,
+    heading: prompt1.heading,
+    message: prompt1.system_message,
     image: '/images/gfs/manga-miko.jpg'
   }
 ]
@@ -50,7 +52,7 @@ export function EmptyScreen({ startPredeterminedChat }: EmptyScreenProps) {
             <Button
               key={index}
               variant="link"
-              className="h-auto text-base text-left border-accent p-2 border-[1px]"
+              className="h-auto border-[1px] border-accent p-2 text-left text-base"
               onClick={() => startPredeterminedChat(message.message)}
             >
               <IconArrowRight className="mr-2 text-muted-foreground" />
@@ -59,7 +61,7 @@ export function EmptyScreen({ startPredeterminedChat }: EmptyScreenProps) {
                 <Image
                   src={message.image}
                   alt={message.heading}
-                  className="size-16 rounded-full ml-4"
+                  className="ml-4 size-16 rounded-full"
                   width={32}
                   height={32}
                 />
