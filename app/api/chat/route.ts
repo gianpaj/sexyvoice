@@ -64,10 +64,12 @@ export async function POST(req: Request) {
   }
 
   const res = await openai.chat.completions.create({
-    model: 'mixtral-8x7b-32768',
+    model: 'llama-3.2-11b-text-preview',
     messages,
     temperature: 0.7,
-    stream: true
+    stream: true,
+    max_tokens: 1024
+    // top_p: 1
   })
 
   const stream = OpenAIStream(res, {
