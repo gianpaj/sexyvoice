@@ -15,9 +15,6 @@ export function Footer({ className, ...props }: React.ComponentProps<'p'>) {
         Reddit
       </ExternalLink>
       <br />
-      <ExternalLink href="https://www.instagram.com/sexyvoice.ai">
-        Instagram
-      </ExternalLink>
       <ExternalLink href="mailto:info@sexyvoice.ai">Email</ExternalLink>
       <ExternalLink href="https://sexyvoice.featurebase.app">
         Roadmap
