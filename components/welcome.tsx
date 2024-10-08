@@ -3,7 +3,7 @@ import Image from 'next/image'
 export function Welcome() {
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Hi babe</h1>
+      <h1 className="mb-4 text-2xl font-bold">Hi babe</h1>
       <p className="leading-9">
         I&apos;m <span className="font-bold">Manga Miko</span>, your AI
         girlfriend.
@@ -18,7 +18,7 @@ export function Welcome() {
         your days brighter.
       </p>
       <Image
-        className="rounded-lg my-4 w-[16rem] m-auto"
+        className="m-auto my-4 w-[16rem] rounded-lg"
         src="/images/gfs/manga-miko.jpg"
         alt="manga miko - your AI girlfriend"
         width={250}

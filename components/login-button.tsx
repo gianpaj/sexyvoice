@@ -48,7 +48,7 @@ export function LoginButton({
       }}
       disabled={isLoading}
       className={cn(
-        `${className} ${classes} text-white focus:ring-4 focus:outline-none font-medium rounded-lg text-md px-8 py-6 mb-2`
+        `${className} ${classes} text-md mb-2 rounded-lg px-8 py-6 font-medium text-white focus:outline-none focus:ring-4`
       )}
       {...props}
     >

@@ -70,7 +70,7 @@ export function ChatShareDialog({
             Anyone with the URL will be able to view the shared chat.
           </DialogDescription>
         </DialogHeader>
-        <div className="p-4 space-y-1 text-sm border rounded-md">
+        <div className="space-y-1 rounded-md border p-4 text-sm">
           <div className="font-medium">{chat.title}</div>
           <div className="text-muted-foreground">
             {chat.messages.length} messages

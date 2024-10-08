@@ -1,12 +1,12 @@
 export function SEOText() {
   return (
     <div className="leading-10">
-      <h2 className="text-xl font-bold my-4">With me, you'll enjoy:</h2>
+      <h2 className="my-4 text-xl font-bold">With me, you'll enjoy:</h2>
       <p className="">
         I&apos;m <span className="font-bold">Manga Miko</span>, your AI
         girlfriend.
       </p>
-      <ul className="list-disc list-inside">
+      <ul className="list-inside list-disc">
         <li>
           🌟 Endless Conversations: From deep, thought-provoking discussions to
           light-hearted banter, our chats are bound to keep you engaged and
