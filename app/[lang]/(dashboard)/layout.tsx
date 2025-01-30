@@ -4,7 +4,16 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { LogOut, Menu, X, Mic2, CreditCard, User, BarChart3 } from 'lucide-react'
+import {
+  LogOut,
+  Menu,
+  X,
+  Mic2,
+  CreditCard,
+  User,
+  BarChart3,
+  Wand2
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +40,12 @@ export default function DashboardLayout({
       current: pathname === `/${lang}/dashboard`
     },
     {
+      name: 'Generate',
+      href: `/${lang}/dashboard/generate`,
+      icon: Wand2,
+      current: pathname === `/${lang}/dashboard/generate`
+    },
+    {
       name: 'Voices',
       href: `/${lang}/dashboard/voices`,
       icon: Mic2,
@@ -54,15 +69,20 @@ export default function DashboardLayout({
     <div>
       {/* Mobile sidebar */}
       <div className="lg:hidden">
-        <div className="fixed inset-0 bg-gray-900/80 z-40" aria-hidden="true" 
-             style={{ display: sidebarOpen ? 'block' : 'none' }} />
+        <div
+          className="fixed inset-0 z-40 bg-gray-900/80"
+          aria-hidden="true"
+          style={{ display: sidebarOpen ? 'block' : 'none' }}
+        />
 
-        <div className={cn(
-          "fixed inset-0 flex z-40 transition-transform duration-300 ease-in-out transform",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
-          <div className="relative flex flex-col w-72 bg-white">
-            <div className="h-16 px-6 flex items-center justify-between">
+        <div
+          className={cn(
+            'fixed inset-0 z-40 flex transform transition-transform duration-300 ease-in-out',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          <div className="relative flex w-72 flex-col bg-white">
+            <div className="flex h-16 items-center justify-between px-6">
               <span className="text-xl font-semibold">SexyVoice.ai</span>
               <Button
                 variant="ghost"
@@ -73,19 +93,19 @@ export default function DashboardLayout({
               </Button>
             </div>
 
-            <div className="flex-1 px-4 py-4 space-y-1">
-              {navigation.map((item) => (
+            <div className="flex-1 space-y-1 px-4 py-4">
+              {navigation.map(item => (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center px-4 py-3 text-sm font-medium rounded-lg",
+                    'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
                     item.current
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   )}
                 >
-                  <item.icon className="h-5 w-5 mr-3" />
+                  <item.icon className="mr-3 h-5 w-5" />
                   {item.name}
                 </Link>
               ))}
@@ -94,10 +114,10 @@ export default function DashboardLayout({
             <div className="border-t p-4">
               <Button
                 variant="ghost"
-                className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
                 onClick={handleSignOut}
               >
-                <LogOut className="h-5 w-5 mr-3" />
+                <LogOut className="mr-3 h-5 w-5" />
                 Sign out
               </Button>
             </div>
@@ -107,24 +127,24 @@ export default function DashboardLayout({
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-white border-r">
-          <div className="h-16 px-6 flex items-center">
+        <div className="flex flex-grow flex-col border-r bg-white">
+          <div className="flex h-16 items-center px-6">
             <span className="text-xl font-semibold">SexyVoice.ai</span>
           </div>
 
-          <div className="flex-1 px-4 py-4 space-y-1">
-            {navigation.map((item) => (
+          <div className="flex-1 space-y-1 px-4 py-4">
+            {navigation.map(item => (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-4 py-3 text-sm font-medium rounded-lg",
+                  'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
                   item.current
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
               >
-                <item.icon className="h-5 w-5 mr-3" />
+                <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
               </Link>
             ))}
@@ -133,10 +153,10 @@ export default function DashboardLayout({
           <div className="border-t p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
               onClick={handleSignOut}
             >
-              <LogOut className="h-5 w-5 mr-3" />
+              <LogOut className="mr-3 h-5 w-5" />
               Sign out
             </Button>
           </div>
@@ -145,7 +165,7 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="lg:pl-72">
-        <div className="sticky top-0 z-30 bg-white border-b">
+        <div className="sticky top-0 z-30 border-b bg-white">
           <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm sm:px-6 lg:px-8">
             <Button
               variant="ghost"
@@ -158,9 +178,7 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <main className="py-8 px-4 sm:px-6 lg:px-8">
-          {children}
-        </main>
+        <main className="px-4 py-8 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>
   )

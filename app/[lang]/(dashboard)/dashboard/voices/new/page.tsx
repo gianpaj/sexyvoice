@@ -42,7 +42,7 @@ export default function NewVoicePage({
     const { data } = await supabase.auth.getUser()
     const user = data?.user
 
-    if (!data) {
+    if (!user) {
       router.push(`/${lang}/login`)
       return
     }
