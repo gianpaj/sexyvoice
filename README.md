@@ -1,32 +1,44 @@
 <p align="center">
   <a href="https://sexyvoice.ai">
   <img alt="SexyVoice.ai Chatbot" src="./public/sexyvoice.ai-og-image.jpg" width="640">
-  <h1 align="center">SexyVoice.ai Chatbot</h1>
+  <h1 align="center">SexyVoice.ai</h1>
   </a>
 </p>
 
 <p align="center">
-  The last girlfriend you'll need
+  AI Voice Generation Platform
 </p>
 
 - Roadmap: <https://sexyvoice.featurebase.app>
 
-## Tech
+## Features
 
-- [Next.js](https://nextjs.org) App Router
+- Generate AI voices in multiple languages (English & Spanish)
+- Voice selection system with customizable options
+- Public library of generated voices ranked by usage and votes
+- Credit-based usage system (TODO)
+- User authentication and profile management
+
+## Back-end Python API
+
+- [OpenVoice](https://github.com/myshell-ai/OpenVoice) running on [Hyperstack](https://www.hyperstack.cloud/)
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org) App Router with TypeScript
 - React Server Components (RSCs), Suspense, and Server Actions
-- [Vercel AI SDK](https://sdk.vercel.ai/docs) for streaming chat UI
-- Support for OpenAI (default), Anthropic, Cohere, Hugging Face, or custom AI chat models and/or LangChain
+- [Supabase](https://supabase.com) for authentication and database (with SSR support)
+- [Drizzle ORM](https://orm.drizzle.team) for type-safe database operations (TODO)
+- [Vercel Blob Storage](https://vercel.com/storage/blob) for audio file storage
 - [shadcn/ui](https://ui.shadcn.com)
   - Styling with [Tailwind CSS](https://tailwindcss.com)
   - [Radix UI](https://radix-ui.com) for headless component primitives
-  - Icons from [Phosphor Icons](https://phosphoricons.com)
-- Chat History, rate limiting, and session storage with [Vercel KV](https://vercel.com/storage/kv)
-- [NextAuth.js](https://github.com/nextauthjs/next-auth) for authentication
+- Internationalization (i18n) support for English and Spanish
+- Rate limiting and usage tracking
 
 ## Running locally
 
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
+You will need to use the environment variables [defined in `.env.example`](.env.example) to run the application. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
 
 ```bash
 pnpm install
