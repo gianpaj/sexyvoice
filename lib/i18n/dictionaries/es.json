@@ -1,0 +1,54 @@
+{
+  "auth": {
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión en tu cuenta",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "noAccount": "¿No tienes una cuenta?",
+      "signUp": "Regístrate",
+      "error": "Correo o contraseña inválidos"
+    },
+    "signup": {
+      "title": "Crear una cuenta",
+      "subtitle": "Comienza con la clonación de voz",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "username": "Nombre de usuario",
+      "fullName": "Nombre completo",
+      "submit": "Crear cuenta",
+      "hasAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Inicia sesión",
+      "error": "Error al crear la cuenta"
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Tu Voz, Amplificada",
+      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores.",
+      "getStarted": "Comenzar",
+      "signIn": "Iniciar Sesión"
+    },
+    "features": {
+      "voiceCloning": {
+        "title": "Clonación Natural de Voz",
+        "description": "Crea réplicas perfectas de voz con solo unos minutos de muestras de audio utilizando tecnología AI de última generación."
+      },
+      "multiLanguage": {
+        "title": "Soporte Multilingüe",
+        "description": "Clona voces en múltiples idiomas y acentos, perfecto para la creación de contenido global y localización."
+      },
+      "security": {
+        "title": "Seguro y Privado",
+        "description": "Tus datos de voz están protegidos con seguridad de nivel empresarial. Control total sobre la privacidad y el uso."
+      }
+    },
+    "cta": {
+      "freeCredits": "Comienza con 100 créditos gratis",
+      "title": "¿Listo para encontrar tu voz?",
+      "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para sus necesidades de clonación de voz.",
+      "action": "Crea Tu Primera Voz"
+    }
+  }
+}

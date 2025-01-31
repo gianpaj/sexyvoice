@@ -1,0 +1,54 @@
+{
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "error": "Invalid email or password"
+    },
+    "signup": {
+      "title": "Create an account",
+      "subtitle": "Get started with voice cloning",
+      "email": "Email address",
+      "password": "Password",
+      "username": "Username",
+      "fullName": "Full name",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "error": "Error creating account"
+    }
+  },
+  "landing": {
+    "hero": {
+      "title": "Your Voice, Amplified",
+      "subtitle": "Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.",
+      "getStarted": "Get Started",
+      "signIn": "Sign In"
+    },
+    "features": {
+      "voiceCloning": {
+        "title": "Natural Voice Cloning",
+        "description": "Create perfect voice replicas with just a few minutes of audio samples using state-of-the-art AI technology."
+      },
+      "multiLanguage": {
+        "title": "Multi-Language Support",
+        "description": "Clone voices in multiple languages and accents, perfect for global content creation and localization."
+      },
+      "security": {
+        "title": "Secure & Private",
+        "description": "Your voice data is protected with enterprise-grade security. Full control over privacy settings and usage."
+      }
+    },
+    "cta": {
+      "freeCredits": "Start with 100 free credits",
+      "title": "Ready to find your voice?",
+      "subtitle": "Join thousands of creators who trust our platform for their voice cloning needs.",
+      "action": "Create Your First Voice"
+    }
+  }
+}
