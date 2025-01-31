@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import WaveSurfer from 'wavesurfer.js';
 
 const publicVoices = [
   {
@@ -71,6 +72,39 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const waveformRef = useRef<HTMLDivElement>(null);
+  const wavesurfer = useRef<WaveSurfer | null>(null);
+
+  useEffect(() => {
+    const loadWaveform = async () => {
+      if (!waveformRef.current || !audio) {
+        return;
+      }
+      wavesurfer.current = WaveSurfer.create({
+        container: waveformRef.current,
+        waveColor: 'rgb(255, 255, 255, 0.8)',
+        progressColor: 'rgb(175, 193, 230)',
+        height: 48,
+        cursorWidth: 0,
+        barWidth: 2,
+        barGap: 1,
+        url: audio.src,
+        interact: false,
+        normalize: true,
+      });
+      wavesurfer.current.on('play', () => {
+        setIsPlaying(true);
+      });
+      wavesurfer.current.on('finish', () => {
+        setIsPlaying(false);
+      });
+
+      return () => {
+        wavesurfer.current?.destroy();
+      };
+    };
+    loadWaveform();
+  }, [audio]);
 
   const handleGenerate = async () => {
     if (!selectedVoice || !text.trim() || !accent) {
@@ -100,11 +134,13 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
 
       setAudio(newAudio);
 
-      // Automatically play the audio
-      newAudio.play();
-      setIsPlaying(true);
-
       toast.success('Audio generated successfully');
+
+      setTimeout(() => {
+        // Automatically play the audio
+        wavesurfer.current?.play();
+        setIsPlaying(true);
+      }, 100);
     } catch (error) {
       console.error('Error generating audio:', error);
 
@@ -115,25 +151,17 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
       }
     } finally {
       setIsGenerating(false);
+      wavesurfer.current?.destroy();
     }
   };
 
   const togglePlayback = () => {
     if (!audio) return;
 
-    if (isPlaying) {
-      audio.pause();
+    if (wavesurfer.current?.isPlaying()) {
+      wavesurfer.current?.pause();
     } else {
-      audio.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  // Update playback rate when speed changes
-  const handleSpeedChange = (newSpeed: number[]) => {
-    setSpeed(newSpeed);
-    if (audio) {
-      audio.playbackRate = newSpeed[0];
+      wavesurfer.current?.play();
     }
   };
 
@@ -178,7 +206,7 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
           </div>
           <Slider
             value={speed}
-            onValueChange={handleSpeedChange}
+            onValueChange={setSpeed}
             min={0.5}
             max={2}
             step={0.1}
@@ -188,21 +216,21 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
             <span
               className="cursor-pointer hover:text-white"
-              onClick={() => handleSpeedChange([0.5])}
+              onClick={() => setSpeed([0.5])}
             >
               0.5x
             </span>
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
             <span
               className="ml-[-33.3%] cursor-pointer hover:text-white"
-              onClick={() => handleSpeedChange([1.0])}
+              onClick={() => setSpeed([1.0])}
             >
               1x
             </span>
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
             <span
               className="cursor-pointer hover:text-white"
-              onClick={() => handleSpeedChange([2.0])}
+              onClick={() => setSpeed([2.0])}
             >
               2x
             </span>
@@ -210,43 +238,48 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
         </div>
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-center">
         <div className="space-x-2">
-          {audio && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={togglePlayback}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                title={isPlaying ? dict.pause : dict.play}
-              >
-                {isPlaying ? (
-                  <Pause className="size-4" />
-                ) : (
-                  <Play className="size-4" />
-                )}
-              </Button>
-              {/* <Button
-                variant="outline"
-                size="icon"
-                onClick={resetForm}
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                title={dict.reset}
-              >
-                <RotateCcw className="size-4" />
-              </Button> */}
-            </>
-          )}
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || !text.trim() || !selectedVoice}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isGenerating ? dict.generating : dict.generate}
+          </Button>
         </div>
-        <Button
-          onClick={handleGenerate}
-          disabled={isGenerating || !text.trim() || !selectedVoice}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {isGenerating ? dict.generating : dict.generate}
-        </Button>
       </div>
+
+      {audio && (
+        <div className="mt-4 p-4 bg-white/5 rounded-lg">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={togglePlayback}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              title={isPlaying ? dict.pause : dict.play}
+            >
+              {isPlaying ? (
+                <Pause className="size-4" />
+              ) : (
+                <Play className="size-4" />
+              )}
+            </Button>
+
+            <div className="flex-1">
+              <div ref={waveformRef} className="w-full" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// Helper function to format time
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
