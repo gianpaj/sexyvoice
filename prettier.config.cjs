@@ -33,5 +33,5 @@ module.exports = {
   // importOrderCombineTypeAndValueImports: true,
   //
   // TODO try to add prettier-plugin-organize-imports
-  plugins: ['prettier-plugin-tailwindcss']
-}
+  plugins: ['prettier-plugin-tailwindcss'],
+};

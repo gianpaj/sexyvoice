@@ -1,69 +1,69 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/supabase';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Globe2, Lock, MoreVertical, Trash2 } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+} from '@/components/ui/dropdown-menu';
+import { Globe2, Lock, MoreVertical, Trash2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Voice {
-  id: string
-  name: string
-  language: string
-  is_public: boolean
-  is_nsfw: boolean
-  created_at: string
+  id: string;
+  name: string;
+  language: string;
+  is_public: boolean;
+  is_nsfw: boolean;
+  created_at: string;
 }
 
-export function VoicesList({ voices, lang }: { voices: Voice[], lang: string }) {
-  const [isLoading, setIsLoading] = useState<string | null>(null)
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+export function VoicesList({
+  voices,
+  lang,
+}: { voices: Voice[]; lang: string }) {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
   const handlePrivacyToggle = async (voiceId: string, isPublic: boolean) => {
-    setIsLoading(voiceId)
-    
+    setIsLoading(voiceId);
+
     const { error } = await supabase
       .from('voices')
       .update({ is_public: isPublic })
-      .eq('id', voiceId)
+      .eq('id', voiceId);
 
     if (!error) {
-      router.refresh()
+      router.refresh();
     }
 
-    setIsLoading(null)
-  }
+    setIsLoading(null);
+  };
 
   const handleDelete = async (voiceId: string) => {
-    setIsLoading(voiceId)
+    setIsLoading(voiceId);
 
-    const { error } = await supabase
-      .from('voices')
-      .delete()
-      .eq('id', voiceId)
+    const { error } = await supabase.from('voices').delete().eq('id', voiceId);
 
     if (!error) {
-      router.refresh()
+      router.refresh();
     }
 
-    setIsLoading(null)
-  }
+    setIsLoading(null);
+  };
 
   if (voices.length === 0) {
     return (
@@ -73,7 +73,7 @@ export function VoicesList({ voices, lang }: { voices: Voice[], lang: string }) 
           Create your first voice clone to get started
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -110,24 +110,29 @@ export function VoicesList({ voices, lang }: { voices: Voice[], lang: string }) 
               )}
               {voice.language}
             </CardDescription>
-            
+
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Public access</span>
                 <Switch
                   checked={voice.is_public}
-                  onCheckedChange={(checked) => handlePrivacyToggle(voice.id, checked)}
+                  onCheckedChange={(checked) =>
+                    handlePrivacyToggle(voice.id, checked)
+                  }
                   disabled={isLoading === voice.id}
                 />
               </div>
-              
+
               <div className="text-sm text-muted-foreground">
-                Created {formatDistanceToNow(new Date(voice.created_at), { addSuffix: true })}
+                Created{' '}
+                {formatDistanceToNow(new Date(voice.created_at), {
+                  addSuffix: true,
+                })}
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
     </div>
-  )
+  );
 }

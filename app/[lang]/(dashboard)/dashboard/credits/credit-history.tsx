@@ -1,56 +1,56 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/supabase';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { format } from 'date-fns'
+  TableRow,
+} from '@/components/ui/table';
+import { format } from 'date-fns';
 
 interface CreditTransaction {
-  id: string
-  amount: number
-  type: 'purchase' | 'usage'
-  description: string
-  created_at: string
+  id: string;
+  amount: number;
+  type: 'purchase' | 'usage';
+  description: string;
+  created_at: string;
 }
 
 export function CreditHistory({ userId }: { userId?: string }) {
-  const [transactions, setTransactions] = useState<CreditTransaction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     async function loadTransactions() {
-      if (!userId) return
+      if (!userId) return;
 
       const { data } = await supabase
         .from('credit_transactions')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(10)
+        .limit(10);
 
       if (data) {
-        setTransactions(data)
+        setTransactions(data);
       }
-      setIsLoading(false)
+      setIsLoading(false);
     }
 
-    loadTransactions()
-  }, [userId, supabase])
+    loadTransactions();
+  }, [userId, supabase]);
 
   if (isLoading) {
     return (
       <div className="py-8 text-center">
         <p className="text-muted-foreground">Loading transaction history...</p>
       </div>
-    )
+    );
   }
 
   if (transactions.length === 0) {
@@ -61,7 +61,7 @@ export function CreditHistory({ userId }: { userId?: string }) {
           Your credit usage history will appear here
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -76,7 +76,7 @@ export function CreditHistory({ userId }: { userId?: string }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map(transaction => (
+          {transactions.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">
                 {format(new Date(transaction.created_at), 'MMM d, yyyy')}
@@ -94,5 +94,5 @@ export function CreditHistory({ userId }: { userId?: string }) {
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

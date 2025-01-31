@@ -1,27 +1,27 @@
-import { createClient } from '@/lib/supabase/server'
-import { getDictionary } from '@/lib/i18n/get-dictionary'
-import { Locale } from '@/lib/i18n/i18n-config'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Plus, CreditCard } from 'lucide-react'
-import { CreditHistory } from './credit-history'
+import { createClient } from '@/lib/supabase/server';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Plus, CreditCard } from 'lucide-react';
+import { CreditHistory } from './credit-history';
 
 export default async function CreditsPage({
-  params: { lang }
+  params: { lang },
 }: {
-  params: { lang: Locale }
+  params: { lang: Locale };
 }) {
-  const supabase = createClient()
-  const dict = await getDictionary(lang)
+  const supabase = createClient();
+  const dict = await getDictionary(lang);
 
-  const { data } = await supabase.auth.getUser()
-  const user = data?.user
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
 
   const { data: credits } = await supabase
     .from('credits')
     .select('amount')
     .eq('user_id', user?.id)
-    .single()
+    .single();
 
   return (
     <div className="space-y-8">
@@ -60,5 +60,5 @@ export default async function CreditsPage({
         <CreditHistory userId={user?.id} />
       </div>
     </div>
-  )
+  );
 }

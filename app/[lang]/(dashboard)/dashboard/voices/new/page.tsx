@@ -1,50 +1,50 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/supabase';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+  CardTitle,
+} from '@/components/ui/card';
 
 export default function NewVoicePage({
-  params: { lang }
+  params: { lang },
 }: {
-  params: { lang: string }
+  params: { lang: string };
 }) {
-  const [name, setName] = useState('')
-  const [language, setLanguage] = useState('')
-  const [isPublic, setIsPublic] = useState(false)
-  const [isNsfw, setIsNsfw] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const [name, setName] = useState('');
+  const [language, setLanguage] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+  const [isNsfw, setIsNsfw] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
-    const { data } = await supabase.auth.getUser()
-    const user = data?.user
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
 
     if (!user) {
-      router.push(`/${lang}/login`)
-      return
+      router.push(`/${lang}/login`);
+      return;
     }
 
     const { error } = await supabase.from('voices').insert([
@@ -53,17 +53,17 @@ export default function NewVoicePage({
         language,
         is_public: isPublic,
         is_nsfw: isNsfw,
-        user_id: user.id
-      }
-    ])
+        user_id: user.id,
+      },
+    ]);
 
     if (!error) {
-      router.push(`/${lang}/dashboard/voices`)
-      router.refresh()
+      router.push(`/${lang}/dashboard/voices`);
+      router.refresh();
     }
 
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -81,7 +81,7 @@ export default function NewVoicePage({
               <Input
                 id="name"
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
@@ -146,5 +146,5 @@ export default function NewVoicePage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

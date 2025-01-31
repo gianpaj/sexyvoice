@@ -1,56 +1,56 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Camera } from 'lucide-react'
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/supabase';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Camera } from 'lucide-react';
 
 interface Profile {
-  id: string
-  username: string
-  full_name: string
-  avatar_url?: string
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url?: string;
 }
 
-export function ProfileForm({ 
+export function ProfileForm({
   initialData,
-  lang 
-}: { 
-  initialData: Profile
-  lang: string
+  lang,
+}: {
+  initialData: Profile;
+  lang: string;
 }) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [username, setUsername] = useState(initialData?.username || '')
-  const [fullName, setFullName] = useState(initialData?.full_name || '')
-  const [avatarUrl, setAvatarUrl] = useState(initialData?.avatar_url || '')
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState(initialData?.username || '');
+  const [fullName, setFullName] = useState(initialData?.full_name || '');
+  const [avatarUrl, setAvatarUrl] = useState(initialData?.avatar_url || '');
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     try {
-      setIsLoading(true)
-      
+      setIsLoading(true);
+
       // Upload the file to Supabase Storage
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random()}.${fileExt}`
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
       const { error: uploadError, data } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file)
+        .upload(fileName, file);
 
-      if (uploadError) throw uploadError
+      if (uploadError) throw uploadError;
 
       // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName)
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(fileName);
 
       // Update profile with new avatar URL
       const { error: updateError } = await supabase
@@ -59,23 +59,23 @@ export function ProfileForm({
           avatar_url: publicUrl,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', initialData.id)
+        .eq('id', initialData.id);
 
-      if (updateError) throw updateError
+      if (updateError) throw updateError;
 
-      setAvatarUrl(publicUrl)
-      toast.success('Avatar updated successfully')
-      router.refresh()
+      setAvatarUrl(publicUrl);
+      toast.success('Avatar updated successfully');
+      router.refresh();
     } catch (error) {
-      toast.error('Error updating avatar')
+      toast.error('Error updating avatar');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     const { error } = await supabase
       .from('profiles')
@@ -84,18 +84,18 @@ export function ProfileForm({
         full_name: fullName,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', initialData.id)
+      .eq('id', initialData.id);
 
     if (error) {
-      toast.error('Failed to update profile')
-      setIsLoading(false)
-      return
+      toast.error('Failed to update profile');
+      setIsLoading(false);
+      return;
     }
 
-    toast.success('Profile updated successfully')
-    router.refresh()
-    setIsLoading(false)
-  }
+    toast.success('Profile updated successfully');
+    router.refresh();
+    setIsLoading(false);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -156,5 +156,5 @@ export function ProfileForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }

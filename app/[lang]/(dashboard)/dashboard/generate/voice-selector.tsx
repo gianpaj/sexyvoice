@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   Select,
   SelectContent,
@@ -8,33 +8,33 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+  CardTitle,
+} from '@/components/ui/card';
 
 interface Voice {
-  id: string
-  name: string
-  language: string
-  is_public: boolean
+  id: string;
+  name: string;
+  language: string;
+  is_public: boolean;
 }
 
 export function VoiceSelector({
   userVoices,
   publicVoices,
-  lang
+  lang,
 }: {
-  userVoices: Voice[]
-  publicVoices: Voice[]
-  lang: string
+  userVoices: Voice[];
+  publicVoices: Voice[];
+  lang: string;
 }) {
-  const [selectedVoice, setSelectedVoice] = useState<string>('')
+  const [selectedVoice, setSelectedVoice] = useState<string>('');
 
   return (
     <Card>
@@ -53,7 +53,7 @@ export function VoiceSelector({
             {userVoices.length > 0 && (
               <SelectGroup>
                 <SelectLabel>Your Voices</SelectLabel>
-                {userVoices.map(voice => (
+                {userVoices.map((voice) => (
                   <SelectItem key={voice.id} value={voice.id}>
                     {voice.name} ({voice.language})
                   </SelectItem>
@@ -63,7 +63,7 @@ export function VoiceSelector({
             {publicVoices.length > 0 && (
               <SelectGroup>
                 <SelectLabel>Public Voices</SelectLabel>
-                {publicVoices.map(voice => (
+                {publicVoices.map((voice) => (
                   <SelectItem key={voice.id} value={voice.id}>
                     {voice.name} ({voice.language})
                   </SelectItem>
@@ -74,5 +74,5 @@ export function VoiceSelector({
         </Select>
       </CardContent>
     </Card>
-  )
+  );
 }

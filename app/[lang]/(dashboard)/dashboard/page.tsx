@@ -1,33 +1,33 @@
-import { createClient } from '@/lib/supabase/server'
-import { getDictionary } from '@/lib/i18n/get-dictionary'
-import { Locale } from '@/lib/i18n/i18n-config'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mic2, CreditCard } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Mic2, CreditCard } from 'lucide-react';
 
 export default async function DashboardPage({
-  params: { lang }
+  params: { lang },
 }: {
-  params: { lang: Locale }
+  params: { lang: Locale };
 }) {
-  const supabase = createClient()
-  const dict = await getDictionary(lang)
+  const supabase = createClient();
+  const dict = await getDictionary(lang);
 
   // Get user data
-  const { data } = await supabase.auth.getUser()
-  const user = data?.user
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
 
   // Get user's voices count
   const { count: voicesCount } = await supabase
     .from('voices')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', user?.id)
+    .eq('user_id', user?.id);
 
   // Get user's credits
   const { data: credits } = await supabase
     .from('credits')
     .select('amount')
     .eq('user_id', user?.id)
-    .single()
+    .single();
 
   return (
     <div className="space-y-8">
@@ -62,5 +62,5 @@ export default async function DashboardPage({
         </Card>
       </div>
     </div>
-  )
+  );
 }

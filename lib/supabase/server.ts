@@ -1,9 +1,9 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 // import type { Database } from '@/types/database'
 
 export const createClient = () => {
-  const cookieStore = cookies()
+  const cookieStore = cookies();
 
   // return createServerClient<Database>(
   return createServerClient(
@@ -12,20 +12,20 @@ export const createClient = () => {
     {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
           try {
             for (const { name, value, options } of cookiesToSet) {
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, options);
             }
           } catch (error) {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
           }
-        }
-      }
-    }
-  )
-}
+        },
+      },
+    },
+  );
+};

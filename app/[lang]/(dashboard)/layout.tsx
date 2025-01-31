@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/supabase';
 import {
   LogOut,
   Menu,
@@ -12,58 +12,58 @@ import {
   CreditCard,
   User,
   BarChart3,
-  Wand2
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+  Wand2,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({
   children,
-  params: { lang }
+  params: { lang },
 }: {
-  children: React.ReactNode
-  params: { lang: string }
+  children: React.ReactNode;
+  params: { lang: string };
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const pathname = usePathname()
-  const supabase = createClientComponentClient()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const supabase = createClient();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-  }
+    await supabase.auth.signOut();
+  };
 
   const navigation = [
     {
       name: 'Dashboard',
       href: `/${lang}/dashboard`,
       icon: BarChart3,
-      current: pathname === `/${lang}/dashboard`
+      current: pathname === `/${lang}/dashboard`,
     },
     {
       name: 'Generate',
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
-      current: pathname === `/${lang}/dashboard/generate`
+      current: pathname === `/${lang}/dashboard/generate`,
     },
     {
       name: 'Voices',
       href: `/${lang}/dashboard/voices`,
       icon: Mic2,
-      current: pathname === `/${lang}/dashboard/voices`
+      current: pathname === `/${lang}/dashboard/voices`,
     },
     {
       name: 'Credits',
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
-      current: pathname === `/${lang}/dashboard/credits`
+      current: pathname === `/${lang}/dashboard/credits`,
     },
     {
       name: 'Profile',
       href: `/${lang}/dashboard/profile`,
       icon: User,
-      current: pathname === `/${lang}/dashboard/profile`
-    }
-  ]
+      current: pathname === `/${lang}/dashboard/profile`,
+    },
+  ];
 
   return (
     <div>
@@ -78,7 +78,7 @@ export default function DashboardLayout({
         <div
           className={cn(
             'fixed inset-0 z-40 flex transform transition-transform duration-300 ease-in-out',
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
           <div className="relative flex w-72 flex-col bg-white">
@@ -94,7 +94,7 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex-1 space-y-1 px-4 py-4">
-              {navigation.map(item => (
+              {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
@@ -102,7 +102,7 @@ export default function DashboardLayout({
                     'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
                     item.current
                       ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                   )}
                 >
                   <item.icon className="mr-3 h-5 w-5" />
@@ -133,7 +133,7 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex-1 space-y-1 px-4 py-4">
-            {navigation.map(item => (
+            {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -141,7 +141,7 @@ export default function DashboardLayout({
                   'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
                   item.current
                     ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                 )}
               >
                 <item.icon className="mr-3 h-5 w-5" />
@@ -181,5 +181,5 @@ export default function DashboardLayout({
         <main className="px-4 py-8 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>
-  )
+  );
 }

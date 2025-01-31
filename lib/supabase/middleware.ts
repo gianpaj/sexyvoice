@@ -1,15 +1,15 @@
-import { type NextRequest, NextResponse } from 'next/server'
-import { createClient } from './server'
+import { type NextRequest, NextResponse } from 'next/server';
+import { createClient } from './server';
 
-const publicRoutes = ['/', '/auth/callback']
+const publicRoutes = ['/', '/auth/callback'];
 
 export const updateSession = async (request: NextRequest) => {
   try {
     const supabaseResponse = NextResponse.next({
-      request
-    })
+      request,
+    });
 
-    const supabase = createClient()
+    const supabase = createClient();
 
     // const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname)
 
@@ -27,8 +27,8 @@ export const updateSession = async (request: NextRequest) => {
 
     // return response
     const {
-      data: { user }
-    } = await supabase.auth.getUser()
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (
       !user &&
@@ -36,9 +36,9 @@ export const updateSession = async (request: NextRequest) => {
       !request.nextUrl.pathname.startsWith('/auth')
     ) {
       // no user, potentially respond by redirecting the user to the login page
-      const url = request.nextUrl.clone()
-      url.pathname = '/'
-      return NextResponse.redirect(url)
+      const url = request.nextUrl.clone();
+      url.pathname = '/';
+      return NextResponse.redirect(url);
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
@@ -54,9 +54,9 @@ export const updateSession = async (request: NextRequest) => {
     // If this is not done, you may be causing the browser and server to go out
     // of sync and terminate the user's session prematurely!
 
-    return supabaseResponse
+    return supabaseResponse;
   } catch (e) {
-    console.error('Middleware error:', e)
-    return NextResponse.redirect(new URL('/', request.url))
+    console.error('Middleware error:', e);
+    return NextResponse.redirect(new URL('/', request.url));
   }
-}
+};

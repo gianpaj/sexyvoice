@@ -1,66 +1,61 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/supabase';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export function SecurityForm({
   email,
-  lang
+  lang,
 }: {
-  email?: string
-  lang: string
+  email?: string;
+  lang: string;
 }) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const router = useRouter();
+  const supabase = createClient();
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match')
-      return
+      toast.error('New passwords do not match');
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    })
+      password: newPassword,
+    });
 
     if (error) {
-      toast.error('Failed to update password')
-      setIsLoading(false)
-      return
+      toast.error('Failed to update password');
+      setIsLoading(false);
+      return;
     }
 
-    toast.success('Password updated successfully')
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    setIsLoading(false)
-  }
+    toast.success('Password updated successfully');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setIsLoading(false);
+  };
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>Email Address</Label>
-          <Input
-            type="email"
-            value={email}
-            disabled
-            className="bg-muted"
-          />
+          <Input type="email" value={email} disabled className="bg-muted" />
         </div>
       </div>
 
@@ -68,7 +63,8 @@ export function SecurityForm({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Enter your current password and a new password to update your credentials
+            Enter your current password and a new password to update your
+            credentials
           </AlertDescription>
         </Alert>
 
@@ -114,5 +110,5 @@ export function SecurityForm({
         </form>
       </div>
     </div>
-  )
+  );
 }

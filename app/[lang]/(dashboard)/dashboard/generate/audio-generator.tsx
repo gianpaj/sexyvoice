@@ -1,58 +1,58 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { useState } from 'react';
+import { createClient } from '@/lib/supabase/supabase';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import { Slider } from '@/components/ui/slider'
-import { Label } from '@/components/ui/label'
-import { Play, Pause, RotateCcw } from 'lucide-react'
+  CardTitle,
+} from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 
 export function AudioGenerator({
   credits,
-  lang
+  lang,
 }: {
-  credits: number
-  lang: string
+  credits: number;
+  lang: string;
 }) {
-  const [text, setText] = useState('')
-  const [speed, setSpeed] = useState([1])
-  const [pitch, setPitch] = useState([1])
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [audioUrl, setAudioUrl] = useState<string | null>(null)
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const [text, setText] = useState('');
+  const [speed, setSpeed] = useState([1]);
+  const [pitch, setPitch] = useState([1]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
 
   const handleGenerate = async () => {
-    setIsGenerating(true)
+    setIsGenerating(true);
     // TODO: Implement actual voice generation
     // This is a mock implementation
     setTimeout(() => {
-      setAudioUrl('https://example.com/audio.mp3')
-      setIsGenerating(false)
-    }, 2000)
-  }
+      setAudioUrl('https://example.com/audio.mp3');
+      setIsGenerating(false);
+    }, 2000);
+  };
 
   const togglePlayback = () => {
-    setIsPlaying(!isPlaying)
-  }
+    setIsPlaying(!isPlaying);
+  };
 
   const resetForm = () => {
-    setText('')
-    setSpeed([1])
-    setPitch([1])
-    setAudioUrl(null)
-    setIsPlaying(false)
-  }
+    setText('');
+    setSpeed([1]);
+    setPitch([1]);
+    setAudioUrl(null);
+    setIsPlaying(false);
+  };
 
   return (
     <Card>
@@ -65,7 +65,7 @@ export function AudioGenerator({
           <Label>Text to generate</Label>
           <Textarea
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={(e) => setText(e.target.value)}
             placeholder="Enter the text you want to convert to speech..."
             className="h-32"
           />
@@ -131,5 +131,5 @@ export function AudioGenerator({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

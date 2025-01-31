@@ -1,16 +1,16 @@
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Mic2, Globe2, Shield, Sparkles } from 'lucide-react'
-import { getDictionary } from '@/lib/i18n/get-dictionary'
-import { LanguageSelector } from '@/components/language-selector'
-import type { Locale } from '@/lib/i18n/i18n-config'
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Mic2, Globe2, Shield, Sparkles } from 'lucide-react';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { LanguageSelector } from '@/components/language-selector';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 export default async function LandingPage({
-  params: { lang }
+  params: { lang },
 }: {
-  params: { lang: Locale }
+  params: { lang: Locale };
 }) {
-  const { landing } = await getDictionary(lang)
+  const { landing } = await getDictionary(lang);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
@@ -109,5 +109,5 @@ export default async function LandingPage({
         </div>
       </div>
     </div>
-  )
+  );
 }
