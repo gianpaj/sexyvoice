@@ -6,50 +6,34 @@ import { updateSession } from '@/lib/supabase/middleware'
 import Negotiator from 'negotiator'
 
 function getLocale(request: NextRequest): string {
-  const negotiatorHeaders: Record<string, string> = {}
-  request.headers.forEach((value, key) => (negotiatorHeaders[key] = value))
+  const negotiatorHeaders = Object.fromEntries(
+    Array.from(request.headers.entries()).map(([key, value]) => [key, value])
+  )
 
   const languages = new Negotiator({ headers: negotiatorHeaders }).languages()
-  const locales = i18n.locales
 
-  return matchLocale(languages, locales, i18n.defaultLocale)
+  return matchLocale(languages, i18n.locales, i18n.defaultLocale)
 }
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
   const pathname = req.nextUrl.pathname
 
-  // Check if the pathname is missing a locale
   const pathnameIsMissingLocale = i18n.locales.every(
     locale => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
   )
 
   // Redirect if there is no locale
   if (pathnameIsMissingLocale) {
-    const locale = getLocale(req)
-    return NextResponse.redirect(new URL(`/${locale}${pathname}`, req.url))
+    try {
+      const locale = getLocale(req)
+      return NextResponse.redirect(new URL(`/${locale}${pathname}`, req.url))
+    } catch (error) {
+      if (pathname === '/') {
+        return NextResponse.redirect(new URL('/en', req.url))
+      }
+      return NextResponse.redirect(new URL(`/en${pathname}`, req.url))
+    }
   }
-
-  // Get the pathname without the locale
-  const pathnameWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '')
-
-  // Protect routes that require authentication
-  // if (!session && (
-  //   pathnameWithoutLocale.startsWith('/dashboard') ||
-  //   pathnameWithoutLocale.startsWith('/profile')
-  // )) {
-  //   const locale = pathname.split('/')[1]
-  //   return NextResponse.redirect(new URL(`/${locale}/login`, req.url))
-  // }
-
-  // // If user is logged in, redirect away from auth pages
-  // if (session && (
-  //   pathnameWithoutLocale.startsWith('/login') ||
-  //   pathnameWithoutLocale.startsWith('/signup')
-  // )) {
-  //   const locale = pathname.split('/')[1]
-  //   return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url))
-  // }
 
   return await updateSession(req)
 }

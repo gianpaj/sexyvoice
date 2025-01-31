@@ -1,44 +1,46 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { createClient } from './server';
+import { type NextRequest, NextResponse } from 'next/server'
+import { createClient } from './server'
+import { i18n } from '@/lib/i18n/i18n-config'
 
-const publicRoutes = ['/', '/auth/callback'];
+const routesPerLocale = (routes: string[]): string[] => {
+  return i18n.locales.flatMap(locale =>
+    routes.flatMap(route =>
+      route === '/' ? [`/${locale}`, `/${locale}/`] : `/${locale}${route}`
+    )
+  )
+}
+
+const publicRoutes = [
+  '/api/generate-voice',
+  ...routesPerLocale(['/', '/signup', '/login'])
+]
 
 export const updateSession = async (request: NextRequest) => {
   try {
     const supabaseResponse = NextResponse.next({
-      request,
-    });
+      request
+    })
 
-    const supabase = createClient();
-
-    // const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname)
-
-    // if (!session && !isPublicRoute) {
-    //   // If there's no session and trying to access a protected route,
-    //   // redirect to the login page
-    //   return NextResponse.redirect(new URL('/', request.url))
-    // }
-
-    // if (session && request.nextUrl.pathname === '/') {
-    //   // If there's a session and trying to access login page,
-    //   // redirect to the dashboard
-    //   return NextResponse.redirect(new URL('/branding-analysis', request.url))
-    // }
+    const supabase = createClient()
 
     // return response
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { user }
+    } = await supabase.auth.getUser()
 
-    if (
-      !user &&
-      !request.nextUrl.pathname.startsWith('/') &&
-      !request.nextUrl.pathname.startsWith('/auth')
-    ) {
+    const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname)
+
+    if (!user && !isPublicRoute) {
+      // If there's no session and trying to access a protected route,
+      // redirect to the login page
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    if (!user && !isPublicRoute) {
       // no user, potentially respond by redirecting the user to the login page
-      const url = request.nextUrl.clone();
-      url.pathname = '/';
-      return NextResponse.redirect(url);
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
@@ -54,9 +56,9 @@ export const updateSession = async (request: NextRequest) => {
     // If this is not done, you may be causing the browser and server to go out
     // of sync and terminate the user's session prematurely!
 
-    return supabaseResponse;
+    return supabaseResponse
   } catch (e) {
-    console.error('Middleware error:', e);
-    return NextResponse.redirect(new URL('/', request.url));
+    console.error('Middleware error:', e)
+    return NextResponse.redirect(new URL('/', request.url))
   }
-};
+}
