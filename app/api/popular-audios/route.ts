@@ -9,9 +9,11 @@ export async function GET() {
       .from('audio_files')
       .select(
         `id,
-        voice_id,
+        url,
         total_votes,
         is_public,
+        text_content,
+        voice_id,
         voices (
           id,
           name
