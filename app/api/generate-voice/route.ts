@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
+import { put, list } from '@vercel/blob'
 
 const VOICE_API_URL = `${process.env.VOICE_API_URL}/synthesize_speech`
 
-async function generateHash(text: string) {
+async function generateHash(text: string, voice: string, accent: string) {
   const textEncoder = new TextEncoder()
-  const data = textEncoder.encode(text)
+  const combinedString = `${text}-${voice}-${accent}`
+  const data = textEncoder.encode(combinedString)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray
@@ -28,7 +29,18 @@ export async function GET(request: Request) {
       )
     }
 
-    // Make request to voice generation API
+    // Generate hash for the combination of text, voice, and accent
+    const hash = await generateHash(text, voice, accent)
+
+    // Check if audio file already exists
+    const { blobs } = await list({ prefix: `audio/${hash}` })
+
+    if (blobs.length > 0) {
+      // Return existing audio file URL
+      return NextResponse.json({ url: blobs[0].url }, { status: 200 })
+    }
+
+    // If no existing file found, generate new audio
     const response = await fetch(
       `${VOICE_API_URL}?text=${encodeURIComponent(text)}&accent=en-newest&voice=${encodeURIComponent(voice)}&language=${encodeURIComponent(accent)}`,
       {
@@ -40,25 +52,17 @@ export async function GET(request: Request) {
       throw new Error('Voice generation failed')
     }
 
-    // Get the audio data as an ArrayBuffer
     const audioData = await response.arrayBuffer()
-
-    // Convert ArrayBuffer to Blob before uploading
     const audioBlob = new Blob([audioData], { type: 'audio/mpeg' })
 
-    // Create hash using Web Crypto API
-    const textHash = await generateHash(text)
-
-    const path = `audio/${Date.now()}-${voice}-${accent}-${textHash}.mp3`
+    // Use hash in the file path for future lookups
+    const path = `audio/${hash}-${voice}-${accent}.mp3`
     const uploadResponse = await put(path, audioBlob, {
       access: 'public',
       contentType: 'audio/mpeg'
     })
 
-    const blobUrl = uploadResponse.url
-
-    // Return the blob URL
-    return NextResponse.json({ url: blobUrl }, { status: 200 })
+    return NextResponse.json({ url: uploadResponse.url }, { status: 200 })
   } catch (error) {
     console.error('Voice generation error:', error)
     return NextResponse.json(
