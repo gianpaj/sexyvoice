@@ -7,7 +7,7 @@ async function generateHash(
   text: string,
   voice: string,
   accent: string,
-  speed: number
+  speed: string
 ) {
   const textEncoder = new TextEncoder()
   const combinedString = `${text}-${voice}-${accent}-${speed} `
@@ -26,11 +26,19 @@ export async function GET(request: Request) {
     const text = searchParams.get('text')
     const voice = searchParams.get('voice')
     const accent = searchParams.get('accent')
-    const speed = searchParams.get('speed')
+    const speed = searchParams.get('speed') || '1.0'
 
     if (!text || !voice || !accent) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
+        { status: 400 }
+      )
+    }
+
+    const speedNumber = Number.parseFloat(speed)
+    if (speedNumber < 0.5 || speedNumber > 4) {
+      return NextResponse.json(
+        { error: 'speed must be between 0.5 and 4' },
         { status: 400 }
       )
     }
