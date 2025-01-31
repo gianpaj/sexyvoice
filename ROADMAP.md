@@ -16,11 +16,11 @@
 - Set up voice selection system
 - Add authentication middleware (using Supabase)
 
-
 ## Phase 3: User Interface
-- Design and implement landing page for marketing
-- The main page should be under /en for English and /es for Spanish
-- Create credit management interface
+- Design and implement landing page where you can create a new voice without logging in. Select a voice from a dropdown, select language and type the text you want to generate into speech (voice).
+- There's a list of audio files previously generated and ranked by usage and votes.
+- The main page should be under /en for English and /es for Spanish. Default to English.
+- Create credit management interface and system
 - Implement responsive design
 
 ## Phase 4: Database Schema and Storage Setup
