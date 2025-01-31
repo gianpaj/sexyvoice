@@ -61,11 +61,11 @@ interface VoiceGeneratorProps {
     play: string;
     pause: string;
     reset: string;
-    download: string;
   };
+  download: string;
 }
 
-export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
+export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
   const [text, setText] = useState('');
   const [selectedVoice, setSelectedVoice] = useState(publicVoices[0].voice);
   const [speed, setSpeed] = useState([1.0]);
@@ -284,7 +284,7 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
               size="icon"
               onClick={handleDownload}
               className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              title={dict.download}
+              title={download}
             >
               <Download className="size-4" />
             </Button>

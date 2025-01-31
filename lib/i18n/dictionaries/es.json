@@ -62,7 +62,8 @@
       "generating": "Generando...",
       "play": "Reproducir",
       "pause": "Pausar",
-      "reset": "Reiniciar"
+      "reset": "Reiniciar",
+      "download": "Descargar"
     },
     "popular": {
       "title": "Voces Populares",
