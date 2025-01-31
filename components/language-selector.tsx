@@ -54,18 +54,28 @@ export function LanguageSelector({
           </DropdownMenuContent>
         </>
       ) : (
-        <DropdownMenuContent align="end">
-          {languages.map((lang) => (
-            <DropdownMenuItem key={lang.code} asChild>
-              <Link
-                href={`/${lang.code}`}
-                className={`w-full cursor-pointer ${currentLang === lang.code ? 'font-bold' : ''}`}
-              >
-                {lang.label}
-              </Link>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
+        <>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="bg-secondary/70 justify-start p-2 font-normal"
+            >
+              Language <div>&nbsp;</div> <Languages className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {languages.map((lang) => (
+              <DropdownMenuItem key={lang.code} asChild>
+                <Link
+                  href={`/${lang.code}`}
+                  className={`w-full cursor-pointer ${currentLang === lang.code ? 'font-bold' : ''}`}
+                >
+                  {lang.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </>
       )}
     </DropdownMenu>
   );
