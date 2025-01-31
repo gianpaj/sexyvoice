@@ -23,7 +23,6 @@ export const updateSession = async (request: NextRequest) => {
 
     const supabase = createClient()
 
-    // return response
     const {
       data: { user }
     } = await supabase.auth.getUser()
@@ -41,6 +40,12 @@ export const updateSession = async (request: NextRequest) => {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
+    }
+
+    const authRoutes = routesPerLocale(['/signup', '/login'])
+
+    if (user && authRoutes.includes(request.nextUrl.pathname)) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
