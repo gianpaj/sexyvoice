@@ -42,7 +42,7 @@ export default async function DashboardPage({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Voices</CardTitle>
-            <Mic2 className="h-4 w-4 text-muted-foreground" />
+            <Mic2 className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{voicesCount || 0}</div>
@@ -54,7 +54,7 @@ export default async function DashboardPage({
             <CardTitle className="text-sm font-medium">
               Available Credits
             </CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <CreditCard className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{credits?.amount || 0}</div>

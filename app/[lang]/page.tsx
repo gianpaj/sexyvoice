@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Mic2, Globe2, Shield, Sparkles } from 'lucide-react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
-import { LanguageSelector } from '@/components/language-selector';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { VoiceGenerator } from '@/components/voice-generator';
 import { PopularAudios } from '@/components/popular-audios';
@@ -27,11 +26,6 @@ export default async function LandingPage({
       <Header lang={lang} />
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <div className="container mx-auto px-4">
-          {/* Language Selector */}
-          <div className="flex justify-end pt-6">
-            <LanguageSelector currentLang={lang} />
-          </div>
-
           {/* Hero Section */}
           <div className="text-center space-y-6 py-20">
             <h1 className="text-5xl md:text-6xl font-bold text-white">
@@ -58,7 +52,10 @@ export default async function LandingPage({
               </h2>
               <p className="text-gray-300">{dict.landing.generator.subtitle}</p>
             </div>
-            <VoiceGenerator dict={dict.landing.generator} />
+            <VoiceGenerator
+              dict={dict.landing.generator}
+              download={dict.landing.generator.download}
+            />
           </div>
 
           {/* Popular Audios Section */}

@@ -1,5 +1,14 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { LanguageSelector } from './language-selector';
+import { Languages, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export async function Header({ lang }: { lang: string }) {
   const supabase = createClient();
@@ -13,30 +22,59 @@ export async function Header({ lang }: { lang: string }) {
           SexyVoice.ai
         </Link>
 
-        <div>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-4 justify-center">
+          <LanguageSelector currentLang={lang} />
+
           {user ? (
-            <Link
-              href={`/${lang}/dashboard`}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              Dashboard
+            <Link href={`/${lang}/dashboard`}>
+              <Button variant="default">Dashboard</Button>
             </Link>
           ) : (
             <div className="space-x-4">
-              <Link
-                href={`/${lang}/login`}
-                className="px-4 py-2 rounded-md border border-gray-600 text-gray-300 hover:bg-gray-800 transition-colors"
-              >
-                Login
+              <Link href={`/${lang}/login`}>
+                <Button variant="outline">Login</Button>
               </Link>
-              <Link
-                href={`/${lang}/signup`}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              >
-                Sign Up
+              <Link href={`/${lang}/signup`}>
+                <Button variant="default">Sign Up</Button>
               </Link>
             </div>
           )}
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Menu className="size-5" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <LanguageSelector isMobile currentLang={lang} />
+              {user ? (
+                <DropdownMenuItem asChild>
+                  <Link href={`/${lang}/dashboard`} className="w-full">
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/${lang}/login`} className="w-full">
+                      Login
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/${lang}/signup`} className="w-full">
+                      Sign Up
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
     </header>

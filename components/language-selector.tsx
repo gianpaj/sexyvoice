@@ -1,44 +1,72 @@
-'use client';
-
-import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Languages } from 'lucide-react';
 
-export function LanguageSelector({ currentLang }: { currentLang: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const languages = {
-    en: 'English',
-    es: 'Español',
-  };
+const languages = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español' },
+];
 
-  const handleLanguageChange = (newLang: string) => {
-    // Get the path segments after the language code
-    const pathSegments = pathname.split('/').slice(2);
-
-    // Construct new path with selected language
-    const newPath = `/${newLang}${pathSegments.length > 0 ? `/${pathSegments.join('/')}` : ''}`;
-
-    router.push(newPath);
-  };
+export function LanguageSelector({
+  currentLang,
+  isMobile,
+}: {
+  currentLang: string;
+  isMobile: boolean;
+}) {
+  const currentLanguage =
+    languages.find((lang) => lang.code === currentLang)?.label || 'Language';
 
   return (
-    <Select value={currentLang} onValueChange={handleLanguageChange}>
-      <SelectTrigger className="w-[180px] border-white/20 bg-white/10 text-white">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {Object.entries(languages).map(([code, name]) => (
-          <SelectItem key={code} value={code}>
-            {name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <DropdownMenu>
+      {isMobile ? (
+        <>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-36 justify-start p-2 text-small font-normal"
+            >
+              Language <div>&nbsp;</div> <Languages className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="right"
+            align="start"
+            alignOffset={-5}
+            className=""
+          >
+            {languages.map((lang) => (
+              <DropdownMenuItem key={lang.code} asChild>
+                <Link
+                  href={`/${lang.code}`}
+                  className={`w-full cursor-pointer ${currentLang === lang.code ? 'font-bold' : ''}`}
+                >
+                  {lang.label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </>
+      ) : (
+        <DropdownMenuContent align="end">
+          {languages.map((lang) => (
+            <DropdownMenuItem key={lang.code} asChild>
+              <Link
+                href={`/${lang.code}`}
+                className={`w-full cursor-pointer ${currentLang === lang.code ? 'font-bold' : ''}`}
+              >
+                {lang.label}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      )}
+    </DropdownMenu>
   );
 }
