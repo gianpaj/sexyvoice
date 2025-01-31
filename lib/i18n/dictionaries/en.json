@@ -49,6 +49,24 @@
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for their voice cloning needs.",
       "action": "Create Your First Voice"
+    },
+    "generator": {
+      "title": "Try it now",
+      "subtitle": "Generate your first voice sample",
+      "selectVoice": "Select a voice",
+      "enterText": "Enter text to convert",
+      "speed": "Speed",
+      "pitch": "Pitch",
+      "generate": "Generate Audio",
+      "generating": "Generating...",
+      "play": "Play",
+      "pause": "Pause",
+      "reset": "Reset"
+    },
+    "popular": {
+      "title": "Popular Voices",
+      "subtitle": "Listen to what others have created",
+      "loading": "Loading popular audios..."
     }
   }
 }

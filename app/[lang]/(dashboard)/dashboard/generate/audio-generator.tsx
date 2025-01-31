@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/supabase';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import {
   Card,
   CardContent,
@@ -12,46 +12,90 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
-export function AudioGenerator({
-  credits,
-  lang,
-}: {
+interface AudioGeneratorProps {
   credits: number;
-  lang: string;
-}) {
+}
+
+export function AudioGenerator({ credits }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [speed, setSpeed] = useState([1]);
   const [pitch, setPitch] = useState([1]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const router = useRouter();
-  const supabase = createClient();
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const handleGenerate = async () => {
+    if (!text.trim()) {
+      toast.error('Please enter text to generate');
+      return;
+    }
+
     setIsGenerating(true);
-    // TODO: Implement actual voice generation
-    // This is a mock implementation
-    setTimeout(() => {
-      setAudioUrl('https://example.com/audio.mp3');
+    try {
+      const response = await fetch(
+        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=example_reference&accent=en-newest`,
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate audio');
+      }
+
+      const { url } = await response.json();
+
+      const newAudio = new Audio(url);
+      newAudio.playbackRate = speed[0];
+
+      newAudio.addEventListener('ended', () => {
+        setIsPlaying(false);
+      });
+
+      setAudio(newAudio);
+
+      // Automatically play the audio
+      newAudio.play();
+      setIsPlaying(true);
+
+      toast.success('Audio generated successfully');
+    } catch (error) {
+      toast.error('Failed to generate audio');
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const togglePlayback = () => {
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
     setIsPlaying(!isPlaying);
   };
 
   const resetForm = () => {
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      URL.revokeObjectURL(audio.src);
+      setAudio(null);
+    }
     setText('');
     setSpeed([1]);
     setPitch([1]);
-    setAudioUrl(null);
     setIsPlaying(false);
+  };
+
+  // Update playback rate when speed changes
+  const handleSpeedChange = (newSpeed: number[]) => {
+    setSpeed(newSpeed);
+    if (audio) {
+      audio.playbackRate = newSpeed[0];
+    }
   };
 
   return (
@@ -76,7 +120,7 @@ export function AudioGenerator({
             <Label>Speed</Label>
             <Slider
               value={speed}
-              onValueChange={setSpeed}
+              onValueChange={handleSpeedChange}
               min={0.5}
               max={2}
               step={0.1}
@@ -107,17 +151,17 @@ export function AudioGenerator({
 
         <div className="flex items-center justify-between">
           <div className="space-x-2">
-            {audioUrl && (
+            {audio && (
               <>
                 <Button variant="outline" size="icon" onClick={togglePlayback}>
                   {isPlaying ? (
-                    <Pause className="h-4 w-4" />
+                    <Pause className="size-4" />
                   ) : (
-                    <Play className="h-4 w-4" />
+                    <Play className="size-4" />
                   )}
                 </Button>
                 <Button variant="outline" size="icon" onClick={resetForm}>
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="size-4" />
                 </Button>
               </>
             )}

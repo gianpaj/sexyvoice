@@ -52,7 +52,7 @@ export default async function GeneratePage({
           publicVoices={publicVoices || []}
           lang={lang}
         />
-        <AudioGenerator credits={credits?.amount || 0} lang={lang} />
+        <AudioGenerator credits={credits?.amount || 0} />
       </div>
     </div>
   );
