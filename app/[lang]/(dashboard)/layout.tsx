@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/supabase';
 import {
   LogOut,
@@ -27,9 +27,11 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    router.push(`/${lang}`);
   };
 
   const navigation = [
