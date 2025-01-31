@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     const audioBlob = new Blob([audioData], { type: 'audio/mpeg' })
 
     // Use hash in the file path for future lookups
-    const path = `audio/${hash}-${voice}-${accent}.mp3`
+    const path = `audio/${hash}-${voice}-${accent}.wav`
     const uploadResponse = await put(path, audioBlob, {
       access: 'public',
       contentType: 'audio/mpeg'

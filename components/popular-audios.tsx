@@ -3,16 +3,24 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Play, ThumbsUp } from 'lucide-react';
+import { Play, Pause, ThumbsUp } from 'lucide-react';
 
 interface AudioFile {
   id: string;
-  text_content: string;
+  url: string;
+  voice_id: string;
   voices: {
+    id: string;
     name: string;
   };
+  user_id: string;
+  storage_key: string;
+  duration: number;
+  text_content: string;
   total_votes: number;
   total_plays: number;
+  is_public: boolean;
+  created_at: string;
 }
 
 interface PopularAudiosProps {
@@ -25,6 +33,10 @@ interface PopularAudiosProps {
 export function PopularAudios({ dict }: PopularAudiosProps) {
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
+    null,
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: it's grand
   useEffect(() => {
@@ -44,6 +56,30 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
 
     loadAudioFiles();
   }, [dict.error]);
+
+  const handlePlayPause = (audio: AudioFile) => {
+    if (currentlyPlaying === audio.id) {
+      // Pause current audio
+      audioElement?.pause();
+      setCurrentlyPlaying(null);
+      setAudioElement(null);
+    } else {
+      // Stop previous audio if any
+      audioElement?.pause();
+
+      // Play new audio
+      const newAudio = new Audio(audio.url);
+      newAudio.play();
+      setCurrentlyPlaying(audio.id);
+      setAudioElement(newAudio);
+
+      // Handle audio ending
+      newAudio.onended = () => {
+        setCurrentlyPlaying(null);
+        setAudioElement(null);
+      };
+    }
+  };
 
   if (isLoading) {
     return (
@@ -72,16 +108,21 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
                 <p className="text-sm text-gray-400">{audio.voices.name}</p>
               </div>
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-1 text-gray-400">
+                {/* <div className="flex items-center space-x-1 text-gray-400">
                   <ThumbsUp className="size-4" />
                   <span className="text-sm">{audio.total_votes}</span>
-                </div>
+                </div> */}
                 <Button
                   variant="outline"
                   size="icon"
                   className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  onClick={() => handlePlayPause(audio)}
                 >
-                  <Play className="size-4" />
+                  {currentlyPlaying === audio.id ? (
+                    <Pause className="size-4" />
+                  ) : (
+                    <Play className="size-4" />
+                  )}
                 </Button>
               </div>
             </div>
