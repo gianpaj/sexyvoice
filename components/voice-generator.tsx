@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import WaveSurfer from 'wavesurfer.js';
 
@@ -61,6 +61,7 @@ interface VoiceGeneratorProps {
     play: string;
     pause: string;
     reset: string;
+    download: string;
   };
 }
 
@@ -156,13 +157,24 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
   };
 
   const togglePlayback = () => {
-    if (!audio) return;
+    if (!audio || !wavesurfer.current) return;
 
-    if (wavesurfer.current?.isPlaying()) {
-      wavesurfer.current?.pause();
+    if (wavesurfer.current.isPlaying()) {
+      wavesurfer.current.pause();
     } else {
-      wavesurfer.current?.play();
+      wavesurfer.current.play();
     }
+  };
+
+  const handleDownload = () => {
+    if (!audio?.src) return;
+
+    const link = document.createElement('a');
+    link.href = audio.src;
+    link.download = 'generated-audio.wav';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -265,6 +277,16 @@ export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
               ) : (
                 <Play className="size-4" />
               )}
+            </Button>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleDownload}
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+              title={dict.download}
+            >
+              <Download className="size-4" />
             </Button>
 
             <div className="flex-1">
