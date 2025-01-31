@@ -24,11 +24,11 @@ export default async function GeneratePage({
     .eq('user_id', user?.id);
 
   // Get public voices
-  const { data: publicVoices } = await supabase
-    .from('voices')
-    .select('*')
-    .eq('is_public', true)
-    .neq('user_id', user?.id);
+  // const { data: publicVoices } = await supabase
+  //   .from('voices')
+  //   .select('*')
+  //   .eq('is_public', true)
+  //   .neq('user_id', user?.id);
 
   // Get user's credits
   const { data: credits } = await supabase
@@ -36,6 +36,39 @@ export default async function GeneratePage({
     .select('amount')
     .eq('user_id', user?.id)
     .single();
+
+  const publicVoices = [
+    {
+      id: '0',
+      language: 'en-US',
+      is_public: true,
+      name: 'example reference',
+      voice: 'example_reference',
+      accent: 'en-newest',
+    },
+    // {
+    //   id: '1',
+    //   language: 'en-US',
+    //   is_public: true,
+
+    //   name: 'en-US-SaraNeural',
+    //   voice: 'Sara',
+    // },
+    // {
+    //   id: '2',
+    //   language: 'en-US',
+    //   is_public: true,
+    //   name: 'en-US-GuyNeural',
+    //   voice: 'Guy',
+    // },
+    // {
+    //   id: '3',
+    //   language: 'en-US',
+    //   is_public: true,
+    //   name: 'en-US-KimberlyNeural',
+    //   voice: 'Kimberly',
+    // },
+  ];
 
   return (
     <div className="space-y-8">
@@ -50,7 +83,6 @@ export default async function GeneratePage({
         <VoiceSelector
           userVoices={userVoices || []}
           publicVoices={publicVoices || []}
-          lang={lang}
         />
         <AudioGenerator credits={credits?.amount || 0} />
       </div>

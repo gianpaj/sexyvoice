@@ -3,9 +3,14 @@ import { put, list } from '@vercel/blob'
 
 const VOICE_API_URL = `${process.env.VOICE_API_URL}/synthesize_speech`
 
-async function generateHash(text: string, voice: string, accent: string) {
+async function generateHash(
+  text: string,
+  voice: string,
+  accent: string,
+  speed: number
+) {
   const textEncoder = new TextEncoder()
-  const combinedString = `${text}-${voice}-${accent}`
+  const combinedString = `${text}-${voice}-${accent}-${speed} `
   const data = textEncoder.encode(combinedString)
   const hashBuffer = await crypto.subtle.digest('SHA-256', data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
@@ -21,6 +26,7 @@ export async function GET(request: Request) {
     const text = searchParams.get('text')
     const voice = searchParams.get('voice')
     const accent = searchParams.get('accent')
+    const speed = searchParams.get('speed')
 
     if (!text || !voice || !accent) {
       return NextResponse.json(
@@ -29,8 +35,15 @@ export async function GET(request: Request) {
       )
     }
 
+    if (text.length > 500) {
+      return NextResponse.json(
+        { error: 'Text exceeds the maximum length of 500 characters' },
+        { status: 400 }
+      )
+    }
+
     // Generate hash for the combination of text, voice, and accent
-    const hash = await generateHash(text, voice, accent)
+    const hash = await generateHash(text, voice, accent, speed)
 
     // Check if audio file already exists
     const { blobs } = await list({ prefix: `audio/${hash}` })
@@ -49,7 +62,14 @@ export async function GET(request: Request) {
     )
 
     if (!response.ok) {
-      throw new Error('Voice generation failed')
+      const errorData = await response.json()
+      console.error({
+        text,
+        voice,
+        accent,
+        errorData
+      })
+      throw new Error(errorData.detail || 'Voice generation failed')
     }
 
     const audioData = await response.arrayBuffer()
@@ -65,6 +85,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ url: uploadResponse.url }, { status: 200 })
   } catch (error) {
     console.error('Voice generation error:', error)
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     return NextResponse.json(
       { error: 'Failed to generate voice' },
       { status: 500 }

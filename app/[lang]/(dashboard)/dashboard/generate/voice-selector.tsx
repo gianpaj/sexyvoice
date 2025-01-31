@@ -28,11 +28,9 @@ interface Voice {
 export function VoiceSelector({
   userVoices,
   publicVoices,
-  lang,
 }: {
   userVoices: Voice[];
   publicVoices: Voice[];
-  lang: string;
 }) {
   const [selectedVoice, setSelectedVoice] = useState<string>('');
 

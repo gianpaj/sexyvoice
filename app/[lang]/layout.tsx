@@ -1,6 +1,8 @@
 import { Inter } from 'next/font/google';
-import { Locale, i18n } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { i18n } from '@/lib/i18n/i18n-config';
 import '../globals.css';
+import { Providers } from '../providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang={params.lang}>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

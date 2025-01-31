@@ -17,11 +17,37 @@ import { Slider } from '@/components/ui/slider';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
-const voices = [
-  { name: 'en-US-JennyNeural', voice: 'Jenny' },
-  { name: 'en-US-SaraNeural', voice: 'Sara' },
-  { name: 'en-US-GuyNeural', voice: 'Guy' },
-  { name: 'en-US-KimberlyNeural', voice: 'Kimberly' },
+const publicVoices = [
+  {
+    id: '0',
+    language: 'en-US',
+    is_public: true,
+    name: 'example reference',
+    voice: 'example_reference',
+    accent: 'en-newest',
+  },
+  // {
+  //   id: '1',
+  //   language: 'en-US',
+  //   is_public: true,
+
+  //   name: 'en-US-SaraNeural',
+  //   voice: 'Sara',
+  // },
+  // {
+  //   id: '2',
+  //   language: 'en-US',
+  //   is_public: true,
+  //   name: 'en-US-GuyNeural',
+  //   voice: 'Guy',
+  // },
+  // {
+  //   id: '3',
+  //   language: 'en-US',
+  //   is_public: true,
+  //   name: 'en-US-KimberlyNeural',
+  //   voice: 'Kimberly',
+  // },
 ];
 
 interface VoiceGeneratorProps {
@@ -29,53 +55,64 @@ interface VoiceGeneratorProps {
     selectVoice: string;
     enterText: string;
     speed: string;
-    pitch: string;
     generate: string;
     generating: string;
     play: string;
     pause: string;
     reset: string;
   };
-  lang: string;
 }
 
-export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
+export function VoiceGenerator({ dict }: VoiceGeneratorProps) {
   const [text, setText] = useState('');
-  const [selectedVoice, setSelectedVoice] = useState('');
-  const [speed, setSpeed] = useState([1]);
-  const [pitch, setPitch] = useState([1]);
+  const [selectedVoice, setSelectedVoice] = useState(publicVoices[0].voice);
+  const [speed, setSpeed] = useState([1.0]);
   const [accent, setAccent] = useState('en-newest');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const handleGenerate = async () => {
-    if (!selectedVoice || !text.trim()) {
-      toast.error('Please select a voice and enter text');
+    if (!selectedVoice || !text.trim() || !accent) {
+      toast.error('Please select a voice, accent and enter text');
       return;
     }
 
     setIsGenerating(true);
     try {
       const response = await fetch(
-        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(selectedVoice)}&accent=${accent}`,
+        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(selectedVoice)}&accent=${accent}&speed=${speed}`,
       );
 
       if (!response.ok) {
-        throw new Error('Failed to generate audio');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate audio');
       }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      const { url } = await response.json();
 
-      // Create new audio element
-      const newAudio = new Audio(audioUrl);
+      const newAudio = new Audio(url);
       newAudio.playbackRate = speed[0];
+
+      newAudio.addEventListener('ended', () => {
+        setIsPlaying(false);
+      });
+
       setAudio(newAudio);
+
+      // Automatically play the audio
+      newAudio.play();
+      setIsPlaying(true);
 
       toast.success('Audio generated successfully');
     } catch (error) {
-      toast.error('Failed to generate audio');
+      console.error('Error generating audio:', error);
+
+      if (error instanceof Error) {
+        toast.error(error.message || 'Failed to generate audio');
+      } else {
+        toast.error('Failed to generate audio');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -90,20 +127,6 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
       audio.play();
     }
     setIsPlaying(!isPlaying);
-  };
-
-  const resetForm = () => {
-    if (audio) {
-      audio.pause();
-      audio.currentTime = 0;
-      URL.revokeObjectURL(audio.src);
-      setAudio(null);
-    }
-    setText('');
-    setSelectedVoice('');
-    setSpeed([1]);
-    setPitch([1]);
-    setIsPlaying(false);
   };
 
   // Update playback rate when speed changes
@@ -125,8 +148,8 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
           <SelectContent>
             <SelectGroup>
               <SelectLabel>Voices</SelectLabel>
-              {voices.map((voice) => (
-                <SelectItem key={voice.name} value={voice.name}>
+              {publicVoices.map((voice) => (
+                <SelectItem key={voice.name} value={voice.voice}>
                   {voice.name}
                 </SelectItem>
               ))}
@@ -139,6 +162,7 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
         <Label className="text-white">{dict.enterText}</Label>
         <Textarea
           value={text}
+          maxLength={500}
           onChange={(e) => setText(e.target.value)}
           placeholder={dict.enterText}
           className="h-32 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
@@ -147,7 +171,11 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-white">{dict.speed}</Label>
+          <div className="flex justify-between items-center">
+            <Label className="text-white">{dict.speed}</Label>
+
+            <span className="text-sm text-white">{speed[0].toFixed(1)}x</span>
+          </div>
           <Slider
             value={speed}
             onValueChange={handleSpeedChange}
@@ -157,26 +185,27 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
             className="py-2"
           />
           <div className="flex justify-between text-sm text-gray-300">
-            <span>0.5x</span>
-            <span>{speed[0]}x</span>
-            <span>2x</span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-white">{dict.pitch}</Label>
-          <Slider
-            value={pitch}
-            onValueChange={setPitch}
-            min={0.5}
-            max={2}
-            step={0.1}
-            className="py-2"
-          />
-          <div className="flex justify-between text-sm text-gray-300">
-            <span>0.5x</span>
-            <span>{pitch[0]}x</span>
-            <span>2x</span>
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+            <span
+              className="cursor-pointer hover:text-white"
+              onClick={() => handleSpeedChange([0.5])}
+            >
+              0.5x
+            </span>
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+            <span
+              className="ml-[-33.3%] cursor-pointer hover:text-white"
+              onClick={() => handleSpeedChange([1.0])}
+            >
+              1x
+            </span>
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+            <span
+              className="cursor-pointer hover:text-white"
+              onClick={() => handleSpeedChange([2.0])}
+            >
+              2x
+            </span>
           </div>
         </div>
       </div>
@@ -198,7 +227,7 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
                   <Play className="size-4" />
                 )}
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="icon"
                 onClick={resetForm}
@@ -206,7 +235,7 @@ export function VoiceGenerator({ dict, lang }: VoiceGeneratorProps) {
                 title={dict.reset}
               >
                 <RotateCcw className="size-4" />
-              </Button>
+              </Button> */}
             </>
           )}
         </div>

@@ -37,14 +37,14 @@ export default async function LandingPage({
         </div>
 
         {/* Voice Generator Section */}
-        <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
+        <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-white mb-2">
               {dict.landing.generator.title}
             </h2>
             <p className="text-gray-300">{dict.landing.generator.subtitle}</p>
           </div>
-          <VoiceGenerator dict={dict.landing.generator} lang={lang} />
+          <VoiceGenerator dict={dict.landing.generator} />
         </div>
 
         {/* Popular Audios Section */}
