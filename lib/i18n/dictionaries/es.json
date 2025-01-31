@@ -20,12 +20,13 @@
       "submit": "Crear cuenta",
       "hasAccount": "¿Ya tienes una cuenta?",
       "signIn": "Inicia sesión",
-      "error": "Error al crear la cuenta"
+      "error": "Error al crear la cuenta",
+      "signupSuccess": "Revisa tu correo electrónico para verificar tu cuenta"
     }
   },
   "landing": {
     "hero": {
-      "title": "Tu Voz, Amplificada",
+      "title": "Tu Voz, Sin Censura",
       "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores.",
       "getStarted": "Comenzar",
       "signIn": "Iniciar Sesión"

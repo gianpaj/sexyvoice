@@ -77,7 +77,7 @@ export default function DashboardLayout({
 
         <div
           className={cn(
-            'fixed inset-0 z-40 flex transform transition-transform duration-300 ease-in-out',
+            'fixed inset-0 z-40 flex transition-transform duration-300 ease-in-out',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
@@ -89,11 +89,11 @@ export default function DashboardLayout({
                 size="icon"
                 onClick={() => setSidebarOpen(false)}
               >
-                <X className="h-6 w-6" />
+                <X className="size-6" />
               </Button>
             </div>
 
-            <div className="flex-1 space-y-1 px-4 py-4">
+            <div className="flex-1 space-y-1 p-4">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
@@ -105,7 +105,7 @@ export default function DashboardLayout({
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <item.icon className="mr-3 size-5" />
                   {item.name}
                 </Link>
               ))}
@@ -117,7 +117,7 @@ export default function DashboardLayout({
                 className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
                 onClick={handleSignOut}
               >
-                <LogOut className="mr-3 h-5 w-5" />
+                <LogOut className="mr-3 size-5" />
                 Sign out
               </Button>
             </div>
@@ -127,12 +127,12 @@ export default function DashboardLayout({
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex flex-grow flex-col border-r bg-white">
+        <div className="flex grow flex-col border-r bg-white">
           <div className="flex h-16 items-center px-6">
             <span className="text-xl font-semibold">SexyVoice.ai</span>
           </div>
 
-          <div className="flex-1 space-y-1 px-4 py-4">
+          <div className="flex-1 space-y-1 p-4">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -144,7 +144,7 @@ export default function DashboardLayout({
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
                 )}
               >
-                <item.icon className="mr-3 h-5 w-5" />
+                <item.icon className="mr-3 size-5" />
                 {item.name}
               </Link>
             ))}
@@ -156,7 +156,7 @@ export default function DashboardLayout({
               className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
               onClick={handleSignOut}
             >
-              <LogOut className="mr-3 h-5 w-5" />
+              <LogOut className="mr-3 size-5" />
               Sign out
             </Button>
           </div>
@@ -173,7 +173,7 @@ export default function DashboardLayout({
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="size-6" />
             </Button>
           </div>
         </div>

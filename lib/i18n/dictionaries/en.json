@@ -20,13 +20,14 @@
       "submit": "Create account",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
-      "error": "Error creating account"
+      "error": "Error creating account",
+      "signupSuccess": "Check your email inbox for verification"
     }
   },
   "landing": {
     "hero": {
-      "title": "Your Voice, Amplified",
-      "subtitle": "Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.",
+      "title": "Your Voice, Uncensored",
+      "subtitle": "Create beautiful voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.",
       "getStarted": "Get Started",
       "signIn": "Sign In"
     },

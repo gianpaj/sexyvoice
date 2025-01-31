@@ -7,7 +7,10 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/supabase';
 
-export function LoginForm({ dict, lang }: { dict: any; lang: string }) {
+export function LoginForm({
+  dict,
+  lang,
+}: { dict: Record<string, string>; lang: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,7 @@ export function LoginForm({ dict, lang }: { dict: any; lang: string }) {
     });
 
     if (error) {
-      setError(dict.error);
+      setError(error.message || dict.error);
       setIsLoading(false);
       return;
     }
@@ -44,6 +47,8 @@ export function LoginForm({ dict, lang }: { dict: any; lang: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoFocus
+          autoComplete="email"
         />
         <Input
           type="password"
@@ -51,6 +56,7 @@ export function LoginForm({ dict, lang }: { dict: any; lang: string }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="current-password"
         />
       </div>
 

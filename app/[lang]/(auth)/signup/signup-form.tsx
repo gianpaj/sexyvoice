@@ -1,20 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/supabase';
+import { toast } from 'sonner';
 
-export function SignUpForm({ dict, lang }: { dict: any; lang: string }) {
+export function SignUpForm({
+  dict,
+  lang,
+}: { dict: Record<string, string>; lang: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
-  const [fullName, setFullName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,34 +29,24 @@ export function SignUpForm({ dict, lang }: { dict: any; lang: string }) {
       options: {
         data: {
           username,
-          full_name: fullName,
         },
       },
     });
 
-    if (signUpError) {
+    if (signUpError || !data.user) {
+      console.error(signUpError, data);
       setError(dict.error);
-      setIsLoading(false);
       return;
     }
-
-    // Create profile
-    const { error: profileError } = await supabase.from('profiles').insert([
-      {
-        id: data.user!.id,
-        username,
-        full_name: fullName,
-      },
-    ]);
-
-    if (profileError) {
-      setError(dict.error);
-      setIsLoading(false);
-      return;
-    }
-
-    router.push(`/${lang}/dashboard`);
-    router.refresh();
+    setIsLoading(false);
+    toast.success(dict.signupSuccess, {
+      duration: 60000,
+      cancel: (
+        <Button variant="outline" size="sm" onClick={() => toast.dismiss()}>
+          Ok
+        </Button>
+      ),
+    });
   };
 
   return (
@@ -67,6 +58,8 @@ export function SignUpForm({ dict, lang }: { dict: any; lang: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          autoFocus
+          autoComplete="email"
         />
         <Input
           type="text"
@@ -76,18 +69,12 @@ export function SignUpForm({ dict, lang }: { dict: any; lang: string }) {
           required
         />
         <Input
-          type="text"
-          placeholder={dict.fullName}
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-        <Input
           type="password"
           placeholder={dict.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          autoComplete="new-password"
         />
       </div>
 
