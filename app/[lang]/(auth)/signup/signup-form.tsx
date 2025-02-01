@@ -27,18 +27,27 @@ export function SignUpForm({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           username,
         },
       },
     });
 
+    setIsLoading(false);
     if (signUpError || !data.user) {
       console.error(signUpError, data);
-      setError(dict.error);
+      // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
+      if (signUpError?.message.includes('already registered')) {
+        // setError(
+        //   'An account with this email already exists. Please login instead.',
+        // );
+      } else {
+        setError(signUpError?.message || dict.error);
+      }
       return;
     }
-    setIsLoading(false);
+
     toast.success(dict.signupSuccess, {
       duration: 60000,
       cancel: (

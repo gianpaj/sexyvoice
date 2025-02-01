@@ -12,6 +12,7 @@ const routesPerLocale = (routes: string[]): string[] => {
 
 const publicRoutes = [
   '/api/generate-voice',
+  '/auth/callback',
   ...routesPerLocale(['/', '/signup', '/login'])
 ]
 

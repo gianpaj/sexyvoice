@@ -20,8 +20,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         {children}
-        <Analytics />
-        <SpeedInsights />
+        {process.env.NODE_ENVODE_ENV === 'production' && (
+          <>
+            <Analytics debug={false} />
+            <SpeedInsights debug={false} />
+          </>
+        )}
       </body>
     </html>
   );

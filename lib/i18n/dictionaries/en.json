@@ -70,5 +70,68 @@
       "subtitle": "Listen to what others have created",
       "loading": "Loading popular audios..."
     }
+  },
+
+  "credits": {
+    "title": "Plans built for creators and businesses of all sizes",
+    "description": "Choose the plan that best fits your needs",
+    "billing": {
+      "monthly": "Monthly",
+      "annually": "Annually",
+      "monthsFree": "2 months free",
+      "forever": "forever"
+    },
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "For individuals who want to try out the most advanced AI audio.",
+        "currentPlan": "Current Plan",
+        "credits": "10,000 credits per month (~10 min audio)",
+        "features": [
+          "Generate speech in 29 languages using thousands of unique voices",
+          "Translate content with automatic dubbing",
+          "Create custom, synthetic voices",
+          "Generate sound effects",
+          "API access"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "For hobbyists creating projects with AI audio.",
+        "subscribe": "Subscribe",
+        "credits": "30,000 credits per month (~30 min audio)",
+        "features": [
+          "Everything in free, plus",
+          "Clone your voice with as little as 1 minute of audio",
+          "Access to the Dubbing editor for more control over translation & timing",
+          "License to use ElevenLabs for commercial use"
+        ]
+      },
+      "creator": {
+        "name": "Creator",
+        "popular": "Most Popular",
+        "description": "For creators making premium content for global audiences.",
+        "subscribe": "Subscribe",
+        "credits": "100,000 credits per month (~2 hours audio)",
+        "features": [
+          "Everything in starter, plus",
+          "Professional voice cloning to create the most realistic digital replica of your voice",
+          "Studio to create long form content with multiple speakers",
+          "Audio Native to add narration to your website and blogs",
+          "Higher quality audio via the API - 192 kbps"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For larger creators ramping up their content production.",
+        "subscribe": "Subscribe",
+        "credits": "500,000 credits per month (~10 hours audio)",
+        "features": [
+          "Everything in creator, plus",
+          "Higher quality audio via Studio - 192 kbps",
+          "44.1 kHz PCM audio output via API"
+        ]
+      }
+    }
   }
 }

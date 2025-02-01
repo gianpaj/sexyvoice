@@ -70,5 +70,67 @@
       "subtitle": "Escucha lo que otros han creado",
       "loading": "Cargando audios populares..."
     }
+  },
+  "credits": {
+    "title": "Planes diseñados para creadores y empresas de todos los tamaños",
+    "description": "Elige el plan que mejor se adapte a tus necesidades",
+    "billing": {
+      "monthly": "Mensual",
+      "annually": "Anual",
+      "monthsFree": "2 meses gratis",
+      "forever": "para siempre"
+    },
+    "plans": {
+      "free": {
+        "name": "Gratis",
+        "description": "Para personas que quieren probar el audio de IA más avanzado.",
+        "currentPlan": "Plan Actual",
+        "credits": "10,000 créditos por mes (~10 min de audio)",
+        "features": [
+          "Genera voz en 29 idiomas usando miles de voces únicas",
+          "Traduce contenido con doblaje automático",
+          "Crea voces sintéticas personalizadas",
+          "Genera efectos de sonido",
+          "Acceso a API"
+        ]
+      },
+      "starter": {
+        "name": "Inicial",
+        "description": "Para aficionados que crean proyectos con audio de IA.",
+        "subscribe": "Suscribirse",
+        "credits": "30,000 créditos por mes (~30 min de audio)",
+        "features": [
+          "Todo lo incluido en el plan gratuito, más",
+          "Clona tu voz con tan solo 1 minuto de audio",
+          "Acceso al editor de doblaje para mayor control sobre la traducción y el tiempo",
+          "Licencia para usar ElevenLabs con fines comerciales"
+        ]
+      },
+      "creator": {
+        "name": "Creador",
+        "popular": "Más Popular",
+        "description": "Para creadores que producen contenido premium para audiencias globales.",
+        "subscribe": "Suscribirse",
+        "credits": "100,000 créditos por mes (~2 horas de audio)",
+        "features": [
+          "Todo lo incluido en el plan inicial, más",
+          "Clonación profesional de voz para crear la réplica digital más realista de tu voz",
+          "Studio para crear contenido de larga duración con múltiples hablantes",
+          "Audio Native para agregar narración a tu sitio web y blogs",
+          "Audio de mayor calidad a través de la API - 192 kbps"
+        ]
+      },
+      "pro": {
+        "name": "Profesional",
+        "description": "Para creadores más grandes que aumentan su producción de contenido.",
+        "subscribe": "Suscribirse",
+        "credits": "500,000 créditos por mes (~10 horas de audio)",
+        "features": [
+          "Todo lo incluido en el plan creador, más",
+          "Audio de mayor calidad a través de Studio - 192 kbps",
+          "Salida de audio PCM 44.1 kHz a través de API"
+        ]
+      }
+    }
   }
 }

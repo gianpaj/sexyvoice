@@ -19,7 +19,12 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   const pathnameIsMissingLocale = i18n.locales.every(
-    locale => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
+    locale =>
+      !pathname.startsWith(`/${locale}/`) &&
+      !pathname.startsWith('/auth') &&
+      !pathname.startsWith('/api') &&
+      !pathname.startsWith('/webhook') &&
+      pathname !== `/${locale}`
   )
 
   // Redirect if there is no locale
