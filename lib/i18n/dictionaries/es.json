@@ -27,7 +27,7 @@
   "landing": {
     "hero": {
       "title": "Tu Voz, Sin Censura",
-      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores.",
+      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
       "getStarted": "Comenzar",
       "signIn": "Iniciar Sesión"
     },
@@ -58,7 +58,7 @@
       "enterText": "Ingresa texto para convertir",
       "speed": "Velocidad",
       "pitch": "Tono",
-      "generate": "Generar Audio",
+      "generate": "Generar Audio (próximamente)",
       "generating": "Generando...",
       "play": "Reproducir",
       "pause": "Pausar",

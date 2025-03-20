@@ -27,7 +27,7 @@
   "landing": {
     "hero": {
       "title": "Your Voice, Uncensored",
-      "subtitle": "Create beautiful voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.",
+      "subtitle": "Create beautiful voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers. 😉",
       "getStarted": "Get Started",
       "signIn": "Sign In"
     },
@@ -58,7 +58,7 @@
       "enterText": "Enter text to convert",
       "speed": "Speed",
       "pitch": "Pitch",
-      "generate": "Generate Audio",
+      "generate": "Generate Audio (coming soon)",
       "generating": "Generating...",
       "play": "Play",
       "pause": "Pause",

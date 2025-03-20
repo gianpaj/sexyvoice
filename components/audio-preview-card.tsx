@@ -52,7 +52,7 @@ export function AudioPreviewCard({
           onClick={togglePlay}
           variant="outline"
           size="icon"
-          className="bg-blue-600/20 border-none hover:bg-blue-600/40 text-blue-400"
+          className="bg-blue-600/20 border-none hover:bg-blue-600/40 !text-blue-400"
         >
           {isPlaying ? (
             <Pause className="size-4" />

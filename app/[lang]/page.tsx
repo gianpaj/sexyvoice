@@ -78,7 +78,7 @@ export default async function LandingPage({
           {/* Audio Previews Grid */}
           <div className="max-w-4xl mx-auto mb-16">
             <h2 className="text-2xl font-bold text-white mb-2">
-              Try Our Voice Clones
+              Try Our Voice Samples
             </h2>
             <p className="text-gray-300 mb-6">
               Listen to sample voice clones created with our advanced AI
@@ -111,7 +111,7 @@ export default async function LandingPage({
           </div>
 
           {/* Popular Audios Section */}
-          <div className="max-w-4xl mx-auto mb-16">
+          {/* <div className="max-w-4xl mx-auto mb-16">
             <h2 className="text-2xl font-bold text-white mb-2">
               {dict.landing.popular.title}
             </h2>
@@ -119,7 +119,7 @@ export default async function LandingPage({
               {dict.landing.popular.subtitle}
             </p>
             <PopularAudios dict={dict.landing.popular} />
-          </div>
+          </div> */}
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 py-16">

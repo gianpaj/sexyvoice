@@ -254,10 +254,13 @@ export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
         <div className="space-x-2">
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !text.trim() || !selectedVoice}
+            disabled={true}
+            // disabled={isGenerating || !text.trim() || !selectedVoice}
             className="bg-blue-600 hover:bg-blue-700"
+            title="Coming soon"
           >
-            {isGenerating ? dict.generating : dict.generate}
+            {dict.generate}
+            {/* {isGenerating ? dict.generating : dict.generate} */}
           </Button>
         </div>
       </div>
