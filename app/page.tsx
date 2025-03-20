@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-
 export default function Home() {
-  redirect('/en');
+  // the middleware handles the redirection based on the user's preferred language
+  return null;
 }

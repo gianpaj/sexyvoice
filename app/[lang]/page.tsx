@@ -1,18 +1,49 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Mic2, Globe2, Shield, Sparkles } from 'lucide-react';
+import { Mic2, Globe2, Shield, Sparkles, Play } from 'lucide-react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { VoiceGenerator } from '@/components/voice-generator';
 import { PopularAudios } from '@/components/popular-audios';
 import type { Metadata } from 'next';
 import { Header } from '@/components/header';
+import { AudioPreviewCard } from '@/components/audio-preview-card';
 
 // export const metadata: Metadata = {
 //   title: 'SexyVoice.ai - AI Voice Cloning Platform',
 //   description:
 //     'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
 // };
+
+// Sample audio preview data
+const sampleAudios = [
+  // {
+  //   id: 1,
+  //   name: 'Tara',
+  //   prompt:
+  //     "Life is like a box of chocolates, you never know what you're gonna get.",
+  //   audioSrc: '/audios/tara_20250320_130636.mp3',
+  // },
+  {
+    id: 2,
+    name: 'Tara',
+    prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
+    audioSrc: '/audios/tara_amazing.mp3',
+  },
+  {
+    id: 3,
+    name: 'Tara',
+    prompt: '<sigh> Oh my god. This is fantastic! <laugh>',
+    audioSrc: '/audios/tara_fantastic.mp3',
+  },
+  // {
+  //   id: 4,
+  //   name: 'Emma Watson',
+  //   prompt:
+  //     'Education is the most powerful weapon which you can use to change the world.',
+  //   audioSrc: '/audios/emma-watson.mp3',
+  // },
+];
 
 export default async function LandingPage({
   params: { lang },
@@ -42,6 +73,27 @@ export default async function LandingPage({
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               {dict.landing.hero.subtitle}
             </p>
+          </div>
+
+          {/* Audio Previews Grid */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Try Our Voice Clones
+            </h2>
+            <p className="text-gray-300 mb-6">
+              Listen to sample voice clones created with our advanced AI
+              technology
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              {sampleAudios.map((audio) => (
+                <AudioPreviewCard
+                  key={audio.id}
+                  name={audio.name}
+                  prompt={audio.prompt}
+                  audioSrc={audio.audioSrc}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Voice Generator Section */}
