@@ -36,6 +36,14 @@ const sampleAudios = [
     prompt: '<sigh> Oh my god. This is fantastic! <laugh>',
     audioSrc: '/audios/tara_fantastic.mp3',
   },
+  {
+    id: 4,
+    name: 'Dan',
+    prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
+Because it’s hard to lay down in a square! <laugh>
+I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
+    audioSrc: '/audios/dan_joke.mp3',
+  },
   // {
   //   id: 4,
   //   name: 'Emma Watson',
