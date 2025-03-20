@@ -44,6 +44,13 @@ Because it’s hard to lay down in a square! <laugh>
 I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
     audioSrc: '/audios/dan_joke.mp3',
   },
+  {
+    id: 5,
+    name: 'Emma',
+    prompt:
+      '<gasp> Ever dreamed ... of wielding legendary power, carving your destiny in a world of magic and wonder?',
+    audioSrc: '/audios/emma_wonder.mp3',
+  },
   // {
   //   id: 4,
   //   name: 'Emma Watson',
