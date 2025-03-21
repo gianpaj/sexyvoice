@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { LanguageSelector } from './language-selector';
+// import { LanguageSelector } from './language-selector';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +24,7 @@ export async function Header({ lang }: { lang: string }) {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-4 justify-center">
-          <LanguageSelector currentLang={lang} isMobile={false} />
+          {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
 
           {user ? (
             <Link href={`/${lang}/dashboard`}>
@@ -33,10 +33,10 @@ export async function Header({ lang }: { lang: string }) {
           ) : (
             <div className="space-x-4">
               <Link href={`/${lang}/login`}>
-                <Button variant="default">Login</Button>
+                <Button variant="secondary">Login</Button>
               </Link>
               <Link href={`/${lang}/signup`}>
-                <Button variant="outline">Sign Up</Button>
+                <Button variant="default">Sign Up</Button>
               </Link>
             </div>
           )}
@@ -52,7 +52,7 @@ export async function Header({ lang }: { lang: string }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-36">
-              <LanguageSelector isMobile currentLang={lang} />
+              {/* <LanguageSelector isMobile currentLang={lang} /> */}
               {user ? (
                 <DropdownMenuItem asChild>
                   <Link href={`/${lang}/dashboard`} className="w-full">
