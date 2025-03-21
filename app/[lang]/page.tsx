@@ -4,10 +4,13 @@ import { Mic2, Globe2, Shield, Sparkles, Play } from 'lucide-react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { VoiceGenerator } from '@/components/voice-generator';
-import { PopularAudios } from '@/components/popular-audios';
+// import { PopularAudios } from '@/components/popular-audios';
 import type { Metadata } from 'next';
+
 import { Header } from '@/components/header';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
+import Footer from '@/components/footer';
+import LandingHero from '@/components/landing-hero';
 
 // export const metadata: Metadata = {
 //   title: 'SexyVoice.ai - AI Voice Cloning Platform',
@@ -74,6 +77,7 @@ export default async function LandingPage({
         <div className="container mx-auto px-4">
           {/* Hero Section */}
           <div className="text-center space-y-6 py-20">
+            <LandingHero />
             <h1 className="text-5xl md:text-6xl font-bold text-white">
               {dict.landing.hero.title.split(',').map((part, i) => (
                 <span key={i}>
@@ -195,6 +199,7 @@ export default async function LandingPage({
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }
