@@ -164,6 +164,7 @@ export default async function CreditsPage({
 
       <div className="my-8">
         <h3 className="mb-4 text-lg font-semibold">Credit History</h3>
+        {/* @ts-ignore */}
         <CreditHistory dict={dict} userId={user?.id} />
       </div>
 
@@ -172,7 +173,7 @@ export default async function CreditsPage({
         publishableKey="pk_live_51OddRpJ2uQQSTCBs8qxECPQ1TtH6urXhq1mFEDBbfN82vt1aSJp8rVIgXoQHw5tW7Q7ehdPzUvPXdANnDXIGJKUx00gMcxE4S3"
         clientReferenceId={user?.id}
       />
-      {/* 
+      {/*
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Free Plan * /}
         <Card className="p-6">
