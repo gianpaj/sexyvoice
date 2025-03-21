@@ -9,7 +9,7 @@
     "preview": "next build && next start",
     "type-check": "tsc --noEmit",
     "format:write": "pnpm run format:check --write",
-    "format:check": "biome format ./app components hooks lib middleware"
+    "format:check": "biome format ./app components hooks lib middleware.ts"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.5.10",

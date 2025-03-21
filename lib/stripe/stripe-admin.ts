@@ -1,33 +1,33 @@
-import Stripe from 'stripe'
-import { createClient } from '../supabase/server'
+import Stripe from 'stripe';
+import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set')
+  throw new Error('STRIPE_SECRET_KEY is not set');
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-01-27.acacia'
-})
+  apiVersion: '2025-01-27.acacia',
+});
 
 // https://github.com/Domogo/t3-supabase-drizzle-app-starter
 export async function createOrRetrieveCustomer({
   uuid,
-  email
+  email,
 }: {
-  uuid: string
-  email: string
+  uuid: string;
+  email: string;
 }) {
-  const customers = await stripe.customers.list({ email })
+  const customers = await stripe.customers.list({ email });
 
   if (customers.data.length && customers?.data[0]?.id === uuid)
-    return customers.data[0].id
+    return customers.data[0].id;
 
   const customer = await stripe.customers.create({
     email,
-    metadata: { supabaseUUID: uuid }
-  })
+    metadata: { supabaseUUID: uuid },
+  });
 
-  return customer.id
+  return customer.id;
 }
 
 // export async function getStripePlan() {
@@ -47,15 +47,15 @@ export async function createOrRetrieveCustomer({
 export async function createStripeCustomer(
   id: string,
   email: string,
-  name?: string
+  name?: string,
 ) {
   const customer = await stripe.customers.create({
     name: name ? name : '',
     email: email,
     metadata: {
-      supabase_id: id
-    }
-  })
+      supabase_id: id,
+    },
+  });
   // Create a new customer in Stripe
-  return customer.id
+  return customer.id;
 }

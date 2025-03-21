@@ -1,40 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server'
-import type { NextRequest as NextRequestType } from 'next/server'
-import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest as NextRequestType } from 'next/server';
+import Stripe from 'stripe';
+import { createClient } from '@/lib/supabase/server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-01-27.acacia'
-})
+  apiVersion: '2025-01-27.acacia',
+});
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const stripeId = searchParams.get('stripeId')
+    const { searchParams } = new URL(request.url);
+    const stripeId = searchParams.get('stripeId');
 
     if (!stripeId) {
       return NextResponse.json(
         { error: 'Stripe ID is required' },
-        { status: 400 }
-      )
+        { status: 400 },
+      );
     }
 
-    const supabase = createClient()
+    const supabase = createClient();
 
     // Check if user is authenticated
     const {
-      data: { session }
-    } = await supabase.auth.getSession()
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get active subscriptions for this customer
     const subscriptions = await stripe.subscriptions.list({
-      customer: stripeId
+      customer: stripeId,
       //   status: 'active',
       //   expand: ['data.latest_invoice']
-    })
+    });
 
     // Get charges for this customer
     // const charges = await stripe.charges.list({
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
     // }))
 
     // Format subscription data
-    const subscriptionTransactions = subscriptions.data.map(subscription => {
-      const invoice = subscription.latest_invoice as Stripe.Invoice
+    const subscriptionTransactions = subscriptions.data.map((subscription) => {
+      const invoice = subscription.latest_invoice as Stripe.Invoice;
       return {
         id: subscription.id,
         amount: subscription.items.data[0]?.price?.unit_amount || 0,
@@ -66,22 +66,22 @@ export async function GET(request: NextRequest) {
         status: subscription.status,
         current_period_end: subscription.current_period_end,
         current_period_start: subscription.current_period_start,
-        invoice_id: typeof invoice === 'object' ? invoice.id : invoice
-      }
-    })
+        invoice_id: typeof invoice === 'object' ? invoice.id : invoice,
+      };
+    });
 
     // Combine transactions and sort by created date
     const transactions = [
       //   ...chargeTransactions,
-      ...subscriptionTransactions
-    ].sort((a, b) => b.created - a.created)
+      ...subscriptionTransactions,
+    ].sort((a, b) => b.created - a.created);
 
-    return NextResponse.json(transactions)
+    return NextResponse.json(transactions);
   } catch (error) {
-    console.error('Error fetching Stripe transactions:', error)
+    console.error('Error fetching Stripe transactions:', error);
     return NextResponse.json(
       { error: 'Failed to fetch transactions' },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
