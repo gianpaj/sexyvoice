@@ -90,5 +90,13 @@
     "prettier": "^3.2.4",
     "prettier-plugin-tailwindcss": "^0.5.12"
   },
-  "packageManager": "pnpm@8.6.3"
+  "packageManager": "pnpm@8.6.3",
+  "pnpm": {
+    "overrides": {
+      "undici@<5.28.4": ">=5.28.4",
+      "undici@<=5.28.2": ">=5.28.3",
+      "undici@>=4.5.0 <5.28.5": ">=5.28.5",
+      "@babel/runtime@<7.26.10": ">=7.26.10"
+    }
+  }
 }
