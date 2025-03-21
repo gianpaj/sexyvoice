@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ProfileForm } from './profile-form';
+// import { ProfileForm } from './profile-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecurityForm } from './security-form';
 
@@ -38,7 +38,7 @@ export default async function ProfilePage({
         </p>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      {/* <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
@@ -56,20 +56,20 @@ export default async function ProfilePage({
               <ProfileForm initialData={profile} lang={lang} />
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
 
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Manage your email and password</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SecurityForm email={user?.email} lang={lang} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* <TabsContent value="security"> */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Security Settings</CardTitle>
+          <CardDescription>Manage your email and password</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SecurityForm email={user?.email} lang={lang} />
+        </CardContent>
+      </Card>
+      {/* </TabsContent> */}
+      {/* </Tabs> */}
     </div>
   );
 }

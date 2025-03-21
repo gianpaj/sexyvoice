@@ -68,7 +68,7 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div className="dark bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div className="bg-gradient-to-br from-gray-900 to-gray-800">
       {/* Mobile sidebar */}
       <div className="lg:hidden">
         <div
@@ -155,7 +155,7 @@ export default function DashboardLayout({
           <div className="border-t p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
+              className="w-full justify-start text-grey-900 hover:bg-grey-50 hover:text-grey-700"
               onClick={handleSignOut}
             >
               <LogOut className="mr-3 size-5" />
@@ -166,7 +166,7 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-72">
+      <div className="lg:pl-72 min-h-screen">
         <div className="sticky top-0 z-30 border-b">
           <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm sm:px-6 lg:px-8">
             <Button

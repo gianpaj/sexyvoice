@@ -34,7 +34,10 @@ export default async function DashboardPage({
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">
-          Welcome back, {user?.user_metadata.full_name}
+          Welcome back,{' '}
+          {user?.user_metadata.full_name ||
+            user?.user_metadata.username ||
+            'Guest'}
         </p>
       </div>
 

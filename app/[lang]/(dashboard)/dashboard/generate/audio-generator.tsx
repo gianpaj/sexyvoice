@@ -119,7 +119,33 @@ export function AudioGenerator({
           />
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-start gap-2">
+          <Button
+            onClick={handleGenerate}
+            disabled={isGenerating || !text.trim() || !selectedVoice}
+            className={` ${isGenerating ? 'text-white' : ''}`}
+            size="lg"
+          >
+            {isGenerating ? (
+              <span className="flex items-center">
+                Generating
+                <span className="inline-flex ml-1">
+                  <span className="animate-[pulse_1.4s_ease-in-out_infinite]">
+                    .
+                  </span>
+                  <span className="animate-[pulse_1.4s_ease-in-out_0.4s_infinite]">
+                    .
+                  </span>
+                  <span className="animate-[pulse_1.4s_ease-in-out_0.8s_infinite]">
+                    .
+                  </span>
+                </span>
+              </span>
+            ) : (
+              'Generate Audio'
+            )}
+          </Button>
+
           <div className="space-x-2">
             {audio && (
               <>
@@ -136,12 +162,6 @@ export function AudioGenerator({
               </>
             )}
           </div>
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || !text.trim()}
-          >
-            {isGenerating ? 'Generating...' : 'Generate Audio'}
-          </Button>
         </div>
       </CardContent>
     </Card>
