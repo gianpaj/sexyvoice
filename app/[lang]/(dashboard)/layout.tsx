@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/supabase';
@@ -8,7 +8,7 @@ import {
   LogOut,
   Menu,
   X,
-  Mic2,
+  // Mic2,
   CreditCard,
   User,
   BarChart3,
@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Crisp } from 'crisp-sdk-web';
+
+if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
+  Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
+}
 
 export default function DashboardLayout({
   children,
@@ -34,6 +39,32 @@ export default function DashboardLayout({
     router.push(`/${lang}`);
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    const fn = async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      // Get user's credits
+      // const { data: credits } = await supabase
+      //   .from('credits')
+      //   .select('amount')
+      //   .eq('user_id', user?.id)
+      //   .single();
+      Crisp.session.setData({
+        user_id: user?.id,
+        name:
+          user?.user_metadata.full_name ||
+          user?.user_metadata.username ||
+          'Guest',
+        email: user?.email,
+        // credits: credits?.amount || 0,
+        // plan
+      });
+    };
+
+    fn();
+  }, []);
+
   const navigation = [
     {
       name: 'Dashboard',
@@ -47,12 +78,12 @@ export default function DashboardLayout({
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
-    {
-      name: 'Voices',
-      href: `/${lang}/dashboard/voices`,
-      icon: Mic2,
-      current: pathname === `/${lang}/dashboard/voices`,
-    },
+    // {
+    //   name: 'Voices',
+    //   href: `/${lang}/dashboard/voices`,
+    //   icon: Mic2,
+    //   current: pathname === `/${lang}/dashboard/voices`,
+    // },
     {
       name: 'Credits',
       href: `/${lang}/dashboard/credits`,

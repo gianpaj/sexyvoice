@@ -39,13 +39,7 @@ export function CreditHistory({
   dict,
   userId,
 }: {
-  dict: {
-    credits: {
-      historyEmpty: string;
-      [key: string]: string;
-    };
-    [key: string]: Record<string, string>;
-  };
+  dict: any;
   userId?: string;
 }) {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
