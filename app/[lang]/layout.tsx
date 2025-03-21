@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang={params.lang} suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} dark`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -68,7 +68,7 @@ export default function DashboardLayout({
   ];
 
   return (
-    <div>
+    <div className="dark bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       {/* Mobile sidebar */}
       <div className="lg:hidden">
         <div
@@ -83,7 +83,7 @@ export default function DashboardLayout({
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <div className="relative flex w-72 flex-col bg-white">
+          <div className="relative flex w-72 flex-col">
             <div className="flex h-16 items-center justify-between px-6">
               <span className="text-xl font-semibold">SexyVoice.ai</span>
               <Button
@@ -103,8 +103,8 @@ export default function DashboardLayout({
                   className={cn(
                     'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
                     item.current
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                      ? 'bg-gray-200 text-gray-900'
+                      : 'text-gray-200 hover:bg-gray-50 hover:text-gray-900',
                   )}
                 >
                   <item.icon className="mr-3 size-5" />
@@ -129,7 +129,7 @@ export default function DashboardLayout({
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex grow flex-col border-r bg-white">
+        <div className="flex grow flex-col border-r">
           <div className="flex h-16 items-center px-6">
             <span className="text-xl font-semibold">SexyVoice.ai</span>
           </div>
@@ -142,8 +142,8 @@ export default function DashboardLayout({
                 className={cn(
                   'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
                   item.current
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                    ? 'bg-gray-200 text-gray-900'
+                    : 'text-gray-200 hover:bg-gray-50 hover:text-gray-900',
                 )}
               >
                 <item.icon className="mr-3 size-5" />
@@ -167,7 +167,7 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="lg:pl-72">
-        <div className="sticky top-0 z-30 border-b bg-white">
+        <div className="sticky top-0 z-30 border-b">
           <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm sm:px-6 lg:px-8">
             <Button
               variant="ghost"

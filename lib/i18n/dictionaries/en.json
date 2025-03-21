@@ -75,6 +75,9 @@
   "credits": {
     "title": "Plans built for creators and businesses of all sizes",
     "description": "Choose the plan that best fits your needs",
+    "availableCredits": "Available Credits",
+    "creditsUsage": "Credits are used for voice generation",
+    "historyEmpty": "Your credit usage history will appear here",
     "billing": {
       "monthly": "Monthly",
       "annually": "Annually",

@@ -74,6 +74,9 @@
   "credits": {
     "title": "Planes diseñados para creadores y empresas de todos los tamaños",
     "description": "Elige el plan que mejor se adapte a tus necesidades",
+    "availableCredits": "Créditos Disponibles",
+    "creditsUsage": "Los créditos se utilizan para la generación de voz",
+    "historyEmpty": "Tu historial de uso de créditos aparecerá aquí",
     "billing": {
       "monthly": "Mensual",
       "annually": "Anual",
