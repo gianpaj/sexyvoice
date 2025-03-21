@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+// import { Slider } from '@/components/ui/slider';
 import {
   Card,
   CardContent,
@@ -17,12 +17,16 @@ import { toast } from 'sonner';
 
 interface AudioGeneratorProps {
   credits: number;
+  selectedVoice: string;
 }
 
-export function AudioGenerator({ credits }: AudioGeneratorProps) {
+export function AudioGenerator({
+  credits,
+  selectedVoice,
+}: AudioGeneratorProps) {
   const [text, setText] = useState('');
-  const [speed, setSpeed] = useState([1]);
-  const [pitch, setPitch] = useState([1]);
+  // const [speed, setSpeed] = useState([1]);
+  // const [pitch, setPitch] = useState([1]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -36,7 +40,7 @@ export function AudioGenerator({ credits }: AudioGeneratorProps) {
     setIsGenerating(true);
     try {
       const response = await fetch(
-        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=example_reference&accent=en-newest`,
+        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=${selectedVoice}`,
       );
 
       if (!response.ok) {
@@ -46,7 +50,7 @@ export function AudioGenerator({ credits }: AudioGeneratorProps) {
       const { url } = await response.json();
 
       const newAudio = new Audio(url);
-      newAudio.playbackRate = speed[0];
+      // newAudio.playbackRate = speed[0];
 
       newAudio.addEventListener('ended', () => {
         setIsPlaying(false);
@@ -85,18 +89,18 @@ export function AudioGenerator({ credits }: AudioGeneratorProps) {
       setAudio(null);
     }
     setText('');
-    setSpeed([1]);
-    setPitch([1]);
+    // setSpeed([1]);
+    // setPitch([1]);
     setIsPlaying(false);
   };
 
   // Update playback rate when speed changes
-  const handleSpeedChange = (newSpeed: number[]) => {
-    setSpeed(newSpeed);
-    if (audio) {
-      audio.playbackRate = newSpeed[0];
-    }
-  };
+  // const handleSpeedChange = (newSpeed: number[]) => {
+  //   setSpeed(newSpeed);
+  //   if (audio) {
+  //     audio.playbackRate = newSpeed[0];
+  //   }
+  // };
 
   return (
     <Card>
@@ -113,40 +117,6 @@ export function AudioGenerator({ credits }: AudioGeneratorProps) {
             placeholder="Enter the text you want to convert to speech..."
             className="h-32"
           />
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Speed</Label>
-            <Slider
-              value={speed}
-              onValueChange={handleSpeedChange}
-              min={0.5}
-              max={2}
-              step={0.1}
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>0.5x</span>
-              <span>{speed[0]}x</span>
-              <span>2x</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Pitch</Label>
-            <Slider
-              value={pitch}
-              onValueChange={setPitch}
-              min={0.5}
-              max={2}
-              step={0.1}
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>0.5x</span>
-              <span>{pitch[0]}x</span>
-              <span>2x</span>
-            </div>
-          </div>
         </div>
 
         <div className="flex items-center justify-between">

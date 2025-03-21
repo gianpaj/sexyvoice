@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import { put, list } from '@vercel/blob';
 
-const VOICE_API_URL = `${process.env.VOICE_API_URL}/synthesize_speech`;
+const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
 
 async function generateHash(
   text: string,
   voice: string,
-  accent: string,
-  speed: string,
+  // accent: string,
+  // speed: string,
 ) {
   const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${voice}-${accent}-${speed} `;
+  const combinedString = `${text}-${voice}`;
   const data = textEncoder.encode(combinedString);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -25,20 +25,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const text = searchParams.get('text');
     const voice = searchParams.get('voice');
-    const accent = searchParams.get('accent');
-    const speed = searchParams.get('speed') || '1.0';
+    // const accent = searchParams.get('accent');
+    // const speed = searchParams.get('speed') || '1.0';
 
-    if (!text || !voice || !accent) {
+    if (!text || !voice) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
-        { status: 400 },
-      );
-    }
-
-    const speedNumber = Number.parseFloat(speed);
-    if (speedNumber < 0.5 || speedNumber > 4) {
-      return NextResponse.json(
-        { error: 'speed must be between 0.5 and 4' },
         { status: 400 },
       );
     }
@@ -51,7 +43,7 @@ export async function GET(request: Request) {
     }
 
     // Generate hash for the combination of text, voice, and accent
-    const hash = await generateHash(text, voice, accent, speed);
+    const hash = await generateHash(text, voice);
 
     // Check if audio file already exists
     const { blobs } = await list({ prefix: `audio/${hash}` });
@@ -62,19 +54,19 @@ export async function GET(request: Request) {
     }
 
     // If no existing file found, generate new audio
-    const response = await fetch(
-      `${VOICE_API_URL}?text=${encodeURIComponent(text)}&accent=en-newest&voice=${encodeURIComponent(voice)}&language=${encodeURIComponent(accent)}`,
-      {
-        method: 'GET',
+    const response = await fetch(`${VOICE_API_URL}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({ text, voice }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error({
         text,
         voice,
-        accent,
         errorData,
       });
       throw new Error(errorData.detail || 'Voice generation failed');
@@ -84,7 +76,7 @@ export async function GET(request: Request) {
     const audioBlob = new Blob([audioData], { type: 'audio/mpeg' });
 
     // Use hash in the file path for future lookups
-    const path = `audio/${hash}-${voice}-${accent}.wav`;
+    const path = `audio/${voice}-${hash}.wav`;
     const uploadResponse = await put(path, audioBlob, {
       access: 'public',
       contentType: 'audio/mpeg',

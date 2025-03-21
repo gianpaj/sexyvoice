@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { VoiceSelector } from './voice-selector';
-import { AudioGenerator } from './audio-generator';
+import { GenerateUI } from './generateui.client';
 
 export default async function GeneratePage({
   params: { lang },
@@ -18,10 +17,10 @@ export default async function GeneratePage({
   const user = session?.user;
 
   // Get user's voices
-  const { data: userVoices } = await supabase
-    .from('voices')
-    .select('*')
-    .eq('user_id', user?.id);
+  // const { data: userVoices } = await supabase
+  //   .from('voices')
+  //   .select('*')
+  //   .eq('user_id', user?.id);
 
   // Get public voices
   // const { data: publicVoices } = await supabase
@@ -37,39 +36,6 @@ export default async function GeneratePage({
     .eq('user_id', user?.id)
     .single();
 
-  const publicVoices = [
-    {
-      id: '0',
-      language: 'en-US',
-      is_public: true,
-      name: 'example reference',
-      voice: 'example_reference',
-      accent: 'en-newest',
-    },
-    // {
-    //   id: '1',
-    //   language: 'en-US',
-    //   is_public: true,
-
-    //   name: 'en-US-SaraNeural',
-    //   voice: 'Sara',
-    // },
-    // {
-    //   id: '2',
-    //   language: 'en-US',
-    //   is_public: true,
-    //   name: 'en-US-GuyNeural',
-    //   voice: 'Guy',
-    // },
-    // {
-    //   id: '3',
-    //   language: 'en-US',
-    //   is_public: true,
-    //   name: 'en-US-KimberlyNeural',
-    //   voice: 'Kimberly',
-    // },
-  ];
-
   return (
     <div className="space-y-8">
       <div>
@@ -80,11 +46,7 @@ export default async function GeneratePage({
       </div>
 
       <div className="grid gap-6">
-        <VoiceSelector
-          userVoices={userVoices || []}
-          publicVoices={publicVoices || []}
-        />
-        <AudioGenerator credits={credits?.amount || 0} />
+        <GenerateUI credits={credits} />
       </div>
     </div>
   );
