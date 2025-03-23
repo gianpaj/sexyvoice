@@ -4,11 +4,17 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mic2, CreditCard } from 'lucide-react';
 
-export default async function DashboardPage({
-  params: { lang },
-}: {
-  params: { lang: Locale };
-}) {
+export default async function DashboardPage(
+  props: {
+    params: Promise<{ lang: Locale }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    lang
+  } = params;
+
   const supabase = createClient();
   const dict = await getDictionary(lang);
 

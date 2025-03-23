@@ -5,11 +5,17 @@ import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { GenerateUI } from './generateui.client';
 
-export default async function GeneratePage({
-  params: { lang },
-}: {
-  params: { lang: Locale };
-}) {
+export default async function GeneratePage(
+  props: {
+    params: Promise<{ lang: Locale }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    lang
+  } = params;
+
   const supabase = createClient();
   // const dict = await getDictionary(lang);
 

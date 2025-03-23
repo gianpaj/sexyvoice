@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -18,13 +18,22 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Crisp } from 'crisp-sdk-web';
 
-export default function DashboardLayout({
-  children,
-  params: { lang },
-}: {
-  children: React.ReactNode;
-  params: { lang: string };
-}) {
+export default function DashboardLayout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ lang: string }>;
+  }
+) {
+  const params = use(props.params);
+
+  const {
+    lang
+  } = params;
+
+  const {
+    children
+  } = props;
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();

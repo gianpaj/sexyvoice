@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -22,11 +22,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export default function NewVoicePage({
-  params: { lang },
-}: {
-  params: { lang: string };
-}) {
+export default function NewVoicePage(
+  props: {
+    params: Promise<{ lang: string }>;
+  }
+) {
+  const params = use(props.params);
+
+  const {
+    lang
+  } = params;
+
   const [name, setName] = useState('');
   const [language, setLanguage] = useState('');
   const [isPublic, setIsPublic] = useState(false);

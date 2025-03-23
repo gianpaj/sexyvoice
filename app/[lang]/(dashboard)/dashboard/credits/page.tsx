@@ -52,11 +52,17 @@ async function getStripeProducts(): Promise<StripeProduct[]> {
   }));
 }
 
-export default async function CreditsPage({
-  params: { lang },
-}: {
-  params: { lang: Locale };
-}) {
+export default async function CreditsPage(
+  props: {
+    params: Promise<{ lang: Locale }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    lang
+  } = params;
+
   const supabase = createClient();
   const dict = await getDictionary(lang);
 

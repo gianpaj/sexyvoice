@@ -64,11 +64,17 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   // },
 ];
 
-export default async function LandingPage({
-  params: { lang },
-}: {
-  params: { lang: Locale };
-}) {
+export default async function LandingPage(
+  props: {
+    params: Promise<{ lang: Locale }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    lang
+  } = params;
+
   const dict = await getDictionary(lang);
 
   return (

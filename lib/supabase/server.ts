@@ -1,9 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { cookies, type UnsafeUnwrappedCookies } from 'next/headers';
 // import type { Database } from '@/types/database'
 
 export const createClient = () => {
-  const cookieStore = cookies();
+  const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies);
 
   // return createServerClient<Database>(
   return createServerClient(

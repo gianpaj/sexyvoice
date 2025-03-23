@@ -3,11 +3,17 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { SignUpForm } from './signup-form';
 import { Header } from '@/components/header';
 
-export default async function SignUpPage({
-  params: { lang },
-}: {
-  params: { lang: Locale };
-}) {
+export default async function SignUpPage(
+  props: {
+    params: Promise<{ lang: Locale }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    lang
+  } = params;
+
   const dict = await getDictionary(lang);
 
   return (

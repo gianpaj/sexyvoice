@@ -46,3 +46,10 @@ pnpm dev
 ```
 
 Open [localhost:3000](http://localhost:3000/).
+
+
+## Migrations
+
+```bash
+supabase db push
+```
