@@ -86,7 +86,7 @@ interface Props {
 }
 
 export const GenerateUI = ({ credits }: Props) => {
-  const [selectedVoice, setSelectedVoice] = useState<string>('');
+  const [selectedVoice, setSelectedVoice] = useState<string>('tara');
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
