@@ -74,6 +74,7 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
             </Link>
             <div className="space-y-2">
               <div className="text-sm font-medium">{plan.credits}</div>
+              {/* @ts-ignore */}
               {plan.features.map((feature, i) => (
                 <div key={i} className="flex items-center text-sm">
                   <Check className="mr-2 size-4" />

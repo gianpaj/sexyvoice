@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { createClient } from '../supabase/server';
+// import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');

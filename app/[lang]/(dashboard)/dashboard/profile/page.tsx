@@ -12,18 +12,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecurityForm } from './security-form';
 
-export default async function ProfilePage(
-  props: {
-    params: Promise<{ lang: Locale }>;
-  }
-) {
+export default async function ProfilePage(props: {
+  params: Promise<{ lang: Locale }>;
+}) {
   const params = await props.params;
 
-  const {
-    lang
-  } = params;
+  const { lang } = params;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const dict = await getDictionary(lang);
 
   const { data } = await supabase.auth.getUser();

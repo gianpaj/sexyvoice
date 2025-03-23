@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export async function Header({ lang }: { lang: string }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 

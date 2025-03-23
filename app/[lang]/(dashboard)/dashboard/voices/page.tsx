@@ -6,18 +6,14 @@ import { Plus } from 'lucide-react';
 import { VoicesList } from './voices-list';
 import Link from 'next/link';
 
-export default async function VoicesPage(
-  props: {
-    params: Promise<{ lang: Locale }>;
-  }
-) {
+export default async function VoicesPage(props: {
+  params: Promise<{ lang: Locale }>;
+}) {
   const params = await props.params;
 
-  const {
-    lang
-  } = params;
+  const { lang } = params;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const dict = await getDictionary(lang);
 
   const { data } = await supabase.auth.getUser();

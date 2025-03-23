@@ -24,7 +24,7 @@ export const updateSession = async (request: NextRequest) => {
       request,
     });
 
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const {
       data: { user },
