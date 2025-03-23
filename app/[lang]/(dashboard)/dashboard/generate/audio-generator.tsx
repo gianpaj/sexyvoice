@@ -30,6 +30,7 @@ export function AudioGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [creditsUsed, setCreditsUsed] = useState(credits);
 
   const handleGenerate = async () => {
     if (!text.trim()) {
@@ -47,7 +48,8 @@ export function AudioGenerator({
         throw new Error('Failed to generate audio');
       }
 
-      const { url } = await response.json();
+      const { url, creditsRemaining, creditsUsed } = await response.json();
+      setCreditsUsed(creditsUsed);
 
       const newAudio = new Audio(url);
       // newAudio.playbackRate = speed[0];
@@ -63,6 +65,7 @@ export function AudioGenerator({
       setIsPlaying(true);
 
       toast.success('Audio generated successfully');
+      // TODO fetch credits remaining
     } catch (error) {
       toast.error('Failed to generate audio');
     } finally {
@@ -164,6 +167,7 @@ export function AudioGenerator({
                 <Button variant="outline" size="icon" onClick={downloadAudio}>
                   <Download className="size-4" />
                 </Button>
+                <p>Credits Used: {creditsUsed}</p>
               </>
             )}
           </div>

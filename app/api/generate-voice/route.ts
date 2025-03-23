@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { put, list } from '@vercel/blob';
 import Replicate, { Prediction } from 'replicate';
 
-const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
+import { createClient } from '@/lib/supabase/server';
+import { getCredits } from '@/lib/supabase/queries';
+
+// const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
 
 async function generateHash(
   text: string,
@@ -43,16 +46,38 @@ export async function GET(request: Request) {
       );
     }
 
+    const supabase = await createClient();
+
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+    }
+
+    const currentAmount = await getCredits(user.id);
+
+    const estimate = estimateCredits(text);
+
+    console.log({ estimate });
+
+    if (currentAmount < estimate) {
+      return NextResponse.json(
+        { error: 'Insufficient credits' },
+        { status: 402 },
+      );
+    }
+
     // Generate hash for the combination of text, voice, and accent
     const hash = await generateHash(text, voice);
 
     // Check if audio file already exists
     const { blobs } = await list({ prefix: `audio/${voice}-${hash}` });
 
-    if (blobs.length > 0) {
-      // Return existing audio file URL
-      return NextResponse.json({ url: blobs[0].url }, { status: 200 });
-    }
+    // if (blobs.length > 0) {
+    //   // Return existing audio file URL
+    //   return NextResponse.json({ url: blobs[0].url }, { status: 200 });
+    // }
 
     // If no existing file found, generate new audio
     // const response = await fetch(`${VOICE_API_URL}`, {
@@ -113,7 +138,20 @@ export async function GET(request: Request) {
       contentType: 'audio/mpeg',
     });
 
-    return NextResponse.json({ url: blobResult.url }, { status: 200 });
+    after(async () => {
+      // const creditsToReduce = await calculateCreditsToReduce(output);
+      // reduce the number of credits
+      await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+    });
+
+    return NextResponse.json(
+      {
+        url: blobResult.url,
+        creditsUsed: estimate,
+        creditsRemaining: (currentAmount || 0) - estimate,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error('Voice generation error:', error);
     if (error instanceof Error) {
@@ -125,3 +163,35 @@ export async function GET(request: Request) {
     );
   }
 }
+
+async function reduceCredits({
+  userId,
+  currentAmount,
+  amount,
+}: { userId: string; currentAmount: number; amount: number }) {
+  const supabase = await createClient();
+
+  const newAmount = (currentAmount || 0) - amount;
+
+  const { error: updateError } = await supabase
+    .from('credits')
+    .update({ amount: newAmount })
+    .eq('user_id', userId);
+
+  if (updateError) throw updateError;
+}
+
+function estimateCredits(text: string): number {
+  // Remove extra whitespace and split into words
+  const words = text.trim().split(/\s+/).length;
+
+  // Using average speaking rate of 135 words per minute (middle of 120-150 range)
+  const wordsPerSecond = 135 / 60; // 2.25 words per second
+
+  // Calculate estimated seconds (credits)
+  return Math.ceil(words / wordsPerSecond);
+}
+
+// async function calculateCreditsToReduce(output: ReadableStream<any>): Promise<number> {
+
+// }
