@@ -1,19 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, CreditCard } from 'lucide-react';
 import { CreditHistory } from './credit-history';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Check } from 'lucide-react';
 import Stripe from 'stripe';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -173,141 +164,6 @@ export default async function CreditsPage({
         publishableKey="pk_live_51OddRpJ2uQQSTCBs8qxECPQ1TtH6urXhq1mFEDBbfN82vt1aSJp8rVIgXoQHw5tW7Q7ehdPzUvPXdANnDXIGJKUx00gMcxE4S3"
         clientReferenceId={user?.id}
       />
-      {/*
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Free Plan * /}
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold">
-              {dict.credits.plans.free.name}
-            </h3>
-            <div className="flex items-baseline">
-              <span className="text-3xl font-bold">$0</span>
-              <span className="text-sm text-muted-foreground">
-                /{dict.credits.billing.forever}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {dict.credits.plans.free.description}
-            </p>
-            <Button className="w-full" variant="outline">
-              {dict.credits.plans.free.currentPlan}
-            </Button>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {dict.credits.plans.free.credits}
-              </div>
-              {dict.credits.plans.free.features.map((feature, i) => (
-                <div key={i} className="flex items-center text-sm">
-                  <Check className="mr-2 size-4" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* Starter Plan * /}
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold">
-              {dict.credits.plans.starter.name}
-            </h3>
-            <div className="flex items-baseline">
-              <span className="text-3xl font-bold">$5</span>
-              <span className="text-sm text-muted-foreground">
-                /{dict.credits.billing.monthly}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {dict.credits.plans.starter.description}
-            </p>
-            <Button className="w-full">
-              {dict.credits.plans.starter.subscribe}
-            </Button>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {dict.credits.plans.starter.credits}
-              </div>
-              {dict.credits.plans.starter.features.map((feature, i) => (
-                <div key={i} className="flex items-center text-sm">
-                  <Check className="mr-2 size-4" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* Creator Plan * /}
-        <Card className="p-6 border-green-600">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">
-                {dict.credits.plans.creator.name}
-              </h3>
-              <span className="rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
-                {dict.credits.plans.creator.popular}
-              </span>
-            </div>
-            <div className="flex items-baseline">
-              <span className="text-3xl font-bold">$11</span>
-              <span className="text-sm text-muted-foreground">
-                /{dict.credits.billing.monthly}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {dict.credits.plans.creator.description}
-            </p>
-            <Button className="w-full" variant="default">
-              {dict.credits.plans.creator.subscribe}
-            </Button>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {dict.credits.plans.creator.credits}
-              </div>
-              {dict.credits.plans.creator.features.map((feature, i) => (
-                <div key={i} className="flex items-center text-sm">
-                  <Check className="mr-2 size-4" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        {/* Pro Plan * /}
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold">
-              {dict.credits.plans.pro.name}
-            </h3>
-            <div className="flex items-baseline">
-              <span className="text-3xl font-bold">$99</span>
-              <span className="text-sm text-muted-foreground">
-                /{dict.credits.billing.monthly}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {dict.credits.plans.pro.description}
-            </p>
-            <Button className="w-full">
-              {dict.credits.plans.pro.subscribe}
-            </Button>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {dict.credits.plans.pro.credits}
-              </div>
-              {dict.credits.plans.pro.features.map((feature, i) => (
-                <div key={i} className="flex items-center text-sm">
-                  <Check className="mr-2 size-4" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div> */}
     </div>
   );
 }

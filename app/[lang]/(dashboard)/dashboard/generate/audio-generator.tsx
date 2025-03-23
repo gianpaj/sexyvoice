@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 // import { Slider } from '@/components/ui/slider';
 import {
   Card,
@@ -11,9 +11,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Play, Pause, RotateCcw, Download } from "lucide-react";
-import { toast } from "sonner";
+} from '@/components/ui/card';
+import { Play, Pause, RotateCcw, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AudioGeneratorProps {
   credits: number;
@@ -24,7 +24,7 @@ export function AudioGenerator({
   credits,
   selectedVoice,
 }: AudioGeneratorProps) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   // const [speed, setSpeed] = useState([1]);
   // const [pitch, setPitch] = useState([1]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -33,7 +33,7 @@ export function AudioGenerator({
 
   const handleGenerate = async () => {
     if (!text.trim()) {
-      toast.error("Please enter text to generate");
+      toast.error('Please enter text to generate');
       return;
     }
 
@@ -44,7 +44,7 @@ export function AudioGenerator({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to generate audio");
+        throw new Error('Failed to generate audio');
       }
 
       const { url } = await response.json();
@@ -52,7 +52,7 @@ export function AudioGenerator({
       const newAudio = new Audio(url);
       // newAudio.playbackRate = speed[0];
 
-      newAudio.addEventListener("ended", () => {
+      newAudio.addEventListener('ended', () => {
         setIsPlaying(false);
       });
 
@@ -62,9 +62,9 @@ export function AudioGenerator({
       newAudio.play();
       setIsPlaying(true);
 
-      toast.success("Audio generated successfully");
+      toast.success('Audio generated successfully');
     } catch (error) {
-      toast.error("Failed to generate audio");
+      toast.error('Failed to generate audio');
     } finally {
       setIsGenerating(false);
     }
@@ -88,7 +88,7 @@ export function AudioGenerator({
       URL.revokeObjectURL(audio.src);
       setAudio(null);
     }
-    setText("");
+    setText('');
     // setSpeed([1]);
     // setPitch([1]);
     setIsPlaying(false);
@@ -97,10 +97,10 @@ export function AudioGenerator({
   const downloadAudio = () => {
     if (!audio) return;
 
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = audio.src;
-    link.download = "generated_audio.mp3";
-    link.target = "_blank";
+    link.download = 'generated_audio.mp3';
+    link.target = '_blank';
     link.click();
   };
 
@@ -125,7 +125,7 @@ export function AudioGenerator({
           <Button
             onClick={handleGenerate}
             disabled={isGenerating || !text.trim() || !selectedVoice}
-            className={` ${isGenerating ? "text-white" : ""}`}
+            className={` ${isGenerating ? 'text-white' : ''}`}
             size="lg"
           >
             {isGenerating ? (
@@ -144,7 +144,7 @@ export function AudioGenerator({
                 </span>
               </span>
             ) : (
-              "Generate Audio"
+              'Generate Audio'
             )}
           </Button>
 

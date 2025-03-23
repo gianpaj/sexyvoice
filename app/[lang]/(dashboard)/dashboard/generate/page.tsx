@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+// import { getDictionary } from "@/lib/i18n/get-dictionary";
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { GenerateUI } from './generateui.client';
 
@@ -11,7 +11,7 @@ export default async function GeneratePage({
   params: { lang: Locale };
 }) {
   const supabase = createClient();
-  const dict = await getDictionary(lang);
+  // const dict = await getDictionary(lang);
 
   const {
     data: { user },

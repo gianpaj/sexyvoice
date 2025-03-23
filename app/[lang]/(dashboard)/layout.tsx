@@ -197,7 +197,7 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="lg:pl-72 min-h-screen">
-        <div className="sticky top-0 z-30 border-b">
+        <div className="sticky top-0 z-30 border-b lg:border-none">
           <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm sm:px-6 lg:px-8">
             <Button
               variant="ghost"

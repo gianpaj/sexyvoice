@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Mic2, Globe2, Shield, Sparkles, Play } from 'lucide-react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { VoiceGenerator } from '@/components/voice-generator';
+// import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 import type { Metadata } from 'next';
 
@@ -11,6 +11,7 @@ import { Header } from '@/components/header';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 import LandingHero from '@/components/landing-hero';
+import PricingTable from '@/components/pricing-table';
 
 // export const metadata: Metadata = {
 //   title: 'SexyVoice.ai - AI Voice Cloning Platform',
@@ -116,7 +117,7 @@ export default async function LandingPage({
           </div>
 
           {/* Voice Generator Section */}
-          <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
+          {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">
                 {dict.landing.generator.title}
@@ -127,7 +128,7 @@ export default async function LandingPage({
               dict={dict.landing.generator}
               download={dict.landing.generator.download}
             />
-          </div>
+          </div> */}
 
           {/* Popular Audios Section */}
           {/* <div className="max-w-4xl mx-auto mb-16">
@@ -141,7 +142,7 @@ export default async function LandingPage({
           </div> */}
 
           {/* Features Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 py-16">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 py-16 sm:px-28">
             <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
               <div className="size-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
                 <Mic2 className="size-6 text-blue-400" />
@@ -178,6 +179,8 @@ export default async function LandingPage({
               </p>
             </div>
           </div>
+
+          <PricingTable dict={dict} lang={lang} />
 
           {/* CTA Section */}
           <div className="text-center py-16 space-y-6">
