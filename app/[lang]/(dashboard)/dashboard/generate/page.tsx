@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 import { createClient } from '@/lib/supabase/server';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -12,9 +14,12 @@ export default async function GeneratePage({
   const dict = await getDictionary(lang);
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user;
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  if (!user || error) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   // Get user's voices
   // const { data: userVoices } = await supabase

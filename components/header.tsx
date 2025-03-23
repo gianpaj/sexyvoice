@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import { Menu } from 'lucide-react';
+
 import { createClient } from '@/lib/supabase/server';
 // import { LanguageSelector } from './language-selector';
-import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

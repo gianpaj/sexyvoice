@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 export function SignUpForm({

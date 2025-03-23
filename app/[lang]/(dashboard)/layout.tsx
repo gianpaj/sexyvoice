@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/supabase';
+import { createClient } from '@/lib/supabase/client';
 import {
   LogOut,
   Menu,
@@ -17,10 +17,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Crisp } from 'crisp-sdk-web';
-
-if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-  Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
-}
 
 export default function DashboardLayout({
   children,
@@ -41,7 +37,7 @@ export default function DashboardLayout({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const fn = async () => {
+    const sendCrispData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
       // Get user's credits
@@ -62,7 +58,10 @@ export default function DashboardLayout({
       });
     };
 
-    fn();
+    if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
+      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
+      sendCrispData();
+    }
   }, []);
 
   const navigation = [
