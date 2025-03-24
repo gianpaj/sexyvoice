@@ -18,21 +18,15 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Crisp } from 'crisp-sdk-web';
 
-export default function DashboardLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ lang: string }>;
-  }
-) {
+export default function DashboardLayout(props: {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}) {
   const params = use(props.params);
 
-  const {
-    lang
-  } = params;
+  const { lang } = params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
@@ -207,7 +201,7 @@ export default function DashboardLayout(
       {/* Main content */}
       <div className="lg:pl-72 min-h-screen">
         <div className="sticky top-0 z-30 border-b lg:border-none">
-          <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm lg:shadow-none sm:px-6 lg:px-8">
             <Button
               variant="ghost"
               size="icon"

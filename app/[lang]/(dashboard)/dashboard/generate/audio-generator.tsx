@@ -111,7 +111,6 @@ export function AudioGenerator({
     <Card>
       <CardHeader>
         <CardTitle>Generate Audio</CardTitle>
-        <CardDescription>Available credits: {credits}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
@@ -167,7 +166,6 @@ export function AudioGenerator({
                 <Button variant="outline" size="icon" onClick={downloadAudio}>
                   <Download className="size-4" />
                 </Button>
-                <p>Credits Used: {creditsUsed}</p>
               </>
             )}
           </div>

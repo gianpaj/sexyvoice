@@ -224,29 +224,6 @@ export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
             step={0.1}
             className="py-2"
           />
-          <div className="flex justify-between text-sm text-gray-300">
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-            <span
-              className="cursor-pointer hover:text-white"
-              onClick={() => setSpeed([0.5])}
-            >
-              0.5x
-            </span>
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-            <span
-              className="ml-[-33.3%] cursor-pointer hover:text-white"
-              onClick={() => setSpeed([1.0])}
-            >
-              1x
-            </span>
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
-            <span
-              className="cursor-pointer hover:text-white"
-              onClick={() => setSpeed([2.0])}
-            >
-              2x
-            </span>
-          </div>
         </div>
       </div>
 

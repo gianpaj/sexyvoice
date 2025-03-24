@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const supabase = await createClient();
 
-    // WE should use redis for this. no need for auth
+    // WE should use redis (@vercel/kv) for this. no need for auth
     const { data: audioFiles, error } = await supabase
       .from('audio_files')
       .select(

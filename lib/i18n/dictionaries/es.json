@@ -46,7 +46,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Comienza con 10,000 créditos gratis!",
+      "freeCredits": "Comienza con 10,000 créditos gratis",
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para sus necesidades de clonación de voz.",
       "action": "Crea Tu Primera Voz"
@@ -89,7 +89,7 @@
         "name": "Gratis",
         "description": "Para personas que quieren probar el audio de IA más avanzado.",
         "currentPlan": "Plan Actual",
-        "credits": "10,000 créditos por mes (~10 min de audio)",
+        "credits": "10,000 créditos (~10 min de audio)",
         "features": [
           "Genera voz con voces únicas",
           "Traduce contenido con doblaje automático",

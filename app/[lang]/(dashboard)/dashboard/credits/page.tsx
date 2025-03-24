@@ -71,6 +71,11 @@ export default async function CreditsPage(props: {
     .eq('user_id', user?.id)
     .single();
 
+  // Get user's plan and initial credits
+  const initialCredits = 10000; // Initial credits for free plan
+  const creditsSpent = initialCredits - (credits?.amount || 0);
+  const creditsRemaining = credits?.amount || 0;
+
   // const products = await getStripeProducts();
 
   return (
@@ -107,20 +112,31 @@ export default async function CreditsPage(props: {
       </div> */}
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {dict.credits.availableCredits}
-            </CardTitle>
-            <CreditCard className="size-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{credits?.amount || 0}</div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {dict.credits.creditsUsage}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Credit Banner */}
+        {credits && (
+          <div className="rounded-lg bg-blue-500 p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <span className="text-xl font-medium">
+                  You are currently on the free offer
+                </span>
+              </div>
+              {/* <Button className="bg-white text-blue-500 hover:bg-white/90">
+              Add credits
+            </Button> */}
+            </div>
+            <div className="w-full bg-blue-400/40 rounded-full h-2 mb-2">
+              <div
+                className="bg-white h-2 rounded-full"
+                style={{ width: `${(creditsSpent / initialCredits) * 100}%` }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>{creditsSpent.toLocaleString()} credits spent</span>
+              <span>{creditsRemaining.toLocaleString()} credits remaining</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* {products.map((product) => (

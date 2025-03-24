@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { addInitialCredits } from '@/lib/supabase/queries.client';
 
 export function SignUpForm({
   dict,
@@ -13,7 +14,6 @@ export function SignUpForm({
 }: { dict: Record<string, string>; lang: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
@@ -23,39 +23,47 @@ export function SignUpForm({
     setIsLoading(true);
     setError(null);
 
-    const { error: signUpError, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: {
-          username,
+    try {
+      const { error: signUpError, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          // data: {
+          //   username,
+          // },
         },
-      },
-    });
+      });
 
-    setIsLoading(false);
-    if (signUpError || !data.user) {
-      console.error(signUpError, data);
-      // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
-      if (signUpError?.message.includes('already registered')) {
-        // setError(
-        //   'An account with this email already exists. Please login instead.',
-        // );
-      } else {
-        setError(signUpError?.message || dict.error);
+      setIsLoading(false);
+      if (signUpError || !data.user) {
+        console.error(signUpError, data);
+        // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
+        if (signUpError?.message.includes('already registered')) {
+          // setError(
+          //   'An account with this email already exists. Please login instead.',
+          // );
+        } else {
+          setError(signUpError?.message || dict.error);
+        }
+        return;
       }
-      return;
-    }
 
-    toast.success(dict.signupSuccess, {
-      duration: 60000,
-      cancel: (
-        <Button variant="outline" size="sm" onClick={() => toast.dismiss()}>
-          Ok
-        </Button>
-      ),
-    });
+      // add 10_000 credits to the user's account
+      await addInitialCredits(data.user.id);
+
+      toast.success(dict.signupSuccess, {
+        duration: 60000,
+        cancel: (
+          <Button variant="outline" size="sm" onClick={() => toast.dismiss()}>
+            Ok
+          </Button>
+        ),
+      });
+    } catch (error) {
+      setIsLoading(false);
+      setError(dict.error || 'Error creating account');
+    }
   };
 
   return (
@@ -69,13 +77,6 @@ export function SignUpForm({
           required
           autoFocus
           autoComplete="email"
-        />
-        <Input
-          type="text"
-          placeholder={dict.username}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
         />
         <Input
           type="password"
