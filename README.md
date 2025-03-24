@@ -13,15 +13,15 @@
 
 ## Features
 
-- Generate AI voices in multiple languages (English & Spanish)
+<!-- - Generate AI voices in multiple languages (English & Spanish) -->
 - Voice selection system with customizable options
 - Public library of generated voices ranked by usage and votes
-- Credit-based usage system (TODO)
-- User authentication and profile management
+- Credit-based usage system
+- User authentication and profile management (Google, Facebook and Apple login coming soon)
 
-## Back-end Python API
+<!-- ## Back-end Python API -->
 
-- [OpenVoice](https://github.com/myshell-ai/OpenVoice) running on [Hyperstack](https://www.hyperstack.cloud/)
+<!-- - [OpenVoice](https://github.com/myshell-ai/OpenVoice) running on [Hyperstack](https://www.hyperstack.cloud/) -->
 
 ## Tech Stack
 

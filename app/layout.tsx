@@ -6,7 +6,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SexyVoice.ai - AI Voice Cloning Platform',
+  title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
   description:
     'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
 };

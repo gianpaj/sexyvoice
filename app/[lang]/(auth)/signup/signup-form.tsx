@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
-import { addInitialCredits } from '@/lib/supabase/queries.client';
 
 export function SignUpForm({
   dict,
@@ -49,9 +48,6 @@ export function SignUpForm({
         return;
       }
 
-      // add 10_000 credits to the user's account
-      await addInitialCredits(data.user.id);
-
       toast.success(dict.signupSuccess, {
         duration: 60000,
         cancel: (
@@ -63,6 +59,24 @@ export function SignUpForm({
     } catch (error) {
       setIsLoading(false);
       setError(dict.error || 'Error creating account');
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    const { error, data } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message || dict.error);
+      setIsLoading(false);
+      return;
     }
   };
 
@@ -92,6 +106,15 @@ export function SignUpForm({
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Loading...' : dict.submit}
+      </Button>
+
+      <Button
+        onClick={loginWithGoogle}
+        variant="outline"
+        className="w-full"
+        disabled={isLoading}
+      >
+        Sign up with Google
       </Button>
 
       <p className="text-center text-sm text-gray-600">

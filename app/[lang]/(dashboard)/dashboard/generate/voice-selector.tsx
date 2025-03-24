@@ -42,9 +42,7 @@ export function VoiceSelector({
       <CardHeader>
         {/* TODO: translate */}
         <CardTitle>Select Voice</CardTitle>
-        <CardDescription>
-          Choose from your voices or explore public ones
-        </CardDescription>
+        <CardDescription>Choose from public voices</CardDescription>
       </CardHeader>
       <CardContent>
         <Select value={selectedVoice} onValueChange={setSelectedVoice}>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+// import GoogleOneTap from '@/components/google-one-tab';
 
 export function LoginForm({
   dict,
@@ -38,6 +39,24 @@ export function LoginForm({
     router.refresh();
   };
 
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message || dict.error);
+      setIsLoading(false);
+      return;
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -64,6 +83,15 @@ export function LoginForm({
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Loading...' : dict.submit}
+      </Button>
+
+      <Button
+        onClick={loginWithGoogle}
+        variant="outline"
+        className="w-full"
+        disabled={isLoading}
+      >
+        Login with Google
       </Button>
 
       <p className="text-center text-sm text-gray-600">
