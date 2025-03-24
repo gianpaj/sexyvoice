@@ -47,7 +47,7 @@
     "@supabase/supabase-js": "^2.39.3",
     "@vercel/analytics": "^1.4.1",
     "@vercel/blob": "^0.19.0",
-    "@vercel/speed-insights": "^1.1.0",
+    "@vercel/speed-insights": "^1.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
