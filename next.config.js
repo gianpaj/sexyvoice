@@ -6,19 +6,23 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
         port: '',
-        pathname: '**'
+        pathname: '**',
       },
       {
         protocol: 'https',
         hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
-        port: ''
-      }
-    ]
+        port: '',
+      },
+    ],
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  images: { unoptimized: true },
+  // images: { unoptimized: true },
 };
 
-module.exports = nextConfig;
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+module.exports = withBundleAnalyzer(nextConfig);

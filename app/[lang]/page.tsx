@@ -5,7 +5,6 @@ import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
-import type { Metadata } from 'next';
 
 import { Header } from '@/components/header';
 import { AudioPreviewCard } from '@/components/audio-preview-card';

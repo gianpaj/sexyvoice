@@ -9,11 +9,13 @@
     "preview": "next build && next start",
     "type-check": "tsc --noEmit",
     "format:write": "pnpm run format:check --write",
-    "format:check": "biome format ./app components hooks lib middleware.ts"
+    "format:check": "biome format ./app components hooks lib middleware.ts",
+    "analyse": "ANALYZE=true next build"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.5.10",
     "@lottiefiles/dotlottie-react": "^0.13.2",
+    "@next/bundle-analyzer": "^15.2.4",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -60,9 +62,8 @@
     "nanoid": "^5.0.9",
     "negotiator": "^1.0.0",
     "next": "15.2.3",
-    "next-themes": "^0.3.0",
+    "next-themes": "^0.4.6",
     "react": "19.0.0",
-    "react-day-picker": "^8.10.1",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.53.0",
     "react-resizable-panels": "^2.1.3",
@@ -74,7 +75,6 @@
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.3.3",
-    "vaul": "^0.9.9",
     "wavesurfer.js": "^7.9.0"
   },
   "devDependencies": {
@@ -85,9 +85,6 @@
     "@types/react-dom": "19.0.4",
     "@types/react-syntax-highlighter": "^15.5.11",
     "autoprefixer": "^10.4.17",
-    "eslint-config-next": "15.2.3",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-tailwindcss": "^3.14.0",
     "postcss": "^8.4.33",
     "prettier": "^3.2.4",
     "prettier-plugin-tailwindcss": "^0.5.12"
