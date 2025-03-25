@@ -53,3 +53,9 @@ Open [localhost:3000](http://localhost:3000/).
 ```bash
 supabase db push
 ```
+
+## Tests
+
+```bash
+npx tsx --test --watch lib/utils.test.ts
+```

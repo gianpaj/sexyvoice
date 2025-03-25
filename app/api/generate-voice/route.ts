@@ -125,7 +125,7 @@ export async function GET(request: Request) {
       voice,
       // top_p: 0.95,
       // temperature: 0.6,
-      // max_new_tokens: 1200,
+      // max_new_tokens: 1200, // max is 2000
       // repetition_penalty: 1.1
     };
     let predictionResult: Prediction | undefined;

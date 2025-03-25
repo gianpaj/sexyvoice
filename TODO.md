@@ -4,6 +4,7 @@
 - Stripe subscription adds credits!
 - Add Terms and Conditions
 - Add Privacy Policy
+- Add a Share page for individual generated audio files
 - Add Blog
 
 ## Features
