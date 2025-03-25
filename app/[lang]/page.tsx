@@ -10,8 +10,12 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/header';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
-import LandingHero from '@/components/landing-hero';
+// import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
+
+import { lazy } from 'react';
+
+const LandingHero = lazy(() => import('@/components/landing-hero'));
 
 // Sample audio preview data
 const sampleAudios = [
@@ -190,11 +194,13 @@ export default async function LandingPage(props: {
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               {dict.landing.cta.subtitle}
             </p>
-            <Link href={`/${lang}/signup`}>
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 mt-4">
-                {dict.landing.cta.action}
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 mt-4"
+              asChild
+            >
+              <Link href={`/${lang}/signup`}>{dict.landing.cta.action}</Link>
+            </Button>
           </div>
         </div>
       </div>

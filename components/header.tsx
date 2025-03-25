@@ -33,12 +33,12 @@ export async function Header({ lang }: { lang: string }) {
             </Link>
           ) : (
             <div className="space-x-4">
-              <Link href={`/${lang}/login`}>
-                <Button variant="secondary">Login</Button>
-              </Link>
-              <Link href={`/${lang}/signup`}>
-                <Button variant="default">Sign Up</Button>
-              </Link>
+              <Button variant="secondary" asChild>
+                <Link href={`/${lang}/login`}>Login</Link>
+              </Button>
+              <Button variant="default" asChild>
+                <Link href={`/${lang}/signup`}>Sign Up</Link>
+              </Button>
             </div>
           )}
         </div>

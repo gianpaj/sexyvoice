@@ -6,6 +6,11 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NODE_ENV === 'production'
+      ? 'https://sexyvoice.ai'
+      : 'http://localhost:3000',
+  ),
   title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
   description:
     'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
@@ -16,6 +21,13 @@ export const metadata: Metadata = {
     description:
       'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
     images: [{ url: '/sexyvoice.ai-og-image.jpg' }],
+  },
+  alternates: {
+    canonical: '/',
+    languages: {
+      en: '/en',
+      es: '/es',
+    },
   },
 };
 

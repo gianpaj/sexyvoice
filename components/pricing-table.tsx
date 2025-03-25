@@ -64,14 +64,13 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
               </span>
             </div>
             <p className="text-sm text-muted-foreground">{plan.description}</p>
-            <Link href={`/${lang}/signup`}>
-              <Button
-                className="w-full my-4"
-                variant={plan.buttonVariant as 'outline' | 'default'}
-              >
-                {plan.buttonText}
-              </Button>
-            </Link>
+            <Button
+              className="w-full my-4"
+              asChild
+              variant={plan.buttonVariant as 'outline' | 'default'}
+            >
+              <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
+            </Button>
             <div className="space-y-2">
               <div className="text-sm font-medium">{plan.credits}</div>
               {/* @ts-ignore */}

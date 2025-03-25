@@ -49,6 +49,7 @@ export function AudioPreviewCard({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">{name}</h3>
         <Button
+          aria-label={isPlaying ? 'Pause' : 'Play'}
           onClick={togglePlay}
           variant="outline"
           size="icon"
