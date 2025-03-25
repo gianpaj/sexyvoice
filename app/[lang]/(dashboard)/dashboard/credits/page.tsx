@@ -65,6 +65,10 @@ export default async function CreditsPage(props: {
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
+  if (!user) {
+    throw new Error('User not found');
+  }
+
   const { data: credits } = await supabase
     .from('credits')
     .select('amount')
@@ -76,7 +80,15 @@ export default async function CreditsPage(props: {
   const creditsSpent = initialCredits - (credits?.amount || 0);
   const creditsRemaining = credits?.amount || 0;
 
-  // const products = await getStripeProducts();
+  const { data: credit_transactions } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  const plan = credit_transactions?.findLast((t) => t.type === 'freemium')
+    ? 'free'
+    : 'paid';
 
   return (
     <div className="space-y-8">
@@ -111,14 +123,14 @@ export default async function CreditsPage(props: {
         </ToggleGroup>
       </div> */}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid md:grid-cols-2">
         {/* Credit Banner */}
         {credits && (
           <div className="rounded-lg bg-blue-500 p-6 text-white">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <span className="text-xl font-medium">
-                  You are currently on the free offer
+                  You are currently on the {plan} offer
                 </span>
               </div>
               {/* <Button className="bg-white text-blue-500 hover:bg-white/90">

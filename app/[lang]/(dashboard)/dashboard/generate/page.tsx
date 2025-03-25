@@ -54,30 +54,32 @@ export default async function GeneratePage(props: {
 
   return (
     <div className="space-y-8">
-      {credits && (
-        <div className="rounded-lg bg-blue-500 p-6 text-white">
-          <div className="flex items-center justify-between mb-4 w-50">
-            <div className="flex items-center">
-              <span className="text-xl font-medium">
-                You are currently on the {plan} offer
-              </span>
+      <div className="grid gap-6 md:grid-cols-2">
+        {credits && (
+          <div className="rounded-lg bg-blue-500 p-6 text-white">
+            <div className="flex items-center justify-between mb-4 w-50">
+              <div className="flex items-center">
+                <span className="text-xl font-medium">
+                  You are currently on the {plan} offer
+                </span>
+              </div>
+              {/* <Button className="bg-white text-blue-500 hover:bg-white/90">
+                Add credits
+              </Button> */}
             </div>
-            {/* <Button className="bg-white text-blue-500 hover:bg-white/90">
-              Add credits
-            </Button> */}
+            <div className="w-full bg-blue-400/40 rounded-full h-2 mb-2">
+              <div
+                className="bg-white h-2 rounded-full"
+                style={{ width: `${(4 / credits?.amount) * 100}%` }}
+              />
+            </div>
+            <div className="flex justify-between">
+              <span>{credits?.amount.toLocaleString()} credits spent</span>
+              <span>{credits?.amount.toLocaleString()} credits remaining</span>
+            </div>
           </div>
-          <div className="w-full bg-blue-400/40 rounded-full h-2 mb-2">
-            <div
-              className="bg-white h-2 rounded-full"
-              style={{ width: `${(4 / credits?.amount) * 100}%` }}
-            />
-          </div>
-          <div className="flex justify-between">
-            <span>{credits?.amount.toLocaleString()} credits spent</span>
-            <span>{credits?.amount.toLocaleString()} credits remaining</span>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Generate Audio</h2>
         <p className="text-muted-foreground">
