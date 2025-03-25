@@ -59,3 +59,51 @@ export async function getVoiceIdByName(
 
   return data?.[0]?.id;
 }
+
+export async function reduceCredits({
+  userId,
+  currentAmount,
+  amount,
+}: { userId: string; currentAmount: number; amount: number }) {
+  const supabase = await createClient();
+
+  const newAmount = (currentAmount || 0) - amount;
+
+  const { error: updateError } = await supabase
+    .from('credits')
+    .update({ amount: newAmount })
+    .eq('user_id', userId);
+
+  if (updateError) throw updateError;
+}
+
+export async function saveAudioFile({
+  userId,
+  filename,
+  text,
+  url,
+  isPublic,
+  voiceId,
+  duration,
+}: {
+  userId: string;
+  filename: string;
+  text: string;
+  url: string;
+  isPublic: boolean;
+  voiceId: string;
+  duration: string;
+}) {
+  const supabase = await createClient();
+
+  return await supabase.from('audio_files').insert({
+    user_id: userId,
+    storage_key: filename,
+    text_content: text,
+    url: url,
+    is_public: isPublic,
+    voice_id: voiceId,
+    duration: duration,
+    // credits_used: estimate,
+  });
+}

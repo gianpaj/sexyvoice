@@ -3,7 +3,12 @@ import { put, list } from '@vercel/blob';
 import Replicate, { Prediction } from 'replicate';
 
 import { createClient } from '@/lib/supabase/server';
-import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
+import {
+  getCredits,
+  getVoiceIdByName,
+  reduceCredits,
+  saveAudioFile,
+} from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import { APIError } from '@/lib/error-ts';
 
@@ -94,8 +99,10 @@ export async function GET(request: Request) {
     // Generate hash for the combination of text, voice, and accent
     const hash = await generateHash(text, voice);
 
+    const path = `audio/${voice}-${hash}`;
+
     // Check if audio file already exists
-    const { blobs } = await list({ prefix: `audio/${voice}-${hash}` });
+    const { blobs } = await list({ prefix: path });
 
     if (blobs.length > 0) {
       // Return existing audio file URL
@@ -143,7 +150,7 @@ export async function GET(request: Request) {
       throw new Error(output.error || 'Voice generation failed');
     }
 
-    const filename = `audio/${voice}-${hash}.wav`;
+    const filename = `${path}.wav`;
 
     // await replicate.predictions.cancel(prediction.id);
 
@@ -155,8 +162,26 @@ export async function GET(request: Request) {
 
     after(async () => {
       // const creditsToReduce = await calculateCreditsToReduce(output);
-      // reduce the number of credits
+
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+
+      const audioFileDBResult = await saveAudioFile({
+        userId: user.id,
+        filename,
+        text,
+        url: blobResult.url,
+        isPublic: false,
+        voiceId,
+        duration: '-1',
+        // credits_used: estimate,
+      });
+
+      if (audioFileDBResult.error) {
+        console.error(
+          'Failed to insert audio file row:',
+          audioFileDBResult.error,
+        );
+      }
     });
 
     return NextResponse.json(
@@ -177,23 +202,6 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
-}
-
-async function reduceCredits({
-  userId,
-  currentAmount,
-  amount,
-}: { userId: string; currentAmount: number; amount: number }) {
-  const supabase = await createClient();
-
-  const newAmount = (currentAmount || 0) - amount;
-
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: newAmount })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
 }
 
 // async function calculateCreditsToReduce(output: ReadableStream<any>): Promise<number> {
