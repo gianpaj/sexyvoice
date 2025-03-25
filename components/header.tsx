@@ -28,16 +28,20 @@ export async function Header({ lang }: { lang: string }) {
           {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
 
           {user ? (
-            <Link href={`/${lang}/dashboard`}>
+            <Link href={`/${lang}/dashboard`} prefetch>
               <Button variant="default">Dashboard</Button>
             </Link>
           ) : (
             <div className="space-x-4">
               <Button variant="secondary" asChild>
-                <Link href={`/${lang}/login`}>Login</Link>
+                <Link href={`/${lang}/login`} prefetch>
+                  Login
+                </Link>
               </Button>
               <Button variant="default" asChild>
-                <Link href={`/${lang}/signup`}>Sign Up</Link>
+                <Link href={`/${lang}/signup`} prefetch>
+                  Sign Up
+                </Link>
               </Button>
             </div>
           )}
@@ -56,19 +60,19 @@ export async function Header({ lang }: { lang: string }) {
               {/* <LanguageSelector isMobile currentLang={lang} /> */}
               {user ? (
                 <DropdownMenuItem asChild>
-                  <Link href={`/${lang}/dashboard`} className="w-full">
+                  <Link href={`/${lang}/dashboard`} className="w-full" prefetch>
                     Dashboard
                   </Link>
                 </DropdownMenuItem>
               ) : (
                 <>
                   <DropdownMenuItem asChild>
-                    <Link href={`/${lang}/login`} className="w-full">
+                    <Link href={`/${lang}/login`} className="w-full" prefetch>
                       Login
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/${lang}/signup`} className="w-full">
+                    <Link href={`/${lang}/signup`} className="w-full" prefetch>
                       Sign Up
                     </Link>
                   </DropdownMenuItem>

@@ -72,6 +72,10 @@ export default async function LandingPage(props: {
 
   return (
     <>
+      <link
+        rel="preconnect"
+        href="https://https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
+      />
       <Header lang={lang} />
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <div className="container mx-auto px-4">
