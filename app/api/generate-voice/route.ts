@@ -4,6 +4,7 @@ import Replicate, { Prediction } from 'replicate';
 
 import { createClient } from '@/lib/supabase/server';
 import { getCredits } from '@/lib/supabase/queries';
+import { estimateCredits } from '@/lib/utils';
 
 // const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
 
@@ -179,17 +180,6 @@ async function reduceCredits({
     .eq('user_id', userId);
 
   if (updateError) throw updateError;
-}
-
-function estimateCredits(text: string): number {
-  // Remove extra whitespace and split into words
-  const words = text.trim().split(/\s+/).length;
-
-  // Using average speaking rate of 135 words per minute (middle of 120-150 range)
-  const wordsPerSecond = 135 / 60; // 2.25 words per second
-
-  // Calculate estimated seconds (credits)
-  return Math.ceil(words / wordsPerSecond);
 }
 
 // async function calculateCreditsToReduce(output: ReadableStream<any>): Promise<number> {
