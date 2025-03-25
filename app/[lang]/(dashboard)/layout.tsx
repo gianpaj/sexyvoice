@@ -43,19 +43,21 @@ export default function DashboardLayout(props: {
     const sendCrispData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
+      if (!user) return;
       // Get user's credits
       // const { data: credits } = await supabase
       //   .from('credits')
       //   .select('amount')
       //   .eq('user_id', user?.id)
       //   .single();
+      user.email && Crisp.user.setEmail(user.email);
+      user.user_metadata.full_name ||
+        (user.user_metadata.username &&
+          Crisp.user.setNickname(
+            user.user_metadata.full_name || user.user_metadata.username,
+          ));
       Crisp.session.setData({
-        user_id: user?.id,
-        name:
-          user?.user_metadata.full_name ||
-          user?.user_metadata.username ||
-          'Guest',
-        email: user?.email,
+        user_id: user.id,
         // credits: credits?.amount || 0,
         // plan
       });
