@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
   description:
     'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
+  openGraph: {
+    title: 'SexyVoice.ai',
+    siteName: 'SexyVoice.ai',
+    url: 'https://sexyvoice.ai',
+    description:
+      'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
+    images: [{ url: '/sexyvoice.ai-og-image.jpg' }],
+  },
 };
 
 export default function RootLayout({

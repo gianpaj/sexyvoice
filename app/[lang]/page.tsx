@@ -13,12 +13,6 @@ import Footer from '@/components/footer';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 
-// export const metadata: Metadata = {
-//   title: 'SexyVoice.ai - AI Voice Cloning Platform',
-//   description:
-//     'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
-// };
-
 // Sample audio preview data
 const sampleAudios = [
   // {
@@ -64,16 +58,12 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   // },
 ];
 
-export default async function LandingPage(
-  props: {
-    params: Promise<{ lang: Locale }>;
-  }
-) {
+export default async function LandingPage(props: {
+  params: Promise<{ lang: Locale }>;
+}) {
   const params = await props.params;
 
-  const {
-    lang
-  } = params;
+  const { lang } = params;
 
   const dict = await getDictionary(lang);
 
