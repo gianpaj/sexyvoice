@@ -3,8 +3,9 @@ import { put, list } from '@vercel/blob';
 import Replicate, { Prediction } from 'replicate';
 
 import { createClient } from '@/lib/supabase/server';
-import { getCredits } from '@/lib/supabase/queries';
+import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
+import { APIError } from '@/lib/error-ts';
 
 // const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
 
@@ -30,8 +31,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const text = searchParams.get('text');
     const voice = searchParams.get('voice');
-    // const accent = searchParams.get('accent');
-    // const speed = searchParams.get('speed') || '1.0';
+
+    // if (request.body === null) {
+    //   return new Response('Request body is empty', { status: 400 });
+    // }
 
     if (!text || !voice) {
       return NextResponse.json(
@@ -42,7 +45,12 @@ export async function GET(request: Request) {
 
     if (text.length > 500) {
       return NextResponse.json(
-        { error: 'Text exceeds the maximum length of 500 characters' },
+        new APIError(
+          'Text exceeds the maximum length of 500 characters',
+          new Response('Text exceeds the maximum length of 500 characters', {
+            status: 400,
+          }),
+        ),
         { status: 400 },
       );
     }
@@ -56,11 +64,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
+    const voiceId = await getVoiceIdByName(voice);
+
+    if (!voiceId) {
+      return NextResponse.json(
+        new APIError(
+          'Voice not found',
+          new Response('Voice not found', {
+            status: 400,
+          }),
+        ),
+        { status: 404 },
+      );
+    }
+
     const currentAmount = await getCredits(user.id);
 
     const estimate = estimateCredits(text);
 
-    console.log({ estimate });
+    // console.log({ estimate });
 
     if (currentAmount < estimate) {
       return NextResponse.json(
@@ -75,10 +97,10 @@ export async function GET(request: Request) {
     // Check if audio file already exists
     const { blobs } = await list({ prefix: `audio/${voice}-${hash}` });
 
-    // if (blobs.length > 0) {
-    //   // Return existing audio file URL
-    //   return NextResponse.json({ url: blobs[0].url }, { status: 200 });
-    // }
+    if (blobs.length > 0) {
+      // Return existing audio file URL
+      return NextResponse.json({ url: blobs[0].url }, { status: 200 });
+    }
 
     // If no existing file found, generate new audio
     // const response = await fetch(`${VOICE_API_URL}`, {
@@ -120,15 +142,7 @@ export async function GET(request: Request) {
       // @ts-ignore
       throw new Error(output.error || 'Voice generation failed');
     }
-    // if (!response.ok) {
-    //   const errorData = await response.json();
-    //   console.error({
-    //     text,
-    //     voice,
-    //     errorData,
-    //   });
-    //   throw new Error(errorData.detail || "Voice generation failed");
-    // }
+
     const filename = `audio/${voice}-${hash}.wav`;
 
     // await replicate.predictions.cancel(prediction.id);

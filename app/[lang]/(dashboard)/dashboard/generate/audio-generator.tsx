@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/card';
 import { Play, Pause, RotateCcw, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { APIError } from '@/lib/error-ts';
+import { ApiError } from 'next/dist/server/api-utils';
 
 interface AudioGeneratorProps {
   credits: number;
@@ -45,14 +47,15 @@ export function AudioGenerator({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to generate audio');
+        const error: APIError = await response.json();
+
+        throw new APIError(error.serverMessage, response);
       }
 
       const { url, creditsRemaining, creditsUsed } = await response.json();
       setCreditsUsed(creditsUsed);
 
       const newAudio = new Audio(url);
-      // newAudio.playbackRate = speed[0];
 
       newAudio.addEventListener('ended', () => {
         setIsPlaying(false);
@@ -65,9 +68,12 @@ export function AudioGenerator({
       setIsPlaying(true);
 
       toast.success('Audio generated successfully');
-      // TODO fetch credits remaining
     } catch (error) {
-      toast.error('Failed to generate audio');
+      if (error instanceof APIError) {
+        toast.error(error.message || 'Failed to generate audio');
+      } else {
+        toast.error('Failed to generate audio');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -160,10 +166,20 @@ export function AudioGenerator({
                     <Play className="size-4" />
                   )}
                 </Button>
-                <Button variant="outline" size="icon" onClick={resetForm}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Reset form"
+                  onClick={resetForm}
+                >
                   <RotateCcw className="size-4" />
                 </Button>
-                <Button variant="outline" size="icon" onClick={downloadAudio}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  title="Download audio"
+                  onClick={downloadAudio}
+                >
                   <Download className="size-4" />
                 </Button>
               </>

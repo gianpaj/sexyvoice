@@ -42,3 +42,20 @@ export async function addInitialCredits(userId: string): Promise<void> {
     console.error('Error adding initial credits:', error);
   }
 }
+
+export async function getVoiceIdByName(
+  voiceName: string,
+  isPublic = true,
+): Promise<string> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select('id, name, language')
+    .eq('name', voiceName)
+    .eq('is_public', isPublic)
+    .limit(1);
+
+  if (error) throw error;
+
+  return data?.[0]?.id;
+}
