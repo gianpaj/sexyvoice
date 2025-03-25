@@ -128,13 +128,14 @@ export async function GET(request: Request) {
       // max_new_tokens: 1200,
       // repetition_penalty: 1.1
     };
-    // const onProgress = (prediction: Prediction) => {
-    //   console.log({ prediction });
-    // };
+    let predictionResult: Prediction | undefined;
+    const onProgress = (prediction: Prediction) => {
+      predictionResult = prediction;
+    };
     const output = (await replicate.run(
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
       { input },
-      // onProgress,
+      onProgress,
     )) as ReadableStream;
 
     // console.log({ output });
@@ -170,6 +171,8 @@ export async function GET(request: Request) {
         filename,
         text,
         url: blobResult.url,
+        model: 'lucataco/orpheus-3b-0.1-ft',
+        predictionId: predictionResult?.id,
         isPublic: false,
         voiceId,
         duration: '-1',

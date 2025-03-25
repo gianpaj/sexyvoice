@@ -82,6 +82,8 @@ export async function saveAudioFile({
   filename,
   text,
   url,
+  model,
+  predictionId,
   isPublic,
   voiceId,
   duration,
@@ -90,6 +92,8 @@ export async function saveAudioFile({
   filename: string;
   text: string;
   url: string;
+  model: string;
+  predictionId?: string;
   isPublic: boolean;
   voiceId: string;
   duration: string;
@@ -101,6 +105,8 @@ export async function saveAudioFile({
     storage_key: filename,
     text_content: text,
     url: url,
+    model: model,
+    prediction_id: predictionId,
     is_public: isPublic,
     voice_id: voiceId,
     duration: duration,
