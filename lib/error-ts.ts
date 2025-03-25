@@ -1,5 +1,3 @@
-import util from 'node:util';
-
 /**
  * This error is thrown when there is an API error with a payload. The error
  * body includes the data that came in the payload plus status and a server
@@ -40,13 +38,13 @@ export class APIError extends Error {
   }
 }
 
-export function isAPIError(v: unknown): v is APIError {
-  return isError(v) && 'status' in v;
-}
+// export function isAPIError(v: unknown): v is APIError {
+//   return isError(v) && 'status' in v;
+// }
 
 /**
  * A type guard for `try...catch` errors.
  */
-export const isError = (error: unknown): error is Error => {
-  return util.types.isNativeError(error);
-};
+// export const isError = (error: unknown): error is Error => {
+//   return require('node:util').types.isNativeError(error);
+// };
