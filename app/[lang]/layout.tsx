@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google';
+
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { i18n } from '@/lib/i18n/i18n-config';
 import '../globals.css';
@@ -10,7 +11,7 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
-export default async function RootLayout(props: {
+export default async function LangLayout(props: {
   children: React.ReactNode;
   params: Promise<{ lang: Locale }>;
 }) {

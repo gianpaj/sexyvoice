@@ -1,6 +1,6 @@
 import { NextResponse, after } from 'next/server';
 import { put, list } from '@vercel/blob';
-import Replicate, { Prediction } from 'replicate';
+import Replicate, { type Prediction } from 'replicate';
 
 import { createClient } from '@/lib/supabase/server';
 import {

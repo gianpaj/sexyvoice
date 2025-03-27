@@ -8,14 +8,13 @@ import { Label } from '@/components/ui/label';
 import {
   Card,
   CardContent,
-  CardDescription,
+  // CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Play, Pause, RotateCcw, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { APIError } from '@/lib/error-ts';
-import { ApiError } from 'next/dist/server/api-utils';
 
 interface AudioGeneratorProps {
   credits: number;
@@ -98,8 +97,6 @@ export function AudioGenerator({
       setAudio(null);
     }
     setText('');
-    // setSpeed([1]);
-    // setPitch([1]);
     setIsPlaying(false);
   };
 
