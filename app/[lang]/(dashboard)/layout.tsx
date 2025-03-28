@@ -44,20 +44,21 @@ export default function DashboardLayout(props: {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const sendCrispData = async () => {
+    const sendUserAnalyticsData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
       if (!user) return;
+      // Get user's credits
+      const { data: credits } = await supabase
+        .from('credits')
+        .select('amount')
+        .eq('user_id', user?.id)
+        .single();
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
+        creditsLeft: credits?.amount || 0,
       });
-      // Get user's credits
-      // const { data: credits } = await supabase
-      //   .from('credits')
-      //   .select('amount')
-      //   .eq('user_id', user?.id)
-      //   .single();
       user.email && Crisp.user.setEmail(user.email);
       user.user_metadata.full_name ||
         (user.user_metadata.username &&
@@ -66,14 +67,14 @@ export default function DashboardLayout(props: {
           ));
       Crisp.session.setData({
         user_id: user.id,
-        // credits: credits?.amount || 0,
+        creditsLeft: credits?.amount || 0,
         // plan
       });
     };
 
     if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
       Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
-      sendCrispData();
+      sendUserAnalyticsData();
     }
   }, []);
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { VoiceSelector } from './voice-selector';
-import { AudioGenerator } from './audio-generator';
+import { VoiceSelector } from '@/components/voice-selector';
+import { AudioGenerator } from '@/components/audio-generator';
 import { useState } from 'react';
 
 const publicVoices = [
@@ -92,7 +92,7 @@ export const GenerateUI = ({ credits }: Props) => {
       <VoiceSelector
         setSelectedVoice={setSelectedVoice}
         selectedVoice={selectedVoice}
-        userVoices={[]}
+        // userVoices={[]}
         publicVoices={publicVoices || []}
       />
       <AudioGenerator

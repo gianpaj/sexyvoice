@@ -1,12 +1,10 @@
-// 'use client';
-
 import type { Dispatch, SetStateAction } from 'react';
 import {
   Select,
   SelectContent,
-  SelectGroup,
+  // SelectGroup,
   SelectItem,
-  SelectLabel,
+  // SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -27,12 +25,12 @@ interface Voice {
 }
 
 export function VoiceSelector({
-  userVoices,
+  // userVoices,
   publicVoices,
   selectedVoice,
   setSelectedVoice,
 }: {
-  userVoices: Voice[];
+  // userVoices: Voice[];
   publicVoices: Voice[];
   selectedVoice: string;
   setSelectedVoice: Dispatch<SetStateAction<string>>;

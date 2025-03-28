@@ -1,6 +1,8 @@
+import { lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Mic2, Globe2, Shield, Sparkles, Play } from 'lucide-react';
+
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
@@ -11,8 +13,6 @@ import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 // import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
-
-import { lazy } from 'react';
 
 const LandingHero = lazy(() => import('@/components/landing-hero'));
 
@@ -76,7 +76,9 @@ export default async function LandingPage(props: {
         rel="preconnect"
         href="https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
       />
-      <Header lang={lang} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Header lang={lang} />
+      </Suspense>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
         <div className="container mx-auto px-4">
           {/* Hero Section */}
