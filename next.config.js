@@ -1,3 +1,20 @@
+/**
+ * Content Security Policy Header - Without Nonce
+ * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
+ */
+const cspHeader = `
+    default-src 'self' https://bfaqdyadcpaetelvpbva.supabase.co https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://client.crisp.chat;
+    style-src 'self' 'unsafe-inline' https://client.crisp.chat;
+    img-src 'self' blob: data:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+`;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -37,6 +54,30 @@ const nextConfig = {
     ];
   },
   skipTrailingSlashRedirect: true,
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: cspHeader.replace(/\n/g, ''),
+          },
+          {
+            // prevents the browser from attempting to guess the type of content if the `Content-Type` header is not explicitly set.
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          // header is not necessary on Vercel
+          // {
+          //   // browser should only access using HTTPS, for 2 years
+          //   key: 'Strict-Transport-Security',
+          //   value: 'max-age=63072000; includeSubDomains; preload',
+          // },
+        ],
+      },
+    ];
+  },
 };
 
 const withBundleAnalyzer = require('@next/bundle-analyzer')({

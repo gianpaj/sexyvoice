@@ -31,3 +31,8 @@
 - Implement rate limiting to prevent abuse.
 - Block temporary email addresses.
 - Add Cloudflare Captcha protection.
+
+## Maintenance
+
+- add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
+- Sentry monitoring
