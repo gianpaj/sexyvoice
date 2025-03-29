@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, use } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { PostHogProvider } from '@/components/PostHogProvider';
@@ -8,18 +8,33 @@ import { PostHogProvider } from '@/components/PostHogProvider';
 import { createClient } from '@/lib/supabase/client';
 import {
   LogOut,
-  Menu,
-  X,
-  // Mic2,
   CreditCard,
-  User,
+  User2,
   BarChart3,
   Wand2,
+  ChevronUp,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { Crisp } from 'crisp-sdk-web';
 import { usePostHog } from 'posthog-js/react';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function DashboardLayout(props: {
   children: React.ReactNode;
@@ -31,7 +46,6 @@ export default function DashboardLayout(props: {
 
   const { children } = props;
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const supabase = createClient();
   const router = useRouter();
@@ -103,130 +117,98 @@ export default function DashboardLayout(props: {
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
     },
-    {
-      name: 'Profile',
-      href: `/${lang}/dashboard/profile`,
-      icon: User,
-      current: pathname === `/${lang}/dashboard/profile`,
-    },
   ];
 
   return (
     <PostHogProvider>
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800">
-        {/* Mobile sidebar */}
-        <div className="lg:hidden">
-          <div
-            className="fixed inset-0 z-40 bg-gray-900/80"
-            aria-hidden="true"
-            style={{ display: sidebarOpen ? 'block' : 'none' }}
-          />
-
-          <div
-            className={cn(
-              'fixed inset-0 z-40 flex transition-transform duration-300 ease-in-out',
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-            )}
-          >
-            <div className="relative flex w-72 flex-col">
-              <div className="flex h-16 items-center justify-between px-6">
-                <span className="text-xl font-semibold">SexyVoice.ai</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <X className="size-6" />
-                </Button>
-              </div>
-
-              <div className="flex-1 space-y-1 p-4">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
-                      item.current
-                        ? 'bg-gray-200 text-gray-900'
-                        : 'text-gray-200 hover:bg-gray-50 hover:text-gray-900',
-                    )}
+      <div className="bg-background min-h-screen">
+        <SidebarProvider defaultOpen>
+          <Sidebar collapsible="icon">
+            <SidebarHeader>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
                   >
-                    <item.icon className="mr-3 size-5" />
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
+                    <div className="flex aspect-square size-4 group-data-[collapsible=icon]:size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                      <span className="text-xl font-semibold">S</span>
+                    </div>
+                    {/* <div className="flex h-16 items-center px-6"> */}
+                    <span className="text-xl font-semibold">exyVoice.ai</span>
+                    {/* </div> */}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarHeader>
 
-              <div className="border-t p-4">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="mr-3 size-5" />
-                  Sign out
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navigation.map((item) => (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton
+                          isActive={item.current}
+                          tooltip={item.name}
+                          asChild
+                        >
+                          <Link href={item.href}>
+                            <item.icon className="mr-3 size-5" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
 
-        {/* Desktop sidebar */}
-        <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-          <div className="flex grow flex-col border-r">
-            <div className="flex h-16 items-center px-6">
-              <span className="text-xl font-semibold">SexyVoice.ai</span>
-            </div>
-
-            <div className="flex-1 space-y-1 p-4">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center rounded-lg px-4 py-3 text-sm font-medium',
-                    item.current
-                      ? 'bg-gray-200 text-gray-900'
-                      : 'text-gray-200 hover:bg-gray-50 hover:text-gray-900',
-                  )}
-                >
-                  <item.icon className="mr-3 size-5" />
-                  {item.name}
-                </Link>
-              ))}
-            </div>
-
-            <div className="border-t p-4">
-              <Button
+            <SidebarFooter>
+              {/* <Button
                 variant="ghost"
-                className="w-full justify-start text-grey-900 hover:bg-grey-50 hover:text-grey-700"
+                className="w-full justify-start text-gray-200 hover:bg-gray-50 hover:text-gray-900"
                 onClick={handleSignOut}
               >
                 <LogOut className="mr-3 size-5" />
                 Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
+              </Button> */}
 
-        {/* Main content */}
-        <div className="lg:pl-72 min-h-screen">
-          <div className="sticky sm:relative top-0 z-30 border-b lg:border-none">
-            <div className="flex h-16 items-center gap-x-4 px-4 shadow-sm lg:shadow-none sm:px-6 lg:px-8">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden"
-              >
-                <Menu className="size-6" />
-              </Button>
-            </div>
-          </div>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton>
+                        <User2 /> Profile
+                        <ChevronUp className="ml-auto" />
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      side="top"
+                      className="w-[--radix-popper-anchor-width]"
+                    >
+                      <DropdownMenuItem asChild>
+                        <Link href={`/${lang}/dashboard/profile`}>Profile</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleSignOut}>
+                        <span>Sign out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarFooter>
+          </Sidebar>
 
-          <main className="px-4 py-8 sm:px-6 lg:px-8">{children}</main>
-        </div>
+          <div className="flex flex-col flex-1 w-full">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b lg:border-none px-4 sm:px-6 lg:px-8">
+              <SidebarTrigger className="lg:hidden" />
+            </div>
+
+            <main className="px-4 py-8 sm:px-6 lg:px-8 flex-1">{children}</main>
+          </div>
+        </SidebarProvider>
       </div>
     </PostHogProvider>
   );

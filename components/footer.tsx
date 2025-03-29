@@ -58,6 +58,16 @@ function Footer() {
             <p className="text-sm text-muted-foreground">
               © 2025 SexyVoice.ai. All rights reserved.
             </p>
+            <p className="text-sm text-muted-foreground mt-4">
+              <a
+                href="https://sexyvoice.checkly-dashboards.com/"
+                className="hover:text-primary underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Status page
+              </a>
+            </p>
           </div>
         </div>
       </div>
