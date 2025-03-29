@@ -6,9 +6,10 @@ const cspHeader = `
     default-src 'self' https://bfaqdyadcpaetelvpbva.supabase.co https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com;
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://client.crisp.chat https://js.stripe.com https://vercel.live;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
-    img-src 'self' blob: data:;
+    img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
     font-src 'self';
     object-src 'none';
+    frame-src 'self' https://js.stripe.com;
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
