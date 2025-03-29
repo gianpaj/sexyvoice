@@ -57,5 +57,9 @@ supabase db push
 ## Tests
 
 ```bash
-npx tsx --test --watch lib/utils.test.ts
+npm run test
+```
+
+```bash
+npm run test --watch
 ```
