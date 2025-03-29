@@ -27,7 +27,7 @@ export async function middleware(req: NextRequest) {
       pathname !== `/${locale}`,
   );
 
-  // console.log({ pathnameIsMissingLocale });
+  // console.log({ pathnameIsMissingLocale, pathname });
 
   // Redirect if there is no locale
   if (pathnameIsMissingLocale) {

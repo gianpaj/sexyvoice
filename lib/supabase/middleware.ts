@@ -12,7 +12,7 @@ const routesPerLocale = (routes: string[]): string[] => {
 };
 
 const publicRoutes = [
-  '/api/generate-voice',
+  '/api/health',
   '/auth/callback',
   ...routesPerLocale(['/', '/signup', '/login']),
 ];
@@ -40,8 +40,7 @@ export const updateSession = async (request: NextRequest) => {
     }
 
     if (!user && !isPublicRoute) {
-      // If there's no session and trying to access a protected route,
-      // redirect to the login page
+      // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
       return NextResponse.redirect(new URL('/', request.url));
     }
 
