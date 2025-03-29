@@ -4,6 +4,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test": "tsx --test lib/utils.test.ts",
     "lint": "biome lint",
     "lint:fix": "biome lint --write",
     "preview": "next build && next start",
