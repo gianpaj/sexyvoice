@@ -1,8 +1,8 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Analytics } from '@vercel/analytics/next';
-import { Inter } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -41,7 +41,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         {children}
-        {process.env.NODE_ENVODE_ENV === 'production' && (
+        {process.env.NODE_ENV === 'production' && (
           <>
             <Analytics debug={false} />
             <SpeedInsights debug={false} />
