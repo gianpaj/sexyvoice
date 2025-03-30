@@ -35,4 +35,4 @@
 ## Maintenance
 
 - add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
-- Sentry monitoring
+- Sentry monitoring with Posthog error linking <https://posthog.com/docs/libraries/node#sentry-integration>

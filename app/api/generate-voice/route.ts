@@ -11,8 +11,11 @@ import {
 } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import { APIError } from '@/lib/error-ts';
+import PostHogClient from '@/lib/posthog';
 
 // const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
+
+const MODEL = 'lucataco/orpheus-3b-0.1-ft';
 
 async function generateHash(
   text: string,
@@ -171,7 +174,7 @@ export async function GET(request: Request) {
         filename,
         text,
         url: blobResult.url,
-        model: 'lucataco/orpheus-3b-0.1-ft',
+        model: MODEL,
         predictionId: predictionResult?.id,
         isPublic: false,
         voiceId,
@@ -185,6 +188,21 @@ export async function GET(request: Request) {
           audioFileDBResult.error,
         );
       }
+      const posthog = PostHogClient();
+
+      posthog.capture({
+        distinctId: user.id,
+        event: 'generate-voice',
+        properties: {
+          // duration,
+          predictionId: predictionResult?.id,
+          model: MODEL,
+          text,
+          voiceId,
+          credits_used: estimate,
+        },
+      });
+      await posthog.shutdown();
     });
 
     return NextResponse.json(
