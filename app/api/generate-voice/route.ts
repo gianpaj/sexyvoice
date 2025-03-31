@@ -107,6 +107,12 @@ export async function POST(request: Request) {
     const { blobs } = await list({ prefix: path });
 
     if (blobs.length > 0) {
+      await sendPosthogEvent({
+        userId: user.id,
+        text,
+        voiceId,
+        creditUsed: 0,
+      });
       // Return existing audio file URL
       return NextResponse.json({ url: blobs[0].url }, { status: 200 });
     }
@@ -187,21 +193,14 @@ export async function POST(request: Request) {
           audioFileDBResult.error,
         );
       }
-      const posthog = PostHogClient();
 
-      posthog.capture({
-        distinctId: user.id,
-        event: 'generate-voice',
-        properties: {
-          // duration,
-          predictionId: predictionResult?.id,
-          model: MODEL,
-          text,
-          voiceId,
-          credits_used: estimate,
-        },
+      await sendPosthogEvent({
+        userId: user.id,
+        predictionId: predictionResult?.id,
+        text,
+        voiceId,
+        creditUsed: estimate,
       });
-      await posthog.shutdown();
     });
 
     return NextResponse.json(
@@ -222,6 +221,35 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+async function sendPosthogEvent({
+  userId,
+  text,
+  voiceId,
+  predictionId,
+  creditUsed,
+}: {
+  userId: string;
+  text: string;
+  voiceId: string;
+  predictionId?: string;
+  creditUsed: number;
+}) {
+  const posthog = PostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: 'generate-voice',
+    properties: {
+      // duration,
+      predictionId: predictionId,
+      model: MODEL,
+      text,
+      voiceId,
+      credits_used: creditUsed,
+    },
+  });
+  await posthog.shutdown();
 }
 
 // async function calculateCreditsToReduce(output: ReadableStream<any>): Promise<number> {
