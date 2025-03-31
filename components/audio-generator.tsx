@@ -42,7 +42,7 @@ export function AudioGenerator({
 
     setIsGenerating(true);
     try {
-      const response = await fetch(`/api/generate-voice`, {
+      const response = await fetch('/api/generate-voice', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,7 +57,9 @@ export function AudioGenerator({
       }
 
       const { url, creditsRemaining, creditsUsed } = await response.json();
-      setCreditsUsed(creditsUsed);
+
+      // creditsUsed is undefined if the audio was previously generated
+      creditsUsed && setCreditsUsed(creditsUsed);
 
       const newAudio = new Audio(url);
 
