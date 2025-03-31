@@ -130,7 +130,7 @@ export default function DashboardLayout(props: {
                     size="lg"
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
                   >
-                    <div className="flex aspect-square size-4 group-data-[collapsible=icon]:size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
+                    <div className="flex aspect-square size-auto group-data-[collapsible=icon]:size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
                       <span className="text-xl font-semibold">S</span>
                     </div>
                     {/* <div className="flex h-16 items-center px-6"> */}
