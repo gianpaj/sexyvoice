@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import {
   Card,
@@ -15,6 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from './ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 interface Voice {
   id: string;
@@ -39,7 +47,28 @@ export function VoiceSelector({
     <Card>
       <CardHeader>
         {/* TODO: translate */}
-        <CardTitle>Select Voice</CardTitle>
+        <CardTitle className="flex flex-row">
+          Select Voice
+          <TooltipProvider>
+            <Tooltip delayDuration={100} supportMobileTap>
+              <TooltipTrigger asChild>
+                <Button
+                  className="h-auto w-auto self-end pb-[2px]"
+                  variant="link"
+                  size="icon"
+                >
+                  <Info className="w-4 h-4 ml-2" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Model: Orpheus-TTS (text-to-speech AI model) - Commercial use
+                  ✔️
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </CardTitle>
         <CardDescription>Choose from public voices</CardDescription>
       </CardHeader>
       <CardContent>
