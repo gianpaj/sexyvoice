@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { createClient } from './server';
 import { i18n } from '@/lib/i18n/i18n-config';
+import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] => {
   return i18n.locales.flatMap((locale) =>

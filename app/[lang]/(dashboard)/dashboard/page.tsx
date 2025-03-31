@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
+import { CreditCard, Mic2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic2, CreditCard } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function DashboardPage(props: {
   params: Promise<{ lang: Locale }>;

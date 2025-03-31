@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+import { Globe2, Lock, MoreVertical, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -10,16 +12,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Globe2, Lock, MoreVertical, Trash2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
+import { createClient } from '@/lib/supabase/client';
 
 interface Voice {
   id: string;
@@ -33,7 +33,10 @@ interface Voice {
 export function VoicesList({
   voices,
   lang,
-}: { voices: Voice[]; lang: string }) {
+}: {
+  voices: Voice[];
+  lang: string;
+}) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();

@@ -64,7 +64,11 @@ export async function reduceCredits({
   userId,
   currentAmount,
   amount,
-}: { userId: string; currentAmount: number; amount: number }) {
+}: {
+  userId: string;
+  currentAmount: number;
+  amount: number;
+}) {
   const supabase = await createClient();
 
   const newAmount = (currentAmount || 0) - amount;

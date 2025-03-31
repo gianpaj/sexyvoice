@@ -1,9 +1,8 @@
 import { Check } from 'lucide-react';
-
-import type { Locale } from '@/lib/i18n/i18n-config';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
 import Link from 'next/link';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
 
 async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
   const { credits } = dict;

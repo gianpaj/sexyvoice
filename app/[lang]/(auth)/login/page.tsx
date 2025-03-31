@@ -1,18 +1,14 @@
+import { Header } from '@/components/header';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LoginForm } from './login-form';
-import { Header } from '@/components/header';
 
-export default async function LoginPage(
-  props: {
-    params: Promise<{ lang: Locale }>;
-  }
-) {
+export default async function LoginPage(props: {
+  params: Promise<{ lang: Locale }>;
+}) {
   const params = await props.params;
 
-  const {
-    lang
-  } = params;
+  const { lang } = params;
 
   const dict = await getDictionary(lang);
 

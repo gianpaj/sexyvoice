@@ -1,12 +1,12 @@
+import { Languages } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Languages } from 'lucide-react';
 
 const languages = [
   { code: 'en', label: 'English' },

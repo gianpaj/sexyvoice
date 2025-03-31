@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { createClient } from '@/lib/supabase/server';
+import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { addInitialCredits } from '@/lib/supabase/queries';
-import PostHogClient from '@/lib/posthog';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   // The `/auth/callback` route is required for the server-side auth flow implemented

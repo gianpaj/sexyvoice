@@ -1,13 +1,14 @@
-import { createClient } from '@/lib/supabase/server';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
-import type { Locale } from '@/lib/i18n/i18n-config';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, CreditCard } from 'lucide-react';
-import { CreditHistory } from './credit-history';
-import Stripe from 'stripe';
+import { CreditCard, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Script from 'next/script';
+import Stripe from 'stripe';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { createClient } from '@/lib/supabase/server';
+import { CreditHistory } from './credit-history';
+
 // Types
 interface StripeProduct {
   id: string;

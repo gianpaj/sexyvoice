@@ -1,7 +1,7 @@
 'use client';
 
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { createClient } from '@/lib/supabase/client';
 
 interface CreditTransaction {
   id: string;

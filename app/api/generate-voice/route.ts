@@ -1,17 +1,17 @@
-import { NextResponse, after } from 'next/server';
-import { put, list } from '@vercel/blob';
+import { list, put } from '@vercel/blob';
+import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { createClient } from '@/lib/supabase/server';
+import { APIError } from '@/lib/error-ts';
+import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
   getVoiceIdByName,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
-import { APIError } from '@/lib/error-ts';
-import PostHogClient from '@/lib/posthog';
 
 // const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
 
@@ -34,15 +34,14 @@ async function generateHash(
     .slice(0, 8);
 }
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const text = searchParams.get('text');
-    const voice = searchParams.get('voice');
+    const body = await request.json();
 
-    // if (request.body === null) {
-    //   return new Response('Request body is empty', { status: 400 });
-    // }
+    if (request.body === null) {
+      return new Response('Request body is empty', { status: 400 });
+    }
+    const { text, voice } = body;
 
     if (!text || !voice) {
       return NextResponse.json(

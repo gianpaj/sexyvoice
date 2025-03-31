@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { Menu } from 'lucide-react';
+import Link from 'next/link';
 
-import { createClient } from '@/lib/supabase/server';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { createClient } from '@/lib/supabase/server';
 
 export async function Header({ lang }: { lang: string }) {
   const supabase = await createClient();

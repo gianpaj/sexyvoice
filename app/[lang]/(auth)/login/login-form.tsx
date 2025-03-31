@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 // import GoogleOneTap from '@/components/google-one-tab';
 
 export function LoginForm({
   dict,
   lang,
-}: { dict: Record<string, string>; lang: string }) {
+}: {
+  dict: Record<string, string>;
+  lang: string;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

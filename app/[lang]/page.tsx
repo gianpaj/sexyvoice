@@ -1,16 +1,16 @@
-import { lazy, Suspense } from 'react';
+import { Globe2, Mic2, Play, Shield, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic2, Globe2, Shield, Sparkles, Play } from 'lucide-react';
 
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import { Header } from '@/components/header';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
+import { Header } from '@/components/header';
 // import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 

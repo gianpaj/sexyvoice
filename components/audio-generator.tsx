@@ -1,9 +1,10 @@
 'use client';
 
+import { Download, Pause, Play, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 // import { Slider } from '@/components/ui/slider';
 import {
   Card,
@@ -12,8 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Play, Pause, RotateCcw, Download } from 'lucide-react';
-import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { APIError } from '@/lib/error-ts';
 
 interface AudioGeneratorProps {
@@ -41,9 +42,13 @@ export function AudioGenerator({
 
     setIsGenerating(true);
     try {
-      const response = await fetch(
-        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=${selectedVoice}`,
-      );
+      const response = await fetch(`/api/generate-voice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, voice: selectedVoice }),
+      });
 
       if (!response.ok) {
         const error: APIError = await response.json();

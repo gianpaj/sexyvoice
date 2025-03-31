@@ -1,6 +1,3 @@
-import { createClient } from '@/lib/supabase/server';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
-import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   Card,
   CardContent,
@@ -10,6 +7,9 @@ import {
 } from '@/components/ui/card';
 // import { ProfileForm } from './profile-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { createClient } from '@/lib/supabase/server';
 import { SecurityForm } from './security-form';
 
 export default async function ProfilePage(props: {

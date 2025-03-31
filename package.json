@@ -6,11 +6,11 @@
     "start": "next start",
     "test": "tsx --test lib/utils.test.ts",
     "lint": "biome lint",
-    "lint:fix": "biome lint --write",
+    "lint:fix": "biome lint --write ./app components hooks lib middleware.ts",
     "preview": "next build && next start",
     "type-check": "tsc --noEmit",
     "format:write": "pnpm run format:check --write",
-    "format:check": "biome format ./app components hooks lib middleware.ts",
+    "format:check": "biome check ./app components hooks lib middleware.ts",
     "analyse": "ANALYZE=true next build"
   },
   "dependencies": {
@@ -82,7 +82,7 @@
     "wavesurfer.js": "^7.9.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "2.0.0-beta.1",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^20.11.6",
     "@types/react": "19.0.12",

@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { i18n } from './lib/i18n/i18n-config';
 import { match as matchLocale } from '@formatjs/intl-localematcher';
-import { updateSession } from '@/lib/supabase/middleware';
 import Negotiator from 'negotiator';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
+import { i18n } from './lib/i18n/i18n-config';
 
 function getLocale(request: NextRequest): string {
   const negotiatorHeaders = Object.fromEntries(

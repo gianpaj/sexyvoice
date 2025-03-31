@@ -1,8 +1,8 @@
 'use client';
 
-import { VoiceSelector } from '@/components/voice-selector';
-import { AudioGenerator } from '@/components/audio-generator';
 import { useState } from 'react';
+import { AudioGenerator } from '@/components/audio-generator';
+import { VoiceSelector } from '@/components/voice-selector';
 
 const publicVoices = [
   // {

@@ -1,11 +1,11 @@
-import { test, describe } from 'node:test';
 import assert from 'node:assert';
+import { describe, test } from 'node:test';
 
 import { estimateCredits } from './utils';
 
-// This model costs approximately $0.0089 to run on Replicate, or 112 runs per $1
+// This model costs approximately $0.015 to run on Replicate, or 66 runs per $1
 //
-// if 5 USD = 10000 credits, and 0.01 USD per run
+// if 5 USD = 10000 credits, and 0.025 USD per run
 //
 // e.g. 26sec run for 22 audio ()
 

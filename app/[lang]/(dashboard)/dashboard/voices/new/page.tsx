@@ -1,10 +1,17 @@
 'use client';
 
-import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { use, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -13,25 +20,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/client';
 
-export default function NewVoicePage(
-  props: {
-    params: Promise<{ lang: string }>;
-  }
-) {
+export default function NewVoicePage(props: {
+  params: Promise<{ lang: string }>;
+}) {
   const params = use(props.params);
 
-  const {
-    lang
-  } = params;
+  const { lang } = params;
 
   const [name, setName] = useState('');
   const [language, setLanguage] = useState('');

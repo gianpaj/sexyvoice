@@ -1,22 +1,22 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { Download, Pause, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import WaveSurfer from 'wavesurfer.js';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectGroup,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Download } from 'lucide-react';
-import { toast } from 'sonner';
-import WaveSurfer from 'wavesurfer.js';
+import { Textarea } from '@/components/ui/textarea';
 
 const publicVoices = [
   {

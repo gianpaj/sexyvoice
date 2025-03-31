@@ -1,21 +1,25 @@
 'use client';
 
-import { useEffect, use } from 'react';
+import { Crisp } from 'crisp-sdk-web';
+import {
+  BarChart3,
+  ChevronUp,
+  CreditCard,
+  LogOut,
+  User2,
+  Wand2,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { PostHogProvider } from '@/components/PostHogProvider';
-
-import { createClient } from '@/lib/supabase/client';
-import {
-  LogOut,
-  CreditCard,
-  User2,
-  BarChart3,
-  Wand2,
-  ChevronUp,
-} from 'lucide-react';
-import { Crisp } from 'crisp-sdk-web';
 import { usePostHog } from 'posthog-js/react';
+import { use, useEffect } from 'react';
+import { PostHogProvider } from '@/components/PostHogProvider';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -29,12 +33,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { createClient } from '@/lib/supabase/client';
 
 export default function DashboardLayout(props: {
   children: React.ReactNode;
