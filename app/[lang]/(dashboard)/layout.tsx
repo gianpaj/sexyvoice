@@ -4,15 +4,19 @@ import { Crisp } from 'crisp-sdk-web';
 import {
   BarChart3,
   ChevronUp,
+  Copy,
   CreditCard,
-  LogOut,
+  FileClock,
+  // Mic2,
   User2,
   Wand2,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { usePostHog } from 'posthog-js/react';
+import { useFeatureFlagEnabled, usePostHog } from 'posthog-js/react';
 import { use, useEffect } from 'react';
+
 import { PostHogProvider } from '@/components/PostHogProvider';
 import {
   DropdownMenu,
@@ -42,8 +46,6 @@ export default function DashboardLayout(props: {
   const params = use(props.params);
 
   const { lang } = params;
-
-  const { children } = props;
 
   const pathname = usePathname();
   const supabase = createClient();
@@ -91,6 +93,9 @@ export default function DashboardLayout(props: {
     }
   }, []);
 
+  // const flagEnabled = useFeatureFlagEnabled('clone-voice');
+  // console.log({ flagEnabled });
+
   const navigation = [
     {
       name: 'Dashboard',
@@ -104,12 +109,28 @@ export default function DashboardLayout(props: {
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
+    {
+      name: 'History',
+      href: `/${lang}/dashboard/history`,
+      icon: FileClock,
+      current: pathname === `/${lang}/dashboard/history`,
+    },
     // {
     //   name: 'Voices',
     //   href: `/${lang}/dashboard/voices`,
     //   icon: Mic2,
     //   current: pathname === `/${lang}/dashboard/voices`,
     // },
+    // ...(flagEnabled
+    // ? [
+    {
+      name: 'Clone',
+      href: `/${lang}/dashboard/clone`,
+      icon: Copy,
+      current: pathname === `/${lang}/dashboard/clone`,
+    },
+    //   ]
+    // : []),
     {
       name: 'Credits',
       href: `/${lang}/dashboard/credits`,
@@ -205,7 +226,9 @@ export default function DashboardLayout(props: {
               <SidebarTrigger className="lg:hidden" />
             </div>
 
-            <main className="px-4 py-8 sm:px-6 lg:px-8 flex-1">{children}</main>
+            <main className="px-4 py-8 sm:px-6 lg:px-8 flex-1">
+              {props.children}
+            </main>
           </div>
         </SidebarProvider>
       </div>

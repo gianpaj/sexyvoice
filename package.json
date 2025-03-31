@@ -49,6 +49,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.39.3",
+    "@tanstack/react-table": "^8.21.2",
     "@vercel/analytics": "^1.4.1",
     "@vercel/blob": "^0.19.0",
     "@vercel/speed-insights": "^1.2.0",

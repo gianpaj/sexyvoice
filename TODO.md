@@ -8,7 +8,6 @@
 
 ## Features
 
-- See list of generated `audio_files`
 - Clone voice
 - Try pre-cloned voices
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>

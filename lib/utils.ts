@@ -32,12 +32,19 @@ export async function fetcher<JSON = any>(
   return res.json();
 }
 
-export function formatDate(input: string | number | Date): string {
+export function formatDate(
+  input: string | number | Date,
+  { withTime = false }: { withTime?: boolean } = {},
+): string {
   const date = new Date(input);
   return date.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    ...(withTime && {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
   });
 }
 
