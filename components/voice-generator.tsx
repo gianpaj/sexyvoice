@@ -4,6 +4,7 @@ import { Download, Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import WaveSurfer from 'wavesurfer.js';
+
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 
 const publicVoices = [
@@ -68,8 +68,6 @@ interface VoiceGeneratorProps {
 export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
   const [text, setText] = useState('');
   const [selectedVoice, setSelectedVoice] = useState(publicVoices[0].voice);
-  const [speed, setSpeed] = useState([1.0]);
-  const [accent, setAccent] = useState('en-newest');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -108,16 +106,20 @@ export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
   }, [audio]);
 
   const handleGenerate = async () => {
-    if (!selectedVoice || !text.trim() || !accent) {
-      toast.error('Please select a voice, accent and enter text');
+    if (!selectedVoice || !text.trim()) {
+      toast.error('Please select a voice and enter text');
       return;
     }
 
     setIsGenerating(true);
     try {
-      const response = await fetch(
-        `/api/generate-voice?text=${encodeURIComponent(text)}&voice=${encodeURIComponent(selectedVoice)}&accent=${accent}&speed=${speed}`,
-      );
+      const response = await fetch('/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, voice: selectedVoice }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -127,7 +129,6 @@ export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
       const { url } = await response.json();
 
       const newAudio = new Audio(url);
-      newAudio.playbackRate = speed[0];
 
       newAudio.addEventListener('ended', () => {
         setIsPlaying(false);
@@ -207,24 +208,6 @@ export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
           placeholder={dict.enterText}
           className="h-32 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
         />
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label className="text-white">{dict.speed}</Label>
-
-            <span className="text-sm text-white">{speed[0].toFixed(1)}x</span>
-          </div>
-          <Slider
-            value={speed}
-            onValueChange={setSpeed}
-            min={0.5}
-            max={2}
-            step={0.1}
-            className="py-2"
-          />
-        </div>
       </div>
 
       <div className="flex justify-center">
