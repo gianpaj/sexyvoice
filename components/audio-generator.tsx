@@ -124,7 +124,6 @@ export function AudioGenerator({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label>Text to generate</Label>
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
