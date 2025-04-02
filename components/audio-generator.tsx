@@ -18,21 +18,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { APIError } from '@/lib/error-ts';
 
 interface AudioGeneratorProps {
-  credits: number;
   selectedVoice: string;
 }
 
-export function AudioGenerator({
-  credits,
-  selectedVoice,
-}: AudioGeneratorProps) {
+export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   // const [speed, setSpeed] = useState([1]);
   // const [pitch, setPitch] = useState([1]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-  const [creditsUsed, setCreditsUsed] = useState(credits);
+  // const [creditsUsed, setCreditsUsed] = useState(credits);
 
   const handleGenerate = async () => {
     if (!text.trim()) {
@@ -59,7 +55,7 @@ export function AudioGenerator({
       const { url, creditsRemaining, creditsUsed } = await response.json();
 
       // creditsUsed is undefined if the audio was previously generated
-      creditsUsed && setCreditsUsed(creditsUsed);
+      // creditsUsed && setCreditsUsed(creditsUsed);
 
       const newAudio = new Audio(url);
 

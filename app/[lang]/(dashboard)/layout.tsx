@@ -15,9 +15,11 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useFeatureFlagEnabled, usePostHog } from 'posthog-js/react';
-import { use, useEffect } from 'react';
+import { use, useEffect, useState } from 'react';
 
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +40,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { createClient } from '@/lib/supabase/client';
+import CreditsSection from '@/components/credits-section';
 
 export default function DashboardLayout(props: {
   children: React.ReactNode;
@@ -50,6 +53,10 @@ export default function DashboardLayout(props: {
   const pathname = usePathname();
   const supabase = createClient();
   const router = useRouter();
+  const [credit_transactions, setCreditTransactions] = useState<
+    CreditTransaction[] | null
+  >([]);
+  const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -59,16 +66,31 @@ export default function DashboardLayout(props: {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const sendUserAnalyticsData = async () => {
+    const getData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
       if (!user) return;
+
       // Get user's credits
       const { data: credits } = await supabase
         .from('credits')
         .select('amount')
         .eq('user_id', user?.id)
         .single();
+      setCredits(credits);
+      const { data: credit_transactions } = await supabase
+        .from('credit_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      setCreditTransactions(credit_transactions);
+    };
+
+    const sendUserAnalyticsData = async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      if (!user) return;
+
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
@@ -86,6 +108,8 @@ export default function DashboardLayout(props: {
         // plan
       });
     };
+
+    getData();
 
     if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
       Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
@@ -139,6 +163,10 @@ export default function DashboardLayout(props: {
     },
   ];
 
+  // const plan = credit_transactions?.findLast((t) => t.type === 'freemium')
+  //   ? 'free'
+  //   : 'paid';
+
   return (
     <PostHogProvider>
       <div className="bg-background min-h-screen">
@@ -186,6 +214,11 @@ export default function DashboardLayout(props: {
             </SidebarContent>
 
             <SidebarFooter>
+              <CreditsSection
+                lang={lang}
+                credits={credits?.amount || 0}
+                credit_transactions={credit_transactions || []}
+              />
               {/* <Button
                 variant="ghost"
                 className="w-full justify-start text-gray-200 hover:bg-gray-50 hover:text-gray-900"
@@ -222,7 +255,7 @@ export default function DashboardLayout(props: {
           </Sidebar>
 
           <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b lg:border-none px-4 sm:px-6 lg:px-8">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b lg:border-none px-4 sm:px-6 lg:hidden">
               <SidebarTrigger className="lg:hidden" />
             </div>
 

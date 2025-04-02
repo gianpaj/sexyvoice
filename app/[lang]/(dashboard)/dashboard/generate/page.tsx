@@ -4,12 +4,13 @@ import { NextResponse } from 'next/server';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
+import CreditsSection from '@/components/credits-section';
 
 export default async function GeneratePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  // const params = await props.params;
-  // const { lang } = params;
+  const params = await props.params;
+  const { lang } = params;
   // const dict = await getDictionary(lang);
 
   const supabase = await createClient();
@@ -21,6 +22,19 @@ export default async function GeneratePage(props: {
   if (!user || error) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Get user's credits
+  const { data: credits } = await supabase
+    .from('credits')
+    .select('amount')
+    .eq('user_id', user?.id)
+    .single();
+
+  const { data: credit_transactions } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
 
   // Get user's voices
   // const { data: userVoices } = await supabase
@@ -35,51 +49,8 @@ export default async function GeneratePage(props: {
   //   .eq('is_public', true)
   //   .neq('user_id', user?.id);
 
-  // Get user's credits
-  const { data: credits } = await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', user.id)
-    .single();
-
-  const { data: credit_transactions } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  const plan = credit_transactions?.findLast((t) => t.type === 'freemium')
-    ? 'free'
-    : 'paid';
-
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-2">
-        {credits && (
-          <div className="rounded-lg bg-blue-500 p-6 text-white">
-            <div className="flex items-center justify-between mb-4 w-50">
-              <div className="flex items-center">
-                <span className="text-xl font-medium">
-                  You are currently on the {plan} offer
-                </span>
-              </div>
-              {/* <Button className="bg-white text-blue-500 hover:bg-white/90">
-                Add credits
-              </Button> */}
-            </div>
-            <div className="w-full bg-blue-400/40 rounded-full h-2 mb-2">
-              <div
-                className="bg-white h-2 rounded-full"
-                style={{ width: `${(4 / credits?.amount) * 100}%` }}
-              />
-            </div>
-            <div className="flex justify-between">
-              <span>{credits?.amount.toLocaleString()} credits spent</span>
-              <span>{credits?.amount.toLocaleString()} credits remaining</span>
-            </div>
-          </div>
-        )}
-      </div>
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Generate Audio</h2>
         <p className="text-muted-foreground">
@@ -87,8 +58,16 @@ export default async function GeneratePage(props: {
         </p>
       </div>
 
+      <div className="lg:hidden">
+        <CreditsSection
+          lang={lang}
+          credits={credits?.amount || 0}
+          credit_transactions={credit_transactions || []}
+        />
+      </div>
+
       <div className="grid gap-6">
-        <GenerateUI credits={credits} />
+        <GenerateUI />
       </div>
     </div>
   );

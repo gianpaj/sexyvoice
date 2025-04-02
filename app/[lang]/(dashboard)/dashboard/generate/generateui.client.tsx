@@ -79,13 +79,7 @@ const publicVoices = [
   },
 ];
 
-interface Props {
-  credits: {
-    amount: number;
-  } | null;
-}
-
-export const GenerateUI = ({ credits }: Props) => {
+export const GenerateUI = () => {
   const [selectedVoice, setSelectedVoice] = useState<string>('tara');
   return (
     <div className="flex flex-col gap-6">
@@ -95,10 +89,7 @@ export const GenerateUI = ({ credits }: Props) => {
         // userVoices={[]}
         publicVoices={publicVoices || []}
       />
-      <AudioGenerator
-        selectedVoice={selectedVoice}
-        credits={credits?.amount || 0}
-      />
+      <AudioGenerator selectedVoice={selectedVoice} />
     </div>
   );
 };

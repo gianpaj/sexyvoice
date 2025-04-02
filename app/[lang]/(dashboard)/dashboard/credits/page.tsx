@@ -1,15 +1,13 @@
-import { CreditCard, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Script from 'next/script';
 import Stripe from 'stripe';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 
-// Types
 interface StripeProduct {
   id: string;
   name: string;
@@ -17,9 +15,6 @@ interface StripeProduct {
   features: string[];
   price: Stripe.Price;
 }
-
-// This makes the page dynamic instead of static
-export const revalidate = 3600; // Revalidate every hour
 
 async function getStripeProducts(): Promise<StripeProduct[]> {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -70,31 +65,10 @@ export default async function CreditsPage(props: {
     throw new Error('User not found');
   }
 
-  const { data: credits } = await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', user?.id)
-    .single();
-
-  // Get user's plan and initial credits
-  const initialCredits = 10000; // Initial credits for free plan
-  const creditsSpent = initialCredits - (credits?.amount || 0);
-  const creditsRemaining = credits?.amount || 0;
-
-  const { data: credit_transactions } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  const plan = credit_transactions?.findLast((t) => t.type === 'freemium')
-    ? 'free'
-    : 'paid';
-
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-4 lg:flex-row items-center justify-between">
+        <div className="w-full lg:w-1/2">
           <h2 className="text-3xl font-bold tracking-tight">
             {dict.credits.title}
           </h2>
@@ -123,34 +97,6 @@ export default async function CreditsPage(props: {
           </ToggleGroupItem>
         </ToggleGroup>
       </div> */}
-
-      <div className="grid md:grid-cols-2">
-        {/* Credit Banner */}
-        {credits && (
-          <div className="rounded-lg bg-blue-500 p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <span className="text-xl font-medium">
-                  You are currently on the {plan} offer
-                </span>
-              </div>
-              {/* <Button className="bg-white text-blue-500 hover:bg-white/90">
-              Add credits
-            </Button> */}
-            </div>
-            <div className="w-full bg-blue-400/40 rounded-full h-2 mb-2">
-              <div
-                className="bg-white h-2 rounded-full"
-                style={{ width: `${(creditsSpent / initialCredits) * 100}%` }}
-              />
-            </div>
-            <div className="flex justify-between">
-              <span>{creditsSpent.toLocaleString()} credits spent</span>
-              <span>{creditsRemaining.toLocaleString()} credits remaining</span>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* {products.map((product) => (
         <Card key={product.id}>
@@ -186,8 +132,7 @@ export default async function CreditsPage(props: {
 
       <div className="my-8">
         <h3 className="mb-4 text-lg font-semibold">Credit History</h3>
-        {/* @ts-ignore */}
-        <CreditHistory dict={dict} userId={user?.id} />
+        <CreditHistory dict={dict} userId={user.id} />
       </div>
 
       <NextStripePricingTable
