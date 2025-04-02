@@ -4,7 +4,7 @@ import { Crisp } from 'crisp-sdk-web';
 import {
   BarChart3,
   ChevronUp,
-  Copy,
+  // Copy,
   CreditCard,
   FileClock,
   // Mic2,
@@ -122,15 +122,15 @@ export default function DashboardLayout(props: {
     //   current: pathname === `/${lang}/dashboard/voices`,
     // },
     // ...(flagEnabled
-    // ? [
-    {
-      name: 'Clone',
-      href: `/${lang}/dashboard/clone`,
-      icon: Copy,
-      current: pathname === `/${lang}/dashboard/clone`,
-    },
-    //   ]
-    // : []),
+    //   ? [
+    //       {
+    //         name: 'Clone',
+    //         href: `/${lang}/dashboard/clone`,
+    //         icon: Copy,
+    //         current: pathname === `/${lang}/dashboard/clone`,
+    //       },
+    //     ]
+    //   : []),
     {
       name: 'Credits',
       href: `/${lang}/dashboard/credits`,
