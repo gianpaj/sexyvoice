@@ -1,4 +1,4 @@
-import { Info } from 'lucide-react';
+import { Info, Volume2 } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import {
   Card,
@@ -23,14 +23,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
-
-interface Voice {
-  id: string;
-  name: string;
-  voice: string;
-  language: string;
-  is_public: boolean;
-}
+import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
+import { capitalizeFirstLetter } from '@/lib/utils';
 
 export function VoiceSelector({
   // userVoices,
@@ -43,6 +37,10 @@ export function VoiceSelector({
   selectedVoice: string;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
 }) {
+  const selectedVoiceSample = publicVoices.find(
+    (file) => file.name === selectedVoice,
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -71,7 +69,7 @@ export function VoiceSelector({
         </CardTitle>
         <CardDescription>Choose from public voices</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <Select value={selectedVoice} onValueChange={setSelectedVoice}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
@@ -89,12 +87,24 @@ export function VoiceSelector({
             )} */}
             {publicVoices.length > 0 &&
               publicVoices.map((voice) => (
-                <SelectItem key={voice.id} value={voice.voice}>
-                  {voice.name} ({voice.language})
+                <SelectItem key={voice.id} value={voice.name}>
+                  {capitalizeFirstLetter(voice.name)} ({voice.language})
                 </SelectItem>
               ))}
           </SelectContent>
         </Select>
+        {selectedVoiceSample?.sample_url && (
+          <div className="flex items-center justify-between p-4 border rounded-md lg:w-1/2">
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                Selected audio sample<br/>
+                Prompt: <i>Hi there, my name is {capitalizeFirstLetter(selectedVoice)}, nice to meet you {'<giggle>'}</i>
+              </p>
+            </div>
+
+            <AudioPlayer url={selectedVoiceSample.sample_url} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

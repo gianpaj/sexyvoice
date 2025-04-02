@@ -62,3 +62,7 @@ export function estimateCredits(text: string): number {
   // Calculate estimated seconds (credits) by 2.5
   return Math.ceil((words / wordsPerSecond) * 2.5);
 }
+
+export function capitalizeFirstLetter(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}

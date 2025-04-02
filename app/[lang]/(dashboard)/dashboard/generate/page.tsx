@@ -43,11 +43,14 @@ export default async function GeneratePage(props: {
   //   .eq('user_id', user?.id);
 
   // Get public voices
-  // const { data: publicVoices } = await supabase
-  //   .from('voices')
-  //   .select('*')
-  //   .eq('is_public', true)
-  //   .neq('user_id', user?.id);
+  const { data: publicVoices } = await supabase
+    .from('voices')
+    .select('*')
+    .eq('is_public', true);
+
+  if (!publicVoices) {
+    return <div>No public voices found</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -67,7 +70,7 @@ export default async function GeneratePage(props: {
       </div>
 
       <div className="grid gap-6">
-        <GenerateUI />
+        <GenerateUI publicVoices={publicVoices} />
       </div>
     </div>
   );
