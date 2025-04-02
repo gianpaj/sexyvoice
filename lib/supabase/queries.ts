@@ -113,7 +113,7 @@ export async function saveAudioFile({
     prediction_id: predictionId,
     is_public: isPublic,
     voice_id: voiceId,
-    duration: duration,
+    duration: Number.parseFloat(duration),
     // credits_used: estimate,
   });
 }

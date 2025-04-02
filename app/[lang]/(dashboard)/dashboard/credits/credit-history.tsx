@@ -12,17 +12,6 @@ import {
 } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 
-interface CreditTransaction {
-  id: string;
-  amount: number;
-  type: 'purchase' | 'usage' | 'subscription';
-  description: string;
-  created_at: string;
-  status?: string;
-  current_period_end?: number;
-  current_period_start?: number;
-}
-
 interface StripeTransaction {
   id: string;
   amount: number;
