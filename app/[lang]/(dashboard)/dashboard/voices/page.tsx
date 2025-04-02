@@ -14,10 +14,13 @@ export default async function VoicesPage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang);
+  // const dict = await getDictionary(lang);
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
+  if (!user) {
+    return <div>Not logged in</div>;
+  }
 
   const { data: voices } = await supabase
     .from('voices')

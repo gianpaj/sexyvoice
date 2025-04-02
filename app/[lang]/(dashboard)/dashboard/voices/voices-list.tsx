@@ -21,15 +21,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { createClient } from '@/lib/supabase/client';
 
-interface Voice {
-  id: string;
-  name: string;
-  language: string;
-  is_public: boolean;
-  is_nsfw: boolean;
-  created_at: string;
-}
-
 export function VoicesList({
   voices,
   lang,
@@ -118,7 +109,7 @@ export function VoicesList({
               <div className="flex items-center justify-between">
                 <span className="text-sm">Public access</span>
                 <Switch
-                  checked={voice.is_public}
+                  checked={voice.is_public|| undefined}
                   onCheckedChange={(checked) =>
                     handlePrivacyToggle(voice.id, checked)
                   }
@@ -126,12 +117,12 @@ export function VoicesList({
                 />
               </div>
 
-              <div className="text-sm text-muted-foreground">
+              {voice.created_at && <div className="text-sm text-muted-foreground">
                 Created{' '}
                 {formatDistanceToNow(new Date(voice.created_at), {
                   addSuffix: true,
                 })}
-              </div>
+              </div>}
             </div>
           </CardContent>
         </Card>

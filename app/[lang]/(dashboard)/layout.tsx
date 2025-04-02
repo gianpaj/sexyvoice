@@ -1,6 +1,7 @@
 'use client';
 
 import { Crisp } from 'crisp-sdk-web';
+import Image from 'next/image';
 import {
   BarChart3,
   ChevronUp,
@@ -17,9 +18,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useFeatureFlagEnabled, usePostHog } from 'posthog-js/react';
 import { use, useEffect, useState } from 'react';
 
+import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import { PostHogProvider } from '@/components/PostHogProvider';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -177,10 +177,10 @@ export default function DashboardLayout(props: {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0 items-end"
                   >
-                    <div className="flex aspect-square size-auto group-data-[collapsible=icon]:size-8 items-center justify-center rounded-lg text-sidebar-primary-foreground">
-                      <span className="text-xl font-semibold">S</span>
+                    <div className="aspect-square group-data-[collapsible=icon]:size-9">
+                      <Image src={logoSmall} alt="Logo" width={221/8} height={292/8} />
                     </div>
                     {/* <div className="flex h-16 items-center px-6"> */}
                     <span className="text-xl font-semibold">exyVoice.ai</span>
