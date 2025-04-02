@@ -46,6 +46,7 @@ export function CreditHistory({
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClient();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     async function loadTransactions() {
       if (!userId) return;
@@ -59,77 +60,67 @@ export function CreditHistory({
         .eq('id', userId)
         .single();
 
+      // console.log({ profileData });
+
+      // Fallback to local transactions if Stripe ID not available
+      const { data } = await supabase
+        .from('credit_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) {
+        setTransactions(data);
+      }
       if (profileError || !profileData?.stripe_id) {
         console.error('Error fetching stripe_id:', profileError);
 
-        // Fallback to local transactions if Stripe ID not available
-        const { data } = await supabase
-          .from('credit_transactions')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (data) {
-          setTransactions(data);
-        }
+        console.log({ data });
         setIsLoading(false);
         return;
       }
 
-      try {
-        // Fetch transactions from server endpoint that will call Stripe API
-        const response = await fetch(
-          `/api/stripe/transactions?stripeId=${profileData.stripe_id}`,
-        );
+      // try {
+      //   // Fetch transactions from server endpoint that will call Stripe API
+      //   const response = await fetch(
+      //     `/api/stripe/transactions?stripeId=${profileData.stripe_id}`,
+      //   );
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch Stripe transactions');
-        }
+      //   if (!response.ok) {
+      //     throw new Error('Failed to fetch Stripe transactions');
+      //   }
 
-        const stripeTransactions = await response.json();
+      //   const stripeTransactions = await response.json();
 
-        // Transform Stripe data to match our CreditTransaction format
-        const formattedTransactions = stripeTransactions.map(
-          (item: StripeTransaction) => ({
-            id: item.id,
-            amount: item.amount / 100, // Stripe amounts are in cents
-            type:
-              item.type === 'payment'
-                ? 'purchase'
-                : item.type === 'subscription'
-                  ? 'subscription'
-                  : 'usage',
-            description: item.description || 'Stripe transaction',
-            created_at: new Date(item.created * 1000).toISOString(),
-            status: item.status,
-            current_period_end: item.current_period_end,
-            current_period_start: item.current_period_start,
-          }),
-        );
+      //   // Transform Stripe data to match our CreditTransaction format
+      //   const formattedTransactions = stripeTransactions.map(
+      //     (item: StripeTransaction) => ({
+      //       id: item.id,
+      //       amount: item.amount / 100, // Stripe amounts are in cents
+      //       type:
+      //         item.type === 'payment'
+      //           ? 'purchase'
+      //           : item.type === 'subscription'
+      //             ? 'subscription'
+      //             : 'usage',
+      //       description: item.description || 'Stripe transaction',
+      //       created_at: new Date(item.created * 1000).toISOString(),
+      //       status: item.status,
+      //       current_period_end: item.current_period_end,
+      //       current_period_start: item.current_period_start,
+      //     }),
+      //   );
 
-        setTransactions(formattedTransactions);
-      } catch (error) {
-        console.error('Error fetching Stripe transactions:', error);
-
-        // Fallback to database transactions if Stripe API fails
-        const { data } = await supabase
-          .from('credit_transactions')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (data) {
-          setTransactions(data);
-        }
-      }
+      //   setTransactions(formattedTransactions);
+      // } catch (error) {
+      //   console.error('Error fetching Stripe transactions:', error);
+      // }
 
       setIsLoading(false);
     }
 
     loadTransactions();
-  }, [userId, supabase]);
+  }, [userId]);
 
   if (isLoading) {
     return (
@@ -167,7 +158,7 @@ export function CreditHistory({
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">
                 {format(new Date(transaction.created_at), 'MMM d, yyyy')}
-                {transaction.type === 'subscription' &&
+                {/* {transaction.type === 'purchase' &&
                   transaction.current_period_end && (
                     <div className="text-xs text-muted-foreground">
                       Renews:{' '}
@@ -176,28 +167,28 @@ export function CreditHistory({
                         'MMM d, yyyy',
                       )}
                     </div>
-                  )}
+                  )} */}
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell className="capitalize">
                 {transaction.type}
-                {transaction.status && transaction.status !== 'active' && (
+                {/* {transaction.status && transaction.status !== 'active' && (
                   <span className="ml-1 text-xs text-muted-foreground">
                     ({transaction.status})
                   </span>
-                )}
+                )} */}
               </TableCell>
               <TableCell
                 className={`text-right ${
-                  transaction.type === 'purchase' ||
-                  transaction.type === 'subscription'
-                    ? 'text-green-600'
+                  ['purchase', 'freemium'].includes(transaction.type)
+                    ? // || transaction.type === 'subscription'
+                      'text-green-600'
                     : 'text-red-600'
                 }`}
               >
-                {transaction.type === 'purchase' ||
-                transaction.type === 'subscription'
-                  ? '+'
+                {['purchase', 'freemium'].includes(transaction.type)
+                  ? // || transaction.type === 'subscription'
+                    '+'
                   : '-'}
                 {transaction.amount}
               </TableCell>

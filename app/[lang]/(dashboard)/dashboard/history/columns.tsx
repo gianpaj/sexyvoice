@@ -39,7 +39,7 @@ export const columns: ColumnDef<AudioFile>[] = [
     accessorKey: 'voices.name',
     header: 'Voice',
     cell: ({ row }) => (
-      <div className="w-32">
+      <div className="w-full lg:w-32">
         <Badge variant="outline" className="px-1.5 text-muted-foreground">
           {row.original.voices?.name || 'Unknown'}
         </Badge>
@@ -87,7 +87,7 @@ export const columns: ColumnDef<AudioFile>[] = [
       const file = row.original;
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-center gap-2">
           <AudioPlayer url={file.url} />
         </div>
       );
