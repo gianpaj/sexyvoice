@@ -1,8 +1,10 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
@@ -69,9 +71,8 @@ export function LoginForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          autoFocus
           autoComplete="email"
-          className="text-black"
+          // className="text-black"
         />
         <Input
           type="password"
@@ -80,7 +81,6 @@ export function LoginForm({
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="text-black"
         />
       </div>
 
@@ -92,14 +92,15 @@ export function LoginForm({
 
       <Button
         onClick={loginWithGoogle}
-        variant="outline"
+        variant="secondary"
         className="w-full"
         disabled={isLoading}
       >
+        <Icon icon="logos:google-icon" width="256" height="262" />
         Login with Google
       </Button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-gray-500">
         {dict.noAccount}{' '}
         <Link
           href={`/${lang}/signup`}

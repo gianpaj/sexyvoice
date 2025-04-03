@@ -79,7 +79,7 @@ export default async function LandingPage(props: {
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
+      <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
           {/* Hero Section */}
           <div className="text-center space-y-6 py-20">

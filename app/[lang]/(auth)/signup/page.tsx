@@ -16,17 +16,17 @@ export default async function SignUpPage(props: {
   return (
     <>
       <Header lang={lang} />
-      <div className="flex min-h-screen sm:pt-0 pt-11 sm:items-center flex-col justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4">
-        <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 mb-4">
+      <div className="flex min-h-[calc(100vh-65px)] sm:min-h-screen sm:pt-0 pt-11 sm:items-center flex-col sm:justify-center justify-end dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-500/10 dark:bg-blue-600/20 text-blue-400 mb-4">
           <Sparkles className="size-4 mr-2" />
           <span>{dict.landing.cta.freeCredits}</span>
         </div>
         <div className="w-full max-w-md">
-          <div className="rounded-2xl bg-white p-8 shadow-xl">
-            <h1 className="mb-2 text-center text-3xl font-bold text-gray-900">
+          <div className="rounded-2xl p-8 bg-background shadow-xl">
+            <h1 className="mb-2 text-center text-3xl font-bold text-foreground">
               {dict.auth.signup.title}
             </h1>
-            <p className="mb-8 text-center text-gray-600">
+            <p className="mb-8 text-center text-gray-400">
               {dict.auth.signup.subtitle}
             </p>
             <SignUpForm dict={dict.auth.signup} lang={lang} />

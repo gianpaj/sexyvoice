@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -92,7 +93,6 @@ export function SignUpForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          autoFocus
           autoComplete="email"
           className="text-black"
         />
@@ -115,14 +115,15 @@ export function SignUpForm({
 
       <Button
         onClick={loginWithGoogle}
-        variant="outline"
+        variant="secondary"
         className="w-full"
         disabled={isLoading}
       >
+        <Icon icon="logos:google-icon" width="256" height="262" />
         Sign up with Google
       </Button>
 
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-gray-500">
         {dict.hasAccount}{' '}
         <Link
           href={`/${lang}/login`}

@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.5.10",
+    "@iconify-json/logos": "^1.2.4",
+    "@iconify/react": "^5.2.1",
     "@lottiefiles/dotlottie-react": "^0.13.2",
     "@next/bundle-analyzer": "^15.2.4",
     "@radix-ui/react-accordion": "^1.2.0",
