@@ -167,6 +167,7 @@ export async function POST(request: Request) {
     const blobResult = await put(filename, output, {
       access: 'public',
       contentType: 'audio/mpeg',
+      addRandomSuffix: false
     });
 
     after(async () => {
