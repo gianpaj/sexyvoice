@@ -30,12 +30,12 @@ export default async function ProfilePage(props: {
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
-      <div>
+      {/* <div>
         <h2 className="text-3xl font-bold tracking-tight">Profile Settings</h2>
         <p className="text-muted-foreground">
           Manage your account settings and preferences
         </p>
-      </div>
+      </div> */}
 
       {/* <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>

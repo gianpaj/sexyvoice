@@ -7,7 +7,7 @@ const cspHeader = `
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://client.crisp.chat https://js.stripe.com https://vercel.live;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
     img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
-    font-src 'self';
+    font-src 'self' https://client.crisp.chat;
     object-src 'none';
     frame-src 'self' https://js.stripe.com;
     base-uri 'self';
