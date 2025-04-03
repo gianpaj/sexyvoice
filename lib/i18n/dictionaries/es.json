@@ -22,6 +22,32 @@
       "signIn": "Inicia sesión",
       "error": "Error al crear la cuenta",
       "signupSuccess": "Revisa tu correo electrónico para verificar tu cuenta"
+    },
+    "resetPassword": {
+      "title": "Restablecer contraseña",
+      "subtitle": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña",
+      "email": "Correo electrónico",
+      "submit": "Restablecer contraseña",
+      "error": "Correo electrónico inválido",
+      "success": "Revisa tu correo electrónico para restablecer tu contraseña",
+      "backToLogin": "Volver al inicio de sesión",
+      "errors": {
+        "generic": "No se pudo restablecer la contraseña",
+        "email_required": "Correo electrónico requerido"
+      }
+    },
+    "updatePassword": {
+      "title": "Actualizar contraseña",
+      "subtitle": "Ingresa tu nueva contraseña y confirma para actualizar",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "updatePassword": "Actualizar contraseña",
+      "errors": {
+        "same_password": "La nueva contraseña debe ser diferente a la contraseña actual",
+        "passwords_do_not_match": "Las contraseñas no coinciden",
+        "passwords_required": "Se requiere contraseña y confirmación de contraseña",
+        "success": "Contraseña actualizada"
+      }
     }
   },
   "landing": {

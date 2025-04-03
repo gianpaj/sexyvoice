@@ -7,6 +7,7 @@ import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 // import GoogleOneTap from '@/components/google-one-tab';
 
@@ -64,19 +65,31 @@ export function LoginForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+      <div className="grid gap-2">
+        <Label htmlFor="email">{dict.email}</Label>
         <Input
+          id="email"
           type="email"
-          placeholder={dict.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
           // className="text-black"
         />
+      </div>
+      <div className="grid gap-2">
+        <div className="flex items-center">
+          <Label htmlFor="password">{dict.password}</Label>
+          <Link
+            href={`/${lang}/reset-password`}
+            className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+          >
+            {dict.forgotPassword || 'Forgot your password?'}
+          </Link>
+        </div>
         <Input
+          id="password"
           type="password"
-          placeholder={dict.password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

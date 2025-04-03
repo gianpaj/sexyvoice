@@ -14,7 +14,7 @@ const routesPerLocale = (routes: string[]): string[] => {
 const publicRoutes = [
   '/api/health',
   '/auth/callback',
-  ...routesPerLocale(['/', '/signup', '/login']),
+  ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
 export const updateSession = async (request: NextRequest) => {

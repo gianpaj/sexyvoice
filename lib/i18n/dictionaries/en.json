@@ -22,6 +22,33 @@
       "signIn": "Sign in",
       "error": "Error creating account",
       "signupSuccess": "Check your email inbox for verification"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email address and we'll send you a link to reset your password",
+      "email": "Email address",
+      "submit": "Reset password",
+      "error": "Invalid email address",
+      "success": "Check your email for a password reset link",
+      "backToLogin": "Back to Login",
+      "errors": {
+        "generic": "Could not reset password",
+        "email_required": "Email is required"
+      }
+    },
+    "updatePassword": {
+      "title": "Update Password",
+      "subtitle": "Enter your new password below",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "updatePassword": "Update Password",
+      "loading": "Updating...",
+      "errors": {
+        "same_password": "New password should be different from the old password",
+        "passwords_do_not_match": "Passwords do not match",
+        "passwords_required": "Password and confirm password are required",
+        "success": "Password updated"
+      }
     }
   },
   "landing": {
