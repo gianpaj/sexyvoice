@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
-import { addInitialCredits } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {

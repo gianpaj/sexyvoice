@@ -1,7 +1,9 @@
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
+import Link from 'next/link';
 
 export default async function DashboardPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -69,6 +71,9 @@ export default async function DashboardPage(props: {
           </CardContent>
         </Card>
       </div>
+      <Button variant="default" asChild size="lg">
+        <Link href="./dashboard/generate">Generate</Link>
+      </Button>
     </div>
   );
 }
