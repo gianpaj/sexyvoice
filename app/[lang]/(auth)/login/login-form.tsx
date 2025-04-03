@@ -71,6 +71,7 @@ export function LoginForm({
           required
           autoFocus
           autoComplete="email"
+          className="text-black"
         />
         <Input
           type="password"
@@ -79,6 +80,7 @@ export function LoginForm({
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
+          className="text-black"
         />
       </div>
 
