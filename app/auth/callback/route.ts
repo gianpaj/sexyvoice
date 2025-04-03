@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
+  const redirectTo = requestUrl.searchParams.get('redirect_to')?.toString();
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login`);
@@ -39,8 +40,10 @@ export async function GET(request: Request) {
       })
       .eq('id', user.id);
 
+    // FIXME - only at signup
+
     // add 10_000 credits to the user's account
-    await addInitialCredits(user.id);
+    // await addInitialCredits(user.id);
 
     const posthog = PostHogClient();
 
@@ -53,6 +56,10 @@ export async function GET(request: Request) {
       // },
     });
     await posthog.shutdown();
+  }
+
+  if (redirectTo) {
+    return NextResponse.redirect(`${origin}${redirectTo}`);
   }
 
   // URL to redirect to after sign up process completes

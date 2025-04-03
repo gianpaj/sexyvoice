@@ -53,7 +53,7 @@ export function SecurityForm({
   return (
     <div className="space-y-6">
       <div className="grid gap-4">
-        <Alert>
+        <Alert className="p-4">
           <AlertCircle className="size-4" />
           <AlertDescription>
             Enter your current password and a new password to update your

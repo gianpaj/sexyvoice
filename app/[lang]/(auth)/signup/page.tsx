@@ -23,10 +23,10 @@ export default async function SignUpPage(props: {
         </div>
         <div className="w-full max-w-md">
           <div className="rounded-2xl p-8 bg-background shadow-xl">
-            <h1 className="mb-2 text-center text-3xl font-bold text-foreground">
+            <h1 className="mb-2 text-center text-3xl font-bold">
               {dict.auth.signup.title}
             </h1>
-            <p className="mb-8 text-center text-gray-400">
+            <p className="mb-8 text-center text-muted-foreground">
               {dict.auth.signup.subtitle}
             </p>
             <SignUpForm dict={dict.auth.signup} lang={lang} />
