@@ -11,10 +11,10 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
-// import LandingHero from '@/components/landing-hero';
+import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 
-const LandingHero = lazy(() => import('@/components/landing-hero'));
+// const LandingHero = lazy(() => import('@/components/landing-hero'));
 
 // Sample audio preview data
 const sampleAudios = [
@@ -41,7 +41,7 @@ const sampleAudios = [
     id: 4,
     name: 'Dan',
     prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
-Because it’s hard to lay down in a square! <laugh>
+Because it's hard to lay down in a square! <laugh>
 I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
     audioSrc: 'dan_joke.mp3',
   },
