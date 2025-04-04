@@ -14,8 +14,6 @@ import { Header } from '@/components/header';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 
-// const LandingHero = lazy(() => import('@/components/landing-hero'));
-
 // Sample audio preview data
 const sampleAudios = [
   // {

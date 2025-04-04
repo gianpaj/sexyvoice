@@ -141,7 +141,7 @@
 
         "credits": "500,000 credits per month (~10 hours audio)",
         "features": [
-          "Everything in creator, plus",
+          "Everything in starter, plus",
           "Higher quality audio",
           "44.1 kHz PCM audio output via API (coming soon)"
         ]

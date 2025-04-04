@@ -45,9 +45,9 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
       {plans.map((plan) => (
         <Card
           key={plan.name}
-          className={`p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
+          className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
         >
-          <div className="space-y-4">
+          <div>
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{plan.name}</h3>
               {plan.isPopular && (
@@ -62,24 +62,24 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
                 /{plan.billing}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">{plan.description}</p>
-            <Button
-              className="w-full my-4"
-              asChild
-              variant={plan.buttonVariant as 'outline' | 'default'}
-            >
-              <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
-            </Button>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{plan.credits}</div>
-              {/* @ts-ignore */}
-              {plan.features.map((feature, i) => (
-                <div key={i} className="flex items-center text-sm">
-                  <Check className="mr-2 size-4" />
-                  {feature}
-                </div>
-              ))}
-            </div>
+          </div>
+          <p className="text-sm text-muted-foreground">{plan.description}</p>
+          <Button
+            className="w-full my-4"
+            asChild
+            variant={plan.buttonVariant as 'outline' | 'default'}
+          >
+            <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
+          </Button>
+          <div className="space-y-2">
+            <div className="text-sm font-medium">{plan.credits}</div>
+            {/* @ts-ignore */}
+            {plan.features.map((feature, i) => (
+              <div key={i} className="flex items-center text-sm">
+                <Check className="mr-2 size-4 min-w-fit" />
+                {feature}
+              </div>
+            ))}
           </div>
         </Card>
       ))}
