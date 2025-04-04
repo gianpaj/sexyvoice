@@ -1,6 +1,6 @@
 // import { Input } from '@/components/ui/input';
 // import { Label } from '@/components/ui/label';
-import { Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
+import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -30,8 +30,8 @@ function Footer() {
               size="icon"
               className="rounded-full bg-gray-900"
             >
-              <Link href="https://x.com/SexyvoiceAi">
-                <Twitter className="size-4" />
+              <Link href="https://x.com/SexyvoiceAi" target="_blank">
+                <Icon icon="logos:x" width="256" height="262" fill="white" />
                 <span className="sr-only">Twitter/X</span>
               </Link>
             </Button>

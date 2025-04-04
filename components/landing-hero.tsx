@@ -22,9 +22,9 @@ function LandingHero() {
         <title>Audio Wave</title>
         <defs>
           <linearGradient id="header-shape-gradient" x2="0.35" y2="1">
-            <stop offset="0%" stop-color="var(--color-stop)" />
-            <stop offset="30%" stop-color="var(--color-stop)" />
-            <stop offset="100%" stop-color="var(--color-bot)" />
+            <stop offset="0%" stopColor="var(--color-stop)" />
+            <stop offset="30%" stopColor="var(--color-stop)" />
+            <stop offset="100%" stopColor="var(--color-bot)" />
           </linearGradient>
         </defs>
         <path
