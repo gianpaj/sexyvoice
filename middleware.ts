@@ -22,6 +22,8 @@ export async function middleware(req: NextRequest) {
     (locale) =>
       !pathname.startsWith(`/${locale}/`) &&
       !pathname.startsWith('/auth') &&
+      !pathname.startsWith('/privacy-policy') &&
+      !pathname.startsWith('/terms') &&
       !pathname.startsWith('/api') &&
       !pathname.startsWith('/webhook') &&
       pathname !== `/${locale}`,

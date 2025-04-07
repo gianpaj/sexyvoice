@@ -61,11 +61,25 @@ function Footer() {
             <p className="text-sm text-muted-foreground mt-4">
               <a
                 href="https://sexyvoice.checkly-dashboards.com/"
-                className="hover:text-primary underline"
+                className="hover:text-primary hover:underline"
                 target="_blank"
                 rel="noreferrer"
               >
                 Status page
+              </a>{' '}
+              <a
+                href="/privacy-policy"
+                className="hover:text-primary hover:underline"
+                rel="noreferrer"
+              >
+                Privacy Policy
+              </a>
+              <a
+                href="/terms"
+                className="hover:text-primary hover:underline"
+                rel="noreferrer"
+              >
+                Terms and Conditions
               </a>
             </p>
           </div>
