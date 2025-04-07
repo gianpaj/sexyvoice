@@ -14,13 +14,13 @@ export const metadata: Metadata = {
   ),
   title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
   description:
-    'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
+    'Create stunning voice clones with advanced AI technology. Our easy-to-use platform helps content creators, developers, and storytellers bring their projects to life with realistic voices.',
   openGraph: {
     title: 'SexyVoice.ai',
     siteName: 'SexyVoice.ai',
     url: 'https://sexyvoice.ai',
     description:
-      'Create stunning voice clones with advanced AI technology. Perfect for content creators, developers, and storytellers.',
+      'Create stunning voice clones with advanced AI technology. Our easy-to-use platform helps content creators, developers, and storytellers bring their projects to life with realistic voices.',
     images: [{ url: '/sexyvoice.ai-og-image.jpg' }],
   },
   alternates: {
