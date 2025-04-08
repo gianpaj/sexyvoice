@@ -55,7 +55,7 @@ function Footer() {
             </form>
           </div> */}
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               © 2025 SexyVoice.ai. All rights reserved.
             </p>
             <p className="text-sm text-muted-foreground mt-4">

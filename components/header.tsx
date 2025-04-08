@@ -1,6 +1,5 @@
 import { Menu } from 'lucide-react';
 import Link from 'next/link';
-
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,18 +18,23 @@ export async function Header({ lang }: { lang: string }) {
   return (
     <header className="border-b border-gray-700 bg-gray-900">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href={`/${lang}`} className="text-xl font-semibold text-white">
+        <Link
+          href={`/${lang}`}
+          className="text-xl font-semibold text-white z-10"
+        >
           SexyVoice.ai
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-4 justify-center">
+        <div className="hidden md:flex items-center gap-4 justify-center z-10">
           {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
 
           {user ? (
-            <Link href={`/${lang}/dashboard`} prefetch>
-              <Button variant="default">Dashboard</Button>
-            </Link>
+            <Button variant="default" asChild>
+              <Link href={`/${lang}/dashboard`} prefetch>
+                Dashboard
+              </Link>
+            </Button>
           ) : (
             <div className="space-x-4">
               <Button variant="secondary" asChild>
