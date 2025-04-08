@@ -68,6 +68,10 @@ export default async function LandingPage(props: {
 
   const dict = await getDictionary(lang);
 
+  const parts = dict.landing.hero.title.split(',');
+  const firstPart = parts[0];
+  const restParts = parts.slice(1).join(',');
+
   return (
     <>
       <link
@@ -77,21 +81,18 @@ export default async function LandingPage(props: {
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
+      <div className="absolute inset-0 overflow-hidden h-[102rem] md:h-[72rem]">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
+        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_80%,rgba(221,193,70,0.1)_0%,rgba(0,0,0,0)_50%)]" />
+      </div>
       <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
           {/* Hero Section */}
-          <div className="text-center space-y-6 py-20">
+          <div className="text-center space-y-6 py-20 z-10 md:pb-32">
             <LandingHero />
             <h1 className="text-5xl md:text-6xl font-bold text-white">
-              {dict.landing.hero.title.split(',').map((part, i) => (
-                <span key={i}>
-                  {i === 0 ? (
-                    part
-                  ) : (
-                    <span className="text-blue-400">{part}</span>
-                  )}
-                </span>
-              ))}
+              <span>{firstPart}</span>
+              {restParts && <span className="text-blue-400">{restParts}</span>}
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               {dict.landing.hero.subtitle}
@@ -99,7 +100,7 @@ export default async function LandingPage(props: {
           </div>
 
           {/* Audio Previews Grid */}
-          <div className="max-w-4xl mx-auto mb-16">
+          <div className="max-w-4xl mx-auto mb-16 md:pb-16">
             <h2 className="text-2xl font-bold text-white mb-2">
               Try Our Voice Samples
             </h2>

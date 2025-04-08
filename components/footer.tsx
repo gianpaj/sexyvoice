@@ -66,7 +66,8 @@ function Footer() {
                 rel="noreferrer"
               >
                 Status page
-              </a>{' '}
+              </a>
+              {' - '}
               <a
                 href="/privacy-policy"
                 className="hover:text-primary hover:underline"
@@ -74,6 +75,7 @@ function Footer() {
               >
                 Privacy Policy
               </a>
+              {' - '}
               <a
                 href="/terms"
                 className="hover:text-primary hover:underline"
