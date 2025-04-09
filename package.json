@@ -9,8 +9,8 @@
     "lint:fix": "biome lint --write ./app components hooks lib middleware.ts",
     "preview": "next build && next start",
     "type-check": "tsc --noEmit",
-    "format:write": "pnpm run format:check --write",
-    "format:check": "biome check ./app components hooks lib middleware.ts",
+    "format:write": "pnpm run format --write",
+    "format": "biome format ./app components hooks lib middleware.ts",
     "analyse": "ANALYZE=true next build"
   },
   "dependencies": {

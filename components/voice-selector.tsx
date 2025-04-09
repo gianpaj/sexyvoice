@@ -1,5 +1,6 @@
 import { Info, Volume2 } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
 import {
   Card,
   CardContent,
@@ -16,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import {
   Tooltip,
@@ -23,8 +25,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
-import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
-import { capitalizeFirstLetter } from '@/lib/utils';
 
 export function VoiceSelector({
   // userVoices,
@@ -97,8 +97,13 @@ export function VoiceSelector({
           <div className="flex items-center justify-between p-4 border rounded-md lg:w-1/2">
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                Selected audio sample<br/>
-                Prompt: <i>Hi there, my name is {capitalizeFirstLetter(selectedVoice)}, nice to meet you {'<giggle>'}</i>
+                Selected audio sample
+                <br />
+                Prompt:{' '}
+                <i>
+                  Hi there, my name is {capitalizeFirstLetter(selectedVoice)},
+                  nice to meet you {'<giggle>'}
+                </i>
               </p>
             </div>
 

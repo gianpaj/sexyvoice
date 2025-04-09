@@ -1,6 +1,6 @@
-import { Skeleton } from './ui/skeleton';
-import { Button } from './ui/button';
 import Link from 'next/link';
+import { Button } from './ui/button';
+import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
   lang,

@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-
+import CreditsSection from '@/components/credits-section';
 // import { getDictionary } from "@/lib/i18n/get-dictionary";
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
-import CreditsSection from '@/components/credits-section';
 
 export default async function GeneratePage(props: {
   params: Promise<{ lang: Locale }>;

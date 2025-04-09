@@ -1,7 +1,6 @@
 'use client';
 
 import { Crisp } from 'crisp-sdk-web';
-import Image from 'next/image';
 import {
   BarChart3,
   ChevronUp,
@@ -13,12 +12,14 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useFeatureFlagEnabled, usePostHog } from 'posthog-js/react';
 import { use, useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import CreditsSection from '@/components/credits-section';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import {
   DropdownMenu,
@@ -40,7 +41,6 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { createClient } from '@/lib/supabase/client';
-import CreditsSection from '@/components/credits-section';
 
 export default function DashboardLayout(props: {
   children: React.ReactNode;
@@ -180,7 +180,12 @@ export default function DashboardLayout(props: {
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0 items-end"
                   >
                     <div className="aspect-square group-data-[collapsible=icon]:size-9">
-                      <Image src={logoSmall} alt="Logo" width={221/8} height={292/8} />
+                      <Image
+                        src={logoSmall}
+                        alt="Logo"
+                        width={221 / 8}
+                        height={292 / 8}
+                      />
                     </div>
                     {/* <div className="flex h-16 items-center px-6"> */}
                     <span className="text-xl font-semibold">exyVoice.ai</span>

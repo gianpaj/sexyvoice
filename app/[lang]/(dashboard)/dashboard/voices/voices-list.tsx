@@ -109,7 +109,7 @@ export function VoicesList({
               <div className="flex items-center justify-between">
                 <span className="text-sm">Public access</span>
                 <Switch
-                  checked={voice.is_public|| undefined}
+                  checked={voice.is_public || undefined}
                   onCheckedChange={(checked) =>
                     handlePrivacyToggle(voice.id, checked)
                   }
@@ -117,12 +117,14 @@ export function VoicesList({
                 />
               </div>
 
-              {voice.created_at && <div className="text-sm text-muted-foreground">
-                Created{' '}
-                {formatDistanceToNow(new Date(voice.created_at), {
-                  addSuffix: true,
-                })}
-              </div>}
+              {voice.created_at && (
+                <div className="text-sm text-muted-foreground">
+                  Created{' '}
+                  {formatDistanceToNow(new Date(voice.created_at), {
+                    addSuffix: true,
+                  })}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -2,17 +2,26 @@
 
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type SortingState,
-  ColumnFiltersState,
   getFilteredRowModel,
-  VisibilityState,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
 } from '@tanstack/react-table';
+import { ColumnsIcon } from 'lucide-react';
+import { ChevronDownIcon } from 'lucide-react';
 import { useState } from 'react';
-
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -21,16 +30,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { ColumnsIcon } from 'lucide-react';
-import { ChevronDownIcon } from 'lucide-react';
 import { AudioFile } from './columns';
 
 interface DataTableProps<AudioFile, TValue> {

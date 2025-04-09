@@ -1,9 +1,9 @@
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
 import type { Message } from '../../(auth)/reset-password/reset-password-form';
 
 export default async function DashboardPage(props: {

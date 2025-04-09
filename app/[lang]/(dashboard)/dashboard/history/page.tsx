@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { AudioFile, columns } from './columns';
+import { type AudioFile, columns } from './columns';
 import { DataTable } from './data-table';
 
 export default async function HistoryPage() {
