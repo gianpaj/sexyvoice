@@ -4,14 +4,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreVerticalIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from './audio-player';
-import { DeleteButton } from './delete-button';
 
 export type AudioFile = {
   id: string;
