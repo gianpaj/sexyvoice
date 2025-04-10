@@ -13,6 +13,12 @@ import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 // Sample audio preview data
 const sampleAudios = [
@@ -185,6 +191,33 @@ export default async function LandingPage(props: {
           </div>
 
           <PricingTable dict={dict} lang={lang} />
+
+          {/* FAQ Section */}
+          <div className="max-w-3xl mx-auto py-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-2">
+                {dict.landing.faq.title}
+              </h2>
+              <p className="text-gray-300">{dict.landing.faq.subtitle}</p>
+            </div>
+
+            <Accordion type="single" collapsible className="w-full">
+              {dict.landing.faq.questions.map((faq, index) => (
+                <AccordionItem
+                  key={`faq-${faq.question.substring(0, 10).replace(/\s+/g, '-').toLowerCase()}`}
+                  value={`item-${index}`}
+                  className="border-b border-white/10"
+                >
+                  <AccordionTrigger className="text-white hover:text-blue-400 hover:no-underline py-5">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-gray-300">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
 
           {/* CTA Section */}
           <div className="text-center py-16 space-y-6">

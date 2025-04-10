@@ -95,6 +95,36 @@
       "title": "Voces Populares",
       "subtitle": "Escucha lo que otros han creado",
       "loading": "Cargando audios populares..."
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "subtitle": "Todo lo que necesitas saber sobre SexyVoice.ai",
+      "questions": [
+        {
+          "question": "¿Están seguros mis datos de voz?",
+          "answer": "Sí. Ciframos todos los datos de voz y los almacenamos de forma segura. Tienes control total sobre tus generaciones de audio y puedes eliminarlas en cualquier momento. Nunca compartimos tus datos de voz con terceros sin tu permiso. Tu privacidad es nuestra prioridad."
+        },
+        {
+          "question": "¿Para qué puedo utilizar las voces generadas?",
+          "answer": "Puedes utilizar las voces generadas para podcasts, vídeos, contenido en redes sociales, e-learning, audiolibros, juegos y mucho más. Muchos creadores utilizan nuestras voces para ahorrar tiempo de grabación o para mantener una calidad de audio consistente. Recuerda que nuestros términos prohíben el engaño o la suplantación de identidad."
+        },
+        {
+          "question": "¿Cuántos créditos necesito?",
+          "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 10.000 créditos gratuitos (unos 10 minutos de voz). Nuestro plan Starter incluye 30.000 créditos mensuales, mientras que el Pro ofrece 500.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
+        },
+        {
+          "question": "¿Puedo clonar voces en otros idiomas además del inglés?",
+          "answer": "Actualmente, solo admitimos la generación de voz en inglés. Estamos trabajando intensamente para añadir más idiomas en el futuro. Nos centramos primero en perfeccionar las voces en inglés para garantizar la máxima calidad antes de expandirnos a otros idiomas. Anunciaremos nuevas opciones de idiomas tan pronto como estén disponibles."
+        },
+        {
+          "question": "¿Tenéis una API para desarrolladores?",
+          "answer": "¡Está en camino! Nuestra API permitirá a los desarrolladores añadir generación de voz a aplicaciones, sitios web y juegos. Podrás crear voz bajo demanda y gestionar modelos de voz de forma programática con simples llamadas a la API."
+        },
+        {
+          "question": "¿Por qué elegir SexyVoice.ai?",
+          "answer": "Ofrecemos la mejor combinación de calidad de voz, facilidad de uso y precios asequibles. A diferencia de la competencia, proporcionamos voces de calidad profesional para creadores de todos los niveles. Con generosos créditos gratuitos y sin contratos, puedes empezar a crear contenido de voz increíble de inmediato."
+        }
+      ]
     }
   },
   "credits": {
