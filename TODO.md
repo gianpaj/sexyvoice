@@ -49,3 +49,17 @@
 
 - add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
 - Sentry monitoring with Posthog error linking <https://posthog.com/docs/libraries/node#sentry-integration>
+
+
+## FAQ for voice cloning
+
+```json
+{
+  "question": "How does voice cloning work?",
+  "answer": "Our AI analyzes your voice samples to learn its unique patterns and characteristics. With just a minute of audio, we can create a digital voice that sounds just like you. The system uses advanced AI to match your tone, accent, and speaking style."
+},
+{
+  "question": "Can I clone my own voice?",
+  "answer": "Yes! You'll soon be able to clone your voice with just 1 minute of audio (coming to Starter and Pro plans). For ethical reasons, you need permission before cloning someone else's voice. We take voice rights seriously."
+},
+```

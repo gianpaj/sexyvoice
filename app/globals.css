@@ -98,3 +98,9 @@
     @apply bg-background text-foreground;
   }
 }
+@-moz-document url-prefix() {
+  .disable-bg-firefox {
+    background: none;
+    background-image: none !important;
+  }
+}
