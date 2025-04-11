@@ -5,6 +5,7 @@
     "build": "next build",
     "start": "next start",
     "test": "tsx --test lib/utils.test.ts",
+    "test:watch": "tsx --test --watch lib/utils.test.ts",
     "lint": "biome lint",
     "lint:fix": "biome lint --write ./app components hooks lib middleware.ts",
     "preview": "next build && next start",
