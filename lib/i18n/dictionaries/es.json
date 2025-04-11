@@ -177,5 +177,15 @@
         ]
       }
     }
+  },
+  "generate": {
+    "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
+    "success": "Audio generado con éxito!",
+    "error": "Error al generar audio",
+    "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
+    "generating": "Generando",
+    "ctaButton": "Generar audio",
+    "resetForm": "Reiniciar Formulario",
+    "downloadAudio": "Descargar Audio"
   }
 }

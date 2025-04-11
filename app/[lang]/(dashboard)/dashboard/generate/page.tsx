@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import CreditsSection from '@/components/credits-section';
-// import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
@@ -10,7 +10,7 @@ export default async function GeneratePage(props: {
 }) {
   const params = await props.params;
   const { lang } = params;
-  // const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang);
 
   const supabase = await createClient();
 
@@ -23,11 +23,13 @@ export default async function GeneratePage(props: {
   }
 
   // Get user's credits
-  const { data: credits } = await supabase
+  const { data: creditsData } = (await supabase
     .from('credits')
     .select('amount')
     .eq('user_id', user?.id)
-    .single();
+    .single()) || { amount: 0 };
+
+  const credits = creditsData || { amount: 0 };
 
   const { data: credit_transactions } = await supabase
     .from('credit_transactions')
@@ -63,13 +65,17 @@ export default async function GeneratePage(props: {
       <div className="lg:hidden">
         <CreditsSection
           lang={lang}
-          credits={credits?.amount || 0}
+          credits={credits.amount || 0}
           credit_transactions={credit_transactions || []}
         />
       </div>
 
       <div className="grid gap-6">
-        <GenerateUI publicVoices={publicVoices} />
+        <GenerateUI
+          dict={dict.generate}
+          hasEnoughCredits={credits.amount >= 1}
+          publicVoices={publicVoices}
+        />
       </div>
     </div>
   );

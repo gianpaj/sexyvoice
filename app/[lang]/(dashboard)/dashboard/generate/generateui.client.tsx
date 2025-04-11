@@ -6,9 +6,16 @@ import { VoiceSelector } from '@/components/voice-selector';
 
 interface GenerateUIProps {
   publicVoices: Voice[];
+  hasEnoughCredits: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  dict: any;
 }
 
-export function GenerateUI({ publicVoices }: GenerateUIProps) {
+export function GenerateUI({
+  publicVoices,
+  hasEnoughCredits,
+  dict,
+}: GenerateUIProps) {
   const [selectedVoice, setSelectedVoice] = useState('tara');
 
   return (
@@ -18,7 +25,11 @@ export function GenerateUI({ publicVoices }: GenerateUIProps) {
         selectedVoice={selectedVoice}
         publicVoices={publicVoices}
       />
-      <AudioGenerator selectedVoice={selectedVoice} />
+      <AudioGenerator
+        selectedVoice={selectedVoice}
+        hasEnoughCredits={hasEnoughCredits}
+        dict={dict}
+      />
     </div>
   );
 }

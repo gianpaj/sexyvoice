@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-// import { Slider } from '@/components/ui/slider';
 import {
   Card,
   CardContent,
@@ -13,29 +12,29 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { APIError } from '@/lib/error-ts';
+import { Alert, AlertDescription } from './ui/alert';
 
 interface AudioGeneratorProps {
   selectedVoice: string;
+  hasEnoughCredits: boolean;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  dict: any;
 }
 
-export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
+export function AudioGenerator({
+  selectedVoice,
+  hasEnoughCredits,
+  dict,
+}: AudioGeneratorProps) {
   const [text, setText] = useState('');
-  // const [speed, setSpeed] = useState([1]);
-  // const [pitch, setPitch] = useState([1]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   // const [creditsUsed, setCreditsUsed] = useState(credits);
 
   const handleGenerate = async () => {
-    if (!text.trim()) {
-      toast.error('Please enter text to generate');
-      return;
-    }
-
     setIsGenerating(true);
     try {
       const response = await fetch('/api/generate-voice', {
@@ -69,12 +68,12 @@ export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
       newAudio.play();
       setIsPlaying(true);
 
-      toast.success('Audio generated successfully');
+      toast.success(dict.success);
     } catch (error) {
       if (error instanceof APIError) {
-        toast.error(error.message || 'Failed to generate audio');
+        toast.error(error.message || dict.error);
       } else {
-        toast.error('Failed to generate audio');
+        toast.error(dict.error);
       }
     } finally {
       setIsGenerating(false);
@@ -123,21 +122,33 @@ export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Enter the text you want to convert to speech..."
+            placeholder={dict.textAreaPlaceholder}
             className="h-32"
           />
         </div>
 
-        <div className="flex items-center justify-start gap-2">
+        <div
+          className={`flex ${hasEnoughCredits ? 'items-center' : 'flex-col items-start'} justify-start gap-2`}
+        >
+          {!hasEnoughCredits && (
+            <Alert variant="destructive" className="w-fit">
+              <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+            </Alert>
+          )}
           <Button
             onClick={handleGenerate}
-            disabled={isGenerating || !text.trim() || !selectedVoice}
+            disabled={
+              isGenerating ||
+              !text.trim() ||
+              !selectedVoice ||
+              !hasEnoughCredits
+            }
             className={` ${isGenerating ? 'text-white' : ''}`}
             size="lg"
           >
             {isGenerating ? (
               <span className="flex items-center">
-                Generating
+                {dict.generating}
                 <span className="inline-flex ml-1">
                   <span className="animate-[pulse_1.4s_ease-in-out_infinite]">
                     .
@@ -151,7 +162,7 @@ export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
                 </span>
               </span>
             ) : (
-              'Generate Audio'
+              <span>{dict.ctaButton}</span>
             )}
           </Button>
 
@@ -168,7 +179,7 @@ export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
                 <Button
                   variant="outline"
                   size="icon"
-                  title="Reset form"
+                  title={dict.resetForm}
                   onClick={resetForm}
                 >
                   <RotateCcw className="size-4" />
@@ -176,7 +187,7 @@ export function AudioGenerator({ selectedVoice }: AudioGeneratorProps) {
                 <Button
                   variant="outline"
                   size="icon"
-                  title="Download audio"
+                  title={dict.downloadAudio}
                   onClick={downloadAudio}
                 >
                   <Download className="size-4" />
