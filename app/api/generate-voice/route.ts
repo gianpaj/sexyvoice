@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import { list, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
@@ -31,13 +32,16 @@ async function generateHash(
 }
 
 export async function POST(request: Request) {
+  let text = '';
+  let voice = '';
   try {
     const body = await request.json();
 
     if (request.body === null) {
       return new Response('Request body is empty', { status: 400 });
     }
-    const { text, voice, language = 'en' } = body;
+    text = body.text || '';
+    voice = body.voice || '';
 
     if (!text || !voice) {
       return NextResponse.json(
@@ -70,6 +74,7 @@ export async function POST(request: Request) {
     const voiceObj = await getVoiceIdByName(voice);
 
     if (!voiceObj) {
+      Sentry.captureException({ error: 'Voice not found', voice, text });
       return NextResponse.json(
         new APIError(
           'Voice not found',
@@ -88,6 +93,7 @@ export async function POST(request: Request) {
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
+      Sentry.captureException({ error: 'Insufficient credits', voice, text });
       return NextResponse.json(
         { error: 'Insufficient credits' },
         { status: 402 },
@@ -114,15 +120,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: blobs[0].url }, { status: 200 });
     }
 
-    // If no existing file found, generate new audio
-    // const response = await fetch(`${VOICE_API_URL}`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({ text, voice }),
-    // });
-
     const replicate = new Replicate();
 
     const input = {
@@ -147,12 +144,17 @@ export async function POST(request: Request) {
     // console.log({ output });
 
     if ('error' in output) {
-      // const errorData = await response.json();
-      console.error({
+      const errorObj = {
         text,
         voice,
+        model: voiceObj.model,
         errorData: output.error,
+      };
+      Sentry.captureException({
+        error: 'Voice generation failed',
+        ...errorObj,
       });
+      console.error(errorObj);
       // @ts-ignore
       throw new Error(output.error || 'Voice generation failed');
     }
@@ -187,10 +189,17 @@ export async function POST(request: Request) {
       });
 
       if (audioFileDBResult.error) {
-        console.error(
-          'Failed to insert audio file row:',
-          audioFileDBResult.error,
-        );
+        const errorObj = {
+          text,
+          voice,
+          model: voiceObj.model,
+          errorData: audioFileDBResult.error,
+        };
+        Sentry.captureException({
+          error: 'Failed to insert audio file row',
+          ...errorObj,
+        });
+        console.error(errorObj);
       }
 
       await sendPosthogEvent({
@@ -212,6 +221,16 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    const errorObj = {
+      text,
+      voice,
+      errorData: error,
+    };
+    Sentry.captureException({
+      error: 'Voice generation error',
+      ...errorObj,
+    });
+    console.error(errorObj);
     console.error('Voice generation error:', error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
