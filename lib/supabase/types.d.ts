@@ -167,6 +167,7 @@ declare type Database = {
           language: string;
           model: string;
           name: string;
+          sample_prompt: string | null;
           sample_url: string | null;
           updated_at: string | null;
           user_id: string;
@@ -179,6 +180,7 @@ declare type Database = {
           language: string;
           model?: string;
           name: string;
+          sample_prompt?: string | null;
           sample_url?: string | null;
           updated_at?: string | null;
           user_id: string;
@@ -191,6 +193,7 @@ declare type Database = {
           language?: string;
           model?: string;
           name?: string;
+          sample_prompt?: string | null;
           sample_url?: string | null;
           updated_at?: string | null;
           user_id?: string;

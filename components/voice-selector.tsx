@@ -99,11 +99,7 @@ export function VoiceSelector({
               <p className="text-sm text-muted-foreground">
                 Selected audio sample
                 <br />
-                Prompt:{' '}
-                <i>
-                  Hi there, my name is {capitalizeFirstLetter(selectedVoice)},
-                  nice to meet you {'<giggle>'}
-                </i>
+                Prompt: <i>{selectedVoiceSample.sample_prompt}</i>
               </p>
             </div>
 
