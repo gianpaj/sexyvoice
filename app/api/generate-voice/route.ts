@@ -13,10 +13,6 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
-// const VOICE_API_URL = `${process.env.VOICE_API_URL}/generate-speech`;
-
-const MODEL = 'lucataco/orpheus-3b-0.1-ft';
-
 async function generateHash(
   text: string,
   voice: string,
@@ -41,7 +37,7 @@ export async function POST(request: Request) {
     if (request.body === null) {
       return new Response('Request body is empty', { status: 400 });
     }
-    const { text, voice } = body;
+    const { text, voice, language = 'en' } = body;
 
     if (!text || !voice) {
       return NextResponse.json(
@@ -71,9 +67,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
-    const voiceId = await getVoiceIdByName(voice);
+    const voiceObj = await getVoiceIdByName(voice);
 
-    if (!voiceId) {
+    if (!voiceObj) {
       return NextResponse.json(
         new APIError(
           'Voice not found',
@@ -110,8 +106,9 @@ export async function POST(request: Request) {
       await sendPosthogEvent({
         userId: user.id,
         text,
-        voiceId,
+        voiceId: voiceObj.id,
         creditUsed: 0,
+        model: voiceObj.model,
       });
       // Return existing audio file URL
       return NextResponse.json({ url: blobs[0].url }, { status: 200 });
@@ -141,7 +138,8 @@ export async function POST(request: Request) {
       predictionResult = prediction;
     };
     const output = (await replicate.run(
-      'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      // @ts-ignore
+      voiceObj.model,
       { input },
       onProgress,
     )) as ReadableStream;
@@ -180,10 +178,10 @@ export async function POST(request: Request) {
         filename,
         text,
         url: blobResult.url,
-        model: MODEL,
+        model: voiceObj.model,
         predictionId: predictionResult?.id,
         isPublic: false,
-        voiceId,
+        voiceId: voiceObj.id,
         duration: '-1',
         // credits_used: estimate,
       });
@@ -199,8 +197,9 @@ export async function POST(request: Request) {
         userId: user.id,
         predictionId: predictionResult?.id,
         text,
-        voiceId,
+        voiceId: voiceObj.id,
         creditUsed: estimate,
+        model: voiceObj.model,
       });
     });
 
@@ -230,12 +229,14 @@ async function sendPosthogEvent({
   voiceId,
   predictionId,
   creditUsed,
+  model,
 }: {
   userId: string;
   text: string;
   voiceId: string;
   predictionId?: string;
   creditUsed: number;
+  model: string;
 }) {
   const posthog = PostHogClient();
   posthog.capture({
@@ -244,7 +245,7 @@ async function sendPosthogEvent({
     properties: {
       // duration,
       predictionId: predictionId,
-      model: MODEL,
+      model,
       text,
       voiceId,
       credits_used: creditUsed,

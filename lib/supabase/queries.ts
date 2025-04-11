@@ -16,18 +16,18 @@ export async function getCredits(userId: string): Promise<number> {
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
-): Promise<string> {
+): Promise<{ id: string; name: string; language: string; model: string }> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('voices')
-    .select('id, name, language')
+    .select('id, name, language, model')
     .eq('name', voiceName)
     .eq('is_public', isPublic)
-    .limit(1);
+    .single();
 
   if (error) throw error;
 
-  return data?.[0]?.id;
+  return data;
 }
 
 export async function reduceCredits({
