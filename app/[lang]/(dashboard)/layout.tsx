@@ -112,7 +112,9 @@ export default function DashboardLayout(props: {
     getData();
 
     if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID);
+      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
+        locale: lang,
+      });
       sendUserAnalyticsData();
     }
   }, []);

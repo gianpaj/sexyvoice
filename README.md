@@ -62,3 +62,14 @@ npm run test
 ```bash
 npm run test --watch
 ```
+
+## Generate videos
+
+<https://github.com/adefossez/seewav>
+
+```bash
+pip3 install seewav
+
+# #CC0066
+seewav javi_anfitrion.mp3 --color '0.8,0.0,0.4'
+```

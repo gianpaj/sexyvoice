@@ -70,7 +70,7 @@ export default async function GeneratePage(props: {
         />
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-6 pb-16">
         <GenerateUI
           dict={dict.generate}
           hasEnoughCredits={credits.amount >= 1}

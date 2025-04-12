@@ -91,14 +91,13 @@ export function AudioGenerator({
     setIsPlaying(!isPlaying);
   };
 
-  const resetForm = () => {
+  const resetPlayer = () => {
     if (audio) {
       audio.pause();
       audio.currentTime = 0;
       URL.revokeObjectURL(audio.src);
       setAudio(null);
     }
-    setText('');
     setIsPlaying(false);
   };
 
@@ -179,8 +178,8 @@ export function AudioGenerator({
                 <Button
                   variant="outline"
                   size="icon"
-                  title={dict.resetForm}
-                  onClick={resetForm}
+                  title={dict.resetPlayer}
+                  onClick={resetPlayer}
                 >
                   <RotateCcw className="size-4" />
                 </Button>
