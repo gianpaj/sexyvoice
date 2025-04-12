@@ -87,7 +87,7 @@ export default async function LandingPage(props: {
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
-      <div className="absolute inset-0 overflow-hidden h-[102rem] md:h-[72rem]">
+      <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[72rem]">
         <div className="absolute top-0 left-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
         <div className="absolute bottom-0 right-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_70%_80%,rgba(221,193,70,0.1)_0%,rgba(0,0,0,0)_50%)]" />
       </div>

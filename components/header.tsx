@@ -1,13 +1,8 @@
-import { Menu } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
+import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { createClient } from '@/lib/supabase/server';
 
 export async function Header({ lang }: { lang: string }) {
@@ -18,11 +13,17 @@ export async function Header({ lang }: { lang: string }) {
   return (
     <header className="border-b border-gray-700 bg-gray-900">
       <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link
-          href={`/${lang}`}
-          className="text-xl font-semibold text-white z-10"
-        >
-          SexyVoice.ai
+        <Link href={`/${lang}`} className="z-10 gap-0 items-end flex">
+          <div className="aspect-square">
+            <Image
+              src={logoSmall}
+              alt="Logo"
+              width={221 / 8}
+              height={292 / 8}
+            />
+          </div>
+          {/* <div className="flex h-16 items-center px-6"> */}
+          <span className="text-xl text-white font-semibold">exyVoice.ai</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -52,38 +53,30 @@ export async function Header({ lang }: { lang: string }) {
         </div>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Menu className="size-5" />
-                <span className="sr-only">Open menu</span>
+        <div className="md:hidden z-10 flex gap-2">
+          {/* <LanguageSelector isMobile currentLang={lang} /> */}
+          {user ? (
+            <Link href={`/${lang}/dashboard`} className="w-full" prefetch>
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Button asChild size="sm" variant="secondary">
+                <Link href={`/${lang}/login`} className="w-full" prefetch>
+                  Login
+                </Link>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-36">
-              {/* <LanguageSelector isMobile currentLang={lang} /> */}
-              {user ? (
-                <DropdownMenuItem asChild>
-                  <Link href={`/${lang}/dashboard`} className="w-full" prefetch>
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-              ) : (
-                <>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/${lang}/login`} className="w-full" prefetch>
-                      Login
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/${lang}/signup`} className="w-full" prefetch>
-                      Sign Up
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Button asChild size="sm">
+                <Link
+                  href={`/${lang}/signup`}
+                  className="w-full text-white"
+                  prefetch
+                >
+                  Sign Up
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </nav>
     </header>
