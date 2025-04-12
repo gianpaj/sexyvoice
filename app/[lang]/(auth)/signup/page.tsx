@@ -16,8 +16,8 @@ export default async function SignUpPage(props: {
   return (
     <>
       <Header lang={lang} />
-      <div className="flex min-h-[calc(100vh-65px)] sm:min-h-screen sm:pt-0 pt-11 sm:items-center flex-col sm:justify-center justify-end dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 p-4">
-        <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-500/10 dark:bg-blue-600/20 text-blue-400 mb-4">
+      <div className="flex min-h-[calc(100vh-65px)] sm:min-h-screen sm:pt-0 pt-11 sm:items-center flex-col justify-center dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="mx-auto inline-flex items-center px-4 py-2 rounded-full bg-blue-500/10 dark:bg-blue-600/20 text-blue-400 mb-4">
           <Sparkles className="size-4 mr-2" />
           <span>{dict.landing.cta.freeCredits}</span>
         </div>

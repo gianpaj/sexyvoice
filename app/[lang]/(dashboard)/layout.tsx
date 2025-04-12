@@ -15,7 +15,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useFeatureFlagEnabled, usePostHog } from 'posthog-js/react';
+import { usePostHog } from 'posthog-js/react';
 import { use, useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
