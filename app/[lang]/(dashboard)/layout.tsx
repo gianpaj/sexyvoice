@@ -260,7 +260,7 @@ export default function DashboardLayout(props: {
           </Sidebar>
 
           <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b lg:border-none px-4 sm:px-6 lg:hidden">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
             </div>
 

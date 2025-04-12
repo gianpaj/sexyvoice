@@ -571,7 +571,7 @@ const SidebarMenuButton = React.forwardRef<
     ref,
   ) => {
     const Comp = asChild ? Slot : 'button';
-    const { isMobile, state } = useSidebar();
+    const { isMobile, state, toggleSidebar } = useSidebar();
 
     const button = (
       <Comp
@@ -580,6 +580,9 @@ const SidebarMenuButton = React.forwardRef<
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+        onClick={() => {
+          isMobile && toggleSidebar();
+        }}
         {...props}
       />
     );
@@ -732,12 +735,16 @@ const SidebarMenuSubButton = React.forwardRef<
 >(({ asChild = false, size = 'md', isActive, className, ...props }, ref) => {
   const Comp = asChild ? Slot : 'a';
 
+  const { isMobile, toggleSidebar } = useSidebar();
   return (
     <Comp
       ref={ref}
       data-sidebar="menu-sub-button"
       data-size={size}
       data-active={isActive}
+      onClick={() => {
+        isMobile && toggleSidebar();
+      }}
       className={cn(
         'flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground',
         'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground',
