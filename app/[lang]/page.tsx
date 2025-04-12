@@ -31,19 +31,19 @@ const sampleAudios = [
   // },
   {
     id: 2,
-    name: 'Tara',
+    name: 'Tara (en-US) 🇺🇸',
     prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
     audioSrc: 'tara_amazing.mp3',
   },
-  {
-    id: 3,
-    name: 'Tara',
-    prompt: '<sigh> Oh my god. This is fantastic! <laugh>',
-    audioSrc: 'tara_fantastic.mp3',
-  },
+  // {
+  //   id: 3,
+  //   name: 'Tara (en-US) 🇺🇸',
+  //   prompt: '<sigh> Oh my god. This is fantastic! <laugh>',
+  //   audioSrc: 'tara_fantastic.mp3',
+  // },
   {
     id: 4,
-    name: 'Dan',
+    name: 'Dan (en-UK) 🇬🇧',
     prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
 Because it's hard to lay down in a square! <laugh>
 I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
@@ -51,18 +51,18 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   },
   {
     id: 5,
-    name: 'Emma',
+    name: 'Emma (en-US) 🇺🇸',
     prompt:
       '<gasp> Ever dreamed ... of wielding legendary power, carving your destiny in a world of magic and wonder?',
     audioSrc: 'emma_wonder.mp3',
   },
-  // {
-  //   id: 4,
-  //   name: 'Emma Watson',
-  //   prompt:
-  //     'Education is the most powerful weapon which you can use to change the world.',
-  //   audioSrc: '/audios/emma-watson.mp3',
-  // },
+  {
+    id: 6,
+    name: 'Javi (es-ES) 🇪🇸',
+    prompt:
+      'Bienvenido a SexyVoice.ai <resoplido> , tu puerta de entrada a la vanguardia de la innovación y el mundo de la tecnología. Soy tu anfitrión, Javi, y cada semana exploramos las últimas tendencias, avances y las personas que están dando forma al futuro de la tecnología.',
+    audioSrc: 'javi_anfitrion.mp3',
+  },
 ];
 
 export default async function LandingPage(props: {
