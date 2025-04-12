@@ -113,8 +113,8 @@
           "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 10.000 créditos gratuitos (unos 10 minutos de voz). Nuestro plan Starter incluye 30.000 créditos mensuales, mientras que el Pro ofrece 500.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
         },
         {
-          "question": "¿Puedo clonar voces en otros idiomas además del inglés?",
-          "answer": "Actualmente, solo admitimos la generación de voz en inglés. Estamos trabajando intensamente para añadir más idiomas en el futuro. Nos centramos primero en perfeccionar las voces en inglés para garantizar la máxima calidad antes de expandirnos a otros idiomas. Anunciaremos nuevas opciones de idiomas tan pronto como estén disponibles."
+          "question": "¿Qué idiomas soportas?",
+          "answer": "Actualmente, soportamos el texto a voz en inglés US 🇺🇸, UK 🇬🇧, español 🇪🇸 y italiano 🇮🇹. Estamos trabajando duro para añadir más idiomas en el futuro. Nuestra prioridad es expandir el soporte de idiomas manteniendo la calidad de voz más alta. Anunciamos nuevas opciones de idioma tan pronto como estén disponibles."
         },
         {
           "question": "¿Tenéis una API para desarrolladores?",

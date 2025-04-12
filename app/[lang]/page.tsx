@@ -87,7 +87,7 @@ export default async function LandingPage(props: {
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
-      <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[72rem]">
+      <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
         <div className="absolute top-0 left-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
         <div className="absolute bottom-0 right-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_70%_80%,rgba(221,193,70,0.1)_0%,rgba(0,0,0,0)_50%)]" />
       </div>
@@ -194,7 +194,7 @@ export default async function LandingPage(props: {
 
           {/* FAQ Section */}
           <div className="max-w-3xl mx-auto py-16">
-            <div className="text-center mb-12">
+            <div className="text-left md:text-center mb-12">
               <h2 className="text-3xl font-bold text-white mb-2">
                 {dict.landing.faq.title}
               </h2>
@@ -204,11 +204,11 @@ export default async function LandingPage(props: {
             <Accordion type="single" collapsible className="w-full">
               {dict.landing.faq.questions.map((faq, index) => (
                 <AccordionItem
-                  key={`faq-${faq.question.substring(0, 10).replace(/\s+/g, '-').toLowerCase()}`}
+                  key={`item-${index}`}
                   value={`item-${index}`}
                   className="border-b border-white/10"
                 >
-                  <AccordionTrigger className="text-white hover:text-blue-400 hover:no-underline py-5">
+                  <AccordionTrigger className="text-white text-left hover:text-blue-400 hover:no-underline py-5">
                     {faq.question}
                   </AccordionTrigger>
                   <AccordionContent className="text-gray-300">

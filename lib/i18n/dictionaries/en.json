@@ -114,8 +114,8 @@
           "answer": "About 1,000 credits makes 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
         },
         {
-          "question": "Can I clone voices in languages other than English?",
-          "answer": "Currently, we only support English voice generation. We're working hard to add more languages in the future. Our focus is on perfecting English voices first to ensure the highest quality before expanding to other languages. We'll announce new language options as soon as they're available."
+          "question": "What languages do you support?",
+          "answer": "We currently support text to speech generation in English US 🇺🇸, UK 🇬🇧, Spanish 🇪🇸 and Italian 🇮🇹. We're working hard to add more languages in the future. Our focus is on expanding language support while maintaining the highest quality voice generation. We'll announce new language options as soon as they're available."
         },
         {
           "question": "Do you have an API for developers?",
