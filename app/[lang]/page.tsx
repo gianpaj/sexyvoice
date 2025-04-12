@@ -1,6 +1,6 @@
-import { Globe2, Mic2, Play, Shield, Sparkles } from 'lucide-react';
+import { Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 
 import { getDictionary } from '@/lib/i18n/get-dictionary';
