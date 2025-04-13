@@ -25,7 +25,12 @@ export function AudioPlayer({ url }: { url: string }) {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={handlePlay}>
+    <Button
+      variant="secondary"
+      size="icon"
+      className="min-w-9 min-h-9"
+      onClick={handlePlay}
+    >
       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
     </Button>
   );

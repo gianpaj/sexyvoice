@@ -88,17 +88,15 @@ export function VoiceSelector({
             {publicVoices.length > 0 &&
               publicVoices.map((voice) => (
                 <SelectItem key={voice.id} value={voice.name}>
-                  {capitalizeFirstLetter(voice.name)} ({voice.language})
+                  {capitalizeFirstLetter(voice.name)} | {voice.language}
                 </SelectItem>
               ))}
           </SelectContent>
         </Select>
         {selectedVoiceSample?.sample_url && (
-          <div className="flex items-center justify-between p-4 border rounded-md lg:w-1/2">
+          <div className="flex gap-2 items-center justify-between p-4 border rounded-md lg:w-1/2">
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                Selected audio sample
-                <br />
                 Prompt: <i>{selectedVoiceSample.sample_prompt}</i>
               </p>
             </div>

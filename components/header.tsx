@@ -67,11 +67,7 @@ export async function Header({ lang }: { lang: string }) {
                 </Link>
               </Button>
               <Button asChild size="sm">
-                <Link
-                  href={`/${lang}/signup`}
-                  className="w-full text-white"
-                  prefetch
-                >
+                <Link href={`/${lang}/signup`} className="w-full" prefetch>
                   Sign Up
                 </Link>
               </Button>

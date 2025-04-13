@@ -142,7 +142,6 @@ export function AudioGenerator({
               !selectedVoice ||
               !hasEnoughCredits
             }
-            className={` ${isGenerating ? 'text-white' : ''}`}
             size="lg"
           >
             {isGenerating ? (
