@@ -12,6 +12,7 @@ declare type Database = {
       audio_files: {
         Row: {
           created_at: string | null;
+          credits_used: number;
           duration: number;
           id: string;
           is_public: boolean;
@@ -26,6 +27,7 @@ declare type Database = {
         };
         Insert: {
           created_at?: string | null;
+          credits_used?: number;
           duration: number;
           id?: string;
           is_public?: boolean;
@@ -40,6 +42,7 @@ declare type Database = {
         };
         Update: {
           created_at?: string | null;
+          credits_used?: number;
           duration?: number;
           id?: string;
           is_public?: boolean;

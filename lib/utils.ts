@@ -49,7 +49,7 @@ export function formatDate(
   });
 }
 
-export function estimateCredits(text: string): number {
+export function estimateCredits(text: string, voice: string): number {
   // Remove extra whitespace and split into words
   const words = text.trim().split(/\s+/).length;
 
@@ -57,11 +57,23 @@ export function estimateCredits(text: string): number {
     return 0;
   }
 
+  if (!voice) {
+    throw new Error('Voice is required');
+  }
+
   // Using average speaking rate of 100 words per minute (middle of 120-150 range)
   const wordsPerSecond = 100 / 60; // 2.25 words per second
 
+  let multiplier = 1;
+  // Calculate multiplier based on voice
+  if (
+    ['pietro', 'giulia', 'carlo', 'javi', 'sergio', 'maria'].includes(voice)
+  ) {
+    multiplier = 4;
+  }
+
   // Calculate estimated seconds (credits) by 10
-  return Math.ceil((words / wordsPerSecond) * 10);
+  return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
 
 export function capitalizeFirstLetter(str: string) {

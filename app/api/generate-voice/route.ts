@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text);
+    const estimate = estimateCredits(text, voice);
 
     // console.log({ estimate });
 
@@ -171,8 +171,6 @@ export async function POST(request: Request) {
     });
 
     after(async () => {
-      // const creditsToReduce = await calculateCreditsToReduce(output);
-
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
       const audioFileDBResult = await saveAudioFile({
@@ -185,7 +183,7 @@ export async function POST(request: Request) {
         isPublic: false,
         voiceId: voiceObj.id,
         duration: '-1',
-        // credits_used: estimate,
+        credits_used: estimate,
       });
 
       if (audioFileDBResult.error) {
@@ -272,7 +270,3 @@ async function sendPosthogEvent({
   });
   await posthog.shutdown();
 }
-
-// async function calculateCreditsToReduce(output: ReadableStream<any>): Promise<number> {
-
-// }

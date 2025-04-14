@@ -73,3 +73,9 @@ pip3 install seewav
 # #CC0066
 seewav javi_anfitrion.mp3 --color '0.8,0.0,0.4'
 ```
+
+## Generate types from supabase
+
+```bash
+supabase gen types typescript --project-id bfaqdyadcpaetelvpbva > database.types.ts
+```
