@@ -51,7 +51,7 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">{plan.name}</h3>
               {plan.isPopular && (
-                <span className="rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
+                <span className="rounded-full bg-green-800 px-2 py-0.5 text-xs text-white">
                   {dict.credits.plans.popular}
                 </span>
               )}

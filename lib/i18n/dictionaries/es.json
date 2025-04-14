@@ -141,6 +141,8 @@
     },
     "plans": {
       "popular": "Más Popular",
+      "subscribe": "Empezar",
+      "currentPlan": "Plan Actual",
       "free": {
         "name": "Gratis",
         "description": "Para personas que quieren probar el audio de IA más avanzado.",
