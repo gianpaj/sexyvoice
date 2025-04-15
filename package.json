@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
+    "build": "pnpm run check-translations && SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
     "start": "next start",
     "test": "tsx --test lib/utils.test.ts",
     "test:watch": "tsx --test --watch lib/utils.test.ts",
@@ -13,7 +13,8 @@
     "format:write": "pnpm run format --write",
     "format": "biome format ./app components hooks lib middleware.ts",
     "analyse": "ANALYZE=true next build",
-    "clean": "knip"
+    "clean": "knip",
+    "check-translations": "node scripts/check-translations.js"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.5.10",

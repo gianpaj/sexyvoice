@@ -143,7 +143,6 @@
     "plans": {
       "popular": "Most Popular",
       "subscribe": "Subscribe",
-      "currentPlan": "Current Plan",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio.",
@@ -167,7 +166,6 @@
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-
         "credits": "500,000 credits per month (~10 hours audio)",
         "features": [
           "Everything in starter, plus",

@@ -1,15 +1,17 @@
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+
+import type en from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 
-async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
+async function PricingTable({ lang, dict }: { lang: Locale; dict: typeof en }) {
   const { credits } = dict;
   const { plans: pPlans } = credits;
   const plans = [
     {
-      name: credits.plans.free.name,
+      name: pPlans.free.name,
       price: '0',
       billing: credits.billing.forever,
       description: pPlans.free.description,
@@ -52,7 +54,7 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: any }) {
               <h3 className="text-xl font-semibold">{plan.name}</h3>
               {plan.isPopular && (
                 <span className="rounded-full bg-green-800 px-2 py-0.5 text-xs text-white">
-                  {dict.credits.plans.popular}
+                  {pPlans.popular}
                 </span>
               )}
             </div>

@@ -42,6 +42,7 @@
       "newPassword": "Nueva contraseña",
       "confirmPassword": "Confirmar contraseña",
       "updatePassword": "Actualizar contraseña",
+      "loading": "Actualizando...",
       "errors": {
         "same_password": "La nueva contraseña debe ser diferente a la contraseña actual",
         "passwords_do_not_match": "Las contraseñas no coinciden",
@@ -142,11 +143,9 @@
     "plans": {
       "popular": "Más Popular",
       "subscribe": "Empezar",
-      "currentPlan": "Plan Actual",
       "free": {
         "name": "Gratis",
         "description": "Para personas que quieren probar el audio de IA más avanzado.",
-        "currentPlan": "Plan Actual",
         "credits": "10,000 créditos (~10 min de audio)",
         "features": [
           "Genera voz con voces únicas",
@@ -159,7 +158,6 @@
       "starter": {
         "name": "Inicial",
         "description": "Para aficionados que crean proyectos con audio de IA.",
-        "subscribe": "Suscribirse",
         "credits": "30,000 créditos por mes (~30 min de audio)",
         "features": [
           "Todo lo incluido en el plan gratuito, más",
@@ -170,7 +168,6 @@
       "pro": {
         "name": "Profesional",
         "description": "Para creadores más grandes que aumentan su producción de contenido.",
-        "subscribe": "Suscribirse",
         "credits": "500,000 créditos por mes (~10 horas de audio)",
         "features": [
           "Todo lo incluido en el plan creador, más",
