@@ -94,7 +94,6 @@ export function SignUpForm({
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          className="text-black"
         />
         <Input
           type="password"
@@ -103,7 +102,6 @@ export function SignUpForm({
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className="text-black"
         />
       </div>
 

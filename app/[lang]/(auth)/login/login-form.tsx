@@ -74,7 +74,6 @@ export function LoginForm({
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          // className="text-black"
         />
       </div>
       <div className="grid gap-2">
