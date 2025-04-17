@@ -102,12 +102,13 @@
   "packageManager": "pnpm@8.6.3",
   "pnpm": {
     "overrides": {
+      "@babel/runtime@<7.26.10": ">=7.26.10",
+      "@types/react": "19.0.12",
+      "@types/react-dom": "19.0.4",
       "undici@<5.28.4": ">=5.28.4",
       "undici@<=5.28.2": ">=5.28.3",
       "undici@>=4.5.0 <5.28.5": ">=5.28.5",
-      "@babel/runtime@<7.26.10": ">=7.26.10",
-      "@types/react": "19.0.12",
-      "@types/react-dom": "19.0.4"
+      "whatwg-url": "^14.0.0"
     }
   }
 }

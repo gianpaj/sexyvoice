@@ -36,7 +36,6 @@
 ## AI server
 
 - Monitor Replicate API calls. Which user is making more calls.
-- delete file after generated
 
 ## Security
 
