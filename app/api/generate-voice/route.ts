@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
-import { list, put } from '@vercel/blob';
+import { Redis } from '@upstash/redis';
+import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -30,6 +31,12 @@ async function generateHash(
     .join('')
     .slice(0, 8);
 }
+
+// https://vercel.com/docs/functions/configuring-functions/duration
+export const maxDuration = 60; // seconds - fluid compute is enabled
+
+// Initialize Redis
+const redis = Redis.fromEnv();
 
 export async function POST(request: Request) {
   let text = '';
@@ -103,12 +110,19 @@ export async function POST(request: Request) {
     // Generate hash for the combination of text, voice, and accent
     const hash = await generateHash(text, voice);
 
+    const abortController = new AbortController();
+
     const path = `audio/${voice}-${hash}`;
 
-    // Check if audio file already exists
-    const { blobs } = await list({ prefix: path });
+    request.signal.addEventListener('abort', () => {
+      console.log('request aborted. hash:', hash);
+      abortController.abort();
+    });
 
-    if (blobs.length > 0) {
+    const filename = `${path}.wav`;
+    const result = await redis.get(filename);
+
+    if (result) {
       await sendPosthogEvent({
         userId: user.id,
         text,
@@ -117,7 +131,7 @@ export async function POST(request: Request) {
         model: voiceObj.model,
       });
       // Return existing audio file URL
-      return NextResponse.json({ url: blobs[0].url }, { status: 200 });
+      return NextResponse.json({ url: result }, { status: 200 });
     }
 
     // uses REPLICATE_API_TOKEN
@@ -138,7 +152,7 @@ export async function POST(request: Request) {
     const output = (await replicate.run(
       // @ts-ignore
       voiceObj.model,
-      { input },
+      { input, signal: request.signal },
       onProgress,
     )) as ReadableStream;
 
@@ -160,16 +174,14 @@ export async function POST(request: Request) {
       throw new Error(output.error || 'Voice generation failed');
     }
 
-    const filename = `${path}.wav`;
-
-    // await replicate.predictions.cancel(prediction.id);
-
     // Use hash in the file path for future lookups
     const blobResult = await put(filename, output, {
       access: 'public',
       contentType: 'audio/mpeg',
-      addRandomSuffix: false,
+      allowOverwrite: true,
     });
+
+    await redis.set(filename, blobResult.url);
 
     after(async () => {
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });

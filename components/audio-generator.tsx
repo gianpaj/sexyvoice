@@ -1,7 +1,7 @@
 'use client';
 
-import { Download, Pause, Play, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { CircleStop, Download, Pause, Play, RotateCcw } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -34,15 +34,20 @@ export function AudioGenerator({
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   // const [creditsUsed, setCreditsUsed] = useState(credits);
 
+  const abortController = useRef<AbortController | null>(null);
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
+      abortController.current = new AbortController();
+
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ text, voice: selectedVoice }),
+        signal: abortController.current.signal,
       });
 
       if (!response.ok) {
@@ -165,6 +170,15 @@ export function AudioGenerator({
           </Button>
 
           <div className="space-x-2">
+            {isGenerating && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => abortController.current?.abort()}
+              >
+                <CircleStop name="cancel" className="size-4" />
+              </Button>
+            )}
             {audio && (
               <>
                 <Button variant="outline" size="icon" onClick={togglePlayback}>
