@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Button } from './ui/button';
+import { ProgressCircle } from './ui/circular-progress';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
@@ -52,16 +53,10 @@ function CreditsSection({
           </div>
         </div>
         <div className="relative w-10 h-10">
-          <div className="w-full h-full rounded-full border-2 border-gray-600" />
-          <div
-            className="absolute top-0 left-0 w-full h-full rounded-full border-4 border-white"
-            style={{
-              clipPath: `polygon(50% 50%, 50% 0%, ${50 + Math.cos((((credits / 10000) * 360 - 90) * Math.PI) / 180) * 50}% ${50 + Math.sin((((credits / 10000) * 360 - 90) * Math.PI) / 180) * 50}%)`,
-            }}
+          <ProgressCircle
+            value={Math.round((credits / 10000) * 100)}
+            className="size-10"
           />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[0.7rem] font-medium">
-            {Math.round((credits / 10000) * 100)}%
-          </div>
         </div>
       </div>
     </div>
