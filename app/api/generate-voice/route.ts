@@ -120,6 +120,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: blobs[0].url }, { status: 200 });
     }
 
+    // uses REPLICATE_API_TOKEN
     const replicate = new Replicate();
 
     const input = {

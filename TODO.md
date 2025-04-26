@@ -9,11 +9,35 @@
 - Add Privacy Policy
 - Add a Share page for individual generated audio files
 - Add Blog
+- IT: pietro, giulia, carlo
+  sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
+- ES: javi, sergio, maria
+  groan, chuckle, gasp, resoplido, laugh, yawn, cough
+---
+- Deploy model
+  - FR: pierre, amelie, marie
+    chuckle, cough, gasp, groan, laugh, sigh, sniffle, whimper, yawn
+- Deploy model
+  - DE: jana, thomas, max
+    chuckle, cough, gasp, groan, laugh, sigh, sniffle, yawn
+- Korean: 유나, 준서
+- Mandarin: 长乐, 白芷
+
+Ciao, mi chiamo Pietro, <laugh> , e sono un modello di generazione vocale che può sembrare una persona.
+
+Ciao, mi chiamo Giulia, <gemito> , e sono un modello di generazione vocale che può sembrare una persona.
+
+Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può sembrare una persona.
+
+> sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
 
 ## SEO
 
 - sitemap
 - show more info on the side of the signup page. see <https://ui.shadcn.com/blocks/authentication>
+- Page to compare with other TTS services
+  - Google HD voice: https://cloud.google.com/text-to-speech?hl=en - doesn't support Speech Synthesis Markup Language (SSML) - price: free up to 1 million characters/month , US$30 per 1 million characters (Chirp 3: HD voices)
+  - ElevenLabs
 
 ## Analytics
 

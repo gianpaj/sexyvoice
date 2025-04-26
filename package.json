@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "pnpm run check-translations && SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
+    "prebuild": "pnpm run check-translations",
+    "build": "SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
     "start": "next start",
     "test": "tsx --test lib/utils.test.ts",
     "test:watch": "tsx --test --watch lib/utils.test.ts",
