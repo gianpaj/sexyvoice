@@ -129,6 +129,7 @@
     }
   },
   "credits": {
+    "pricingPlan": "Plan de precios",
     "title": "Planes diseñados para creadores y empresas de todos los tamaños",
     "description": "Elige el plan que mejor se adapte a tus necesidades",
     "availableCredits": "Créditos Disponibles",
