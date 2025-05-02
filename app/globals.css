@@ -53,6 +53,7 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --white: #fff;
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -97,10 +98,19 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .bg-grid-gradient {
+    @apply bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)];
+  }
 }
 @-moz-document url-prefix() {
   .disable-bg-firefox {
     background: none;
     background-image: none !important;
   }
+}
+
+.bg-radial {
+  --tw-gradient-position: in oklab;
+  background-image: radial-gradient(var(--tw-gradient-stops));
 }
