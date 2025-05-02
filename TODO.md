@@ -2,10 +2,8 @@
 
 - Stripe subscription adds credits!
 - Add Status page link on dashboard footer.
-- Add VoiceGeneration component in home page with Play button
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
-- Add Terms and Conditions
-- Add Privacy Policy
+- Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
 - Add Blog
 - IT: pietro, giulia, carlo
@@ -85,3 +83,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
   "answer": "Yes! You'll soon be able to clone your voice with just 1 minute of audio (coming to Starter and Pro plans). For ethical reasons, you need permission before cloning someone else's voice. We take voice rights seriously."
 },
 ```
+
+##  Job scheduler
+
+- upstash QStash

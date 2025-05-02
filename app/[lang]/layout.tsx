@@ -1,5 +1,9 @@
+import { Inter } from 'next/font/google';
+
 import { i18n } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
@@ -14,7 +18,9 @@ export default async function LangLayout({
 }>) {
   return (
     <html lang={(await params).lang}>
-      <Providers>{children}</Providers>
+      <body className={`${inter.className} dark`} suppressHydrationWarning>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

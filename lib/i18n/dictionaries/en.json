@@ -53,15 +53,15 @@
   },
   "landing": {
     "hero": {
-      "title": "Your Voice, Uncensored",
-      "subtitle": "Free Text to Speech & AI Voice Generator. Perfect for content creators, developers, and storytellers. 😉",
-      "getStarted": "Get Started",
+      "title": "Expressive Voices, Uncensored",
+      "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators, developers, and storytellers. 😉",
+      "buttonCTA": "Get Started",
       "signIn": "Sign In"
     },
     "features": {
       "voiceCloning": {
-        "title": "Natural Voice Cloning",
-        "description": "Create perfect voice replicas with just a few minutes of audio samples using state-of-the-art AI technology."
+        "title": "Natural Voices",
+        "description": "Integrate natural emotions—add laughter, sighs, coughs, and more—to create authentic, captivating audio experiences."
       },
       "multiLanguage": {
         "title": "Multi-Language Support",
@@ -129,6 +129,7 @@
     }
   },
   "credits": {
+    "pricingPlan": "Pricing Plan",
     "title": "Plans built for creators and businesses of all sizes",
     "description": "Choose the plan that best fits your needs",
     "availableCredits": "Available Credits",
