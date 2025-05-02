@@ -43,48 +43,53 @@ async function PricingTable({ lang, dict }: { lang: Locale; dict: typeof en }) {
     },
   ];
   return (
-    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3 sm:px-28 py-16">
-      {plans.map((plan) => (
-        <Card
-          key={plan.name}
-          className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
-        >
-          <div>
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">{plan.name}</h3>
-              {plan.isPopular && (
-                <span className="rounded-full bg-green-800 px-2 py-0.5 text-xs text-white">
-                  {pPlans.popular}
-                </span>
-              )}
-            </div>
-            <div className="flex items-baseline">
-              <span className="text-3xl font-bold">${plan.price}</span>
-              <span className="text-sm text-muted-foreground">
-                /{plan.billing}
-              </span>
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground">{plan.description}</p>
-          <Button
-            className="w-full my-4"
-            asChild
-            variant={plan.buttonVariant as 'outline' | 'default'}
+    <div className="sm:px-28 py-16 flex flex-col gap-6">
+      <h2 className="text-2xl font-semibold mb-4 mx-auto">
+        {credits.pricingPlan}
+      </h2>
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+        {plans.map((plan) => (
+          <Card
+            key={plan.name}
+            className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
-            <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
-          </Button>
-          <div className="space-y-2">
-            <div className="text-sm font-medium">{plan.credits}</div>
-            {/* @ts-ignore */}
-            {plan.features.map((feature, i) => (
-              <div key={i} className="flex items-center text-sm">
-                <Check className="mr-2 size-4 min-w-fit" />
-                {feature}
+            <div>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                {plan.isPopular && (
+                  <span className="rounded-full bg-green-800 px-2 py-0.5 text-xs text-white">
+                    {pPlans.popular}
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
-        </Card>
-      ))}
+              <div className="flex items-baseline">
+                <span className="text-3xl font-bold">${plan.price}</span>
+                <span className="text-sm text-muted-foreground">
+                  /{plan.billing}
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">{plan.description}</p>
+            <Button
+              className="w-full my-4"
+              asChild
+              variant={plan.buttonVariant as 'outline' | 'default'}
+            >
+              <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
+            </Button>
+            <div className="space-y-2">
+              <div className="text-sm font-medium">{plan.credits}</div>
+              {/* @ts-ignore */}
+              {plan.features.map((feature, i) => (
+                <div key={i} className="flex items-center text-sm">
+                  <Check className="mr-2 size-4 min-w-fit" />
+                  {feature}
+                </div>
+              ))}
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

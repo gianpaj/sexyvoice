@@ -1,10 +1,10 @@
+import { allPosts } from 'contentlayer/generated';
 import { Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Button } from '@/components/ui/button';
-
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
+
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
@@ -19,6 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 
 // Sample audio preview data
 const sampleAudios = [
@@ -87,22 +88,27 @@ export default async function LandingPage(props: {
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
-      <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
+      {/* <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
         <div className="absolute top-0 left-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
         <div className="absolute bottom-0 right-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_70%_80%,rgba(221,193,70,0.1)_0%,rgba(0,0,0,0)_50%)]" />
-      </div>
+      </div> */}
       <div className="min-h-screen dark:bg-gradient-to-br disable-bg-firefox dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4">
           {/* Hero Section */}
           <div className="text-center space-y-6 py-20 z-10 md:pb-32">
             <LandingHero />
-            <h1 className="text-5xl md:text-6xl font-bold text-white">
-              <span>{firstPart}</span>
+            <h1 className="text-5xl md:text-6xl font-bold text-white leading-10">
+              <span className="leading-[3.5rem]">{firstPart}</span>
               {restParts && <span className="text-blue-400">{restParts}</span>}
             </h1>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
               {dict.landing.hero.subtitle}
             </p>
+            <Button asChild size="lg">
+              <Link href={`/${lang}/signup`}>
+                {dict.landing.hero.buttonCTA}
+              </Link>
+            </Button>
           </div>
 
           {/* Audio Previews Grid */}

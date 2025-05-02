@@ -53,15 +53,15 @@
   },
   "landing": {
     "hero": {
-      "title": "Tu Voz, Sin Censura",
+      "title": "Voces Expressivas, Sin Censura",
       "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
-      "getStarted": "Comenzar",
+      "buttonCTA": "Comienza",
       "signIn": "Iniciar Sesión"
     },
     "features": {
       "voiceCloning": {
-        "title": "Clonación Natural de Voz",
-        "description": "Crea réplicas perfectas de voz con solo unos minutos de muestras de audio utilizando tecnología AI de última generación."
+        "title": "Voz Naturales",
+        "description": "Integra emociones naturales—añade risas, suspiros, toses y más—para crear experiencias de audio auténticas y cautivadoras."
       },
       "multiLanguage": {
         "title": "Soporte Multilingüe",
