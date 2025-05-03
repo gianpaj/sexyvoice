@@ -1,3 +1,5 @@
+const { withContentlayer } = require('next-contentlayer2');
+
 /**
  * Content Security Policy Header - Without Nonce
  * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
@@ -90,6 +92,8 @@ nextConfig =
 // Injected content via Sentry wizard below
 
 const { withSentryConfig } = require('@sentry/nextjs');
+
+nextConfig = withContentlayer(nextConfig);
 
 module.exports =
   process.env.NODE_ENV === 'production'

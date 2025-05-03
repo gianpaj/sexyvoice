@@ -3,9 +3,9 @@ import type { Config } from 'tailwindcss';
 const config: Config = {
   darkMode: ['class'],
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './posts/**/*.{md,mdx}',
   ],
   theme: {
     extend: {
@@ -95,6 +95,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
 };
 export default config;

@@ -5,7 +5,6 @@
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
-- Add Blog
 - IT: pietro, giulia, carlo
   sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
 - ES: javi, sergio, maria

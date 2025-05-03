@@ -1,5 +1,6 @@
 import { allPosts } from 'contentlayer/generated';
 import { Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -20,6 +21,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 // Sample audio preview data
 const sampleAudios = [
@@ -65,6 +72,10 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
     audioSrc: 'javi_anfitrion.mp3',
   },
 ];
+
+const getAllPostsByLang = (lang: Locale) => {
+  return allPosts.filter((post) => post.locale === lang);
+};
 
 export default async function LandingPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -223,6 +234,29 @@ export default async function LandingPage(props: {
                 </AccordionItem>
               ))}
             </Accordion>
+          </div>
+
+          {/* Blog posts Section */}
+          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mx-auto lg:max-w-[400px]">
+            {getAllPostsByLang(lang).map((post, idx) => (
+              <Card className="lg:max-w-[400px] mx-auto" key={idx}>
+                <Link href={`/${post.locale}${post.url}`} prefetch>
+                  <CardHeader>
+                    {post.image && (
+                      <Image
+                        src={post.image}
+                        alt={post.title}
+                        width={300}
+                        height={100}
+                      />
+                    )}
+                    <CardTitle className="text-gray-300 text-lg leading-8 text-center">
+                      {post.title}
+                    </CardTitle>
+                  </CardHeader>
+                </Link>
+              </Card>
+            ))}
           </div>
 
           {/* CTA Section */}
