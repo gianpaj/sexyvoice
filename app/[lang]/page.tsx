@@ -2,6 +2,7 @@ import { allPosts } from 'contentlayer/generated';
 import { Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -23,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -170,41 +172,59 @@ export default async function LandingPage(props: {
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 py-16 sm:px-28">
-            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-              <div className="size-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Mic2 className="size-6 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                {dict.landing.features.voiceCloning.title}
-              </h3>
-              <p className="text-gray-300">
-                {dict.landing.features.voiceCloning.description}
-              </p>
-            </div>
+            <Card className="group shadow-zinc-950/5">
+              <CardHeader className="pb-3">
+                <CardDecorator>
+                  <Mic2 className="size-6 text-blue-400" aria-hidden />
+                </CardDecorator>
 
-            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-              <div className="size-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Globe2 className="size-6 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                {dict.landing.features.multiLanguage.title}
-              </h3>
-              <p className="text-gray-300">
-                {dict.landing.features.multiLanguage.description}
-              </p>
-            </div>
+                <h3 className="mt-6 font-medium text-center">
+                  {dict.landing.features.voiceCloning.title}
+                </h3>
+              </CardHeader>
 
-            <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-              <div className="size-12 bg-blue-600/20 rounded-lg flex items-center justify-center mb-4">
-                <Shield className="size-6 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                {dict.landing.features.security.title}
-              </h3>
-              <p className="text-gray-300">
-                {dict.landing.features.security.description}
-              </p>
-            </div>
+              <CardContent>
+                <p className="text-sm">
+                  {dict.landing.features.voiceCloning.description}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="group shadow-zinc-950/5">
+              <CardHeader className="pb-3">
+                <CardDecorator>
+                  <Globe2 className="size-6 text-blue-400" aria-hidden />
+                </CardDecorator>
+
+                <h3 className="mt-6 font-medium text-center">
+                  {dict.landing.features.multiLanguage.title}
+                </h3>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-sm">
+                  {dict.landing.features.multiLanguage.description}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="group shadow-zinc-950/5">
+              <CardHeader className="pb-3">
+                <CardDecorator>
+                  <Shield className="size-6 text-blue-400" aria-hidden />
+                </CardDecorator>
+
+                <h3 className="mt-6 font-medium text-center">
+                  {dict.landing.features.security.title}
+                </h3>
+              </CardHeader>
+
+              <CardContent>
+                <p className="text-sm">
+                  {dict.landing.features.security.description}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <PricingTable dict={dict} lang={lang} />
@@ -285,3 +305,19 @@ export default async function LandingPage(props: {
     </>
   );
 }
+
+const CardDecorator = ({ children }: { children: ReactNode }) => (
+  <div className="relative mx-auto size-36 duration-200 [--color-border:color-mix(in_oklab,var(--color-zinc-950)10%,transparent)] group-hover:[--color-border:color-mix(in_oklab,var(--color-zinc-950)20%,transparent)] dark:[--color-border:color-mix(in_oklab,var(--color-white)15%,transparent)] dark:group-hover:bg-white/5 dark:group-hover:[--color-border:color-mix(in_oklab,var(--color-white)20%,transparent)]">
+    <div
+      aria-hidden
+      className="absolute inset-0 bg-grid-gradient bg-[size:24px_24px]"
+    />
+    <div
+      aria-hidden
+      className="bg-radial to-card absolute inset-0 from-transparent to-75%"
+    />
+    <div className="bg-card absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t">
+      {children}
+    </div>
+  </div>
+);
