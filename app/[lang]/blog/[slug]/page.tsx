@@ -6,21 +6,31 @@ import { Suspense } from 'react';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
-import { Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 export const dynamicParams = false;
 
-export const generateStaticParams = async () =>
-  allPosts.map((post) => ({ slug: post._raw.flattenedPath.split('/') }));
+export const generateStaticParams = ({
+  params: { lang },
+}: {
+  params: { lang: string };
+}) =>
+  allPosts
+    .map((post) => ({
+      slug: post._raw.flattenedPath,
+      locale: post._raw.flattenedPath.endsWith('.es') ? 'es' : 'en',
+    }))
+    .filter((post) => post.locale === lang);
 
 interface PostProps {
   params: {
-    slug: string[];
+    slug: string;
+    lang: Locale;
   };
 }
 
 async function getPostFromParams(params: PostProps['params']) {
-  const slug = params.slug.join('/');
+  const slug = params.slug;
   const post = allPosts.find((post) => post._raw.flattenedPath === slug);
 
   if (!post) {
@@ -49,7 +59,7 @@ export async function generateMetadata({
 }
 
 const PostLayout = async (props: {
-  params: Promise<{ slug: string[]; tag: string; lang: Locale }>;
+  params: Promise<{ slug: string; tag: string; lang: Locale }>;
 }) => {
   const params = await props.params;
   const { lang } = params;

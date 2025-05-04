@@ -64,6 +64,7 @@
     "crisp-sdk-web": "^1.0.25",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.29.0",
+    "globby": "^14.1.0",
     "import-in-the-middle": "^1.13.1",
     "lucide-react": "^0.446.0",
     "mdx-bundler": "^10.1.1",

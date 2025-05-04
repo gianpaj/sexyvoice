@@ -25,6 +25,7 @@ export async function middleware(req: NextRequest) {
       !pathname.startsWith('/privacy-policy') &&
       !pathname.startsWith('/terms') &&
       !pathname.startsWith('/api') &&
+      !pathname.startsWith('/sitemap') &&
       !pathname.startsWith('/webhook') &&
       pathname !== `/${locale}`,
   );
