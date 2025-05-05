@@ -1,5 +1,5 @@
 import { allPosts } from 'contentlayer/generated';
-import { Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -111,7 +111,13 @@ export default async function LandingPage(props: {
             <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
               {dict.landing.hero.subtitle}
             </p>
-            <Button asChild size="lg">
+            <Button
+              asChild
+              size="lg"
+              effect="expandIcon"
+              icon={ArrowRightIcon}
+              iconPlacement="right"
+            >
               <Link href={`/${lang}/signup`}>
                 {dict.landing.hero.buttonCTA}
               </Link>
@@ -289,6 +295,7 @@ export default async function LandingPage(props: {
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 mt-4"
               asChild
+              effect="ringHover"
             >
               <Link href={`/${lang}/signup`}>{dict.landing.cta.action}</Link>
             </Button>

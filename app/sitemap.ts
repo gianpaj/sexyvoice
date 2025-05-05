@@ -70,8 +70,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       index === self.findIndex((t) => t.url === route.url),
   );
 
-  console.log({ routes });
-
   return [
     ...Array.from(removedDuplicates).map((route, index) => ({
       ...route,

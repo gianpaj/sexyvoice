@@ -43,7 +43,7 @@ export async function Header({ lang }: { lang: string }) {
                   Login
                 </Link>
               </Button>
-              <Button variant="default" asChild>
+              <Button variant="default" asChild effect="ringHover">
                 <Link href={`/${lang}/signup`} prefetch>
                   Sign Up
                 </Link>
