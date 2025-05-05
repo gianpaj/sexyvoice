@@ -15,8 +15,14 @@ function getLocale(request: NextRequest): string {
   return matchLocale(languages, i18n.locales, i18n.defaultLocale);
 }
 
+const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  if (publicRoutesWithoutLocale.includes(pathname)) {
+    return NextResponse.next();
+  }
 
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) =>

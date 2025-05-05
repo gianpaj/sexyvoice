@@ -85,4 +85,4 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ##  Job scheduler
 
-- upstash QStash
+- upstash QStash - https://upstash.com/docs/qstash/quickstarts/vercel-nextjs
