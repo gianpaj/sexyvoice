@@ -269,6 +269,27 @@ export default function DashboardLayout(props: {
             <main className="px-4 py-8 sm:px-6 lg:px-8 flex-1">
               {props.children}
             </main>
+            <footer className="p-4 border-t text-center">
+              <p className="text-sm text-gray-500">
+                <a
+                  href="https://sexyvoice.checkly-dashboards.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  Status Page
+                </a>
+                <span> - </span>
+                <a
+                  href="https://sexyvoice.featurebase.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
+                  Roadmap
+                </a>
+              </p>
+            </footer>
           </div>
         </SidebarProvider>
       </div>
