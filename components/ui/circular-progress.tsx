@@ -51,7 +51,7 @@ export const ProgressCircle = ({
     <svg
       role="progressbar"
       viewBox={`0 0 ${size} ${size}`}
-      className={cn('size-6 text-white', className)}
+      className={cn('size-6 fill-[#fff]', className)}
       aria-valuenow={normalizedValue}
       aria-valuemin={0}
       aria-valuemax={100}
@@ -72,7 +72,7 @@ export const ProgressCircle = ({
         y={halfSize}
         textAnchor="middle"
         dominantBaseline="central"
-        className="fill-white text-[0.4rem] font-medium"
+        className="text-[0.4rem] font-medium"
       >
         {Math.round(normalizedValue)}%
       </text>
