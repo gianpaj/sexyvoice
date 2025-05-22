@@ -7,7 +7,7 @@ import {
   // Copy,
   CreditCard,
   FileClock,
-  // Mic2,
+  Mic2,
   User2,
   Wand2,
   X,
@@ -141,12 +141,12 @@ export default function DashboardLayout(props: {
       icon: FileClock,
       current: pathname === `/${lang}/dashboard/history`,
     },
-    // {
-    //   name: 'Voices',
-    //   href: `/${lang}/dashboard/voices`,
-    //   icon: Mic2,
-    //   current: pathname === `/${lang}/dashboard/voices`,
-    // },
+    {
+      name: 'Voices',
+      href: `/${lang}/dashboard/voices`,
+      icon: Mic2,
+      current: pathname === `/${lang}/dashboard/voices`,
+    },
     // ...(flagEnabled
     //   ? [
     //       {

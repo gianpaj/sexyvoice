@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { createClient } from '@/lib/supabase/client';
 
 export default function NewVoicePage(props: {
@@ -31,8 +30,8 @@ export default function NewVoicePage(props: {
 
   const [name, setName] = useState('');
   const [language, setLanguage] = useState('');
-  const [isPublic, setIsPublic] = useState(false);
-  const [isNsfw, setIsNsfw] = useState(false);
+  // const [isPublic, setIsPublic] = useState(false);
+  // const [isNsfw, setIsNsfw] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
@@ -53,8 +52,8 @@ export default function NewVoicePage(props: {
       {
         name,
         language,
-        is_public: isPublic,
-        is_nsfw: isNsfw,
+        is_public: false,
+        is_nsfw: false,
         user_id: user.id,
       },
     ]);
@@ -110,7 +109,7 @@ export default function NewVoicePage(props: {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Public access</Label>
                   <p className="text-sm text-muted-foreground">
@@ -118,9 +117,9 @@ export default function NewVoicePage(props: {
                   </p>
                 </div>
                 <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-              </div>
+              </div> */}
 
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>NSFW content</Label>
                   <p className="text-sm text-muted-foreground">
@@ -128,7 +127,7 @@ export default function NewVoicePage(props: {
                   </p>
                 </div>
                 <Switch checked={isNsfw} onCheckedChange={setIsNsfw} />
-              </div>
+              </div> */}
             </div>
 
             <div className="flex justify-end space-x-4">
