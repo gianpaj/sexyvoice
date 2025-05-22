@@ -64,12 +64,12 @@ export function estimateCredits(text: string, voice: string): number {
   // Using average speaking rate of 100 words per minute (middle of 120-150 range)
   const wordsPerSecond = 100 / 60; // 2.25 words per second
 
-  let multiplier = 1;
+  let multiplier = 4;
   // Calculate multiplier based on voice
   if (
     ['pietro', 'giulia', 'carlo', 'javi', 'sergio', 'maria'].includes(voice)
   ) {
-    multiplier = 4;
+    multiplier = 8;
   }
 
   // Calculate estimated seconds (credits) by 10
