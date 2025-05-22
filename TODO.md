@@ -1,7 +1,6 @@
 # TODO
 
 - Stripe subscription adds credits!
-- Add Status page link on dashboard footer.
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files

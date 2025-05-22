@@ -1,7 +1,7 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreVerticalIcon } from 'lucide-react';
+import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
@@ -20,12 +20,38 @@ export type AudioFile = {
   };
 };
 
+const downloadFile = (url: string) => {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'generated_audio.mp3';
+  // link.setAttribute('download', 'generated_audio.mp3');
+  link.target = '_blank';
+  // document.body.appendChild(link);
+  link.click();
+  // document.body.removeChild(link);
+};
+
 export const columns: ColumnDef<AudioFile>[] = [
   {
     id: 'file name',
     accessorKey: 'storage_key',
     header: 'File Name',
-    cell: ({ row }) => row.original.storage_key.replace('audio/', ''),
+    cell: ({ row }) => (
+      <div className="w-full items-center flex flex-row">
+        <span>
+          {row.original.storage_key.replace('audio/', '') || 'Unknown'}
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          title="Download"
+          className="ml-2"
+          onClick={() => downloadFile(row.original.url)}
+        >
+          <Download className="size-4" />
+        </Button>
+      </div>
+    ),
   },
   {
     id: 'voice',
@@ -76,15 +102,11 @@ export const columns: ColumnDef<AudioFile>[] = [
   {
     id: 'Preview',
     header: 'Preview',
-    cell: ({ row }) => {
-      const file = row.original;
-
-      return (
-        <div className="flex justify-center gap-2">
-          <AudioPlayer url={file.url} />
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <div className="flex justify-center gap-2">
+        <AudioPlayer url={row.original.url} />
+      </div>
+    ),
   },
   // {
   //   id: 'actions',
