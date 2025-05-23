@@ -1,7 +1,13 @@
 'use client';
 
 import { formatDistanceToNow } from 'date-fns';
-import { Globe2, Lock, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  Globe2,
+  Lock,
+  MessageCircleWarning,
+  MoreVertical,
+  Trash2,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -43,6 +49,18 @@ export function VoicesList({
     setIsLoading(null);
   };
 
+  const handleReport = async (voiceId: string) => {
+    setIsLoading(voiceId);
+
+    // TODO
+
+    // if (!error) {
+    //   router.refresh();
+    // }
+
+    setIsLoading(null);
+  };
+
   if (voices.length === 0) {
     return (
       <div className="text-center py-12">
@@ -70,12 +88,17 @@ export function VoicesList({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {/* TODO if is mine */}
                   <DropdownMenuItem
                     className="text-red-600 focus:text-red-600"
                     onClick={() => handleDelete(voice.id)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete voice
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleReport(voice.id)}>
+                    <MessageCircleWarning className="mr-2 h-4 w-4" />
+                    Report voice
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

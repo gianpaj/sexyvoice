@@ -1,9 +1,12 @@
 # TODO
 
 - Stripe subscription adds credits!
+- Clone initial public voices. Morgan Freeman, David Attenborough, Emma Watson
+- Report Cloned voice
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
+- Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter>
 - IT: pietro, giulia, carlo
   sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
 - ES: javi, sergio, maria

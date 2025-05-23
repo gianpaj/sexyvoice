@@ -86,7 +86,7 @@ export async function POST(request: Request) {
         new APIError(
           'Voice not found',
           new Response('Voice not found', {
-            status: 400,
+            status: 404,
           }),
         ),
         { status: 404 },

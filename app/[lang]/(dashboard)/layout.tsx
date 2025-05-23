@@ -270,7 +270,7 @@ export default function DashboardLayout(props: {
               {props.children}
             </main>
             <footer className="p-4 border-t text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 <a
                   href="https://sexyvoice.checkly-dashboards.com/"
                   target="_blank"
