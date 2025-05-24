@@ -16,7 +16,7 @@ export default async function DashboardPage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'auth');
 
   // Get user data
   const { data } = await supabase.auth.getUser();
@@ -54,7 +54,7 @@ export default async function DashboardPage(props: {
       {'success' in searchParams && (
         <div className="text-foreground border-l-2 border-green-500 px-4 text-sm">
           {searchParams.success === 'passwords_updated'
-            ? dict.auth.updatePassword.errors.success
+            ? dict.updatePassword.errors.success
             : searchParams.success}
         </div>
       )}
