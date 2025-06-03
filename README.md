@@ -94,9 +94,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    ```bash
    cp .env.example .env.local
    ```
-   Fill in the required environment variables as defined in [`.env.example`](.env.example).
+   Fill in the required environment variables as defined in [`.env.example`](.env.example):
+   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+   - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+   - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
+   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
+   - Additional optional variables for analytics and monitoring
 
-4. **Run database migrations**
+4. **Set up Supabase**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Run database migrations:
    ```bash
    supabase db push
    ```
@@ -124,6 +132,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm lint:fix` | Fix linting issues automatically |
 | `pnpm type-check` | Run TypeScript type checking |
 | `pnpm format` | Format code with Biome |
+| `pnpm check-translations` | Validate translation files |
+| `pnpm build:content` | Build content layer |
+| `pnpm clean` | Clean unused dependencies with Knip |
 
 ### Testing
 
@@ -158,6 +169,25 @@ pip3 install seewav
 seewav your_audio.mp3 --color '0.8,0.0,0.4'
 ```
 
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Build failures:**
+- Ensure all environment variables are properly set
+- Run `pnpm install` to update dependencies
+- Check that Node.js version is 18 or higher
+
+**Database connection issues:**
+- Verify Supabase URL and API keys are correct
+- Ensure your Supabase project is active
+- Check database migrations are up to date with `supabase db push`
+
+**Authentication problems:**
+- Verify OAuth provider configurations in Supabase
+- Check redirect URLs are properly configured
+- Ensure environment variables for auth providers are set
+
 ## 🌐 Deployment
 
 The application is optimized for deployment on Vercel:
@@ -170,6 +200,27 @@ For other deployment platforms, ensure you:
 - Set all required environment variables
 - Configure build commands according to your platform
 - Set up proper domain and SSL configuration
+
+### Environment Variables for Production
+
+Ensure the following environment variables are configured in your deployment platform:
+
+- **Required**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `REPLICATE_API_TOKEN`, `STRIPE_SECRET_KEY`
+- **Storage**: `BLOB_READ_WRITE_TOKEN` for file uploads
+- **Analytics**: `NEXT_PUBLIC_POSTHOG_KEY` for product analytics
+- **Monitoring**: Sentry configuration for error tracking
+- **Support**: `NEXT_PUBLIC_CRISP_WEBSITE_ID` for customer support chat
+
+## 🔒 Security
+
+SexyVoice.ai implements multiple security layers:
+
+- **Authentication**: Secure OAuth integration with Supabase Auth
+- **Data Protection**: Row-level security (RLS) policies in PostgreSQL
+- **API Security**: Rate limiting and request validation
+- **File Security**: Secure blob storage with access controls
+- **Error Handling**: Comprehensive error tracking with Sentry
+- **Environment Isolation**: Separate configurations for development and production
 
 ## 🤝 Contributing
 
