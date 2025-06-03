@@ -4,6 +4,8 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+const { logger } = Sentry;
+
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -45,12 +47,19 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     if (request.body === null) {
+      logger.error('Request body is empty', {
+        headers: Object.fromEntries(request.headers.entries()),
+      });
       return new Response('Request body is empty', { status: 400 });
     }
     text = body.text || '';
     voice = body.voice || '';
 
     if (!text || !voice) {
+      logger.error('Missing required parameters: text or voice', {
+        body,
+        headers: Object.fromEntries(request.headers.entries()),
+      });
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 },
@@ -58,6 +67,12 @@ export async function POST(request: Request) {
     }
 
     if (text.length > 500) {
+      logger.error('Text exceeds maximum length', {
+        textLength: text.length,
+        maxLength: 500,
+        body,
+        headers: Object.fromEntries(request.headers.entries()),
+      });
       return NextResponse.json(
         new APIError(
           'Text exceeds the maximum length of 500 characters',
@@ -75,6 +90,10 @@ export async function POST(request: Request) {
     const user = data?.user;
 
     if (!user) {
+      logger.error('User not found', {
+        body,
+        headers: Object.fromEntries(request.headers.entries()),
+      });
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
