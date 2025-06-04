@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -120,9 +121,15 @@ export const columns: ColumnDef<AudioFile>[] = [
     cell: ({ row }) => {
       const file = row.original;
 
+      const [isOpen, setIsOpen] = useState(false);
+
+      const handleCloseDropdown = () => {
+        setIsOpen(false);
+      };
+
       return (
         <div className="flex items-center gap-2">
-          <DropdownMenu>
+          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -134,7 +141,10 @@ export const columns: ColumnDef<AudioFile>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-32">
-              <DeleteButton id={file.id} />
+              <DeleteButton
+                handleCloseDropdown={handleCloseDropdown}
+                id={file.id}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

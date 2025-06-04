@@ -1,11 +1,13 @@
 'use client';
 
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import {
   type ColumnDef,
   type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   type SortingState,
   useReactTable,
@@ -30,23 +32,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { AudioFile } from './columns';
+import useSupabaseBrowser from '@/lib/supabase/client';
+import { getMyAudioFiles } from '@/lib/supabase/queries.client';
 
 interface DataTableProps<AudioFile, TValue> {
   columns: ColumnDef<AudioFile, TValue>[];
-  data: AudioFile[];
+  userId: string;
 }
 
 export function DataTable<AudioFile, TValue>({
   columns,
-  data,
+  userId,
 }: DataTableProps<AudioFile, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
+  const supabase = useSupabaseBrowser();
+  const { data } = useQuery(getMyAudioFiles(supabase, userId));
+
   const table = useReactTable<AudioFile>({
-    data,
+    data: data as AudioFile[],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -59,7 +65,7 @@ export function DataTable<AudioFile, TValue>({
       columnVisibility,
       columnFilters,
     },
-    // getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
@@ -159,6 +165,24 @@ export function DataTable<AudioFile, TValue>({
             )}
           </TableBody>
         </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
       </div>
     </>
   );
