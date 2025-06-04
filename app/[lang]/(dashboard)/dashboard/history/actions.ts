@@ -39,16 +39,19 @@ export const handleDeleteAction = async (id: string) => {
       throw new Error('Audio file not found or unauthorized');
     }
 
-    // Delete from database first
+    // Soft delete: update status to 'deleted' and set deleted_at timestamp
     const { error: deleteError } = await supabase
       .from('audio_files')
-      .delete()
+      .update({
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+      })
       .eq('id', id)
       .eq('user_id', user.id);
 
     if (deleteError) {
       Sentry.captureException({
-        error: 'Failed to delete audio file from database',
+        error: 'Failed to soft delete audio file from database',
         audioId: id,
         userId: user.id,
         errorData: deleteError,
@@ -56,20 +59,8 @@ export const handleDeleteAction = async (id: string) => {
       throw new Error('Failed to delete audio file');
     }
 
-    // Delete from Vercel Blob Storage
-    try {
-      await del(audioFile.url);
-    } catch (blobError) {
-      // Log the error but don't fail the request since the DB deletion succeeded
-      Sentry.captureException({
-        error: 'Failed to delete audio file from blob storage',
-        audioId: id,
-        userId: user.id,
-        url: audioFile.url,
-        errorData: blobError,
-      });
-      console.error('Failed to delete from blob storage:', blobError);
-    }
+    // Note: We keep the file in blob storage for potential recovery
+    // In the future, we could implement a cleanup job to remove old deleted files
 
     return { success: true };
   } catch (error) {
