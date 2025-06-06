@@ -71,15 +71,20 @@ export function DataTable<AudioFile, TValue>({
   return (
     <>
       <div className="flex items-center py-4 justify-between">
-        <Input
-          placeholder="Filter text..."
-          value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
-          onChange={(event) =>
-            table.getColumn('text')?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-          autoComplete="off"
-        />
+        <div className="flex items-center flex-1 gap-2">
+          <Input
+            placeholder="Filter text..."
+            value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
+            onChange={(event) =>
+              table.getColumn('text')?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+            autoComplete="off"
+          />
+          <p className="text-sm text-muted-foreground text-left">
+            {table.getFilteredRowModel().rows.length} audio files
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -98,20 +103,18 @@ export function DataTable<AudioFile, TValue>({
                     typeof column.accessorFn !== 'undefined' &&
                     column.getCanHide(),
                 )
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
+                .map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -121,18 +124,16 @@ export function DataTable<AudioFile, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>

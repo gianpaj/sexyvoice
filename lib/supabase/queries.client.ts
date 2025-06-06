@@ -10,6 +10,6 @@ export function getMyAudioFiles(client: TypedSupabaseClient, userId: string) {
       )
     `)
     .eq('user_id', userId)
-    .neq('status', 'deleted')
+    .eq('status', 'active')
     .order('created_at', { ascending: false });
 }
