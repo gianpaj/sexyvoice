@@ -97,13 +97,24 @@ export function AudioGenerator({
   };
 
   const resetPlayer = () => {
-    if (audio) {
+    if (!audio) {
+      setIsPlaying(false);
+      return;
+    }
+
+    try {
       audio.pause();
       audio.currentTime = 0;
-      URL.revokeObjectURL(audio.src);
+
+      if (audio.src.startsWith('blob:')) {
+        URL.revokeObjectURL(audio.src);
+      }
+    } catch (error) {
+      console.error('Failed to reset audio', error);
+    } finally {
       setAudio(null);
+      setIsPlaying(false);
     }
-    setIsPlaying(false);
   };
 
   const downloadAudio = () => {
