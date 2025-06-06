@@ -1,17 +1,7 @@
 'use client';
 
 import { Crisp } from 'crisp-sdk-web';
-import {
-  BarChart3,
-  ChevronUp,
-  // Copy,
-  CreditCard,
-  FileClock,
-  // Mic2,
-  User2,
-  Wand2,
-  X,
-} from 'lucide-react';
+import { ChevronUp, CreditCard, FileClock, User2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -123,12 +113,6 @@ export default function DashboardLayout(props: {
   // console.log({ flagEnabled });
 
   const navigation = [
-    {
-      name: 'Dashboard',
-      href: `/${lang}/dashboard`,
-      icon: BarChart3,
-      current: pathname === `/${lang}/dashboard`,
-    },
     {
       name: 'Generate',
       href: `/${lang}/dashboard/generate`,

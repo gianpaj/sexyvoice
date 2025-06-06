@@ -32,8 +32,8 @@ export async function Header({ lang }: { lang: string }) {
 
           {user ? (
             <Button variant="default" asChild>
-              <Link href={`/${lang}/dashboard`} prefetch>
-                Dashboard
+              <Link href={`/${lang}/dashboard/generate`} prefetch>
+                Generate
               </Link>
             </Button>
           ) : (
