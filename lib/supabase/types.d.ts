@@ -20,7 +20,6 @@ declare type Database = {
           prediction_id: string | null;
           storage_key: string;
           text_content: string;
-          total_votes: number;
           url: string;
           user_id: string | null;
           voice_id: string;
@@ -35,7 +34,6 @@ declare type Database = {
           prediction_id?: string | null;
           storage_key: string;
           text_content: string;
-          total_votes?: number;
           url: string;
           user_id?: string | null;
           voice_id: string;
@@ -50,7 +48,6 @@ declare type Database = {
           prediction_id?: string | null;
           storage_key?: string;
           text_content?: string;
-          total_votes?: number;
           url?: string;
           user_id?: string | null;
           voice_id?: string;
@@ -70,6 +67,33 @@ declare type Database = {
             referencedRelation: 'voices';
             referencedColumns: ['id'];
           },
+        ];
+      };
+      audio_votes: {
+        Row: {
+          id: string;
+          audio_id: string;
+          user_id: string;
+          vote: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          audio_id: string;
+          user_id: string;
+          vote: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          audio_id?: string;
+          user_id?: string;
+          vote?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "audio_votes_audio_id_fkey"; columns: ["audio_id"]; isOneToOne: false; referencedRelation: "audio_files"; referencedColumns: [id]; },
+          { foreignKeyName: "audio_votes_user_id_fkey"; columns: ["user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: [id]; }
         ];
       };
       credit_transactions: {

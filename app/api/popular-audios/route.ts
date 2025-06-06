@@ -7,32 +7,35 @@ export async function GET() {
     const supabase = await createClient();
 
     // WE should use redis (@vercel/kv) for this. no need for auth
-    const { data: audioFiles, error } = await supabase
+    const { data, error } = await supabase
       .from('audio_files')
       .select(
         `id,
         url,
-        total_votes,
-        is_public,
         text_content,
+        created_at,
         voice_id,
-        voices (
-          id,
-          name
-        )`,
+        voices(id, name),
+        audio_votes(vote)`
       )
-      .order('total_votes', { ascending: false })
-      .limit(10);
+      .eq('is_public', true);
 
     if (error) {
       console.error(error);
-      return NextResponse.json(
-        { error: 'Failed to fetch audio files' },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Failed to fetch audio files' }, { status: 500 });
     }
 
-    return NextResponse.json(audioFiles);
+    const audioFiles = (data as any[]).map((item) => {
+      const votes = item.audio_votes as { vote: number }[] | null;
+      const ups = votes?.filter((v) => v.vote === 1).length || 0;
+      const downs = votes?.filter((v) => v.vote === -1).length || 0;
+      const score = ups - downs;
+      return { ...item, ups, downs, score };
+    });
+
+    const sorted = audioFiles.sort((a, b) => b.score - a.score).slice(0, 10);
+
+    return NextResponse.json(sorted);
   } catch (error) {
     console.error(error);
     return NextResponse.json(
