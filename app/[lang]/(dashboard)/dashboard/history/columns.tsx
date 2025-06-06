@@ -2,10 +2,17 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from './audio-player';
+import { DeleteButton } from './delete-button';
 
 export type AudioFile = {
   id: string;
@@ -108,30 +115,40 @@ export const columns: ColumnDef<AudioFile>[] = [
       </div>
     ),
   },
-  // {
-  //   id: 'actions',
-  //   cell: ({ row }) => {
-  //     const file = row.original;
+  {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row }) => {
+      const file = row.original;
 
-  //     return (
-  //       <div className="flex items-center gap-2">
-  //         <DropdownMenu>
-  //           <DropdownMenuTrigger asChild>
-  //             <Button
-  //               variant="ghost"
-  //               className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-  //               size="icon"
-  //             >
-  //               <MoreVerticalIcon />
-  //               <span className="sr-only">Open menu</span>
-  //             </Button>
-  //           </DropdownMenuTrigger>
-  //           <DropdownMenuContent align="end" className="w-32">
-  //             <DeleteButton id={file.id} />
-  //           </DropdownMenuContent>
-  //         </DropdownMenu>
-  //       </div>
-  //     );
-  //   },
-  // },
+      const [isOpen, setIsOpen] = useState(false);
+
+      const handleCloseDropdown = () => {
+        setIsOpen(false);
+      };
+
+      return (
+        <div className="flex items-center gap-2">
+          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+                size="icon"
+              >
+                <MoreVerticalIcon />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DeleteButton
+                handleCloseDropdown={handleCloseDropdown}
+                id={file.id}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
+  },
 ];
