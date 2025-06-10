@@ -12,22 +12,23 @@ import {
 } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 
-interface StripeTransaction {
-  id: string;
-  amount: number;
-  type: string;
-  description: string;
-  created: number;
-  status: string;
-  current_period_end?: number;
-  current_period_start?: number;
-  invoice_id?: string;
-}
+// interface StripeTransaction {
+//   id: string;
+//   amount: number;
+//   type: string;
+//   description: string;
+//   created: number;
+//   status: string;
+//   current_period_end?: number;
+//   current_period_start?: number;
+//   invoice_id?: string;
+// }
 
 export function CreditHistory({
   dict,
   userId,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   dict: any;
   userId?: string;
 }) {

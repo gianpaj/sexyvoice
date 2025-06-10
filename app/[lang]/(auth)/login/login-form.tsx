@@ -41,7 +41,7 @@ export function LoginForm({
       return;
     }
 
-    router.push(`/${lang}/dashboard`);
+    router.push(`/${lang}/dashboard/generate`);
     router.refresh();
   };
 

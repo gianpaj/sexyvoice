@@ -2,10 +2,11 @@ import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -79,6 +80,11 @@ export default async function LandingPage(props: {
   const params = await props.params;
 
   const { lang } = params;
+
+  // Validate that the language is a supported locale
+  if (!i18n.locales.includes(lang as Locale)) {
+    redirect(`/${i18n.defaultLocale}`);
+  }
 
   const dict = await getDictionary(lang);
 
