@@ -133,10 +133,10 @@ export default function DashboardLayout(props: {
       current: pathname === `/${lang}/dashboard/history`,
     },
     {
-      name: 'Voices',
-      href: `/${lang}/dashboard/voices`,
+      name: 'Clone',
+      href: `/${lang}/dashboard/clone`,
       icon: Mic2,
-      current: pathname === `/${lang}/dashboard/voices`,
+      current: pathname === `/${lang}/dashboard/clone`,
     },
     // ...(flagEnabled
     //   ? [
