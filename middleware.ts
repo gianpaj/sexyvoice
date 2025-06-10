@@ -20,6 +20,11 @@ const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Skip middleware for static files that should be served directly
+  if (pathname.match(/\.(ico|png|jpg|jpeg|gif|webp|svg|mp3)$/)) {
+    return NextResponse.next();
+  }
+
   if (publicRoutesWithoutLocale.includes(pathname)) {
     return NextResponse.next();
   }
