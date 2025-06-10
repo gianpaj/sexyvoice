@@ -4,7 +4,7 @@ This file contains repository-specific guidelines and instructions for Claude wh
 
 ## Project Overview
 
-SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone a voice, and manage a library of generated audio content using a credit-based system.
+SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system.
 
 ### Key Technologies
 
@@ -15,24 +15,64 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Styling**: Tailwind CSS, shadcn/ui components, Radix UI primitives
 - **Payments**: Stripe integration for subscriptions
 - **Monitoring**: Sentry error tracking and PostHog analytics
-- **Internationalization**: English and Spanish support
+- **Internationalization**: English and Spanish support (with plans for Italian, French, German, Korean, Portuguese, and Mandarin)
+
+## Architecture Overview
+
+### Application Structure
+This is a Next.js 15 App Router application with the following key architectural patterns:
+
+- **Internationalization**: Route-based i18n with English (en) and Spanish (es) support using `[lang]` dynamic segments
+- **Authentication**: Supabase Auth with SSR support, session management in middleware
+- **Database**: Supabase PostgreSQL with type-safe operations
+- **Content**: Contentlayer2 for MDX blog posts with locale support
+- **Styling**: Tailwind CSS with shadcn/ui components and Radix UI primitives
+
+### Key Directory Structure
+```
+app/[lang]/                    # Internationalized routes
+├── (auth)/                    # Auth-related pages (login, sign up, etc.)
+├── (dashboard)/               # Protected dashboard routes
+│   └── dashboard/             # Main dashboard with nested routes
+├── blog/[slug]/               # Dynamic blog post pages
+└── page.tsx                   # Landing page
+
+lib/
+├── supabase/                  # Database client, queries, types
+├── i18n/                      # Internationalization config and dictionaries
+└── stripe/                    # Payment processing
+
+components/
+├── ui/                        # shadcn/ui components
+└── [feature-components]       # App-specific components
+```
+
+### Database Schema
+Core tables:
+- `profiles` - User profiles linked to Supabase Auth
+- `voices` - Voice models (can be user-created or system voices)
+- `audio_files` - Generated audio files with metadata
+- `credits` - User credit balances
+- `credit_transactions` - Credit usage/purchase history
+
+### Voice Generation Flow
+1. User selects voice in dashboard
+2. API routes handle voice generation requests
+3. Audio stored in Vercel Blob Storage
+4. Database tracks usage and credits
 
 ## Development Guidelines
 
 ### Code Quality Standards
 
-#### Code Formatting and Linting
-
-- **Always run these commands before committing**:
-
-  ```bash
-  pnpm run lint:fix    # Fix linting issues automatically
-  pnpm run format      # Format code with Biome
-  pnpm run type-check  # Verify TypeScript types
-  ```
+#### Essential Commands (Always run before committing)
+```bash
+pnpm run lint:fix    # Fix linting issues automatically
+pnpm run format      # Format code with Biome
+pnpm run type-check  # Verify TypeScript types
+```
 
 #### Code Style
-
 - Use **Biome** for linting and formatting (configured in `biome.json`)
 - Follow TypeScript strict mode conventions
 - Use 2-space indentation, single quotes for strings
@@ -42,17 +82,21 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 
 ### File Structure Conventions
 
-#### Component Organization
+#### Naming Conventions
+- Components: PascalCase (e.g., `VoiceGenerator.tsx`)
+- Files: kebab-case (e.g., `audio-player.tsx`)
+- API routes: lowercase with hyphens
+- Database tables: snake_case
 
-```t
+#### Component Organization
+```
 components/
 ├── ui/              # shadcn/ui base components
 ├── *.tsx           # Reusable components (kebab-case naming)
 ```
 
 #### App Router Structure
-
-```t
+```
 app/
 ├── [lang]/         # Internationalized routes (en/es)
 │   ├── (auth)/     # Authentication pages
@@ -62,47 +106,64 @@ app/
 └── globals.css     # Global styles
 ```
 
-#### Key Naming Conventions
-
-- Components: PascalCase (e.g., `VoiceGenerator.tsx`)
-- Files: kebab-case (e.g., `audio-player.tsx`)
-- API routes: lowercase with hyphens
-- Database tables: snake_case
-
 ### Database and API Guidelines
 
 #### Supabase Integration
-
 - Use Supabase SSR client for server components
 - Implement proper error handling for database operations
 - Follow Row Level Security (RLS) policies
 - Use typed database queries with proper TypeScript interfaces
 
-#### API Route Standards
+#### Database Development Guidelines
+When creating database functions, follow Cursor rules in `.cursor/rules/`:
+- Default to `SECURITY INVOKER` for functions
+- Always set `search_path = ''` and use fully qualified names
+- Migration files use format: `YYYYMMDDHHmmss_description.sql`
+- Enable RLS on all new tables with granular policies
 
+#### API Route Standards
 - Implement proper error handling and status codes
 - Use Supabase service role for admin operations
 - Validate input data and sanitize outputs
 - Implement rate limiting for resource-intensive operations
 
-### Testing Requirements
+### Authentication & Routing
+- Middleware handles locale detection and Supabase session management
+- Protected routes use `(dashboard)` route group
+- Public routes include auth pages and static content
 
-#### Test Commands
+## Development Commands
 
-```bash
-pnpm run test        # Run unit tests
-```
+### Core Commands
+- `pnpm dev` - Start development server with Turbopack
+- `pnpm build` - Build production application
+- `pnpm start` - Start production server
+- `pnpm preview` - Build and start (preview production locally)
 
-#### Testing Guidelines
+### Code Quality
+- `pnpm lint` - Run Biome linting
+- `pnpm lint:fix` - Auto-fix linting issues in app/, components/, hooks/, lib/, middleware.ts
+- `pnpm format` - Format code with Biome
+- `pnpm type-check` - Run TypeScript type checking
 
-- Write unit tests for utility functions (`lib/utils.test.ts`)
-- Plan to implement Playwright for E2E testing
-- Plan to test critical user flows (authentication, voice generation, credit management)
+### Testing
+- `pnpm test` - Run unit tests (lib/utils.test.ts)
 
-### Security and Privacy
+### Content & Data
+- `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)
+- `pnpm dev:content` - Start Contentlayer2 in development mode
+- `pnpm check-translations` - Validate i18n translation files
 
-#### Security Requirements
+### Database (Supabase)
+- `supabase db push` - Apply migrations to database
+- `supabase gen types typescript --project-id PROJECT_ID > database.types.ts` - Generate TypeScript types from database schema
 
+### Additional Commands
+- `pnpm run analyse` - Analyze bundle size
+
+## Security and Privacy
+
+### Security Requirements
 - Implement rate limiting to prevent abuse
 - Validate and sanitize all user inputs
 - Use Content Security Policy (CSP) headers
@@ -110,31 +171,48 @@ pnpm run test        # Run unit tests
 - Implement proper authentication checks
 - Block temporary email addresses for signups
 
-#### Privacy Considerations
-
+### Privacy Considerations
 - Implement data retention policies
 - Respect voice rights and permissions
 - Secure audio file storage and access
 
-### AI/ML Specific Guidelines
+## AI/ML Specific Guidelines
 
-#### Voice Generation
-
+### Voice Generation
 - Use Replicate API for AI voice generation
 - Implement credit tracking for API usage
 - Handle voice cloning with proper permissions
 - Support multiple languages (EN/ES with more planned)
 - Implement audio preview functionality
 
-#### Content Moderation
-
+### Content Moderation
 - Implement voice privacy controls (public/private)
 - Validate audio content before storage
 
-### Deployment and Environment
+## Testing Requirements
 
-#### Environment Setup
+### Testing Guidelines
+- Write unit tests for utility functions (`lib/utils.test.ts`)
+- Plan to implement Playwright for E2E testing
+- Plan to test critical user flows (authentication, voice generation, credit management)
 
+## Content Management
+
+### Internationalization
+- Add translations to `lib/i18n/dictionaries/`
+- Support English (`en.json`) and Spanish (`es.json`)
+- Use `getDictionary()` for server components
+- Run `pnpm run check-translations` before commits
+
+### Content Guidelines
+- Blog posts written in MDX in `posts/` directory
+- Locale-specific posts use `.es.mdx` extension (defaults to English)
+- Contentlayer2 processes content and generates type-safe data
+- Follow SEO best practices for content structure
+
+## Environment and Deployment
+
+### Environment Setup
 ```bash
 pnpm install        # Install dependencies
 pnpm run dev        # Start development server
@@ -142,53 +220,14 @@ pnpm run build      # Build for production
 pnpm run preview    # Preview production build
 ```
 
-#### Environment Variables
-
+### Environment Variables
 - Follow `.env.example` for required variables
 - Use Vercel Environment Variables for production
 - Configure Supabase connection strings
 - Set up Stripe webhooks and API keys
 - Configure Replicate API access
 
-#### Database Operations
-
-```bash
-# Deploy migrations
-supabase db push
-# Generate Supabase DB types
-supabase gen types typescript --project-id bfaqdyadcpaetelvpbva > database.types.ts
-```
-
-### Content Management
-
-#### Internationalization
-
-- Add translations to `lib/i18n/dictionaries/`
-- Support English (`en.json`) and Spanish (`es.json`)
-- Use `getDictionary()` for server components
-- Plan for Italian, French, German, Korean, Portuguese and Mandarin
-
-#### Content Guidelines
-
-- Run `pnpm run check-translations` before commits
-- Validate translation completeness
-- Use ContentLayer for blog posts and documentation
-- Follow SEO best practices for content structure
-
-### Common Commands Reference
-
-| Command               | Purpose                                 |
-| --------------------- | --------------------------------------- |
-| `pnpm run dev`        | Start development server with Turbopack |
-| `pnpm run build`      | Build production bundle                 |
-| `pnpm run lint:fix`   | Fix linting issues automatically        |
-| `pnpm run type-check` | Verify TypeScript types                 |
-| `pnpm run format`     | Format code with Biome                  |
-| `pnpm run test`       | Run unit tests                          |
-| `pnpm run clean`      | Remove unused dependencies with Knip    |
-| `pnpm run analyse`    | Analyze bundle size                     |
-
-### Feature Development Priorities
+## Feature Development Priorities
 
 Based on ROADMAP.md and TODO.md, current priorities include:
 
@@ -199,9 +238,9 @@ Based on ROADMAP.md and TODO.md, current priorities include:
 5. **Testing**: Playwright E2E tests, GitHub Actions CI/CD
 6. **Performance**: Bundle optimization, caching strategies
 
-### Claude-Specific Instructions
+## Claude-Specific Instructions
 
-#### When Working on Issues
+### When Working on Issues
 
 1. **Always analyze the project context first** by reading relevant files
 2. **Follow the existing code patterns** and architectural decisions
@@ -211,7 +250,7 @@ Based on ROADMAP.md and TODO.md, current priorities include:
 6. **Implement proper error handling** and loading states
 7. **Follow security best practices** for voice-related features
 
-#### Pull Request Requirements
+### Pull Request Requirements
 
 - Include clear description of changes and their purpose
 - Reference related issues and feature requests
@@ -219,21 +258,21 @@ Based on ROADMAP.md and TODO.md, current priorities include:
 - Update relevant documentation (README, ROADMAP, etc.)
 - Consider impact on credit system and voice generation features
 
-### Troubleshooting
+## Troubleshooting
 
-#### Common Issues
-
+### Common Issues
 - **Build failures**: Check TypeScript errors and dependency conflicts
 - **Database issues**: Verify Supabase connection and migration status
 - **Audio generation**: Check Replicate API status and credit balance
 - **Authentication**: Validate Supabase SSR configuration
 
-#### Debug Commands
-
+### Debug Commands
 ```bash
 pnpm run type-check              # Check TypeScript issues
 pnpm run lint                    # Check code quality issues
 supabase status                  # Check Supabase connection
 ```
+
+---
 
 This document should be updated as the project evolves and new patterns emerge.
