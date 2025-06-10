@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CheckCircle, Download, Play, Upload } from 'lucide-react';
+import { AlertCircle, CheckCircle, Download, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

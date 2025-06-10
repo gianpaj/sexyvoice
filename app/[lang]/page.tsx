@@ -233,7 +233,7 @@ export default async function LandingPage(props: {
             </Card>
           </div>
 
-          <PricingTable dict={dict} lang={lang} />
+          <PricingTable lang={lang} />
 
           {/* FAQ Section */}
           <div className="max-w-3xl mx-auto py-16">

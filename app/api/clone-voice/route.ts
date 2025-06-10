@@ -107,11 +107,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate audio file
-    if (!audioFile) {
-      return APIErrorResponse('Audio file is required', 400);
-    }
-
     if (
       !audioFile.type.startsWith('audio/') ||
       !ALLOWED_TYPES.includes(audioFile.type)
