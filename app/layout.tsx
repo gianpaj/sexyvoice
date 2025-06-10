@@ -38,9 +38,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // biome-ignore lint/a11y/useHtmlLang: <explanation>
-    <html suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
+        <a href="#main-content" className="sr-only focus:not-sr-only">
+          Skip to main content
+        </a>
         {children}
         {process.env.NODE_ENV === 'production' && (
           <>

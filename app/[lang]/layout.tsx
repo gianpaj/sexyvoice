@@ -19,6 +19,9 @@ export default async function LangLayout({
   return (
     <html lang={(await params).lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
+        <a href="#main-content" className="sr-only focus:not-sr-only">
+          Skip to main content
+        </a>
         <Providers>{children}</Providers>
       </body>
     </html>
