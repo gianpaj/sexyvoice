@@ -43,22 +43,8 @@ export const columns: ColumnDef<AudioFile>[] = [
     id: 'file name',
     accessorKey: 'storage_key',
     header: 'File Name',
-    cell: ({ row }) => (
-      <div className="w-full items-center flex flex-row">
-        <span>
-          {row.original.storage_key.replace('audio/', '') || 'Unknown'}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          title="Download"
-          className="ml-2"
-          onClick={() => downloadFile(row.original.url)}
-        >
-          <Download className="size-4" />
-        </Button>
-      </div>
-    ),
+    cell: ({ row }) =>
+      row.original.storage_key.replace('audio/', '') || 'Unknown',
   },
   {
     id: 'voice',
@@ -113,6 +99,21 @@ export const columns: ColumnDef<AudioFile>[] = [
       <div className="flex justify-center gap-2">
         <AudioPlayer url={row.original.url} />
       </div>
+    ),
+  },
+  {
+    id: 'Download',
+    header: 'Download',
+    cell: ({ row }) => (
+      <Button
+        variant="outline"
+        size="icon"
+        title="Download"
+        className="ml-2"
+        onClick={() => downloadFile(row.original.url)}
+      >
+        <Download className="size-4" />
+      </Button>
     ),
   },
   {
