@@ -11,6 +11,7 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
+import Script from 'next/script';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
@@ -98,6 +99,21 @@ export default async function LandingPage(props: {
         rel="preconnect"
         href="https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
       />
+      <Script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: dict.landing.faq.questions.map((q) => ({
+            '@type': 'Question',
+            name: q.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: q.answer,
+            },
+          })),
+        })}
+      </Script>
+
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>

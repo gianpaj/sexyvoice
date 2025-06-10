@@ -102,6 +102,14 @@
       "subtitle": "Todo lo que necesitas saber sobre SexyVoice.ai",
       "questions": [
         {
+          "question": "¿Cómo funciona la clonación de voz?",
+          "answer": "Nuestra IA analiza tus muestras de voz para aprender sus patrones y características únicas. Con solo segundos de audio, podemos crear una voz digital que suena exactamente como tú. El sistema utiliza IA avanzada para coincidir con tu tono, acento y estilo de habla."
+        },
+        {
+          "question": "¿Puedo clonar mi propia voz?",
+          "answer": "¡Sí! Por razones éticas, necesitas permiso antes de clonar la voz de otra persona. Nos tomamos en serio los derechos de voz."
+        },
+        {
           "question": "¿Están seguros mis datos de voz?",
           "answer": "Sí. Ciframos todos los datos de voz y los almacenamos de forma segura. Tienes control total sobre tus generaciones de audio y puedes eliminarlas en cualquier momento. Nunca compartimos tus datos de voz con terceros sin tu permiso. Tu privacidad es nuestra prioridad."
         },
