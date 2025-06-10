@@ -14,10 +14,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
-async function generateHash(
-  text: string,
-  audioFilename: string,
-) {
+async function generateHash(text: string, audioFilename: string) {
   const textEncoder = new TextEncoder();
   const combinedString = `${text}-${audioFilename}`;
   const data = textEncoder.encode(combinedString);
@@ -42,10 +39,10 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
-    
-    text = formData.get('text') as string || '';
+
+    text = (formData.get('text') as string) || '';
     audioFile = formData.get('audio') as File | null;
-    
+
     if (!text || !audioFile) {
       return NextResponse.json(
         { error: 'Missing required parameters: text and audio file' },
@@ -96,10 +93,14 @@ export async function POST(request: Request) {
     }
 
     // Upload audio file to Vercel blob first
-    const audioBlob = await put(`audio-prompts/${user.id}-${audioFile.name}`, audioFile, {
-      access: 'public',
-      contentType: audioFile.type,
-    });
+    const audioBlob = await put(
+      `audio-prompts/${user.id}-${audioFile.name}`,
+      audioFile,
+      {
+        access: 'public',
+        contentType: audioFile.type,
+      },
+    );
 
     audioPromptUrl = audioBlob.url;
 
@@ -146,31 +147,36 @@ export async function POST(request: Request) {
       predictionResult = prediction;
     };
 
-    const modelId = "thomcle/chatterbox-tts:3f5f9c195086737dda710bf504330f71e786d0a361b505e377c8b10122af9d32";
-    
-    const output = (await replicate.run(
+    const modelId =
+      'thomcle/chatterbox-tts:3f5f9c195086737dda710bf504330f71e786d0a361b505e377c8b10122af9d32';
+
+    const output = await replicate.run(
       modelId,
       { input, signal: request.signal },
       onProgress,
-    )) as ReadableStream;
+    );
 
-    if ('error' in output) {
+    // Properly check for error before proceeding
+    if (output && typeof output === 'object' && 'error' in output) {
       const errorObj = {
         text,
         audioPromptUrl,
         model: 'chatterbox-tts',
-        errorData: output.error,
+        errorData: (output as { error: unknown }).error,
       };
       Sentry.captureException({
         error: 'Voice cloning failed',
         ...errorObj,
       });
       console.error(errorObj);
-      throw new Error((output as any).error || 'Voice cloning failed');
+      throw new Error(
+        (output as { error: string }).error || 'Voice cloning failed',
+      );
     }
 
+    // At this point, output should be a ReadableStream
     // Use hash in the file path for future lookups
-    const blobResult = await put(filename, output, {
+    const blobResult = await put(filename, output as ReadableStream, {
       access: 'public',
       contentType: 'audio/mpeg',
       allowOverwrite: true,
