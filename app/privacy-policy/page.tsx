@@ -1,7 +1,5 @@
 import Footer from '@/components/footer';
 
-// Using <main> improves landmark semantics for screen readers
-
 import './privacy-policy.css';
 
 export default function PrivacyPolicy() {
@@ -689,7 +687,7 @@ export default function PrivacyPolicy() {
             have collected.
           </li>
           <li>
-    </main>
+            Right to request that a business that sells a consumer's personal
             data, not sell the consumer's personal data.
           </li>
         </ul>
@@ -714,6 +712,6 @@ export default function PrivacyPolicy() {
         </ul>
       </div>
       <Footer />
-    </div>
+    </main>
   );
 }
