@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { VoicesList } from './voices-list';
@@ -26,6 +25,7 @@ export default async function VoicesPage(props: {
     .from('voices')
     .select('*')
     .eq('user_id', user?.id)
+    .eq('is_public', false)
     .order('created_at', { ascending: false });
 
   return (
@@ -40,7 +40,7 @@ export default async function VoicesPage(props: {
         <Link href={`/${lang}/dashboard/voices/new`}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            New Voice
+            Clone New Voice
           </Button>
         </Link>
       </div>

@@ -56,7 +56,7 @@ export default async function CreditsPage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'credits');
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -69,10 +69,8 @@ export default async function CreditsPage(props: {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row items-center justify-between">
         <div className="w-full lg:w-1/2">
-          <h2 className="text-3xl font-bold tracking-tight">
-            {dict.credits.title}
-          </h2>
-          <p className="text-muted-foreground">{dict.credits.description}</p>
+          <h2 className="text-3xl font-bold tracking-tight">{dict.title}</h2>
+          <p className="text-muted-foreground">{dict.description}</p>
         </div>
         <Button asChild>
           <Link
@@ -87,12 +85,12 @@ export default async function CreditsPage(props: {
       {/* <div className="flex justify-center space-x-4">
         <ToggleGroup type="single" defaultValue="monthly">
           <ToggleGroupItem value="monthly">
-            {dict.credits.billing.monthly}
+            {dict.billing.monthly}
           </ToggleGroupItem>
           <ToggleGroupItem value="annually">
-            {dict.credits.billing.annually}
+            {dict.billing.annually}
             <span className="ml-2 rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
-              {dict.credits.billing.monthsFree}
+              {dict.billing.monthsFree}
             </span>
           </ToggleGroupItem>
         </ToggleGroup>

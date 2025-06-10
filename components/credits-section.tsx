@@ -32,7 +32,7 @@ function CreditsSection({
           variant="link"
           size="sm"
           asChild
-          className="pr-0 hover:no-underline"
+          className="pr-0 hover:no-underline bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
         >
           <Link href={`/${lang}/credits`}>Upgrade</Link>
         </Button>

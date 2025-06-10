@@ -1,7 +1,6 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
-import { del } from '@vercel/blob';
 import { createClient } from '@/lib/supabase/server';
 
 export const handleDeleteAction = async (id: string) => {
