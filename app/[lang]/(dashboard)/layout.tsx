@@ -1,7 +1,14 @@
 'use client';
 
 import { Crisp } from 'crisp-sdk-web';
-import { ChevronUp, CreditCard, FileClock, User2, Wand2 } from 'lucide-react';
+import {
+  ChevronUp,
+  CreditCard,
+  FileClock,
+  Mic2,
+  User2,
+  Wand2,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -125,12 +132,12 @@ export default function DashboardLayout(props: {
       icon: FileClock,
       current: pathname === `/${lang}/dashboard/history`,
     },
-    // {
-    //   name: 'Voices',
-    //   href: `/${lang}/dashboard/voices`,
-    //   icon: Mic2,
-    //   current: pathname === `/${lang}/dashboard/voices`,
-    // },
+    {
+      name: 'Voices',
+      href: `/${lang}/dashboard/voices`,
+      icon: Mic2,
+      current: pathname === `/${lang}/dashboard/voices`,
+    },
     // ...(flagEnabled
     //   ? [
     //       {
@@ -254,7 +261,7 @@ export default function DashboardLayout(props: {
               {props.children}
             </main>
             <footer className="p-4 border-t text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 <a
                   href="https://sexyvoice.checkly-dashboards.com/"
                   target="_blank"

@@ -84,8 +84,8 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    // Estimate credits for voice cloning (assuming higher cost than regular generation)
-    const estimate = estimateCredits(text, 'clone') * 2; // Double cost for cloning
+    // Estimate credits for voice cloning generation (higher cost than regular)
+    const estimate = estimateCredits(text, 'clone') * 2;
 
     if (currentAmount < estimate) {
       Sentry.captureException({ error: 'Insufficient credits', text });
@@ -107,11 +107,9 @@ export async function POST(request: Request) {
 
     audioPromptUrl = audioBlob.url;
 
-    // Generate hash for the combination of text and audio file
+    // Generate hash for caching
     const hash = await generateHash(text, audioFile.name);
-
     const abortController = new AbortController();
-
     const path = `audio/clone-${hash}`;
 
     request.signal.addEventListener('abort', () => {
@@ -125,18 +123,17 @@ export async function POST(request: Request) {
     if (result) {
       await sendPosthogEvent({
         userId: user.id,
+        event: 'clone-voice',
         text,
         audioPromptUrl,
         creditUsed: 0,
         model: 'chatterbox-tts',
       });
-      // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
-    // uses REPLICATE_API_TOKEN
+    // Generate TTS with cloned voice
     const replicate = new Replicate();
-
     const input = {
       text,
       cfg_weight: 0.5,
@@ -159,7 +156,7 @@ export async function POST(request: Request) {
       onProgress,
     );
 
-    // Properly check for error before proceeding
+    // Check for errors
     if (output && typeof output === 'object' && 'error' in output) {
       const errorObj = {
         text,
@@ -177,8 +174,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // At this point, output should be a ReadableStream
-    // Use hash in the file path for future lookups
+    // Save generated audio
     const blobResult = await put(filename, output as ReadableStream, {
       access: 'public',
       contentType: 'audio/mpeg',
@@ -187,6 +183,7 @@ export async function POST(request: Request) {
 
     await redis.set(filename, blobResult.url);
 
+    // Background tasks
     after(async () => {
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
@@ -198,8 +195,8 @@ export async function POST(request: Request) {
         model: 'chatterbox-tts',
         predictionId: predictionResult?.id,
         isPublic: false,
-        voiceId: 'cloned-voice', // Special ID for cloned voices
-        duration: '-1',
+        voiceId: 'cloned-voice',
+        duration: duration.toString(),
         credits_used: estimate,
       });
 
@@ -219,6 +216,7 @@ export async function POST(request: Request) {
 
       await sendPosthogEvent({
         userId: user.id,
+        event: 'clone-voice',
         predictionId: predictionResult?.id,
         text,
         audioPromptUrl,
@@ -232,7 +230,7 @@ export async function POST(request: Request) {
         url: blobResult.url,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
-        audioPromptUrl, // Return the uploaded audio prompt URL for reference
+        audioPromptUrl,
       },
       { status: 200 },
     );
@@ -240,6 +238,9 @@ export async function POST(request: Request) {
     const errorObj = {
       text,
       audioPromptUrl,
+      voiceName,
+      language,
+      mode,
       errorData: error,
     };
     Sentry.captureException({
@@ -260,6 +261,7 @@ export async function POST(request: Request) {
 
 async function sendPosthogEvent({
   userId,
+  event,
   text,
   audioPromptUrl,
   predictionId,
@@ -267,6 +269,7 @@ async function sendPosthogEvent({
   model,
 }: {
   userId: string;
+  event: string;
   text: string;
   audioPromptUrl: string;
   predictionId?: string;
@@ -276,7 +279,7 @@ async function sendPosthogEvent({
   const posthog = PostHogClient();
   posthog.capture({
     distinctId: userId,
-    event: 'clone-voice',
+    event,
     properties: {
       predictionId: predictionId,
       model,

@@ -1,7 +1,6 @@
 ---
 # Specify the following for Cursor rules
 description: Guidelines for writing Postgres migrations
-globs: 'supabase/migrations/**/*.sql'
 ---
 
 # Database: Create migration
