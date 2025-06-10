@@ -10,7 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { formatDate } from '@/lib/utils';
+import { formatDate, downloadFile } from '@/lib/utils';
 import { AudioPlayer } from './audio-player';
 import { DeleteButton } from './delete-button';
 
@@ -25,17 +25,6 @@ export type AudioFile = {
   voices: {
     name: string;
   };
-};
-
-const downloadFile = (url: string) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'generated_audio.mp3';
-  // link.setAttribute('download', 'generated_audio.mp3');
-  link.target = '_blank';
-  // document.body.appendChild(link);
-  link.click();
-  // document.body.removeChild(link);
 };
 
 export const columns: ColumnDef<AudioFile>[] = [

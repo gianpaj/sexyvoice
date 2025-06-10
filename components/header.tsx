@@ -3,12 +3,10 @@ import Link from 'next/link';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 
 export async function Header({ lang }: { lang: string }) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
+  const { user } = await getCurrentUser();
 
   return (
     <header className="border-b border-gray-700 bg-gray-900">

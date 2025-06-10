@@ -73,3 +73,13 @@ export function encodedRedirect(
 ): never {
   return redirect(`${path}?${type}=${encodeURIComponent(message)}`);
 }
+
+export function downloadFile(url: string, filename = 'generated_audio.mp3') {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

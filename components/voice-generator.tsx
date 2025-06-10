@@ -7,6 +7,7 @@ import WaveSurfer from 'wavesurfer.js';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { downloadFile } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -169,13 +170,7 @@ export function VoiceGenerator({ dict, download }: VoiceGeneratorProps) {
 
   const handleDownload = () => {
     if (!audio?.src) return;
-
-    const link = document.createElement('a');
-    link.href = audio.src;
-    link.download = 'generated-audio.wav';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFile(audio.src, 'generated-audio.wav');
   };
 
   return (

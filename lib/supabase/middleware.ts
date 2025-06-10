@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { i18n } from '@/lib/i18n/i18n-config';
-import { createClient } from './server';
+import { getCurrentUser } from './get-current-user';
 
 const routesPerLocale = (routes: string[]): string[] => {
   return i18n.locales.flatMap((locale) =>
@@ -24,11 +24,7 @@ export const updateSession = async (request: NextRequest) => {
       request,
     });
 
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { supabase, user } = await getCurrentUser();
 
     const isPublicRoute = publicRoutes.includes(pathname);
 

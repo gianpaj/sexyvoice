@@ -12,7 +12,7 @@ import {
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import { estimateCredits } from '@/lib/utils';
 
 async function generateHash(
@@ -69,10 +69,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createClient();
-
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    const { supabase, user } = await getCurrentUser();
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });

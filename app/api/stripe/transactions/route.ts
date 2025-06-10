@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-02-24.acacia',
@@ -19,13 +19,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
-
-    // Check if user is authenticated
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
+    const { supabase, user, error } = await getCurrentUser();
     if (!user || error) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
