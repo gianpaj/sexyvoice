@@ -18,6 +18,7 @@
 - Public library of generated voices ranked by usage and votes
 - Credit-based usage system
 - User authentication and profile management (Google, Facebook and Apple login coming soon)
+- [Architecture Overview](./ARCHITECTURE.md)
 
 <!-- ## Back-end Python API -->
 
