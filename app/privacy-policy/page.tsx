@@ -1,5 +1,7 @@
 import Footer from '@/components/footer';
 
+// Using <main> improves landmark semantics for screen readers
+
 import './privacy-policy.css';
 
 export default function PrivacyPolicy() {
