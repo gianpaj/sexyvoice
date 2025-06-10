@@ -94,14 +94,14 @@ export function VoiceSelector({
           </SelectContent>
         </Select>
         {selectedVoiceSample?.sample_url && (
-          <div className="flex gap-2 items-center justify-between p-4 border rounded-md lg:w-1/2">
+          <div className="flex gap-2 items-center justify-between p-4 lg:w-1/2">
+            <AudioPlayer url={selectedVoiceSample.sample_url} />
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                Prompt: <i>{selectedVoiceSample.sample_prompt}</i>
+                {capitalizeFirstLetter(selectedVoice)} sample prompt:{' '}
+                <i>{selectedVoiceSample.sample_prompt}</i>
               </p>
             </div>
-
-            <AudioPlayer url={selectedVoiceSample.sample_url} />
           </div>
         )}
       </CardContent>
