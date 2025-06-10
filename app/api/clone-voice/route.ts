@@ -40,8 +40,11 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
 
-    text = (formData.get('text') as string) || '';
-    audioFile = formData.get('audio') as File | null;
+    const textValue = formData.get('text');
+    text = typeof textValue === 'string' ? textValue : '';
+
+    const audioValue = formData.get('audio');
+    audioFile = audioValue instanceof File ? audioValue : null;
 
     if (!text || !audioFile) {
       return NextResponse.json(
