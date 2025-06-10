@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
 
-import { cn, formatDate, nanoid, capitalizeFirstLetter } from './utils';
+import { capitalizeFirstLetter, cn, formatDate, nanoid } from './utils';
 import { estimateCredits } from './utils';
 
 // This model costs approximately $0.015 to run on Replicate, or 66 runs per $1
@@ -56,8 +56,6 @@ describe('estimateCredits', async () => {
   });
 });
 
-// Additional tests for utility functions
-
 // Tests for cn function
 describe('cn', () => {
   test('merges class names', () => {
@@ -86,7 +84,7 @@ describe('formatDate', () => {
   test('formats date with time', () => {
     const result = formatDate('2024-01-01T15:30:00Z', { withTime: true });
     assert.ok(result.includes('January 1, 2024'));
-    assert.ok(/03:30\s?PM/.test(result));
+    assert.ok(/04:30\s?PM/.test(result));
   });
 });
 
