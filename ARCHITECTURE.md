@@ -19,7 +19,7 @@ flowchart TD
     user(User)
     client[Next.js Frontend]
     api[POST /api/generate-voice]
-    supabase[Supabase\nauth & DB]
+    supabase[Supabase auth & DB]
     redis[Upstash Redis]
     replicate[Replicate API]
     blob[Vercel Blob Storage]
