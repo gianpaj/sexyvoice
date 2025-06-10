@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import { VoicesList } from './voices-list';
 
 export default async function VoicesPage(props: {
@@ -12,11 +12,9 @@ export default async function VoicesPage(props: {
 
   const { lang } = params;
 
-  const supabase = await createClient();
+  const { supabase, user } = await getCurrentUser();
   // const dict = await getDictionary(lang);
 
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
   if (!user) {
     return <div>Not logged in</div>;
   }

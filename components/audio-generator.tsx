@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { downloadFile } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -119,12 +120,7 @@ export function AudioGenerator({
 
   const downloadAudio = () => {
     if (!audio) return;
-
-    const link = document.createElement('a');
-    link.href = audio.src;
-    link.download = 'generated_audio.mp3';
-    link.target = '_blank';
-    link.click();
+    downloadFile(audio.src);
   };
 
   return (

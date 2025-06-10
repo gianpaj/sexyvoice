@@ -5,18 +5,14 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 import { getMyAudioFiles } from '@/lib/supabase/queries.client';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import { columns } from './columns';
 import { DataTable } from './data-table';
 
 export default async function HistoryPage() {
   const queryClient = new QueryClient();
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getCurrentUser();
   if (!user) return null;
 
   await prefetchQuery(queryClient, getMyAudioFiles(supabase, user.id));

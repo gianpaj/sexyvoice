@@ -2,6 +2,7 @@
 
 import { AlertCircle, CheckCircle, Download, Upload } from 'lucide-react';
 import { useState } from 'react';
+import { downloadFile } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -107,11 +108,7 @@ export default function NewVoiceClient() {
   };
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = generatedAudioUrl;
-    link.target = '_blank';
-    link.download = 'generated_audio.mp3';
-    link.click();
+    downloadFile(generatedAudioUrl);
   };
 
   return (

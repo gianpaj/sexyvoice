@@ -11,7 +11,7 @@ import {
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import { estimateCredits } from '@/lib/utils';
 
 // File validation constants
@@ -64,9 +64,7 @@ export async function POST(request: Request) {
   let audioFile: File | null = null;
   let audioPromptUrl = '';
   try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    const { supabase, user } = await getCurrentUser();
 
     if (!user) {
       return APIErrorResponse('User not found', 401);

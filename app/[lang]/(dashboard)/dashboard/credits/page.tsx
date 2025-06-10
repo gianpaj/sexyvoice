@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import { CreditHistory } from './credit-history';
 
 interface StripeProduct {
@@ -55,11 +55,8 @@ export default async function CreditsPage(props: {
 
   const { lang } = params;
 
-  const supabase = await createClient();
+  const { supabase, user } = await getCurrentUser();
   const dict = await getDictionary(lang, 'credits');
-
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
 
   if (!user) {
     throw new Error('User not found');

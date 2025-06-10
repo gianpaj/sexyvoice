@@ -1,16 +1,13 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 
 export const handleDeleteAction = async (id: string) => {
   'use server';
 
   try {
-    const supabase = await createClient();
-
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    const { supabase, user } = await getCurrentUser();
 
     if (!user) {
       throw new Error('User not found');

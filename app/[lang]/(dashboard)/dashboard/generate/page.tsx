@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import { GenerateUI } from './generateui.client';
 
 export default async function GeneratePage(props: {
@@ -12,12 +12,7 @@ export default async function GeneratePage(props: {
   const { lang } = params;
   const dict = await getDictionary(lang);
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const { supabase, user, error } = await getCurrentUser();
   if (!user || error) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

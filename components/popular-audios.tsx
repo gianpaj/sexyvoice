@@ -2,6 +2,7 @@
 
 import { Download, Pause, Play, ThumbsUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { downloadFile } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -86,13 +87,8 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
       const response = await fetch(audio.url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
       const path = audio.url.split('/').pop();
-      a.download = path ?? 'audio.wav';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      downloadFile(url, path ?? 'audio.wav');
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading audio:', error);

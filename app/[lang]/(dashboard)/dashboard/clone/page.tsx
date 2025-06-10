@@ -1,14 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/get-current-user';
 import NewVoiceClient from './new.client';
 
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: string }>;
 }) {
-  const supabase = await createClient();
+  const { user } = await getCurrentUser();
   // const dict = await getDictionary(lang);
-
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
   if (!user) {
     return <div>Not logged in</div>;
   }
