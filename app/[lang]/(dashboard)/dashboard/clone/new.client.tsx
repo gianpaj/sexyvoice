@@ -1,7 +1,13 @@
 'use client';
 
-import { AlertCircle, CheckCircle, Download, Upload } from 'lucide-react';
-import { useState } from 'react';
+import {
+  AlertCircle,
+  CheckCircle,
+  CircleStop,
+  Download,
+  Upload,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -72,6 +78,7 @@ export default function NewVoiceClient() {
     setStatus('idle');
   };
 
+  const abortController = useRef<AbortController | null>(null);
   const handleGenerate = async () => {
     if (!file) {
       setErrorMessage('Please select an audio file.');
@@ -89,6 +96,7 @@ export default function NewVoiceClient() {
     setStatus('generating');
 
     try {
+      abortController.current = new AbortController();
       // First upload and process the voice
       const formData = new FormData();
       formData.append('file', file);
@@ -97,6 +105,7 @@ export default function NewVoiceClient() {
       const voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
         body: formData,
+        signal: abortController.current.signal,
       });
 
       const voiceResult = await voiceRes.json();
@@ -257,10 +266,10 @@ export default function NewVoiceClient() {
               {status === 'generating' && (
                 <Button
                   variant="outline"
-                  size="icon"
                   onClick={() => abortController.current?.abort()}
+                  className='mx-auto'
                 >
-                  <CircleStop name="cancel" className="size-4" />
+                  Cancel <CircleStop name="cancel" className="size-4" />
                 </Button>
               )}
             </TabsContent>
