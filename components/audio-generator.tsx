@@ -1,7 +1,7 @@
 'use client';
 
 import { CircleStop, Download, Pause, Play, RotateCcw } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -32,7 +32,15 @@ export function AudioGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-  // const [creditsUsed, setCreditsUsed] = useState(credits);
+  const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+
+  useEffect(() => {
+    // Check if running on Mac for keyboard shortcut display
+    const isMac =
+      navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+      navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
+  }, []);
 
   const abortController = useRef<AbortController | null>(null);
 
@@ -84,6 +92,29 @@ export function AudioGenerator({
       setIsGenerating(false);
     }
   };
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+
+        // Only trigger if form can be submitted
+        if (!isGenerating && text.trim() && selectedVoice && hasEnoughCredits) {
+          handleGenerate();
+        }
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isGenerating, text, selectedVoice, hasEnoughCredits, handleGenerate]); // Dependencies for the effect
 
   const togglePlayback = () => {
     if (!audio) return;
@@ -176,7 +207,12 @@ export function AudioGenerator({
                 </span>
               </span>
             ) : (
-              <span>{dict.ctaButton}</span>
+              <span className="flex items-center gap-2">
+                {dict.ctaButton}
+                <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                  {shortcutKey}
+                </span>
+              </span>
             )}
           </Button>
 

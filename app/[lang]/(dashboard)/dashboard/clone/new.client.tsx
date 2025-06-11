@@ -7,7 +7,7 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,16 +29,16 @@ import { Label } from '@/components/ui/label';
 //   SelectValue,
 // } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioPlayer } from '../history/audio-player';
 
-type Status = 'idle' | 'ready' | 'generating' | 'complete' | 'error';
+type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 type VoiceClone = {
   id: string;
   name: string;
   createdAt: string;
 };
-
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -50,13 +50,26 @@ const ALLOWED_TYPES = [
   'audio/x-m4a',
 ];
 
-export default function NewVoiceClient() {
+export default function NewVoiceClient({
+  dict,
+}: {
+  dict: (typeof lang)['generate'];
+}) {
   const [status, setStatus] = useState<Status>('idle');
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
   const [textToConvert, setTextToConvert] = useState('');
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
+  const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+
+  useEffect(() => {
+    // Check if running on Mac for keyboard shortcut display
+    const isMac =
+      navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+      navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -64,9 +77,7 @@ export default function NewVoiceClient() {
 
     // Check file type
     const fileType = selectedFile.type;
-    if (
-      !ALLOWED_TYPES.includes(fileType)
-    ) {
+    if (!ALLOWED_TYPES.includes(fileType)) {
       setErrorMessage('Please upload an MP3, WAV, M4A or OGG file.');
       setStatus('error');
       return;
@@ -112,7 +123,10 @@ export default function NewVoiceClient() {
 
       if (!voiceRes.ok) {
         setErrorMessage(
-          voiceResult.message || voiceResult.error || 'Failed to clone voice.',
+          voiceResult.message ||
+            voiceResult.error ||
+            dict.errorCloning ||
+            'Failed to clone voice.',
         );
         setStatus('error');
         return;
@@ -123,12 +137,46 @@ export default function NewVoiceClient() {
       setStatus('complete');
       setActiveTab('preview');
     } catch (err: unknown) {
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Unexpected error occurred',
-      );
+      if (
+        err instanceof Error &&
+        err.message === 'signal is aborted without reason'
+      ) {
+        setErrorMessage(dict.abortedCloning || 'Voice generation aborted.');
+      } else {
+        setErrorMessage(
+          err instanceof Error ? err.message : 'Unexpected error occurred',
+        );
+      }
       setStatus('error');
     }
   };
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+
+        // Only trigger if form can be submitted
+        if (
+          status !== 'generating' &&
+          textToConvert.trim()
+          // && hasEnoughCredits
+        ) {
+          handleGenerate();
+        }
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [status, textToConvert]);
 
   const handleDownload = () => {
     const link = document.createElement('a');
@@ -181,7 +229,7 @@ export default function NewVoiceClient() {
                           or drag and drop
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          MP3, WAV, or OGG (10 sec - 1 min)
+                          MP3, WAV, M4A or OGG (10 sec - 1 min long)
                         </p>
                       </div>
                       <Input
@@ -206,15 +254,11 @@ export default function NewVoiceClient() {
                   <textarea
                     id="text-to-convert"
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Enter the text you want to convert to speech..."
+                    placeholder={dict.textAreaPlaceholder}
                     value={textToConvert}
                     onChange={(e) => setTextToConvert(e.target.value)}
                     disabled={status === 'generating'}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Enter the text you want to convert to speech using your
-                    uploaded voice
-                  </p>
                 </div>
               </div>
 
@@ -226,27 +270,17 @@ export default function NewVoiceClient() {
                 </Alert>
               )}
 
-              {status === 'ready' && (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertTitle>Voice Ready</AlertTitle>
-                  <AlertDescription>
-                    Your voice has been processed. You can now generate speech
-                    with your text.
-                  </AlertDescription>
-                </Alert>
-              )}
-
               <Button
                 onClick={handleGenerate}
                 disabled={
                   !file || !textToConvert.trim() || status === 'generating'
+                  // || !hasEnoughCredits
                 }
                 className="w-full"
               >
                 {status === 'generating' ? (
                   <span className="flex items-center">
-                    {'Generating'}
+                    {dict.generating}
                     <span className="inline-flex ml-1">
                       <span className="animate-[pulse_1.4s_ease-in-out_infinite]">
                         .
@@ -260,14 +294,19 @@ export default function NewVoiceClient() {
                     </span>
                   </span>
                 ) : (
-                  <span>{'Generate'}</span>
+                  <>
+                    <span>{dict.ctaButton}</span>
+                    <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                      {shortcutKey}
+                    </span>
+                  </>
                 )}
               </Button>
               {status === 'generating' && (
                 <Button
                   variant="outline"
                   onClick={() => abortController.current?.abort()}
-                  className='mx-auto'
+                  className="mx-auto"
                 >
                   Cancel <CircleStop name="cancel" className="size-4" />
                 </Button>
@@ -291,7 +330,7 @@ export default function NewVoiceClient() {
                     className="flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
-                    Download
+                    {dict.downloadAudio}
                   </Button>
                 </div>
               </div>

@@ -188,10 +188,12 @@
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "success": "Audio generated successfully!",
     "error": "Failed to generate audio",
+    "errorCloning": "Failed to clone voice",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "generating": "Generating",
     "ctaButton": "Generate Audio",
     "resetForm": "Reset Form",
-    "downloadAudio": "Download Audio"
+    "downloadAudio": "Download Audio",
+    "abortedCloning": "Voice generation aborted."
   }
 }
