@@ -33,6 +33,17 @@ type VoiceClone = {
   createdAt: string;
 };
 
+
+const ALLOWED_TYPES = [
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/ogg',
+  'audio/x-wav',
+  'audio/m4a',
+  'audio/x-m4a',
+];
+
 export default function NewVoiceClient() {
   const [status, setStatus] = useState<Status>('idle');
   const [file, setFile] = useState<File | null>(null);
@@ -48,11 +59,9 @@ export default function NewVoiceClient() {
     // Check file type
     const fileType = selectedFile.type;
     if (
-      fileType !== 'audio/mpeg' &&
-      fileType !== 'audio/wav' &&
-      fileType !== 'audio/ogg'
+      !ALLOWED_TYPES.includes(fileType)
     ) {
-      setErrorMessage('Please upload an MP3, WAV, or OGG file.');
+      setErrorMessage('Please upload an MP3, WAV, M4A or OGG file.');
       setStatus('error');
       return;
     }
@@ -169,7 +178,7 @@ export default function NewVoiceClient() {
                       <Input
                         id="audio-file"
                         type="file"
-                        accept=".mp3,.wav,.opus,audio/mpeg,audio/wav,audio/ogg"
+                        accept={ALLOWED_TYPES.join(',')}
                         className="hidden"
                         onChange={handleFileChange}
                       />
