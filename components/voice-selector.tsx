@@ -41,6 +41,21 @@ export function VoiceSelector({
     (file) => file.name === selectedVoice,
   );
 
+  // Emotion tags for each voice based on language
+  const getEmotionTags = (language: string) => {
+    if (language.startsWith('it-')) {
+      return '<sigh>, <laugh>, <cough>, <sniffle>, <groan>, <yawn>, <gemito>, <gasp>';
+    }
+    if (language.startsWith('es-')) {
+      return '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
+    }
+    if (language.startsWith('en-')) {
+      return '<laugh>, <chuckle>, <sigh>, <cough>, <sniffle>, <groan>, <yawn>, <gasp>';
+    }
+  };
+
+  console.log({ publicVoices });
+
   return (
     <Card>
       <CardHeader>
@@ -101,6 +116,28 @@ export function VoiceSelector({
                 {capitalizeFirstLetter(selectedVoice)} sample prompt:{' '}
                 <i>{selectedVoiceSample.sample_prompt}</i>
               </p>
+              {getEmotionTags(selectedVoiceSample.language) && (
+                <TooltipProvider>
+                  <Tooltip delayDuration={100} supportMobileTap>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="h-auto w-auto p-1"
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Info className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        <strong>Supported emotion tags:</strong>
+                        <br />
+                        {getEmotionTags(selectedVoiceSample.language)}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           </div>
         )}

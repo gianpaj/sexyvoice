@@ -8,10 +8,6 @@
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
 - Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter>
-- IT: pietro, giulia, carlo
-  sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
-- ES: javi, sergio, maria
-  groan, chuckle, gasp, resoplido, laugh, yawn, cough
 ---
 - Deploy model
   - FR: pierre, amelie, marie
@@ -44,8 +40,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ## Features
 
-- Clone voice
-- Try pre-cloned voices
+- Demo pre-cloned voices
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>
 <https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
 - History page. Add button to regenerate audio -> navigate to /generate page with text_content prefilled
