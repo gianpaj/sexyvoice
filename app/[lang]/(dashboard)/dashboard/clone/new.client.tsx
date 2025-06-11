@@ -47,8 +47,12 @@ export default function NewVoiceClient() {
 
     // Check file type
     const fileType = selectedFile.type;
-    if (fileType !== 'audio/mpeg' && fileType !== 'audio/wav') {
-      setErrorMessage('Please upload an MP3 or WAV file.');
+    if (
+      fileType !== 'audio/mpeg' &&
+      fileType !== 'audio/wav' &&
+      fileType !== 'audio/ogg'
+    ) {
+      setErrorMessage('Please upload an MP3, WAV, or OGG file.');
       setStatus('error');
       return;
     }
@@ -89,7 +93,9 @@ export default function NewVoiceClient() {
       const voiceResult = await voiceRes.json();
 
       if (!voiceRes.ok) {
-        setErrorMessage(voiceResult.error || 'Failed to clone voice.');
+        setErrorMessage(
+          voiceResult.message || voiceResult.error || 'Failed to clone voice.',
+        );
         setStatus('error');
         return;
       }
@@ -157,13 +163,13 @@ export default function NewVoiceClient() {
                           or drag and drop
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          MP3 or WAV (10 sec - 5 min)
+                          MP3, WAV, or OGG (10 sec - 1 min)
                         </p>
                       </div>
                       <Input
                         id="audio-file"
                         type="file"
-                        accept=".mp3,.wav,audio/mpeg,audio/wav"
+                        accept=".mp3,.wav,.opus,audio/mpeg,audio/wav,audio/ogg"
                         className="hidden"
                         onChange={handleFileChange}
                       />
@@ -202,26 +208,6 @@ export default function NewVoiceClient() {
                 </Alert>
               )}
 
-              {/* {(status === 'uploading') && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
-                      {status === 'uploading'
-                        ? 'Uploading and processing voice...'
-                        : 'Processing voice...'}
-                    </p>
-                  </div>
-                </div>
-              )} */}
-
-              {status === 'generating' && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Generating audio...</p>
-                  </div>
-                </div>
-              )}
-
               {status === 'ready' && (
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
@@ -240,10 +226,34 @@ export default function NewVoiceClient() {
                 }
                 className="w-full"
               >
-                {status === 'generating'
-                  ? 'Generating Speech...'
-                  : 'Create Voice & Generate Speech'}
+                {status === 'generating' ? (
+                  <span className="flex items-center">
+                    {'Generating'}
+                    <span className="inline-flex ml-1">
+                      <span className="animate-[pulse_1.4s_ease-in-out_infinite]">
+                        .
+                      </span>
+                      <span className="animate-[pulse_1.4s_ease-in-out_0.4s_infinite]">
+                        .
+                      </span>
+                      <span className="animate-[pulse_1.4s_ease-in-out_0.8s_infinite]">
+                        .
+                      </span>
+                    </span>
+                  </span>
+                ) : (
+                  <span>{'Generate'}</span>
+                )}
               </Button>
+              {status === 'generating' && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => abortController.current?.abort()}
+                >
+                  <CircleStop name="cancel" className="size-4" />
+                </Button>
+              )}
             </TabsContent>
 
             <TabsContent value="preview" className="space-y-4 py-4">

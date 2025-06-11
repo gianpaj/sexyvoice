@@ -54,8 +54,6 @@ export function VoiceSelector({
     }
   };
 
-  console.log({ publicVoices });
-
   return (
     <Card>
       <CardHeader>

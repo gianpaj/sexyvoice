@@ -19,6 +19,7 @@ const ALLOWED_TYPES = [
   'audio/mpeg',
   'audio/mp3',
   'audio/wav',
+  'audio/ogg',
   'audio/x-wav',
   'audio/m4a',
   'audio/x-m4a',
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       !ALLOWED_TYPES.includes(audioFile.type)
     ) {
       return APIErrorResponse(
-        'Invalid file type. Only MP3, M4A, or WAV allowed.',
+        'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
         400,
       );
     }
@@ -211,11 +212,14 @@ export async function POST(request: Request) {
     }
     const blobUrl = `clone-voice-input/${user.id}-${audioFile.name}`;
 
-    const existingAudio = await head(blobUrl);
+    try {
+      const existingAudio = await head(blobUrl);
 
-    if (existingAudio) {
-      audioPromptUrl = existingAudio.url;
-    } else {
+      if (existingAudio) {
+        audioPromptUrl = existingAudio.url;
+      } else {
+      }
+    } catch (e) {
       // Upload audio file to Vercel blob for TTS generation
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
