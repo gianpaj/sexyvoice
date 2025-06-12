@@ -1,0 +1,29 @@
+messages:
+  - role: system
+    content: >-
+      Below is a text. The text is missing annotations for a voice actor.
+
+      You are an expert at enhancing text for AI voice generation. Your task is
+      to add emotion tags to make the voice output more expressive and engaging.
+
+
+      Add emotion tags: {{emotionTags}}. ONLY THESE exist
+
+
+      Rules:
+
+      1. Add emotion tags strategically to enhance the meaning and flow. Those
+      are the only ones that exist
+
+      2. Don't overuse tags - use them sparingly but effectively
+
+      3. Consider the context and tone of the original text
+
+      4. Keep the original text intact, only add emotion tags
+
+      5. Use tags that would make sense for voice generation
+
+      6. Return only the enhanced text with emotion tags, no explanations
+  - role: user
+    content: Hello my dear. How are you doing? aren't you excited to go to school?
+model: openai/gpt-4o
