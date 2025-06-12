@@ -127,12 +127,6 @@ export default function DashboardLayout(props: {
       current: pathname === `/${lang}/dashboard/generate`,
     },
     {
-      name: 'History',
-      href: `/${lang}/dashboard/history`,
-      icon: FileClock,
-      current: pathname === `/${lang}/dashboard/history`,
-    },
-    {
       name: 'Clone',
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
@@ -143,11 +137,17 @@ export default function DashboardLayout(props: {
     //       {
     //         name: 'Clone',
     //         href: `/${lang}/dashboard/clone`,
-    //         icon: Copy,
+    //         icon: Mic2,
     //         current: pathname === `/${lang}/dashboard/clone`,
     //       },
     //     ]
     //   : []),
+    {
+      name: 'History',
+      href: `/${lang}/dashboard/history`,
+      icon: FileClock,
+      current: pathname === `/${lang}/dashboard/history`,
+    },
     {
       name: 'Credits',
       href: `/${lang}/dashboard/credits`,
