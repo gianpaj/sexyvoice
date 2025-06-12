@@ -66,6 +66,7 @@ export const handleDeleteAction = async (id: string) => {
     Sentry.captureException({
       error: 'Audio file deletion error',
       errorData: error,
+      audioId: id,
     });
     console.error('Error deleting audio file:', error);
     throw error;

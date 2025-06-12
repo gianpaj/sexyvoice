@@ -1,6 +1,14 @@
 'use client';
 
-import { CircleStop, Download, Pause, Play, RotateCcw } from 'lucide-react';
+import { useCompletion } from '@ai-sdk/react';
+import {
+  CircleStop,
+  Download,
+  Pause,
+  Play,
+  RotateCcw,
+  Sparkles,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -13,12 +21,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import { APIError } from '@/lib/error-ts';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 
 interface AudioGeneratorProps {
-  selectedVoice: string;
+  selectedVoice?: Voice;
   hasEnoughCredits: boolean;
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   dict: any;
@@ -30,10 +39,12 @@ export function AudioGenerator({
   dict,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
+  const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+  const [isEnhancingText, setIsEnhancingText] = useState(false);
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -95,6 +106,7 @@ export function AudioGenerator({
   };
 
   // Keyboard shortcut handler
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
@@ -115,7 +127,7 @@ export function AudioGenerator({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isGenerating, text, selectedVoice, hasEnoughCredits, handleGenerate]); // Dependencies for the effect
+  }, [isGenerating, text, selectedVoice, hasEnoughCredits]); // Dependencies for the effect
 
   const togglePlayback = () => {
     if (!audio) return;
@@ -159,6 +171,37 @@ export function AudioGenerator({
     link.click();
   };
 
+  const { complete } = useCompletion({
+    api: '/api/generate-text',
+  });
+
+  const handleEnhanceText = async () => {
+    if (!text.trim() || !selectedVoice) return;
+
+    setIsEnhancingText(true);
+    setPreviousText(text);
+    try {
+      const enhancedText = await complete(text, {
+        body: { selectedVoiceLanguage: selectedVoice.language },
+      });
+
+      if (enhancedText) {
+        setText(enhancedText);
+        toast('Text enhanced with emotion tags!', {
+          action: {
+            label: 'Undo',
+            onClick: () => setText(previousText),
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error enhancing text:', error);
+      toast.error('Failed to enhance text');
+    } finally {
+      setIsEnhancingText(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -166,12 +209,26 @@ export function AudioGenerator({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={dict.textAreaPlaceholder}
-            className="h-32"
-          />
+          <div className="relative">
+            <Textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={dict.textAreaPlaceholder}
+              className="h-32 pr-12"
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 right-2 h-8 w-8"
+              onClick={handleEnhanceText}
+              disabled={!text.trim() || isEnhancingText || isGenerating}
+              title="Enhance text with AI emotion tags"
+            >
+              <Sparkles
+                className={`h-4 w-4 text-yellow-300 ${isEnhancingText ? 'animate-spin' : ''}`}
+              />
+            </Button>
+          </div>
         </div>
 
         <div
@@ -184,7 +241,7 @@ export function AudioGenerator({
           )}
           <Button
             onClick={handleGenerate}
-            data-testId="generate-button"
+            data-testid="generate-button"
             disabled={
               isGenerating ||
               !text.trim() ||

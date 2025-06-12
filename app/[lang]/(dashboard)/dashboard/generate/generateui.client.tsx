@@ -18,16 +18,18 @@ export function GenerateUI({
   dict,
 }: GenerateUIProps) {
   const [selectedVoice, setSelectedVoice] = useState('tara');
-
+  const selectedVoiceSample = publicVoices.find(
+    (file) => file.name === selectedVoice,
+  );
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
         setSelectedVoice={setSelectedVoice}
-        selectedVoice={selectedVoice}
+        selectedVoice={selectedVoiceSample}
         publicVoices={publicVoices}
       />
       <AudioGenerator
-        selectedVoice={selectedVoice}
+        selectedVoice={selectedVoiceSample}
         hasEnoughCredits={hasEnoughCredits}
         dict={dict}
       />

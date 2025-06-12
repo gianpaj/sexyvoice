@@ -1,4 +1,4 @@
-import { Info, Volume2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
 import {
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getEmotionTags } from '@/lib/ai';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import {
@@ -34,26 +35,9 @@ export function VoiceSelector({
 }: {
   // userVoices: Voice[];
   publicVoices: Voice[];
-  selectedVoice: string;
+  selectedVoice?: Voice;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
 }) {
-  const selectedVoiceSample = publicVoices.find(
-    (file) => file.name === selectedVoice,
-  );
-
-  // Emotion tags for each voice based on language
-  const getEmotionTags = (language: string) => {
-    if (language.startsWith('it-')) {
-      return '<sigh>, <laugh>, <cough>, <sniffle>, <groan>, <yawn>, <gemito>, <gasp>';
-    }
-    if (language.startsWith('es-')) {
-      return '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
-    }
-    if (language.startsWith('en-')) {
-      return '<laugh>, <chuckle>, <sigh>, <cough>, <sniffle>, <groan>, <yawn>, <gasp>';
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -83,7 +67,7 @@ export function VoiceSelector({
         <CardDescription>Choose from public voices</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+        <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
@@ -106,15 +90,15 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
-        {selectedVoiceSample?.sample_url && (
+        {selectedVoice?.sample_url && (
           <div className="flex gap-2 items-center justify-between p-4 lg:w-1/2">
-            <AudioPlayer url={selectedVoiceSample.sample_url} />
+            <AudioPlayer url={selectedVoice.sample_url} />
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                {capitalizeFirstLetter(selectedVoice)} sample prompt:{' '}
-                <i>{selectedVoiceSample.sample_prompt}</i>
+                {capitalizeFirstLetter(selectedVoice.name)} sample prompt:{' '}
+                <i>{selectedVoice.sample_prompt}</i>
               </p>
-              {getEmotionTags(selectedVoiceSample.language) && (
+              {getEmotionTags(selectedVoice.language) && (
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>
                     <TooltipTrigger asChild>
@@ -130,7 +114,7 @@ export function VoiceSelector({
                       <p className="max-w-xs">
                         <strong>Supported emotion tags:</strong>
                         <br />
-                        {getEmotionTags(selectedVoiceSample.language)}
+                        {getEmotionTags(selectedVoice.language)}
                       </p>
                     </TooltipContent>
                   </Tooltip>
