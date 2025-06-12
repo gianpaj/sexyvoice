@@ -7,7 +7,7 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PulsatingDots from '@/components/PulsatingDots';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -91,7 +91,7 @@ export default function NewVoiceClient({
   };
 
   const abortController = useRef<AbortController | null>(null);
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     if (!file) {
       setErrorMessage('Please select an audio file.');
       setStatus('error');
@@ -150,7 +150,7 @@ export default function NewVoiceClient({
       }
       setStatus('error');
     }
-  };
+  }, [dict, file, textToConvert]);
 
   // Keyboard shortcut handler
   useEffect(() => {
@@ -177,7 +177,7 @@ export default function NewVoiceClient({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, textToConvert]);
+  }, [status, textToConvert, handleGenerate]);
 
   const handleDownload = () => {
     const link = document.createElement('a');

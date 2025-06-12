@@ -6,7 +6,7 @@ export default async function NewVoicePage(props: {
   params: Promise<{ lang: string }>;
 }) {
   const supabase = await createClient();
-  const {lang} = await props.params;
+  const { lang } = await props.params;
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -15,5 +15,5 @@ export default async function NewVoicePage(props: {
   }
 
   const dict = await getDictionary(lang as 'en' | 'es', 'generate');
-  return <NewVoiceClient dict={dict}  />;
+  return <NewVoiceClient dict={dict} />;
 }

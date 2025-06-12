@@ -78,18 +78,35 @@ const PostLayout = async (props: {
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
-      <article className="py-8 mx-auto max-w-2xl prose dark:prose-invert" itemScope itemType="https://schema.org/BlogPosting">
+      <article
+        className="py-8 mx-auto max-w-2xl prose dark:prose-invert"
+        itemScope
+        itemType="https://schema.org/BlogPosting"
+      >
         <div className="mb-8 text-center">
-          <time dateTime={post.date} className="mb-1 text-xs text-gray-600" itemProp="datePublished" content={post.date}>
+          <time
+            dateTime={post.date}
+            className="mb-1 text-xs text-gray-600"
+            itemProp="datePublished"
+            content={post.date}
+          >
             {format(parseISO(post.date), 'LLLL d, yyyy')}
           </time>
           <h1 itemProp="headline">{post.title}</h1>
           <meta itemProp="description" content={post.description} />
-          <div itemProp="author" itemScope itemType="https://schema.org/Organization">
+          <div
+            itemProp="author"
+            itemScope
+            itemType="https://schema.org/Organization"
+          >
             <meta itemProp="name" content="SexyVoice.ai" />
             <meta itemProp="url" content="https://sexyvoice.ai" />
           </div>
-          <div itemProp="publisher" itemScope itemType="https://schema.org/Organization">
+          <div
+            itemProp="publisher"
+            itemScope
+            itemType="https://schema.org/Organization"
+          >
             <meta itemProp="name" content="SexyVoice.ai" />
             <meta itemProp="url" content="https://sexyvoice.ai" />
           </div>
