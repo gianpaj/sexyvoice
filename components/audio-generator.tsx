@@ -66,7 +66,7 @@ export function AudioGenerator({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text, voice: selectedVoice }),
+        body: JSON.stringify({ text, voice: selectedVoice?.name }),
         signal: abortController.current.signal,
       });
 
