@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>Create stunning AI-generated voices with advanced machine learning technology</strong>
+  <strong>Create stunning AI-generated voices and clone your own voice with advanced machine learning technology</strong>
 </p>
 
 <p align="center">
@@ -29,14 +29,15 @@
 - User authentication and profile management (Google, Facebook and Apple login coming soon)
 - [Architecture Overview](./ARCHITECTURE.md)
 
-SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices using advanced machine learning technology. Whether you're a content creator, developer, or business professional, our platform provides the tools you need to generate professional-grade audio content.
+SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, our platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
+- **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio (Starter plan and above)
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices in English and Spanish (more languages coming soon)
+- **Multi-language Support**: Generate voices in English, Spanish, and Italian (more languages coming soon)
 - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes
 
 ### 🔐 User Experience
@@ -213,9 +214,10 @@ SexyVoice.ai is actively developed and maintained. Check our [roadmap](https://s
 
 ### Current Version
 - ✅ Core voice generation functionality
+- ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Multi-language support (EN/ES)
+- ✅ Multi-language support (EN/ES/IT)
 - 🚧 API access (coming soon)
 
 ---
