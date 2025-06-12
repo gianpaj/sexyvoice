@@ -9,7 +9,7 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 interface GenerateUIProps {
   publicVoices: Voice[];
   hasEnoughCredits: boolean;
-  dict: (typeof lang);
+  dict: (typeof lang)['generate'];
 }
 
 export function GenerateUI({
