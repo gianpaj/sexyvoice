@@ -8,6 +8,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import PulsatingDots from '@/components/PulsatingDots';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -282,15 +283,7 @@ export default function NewVoiceClient({
                   <span className="flex items-center">
                     {dict.generating}
                     <span className="inline-flex ml-1">
-                      <span className="animate-[pulse_1.4s_ease-in-out_infinite]">
-                        .
-                      </span>
-                      <span className="animate-[pulse_1.4s_ease-in-out_0.4s_infinite]">
-                        .
-                      </span>
-                      <span className="animate-[pulse_1.4s_ease-in-out_0.8s_infinite]">
-                        .
-                      </span>
+                      <PulsatingDots />
                     </span>
                   </span>
                 ) : (

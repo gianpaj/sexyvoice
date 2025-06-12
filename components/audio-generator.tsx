@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { APIError } from '@/lib/error-ts';
+import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 
 interface AudioGeneratorProps {
@@ -194,17 +195,7 @@ export function AudioGenerator({
             {isGenerating ? (
               <span className="flex items-center">
                 {dict.generating}
-                <span className="inline-flex ml-1">
-                  <span className="animate-[pulse_1.4s_ease-in-out_infinite]">
-                    .
-                  </span>
-                  <span className="animate-[pulse_1.4s_ease-in-out_0.4s_infinite]">
-                    .
-                  </span>
-                  <span className="animate-[pulse_1.4s_ease-in-out_0.8s_infinite]">
-                    .
-                  </span>
-                </span>
+                <PulsatingDots />
               </span>
             ) : (
               <span className="flex items-center gap-2">
