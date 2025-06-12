@@ -184,6 +184,7 @@ export function AudioGenerator({
           )}
           <Button
             onClick={handleGenerate}
+            data-testId="generate-button"
             disabled={
               isGenerating ||
               !text.trim() ||
