@@ -102,6 +102,14 @@
       "subtitle": "Everything you need to know about SexyVoice.ai",
       "questions": [
         {
+          "question": "How does voice cloning work?",
+          "answer": "Our AI analyzes your voice samples to learn its unique patterns and characteristics. With just seconds of audio, we can create a digital voice that sounds just like you. The system uses advanced AI to match your tone, accent, and speaking style."
+        },
+        {
+          "question": "Can I clone my own voice?",
+          "answer": "Yes! For ethical reasons, you need permission before cloning someone else's voice. We take voice rights seriously."
+        },
+        {
           "question": "Is my voice data secure?",
           "answer": "Yes. We encrypt all voice data and store it securely. You control your audio generations completely and can delete them anytime. We never share your voice data with others without your permission. Your privacy is our priority."
         },
@@ -150,18 +158,18 @@
         "credits": "10,000 credits (~10 min audio)",
         "features": [
           "Generate speech in unique voices",
-          "Create custom, synthetic voices (coming soon)",
+          "Create custom, synthetic voices",
           "Generate sound effects",
           "API access (coming soon)"
         ]
       },
       "starter": {
         "name": "Starter",
-        "description": "For hobbyists creating projects with AI audio and create custom voices (coming soon).",
+        "description": "For hobbyists creating projects with AI audio and create custom voices.",
         "credits": "30,000 credits per month (~30 min audio)",
         "features": [
           "Everything in free, plus",
-          "Clone your voice with as little as 1 minute of audio (coming soon)"
+          "Clone your voice with as little as 10 seconds of audio"
         ]
       },
       "pro": {
@@ -180,10 +188,12 @@
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "success": "Audio generated successfully!",
     "error": "Failed to generate audio",
+    "errorCloning": "Failed to clone voice",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "generating": "Generating",
     "ctaButton": "Generate Audio",
     "resetForm": "Reset Form",
-    "downloadAudio": "Download Audio"
+    "downloadAudio": "Download Audio",
+    "abortedCloning": "Voice generation aborted."
   }
 }

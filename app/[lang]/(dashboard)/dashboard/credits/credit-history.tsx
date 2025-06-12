@@ -10,25 +10,26 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 import { createClient } from '@/lib/supabase/client';
 
-interface StripeTransaction {
-  id: string;
-  amount: number;
-  type: string;
-  description: string;
-  created: number;
-  status: string;
-  current_period_end?: number;
-  current_period_start?: number;
-  invoice_id?: string;
-}
+// interface StripeTransaction {
+//   id: string;
+//   amount: number;
+//   type: string;
+//   description: string;
+//   created: number;
+//   status: string;
+//   current_period_end?: number;
+//   current_period_start?: number;
+//   invoice_id?: string;
+// }
 
 export function CreditHistory({
   dict,
   userId,
 }: {
-  dict: any;
+  dict: (typeof lang)['credits'];
   userId?: string;
 }) {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
@@ -123,9 +124,7 @@ export function CreditHistory({
     return (
       <div className="rounded-lg py-8 text-center">
         <h4 className="mb-2 text-sm font-semibold">No transactions yet</h4>
-        <p className="text-sm text-muted-foreground">
-          {dict.credits.historyEmpty}
-        </p>
+        <p className="text-sm text-muted-foreground">{dict.historyEmpty}</p>
       </div>
     );
   }

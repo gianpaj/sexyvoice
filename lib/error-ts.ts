@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 /**
  * This error is thrown when there is an API error with a payload. The error
  * body includes the data that came in the payload plus status and a server
@@ -37,6 +39,18 @@ export class APIError extends Error {
     }
   }
 }
+
+export const APIErrorResponse = (errorMsg: string, statusCode: number) => {
+  return NextResponse.json(
+    new APIError(
+      errorMsg,
+      new Response(errorMsg, {
+        status: statusCode,
+      }),
+    ),
+    { status: statusCode },
+  );
+};
 
 // export function isAPIError(v: unknown): v is APIError {
 //   return isError(v) && 'status' in v;

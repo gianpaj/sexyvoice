@@ -27,6 +27,15 @@ export function SignUpForm({
     setError(null);
 
     try {
+      // Check if email is Gmail with + sign and block it
+      if (email.includes('+') && email.toLowerCase().includes('@gmail.com')) {
+        setTimeout(() => {
+          setError('Error creating account');
+          setIsLoading(false);
+        }, 1000);
+        return;
+      }
+
       const { error: signUpError, data } = await supabase.auth.signUp({
         email,
         password,

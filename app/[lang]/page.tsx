@@ -2,14 +2,16 @@ import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
+import Script from 'next/script';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
@@ -80,6 +82,11 @@ export default async function LandingPage(props: {
 
   const { lang } = params;
 
+  // Validate that the language is a supported locale
+  if (!i18n.locales.includes(lang as Locale)) {
+    redirect(`/${i18n.defaultLocale}`);
+  }
+
   const dict = await getDictionary(lang);
 
   const parts = dict.landing.hero.title.split(',');
@@ -92,6 +99,21 @@ export default async function LandingPage(props: {
         rel="preconnect"
         href="https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
       />
+      <Script type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: dict.landing.faq.questions.map((q) => ({
+            '@type': 'Question',
+            name: q.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: q.answer,
+            },
+          })),
+        })}
+      </Script>
+
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
       </Suspense>
@@ -227,7 +249,7 @@ export default async function LandingPage(props: {
             </Card>
           </div>
 
-          <PricingTable dict={dict} lang={lang} />
+          <PricingTable lang={lang} />
 
           {/* FAQ Section */}
           <div className="max-w-3xl mx-auto py-16">

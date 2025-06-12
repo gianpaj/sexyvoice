@@ -28,7 +28,7 @@ export function AudioPlayer({ url }: { url: string }) {
     <Button
       variant="secondary"
       size="icon"
-      className="min-w-9 min-h-9"
+      className="min-w-10 min-h-10 rounded-full"
       onClick={handlePlay}
     >
       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

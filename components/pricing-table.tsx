@@ -1,13 +1,12 @@
 import { Check } from 'lucide-react';
 import Link from 'next/link';
-
-import type en from '@/lib/i18n/dictionaries/en.json';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 
-async function PricingTable({ lang, dict }: { lang: Locale; dict: typeof en }) {
-  const { credits } = dict;
+async function PricingTable({ lang }: { lang: Locale }) {
+  const credits = await getDictionary(lang, 'credits');
   const { plans: pPlans } = credits;
   const plans = [
     {

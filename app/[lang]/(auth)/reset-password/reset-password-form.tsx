@@ -18,6 +18,7 @@ export function ResetPasswordForm({
   lang,
   message,
 }: {
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   dict: any;
   lang: string;
   message: Message;

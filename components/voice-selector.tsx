@@ -41,6 +41,19 @@ export function VoiceSelector({
     (file) => file.name === selectedVoice,
   );
 
+  // Emotion tags for each voice based on language
+  const getEmotionTags = (language: string) => {
+    if (language.startsWith('it-')) {
+      return '<sigh>, <laugh>, <cough>, <sniffle>, <groan>, <yawn>, <gemito>, <gasp>';
+    }
+    if (language.startsWith('es-')) {
+      return '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
+    }
+    if (language.startsWith('en-')) {
+      return '<laugh>, <chuckle>, <sigh>, <cough>, <sniffle>, <groan>, <yawn>, <gasp>';
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -94,14 +107,36 @@ export function VoiceSelector({
           </SelectContent>
         </Select>
         {selectedVoiceSample?.sample_url && (
-          <div className="flex gap-2 items-center justify-between p-4 border rounded-md lg:w-1/2">
+          <div className="flex gap-2 items-center justify-between p-4 lg:w-1/2">
+            <AudioPlayer url={selectedVoiceSample.sample_url} />
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                Prompt: <i>{selectedVoiceSample.sample_prompt}</i>
+                {capitalizeFirstLetter(selectedVoice)} sample prompt:{' '}
+                <i>{selectedVoiceSample.sample_prompt}</i>
               </p>
+              {getEmotionTags(selectedVoiceSample.language) && (
+                <TooltipProvider>
+                  <Tooltip delayDuration={100} supportMobileTap>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="h-auto w-auto p-1"
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Info className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        <strong>Supported emotion tags:</strong>
+                        <br />
+                        {getEmotionTags(selectedVoiceSample.language)}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-
-            <AudioPlayer url={selectedVoiceSample.sample_url} />
           </div>
         )}
       </CardContent>

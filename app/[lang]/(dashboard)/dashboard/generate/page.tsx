@@ -10,7 +10,7 @@ export default async function GeneratePage(props: {
 }) {
   const params = await props.params;
   const { lang } = params;
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'generate');
 
   const supabase = await createClient();
 
@@ -72,7 +72,7 @@ export default async function GeneratePage(props: {
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
-          dict={dict.generate}
+          dict={dict}
           hasEnoughCredits={credits.amount >= 1}
           publicVoices={publicVoices}
         />

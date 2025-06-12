@@ -21,6 +21,13 @@
 ---
 
 ## 🌟 About
+=======
+<!-- - Generate AI voices in multiple languages (English & Spanish) -->
+- Voice selection system with customizable options
+- Public library of generated voices ranked by usage and votes
+- Credit-based usage system
+- User authentication and profile management (Google, Facebook and Apple login coming soon)
+- [Architecture Overview](./ARCHITECTURE.md)
 
 SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices using advanced machine learning technology. Whether you're a content creator, developer, or business professional, our platform provides the tools you need to generate professional-grade audio content.
 
@@ -73,7 +80,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Prerequisites
 
-- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **Node.js 30+** - [Download here](https://nodejs.org/)
 - **pnpm** - Install with `npm install -g pnpm`
 - **Supabase account** - [Sign up here](https://supabase.com)
 
@@ -152,7 +159,7 @@ pnpm test:watch
 
 Generate TypeScript types from Supabase:
 ```bash
-supabase gen types typescript --project-id bfaqdyadcpaetelvpbva > database.types.ts
+supabase gen types typescript --project-id PROJECT_ID > database.types.ts
 ```
 
 Push schema changes to Supabase:
@@ -169,48 +176,6 @@ pip3 install seewav
 seewav your_audio.mp3 --color '0.8,0.0,0.4'
 ```
 
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Build failures:**
-- Ensure all environment variables are properly set
-- Run `pnpm install` to update dependencies
-- Check that Node.js version is 18 or higher
-
-**Database connection issues:**
-- Verify Supabase URL and API keys are correct
-- Ensure your Supabase project is active
-- Check database migrations are up to date with `supabase db push`
-
-**Authentication problems:**
-- Verify OAuth provider configurations in Supabase
-- Check redirect URLs are properly configured
-- Ensure environment variables for auth providers are set
-
-## 🌐 Deployment
-
-The application is optimized for deployment on Vercel:
-
-1. **Connect your repository** to Vercel
-2. **Configure environment variables** in the Vercel dashboard
-3. **Deploy** - Vercel will automatically build and deploy your application
-
-For other deployment platforms, ensure you:
-- Set all required environment variables
-- Configure build commands according to your platform
-- Set up proper domain and SSL configuration
-
-### Environment Variables for Production
-
-Ensure the following environment variables are configured in your deployment platform:
-
-- **Required**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `REPLICATE_API_TOKEN`, `STRIPE_SECRET_KEY`
-- **Storage**: `BLOB_READ_WRITE_TOKEN` for file uploads
-- **Analytics**: `NEXT_PUBLIC_POSTHOG_KEY` for product analytics
-- **Monitoring**: Sentry configuration for error tracking
-- **Support**: `NEXT_PUBLIC_CRISP_WEBSITE_ID` for customer support chat
-
 ## 🔒 Security
 
 SexyVoice.ai implements multiple security layers:
@@ -224,11 +189,12 @@ SexyVoice.ai implements multiple security layers:
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [contribution guidelines](CONTRIBUTING.md) for details on how to:
+<!-- We welcome contributions! Please see our [contribution guidelines](CONTRIBUTING.md) for details on how to: -->
+We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
-- Follow our code of conduct
+<!-- - Follow our code of conduct -->
 
 ## 📄 License
 
@@ -239,20 +205,18 @@ This project is licensed under the [MIT License](LICENSE).
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
 - **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*
-- **Support**: [Contact support](mailto:support@sexyvoice.ai)
+- **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status
 
 SexyVoice.ai is actively developed and maintained. Check our [roadmap](https://sexyvoice.featurebase.app) for upcoming features and improvements.
 
-### Current Version: Beta
+### Current Version
 - ✅ Core voice generation functionality
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
 - ✅ Multi-language support (EN/ES)
-- 🚧 Mobile app (coming soon)
 - 🚧 API access (coming soon)
-- 🚧 Advanced voice customization (in development)
 
 ---
 

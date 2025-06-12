@@ -100,7 +100,10 @@ export async function POST(request: Request) {
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
-      Sentry.captureException({ error: 'Insufficient credits', voice, text });
+      Sentry.captureMessage('Insufficient credits', {
+        user: { id: user.id, email: user.email },
+        extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
+      });
       return NextResponse.json(
         { error: 'Insufficient credits' },
         { status: 402 },
@@ -174,7 +177,7 @@ export async function POST(request: Request) {
       throw new Error(output.error || 'Voice generation failed');
     }
 
-    // Use hash in the file path for future lookups
+    // Use hash in the file path for future look ups
     const blobResult = await put(filename, output, {
       access: 'public',
       contentType: 'audio/mpeg',

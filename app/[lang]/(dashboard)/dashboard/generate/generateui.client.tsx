@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 
 interface GenerateUIProps {
   publicVoices: Voice[];
   hasEnoughCredits: boolean;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  dict: any;
+  dict: (typeof lang)['generate'];
 }
 
 export function GenerateUI({

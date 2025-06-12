@@ -23,13 +23,16 @@
         "useExponentiationOperator": "error",
         "useTemplate": "error",
         "noParameterAssign": "error",
-        "noNonNullAssertion": "error",
+        "noNonNullAssertion": "off",
         "useDefaultParameterLast": "error",
         "noArguments": "error",
         "useImportType": "error",
         "useExportType": "error",
         "noUselessElse": "error",
         "useShorthandFunctionType": "error"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off"
       }
     }
   },

@@ -2,15 +2,12 @@
 
 import { Crisp } from 'crisp-sdk-web';
 import {
-  BarChart3,
   ChevronUp,
-  // Copy,
   CreditCard,
   FileClock,
-  // Mic2,
+  Mic2,
   User2,
   Wand2,
-  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -124,39 +121,33 @@ export default function DashboardLayout(props: {
 
   const navigation = [
     {
-      name: 'Dashboard',
-      href: `/${lang}/dashboard`,
-      icon: BarChart3,
-      current: pathname === `/${lang}/dashboard`,
-    },
-    {
       name: 'Generate',
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
     {
-      name: 'History',
-      href: `/${lang}/dashboard/history`,
-      icon: FileClock,
-      current: pathname === `/${lang}/dashboard/history`,
+      name: 'Clone',
+      href: `/${lang}/dashboard/clone`,
+      icon: Mic2,
+      current: pathname === `/${lang}/dashboard/clone`,
     },
-    // {
-    //   name: 'Voices',
-    //   href: `/${lang}/dashboard/voices`,
-    //   icon: Mic2,
-    //   current: pathname === `/${lang}/dashboard/voices`,
-    // },
     // ...(flagEnabled
     //   ? [
     //       {
     //         name: 'Clone',
     //         href: `/${lang}/dashboard/clone`,
-    //         icon: Copy,
+    //         icon: Mic2,
     //         current: pathname === `/${lang}/dashboard/clone`,
     //       },
     //     ]
     //   : []),
+    {
+      name: 'History',
+      href: `/${lang}/dashboard/history`,
+      icon: FileClock,
+      current: pathname === `/${lang}/dashboard/history`,
+    },
     {
       name: 'Credits',
       href: `/${lang}/dashboard/credits`,
@@ -270,7 +261,7 @@ export default function DashboardLayout(props: {
               {props.children}
             </main>
             <footer className="p-4 border-t text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 <a
                   href="https://sexyvoice.checkly-dashboards.com/"
                   target="_blank"
