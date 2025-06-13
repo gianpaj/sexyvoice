@@ -33,7 +33,7 @@ async function generateHash(
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration
-export const maxDuration = 60; // seconds - fluid compute is enabled
+export const maxDuration = 90; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
