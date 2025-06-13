@@ -5,7 +5,9 @@ import {
   CheckCircle,
   CircleStop,
   Download,
-  Upload,
+  PaperclipIcon,
+  UploadIcon,
+  XIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import PulsatingDots from '@/components/PulsatingDots';
@@ -19,7 +21,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 // import { Progress } from '@/components/ui/progress';
 // import {
@@ -30,26 +31,15 @@ import { Label } from '@/components/ui/label';
 //   SelectValue,
 // } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioPlayer } from '../history/audio-player';
 
 type Status = 'idle' | 'generating' | 'complete' | 'error';
 
-type VoiceClone = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
-
-const ALLOWED_TYPES = [
-  'audio/mpeg',
-  'audio/mp3',
-  'audio/wav',
-  'audio/ogg',
-  'audio/x-wav',
-  'audio/m4a',
-  'audio/x-m4a',
-];
+const ALLOWED_TYPES =
+  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function NewVoiceClient({
   dict,
@@ -57,12 +47,31 @@ export default function NewVoiceClient({
   dict: (typeof lang)['generate'];
 }) {
   const [status, setStatus] = useState<Status>('idle');
-  const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
   const [textToConvert, setTextToConvert] = useState('');
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+
+  const [
+    { files, isDragging, errors },
+    {
+      handleDragEnter,
+      handleDragLeave,
+      handleDragOver,
+      handleDrop,
+      openFileDialog,
+      removeFile,
+      getInputProps,
+      clearErrors,
+    },
+  ] = useFileUpload({
+    maxSize: MAX_FILE_SIZE,
+    accept: ALLOWED_TYPES,
+    multiple: false,
+  });
+
+  const file = files[0]?.file instanceof File ? files[0].file : null;
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -72,23 +81,12 @@ export default function NewVoiceClient({
     setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    // Check file type
-    const fileType = selectedFile.type;
-    if (!ALLOWED_TYPES.includes(fileType)) {
-      setErrorMessage('Please upload an MP3, WAV, M4A or OGG file.');
-      setStatus('error');
-      return;
+  // Clear custom error message when file upload errors change
+  useEffect(() => {
+    if (errors.length > 0) {
+      setErrorMessage('');
     }
-
-    // We would normally check duration here, but we'll simulate it
-    setFile(selectedFile);
-    setErrorMessage('');
-    setStatus('idle');
-  };
+  }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
   const handleGenerate = useCallback(async () => {
@@ -104,7 +102,9 @@ export default function NewVoiceClient({
       return;
     }
 
+    // Clear both custom errors and file upload errors
     setErrorMessage('');
+    clearErrors();
     setStatus('generating');
 
     try {
@@ -218,35 +218,89 @@ export default function NewVoiceClient({
               <div className="grid w-full gap-4">
                 <div className="grid w-full gap-2">
                   <Label htmlFor="audio-file">Audio File</Label>
-                  <div className="flex items-center justify-center w-full">
-                    <label
-                      htmlFor="audio-file"
-                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                        <p className="mb-2 text-sm text-muted-foreground">
-                          <span className="font-semibold">Click to upload</span>{' '}
-                          or drag and drop
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          MP3, WAV, M4A or OGG (10 sec - 1 min long)
-                        </p>
+
+                  {/* Drop area */}
+                  <button
+                    type="button"
+                    onClick={openFileDialog}
+                    onKeyUp={openFileDialog}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    data-dragging={isDragging || undefined}
+                    className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
+                  >
+                    <input
+                      {...getInputProps()}
+                      className="sr-only"
+                      aria-label="Upload audio file"
+                      disabled={Boolean(file)}
+                    />
+
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div
+                        className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
+                        aria-hidden="true"
+                      >
+                        <UploadIcon className="size-4 opacity-60" />
                       </div>
-                      <Input
-                        id="audio-file"
-                        type="file"
-                        accept={ALLOWED_TYPES.join(',')}
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                  </div>
+                      <p className="mb-1.5 text-sm font-medium">
+                        Upload audio file
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        Drag & drop or click to browse
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        MP3, WAV, M4A or OGG (max. {formatBytes(MAX_FILE_SIZE)})
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* File upload errors */}
+                  {errors.length > 0 && (
+                    <div
+                      className="text-destructive flex items-center gap-1 text-xs"
+                      role="alert"
+                    >
+                      <AlertCircle className="size-3 shrink-0" />
+                      <span>{errors[0]}</span>
+                    </div>
+                  )}
+
+                  {/* Selected file display */}
                   {file && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Selected file: {file.name} (
-                      {(file.size / (1024 * 1024)).toFixed(2)} MB)
-                    </p>
+                    <div className="space-y-2">
+                      <div
+                        key={files[0]?.id}
+                        className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <PaperclipIcon
+                            className="size-4 shrink-0 opacity-60"
+                            aria-hidden="true"
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate text-[13px] font-medium">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatBytes(file.size)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-muted-foreground/80 hover:text-foreground -me-2 size-8 hover:bg-transparent"
+                          onClick={() => removeFile(files[0]?.id)}
+                          aria-label="Remove file"
+                        >
+                          <XIcon className="size-4" aria-hidden="true" />
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -263,7 +317,7 @@ export default function NewVoiceClient({
                 </div>
               </div>
 
-              {status === 'error' && (
+              {status === 'error' && errorMessage && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Error</AlertTitle>
