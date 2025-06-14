@@ -1,8 +1,8 @@
+import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
-import { fal } from '@fal-ai/client';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
@@ -204,9 +204,14 @@ export async function POST(request: Request) {
     const estimate = estimateCredits(text, 'clone') * 2;
 
     if (currentAmount < estimate) {
-      Sentry.captureException({ error: 'Insufficient credits', text });
+      Sentry.captureException({
+        error: `Insufficient credits. You need ${estimate} credits to generate this audio`,
+        text,
+      });
       return NextResponse.json(
-        { error: 'Insufficient credits' },
+        {
+          error: `Insufficient credits. You need ${estimate} credits to generate this audio`,
+        },
         { status: 402 },
       );
     }
@@ -260,12 +265,12 @@ export async function POST(request: Request) {
       cfg_weight: 0.5,
       temperature: 0.8,
       exaggeration: 0.5,
-      audio_prompt_path: audioPromptUrl,
+      audio_url: audioPromptUrl,
     };
 
     const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
       input,
-      logs: true,
+      logs: false,
       onQueueUpdate: (update) => {
         if (update.status === 'IN_PROGRESS') {
           update.logs?.map((log) => log.message).forEach(console.log);
@@ -274,14 +279,21 @@ export async function POST(request: Request) {
       abortSignal: request.signal,
     });
 
-    const output = result.data as ArrayBuffer;
+    const falData = result.data as {
+      audio: {
+        url: string;
+        content_type: string;
+        file_name: string;
+        file_size: number;
+      };
+    };
     const requestId = result.requestId;
 
-    // Check for errors
-    // fal.ai client throws on errors, so no additional check is required
+    // Fetch the audio file from the URL and upload to blob storage
+    const audioResponse = await fetch(falData.audio.url);
+    const audioBuffer = await audioResponse.arrayBuffer();
 
-    // Save generated audio
-    const blobResult = await put(filename, output, {
+    const blobResult = await put(filename, audioBuffer, {
       access: 'public',
       contentType: 'audio/mpeg',
       allowOverwrite: true,
