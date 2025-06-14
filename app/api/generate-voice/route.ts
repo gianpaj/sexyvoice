@@ -4,6 +4,8 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { getAudioDuration } from '@/lib/audio';
+
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -159,6 +161,10 @@ export async function POST(request: Request) {
       onProgress,
     )) as ReadableStream;
 
+    const outputArrayBuffer = await new Response(output).arrayBuffer();
+    const outputBuffer = Buffer.from(outputArrayBuffer);
+    const duration = await getAudioDuration(outputBuffer, 'audio/mpeg');
+
     // console.log({ output });
 
     if ('error' in output) {
@@ -178,7 +184,7 @@ export async function POST(request: Request) {
     }
 
     // Use hash in the file path for future look ups
-    const blobResult = await put(filename, output, {
+    const blobResult = await put(filename, outputBuffer, {
       access: 'public',
       contentType: 'audio/mpeg',
       allowOverwrite: true,
@@ -198,7 +204,7 @@ export async function POST(request: Request) {
         predictionId: predictionResult?.id,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: '-1',
+        duration: duration !== null ? duration.toString() : '-1',
         credits_used: estimate,
       });
 

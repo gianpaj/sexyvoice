@@ -13,6 +13,7 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
+import { getAudioDuration } from '@/lib/audio';
 
 // File validation constants
 const ALLOWED_TYPES = [
@@ -38,20 +39,6 @@ async function generateHash(text: string, audioFilename: string) {
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
     .slice(0, 8);
-}
-
-async function getAudioDuration(
-  fileBuffer: Buffer,
-  mimeType: string,
-): Promise<number | null> {
-  try {
-    // @ts-ignore
-    const mm = await import('music-metadata');
-    const metadata = await mm.parseBuffer(fileBuffer, mimeType);
-    return metadata.format.duration ?? null;
-  } catch (e) {
-    return null;
-  }
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration
@@ -224,7 +211,7 @@ export async function POST(request: Request) {
         audioPromptUrl = existingAudio.url;
       } else {
       }
-    } catch (e) {
+    } catch (_e) {
       // Upload audio file to Vercel blob for TTS generation
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
