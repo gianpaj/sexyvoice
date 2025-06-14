@@ -106,6 +106,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
    - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+   - `FAL_KEY` - Your fal.ai API key for voice cloning
    - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
    - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
    - Additional optional variables for analytics and monitoring

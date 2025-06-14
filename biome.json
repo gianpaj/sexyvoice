@@ -9,10 +9,8 @@
     "rules": {
       "style": {
         "useLiteralEnumMembers": "error",
-        "noCommaOperator": "error",
         "useNodejsImportProtocol": "error",
         "useAsConstAssertion": "error",
-        "useNumericLiterals": "error",
         "useEnumInitializers": "error",
         "useSelfClosingElements": "error",
         "useConst": "error",
@@ -25,7 +23,6 @@
         "noParameterAssign": "error",
         "noNonNullAssertion": "off",
         "useDefaultParameterLast": "error",
-        "noArguments": "error",
         "useImportType": "error",
         "useExportType": "error",
         "noUselessElse": "error",
