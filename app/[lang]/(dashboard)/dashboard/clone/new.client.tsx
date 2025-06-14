@@ -150,7 +150,7 @@ export default function NewVoiceClient({
       }
       setStatus('error');
     }
-  }, [dict, file, textToConvert]);
+  }, [dict, file, textToConvert, clearErrors]);
 
   // Keyboard shortcut handler
   useEffect(() => {

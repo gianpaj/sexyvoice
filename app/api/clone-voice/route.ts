@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
-import Replicate, { type Prediction } from 'replicate';
+import { fal } from '@fal-ai/client';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
@@ -253,8 +253,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: cachedResult }, { status: 200 });
     }
 
-    // Generate TTS with cloned voice
-    const replicate = new Replicate();
+    // Generate TTS with cloned voice using fal.ai
     const input = {
       text,
       // TODO: accept these parameters
@@ -264,40 +263,25 @@ export async function POST(request: Request) {
       audio_prompt_path: audioPromptUrl,
     };
 
-    let predictionResult: Prediction | undefined;
-    const onProgress = (prediction: Prediction) => {
-      predictionResult = prediction;
-    };
+    const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
+      input,
+      logs: true,
+      onQueueUpdate: (update) => {
+        if (update.status === 'IN_PROGRESS') {
+          update.logs?.map((log) => log.message).forEach(console.log);
+        }
+      },
+      abortSignal: request.signal,
+    });
 
-    const modelId =
-      'thomcle/chatterbox-tts:3f5f9c195086737dda710bf504330f71e786d0a361b505e377c8b10122af9d32';
-
-    const output = await replicate.run(
-      modelId,
-      { input, signal: request.signal },
-      onProgress,
-    );
+    const output = result.data as ArrayBuffer;
+    const requestId = result.requestId;
 
     // Check for errors
-    if (output && typeof output === 'object' && 'error' in output) {
-      const errorObj = {
-        text,
-        audioPromptUrl,
-        model: 'chatterbox-tts',
-        errorData: (output as { error: unknown }).error,
-      };
-      Sentry.captureException({
-        error: 'Voice cloning failed',
-        ...errorObj,
-      });
-      console.error(errorObj);
-      throw new Error(
-        (output as { error: string }).error || 'Voice cloning failed',
-      );
-    }
+    // fal.ai client throws on errors, so no additional check is required
 
     // Save generated audio
-    const blobResult = await put(filename, output as ReadableStream, {
+    const blobResult = await put(filename, output, {
       access: 'public',
       contentType: 'audio/mpeg',
       allowOverwrite: true,
@@ -315,7 +299,7 @@ export async function POST(request: Request) {
         text,
         url: blobResult.url,
         model: 'chatterbox-tts',
-        predictionId: predictionResult?.id,
+        predictionId: requestId,
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
         duration: duration.toString(),
@@ -339,7 +323,7 @@ export async function POST(request: Request) {
       await sendPosthogEvent({
         userId: user.id,
         event: 'clone-voice',
-        predictionId: predictionResult?.id,
+        predictionId: requestId,
         text,
         audioPromptUrl,
         creditUsed: estimate,
