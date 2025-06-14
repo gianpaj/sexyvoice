@@ -257,7 +257,10 @@ export default function DashboardLayout(props: {
               <SidebarTrigger className="lg:hidden" />
             </div>
 
-            <main className="px-4 py-8 sm:px-6 lg:px-8 flex-1">
+            <main
+              id="main-content"
+              className="px-4 py-8 sm:px-6 lg:px-8 flex-1"
+            >
               {props.children}
             </main>
             <footer className="p-4 border-t text-center">

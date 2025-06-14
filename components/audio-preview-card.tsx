@@ -62,7 +62,7 @@ export function AudioPreviewCard({
           )}
         </Button>
       </div>
-      <div className="bg-gray-800/60 rounded p-3 text-sm text-gray-300 grow whitespace-break-spaces">
+      <div className="bg-gray-800/60 rounded p-3 text-sm text-gray-200 grow whitespace-break-spaces">
         {prompt}
       </div>
     </div>
