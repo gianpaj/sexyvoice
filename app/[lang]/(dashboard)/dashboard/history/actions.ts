@@ -1,6 +1,7 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
+import PostHogClient from '@/lib/posthog';
 import { createClient } from '@/lib/supabase/server';
 
 export const handleDeleteAction = async (id: string) => {
@@ -47,6 +48,16 @@ export const handleDeleteAction = async (id: string) => {
       })
       .eq('id', id)
       .eq('user_id', user.id);
+
+    const posthog = PostHogClient();
+    posthog.capture({
+      distinctId: user.id,
+      event: 'delete-audio',
+      properties: {
+        id,
+      },
+    });
+    await posthog.shutdown();
 
     if (deleteError) {
       Sentry.captureException({
