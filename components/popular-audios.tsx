@@ -17,7 +17,6 @@ interface AudioFile {
   storage_key: string;
   duration: number;
   text_content: string;
-  total_votes: number;
   total_plays: number;
   is_public: boolean;
   created_at: string;
@@ -130,10 +129,7 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                {/* <div className="flex items-center space-x-1 text-gray-400">
-                  <ThumbsUp className="size-4" />
-                  <span className="text-sm">{audio.total_votes}</span>
-                </div> */}
+                {/* Vote count could go here */}
                 <Button
                   variant="outline"
                   size="icon"
