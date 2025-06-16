@@ -24,7 +24,7 @@ function CreditsSection({
     <div className="rounded-lg bg-secondary px-4 py-2 text-white group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0 transition-all overflow-hidden">
       <div className="flex items-center justify-between mb-4 w-50">
         <div className="flex items-center">
-          <span className="text-xs text-gray-300 whitespace-nowrap">
+          <span className="text-xs text-gray-200 whitespace-nowrap">
             Credit quota
           </span>
         </div>
@@ -41,13 +41,13 @@ function CreditsSection({
         <div className="flex-1">
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center text-xs">
-              <span className=" text-gray-300">Total</span>
+              <span className=" text-gray-200">Total</span>
               <span className=" font-medium">
                 {total_credits.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className=" text-gray-300">Remaining</span>
+              <span className=" text-gray-200">Remaining</span>
               <span className=" font-medium">{credits.toLocaleString()}</span>
             </div>
           </div>

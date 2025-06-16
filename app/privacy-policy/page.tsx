@@ -4,7 +4,10 @@ import './privacy-policy.css';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+    <main
+      id="main-content"
+      className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+    >
       <div className="container mx-auto px-4 my-8">
         <h1>Privacy Policy</h1>
         <p>Updated at 2025-03-19</p>
@@ -709,6 +712,6 @@ export default function PrivacyPolicy() {
         </ul>
       </div>
       <Footer />
-    </div>
+    </main>
   );
 }
