@@ -2,7 +2,6 @@
 
 import {
   AlertCircle,
-  CheckCircle,
   CircleStop,
   Download,
   PaperclipIcon,

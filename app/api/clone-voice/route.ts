@@ -222,7 +222,6 @@ export async function POST(request: Request) {
 
       if (existingAudio) {
         audioPromptUrl = existingAudio.url;
-      } else {
       }
     } catch (e) {
       // Upload audio file to Vercel blob for TTS generation
