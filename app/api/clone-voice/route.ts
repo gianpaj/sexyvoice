@@ -41,6 +41,20 @@ async function generateHash(text: string, audioFilename: string) {
     .slice(0, 8);
 }
 
+async function getAudioDuration(
+  fileBuffer: Buffer,
+  mimeType: string,
+): Promise<number | null> {
+  try {
+    // @ts-ignore
+    const mm = await import('music-metadata');
+    const metadata = await mm.parseBuffer(fileBuffer, mimeType);
+    return metadata.format.duration ?? null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 60; // seconds - fluid compute is enabled
 
@@ -209,7 +223,6 @@ export async function POST(request: Request) {
 
       if (existingAudio) {
         audioPromptUrl = existingAudio.url;
-      } else {
       }
     } catch (_e) {
       // Upload audio file to Vercel blob for TTS generation

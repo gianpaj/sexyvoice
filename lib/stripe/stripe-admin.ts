@@ -1,5 +1,8 @@
 import Stripe from 'stripe';
 
+import { getUserById } from '../supabase/queries';
+import { createClient } from '../supabase/server';
+
 // import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -20,7 +23,7 @@ export async function createOrRetrieveCustomer({
 }) {
   const customers = await stripe.customers.list({ email });
 
-  if (customers.data.length && customers?.data[0]?.id === uuid)
+  if (customers.data.length && customers.data[0]?.id === uuid)
     return customers.data[0].id;
 
   const customer = await stripe.customers.create({
@@ -59,4 +62,32 @@ export async function createStripeCustomer(
   });
   // Create a new customer in Stripe
   return customer.id;
+}
+
+export async function getCustomerSession() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const dbUser = await getUserById(user.id);
+
+  if (!dbUser || !dbUser.stripe_id) {
+    return null;
+  }
+
+  const customerSession = await stripe.customerSessions.create({
+    customer: dbUser.stripe_id,
+    components: {
+      pricing_table: {
+        enabled: true,
+      },
+    },
+  });
+
+  return customerSession;
 }
