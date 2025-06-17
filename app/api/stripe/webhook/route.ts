@@ -172,7 +172,7 @@ export async function syncStripeDataToKV(customerId: string) {
       break;
     case 'price_1R4m50J2uQQSTCBs5j9ERzXC':
     case 'price_1QnkyTJ2uQQSTCBsgyw7xYb8':
-      amount = 75000;
+      amount = 220_000;
       subAmount = 99;
       break;
     default:
