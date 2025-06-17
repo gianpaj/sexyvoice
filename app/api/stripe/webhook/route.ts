@@ -57,7 +57,7 @@ async function processEvent(event: Stripe.Event) {
     customer: string; // Sadly TypeScript does not know this
   };
   // const customerId = event.data[0].customer;
-  console.log({ customerId });
+  // console.log({ customerId });
 
   // This helps make it typesafe and also lets me know if my assumption is wrong
   if (typeof customerId !== 'string') {
