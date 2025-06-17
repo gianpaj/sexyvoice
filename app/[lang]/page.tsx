@@ -87,9 +87,9 @@ export default async function LandingPage(props: {
     redirect(`/${i18n.defaultLocale}`);
   }
 
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'landing');
 
-  const parts = dict.landing.hero.title.split(',');
+  const parts = dict.hero.title.split(',');
   const firstPart = parts[0];
   const restParts = parts.slice(1).join(',');
 
@@ -103,7 +103,7 @@ export default async function LandingPage(props: {
         {JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
-          mainEntity: dict.landing.faq.questions.map((q) => ({
+          mainEntity: dict.faq.questions.map((q) => ({
             '@type': 'Question',
             name: q.question,
             acceptedAnswer: {
@@ -131,19 +131,20 @@ export default async function LandingPage(props: {
               {restParts && <span className="text-blue-400">{restParts}</span>}
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
-              {dict.landing.hero.subtitle}
+              {dict.hero.subtitle}
             </p>
-            <Button
-              asChild
-              size="lg"
-              effect="expandIcon"
-              icon={ArrowRightIcon}
-              iconPlacement="right"
-            >
-              <Link href={`/${lang}/signup`}>
-                {dict.landing.hero.buttonCTA}
-              </Link>
-            </Button>
+            <div className="flex w-fit mx-auto flex-col gap-2">
+              <Button
+                asChild
+                size="lg"
+                effect="expandIcon"
+                icon={ArrowRightIcon}
+                iconPlacement="right"
+              >
+                <Link href={`/${lang}/signup`}>{dict.hero.buttonCTA}</Link>
+              </Button>
+              <p className="text-gray-300 text-xs">{dict.hero.noCreditCard}</p>
+            </div>
           </div>
 
           {/* Audio Previews Grid */}
@@ -171,25 +172,25 @@ export default async function LandingPage(props: {
           {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">
-                {dict.landing.generator.title}
+                {dict.generator.title}
               </h2>
-              <p className="text-gray-300">{dict.landing.generator.subtitle}</p>
+              <p className="text-gray-300">{dict.generator.subtitle}</p>
             </div>
             <VoiceGenerator
-              dict={dict.landing.generator}
-              download={dict.landing.generator.download}
+              dict={dict.generator}
+              download={dict.generator.download}
             />
           </div> */}
 
           {/* Popular Audios Section */}
           {/* <div className="max-w-4xl mx-auto mb-16">
             <h2 className="text-2xl font-bold text-white mb-2">
-              {dict.landing.popular.title}
+              {dict.popular.title}
             </h2>
             <p className="text-gray-300 mb-6">
-              {dict.landing.popular.subtitle}
+              {dict.popular.subtitle}
             </p>
-            <PopularAudios dict={dict.landing.popular} />
+            <PopularAudios dict={dict.popular} />
           </div> */}
 
           {/* Features Grid */}
@@ -201,13 +202,13 @@ export default async function LandingPage(props: {
                 </CardDecorator>
 
                 <h3 className="mt-6 font-medium text-center">
-                  {dict.landing.features.voiceCloning.title}
+                  {dict.features.voiceCloning.title}
                 </h3>
               </CardHeader>
 
               <CardContent>
                 <p className="text-sm">
-                  {dict.landing.features.voiceCloning.description}
+                  {dict.features.voiceCloning.description}
                 </p>
               </CardContent>
             </Card>
@@ -219,13 +220,13 @@ export default async function LandingPage(props: {
                 </CardDecorator>
 
                 <h3 className="mt-6 font-medium text-center">
-                  {dict.landing.features.multiLanguage.title}
+                  {dict.features.multiLanguage.title}
                 </h3>
               </CardHeader>
 
               <CardContent>
                 <p className="text-sm">
-                  {dict.landing.features.multiLanguage.description}
+                  {dict.features.multiLanguage.description}
                 </p>
               </CardContent>
             </Card>
@@ -237,14 +238,12 @@ export default async function LandingPage(props: {
                 </CardDecorator>
 
                 <h3 className="mt-6 font-medium text-center">
-                  {dict.landing.features.security.title}
+                  {dict.features.security.title}
                 </h3>
               </CardHeader>
 
               <CardContent>
-                <p className="text-sm">
-                  {dict.landing.features.security.description}
-                </p>
+                <p className="text-sm">{dict.features.security.description}</p>
               </CardContent>
             </Card>
           </div>
@@ -255,13 +254,13 @@ export default async function LandingPage(props: {
           <div className="max-w-3xl mx-auto py-16">
             <div className="text-left md:text-center mb-12">
               <h2 className="text-3xl font-bold text-white mb-2">
-                {dict.landing.faq.title}
+                {dict.faq.title}
               </h2>
-              <p className="text-gray-300">{dict.landing.faq.subtitle}</p>
+              <p className="text-gray-300">{dict.faq.subtitle}</p>
             </div>
 
             <Accordion type="single" collapsible className="w-full">
-              {dict.landing.faq.questions.map((faq, index) => (
+              {dict.faq.questions.map((faq, index) => (
                 <AccordionItem
                   key={`item-${index}`}
                   value={`item-${index}`}
@@ -305,13 +304,13 @@ export default async function LandingPage(props: {
           <div className="text-center py-16 space-y-6">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 mb-4">
               <Sparkles className="size-4 mr-2" />
-              <span>{dict.landing.cta.freeCredits}</span>
+              <span>{dict.cta.freeCredits}</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-white">
-              {dict.landing.cta.title}
+              {dict.cta.title}
             </h2>
             <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              {dict.landing.cta.subtitle}
+              {dict.cta.subtitle}
             </p>
             <Button
               size="lg"
@@ -319,7 +318,7 @@ export default async function LandingPage(props: {
               asChild
               effect="ringHover"
             >
-              <Link href={`/${lang}/signup`}>{dict.landing.cta.action}</Link>
+              <Link href={`/${lang}/signup`}>{dict.cta.action}</Link>
             </Button>
           </div>
         </div>
