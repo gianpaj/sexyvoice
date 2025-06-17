@@ -97,7 +97,7 @@ export async function saveAudioFile({
 }) {
   const supabase = await createClient();
 
-  return await supabase.from('audio_files').insert({
+  return supabase.from('audio_files').insert({
     user_id: userId,
     storage_key: filename,
     text_content: text,

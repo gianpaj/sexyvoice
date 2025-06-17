@@ -201,7 +201,7 @@ export async function POST(request: Request) {
     const currentAmount = await getCredits(user.id);
 
     // Estimate credits for voice cloning generation (higher cost than regular)
-    const estimate = estimateCredits(text, 'clone') * 1.4;
+    const estimate = estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
       Sentry.captureException({
