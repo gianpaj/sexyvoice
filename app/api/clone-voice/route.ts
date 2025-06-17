@@ -49,7 +49,7 @@ async function getAudioDuration(
     const mm = await import('music-metadata');
     const metadata = await mm.parseBuffer(fileBuffer, mimeType);
     return metadata.format.duration ?? null;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -223,7 +223,7 @@ export async function POST(request: Request) {
       if (existingAudio) {
         audioPromptUrl = existingAudio.url;
       }
-    } catch (e) {
+    } catch (_e) {
       // Upload audio file to Vercel blob for TTS generation
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',

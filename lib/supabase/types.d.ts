@@ -84,6 +84,7 @@ declare type Database = {
           created_at: string;
           description: string;
           id: string;
+          subscription_id: string | null;
           type: Database['public']['Enums']['credit_transaction_type'];
           updated_at: string;
           user_id: string;
@@ -93,6 +94,7 @@ declare type Database = {
           created_at?: string;
           description: string;
           id?: string;
+          subscription_id?: string | null;
           type: Database['public']['Enums']['credit_transaction_type'];
           updated_at?: string;
           user_id: string;
@@ -102,6 +104,7 @@ declare type Database = {
           created_at?: string;
           description?: string;
           id?: string;
+          subscription_id?: string | null;
           type?: Database['public']['Enums']['credit_transaction_type'];
           updated_at?: string;
           user_id?: string;
