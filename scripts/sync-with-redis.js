@@ -82,8 +82,6 @@ async function processBatch(blobs) {
         continue;
       }
 
-      const voice_enum = pathWithoutExtension.substring(0, splitIndex);
-      const hash = pathWithoutExtension.substring(splitIndex + 1);
 
       console.log(filename, blob.url);
 

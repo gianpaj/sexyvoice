@@ -94,11 +94,11 @@ export default function DashboardLayout(props: {
         creditsLeft: credits?.amount || 0,
       });
       user.email && Crisp.user.setEmail(user.email);
-      user.user_metadata.full_name ||
-        (user.user_metadata.username &&
-          Crisp.user.setNickname(
-            user.user_metadata.full_name || user.user_metadata.username,
-          ));
+      const nickname =
+        user.user_metadata.full_name || user.user_metadata.username;
+      if (nickname) {
+        Crisp.user.setNickname(nickname);
+      }
       Crisp.session.setData({
         user_id: user.id,
         creditsLeft: credits?.amount || 0,

@@ -23,7 +23,7 @@ export async function createOrRetrieveCustomer({
 }) {
   const customers = await stripe.customers.list({ email });
 
-  if (customers.data.length && customers?.data[0]?.id === uuid)
+  if (customers.data.length && customers.data[0]?.id === uuid)
     return customers.data[0].id;
 
   const customer = await stripe.customers.create({
