@@ -3,13 +3,9 @@
 import * as Sentry from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
-// import { CURRENCY } from '@/config';
-
 import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-
-const CURRENCY = 'USD';
 
 const TOPUP_PACKAGES = {
   standard: {
