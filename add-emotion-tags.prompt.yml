@@ -26,4 +26,4 @@ messages:
       6. Return only the enhanced text with emotion tags, no explanations
   - role: user
     content: Hello my dear. How are you doing? aren't you excited to go to school?
-model: openai/gpt-4o
+model: google/gemini-2.0-flash-lite

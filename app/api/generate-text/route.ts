@@ -3,6 +3,7 @@ import { google } from '@ai-sdk/google';
 import * as Sentry from '@sentry/nextjs';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
+
 import { getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
@@ -11,7 +12,7 @@ import { createClient } from '@/lib/supabase/server';
 // );
 
 // Configure the model
-const model = google('gemini-1.5-flash-8b');
+const model = google('gemini-2.0-flash-lite');
 
 // const { name: cachedContent } = await cacheManager.create({
 //   model,
