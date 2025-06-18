@@ -44,7 +44,6 @@ export async function POST(req: Request) {
         event_type: 'processing_error',
       },
       extra: {
-        signature: signature ? 'present' : 'missing',
         body_length: body?.length || 0,
       },
     });
