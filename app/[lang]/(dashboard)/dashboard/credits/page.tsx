@@ -11,6 +11,8 @@ import { getCustomerSession } from '@/lib/stripe/stripe-admin';
 import type Stripe from 'stripe';
 import { getCustomerData } from '@/lib/redis/queries';
 import { getUserById } from '@/lib/supabase/queries';
+import { Alert } from '@/components/ui/alert';
+import { TopupStatus } from './topup-status';
 
 // interface StripeProduct {
 //   id: string;
@@ -84,8 +86,9 @@ export default async function CreditsPage(props: {
 
   return (
     <div className="space-y-8">
+      <TopupStatus dict={dict} />
       <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
-        <div className="w-full lg:w-1/2">
+        <div className="w-full lg:w-3/4">
           <h2 className="text-3xl font-bold tracking-tight">{dict.title}</h2>
           <p className="text-muted-foreground">{dict.description}</p>
         </div>

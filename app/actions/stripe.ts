@@ -1,7 +1,6 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
-import { headers } from 'next/headers';
 import type { Stripe } from 'stripe';
 
 // import { CURRENCY } from '@/config';
@@ -41,8 +40,6 @@ export async function createCheckoutSession(
     const ui_mode = data.get(
       'uiMode',
     ) as Stripe.Checkout.SessionCreateParams.UiMode;
-    const reqHeaders = await headers();
-    const origin: string = reqHeaders.get('origin') as string;
 
     const package_ = TOPUP_PACKAGES[packageType as PackageType];
 
@@ -100,9 +97,6 @@ export async function createCheckoutSession(
         ...(ui_mode === 'hosted' && {
           success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&amount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
-        }),
-        ...(ui_mode === 'embedded' && {
-          return_url: `${origin}/donate-with-embedded-checkout/result?session_id={CHECKOUT_SESSION_ID}`,
         }),
         ui_mode,
         metadata: {

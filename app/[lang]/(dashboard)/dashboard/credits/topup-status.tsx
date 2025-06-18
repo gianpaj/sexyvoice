@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CircleCheckIcon, XCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -13,7 +13,9 @@ interface TopupStatusProps {
 export function TopupStatus({ dict }: TopupStatusProps) {
   const searchParams = useSearchParams();
   const [isVisible, setIsVisible] = useState(false);
-  const [status, setStatus] = useState<'success' | 'error' | 'canceled' | null>(null);
+  const [status, setStatus] = useState<'success' | 'error' | 'canceled' | null>(
+    null,
+  );
   const [amount, setAmount] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,27 +62,32 @@ export function TopupStatus({ dict }: TopupStatusProps) {
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 w-full lg:w-1/2">
       {status === 'success' && (
-        <Alert className="border-green-200 bg-green-50 text-green-800">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">Payment Successful!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            {amount
-              ? `Your account has been credited with ${Number(amount).toLocaleString()} credits.`
-              : 'Your credits have been successfully added to your account.'
-            }
-            <div className="mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
-                className="border-green-300 text-green-700 hover:bg-green-100"
-              >
-                Dismiss
-              </Button>
-            </div>
-          </AlertDescription>
+        <Alert className="grid grid-cols-subgrid gap-2">
+          <div className="grid grid-cols-[auto,1fr,auto] gap-2 items-center">
+            <CircleCheckIcon
+              className="me-3 -mt-0.5 inline-flex !text-emerald-500"
+              aria-hidden="true"
+            />
+
+            <AlertTitle>Payment Successful!</AlertTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDismiss}
+              className="border-green-300 hover:bg-green-900"
+            >
+              Dismiss
+            </Button>
+          </div>
+          <div className="grid grid-cols-[2fr,1fr,auto]">
+            <AlertDescription className="text-muted-foreground">
+              {amount
+                ? `Your account has been credited with ${Number(amount).toLocaleString()} credits.`
+                : 'Your credits have been successfully added to your account.'}
+            </AlertDescription>
+          </div>
         </Alert>
       )}
 
@@ -109,7 +116,8 @@ export function TopupStatus({ dict }: TopupStatusProps) {
           <XCircle className="h-4 w-4 text-red-600" />
           <AlertTitle className="text-red-800">Payment Failed</AlertTitle>
           <AlertDescription className="text-red-700">
-            There was an issue processing your payment. Please try again or contact support if the problem persists.
+            There was an issue processing your payment. Please try again or
+            contact support if the problem persists.
             <div className="mt-2">
               <Button
                 variant="outline"
