@@ -74,7 +74,6 @@ export default async function CreditsPage(props: {
   const customerData = await getCustomerData(userData.stripe_id);
 
   const clientSecret = await getCustomerSession();
-  console.log({ customerData, clientSecret });
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
