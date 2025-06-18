@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { Loader2, Zap } from 'lucide-react';
 import { createCheckoutSession } from '@/app/actions/stripe';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 
 const getTopupPackages = (dict: any) => [
   {
@@ -45,7 +46,7 @@ const getTopupPackages = (dict: any) => [
 ];
 
 interface CreditTopupProps {
-  dict: any; // Replace with proper type when available
+  dict: (typeof lang)['credits'];
 }
 
 export function CreditTopup({ dict }: CreditTopupProps) {

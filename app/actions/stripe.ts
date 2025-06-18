@@ -8,7 +8,6 @@ import type { Stripe } from 'stripe';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { formatAmountForStripe } from '@/utils/stripe-helpers';
 
 const CURRENCY = 'USD';
 
@@ -122,38 +121,6 @@ export async function createCheckoutSession(
       extra: {
         package_type: packageType,
         ui_mode: data.get('uiMode'),
-        error_message: error instanceof Error ? error.message : 'Unknown error',
-      },
-    });
-    throw error;
-  }
-}
-
-export async function createPaymentIntent(
-  data: FormData,
-): Promise<{ client_secret: string }> {
-  try {
-    const customDonation = data.get('customDonation') as string;
-    const amount = formatAmountForStripe(Number(customDonation), CURRENCY);
-
-    const paymentIntent: Stripe.PaymentIntent =
-      await stripe.paymentIntents.create({
-        amount,
-        automatic_payment_methods: { enabled: true },
-        currency: CURRENCY,
-      });
-
-    return { client_secret: paymentIntent.client_secret as string };
-  } catch (error) {
-    console.error('Error creating payment intent:', error);
-    Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_actions',
-        event_type: 'payment_intent_creation_error',
-      },
-      extra: {
-        custom_donation: data.get('customDonation'),
-        currency: CURRENCY,
         error_message: error instanceof Error ? error.message : 'Unknown error',
       },
     });

@@ -132,7 +132,6 @@ export const allowedEvents = [
   'invoice.payment_succeeded',
   'payment_intent.succeeded',
   'payment_intent.payment_failed',
-  'payment_intent.payment_failed',
   'payment_intent.canceled',
 ] as const satisfies readonly Stripe.Event.Type[];
 

@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { CircleCheckIcon, XCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 
 interface TopupStatusProps {
-  dict: any; // Replace with proper type when available
+  dict: (typeof lang)['credits'];
 }
 
 export function TopupStatus({ dict }: TopupStatusProps) {
