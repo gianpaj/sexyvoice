@@ -6,6 +6,7 @@ import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
+import { CreditTopup } from './credit-topup';
 import { getCustomerSession } from '@/lib/stripe/stripe-admin';
 import type Stripe from 'stripe';
 import { getCustomerData } from '@/lib/redis/queries';
@@ -96,6 +97,15 @@ export default async function CreditsPage(props: {
             Stripe Customer Portal
           </Link>
         </Button>
+      </div>
+
+      {/* Add Credit Top-up Section */}
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">Buy Credits</h3>
+        <p className="text-muted-foreground mb-6">
+          Top up your credits instantly with a one-time purchase
+        </p>
+        <CreditTopup dict={dict} />
       </div>
 
       {/* <div className="flex justify-center space-x-4">

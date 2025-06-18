@@ -76,13 +76,13 @@ export function CreditHistory({
               </TableCell>
               <TableCell
                 className={`text-right ${
-                  ['purchase', 'freemium'].includes(transaction.type)
+                  ['purchase', 'freemium', 'topup'].includes(transaction.type)
                     ? // || transaction.type === 'subscription'
                       'text-green-600'
                     : 'text-red-600'
                 }`}
               >
-                {['purchase', 'freemium'].includes(transaction.type)
+                {['purchase', 'freemium', 'topup'].includes(transaction.type)
                   ? // || transaction.type === 'subscription'
                     '+'
                   : '-'}

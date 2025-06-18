@@ -1,11 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 
+import { stripe } from '@/lib/stripe/stripe-admin';
 import { createClient } from '@/lib/supabase/server';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-02-24.acacia',
-});
 
 export async function GET(request: NextRequest) {
   try {

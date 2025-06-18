@@ -84,6 +84,8 @@ declare type Database = {
           created_at: string;
           description: string;
           id: string;
+          metadata: Json | null;
+          reference_id: string | null;
           subscription_id: string | null;
           type: Database['public']['Enums']['credit_transaction_type'];
           updated_at: string;
@@ -94,6 +96,8 @@ declare type Database = {
           created_at?: string;
           description: string;
           id?: string;
+          metadata?: Json | null;
+          reference_id?: string | null;
           subscription_id?: string | null;
           type: Database['public']['Enums']['credit_transaction_type'];
           updated_at?: string;
@@ -104,6 +108,8 @@ declare type Database = {
           created_at?: string;
           description?: string;
           id?: string;
+          metadata?: Json | null;
+          reference_id?: string | null;
           subscription_id?: string | null;
           type?: Database['public']['Enums']['credit_transaction_type'];
           updated_at?: string;
@@ -225,10 +231,17 @@ declare type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      decrement_user_credits: {
+        Args: { user_id: string; credit_amount: number };
+        Returns: undefined;
+      };
+      increment_user_credits: {
+        Args: { user_id: string; credit_amount: number };
+        Returns: undefined;
+      };
     };
     Enums: {
-      credit_transaction_type: 'purchase' | 'usage' | 'freemium';
+      credit_transaction_type: 'purchase' | 'usage' | 'freemium' | 'topup';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -344,7 +357,7 @@ declare type CompositeTypes<
 declare const Constants = {
   public: {
     Enums: {
-      credit_transaction_type: ['purchase', 'usage', 'freemium'],
+      credit_transaction_type: ['purchase', 'usage', 'freemium', 'topup'],
     },
   },
 } as const;

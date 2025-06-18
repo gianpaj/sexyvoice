@@ -188,3 +188,63 @@ export const insertCreditTransaction = async (
     });
   }
 };
+
+export const insertTopupTransaction = async (
+  userId: string,
+  paymentIntentId: string,
+  amount: number,
+  dollarAmount: number,
+  priceId: string,
+) => {
+  const supabase = await createClient();
+
+  try {
+    // Check if transaction already exists to prevent duplicates
+    const { data } = await supabase
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('reference_id', paymentIntentId)
+      .single();
+
+    if (data) {
+      console.log('Topup transaction already exists', {
+        userId,
+        paymentIntentId,
+        data,
+      });
+      return;
+    }
+  } catch (_error) {
+    // Transaction doesn't exist, continue with insertion
+  }
+
+  // Insert the transaction
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    amount: amount,
+    type: 'topup',
+    description: `Credit top-up - $${dollarAmount}`,
+    reference_id: paymentIntentId,
+    metadata: { priceId, dollarAmount },
+  });
+
+  if (error) throw error;
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, amount);
+};
+
+export const updateUserCredits = async (
+  userId: string,
+  creditAmount: number,
+) => {
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc('increment_user_credits', {
+    user_id: userId,
+    credit_amount: creditAmount,
+  });
+
+  if (error) throw error;
+};
