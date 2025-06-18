@@ -31,7 +31,7 @@ const TOPUP_PACKAGES = [
     description: 'Perfect for getting started',
   },
   {
-    id: 'standard',
+    id: 'base',
     name: '25,000 Credits',
     price: '$10',
     credits: '25,000',
