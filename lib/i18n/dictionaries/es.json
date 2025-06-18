@@ -185,6 +185,52 @@
           "Salida de audio PCM 44.1 kHz a través de API (próximamente)"
         ]
       }
+    },
+    "topup": {
+      "title": "Comprar Créditos",
+      "description": "Recarga tus créditos instantáneamente con una compra única",
+      "buyCredits": "Comprar Créditos",
+      "onetimePurchase": "Compra única",
+      "processing": "Procesando...",
+      "packages": {
+        "standard": {
+          "name": "10,000 Créditos",
+          "description": "Perfecto para empezar"
+        },
+        "base": {
+          "name": "25,000 Créditos",
+          "description": "La opción más popular",
+          "value": "Mejor Valor"
+        },
+        "premium": {
+          "name": "220,000 Créditos",
+          "description": "Para usuarios avanzados",
+          "value": "Paquete Pro"
+        }
+      },
+      "mostPopular": "Más Popular"
+    },
+    "status": {
+      "success": {
+        "title": "¡Pago Exitoso!",
+        "description": "Tus créditos han sido añadidos exitosamente a tu cuenta.",
+        "descriptionWithAmount": "Tu cuenta ha sido acreditada con {amount} créditos.",
+        "dismiss": "Descartar"
+      },
+      "canceled": {
+        "title": "Pago Cancelado",
+        "description": "Tu pago fue cancelado. No se realizaron cargos a tu cuenta.",
+        "dismiss": "Descartar"
+      },
+      "error": {
+        "title": "Pago Fallido",
+        "description": "Hubo un problema procesando tu pago. Por favor intenta de nuevo o contacta soporte si el problema persiste.",
+        "dismiss": "Descartar"
+      },
+      "checkoutError": "Error al crear sesión de pago"
+    },
+    "history": {
+      "title": "Historial de Créditos"
     }
   },
   "generate": {

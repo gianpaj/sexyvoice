@@ -6,10 +6,12 @@ import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
+import { CreditTopup } from './credit-topup';
 import { getCustomerSession } from '@/lib/stripe/stripe-admin';
 import type Stripe from 'stripe';
 import { getCustomerData } from '@/lib/redis/queries';
 import { getUserById } from '@/lib/supabase/queries';
+import { TopupStatus } from './topup-status';
 
 // interface StripeProduct {
 //   id: string;
@@ -72,7 +74,6 @@ export default async function CreditsPage(props: {
   const customerData = await getCustomerData(userData.stripe_id);
 
   const clientSecret = await getCustomerSession();
-  console.log({ customerData, clientSecret });
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
@@ -83,8 +84,9 @@ export default async function CreditsPage(props: {
 
   return (
     <div className="space-y-8">
+      <TopupStatus dict={dict} />
       <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
-        <div className="w-full lg:w-1/2">
+        <div className="w-full lg:w-3/4">
           <h2 className="text-3xl font-bold tracking-tight">{dict.title}</h2>
           <p className="text-muted-foreground">{dict.description}</p>
         </div>
@@ -96,6 +98,13 @@ export default async function CreditsPage(props: {
             Stripe Customer Portal
           </Link>
         </Button>
+      </div>
+
+      {/* Add Credit Top-up Section */}
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
+        <p className="text-muted-foreground mb-6">{dict.topup.description}</p>
+        <CreditTopup dict={dict} />
       </div>
 
       {/* <div className="flex justify-center space-x-4">
@@ -145,7 +154,7 @@ export default async function CreditsPage(props: {
       ))} */}
 
       <div className="my-8">
-        <h3 className="mb-4 text-lg font-semibold">Credit History</h3>
+        <h3 className="mb-4 text-lg font-semibold">{dict.history.title}</h3>
         <CreditHistory dict={dict} transactions={existingTransactions} />
       </div>
 
