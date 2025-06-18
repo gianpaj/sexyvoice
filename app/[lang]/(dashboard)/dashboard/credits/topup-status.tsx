@@ -71,21 +71,24 @@ export function TopupStatus({ dict }: TopupStatusProps) {
               aria-hidden="true"
             />
 
-            <AlertTitle>Payment Successful!</AlertTitle>
+            <AlertTitle>{dict.status.success.title}</AlertTitle>
             <Button
               variant="outline"
               size="sm"
               onClick={handleDismiss}
               className="border-green-300 hover:bg-green-900"
             >
-              Dismiss
+              {dict.status.success.dismiss}
             </Button>
           </div>
           <div className="grid grid-cols-[2fr,1fr,auto]">
             <AlertDescription className="text-muted-foreground">
               {amount
-                ? `Your account has been credited with ${Number(amount).toLocaleString()} credits.`
-                : 'Your credits have been successfully added to your account.'}
+                ? dict.status.success.descriptionWithAmount.replace(
+                    '{amount}',
+                    Number(amount).toLocaleString(),
+                  )
+                : dict.status.success.description}
             </AlertDescription>
           </div>
         </Alert>
@@ -94,9 +97,11 @@ export function TopupStatus({ dict }: TopupStatusProps) {
       {status === 'canceled' && (
         <Alert className="border-yellow-200 bg-yellow-50 text-yellow-800">
           <XCircle className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">Payment Canceled</AlertTitle>
+          <AlertTitle className="text-yellow-800">
+            {dict.status.canceled.title}
+          </AlertTitle>
           <AlertDescription className="text-yellow-700">
-            Your payment was canceled. No charges were made to your account.
+            {dict.status.canceled.description}
             <div className="mt-2">
               <Button
                 variant="outline"
@@ -104,7 +109,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
                 onClick={handleDismiss}
                 className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
               >
-                Dismiss
+                {dict.status.canceled.dismiss}
               </Button>
             </div>
           </AlertDescription>
@@ -114,10 +119,11 @@ export function TopupStatus({ dict }: TopupStatusProps) {
       {status === 'error' && (
         <Alert className="border-red-200 bg-red-50 text-red-800">
           <XCircle className="h-4 w-4 text-red-600" />
-          <AlertTitle className="text-red-800">Payment Failed</AlertTitle>
+          <AlertTitle className="text-red-800">
+            {dict.status.error.title}
+          </AlertTitle>
           <AlertDescription className="text-red-700">
-            There was an issue processing your payment. Please try again or
-            contact support if the problem persists.
+            {dict.status.error.description}
             <div className="mt-2">
               <Button
                 variant="outline"
@@ -125,7 +131,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
                 onClick={handleDismiss}
                 className="border-red-300 text-red-700 hover:bg-red-100"
               >
-                Dismiss
+                {dict.status.error.dismiss}
               </Button>
             </div>
           </AlertDescription>

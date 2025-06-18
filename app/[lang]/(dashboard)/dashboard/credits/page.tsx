@@ -11,7 +11,6 @@ import { getCustomerSession } from '@/lib/stripe/stripe-admin';
 import type Stripe from 'stripe';
 import { getCustomerData } from '@/lib/redis/queries';
 import { getUserById } from '@/lib/supabase/queries';
-import { Alert } from '@/components/ui/alert';
 import { TopupStatus } from './topup-status';
 
 // interface StripeProduct {
@@ -104,10 +103,8 @@ export default async function CreditsPage(props: {
 
       {/* Add Credit Top-up Section */}
       <div>
-        <h3 className="mb-4 text-lg font-semibold">Buy Credits</h3>
-        <p className="text-muted-foreground mb-6">
-          Top up your credits instantly with a one-time purchase
-        </p>
+        <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
+        <p className="text-muted-foreground mb-6">{dict.topup.description}</p>
         <CreditTopup dict={dict} />
       </div>
 
@@ -158,7 +155,7 @@ export default async function CreditsPage(props: {
       ))} */}
 
       <div className="my-8">
-        <h3 className="mb-4 text-lg font-semibold">Credit History</h3>
+        <h3 className="mb-4 text-lg font-semibold">{dict.history.title}</h3>
         <CreditHistory dict={dict} transactions={existingTransactions} />
       </div>
 

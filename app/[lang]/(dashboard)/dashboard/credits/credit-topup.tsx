@@ -14,33 +14,33 @@ import {
 import { Loader2, Zap } from 'lucide-react';
 import { createCheckoutSession } from '@/app/actions/stripe';
 
-const TOPUP_PACKAGES = [
+const getTopupPackages = (dict: any) => [
   {
     id: 'standard',
-    name: '10,000 Credits',
+    name: dict.topup.packages.standard.name,
     price: '$5',
     credits: '10,000',
     value: '',
     popular: false,
-    description: 'Perfect for getting started',
+    description: dict.topup.packages.standard.description,
   },
   {
     id: 'base',
-    name: '25,000 Credits',
+    name: dict.topup.packages.base.name,
     price: '$10',
     credits: '25,000',
-    value: 'Best Value',
+    value: dict.topup.packages.base.value,
     popular: true,
-    description: 'Most popular choice',
+    description: dict.topup.packages.base.description,
   },
   {
     id: 'premium',
-    name: '220,000 Credits',
+    name: dict.topup.packages.premium.name,
     price: '$99',
     credits: '220,000',
-    value: 'Pro Pack',
+    value: dict.topup.packages.premium.value,
     popular: false,
-    description: 'For power users',
+    description: dict.topup.packages.premium.description,
   },
 ];
 
@@ -51,6 +51,7 @@ interface CreditTopupProps {
 export function CreditTopup({ dict }: CreditTopupProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const TOPUP_PACKAGES = getTopupPackages(dict);
 
   const formAction = async (data: FormData): Promise<void> => {
     const packageType = data.get('packageType') as
@@ -64,10 +65,14 @@ export function CreditTopup({ dict }: CreditTopupProps) {
     try {
       const { url } = await createCheckoutSession(data, packageType);
 
-      window.location.assign(url);
+      if (url) {
+        window.location.assign(url);
+      } else {
+        throw new Error('No checkout URL received');
+      }
     } catch (error) {
       console.error('Error creating checkout session:', error);
-      setError('Failed to create checkout session');
+      setError(dict.status.checkoutError);
     } finally {
       setLoading(null);
     }
@@ -90,7 +95,7 @@ export function CreditTopup({ dict }: CreditTopupProps) {
           >
             {package_.popular && (
               <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">
-                Most Popular
+                {dict.topup.mostPopular}
               </Badge>
             )}
 
@@ -112,7 +117,7 @@ export function CreditTopup({ dict }: CreditTopupProps) {
                 </Badge>
               )}
               <div className="text-sm text-muted-foreground mt-2">
-                One-time purchase
+                {dict.topup.onetimePurchase}
               </div>
             </CardContent>
 
@@ -129,10 +134,10 @@ export function CreditTopup({ dict }: CreditTopupProps) {
                   {loading === package_.id ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      {dict.topup.processing}
                     </>
                   ) : (
-                    'Buy Credits'
+                    dict.topup.buyCredits
                   )}
                 </Button>
               </form>

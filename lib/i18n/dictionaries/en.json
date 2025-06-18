@@ -183,6 +183,52 @@
           "44.1 kHz PCM audio output via API (coming soon)"
         ]
       }
+    },
+    "topup": {
+      "title": "Buy Credits",
+      "description": "Top up your credits instantly with a one-time purchase",
+      "buyCredits": "Buy Credits",
+      "onetimePurchase": "One-time purchase",
+      "processing": "Processing...",
+      "packages": {
+        "standard": {
+          "name": "10,000 Credits",
+          "description": "Perfect for getting started"
+        },
+        "base": {
+          "name": "25,000 Credits",
+          "description": "Most popular choice",
+          "value": "Best Value"
+        },
+        "premium": {
+          "name": "220,000 Credits",
+          "description": "For power users",
+          "value": "Pro Pack"
+        }
+      },
+      "mostPopular": "Most Popular"
+    },
+    "status": {
+      "success": {
+        "title": "Payment Successful!",
+        "description": "Your credits have been successfully added to your account.",
+        "descriptionWithAmount": "Your account has been credited with {amount} credits.",
+        "dismiss": "Dismiss"
+      },
+      "canceled": {
+        "title": "Payment Canceled",
+        "description": "Your payment was canceled. No charges were made to your account.",
+        "dismiss": "Dismiss"
+      },
+      "error": {
+        "title": "Payment Failed",
+        "description": "There was an issue processing your payment. Please try again or contact support if the problem persists.",
+        "dismiss": "Dismiss"
+      },
+      "checkoutError": "Failed to create checkout session"
+    },
+    "history": {
+      "title": "Credit History"
     }
   },
   "generate": {
