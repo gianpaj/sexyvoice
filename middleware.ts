@@ -18,7 +18,7 @@ function getLocale(request: NextRequest): string {
 
 const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
 
-const publicRoutesWithoutAuth = ['/api/stripe/webhook'];
+const publicRoutesWithoutAuth = ['/api/stripe/webhook', '/api/daily-stats'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

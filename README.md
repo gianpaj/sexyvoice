@@ -105,11 +105,12 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    Fill in the required environment variables as defined in [`.env.example`](.env.example):
    - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+   - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram cronjob)
    - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
    - `FAL_KEY` - Your fal.ai API key for voice cloning
    - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
    - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-   - `TELEGRAM_WEBHOOK_URL` - Telegram webhook for daily stats notifications
+   - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
    - Additional optional variables for analytics and monitoring
 
 4. **Set up Supabase**
