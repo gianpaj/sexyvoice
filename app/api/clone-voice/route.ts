@@ -204,9 +204,9 @@ export async function POST(request: Request) {
     const estimate = estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
-      Sentry.captureException({
-        error: `Insufficient credits. You need ${estimate} credits to generate this audio`,
-        text,
+      Sentry.captureMessage('Insufficient credits', {
+        user: { id: user.id, email: user.email },
+        extra: { text, estimate, currentCreditsAmount: currentAmount },
       });
       return NextResponse.json(
         {
