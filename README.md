@@ -111,6 +111,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
    - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
    - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
+   - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Additional optional variables for analytics and monitoring
 
 4. **Set up Supabase**
