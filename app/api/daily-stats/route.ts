@@ -159,21 +159,27 @@ export async function GET(request: NextRequest) {
     `Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d total ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)}`,
   ];
-  // .join('\n');
 
-  // await fetch(webhook, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ text: message }),
+  try {
+    await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: '202637584', text: message.join('\n') }),
+    });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Failed to send Telegram message:', error);
+    return NextResponse.json({
+      error: 'Failed to send Telegram message',
+    });
+  }
+
+  // return NextResponse.json({
+  //   body: {
+  //     title: `Daily stats for ${previousDay.toISOString().slice(0, 10)}`,
+  //     audio_files: { info: message[1], total: message[2], cloned: message[3] },
+  //     profiles: { info: message[4], total: message[5] },
+  //     credit_transactions: { info: message[6], total: message[7] },
+  //   },
   // });
-
-  return NextResponse.json({
-    body: {
-      title: `Daily stats for ${previousDay.toISOString().slice(0, 10)}`,
-      audio_files: { info: message[1], total: message[2], cloned: message[3] },
-      profiles: { info: message[4], total: message[5] },
-      credit_transactions: { info: message[6], total: message[7] },
-    },
-  });
-  // return NextResponse.json({ ok: true });
 }
