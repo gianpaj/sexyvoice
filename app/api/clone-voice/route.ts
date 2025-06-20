@@ -13,6 +13,7 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
+import { getAudioDuration } from '@/lib/audio';
 
 // File validation constants
 const ALLOWED_TYPES = [
