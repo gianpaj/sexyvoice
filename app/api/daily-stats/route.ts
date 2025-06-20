@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -33,6 +34,11 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+
+  const checkInId = Sentry.captureCheckIn({
+    monitorSlug: 'telegram-bot-daily-stats',
+    status: 'in_progress',
+  });
 
   const supabase = createAdminClient();
   const now = new Date();
@@ -166,9 +172,20 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message.join('\n') }),
     });
+    Sentry.captureCheckIn({
+      // Make sure this variable is named `checkInId`
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'ok',
+    });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'error',
+    });
     return NextResponse.json({
       error: 'Failed to send Telegram message',
     });
