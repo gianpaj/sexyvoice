@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis';
 import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
+import { GoogleGenAI } from '@google/genai';
 
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
@@ -37,10 +38,12 @@ export const maxDuration = 60; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
+const GEMINI_VOICES = ['zephyr', 'kore', 'puck'];
 
 export async function POST(request: Request) {
   let text = '';
   let voice = '';
+  let styleVariant = '';
   try {
     const body = await request.json();
 
@@ -49,6 +52,7 @@ export async function POST(request: Request) {
     }
     text = body.text || '';
     voice = body.voice || '';
+    styleVariant = body.styleVariant || '';
 
     if (!text || !voice) {
       return NextResponse.json(
@@ -79,6 +83,12 @@ export async function POST(request: Request) {
     }
 
     const voiceObj = await getVoiceIdByName(voice);
+
+    const stylePrompt = styleVariant
+      ? process.env[`STYLE_PROMPT_VARIANT_${styleVariant.toUpperCase()}`]
+      : '';
+    const finalText = stylePrompt ? `${stylePrompt} ${text}` : text;
+    text = finalText;
 
     if (!voiceObj) {
       Sentry.captureException({ error: 'Voice not found', voice, text });
@@ -137,52 +147,74 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
-    // uses REPLICATE_API_TOKEN
-    const replicate = new Replicate();
-
-    const input = {
-      text,
-      voice,
-      // top_p: 0.95,
-      // temperature: 0.6,
-      // max_new_tokens: 1200, // max is 2000
-      // repetition_penalty: 1.1
-    };
     let predictionResult: Prediction | undefined;
-    const onProgress = (prediction: Prediction) => {
-      predictionResult = prediction;
-    };
-    const output = (await replicate.run(
-      // @ts-ignore
-      voiceObj.model,
-      { input, signal: request.signal },
-      onProgress,
-    )) as ReadableStream;
+    let modelUsed = voiceObj.model;
+    let blobResult;
 
-    // console.log({ output });
-
-    if ('error' in output) {
-      const errorObj = {
-        text,
-        voice,
-        model: voiceObj.model,
-        errorData: output.error,
-      };
-      Sentry.captureException({
-        error: 'Voice generation failed',
-        ...errorObj,
+    if (GEMINI_VOICES.includes(voice.toLowerCase())) {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro-preview-tts',
+        contents: [{ parts: [{ text }] }],
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
+              },
+            },
+          },
+        },
       });
-      console.error(errorObj);
-      // @ts-ignore
-      throw new Error(output.error || 'Voice generation failed');
-    }
+      const data =
+        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (!data) {
+        throw new Error('Voice generation failed');
+      }
+      const audioBuffer = Buffer.from(data, 'base64');
+      blobResult = await put(filename, audioBuffer, {
+        access: 'public',
+        contentType: 'audio/mpeg',
+        allowOverwrite: true,
+      });
+      modelUsed = 'gemini-2.5-pro-preview-tts';
+    } else {
+      // uses REPLICATE_API_TOKEN
+      const replicate = new Replicate();
+      const input = { text, voice };
+      const onProgress = (prediction: Prediction) => {
+        predictionResult = prediction;
+      };
+      const output = (await replicate.run(
+        // @ts-ignore
+        voiceObj.model,
+        { input, signal: request.signal },
+        onProgress,
+      )) as ReadableStream;
 
-    // Use hash in the file path for future look ups
-    const blobResult = await put(filename, output, {
-      access: 'public',
-      contentType: 'audio/mpeg',
-      allowOverwrite: true,
-    });
+      if ('error' in output) {
+        const errorObj = {
+          text,
+          voice,
+          model: voiceObj.model,
+          errorData: output.error,
+        };
+        Sentry.captureException({
+          error: 'Voice generation failed',
+          ...errorObj,
+        });
+        console.error(errorObj);
+        // @ts-ignore
+        throw new Error(output.error || 'Voice generation failed');
+      }
+
+      blobResult = await put(filename, output, {
+        access: 'public',
+        contentType: 'audio/mpeg',
+        allowOverwrite: true,
+      });
+    }
 
     await redis.set(filename, blobResult.url);
 
@@ -194,7 +226,7 @@ export async function POST(request: Request) {
         filename,
         text,
         url: blobResult.url,
-        model: voiceObj.model,
+        model: modelUsed,
         predictionId: predictionResult?.id,
         isPublic: false,
         voiceId: voiceObj.id,
@@ -206,7 +238,7 @@ export async function POST(request: Request) {
         const errorObj = {
           text,
           voice,
-          model: voiceObj.model,
+          model: modelUsed,
           errorData: audioFileDBResult.error,
         };
         Sentry.captureException({
@@ -222,7 +254,7 @@ export async function POST(request: Request) {
         text,
         voiceId: voiceObj.id,
         creditUsed: estimate,
-        model: voiceObj.model,
+        model: modelUsed,
       });
     });
 
