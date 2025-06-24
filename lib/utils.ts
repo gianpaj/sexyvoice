@@ -3,6 +3,8 @@ import { customAlphabet } from 'nanoid';
 import { redirect } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 
+import { GEMINI_VOICES } from './constants';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -57,12 +59,13 @@ export function estimateCredits(text: string, voice: string): number {
     case 'clone':
       multiplier = 11;
       break;
-    case 'zephyr':
-      multiplier = 4;
-      break;
     default:
       multiplier = 4;
       break;
+  }
+
+  if (GEMINI_VOICES.includes(voice)) {
+    multiplier = 4;
   }
 
   // Calculate estimated seconds (credits) by 10

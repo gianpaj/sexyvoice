@@ -42,8 +42,8 @@ export function VoiceSelector({
   publicVoices: Voice[];
   selectedVoice?: Voice;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
-  selectedStyle: string;
-  setSelectedStyle: Dispatch<SetStateAction<string>>;
+  selectedStyle?: string;
+  setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
 }) {
   const showSelectedStyleOpt = GEMINI_VOICES.includes(
     selectedVoice?.name || '',

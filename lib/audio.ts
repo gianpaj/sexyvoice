@@ -59,7 +59,6 @@ function createWavHeader(
 // https://github.com/RiverTwilight/Geekits/blob/cc185957ff718d80064a6457fdae44703ae44f17/src/pages/api/ai/tts.ts#L69
 export function convertToWav(rawData: string, mimeType: string): Buffer {
   const options = parseMimeType(mimeType);
-  console.log({ mimeType, options });
   const wavHeader = createWavHeader(rawData.length, options);
   const buffer = Buffer.from(rawData, 'base64');
 
