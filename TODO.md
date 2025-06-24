@@ -1,7 +1,6 @@
 # TODO
 
-- Stripe subscription adds credits!
-- Clone initial public voices. Morgan Freeman, David Attenborough, Emma Watson
+- Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Translate website to French
 - Translate website to German
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
@@ -57,7 +56,6 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ## Security
 
-- Verify User email address
 - Implement rate limiting to prevent abuse.
 - Block temporary email addresses.
 - Add Cloudflare Captcha protection.

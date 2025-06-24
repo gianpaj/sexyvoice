@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
@@ -56,9 +57,15 @@ export async function Header({ lang }: { lang: string }) {
         <div className="md:hidden z-10 flex gap-2">
           {/* <LanguageSelector isMobile currentLang={lang} /> */}
           {user ? (
-            <Link href={`/${lang}/dashboard`} className="w-full" prefetch>
-              Dashboard
-            </Link>
+            <Button variant="default" asChild>
+              <Link
+                href={`/${lang}/dashboard/generate`}
+                className="w-full"
+                prefetch
+              >
+                Generate
+              </Link>
+            </Button>
           ) : (
             <>
               <Button asChild size="sm" variant="secondary">
