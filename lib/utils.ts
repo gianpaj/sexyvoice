@@ -57,6 +57,9 @@ export function estimateCredits(text: string, voice: string): number {
     case 'clone':
       multiplier = 11;
       break;
+    case 'zephyr':
+      multiplier = 4;
+      break;
     default:
       multiplier = 4;
       break;

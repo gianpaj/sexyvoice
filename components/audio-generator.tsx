@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from './ui/alert';
 
 interface AudioGeneratorProps {
   selectedVoice?: Voice;
+  selectedStyle?: string;
   hasEnoughCredits: boolean;
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   dict: any;
@@ -34,6 +35,7 @@ interface AudioGeneratorProps {
 
 export function AudioGenerator({
   selectedVoice,
+  selectedStyle,
   hasEnoughCredits,
   dict,
 }: AudioGeneratorProps) {

@@ -1,10 +1,12 @@
+import { GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
-import { GoogleGenAI } from '@google/genai';
 
+import { convertToWav } from '@/lib/audio';
+import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -38,7 +40,6 @@ export const maxDuration = 60; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
-const GEMINI_VOICES = ['zephyr', 'kore', 'puck'];
 
 export async function POST(request: Request) {
   let text = '';
@@ -83,12 +84,6 @@ export async function POST(request: Request) {
     }
 
     const voiceObj = await getVoiceIdByName(voice);
-
-    const stylePrompt = styleVariant
-      ? process.env[`STYLE_PROMPT_VARIANT_${styleVariant.toUpperCase()}`]
-      : '';
-    const finalText = stylePrompt ? `${stylePrompt} ${text}` : text;
-    text = finalText;
 
     if (!voiceObj) {
       Sentry.captureException({ error: 'Voice not found', voice, text });
@@ -149,10 +144,15 @@ export async function POST(request: Request) {
 
     let predictionResult: Prediction | undefined;
     let modelUsed = voiceObj.model;
-    let blobResult;
+    let blobResult: any;
 
     if (GEMINI_VOICES.includes(voice.toLowerCase())) {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+      text = finalText;
+
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro-preview-tts',
         contents: [{ parts: [{ text }] }],
@@ -169,13 +169,16 @@ export async function POST(request: Request) {
       });
       const data =
         response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const mimeType =
+        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
       if (!data) {
         throw new Error('Voice generation failed');
       }
-      const audioBuffer = Buffer.from(data, 'base64');
+
+      const audioBuffer = convertToWav(data, mimeType || 'wav');
       blobResult = await put(filename, audioBuffer, {
         access: 'public',
-        contentType: 'audio/mpeg',
+        contentType: 'audio/wav',
         allowOverwrite: true,
       });
       modelUsed = 'gemini-2.5-pro-preview-tts';

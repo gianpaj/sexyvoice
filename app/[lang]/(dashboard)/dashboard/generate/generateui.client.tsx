@@ -12,12 +12,17 @@ interface GenerateUIProps {
   dict: (typeof lang)['generate'];
 }
 
+
+const STYLE_PROMPT_VARIANT_MOAN =
+  process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN;
+
 export function GenerateUI({
   publicVoices,
   hasEnoughCredits,
   dict,
 }: GenerateUIProps) {
   const [selectedVoice, setSelectedVoice] = useState('tara');
+  const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
   const selectedVoiceSample = publicVoices.find(
     (file) => file.name === selectedVoice,
   );
@@ -26,10 +31,13 @@ export function GenerateUI({
       <VoiceSelector
         setSelectedVoice={setSelectedVoice}
         selectedVoice={selectedVoiceSample}
+        selectedStyle={selectedStyle}
+        setSelectedStyle={setSelectedStyle}
         publicVoices={publicVoices}
       />
       <AudioGenerator
         selectedVoice={selectedVoiceSample}
+        selectedStyle={selectedStyle}
         hasEnoughCredits={hasEnoughCredits}
         dict={dict}
       />
