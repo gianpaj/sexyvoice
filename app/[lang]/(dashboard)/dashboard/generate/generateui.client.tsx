@@ -37,7 +37,6 @@ export function GenerateUI({
       />
       <AudioGenerator
         selectedVoice={selectedVoiceSample}
-        selectedStyle={selectedStyle}
         hasEnoughCredits={hasEnoughCredits}
         dict={dict}
       />

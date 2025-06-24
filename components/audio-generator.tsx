@@ -21,13 +21,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 
 interface AudioGeneratorProps {
   selectedVoice?: Voice;
-  selectedStyle?: string;
   hasEnoughCredits: boolean;
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   dict: any;
@@ -35,7 +35,6 @@ interface AudioGeneratorProps {
 
 export function AudioGenerator({
   selectedVoice,
-  selectedStyle,
   hasEnoughCredits,
   dict,
 }: AudioGeneratorProps) {
@@ -46,6 +45,8 @@ export function AudioGenerator({
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
+
+  const showEnhanceText = !GEMINI_VOICES.includes(selectedVoice?.name || '');
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -217,18 +218,20 @@ export function AudioGenerator({
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-12"
             />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute top-2 right-2 h-8 w-8"
-              onClick={handleEnhanceText}
-              disabled={!text.trim() || isEnhancingText || isGenerating}
-              title="Enhance text with AI emotion tags"
-            >
-              <Sparkles
-                className={`h-4 w-4 text-yellow-300 ${isEnhancingText ? 'animate-spin' : ''}`}
-              />
-            </Button>
+            {showEnhanceText && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute top-2 right-2 h-8 w-8"
+                onClick={handleEnhanceText}
+                disabled={!text.trim() || isEnhancingText || isGenerating}
+                title="Enhance text with AI emotion tags"
+              >
+                <Sparkles
+                  className={`h-4 w-4 text-yellow-300 ${isEnhancingText ? 'animate-spin' : ''}`}
+                />
+              </Button>
+            )}
           </div>
         </div>
 
