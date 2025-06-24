@@ -12,7 +12,6 @@ interface GenerateUIProps {
   dict: (typeof lang)['generate'];
 }
 
-
 const STYLE_PROMPT_VARIANT_MOAN =
   process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN;
 

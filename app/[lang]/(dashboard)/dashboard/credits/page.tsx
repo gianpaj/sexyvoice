@@ -158,7 +158,7 @@ export default async function CreditsPage(props: {
         <CreditHistory dict={dict} transactions={existingTransactions} />
       </div>
 
-      {(!customerData || customerData.status !== 'active') && (
+      {(!customerData || customerData?.status !== 'active') && (
         <NextStripePricingTable clientSecret={clientSecret} />
       )}
     </div>

@@ -85,7 +85,7 @@ export function AudioGenerator({
         throw new APIError(error.serverMessage, response);
       }
 
-      const { url, creditsRemaining, creditsUsed } = await response.json();
+      const { url } = await response.json();
 
       // creditsUsed is undefined if the audio was previously generated
       // creditsUsed && setCreditsUsed(creditsUsed);
@@ -136,7 +136,7 @@ export function AudioGenerator({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isGenerating, text, selectedVoice, hasEnoughCredits]); // Dependencies for the effect
+  }, [isGenerating, text, selectedVoice, hasEnoughCredits]);
 
   const togglePlayback = () => {
     if (!audio) return;
