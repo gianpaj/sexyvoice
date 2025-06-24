@@ -1,9 +1,12 @@
+import { GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { convertToWav } from '@/lib/audio';
+import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -41,6 +44,7 @@ const redis = Redis.fromEnv();
 export async function POST(request: Request) {
   let text = '';
   let voice = '';
+  let styleVariant = '';
   try {
     const body = await request.json();
 
@@ -49,6 +53,7 @@ export async function POST(request: Request) {
     }
     text = body.text || '';
     voice = body.voice || '';
+    styleVariant = body.styleVariant || '';
 
     if (!text || !voice) {
       return NextResponse.json(
@@ -137,52 +142,82 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
-    // uses REPLICATE_API_TOKEN
-    const replicate = new Replicate();
-
-    const input = {
-      text,
-      voice,
-      // top_p: 0.95,
-      // temperature: 0.6,
-      // max_new_tokens: 1200, // max is 2000
-      // repetition_penalty: 1.1
-    };
     let predictionResult: Prediction | undefined;
-    const onProgress = (prediction: Prediction) => {
-      predictionResult = prediction;
-    };
-    const output = (await replicate.run(
-      // @ts-ignore
-      voiceObj.model,
-      { input, signal: request.signal },
-      onProgress,
-    )) as ReadableStream;
+    let modelUsed = voiceObj.model;
+    let blobResult: any;
 
-    // console.log({ output });
+    if (GEMINI_VOICES.includes(voice.toLowerCase())) {
+      const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+      text = finalText;
 
-    if ('error' in output) {
-      const errorObj = {
-        text,
-        voice,
-        model: voiceObj.model,
-        errorData: output.error,
-      };
-      Sentry.captureException({
-        error: 'Voice generation failed',
-        ...errorObj,
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
-      console.error(errorObj);
-      // @ts-ignore
-      throw new Error(output.error || 'Voice generation failed');
-    }
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro-preview-tts',
+        contents: [{ parts: [{ text }] }],
+        config: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
+              },
+            },
+          },
+        },
+      });
+      const data =
+        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const mimeType =
+        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+      if (!data) {
+        throw new Error('Voice generation failed');
+      }
 
-    // Use hash in the file path for future look ups
-    const blobResult = await put(filename, output, {
-      access: 'public',
-      contentType: 'audio/mpeg',
-      allowOverwrite: true,
-    });
+      const audioBuffer = convertToWav(data, mimeType || 'wav');
+      blobResult = await put(filename, audioBuffer, {
+        access: 'public',
+        contentType: 'audio/wav',
+        allowOverwrite: true,
+      });
+      modelUsed = 'gemini-2.5-pro-preview-tts';
+    } else {
+      // uses REPLICATE_API_TOKEN
+      const replicate = new Replicate();
+      const input = { text, voice };
+      const onProgress = (prediction: Prediction) => {
+        predictionResult = prediction;
+      };
+      const output = (await replicate.run(
+        // @ts-ignore
+        voiceObj.model,
+        { input, signal: request.signal },
+        onProgress,
+      )) as ReadableStream;
+
+      if ('error' in output) {
+        const errorObj = {
+          text,
+          voice,
+          model: voiceObj.model,
+          errorData: output.error,
+        };
+        Sentry.captureException({
+          error: 'Voice generation failed',
+          ...errorObj,
+        });
+        console.error(errorObj);
+        // @ts-ignore
+        throw new Error(output.error || 'Voice generation failed');
+      }
+
+      blobResult = await put(filename, output, {
+        access: 'public',
+        contentType: 'audio/mpeg',
+        allowOverwrite: true,
+      });
+    }
 
     await redis.set(filename, blobResult.url);
 
@@ -194,7 +229,7 @@ export async function POST(request: Request) {
         filename,
         text,
         url: blobResult.url,
-        model: voiceObj.model,
+        model: modelUsed,
         predictionId: predictionResult?.id,
         isPublic: false,
         voiceId: voiceObj.id,
@@ -206,7 +241,7 @@ export async function POST(request: Request) {
         const errorObj = {
           text,
           voice,
-          model: voiceObj.model,
+          model: modelUsed,
           errorData: audioFileDBResult.error,
         };
         Sentry.captureException({
@@ -222,7 +257,7 @@ export async function POST(request: Request) {
         text,
         voiceId: voiceObj.id,
         creditUsed: estimate,
-        model: voiceObj.model,
+        model: modelUsed,
       });
     });
 

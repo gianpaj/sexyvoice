@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+
 import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
 import {
   Card,
@@ -18,8 +19,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
+import { GEMINI_VOICES } from '@/lib/constants';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -32,37 +35,46 @@ export function VoiceSelector({
   publicVoices,
   selectedVoice,
   setSelectedVoice,
+  selectedStyle,
+  setSelectedStyle,
 }: {
   // userVoices: Voice[];
   publicVoices: Voice[];
   selectedVoice?: Voice;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
+  selectedStyle?: string;
+  setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
 }) {
+  const showSelectedStyleOpt = GEMINI_VOICES.includes(
+    selectedVoice?.name || '',
+  );
   return (
     <Card>
       <CardHeader>
         {/* TODO: translate */}
         <CardTitle className="flex flex-row">
           Select Voice
-          <TooltipProvider>
-            <Tooltip delayDuration={100} supportMobileTap>
-              <TooltipTrigger asChild>
-                <Button
-                  className="h-auto w-auto self-end pb-[2px]"
-                  variant="link"
-                  size="icon"
-                >
-                  <Info className="w-4 h-4 ml-2" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  Model: Orpheus-TTS (text-to-speech AI model) - Commercial use
-                  ✔️
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {!showSelectedStyleOpt && (
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="h-auto w-auto self-end pb-[2px]"
+                    variant="link"
+                    size="icon"
+                  >
+                    <Info className="w-4 h-4 ml-2" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    Model: Orpheus-TTS (text-to-speech AI model) - Commercial
+                    use ✔️
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </CardTitle>
         <CardDescription>Choose from public voices</CardDescription>
       </CardHeader>
@@ -90,6 +102,12 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
+        {showSelectedStyleOpt && (
+          <Textarea
+            onChange={(e) => setSelectedStyle(e.target.value)}
+            value={selectedStyle}
+          />
+        )}
         {selectedVoice?.sample_url && (
           <div className="flex gap-2 items-center justify-between p-4 lg:w-1/2">
             <AudioPlayer url={selectedVoice.sample_url} />
