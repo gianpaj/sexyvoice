@@ -4,6 +4,7 @@ import { useCompletion } from '@ai-sdk/react';
 import {
   CircleStop,
   Download,
+  Info,
   Pause,
   Play,
   RotateCcw,
@@ -23,14 +24,20 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 interface AudioGeneratorProps {
   selectedVoice?: Voice;
   hasEnoughCredits: boolean;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  dict: any;
+  dict: (typeof lang)['generate'];
 }
 
 export function AudioGenerator({
@@ -216,95 +223,117 @@ export function AudioGenerator({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
-              className="h-32 pr-12"
+              className="h-32 pr-16"
             />
             {showEnhanceText && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="absolute top-2 right-2 h-8 w-8"
-                onClick={handleEnhanceText}
-                disabled={!text.trim() || isEnhancingText || isGenerating}
-                title="Enhance text with AI emotion tags"
-              >
-                <Sparkles
-                  className={`h-4 w-4 text-yellow-300 ${isEnhancingText ? 'animate-spin' : ''}`}
-                />
-              </Button>
+              <>
+                <TooltipProvider>
+                  <Tooltip delayDuration={100} supportMobileTap>
+                    <TooltipTrigger asChild>
+                      <Info className="w-4 h-4 ml-2 absolute top-4 right-12" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add emotion tags</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-8 w-8 bg-neutral-600"
+                  onClick={handleEnhanceText}
+                  disabled={!text.trim() || isEnhancingText || isGenerating}
+                  title="Enhance text with AI emotion tags"
+                >
+                  <Sparkles
+                    className={`h-4 w-4 text-yellow-300 ${isEnhancingText ? 'animate-spin' : ''}`}
+                  />
+                </Button>
+              </>
             )}
           </div>
         </div>
 
         <div
-          className={`flex ${hasEnoughCredits ? 'items-center' : 'flex-col items-start'} justify-start gap-2`}
+          className={`flex ${hasEnoughCredits ? 'items-center' : 'flex-col items-start'} grid grid-cols-1 sm:grid-cols-2 justify-start gap-2`}
         >
           {!hasEnoughCredits && (
             <Alert variant="destructive" className="w-fit">
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
-          <Button
-            onClick={handleGenerate}
-            data-testid="generate-button"
-            disabled={
-              isGenerating ||
-              !text.trim() ||
-              !selectedVoice ||
-              !hasEnoughCredits
-            }
-            size="lg"
-          >
-            {isGenerating ? (
-              <span className="flex items-center">
-                {dict.generating}
-                <PulsatingDots />
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                {dict.ctaButton}
-                <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
-                  {shortcutKey}
+          <div>
+            <Button
+              onClick={handleGenerate}
+              data-testid="generate-button"
+              disabled={
+                isGenerating ||
+                !text.trim() ||
+                !selectedVoice ||
+                !hasEnoughCredits
+              }
+              size="lg"
+            >
+              {isGenerating ? (
+                <span className="flex items-center">
+                  {dict.generating}
+                  <PulsatingDots />
                 </span>
-              </span>
-            )}
-          </Button>
-
-          <div className="space-x-2">
+              ) : (
+                <span className="flex items-center gap-2">
+                  {dict.ctaButton}
+                  <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                    {shortcutKey}
+                  </span>
+                </span>
+              )}
+            </Button>
             {isGenerating && (
               <Button
                 variant="outline"
+                title={dict.cancel}
                 size="icon"
                 onClick={() => abortController.current?.abort()}
+                asChild
+                className="ml-2"
               >
                 <CircleStop name="cancel" className="size-4" />
               </Button>
             )}
+          </div>
+
+          <div className="">
             {audio && (
-              <>
-                <Button variant="outline" size="icon" onClick={togglePlayback}>
+              <div className="flex sm:w-full justify-center sm:justify-start gap-2">
+                <Button
+                  variant="secondary"
+                  title={dict.playAudio}
+                  size="icon"
+                  onClick={togglePlayback}
+                >
                   {isPlaying ? (
-                    <Pause className="size-4" />
+                    <Pause className="size-6" />
                   ) : (
-                    <Play className="size-4" />
+                    <Play className="size-6" />
                   )}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="icon"
-                  title={dict.resetPlayer}
+                  title={dict.resetForm}
                   onClick={resetPlayer}
                 >
-                  <RotateCcw className="size-4" />
+                  <RotateCcw className="size-6" />
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="icon"
                   title={dict.downloadAudio}
                   onClick={downloadAudio}
                 >
-                  <Download className="size-4" />
+                  <Download className="size-6" />
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>

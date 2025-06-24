@@ -244,6 +244,8 @@
     "errorCloning": "Error al clonar la voz",
     "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
     "generating": "Generando",
+    "playAudio": "Escucha Audio",
+    "cancel": "Cancelar",
     "ctaButton": "Generar audio",
     "resetForm": "Reiniciar Formulario",
     "downloadAudio": "Descargar Audio",

@@ -242,6 +242,8 @@
     "errorCloning": "Failed to clone voice",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "generating": "Generating",
+    "playAudio": "Play Audio",
+    "cancel": "Cancel generation",
     "ctaButton": "Generate Audio",
     "resetForm": "Reset Form",
     "downloadAudio": "Download Audio",
