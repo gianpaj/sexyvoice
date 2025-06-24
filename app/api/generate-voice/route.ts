@@ -115,6 +115,9 @@ export async function POST(request: Request) {
       );
     }
 
+    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+    text = finalText;
+
     // Generate hash for the combination of text, voice, and accent
     const hash = await generateHash(text, voice);
 
@@ -147,9 +150,6 @@ export async function POST(request: Request) {
     let blobResult: any;
 
     if (GEMINI_VOICES.includes(voice.toLowerCase())) {
-      const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
-      text = finalText;
-
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
@@ -165,6 +165,24 @@ export async function POST(request: Request) {
               },
             },
           },
+          //   safetySettings: [
+          //     {
+          //       category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+          //       threshold: HarmBlockThreshold.BLOCK_NONE,
+          //     },
+          //     {
+          //       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          //       threshold: HarmBlockThreshold.BLOCK_NONE,
+          //     },
+          //     {
+          //       category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          //       threshold: HarmBlockThreshold.BLOCK_NONE,
+          //     },
+          //     {
+          //       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          //       threshold: HarmBlockThreshold.BLOCK_NONE,
+          //     },
+          //   ],
         },
       });
       const data =
