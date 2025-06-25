@@ -200,7 +200,7 @@ importers:
         version: 0.6.4
       '@types/node':
         specifier: ^22.15.2
-        version: 22.15.32
+        version: 22.15.33
       '@types/react':
         specifier: 19.0.12
         version: 19.0.12
@@ -215,7 +215,7 @@ importers:
         version: 16.5.0
       knip:
         specifier: ^5.50.2
-        version: 5.50.2(@types/node@22.15.32)(typescript@5.7.3)
+        version: 5.50.2(@types/node@22.15.33)(typescript@5.7.3)
       postcss:
         specifier: ^8.4.33
         version: 8.4.33
@@ -2167,8 +2167,8 @@ packages:
   '@types/negotiator@0.6.4':
     resolution: {integrity: sha512-elf6BsTq+AkyNsb2h5cGNst2Mc7dPliVoAPm1fXglC/BM3f2pFA40BaSSv3E5lyHteEawVKLP+8TwiY1DMNb3A==}
 
-  '@types/node@22.15.32':
-    resolution: {integrity: sha512-3jigKqgSjsH6gYZv2nEsqdXfZqIFGAV36XYYjf9KGZ3PSG+IhLecqPnI310RvjutyMwifE2hhhNEklOUrvx/wA==}
+  '@types/node@22.15.33':
+    resolution: {integrity: sha512-wzoocdnnpSxZ+6CjW4ADCK1jVmd1S/J3ArNWfn8FDDQtRm8dkDg7TA+mvek2wNrfCgwuZxqEOiB9B1XCJ6+dbw==}
 
   '@types/pg-pool@2.0.6':
     resolution: {integrity: sha512-TaAUE5rq2VQYxab5Ts7WZhKNmuN78Q6PiFonTDdpbx8a1H0M1vhy3rhiMjl+e2iHmogyMw7jZF4FrE6eJUy5HQ==}
@@ -2720,6 +2720,10 @@ packages:
 
   enhanced-resolve@5.18.1:
     resolution: {integrity: sha512-ZSW3ma5GkcQBIpwZTSRAI8N71Uuwgs93IezB7mf7R60tC8ZbJideoDNKjHn2O9KIlx6rkGTTEk1xUCK2E1Y2Yg==}
+    engines: {node: '>=10.13.0'}
+
+  enhanced-resolve@5.18.2:
+    resolution: {integrity: sha512-6Jw4sE1maoRJo3q8MsSIn2onJFbLTOjY9hlx4DZXmOKvLRd1Ok2kXmAGXaafL2+ijsJZ1ClYbl/pmqr9+k4iUQ==}
     engines: {node: '>=10.13.0'}
 
   es-define-property@1.0.1:
@@ -4342,6 +4346,10 @@ packages:
 
   webpack-sources@3.3.2:
     resolution: {integrity: sha512-ykKKus8lqlgXX/1WjudpIEjqsafjOTcOJqxnAbMLAu/KCsDCJ6GBtvscewvTkrn24HsnvFwrSCbenFrhtcCsAA==}
+    engines: {node: '>=10.13.0'}
+
+  webpack-sources@3.3.3:
+    resolution: {integrity: sha512-yd1RBzSGanHkitROoPFd6qsrxt+oFhg/129YzheDGqeustzX0vTZJZsSsQjVQC4yzBQ56K55XU8gaNCtIzOnTg==}
     engines: {node: '>=10.13.0'}
 
   webpack-virtual-modules@0.5.0:
@@ -6428,7 +6436,7 @@ snapshots:
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
 
   '@types/cookie@0.6.0': {}
 
@@ -6472,11 +6480,11 @@ snapshots:
 
   '@types/mysql@2.15.26':
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
 
   '@types/negotiator@0.6.4': {}
 
-  '@types/node@22.15.32':
+  '@types/node@22.15.33':
     dependencies:
       undici-types: 6.21.0
 
@@ -6486,7 +6494,7 @@ snapshots:
 
   '@types/pg@8.6.1':
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
       pg-protocol: 1.10.1
       pg-types: 2.2.0
 
@@ -6506,7 +6514,7 @@ snapshots:
 
   '@types/tedious@4.0.14':
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
 
   '@types/unist@2.0.11': {}
 
@@ -6514,7 +6522,7 @@ snapshots:
 
   '@types/ws@8.18.1':
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
 
   '@ungap/structured-clone@1.3.0': {}
 
@@ -6999,6 +7007,11 @@ snapshots:
   emoji-regex@9.2.2: {}
 
   enhanced-resolve@5.18.1:
+    dependencies:
+      graceful-fs: 4.2.11
+      tapable: 2.2.2
+
+  enhanced-resolve@5.18.2:
     dependencies:
       graceful-fs: 4.2.11
       tapable: 2.2.2
@@ -7516,7 +7529,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -7570,10 +7583,10 @@ snapshots:
 
   kind-of@6.0.3: {}
 
-  knip@5.50.2(@types/node@22.15.32)(typescript@5.7.3):
+  knip@5.50.2(@types/node@22.15.33)(typescript@5.7.3):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
       easy-table: 1.2.0
       enhanced-resolve: 5.18.1
       fast-glob: 3.3.3
@@ -8294,7 +8307,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
       long: 5.3.2
 
   proxy-from-env@1.1.0: {}
@@ -8697,7 +8710,7 @@ snapshots:
 
   stripe@17.7.0:
     dependencies:
-      '@types/node': 22.15.32
+      '@types/node': 22.15.33
       qs: 6.14.0
 
   strtok3@10.3.1:
@@ -8984,6 +8997,8 @@ snapshots:
 
   webpack-sources@3.3.2: {}
 
+  webpack-sources@3.3.3: {}
+
   webpack-virtual-modules@0.5.0: {}
 
   webpack@5.99.9(esbuild@0.25.5):
@@ -8997,7 +9012,7 @@ snapshots:
       acorn: 8.15.0
       browserslist: 4.25.0
       chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.18.1
+      enhanced-resolve: 5.18.2
       es-module-lexer: 1.7.0
       eslint-scope: 5.1.1
       events: 3.3.0
@@ -9011,7 +9026,7 @@ snapshots:
       tapable: 2.2.2
       terser-webpack-plugin: 5.3.14(esbuild@0.25.5)(webpack@5.99.9(esbuild@0.25.5))
       watchpack: 2.4.4
-      webpack-sources: 3.3.2
+      webpack-sources: 3.3.3
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
