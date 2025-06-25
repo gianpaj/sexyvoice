@@ -48,22 +48,6 @@ export async function createOrRetrieveCustomer({
 //   return product.name
 // }
 
-export async function createStripeCustomer(
-  id: string,
-  email: string,
-  name?: string,
-) {
-  const customer = await stripe.customers.create({
-    name: name ? name : '',
-    email: email,
-    metadata: {
-      supabase_id: id,
-    },
-  });
-  // Create a new customer in Stripe
-  return customer.id;
-}
-
 export async function getCustomerSession() {
   const supabase = await createClient();
   const {

@@ -10,7 +10,7 @@ import {
   useState,
 } from 'react';
 
-export type FileMetadata = {
+type FileMetadata = {
   name: string;
   size: number;
   type: string;
@@ -18,13 +18,13 @@ export type FileMetadata = {
   id: string;
 };
 
-export type FileWithPreview = {
+type FileWithPreview = {
   file: File | FileMetadata;
   id: string;
   preview?: string;
 };
 
-export type FileUploadOptions = {
+type FileUploadOptions = {
   /**
    * Only used when multiple is true, defaults to Infinity
    */
@@ -43,13 +43,13 @@ export type FileUploadOptions = {
   onFilesAdded?: (addedFiles: FileWithPreview[]) => void;
 };
 
-export type FileUploadState = {
+type FileUploadState = {
   files: FileWithPreview[];
   isDragging: boolean;
   errors: string[];
 };
 
-export type FileUploadActions = {
+type FileUploadActions = {
   addFiles: (files: FileList | File[]) => void;
   removeFile: (id: string) => void;
   clearFiles: () => void;

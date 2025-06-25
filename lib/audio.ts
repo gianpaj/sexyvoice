@@ -4,7 +4,7 @@ interface WavConversionOptions {
   bitsPerSample: number;
 }
 
-export function parseMimeType(mimeType: string): WavConversionOptions {
+function parseMimeType(mimeType: string): WavConversionOptions {
   const [fileType, ...params] = mimeType.split(';').map((s) => s.trim());
   const [_, format] = fileType.split('/');
 

@@ -39,11 +39,6 @@ export async function GET(request: Request) {
       })
       .eq('id', user.id);
 
-    // FIXME - only at signup
-
-    // add 10_000 credits to the user's account
-    // await addInitialCredits(user.id);
-
     const posthog = PostHogClient();
 
     posthog.capture({
