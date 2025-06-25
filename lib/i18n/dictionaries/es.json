@@ -56,6 +56,7 @@
       "title": "Voces Expressivas, Sin Censura",
       "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
       "buttonCTA": "Comienza",
+      "noCreditCard": "Sin tarjeta de crédito",
       "signIn": "Iniciar Sesión"
     },
     "features": {
@@ -102,6 +103,14 @@
       "subtitle": "Todo lo que necesitas saber sobre SexyVoice.ai",
       "questions": [
         {
+          "question": "¿Cómo funciona la clonación de voz?",
+          "answer": "Nuestra IA analiza tus muestras de voz para aprender sus patrones y características únicas. Con solo segundos de audio, podemos crear una voz digital que suena exactamente como tú. El sistema utiliza IA avanzada para coincidir con tu tono, acento y estilo de habla."
+        },
+        {
+          "question": "¿Puedo clonar mi propia voz?",
+          "answer": "¡Sí! Por razones éticas, necesitas permiso antes de clonar la voz de otra persona. Nos tomamos en serio los derechos de voz."
+        },
+        {
           "question": "¿Están seguros mis datos de voz?",
           "answer": "Sí. Ciframos todos los datos de voz y los almacenamos de forma segura. Tienes control total sobre tus generaciones de audio y puedes eliminarlas en cualquier momento. Nunca compartimos tus datos de voz con terceros sin tu permiso. Tu privacidad es nuestra prioridad."
         },
@@ -124,6 +133,10 @@
         {
           "question": "¿Por qué elegir SexyVoice.ai?",
           "answer": "Ofrecemos la mejor combinación de calidad de voz, facilidad de uso y precios asequibles. A diferencia de la competencia, proporcionamos voces de calidad profesional para creadores de todos los niveles. Con generosos créditos gratuitos y sin contratos, puedes empezar a crear contenido de voz increíble de inmediato."
+        },
+        {
+          "question": "¿Está permitida la generación de contenido erótico o para adultos?",
+          "answer": "Sí, permitimos la generación de contenido para adultos y erótico en nuestra plataforma. Creemos en la libertad creativa manteniendo un uso responsable. Sin embargo, todo el contenido debe cumplir con nuestros términos de servicio y las leyes aplicables. Prohibimos el contenido que involucre menores, escenarios no consensuales o actividades ilegales."
         }
       ]
     }
@@ -176,16 +189,66 @@
           "Salida de audio PCM 44.1 kHz a través de API (próximamente)"
         ]
       }
+    },
+    "topup": {
+      "title": "Comprar Créditos",
+      "description": "Recarga tus créditos instantáneamente con una compra única",
+      "buyCredits": "Comprar Créditos",
+      "onetimePurchase": "Compra única",
+      "processing": "Procesando...",
+      "packages": {
+        "standard": {
+          "name": "10,000 Créditos",
+          "description": "Perfecto para empezar"
+        },
+        "base": {
+          "name": "25,000 Créditos",
+          "description": "La opción más popular",
+          "value": "Mejor Valor"
+        },
+        "premium": {
+          "name": "220,000 Créditos",
+          "description": "Para usuarios avanzados",
+          "value": "Paquete Pro"
+        }
+      },
+      "mostPopular": "Más Popular"
+    },
+    "status": {
+      "success": {
+        "title": "¡Pago Exitoso!",
+        "description": "Tus créditos han sido añadidos exitosamente a tu cuenta.",
+        "descriptionWithAmount": "Tu cuenta ha sido acreditada con {amount} créditos.",
+        "dismiss": "Descartar"
+      },
+      "canceled": {
+        "title": "Pago Cancelado",
+        "description": "Tu pago fue cancelado. No se realizaron cargos a tu cuenta.",
+        "dismiss": "Descartar"
+      },
+      "error": {
+        "title": "Pago Fallido",
+        "description": "Hubo un problema procesando tu pago. Por favor intenta de nuevo o contacta soporte si el problema persiste.",
+        "dismiss": "Descartar"
+      },
+      "checkoutError": "Error al crear sesión de pago"
+    },
+    "history": {
+      "title": "Historial de Créditos"
     }
   },
   "generate": {
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "success": "Audio generado con éxito!",
     "error": "Error al generar audio",
+    "errorCloning": "Error al clonar la voz",
     "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
     "generating": "Generando",
+    "playAudio": "Escucha Audio",
+    "cancel": "Cancelar",
     "ctaButton": "Generar audio",
     "resetForm": "Reiniciar Formulario",
-    "downloadAudio": "Descargar Audio"
+    "downloadAudio": "Descargar Audio",
+    "abortedCloning": "Clonación de voz cancelada"
   }
 }

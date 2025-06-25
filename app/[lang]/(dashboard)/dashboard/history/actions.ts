@@ -1,7 +1,13 @@
 'use server';
 
 import * as Sentry from '@sentry/nextjs';
+import { Redis } from '@upstash/redis';
+
+import PostHogClient from '@/lib/posthog';
 import { createClient } from '@/lib/supabase/server';
+
+// Initialize Redis
+const redis = Redis.fromEnv();
 
 export const handleDeleteAction = async (id: string) => {
   'use server';
@@ -48,6 +54,19 @@ export const handleDeleteAction = async (id: string) => {
       .eq('id', id)
       .eq('user_id', user.id);
 
+    // allow for regeneration of audio
+    await redis.del(audioFile.storage_key);
+
+    const posthog = PostHogClient();
+    posthog.capture({
+      distinctId: user.id,
+      event: 'delete-audio',
+      properties: {
+        id,
+      },
+    });
+    await posthog.shutdown();
+
     if (deleteError) {
       Sentry.captureException({
         error: 'Failed to soft delete audio file from database',
@@ -66,6 +85,7 @@ export const handleDeleteAction = async (id: string) => {
     Sentry.captureException({
       error: 'Audio file deletion error',
       errorData: error,
+      audioId: id,
     });
     console.error('Error deleting audio file:', error);
     throw error;

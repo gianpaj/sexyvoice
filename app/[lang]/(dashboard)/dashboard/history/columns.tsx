@@ -14,7 +14,7 @@ import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from './audio-player';
 import { DeleteButton } from './delete-button';
 
-export type AudioFile = {
+type AudioFile = {
   id: string;
   storage_key: string;
   created_at: string;

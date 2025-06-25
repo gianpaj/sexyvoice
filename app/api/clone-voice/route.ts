@@ -1,8 +1,8 @@
+import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
-import Replicate, { type Prediction } from 'replicate';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
@@ -19,6 +19,7 @@ const ALLOWED_TYPES = [
   'audio/mpeg',
   'audio/mp3',
   'audio/wav',
+  'audio/ogg',
   'audio/x-wav',
   'audio/m4a',
   'audio/x-m4a',
@@ -48,7 +49,7 @@ async function getAudioDuration(
     const mm = await import('music-metadata');
     const metadata = await mm.parseBuffer(fileBuffer, mimeType);
     return metadata.format.duration ?? null;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
       !ALLOWED_TYPES.includes(audioFile.type)
     ) {
       return APIErrorResponse(
-        'Invalid file type. Only MP3, M4A, or WAV allowed.',
+        'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
         400,
       );
     }
@@ -200,22 +201,29 @@ export async function POST(request: Request) {
     const currentAmount = await getCredits(user.id);
 
     // Estimate credits for voice cloning generation (higher cost than regular)
-    const estimate = estimateCredits(text, 'clone') * 2;
+    const estimate = estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
-      Sentry.captureException({ error: 'Insufficient credits', text });
+      Sentry.captureMessage('Insufficient credits', {
+        user: { id: user.id, email: user.email },
+        extra: { text, estimate, currentCreditsAmount: currentAmount },
+      });
       return NextResponse.json(
-        { error: 'Insufficient credits' },
+        {
+          error: `Insufficient credits. You need ${estimate} credits to generate this audio`,
+        },
         { status: 402 },
       );
     }
     const blobUrl = `clone-voice-input/${user.id}-${audioFile.name}`;
 
-    const existingAudio = await head(blobUrl);
+    try {
+      const existingAudio = await head(blobUrl);
 
-    if (existingAudio) {
-      audioPromptUrl = existingAudio.url;
-    } else {
+      if (existingAudio) {
+        audioPromptUrl = existingAudio.url;
+      }
+    } catch (_e) {
       // Upload audio file to Vercel blob for TTS generation
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
@@ -249,51 +257,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: cachedResult }, { status: 200 });
     }
 
-    // Generate TTS with cloned voice
-    const replicate = new Replicate();
+    // Generate TTS with cloned voice using fal.ai
     const input = {
       text,
       // TODO: accept these parameters
       cfg_weight: 0.5,
       temperature: 0.8,
       exaggeration: 0.5,
-      audio_prompt_path: audioPromptUrl,
+      audio_url: audioPromptUrl,
     };
 
-    let predictionResult: Prediction | undefined;
-    const onProgress = (prediction: Prediction) => {
-      predictionResult = prediction;
-    };
+    const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
+      input,
+      logs: false,
+      onQueueUpdate: (update) => {
+        if (update.status === 'IN_PROGRESS') {
+          update.logs?.map((log) => log.message).forEach(console.log);
+        }
+      },
+      abortSignal: request.signal,
+    });
 
-    const modelId =
-      'thomcle/chatterbox-tts:3f5f9c195086737dda710bf504330f71e786d0a361b505e377c8b10122af9d32';
-
-    const output = await replicate.run(
-      modelId,
-      { input, signal: request.signal },
-      onProgress,
-    );
-
-    // Check for errors
-    if (output && typeof output === 'object' && 'error' in output) {
-      const errorObj = {
-        text,
-        audioPromptUrl,
-        model: 'chatterbox-tts',
-        errorData: (output as { error: unknown }).error,
+    const falData = result.data as {
+      audio: {
+        url: string;
+        content_type: string;
+        file_name: string;
+        file_size: number;
       };
-      Sentry.captureException({
-        error: 'Voice cloning failed',
-        ...errorObj,
-      });
-      console.error(errorObj);
-      throw new Error(
-        (output as { error: string }).error || 'Voice cloning failed',
-      );
-    }
+    };
+    const requestId = result.requestId;
 
-    // Save generated audio
-    const blobResult = await put(filename, output as ReadableStream, {
+    // Fetch the audio file from the URL and upload to blob storage
+    const audioResponse = await fetch(falData.audio.url);
+    const audioBuffer = await audioResponse.arrayBuffer();
+
+    const blobResult = await put(filename, audioBuffer, {
       access: 'public',
       contentType: 'audio/mpeg',
       allowOverwrite: true,
@@ -311,7 +310,7 @@ export async function POST(request: Request) {
         text,
         url: blobResult.url,
         model: 'chatterbox-tts',
-        predictionId: predictionResult?.id,
+        predictionId: requestId,
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
         duration: duration.toString(),
@@ -335,7 +334,7 @@ export async function POST(request: Request) {
       await sendPosthogEvent({
         userId: user.id,
         event: 'clone-voice',
-        predictionId: predictionResult?.id,
+        predictionId: requestId,
         text,
         audioPromptUrl,
         creditUsed: estimate,

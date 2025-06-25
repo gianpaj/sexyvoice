@@ -2,6 +2,7 @@ import { match as matchLocale } from '@formatjs/intl-localematcher';
 import Negotiator from 'negotiator';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
 import { updateSession } from '@/lib/supabase/middleware';
 import { i18n } from './lib/i18n/i18n-config';
 
@@ -16,6 +17,8 @@ function getLocale(request: NextRequest): string {
 }
 
 const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
+
+const publicRoutesWithoutAuth = ['/api/stripe/webhook', '/api/daily-stats'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -48,12 +51,16 @@ export async function middleware(req: NextRequest) {
     try {
       const locale = getLocale(req);
       return NextResponse.redirect(new URL(`/${locale}${pathname}`, req.url));
-    } catch (error) {
+    } catch (_error) {
       if (pathname === '/') {
         return NextResponse.redirect(new URL('/en', req.url));
       }
       return NextResponse.redirect(new URL(`/en${pathname}`, req.url));
     }
+  }
+
+  if (publicRoutesWithoutAuth.includes(pathname)) {
+    return NextResponse.next();
   }
 
   return await updateSession(req);

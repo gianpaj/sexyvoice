@@ -1,52 +1,57 @@
 import Link from 'next/link';
 import Script from 'next/script';
-import Stripe from 'stripe';
-
+// import Stripe from 'stripe';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
+import { CreditTopup } from './credit-topup';
+import { getCustomerSession } from '@/lib/stripe/stripe-admin';
+import type Stripe from 'stripe';
+import { getCustomerData } from '@/lib/redis/queries';
+import { getUserById } from '@/lib/supabase/queries';
+import { TopupStatus } from './topup-status';
 
-interface StripeProduct {
-  id: string;
-  name: string;
-  description: string | null;
-  features: string[];
-  price: Stripe.Price;
-}
+// interface StripeProduct {
+//   id: string;
+//   name: string;
+//   description: string | null;
+//   features: string[];
+//   price: Stripe.Price;
+// }
 
-async function getStripeProducts(): Promise<StripeProduct[]> {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not set');
-  }
+// async function getStripeProducts(): Promise<StripeProduct[]> {
+//   if (!process.env.STRIPE_SECRET_KEY) {
+//     throw new Error('STRIPE_SECRET_KEY is not set');
+//   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2025-02-24.acacia',
-  });
+//   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+//     apiVersion: '2025-02-24.acacia',
+//   });
 
-  const product = await stripe.products.retrieve('prod_RyjYjy3DObZ4pm', {
-    expand: ['default_price'],
-  });
+//   const product = await stripe.products.retrieve('prod_RyjYjy3DObZ4pm', {
+//     expand: ['default_price'],
+//   });
 
-  const products = { data: [product] };
+//   const products = { data: [product] };
 
-  const productsData = products.data.filter(
-    (product) => product.active === true,
-  );
+//   const productsData = products.data.filter(
+//     (product) => product.active === true,
+//   );
 
-  // console.dir(productsData, { depth: null });
+//   // console.dir(productsData, { depth: null });
 
-  return productsData.map((product) => ({
-    id: product.id,
-    name: product.name,
-    description: product.description,
-    features: product.marketing_features.map((feature) => feature.name || ''),
-    // ? JSON.parse(product.metadata.features)
-    // : [],
-    price: product.default_price as Stripe.Price,
-  }));
-}
+//   return productsData.map((product) => ({
+//     id: product.id,
+//     name: product.name,
+//     description: product.description,
+//     features: product.marketing_features.map((feature) => feature.name || ''),
+//     // ? JSON.parse(product.metadata.features)
+//     // : [],
+//     price: product.default_price as Stripe.Price,
+//   }));
+// }
 
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -61,14 +66,27 @@ export default async function CreditsPage(props: {
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
-  if (!user) {
+  const userData = user && (await getUserById(user.id));
+  if (!user || !userData || !userData.stripe_id) {
     throw new Error('User not found');
   }
 
+  const customerData = await getCustomerData(userData.stripe_id);
+
+  const clientSecret = await getCustomerSession();
+
+  const { data: existingTransactions } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 lg:flex-row items-center justify-between">
-        <div className="w-full lg:w-1/2">
+      <TopupStatus dict={dict} />
+      <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
+        <div className="w-full lg:w-3/4">
           <h2 className="text-3xl font-bold tracking-tight">{dict.title}</h2>
           <p className="text-muted-foreground">{dict.description}</p>
         </div>
@@ -80,6 +98,13 @@ export default async function CreditsPage(props: {
             Stripe Customer Portal
           </Link>
         </Button>
+      </div>
+
+      {/* Add Credit Top-up Section */}
+      <div>
+        <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
+        <p className="text-muted-foreground mb-6">{dict.topup.description}</p>
+        <CreditTopup dict={dict} />
       </div>
 
       {/* <div className="flex justify-center space-x-4">
@@ -129,28 +154,25 @@ export default async function CreditsPage(props: {
       ))} */}
 
       <div className="my-8">
-        <h3 className="mb-4 text-lg font-semibold">Credit History</h3>
-        <CreditHistory dict={dict} userId={user.id} />
+        <h3 className="mb-4 text-lg font-semibold">{dict.history.title}</h3>
+        <CreditHistory dict={dict} transactions={existingTransactions} />
       </div>
 
-      <NextStripePricingTable
-        pricingTableId="prctbl_1R4mzLJ2uQQSTCBs4u5WHbac"
-        publishableKey="pk_live_51OddRpJ2uQQSTCBs8qxECPQ1TtH6urXhq1mFEDBbfN82vt1aSJp8rVIgXoQHw5tW7Q7ehdPzUvPXdANnDXIGJKUx00gMcxE4S3"
-        clientReferenceId={user?.id}
-      />
+      {(!customerData || customerData?.status !== 'active') && (
+        <NextStripePricingTable clientSecret={clientSecret} />
+      )}
     </div>
   );
 }
 const NextStripePricingTable = ({
-  pricingTableId,
-  publishableKey,
-  clientReferenceId,
+  clientSecret,
 }: {
-  pricingTableId: string;
-  publishableKey: string;
-  clientReferenceId?: string;
+  clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
 }) => {
-  if (!pricingTableId || !publishableKey) return null;
+  const pricingTableId = process.env.STRIPE_PRICING_ID;
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+
+  if (!pricingTableId || !publishableKey || !clientSecret) return null;
   return (
     <>
       <Script
@@ -162,7 +184,7 @@ const NextStripePricingTable = ({
       <stripe-pricing-table
         pricing-table-id={pricingTableId}
         publishable-key={publishableKey}
-        client-reference-id={clientReferenceId}
+        customer-session-client-secret={clientSecret.client_secret}
       />
     </>
   );

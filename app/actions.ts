@@ -1,15 +1,22 @@
 'use server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
+
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
+
+const EMAIL_SCHEMA = z.string().email({ message: 'Invalid email' });
 
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = formData.get('email')?.toString();
   const lang = formData.get('lang')?.toString();
-  const supabase = await createClient();
-  const origin = (await headers()).get('origin');
-  const callbackUrl = formData.get('callbackUrl')?.toString();
+
+  const result = EMAIL_SCHEMA.safeParse(email);
+
+  if (!result.success) {
+    return encodedRedirect('error', `/${lang}/reset-password`, 'generic_error');
+  }
 
   if (!email) {
     return encodedRedirect(
@@ -18,6 +25,10 @@ export const forgotPasswordAction = async (formData: FormData) => {
       'email_required',
     );
   }
+
+  const supabase = await createClient();
+  const origin = (await headers()).get('origin');
+  const callbackUrl = formData.get('callbackUrl')?.toString();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?redirect_to=/${lang}/protected/update-password`,
@@ -66,7 +77,7 @@ export const updatePasswordAction = async (formData: FormData) => {
     console.error(error);
     let message = 'Password update failed';
     if (error.code === 'same_password') {
-      message = 'same_password';
+      message = 'You already have this password';
     }
     encodedRedirect('error', `/${lang}/protected/update-password`, message);
   }

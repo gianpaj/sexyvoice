@@ -1,5 +1,6 @@
-import { Info, Volume2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
+
 import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
 import {
   Card,
@@ -17,8 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getEmotionTags } from '@/lib/ai';
+import { GEMINI_VOICES } from '@/lib/constants';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -31,46 +35,51 @@ export function VoiceSelector({
   publicVoices,
   selectedVoice,
   setSelectedVoice,
+  selectedStyle,
+  setSelectedStyle,
 }: {
   // userVoices: Voice[];
   publicVoices: Voice[];
-  selectedVoice: string;
+  selectedVoice?: Voice;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
+  selectedStyle?: string;
+  setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
 }) {
-  const selectedVoiceSample = publicVoices.find(
-    (file) => file.name === selectedVoice,
+  const showSelectedStyleOpt = GEMINI_VOICES.includes(
+    selectedVoice?.name || '',
   );
-
   return (
     <Card>
       <CardHeader>
         {/* TODO: translate */}
         <CardTitle className="flex flex-row">
           Select Voice
-          <TooltipProvider>
-            <Tooltip delayDuration={100} supportMobileTap>
-              <TooltipTrigger asChild>
-                <Button
-                  className="h-auto w-auto self-end pb-[2px]"
-                  variant="link"
-                  size="icon"
-                >
-                  <Info className="w-4 h-4 ml-2" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  Model: Orpheus-TTS (text-to-speech AI model) - Commercial use
-                  ✔️
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {!showSelectedStyleOpt && (
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Button
+                    className="h-auto w-auto self-end pb-[2px]"
+                    variant="link"
+                    size="icon"
+                  >
+                    <Info className="w-4 h-4 ml-2" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    Model: Orpheus-TTS (text-to-speech AI model) - Commercial
+                    use ✔️
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </CardTitle>
         <CardDescription>Choose from public voices</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+        <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
@@ -93,14 +102,42 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
-        {selectedVoiceSample?.sample_url && (
+        {showSelectedStyleOpt && (
+          <Textarea
+            onChange={(e) => setSelectedStyle(e.target.value)}
+            value={selectedStyle}
+          />
+        )}
+        {selectedVoice?.sample_url && (
           <div className="flex gap-2 items-center justify-between p-4 lg:w-1/2">
-            <AudioPlayer url={selectedVoiceSample.sample_url} />
+            <AudioPlayer url={selectedVoice.sample_url} />
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                {capitalizeFirstLetter(selectedVoice)} sample prompt:{' '}
-                <i>{selectedVoiceSample.sample_prompt}</i>
+                {capitalizeFirstLetter(selectedVoice.name)} sample prompt:{' '}
+                <i>{selectedVoice.sample_prompt}</i>
               </p>
+              {getEmotionTags(selectedVoice.language) && (
+                <TooltipProvider>
+                  <Tooltip delayDuration={100} supportMobileTap>
+                    <TooltipTrigger asChild>
+                      <Button
+                        className="h-auto w-auto p-1"
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Info className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        <strong>Supported emotion tags:</strong>
+                        <br />
+                        {getEmotionTags(selectedVoice.language)}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
           </div>
         )}
