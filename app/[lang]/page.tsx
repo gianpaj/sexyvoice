@@ -199,7 +199,7 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 py-16 sm:px-28">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 py-16 xl:px-28">
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
