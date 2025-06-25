@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Button } from './ui/button';
@@ -42,7 +43,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
     },
   ];
   return (
-    <div className="sm:px-28 py-16 flex flex-col gap-6">
+    <div className="xl:px-28 py-16 flex flex-col gap-6">
       <h2 className="text-2xl font-semibold mb-4 mx-auto">
         {credits.pricingPlan}
       </h2>

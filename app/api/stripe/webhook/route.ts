@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
-import { setCustomerData } from '@/lib/redis/queries';
+import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
@@ -258,7 +258,7 @@ export async function syncStripeDataToKV(customerId: string) {
     });
 
     if (subscriptions.data.length === 0) {
-      const subData = { status: 'none' };
+      const subData: CustomerData = { status: 'none' };
       await setCustomerData(customerId, subData);
       return subData;
     }

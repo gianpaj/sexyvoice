@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 
 export function SignUpForm({
@@ -96,22 +97,30 @@ export function SignUpForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Input
-          type="email"
-          placeholder={dict.email}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoComplete="email"
-        />
-        <Input
-          type="password"
-          placeholder={dict.password}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          autoComplete="new-password"
-        />
+        <div className="grid gap-2">
+          <Label htmlFor="email">{dict.email}</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder={dict.email}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="password">{dict.password}</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder={dict.password}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="new-password"
+          />
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}

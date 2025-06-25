@@ -3,9 +3,10 @@ import { Redis } from '@upstash/redis';
 // Initialize Redis
 const redis = Redis.fromEnv();
 
-interface CustomerData {
+export interface CustomerData {
   // Stripe subscription
   status:
+    | 'none' // extra
     | 'active'
     | 'canceled'
     | 'incomplete'

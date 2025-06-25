@@ -4,7 +4,10 @@ import '../privacy-policy/privacy-policy.css';
 
 export default function TermsAndCondition() {
   return (
-    <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+    <main
+      id="main-content"
+      className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+    >
       <div className="container mx-auto px-4 my-8">
         <h1>Terms & Conditions</h1>
         <p>Updated at 2025-03-28</p>
@@ -653,6 +656,6 @@ export default function TermsAndCondition() {
       </div>
 
       <Footer />
-    </div>
+    </main>
   );
 }
