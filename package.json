@@ -15,7 +15,7 @@
     "type-check": "tsc --noEmit",
     "format:write": "pnpm run format --write",
     "format": "biome format ./app components hooks lib middleware.ts",
-    "analyse": "ANALYZE=true next build",
+    "analyze": "ANALYZE=true next build",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.js"
   },
