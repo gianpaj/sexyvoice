@@ -5,6 +5,7 @@ import {
   CircleStop,
   Download,
   Info,
+  Loader2,
   Pause,
   Play,
   RotateCcw,
@@ -253,9 +254,11 @@ export function AudioGenerator({
                   disabled={!text.trim() || isEnhancingText || isGenerating}
                   title="Enhance text with AI emotion tags"
                 >
-                  <Sparkles
-                    className={`h-4 w-4 text-yellow-300 ${isEnhancingText ? 'animate-spin' : ''}`}
-                  />
+                  {isEnhancingText ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 text-yellow-300" />
+                  )}
                 </Button>
               </>
             )}
