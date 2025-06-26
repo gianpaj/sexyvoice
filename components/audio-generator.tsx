@@ -291,7 +291,7 @@ export function AudioGenerator({
             {isGenerating && (
               <Button
                 variant="outline"
-                title={dict.cancel}
+                aria-label={dict.cancel}
                 size="icon"
                 onClick={() => abortController.current?.abort()}
                 asChild
