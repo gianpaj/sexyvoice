@@ -104,6 +104,9 @@ export function AudioGenerator({
 
       toast.success(dict.success);
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       if (error instanceof APIError) {
         toast.error(error.message || dict.error);
       } else {
@@ -112,6 +115,11 @@ export function AudioGenerator({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleCancel = () => {
+    setIsGenerating(false);
+    abortController.current?.abort();
   };
 
   // Keyboard shortcut handler
@@ -293,7 +301,7 @@ export function AudioGenerator({
                 variant="outline"
                 title={dict.cancel}
                 size="icon"
-                onClick={() => abortController.current?.abort()}
+                onClick={handleCancel}
                 asChild
                 className="ml-2"
               >

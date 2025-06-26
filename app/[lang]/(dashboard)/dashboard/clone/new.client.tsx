@@ -141,7 +141,7 @@ export default function NewVoiceClient({
         err instanceof Error &&
         err.message === 'signal is aborted without reason'
       ) {
-        setErrorMessage(dict.abortedCloning || 'Voice generation aborted.');
+        return
       } else {
         setErrorMessage(
           err instanceof Error ? err.message : 'Unexpected error occurred',
@@ -150,6 +150,12 @@ export default function NewVoiceClient({
       setStatus('error');
     }
   }, [dict, file, textToConvert, clearErrors]);
+
+  const handleCancel = () => {
+    abortController.current?.abort();
+    setStatus('idle');
+  };
+
 
   // Keyboard shortcut handler
   useEffect(() => {
@@ -351,7 +357,7 @@ export default function NewVoiceClient({
               {status === 'generating' && (
                 <Button
                   variant="outline"
-                  onClick={() => abortController.current?.abort()}
+                  onClick={handleCancel}
                   className="mx-auto"
                 >
                   Cancel <CircleStop name="cancel" className="size-4" />
