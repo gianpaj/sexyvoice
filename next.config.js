@@ -1,4 +1,5 @@
-const { withContentlayer } = require('next-contentlayer2');
+import { withBotId } from 'botid/next/config';
+import { withContentlayer } from 'next-contentlayer2';
 
 /**
  * Content Security Policy Header - Without Nonce
@@ -94,6 +95,8 @@ nextConfig =
 const { withSentryConfig } = require('@sentry/nextjs');
 
 nextConfig = withContentlayer(nextConfig);
+
+nextConfig = withBotId(nextConfig);
 
 module.exports =
   process.env.NODE_ENV === 'production'
