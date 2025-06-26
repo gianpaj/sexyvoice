@@ -1,0 +1,24 @@
+export const banList = [
+  'cevipsa.com',
+  'cpav3.com',
+  'nuclene.com',
+  'steveix.com',
+  'mocvn.com',
+  'tenvil.com',
+  'tgvis.com',
+  'amozix.com',
+  'anypsd.com',
+  'maxric.com',
+  //
+  'iridales.com',
+  // 10minuteinbox.com
+  'mailto.plus',
+  'fexpost.com',
+  'fexbox.org',
+  'mailbox.in.ua',
+  'rover.info',
+  'chitthi.in',
+  'fextemp.com',
+  'any.pink',
+  'merepost.com',
+];

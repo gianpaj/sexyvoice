@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
+import { banList } from '@/lib/banlist';
 
 export function SignUpForm({
   dict,
@@ -29,11 +30,12 @@ export function SignUpForm({
 
     try {
       // Check if email is Gmail with + sign and block it
-      if (email.includes('+') && email.toLowerCase().includes('@gmail.com')) {
+      // Block email if it's in the ban list
+      if (email.includes('+') && email.toLowerCase().includes('@gmail.com') || banList.includes(email)) {
         setTimeout(() => {
           setError('Error creating account');
           setIsLoading(false);
-        }, 1000);
+        }, 5000);
         return;
       }
 
