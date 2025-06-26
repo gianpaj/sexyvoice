@@ -1,5 +1,5 @@
-import { withBotId } from 'botid/next/config';
-import { withContentlayer } from 'next-contentlayer2';
+const { withContentlayer } = require('next-contentlayer2');
+const { withBotId } = require('botid/next/config');
 
 /**
  * Content Security Policy Header - Without Nonce
