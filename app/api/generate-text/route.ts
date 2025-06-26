@@ -74,9 +74,6 @@ Rules:
       prompt,
       // temperature: 0.7,
       maxTokens: 500,
-      experimental_telemetry: {
-        isEnabled: true,
-      },
     });
 
     return result.toDataStreamResponse();
