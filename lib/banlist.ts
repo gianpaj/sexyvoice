@@ -11,6 +11,7 @@ export const banList = [
   'maxric.com',
   //
   'iridales.com',
+  'boxmach.com',
   // 10minuteinbox.com
   'mailto.plus',
   'fexpost.com',
