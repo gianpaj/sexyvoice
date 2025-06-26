@@ -237,6 +237,15 @@
       "title": "Historial de Créditos"
     }
   },
+  
+  "explore": {
+    "title": "Explorar Audios",
+    "loading": "Cargando audios...",
+    "noFiles": "No se encontraron audios públicos",
+    "voteUp": "Votar positivo",
+    "voteDown": "Votar negativo",
+    "filter": {"day": "Top Día", "week": "Top Semana", "month": "Top Mes", "all": "Todo el tiempo", "trending": "Tendencias"}
+  },
   "generate": {
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "success": "Audio generado con éxito!",

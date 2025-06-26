@@ -235,6 +235,15 @@
       "title": "Credit History"
     }
   },
+  
+  "explore": {
+    "title": "Explore Audio Files",
+    "loading": "Loading audio files...",
+    "noFiles": "No public audio files found",
+    "voteUp": "Vote up",
+    "voteDown": "Vote down",
+    "filter": {"day": "Top Day", "week": "Top Week", "month": "Top Month", "all": "All Time", "trending": "Trending"}
+  },
   "generate": {
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "success": "Audio generated successfully!",

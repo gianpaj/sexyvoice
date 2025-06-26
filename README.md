@@ -25,6 +25,7 @@
 <!-- - Generate AI voices in multiple languages (English & Spanish) -->
 - Voice selection system with customizable options
 - Public library of generated voices ranked by usage and votes
+- Explore page to browse and vote on public audio files
 - Credit-based usage system
 - User authentication and profile management (Google, Facebook and Apple login coming soon)
 - [Architecture Overview](./ARCHITECTURE.md)
