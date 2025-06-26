@@ -270,11 +270,11 @@ export async function POST(request: Request) {
     const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
       input,
       logs: false,
-      onQueueUpdate: (update) => {
-        if (update.status === 'IN_PROGRESS') {
-          update.logs?.map((log) => log.message).forEach(console.log);
-        }
-      },
+      // onQueueUpdate: (update) => {
+      //   if (update.status === 'IN_PROGRESS') {
+      //     update.logs?.map((log) => log.message).forEach(console.log);
+      //   }
+      // },
       abortSignal: request.signal,
     });
 
