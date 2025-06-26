@@ -21,12 +21,12 @@
 ---
 
 ## 🌟 About
-=======
-<!-- - Generate AI voices in multiple languages (English & Spanish) -->
+
+- Generate AI voices in multiple languages (English & Spanish)
 - Voice selection system with customizable options
-- Public library of generated voices ranked by usage and votes
+<!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
-- User authentication and profile management (Google, Facebook and Apple login coming soon)
+- User authentication and profile management (Google)
 - [Architecture Overview](./ARCHITECTURE.md)
 
 SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, our platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
@@ -35,13 +35,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### 🎯 Core Functionality
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
-- **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio (Starter plan and above)
+- **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
 - **Multi-language Support**: Generate voices in English, Spanish, and Italian (more languages coming soon)
-- **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes
+<!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
-- **Secure Authentication**: Multiple login options with Google, Facebook, and Apple (coming soon)
+- **Secure Authentication**: Multiple login options with Google (more coming soon)
 - **Credit-based System**: Fair usage tracking with transparent pricing
 - **Profile Management**: Personalized dashboard and settings
 - **Audio History**: Track and manage all your generated content
@@ -81,9 +81,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Prerequisites
 
-- **Node.js 30+** - [Download here](https://nodejs.org/)
-- **pnpm** - Install with `npm install -g pnpm`
-- **Supabase account** - [Sign up here](https://supabase.com)
+- **Node.js 22+**
+- **pnpm**
+- **Supabase account** - <https://supabase.com>
 
 ### Installation
 
@@ -106,16 +106,25 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
    - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram cronjob)
+   - `KV_REST_API_URL` - Your Redis (Upstash) KV REST API URL
+   - `KV_REST_API_TOKEN` - Your Redis (Upstash) KV REST API token
+   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
    - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
    - `FAL_KEY` - Your fal.ai API key for voice cloning
+   - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
    - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
-   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
+   - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing
+   - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
+   - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
+   - `STRIPE_TOPUP_5_PRICE_ID`
+   - `STRIPE_TOPUP_10_PRICE_ID`
+   - `STRIPE_TOPUP_99_PRICE_ID`
    - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
    - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
-   - Additional optional variables for analytics and monitoring
+   - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
 4. **Set up Supabase**
-   - Create a new project at [supabase.com](https://supabase.com)
+   - Create a new project at Supabase
    - Run database migrations:
    ```bash
    supabase db push
@@ -227,5 +236,5 @@ SexyVoice.ai is actively developed and maintained. Check our [roadmap](https://s
 ---
 
 <p align="center">
-  Made with ❤️ by the SexyVoice.ai Team
+  Made with ❤️ by Gianfranco
 </p>

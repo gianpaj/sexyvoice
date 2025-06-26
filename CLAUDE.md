@@ -9,9 +9,10 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 ### Key Technologies
 
 - **Frontend**: Next.js 15 with App Router, React 19, TypeScript
-- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation)
+- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
 - **Database**: Supabase PostgreSQL with planned Drizzle ORM migration
 - **Storage**: Vercel Blob Storage for audio files
+- **Caching**: Upstash Redis for audio URL caching
 - **Styling**: Tailwind CSS, shadcn/ui components, Radix UI primitives
 - **Payments**: Stripe integration for subscriptions
 - **Monitoring**: Sentry error tracking and PostHog analytics
@@ -27,6 +28,7 @@ This is a Next.js 15 App Router application with the following key architectural
 - **Database**: Supabase PostgreSQL with type-safe operations
 - **Content**: Contentlayer2 for MDX blog posts with locale support
 - **Styling**: Tailwind CSS with shadcn/ui components and Radix UI primitives
+- **Caching**: Upstash Redis for performance optimization
 
 ### Key Directory Structure
 ```
@@ -56,10 +58,14 @@ Core tables:
 - `credit_transactions` - Credit usage/purchase history
 
 ### Voice Generation Flow
-1. User selects voice in dashboard
-2. API routes handle voice generation requests
-3. Audio stored in Vercel Blob Storage
-4. Database tracks usage and credits
+1. User selects voice and enters text in dashboard
+2. API route validates request and checks user credits in Supabase
+3. Request hash is looked up in Redis cache; if found, cached URL is returned
+4. Otherwise, API invokes Replicate (voice generation) or fal.ai (voice cloning) to synthesize audio
+5. Generated audio is uploaded to Vercel Blob Storage
+6. Blob URL is cached in Redis and stored in Supabase with metadata
+7. Analytics sent to PostHog, errors logged in Sentry
+8. Final audio URL returned to client
 
 ## Development Guidelines
 
@@ -159,7 +165,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `supabase gen types typescript --project-id PROJECT_ID > database.types.ts` - Generate TypeScript types from database schema
 
 ### Additional Commands
-- `pnpm run analyse` - Analyze bundle size
+- `pnpm run analyze` - Analyze bundle size
 
 ## Security and Privacy
 
@@ -180,9 +186,11 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Voice Generation
 - Use Replicate API for AI voice generation
+- Use fal.ai API for voice cloning functionality
+- Use Google Generative AI for text-to-speech and text enhancement (emotion tags)
 - Implement credit tracking for API usage
 - Handle voice cloning with proper permissions
-- Support multiple languages (EN/ES with more planned)
+- Support multiple languages (EN/ES/IT with more planned)
 - Implement audio preview functionality
 
 ### Content Moderation
@@ -221,22 +229,27 @@ pnpm run preview    # Preview production build
 ```
 
 ### Environment Variables
-- Follow `.env.example` for required variables
-- Use Vercel Environment Variables for production
-- Configure Supabase connection strings
-- Set up Stripe webhooks and API keys
-- Configure Replicate API access
+Key environment variables include:
+- **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob)
+- **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
+- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
+- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
+- **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
+- **Analytics**: PostHog and Crisp configuration
+- Follow `.env.example` for complete list and setup instructions
 
 ## Feature Development Priorities
 
 Based on ROADMAP.md and TODO.md, current priorities include:
 
-1. **Voice Features**: Voice cloning, pre-cloned voices, long-form PDF conversion
+1. **Voice Features**: Voice cloning (✅ implemented with fal.ai), pre-cloned voices, long-form PDF conversion
 2. **User Experience**: History page, regeneration functionality, sharing pages
 3. **Security**: Email verification, rate limiting, Cloudflare protection
 4. **Analytics**: Enhanced PostHog integration, user behavior tracking
 5. **Testing**: Playwright E2E tests, GitHub Actions CI/CD
-6. **Performance**: Bundle optimization, caching strategies
+6. **Performance**: Bundle optimization, Redis caching (✅ implemented)
+7. **Content Tools**: Video generation with seewav for waveform visualization
 
 ## Claude-Specific Instructions
 
@@ -271,6 +284,7 @@ Based on ROADMAP.md and TODO.md, current priorities include:
 pnpm run type-check              # Check TypeScript issues
 pnpm run lint                    # Check code quality issues
 supabase status                  # Check Supabase connection
+pnpm run analyze                 # Analyze bundle size
 ```
 
 ---
