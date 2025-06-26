@@ -142,11 +142,10 @@ export default function NewVoiceClient({
         err.message === 'signal is aborted without reason'
       ) {
         return;
-      } else {
-        setErrorMessage(
-          err instanceof Error ? err.message : 'Unexpected error occurred',
-        );
       }
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Unexpected error occurred',
+      );
       setStatus('error');
     }
   }, [dict, file, textToConvert, clearErrors]);
