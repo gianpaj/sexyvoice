@@ -141,7 +141,7 @@ export default function NewVoiceClient({
         err instanceof Error &&
         err.message === 'signal is aborted without reason'
       ) {
-        return
+        return;
       } else {
         setErrorMessage(
           err instanceof Error ? err.message : 'Unexpected error occurred',
@@ -155,7 +155,6 @@ export default function NewVoiceClient({
     abortController.current?.abort();
     setStatus('idle');
   };
-
 
   // Keyboard shortcut handler
   useEffect(() => {
@@ -225,42 +224,45 @@ export default function NewVoiceClient({
                   <Label htmlFor="audio-file">Audio File</Label>
 
                   {/* Drop area */}
-                  <button
-                    type="button"
-                    onClick={openFileDialog}
-                    onKeyUp={openFileDialog}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    data-dragging={isDragging || undefined}
-                    className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
-                  >
-                    <input
-                      {...getInputProps()}
-                      className="sr-only"
-                      aria-label="Upload audio file"
-                      disabled={Boolean(file)}
-                    />
+                  {!file && (
+                    <button
+                      type="button"
+                      onClick={openFileDialog}
+                      onKeyUp={openFileDialog}
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      data-dragging={isDragging || undefined}
+                      className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
+                    >
+                      <input
+                        {...getInputProps()}
+                        className="sr-only"
+                        aria-label="Upload audio file"
+                        disabled={Boolean(file)}
+                      />
 
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <div
-                        className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
-                        aria-hidden="true"
-                      >
-                        <UploadIcon className="size-4 opacity-60" />
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <div
+                          className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
+                          aria-hidden="true"
+                        >
+                          <UploadIcon className="size-4 opacity-60" />
+                        </div>
+                        <p className="mb-1.5 text-sm font-medium">
+                          Upload audio file
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          Drag & drop or click to browse
+                        </p>
+                        <p className="text-muted-foreground text-xs mt-1">
+                          MP3, WAV, M4A or OGG (max.{' '}
+                          {formatBytes(MAX_FILE_SIZE)})
+                        </p>
                       </div>
-                      <p className="mb-1.5 text-sm font-medium">
-                        Upload audio file
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        Drag & drop or click to browse
-                      </p>
-                      <p className="text-muted-foreground text-xs mt-1">
-                        MP3, WAV, M4A or OGG (max. {formatBytes(MAX_FILE_SIZE)})
-                      </p>
-                    </div>
-                  </button>
+                    </button>
+                  )}
 
                   {/* File upload errors */}
                   {errors.length > 0 && (
@@ -275,36 +277,34 @@ export default function NewVoiceClient({
 
                   {/* Selected file display */}
                   {file && (
-                    <div className="space-y-2">
-                      <div
-                        key={files[0]?.id}
-                        className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
-                      >
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          <PaperclipIcon
-                            className="size-4 shrink-0 opacity-60"
-                            aria-hidden="true"
-                          />
-                          <div className="min-w-0">
-                            <p className="truncate text-[13px] font-medium">
-                              {file.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatBytes(file.size)}
-                            </p>
-                          </div>
+                    <div
+                      key={files[0]?.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <PaperclipIcon
+                          className="size-4 shrink-0 opacity-60"
+                          aria-hidden="true"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate break-all whitespace-normal text-[13px] font-medium">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatBytes(file.size)}
+                          </p>
                         </div>
-
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="text-muted-foreground/80 hover:text-foreground -me-2 size-8 hover:bg-transparent"
-                          onClick={() => removeFile(files[0]?.id)}
-                          aria-label="Remove file"
-                        >
-                          <XIcon className="size-4" aria-hidden="true" />
-                        </Button>
                       </div>
+
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-muted-foreground/80 hover:text-foreground -me-2 size-12 hover:bg-transparent"
+                        onClick={() => removeFile(files[0]?.id)}
+                        aria-label="Remove file"
+                      >
+                        <XIcon className="!size-6" aria-hidden="true" />
+                      </Button>
                     </div>
                   )}
                 </div>

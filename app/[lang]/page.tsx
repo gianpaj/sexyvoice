@@ -305,30 +305,29 @@ export default async function LandingPage(props: {
                 </Card>
               ))}
             </div>
-              {/* CTA Section */}
-              <div className="text-center py-16 space-y-6">
-                <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 mb-4">
-                  <Sparkles className="size-4 mr-2" />
-                  <span>{dict.cta.freeCredits}</span>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-white">
-                  {dict.cta.title}
-                </h2>
-                <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-                  {dict.cta.subtitle}
-                </p>
-                <Button
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 mt-4"
-                  asChild
-                  effect="ringHover"
-                >
-                  <Link href={`/${lang}/signup`}>{dict.cta.action}</Link>
-                </Button>
+            {/* CTA Section */}
+            <div className="text-center py-16 space-y-6">
+              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 mb-4">
+                <Sparkles className="size-4 mr-2" />
+                <span>{dict.cta.freeCredits}</span>
               </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white">
+                {dict.cta.title}
+              </h2>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+                {dict.cta.subtitle}
+              </p>
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 mt-4"
+                asChild
+                effect="ringHover"
+              >
+                <Link href={`/${lang}/signup`}>{dict.cta.action}</Link>
+              </Button>
             </div>
           </div>
-
+        </div>
       </main>
       <Footer />
     </>

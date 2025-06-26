@@ -31,7 +31,10 @@ export function SignUpForm({
     try {
       // Check if email is Gmail with + sign and block it
       // Block email if it's in the ban list
-      if (email.includes('+') && email.toLowerCase().includes('@gmail.com') || banList.includes(email)) {
+      if (
+        (email.includes('+') && email.toLowerCase().includes('@gmail.com')) ||
+        banList.includes(email)
+      ) {
         setTimeout(() => {
           setError('Error creating account');
           setIsLoading(false);
