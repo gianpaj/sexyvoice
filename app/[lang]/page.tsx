@@ -69,6 +69,27 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
       'Bienvenido a SexyVoice.ai <resoplido> , tu puerta de entrada a la vanguardia de la innovación y el mundo de la tecnología. Soy tu anfitrión, Javi, y cada semana exploramos las últimas tendencias, avances y las personas que están dando forma al futuro de la tecnología.',
     audioSrc: 'javi_anfitrion.mp3',
   },
+  {
+    id: 7,
+    name: 'Theodore Roosevelt',
+    prompt:
+      'Fellow citizens, we stand at the dawn of a new century, and it is ours to shape with courage and resolve. Remember, the only man who never makes mistakes is the man who never does anything.',
+    audioSrc: 'roosevelt_demo.mp3',
+  },
+  {
+    id: 8,
+    name: 'Queen Victoria',
+    prompt:
+      'It is my steadfast wish that we move forward with dignity and compassion. May our empire continue to flourish through unity and understanding.',
+    audioSrc: 'victoria_demo.mp3',
+  },
+  {
+    id: 9,
+    name: 'Winston Churchill',
+    prompt:
+      'We shall go forward together with resolute hearts. Let us face our challenges with the firmness and courage that have always defined our people.',
+    audioSrc: 'churchill_demo.mp3',
+  },
 ];
 
 const getAllPostsByLang = (lang: Locale) => {
