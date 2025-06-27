@@ -62,7 +62,7 @@ export async function generateMetadata({
   return {
     title: `${post.title} - SexyVoice.ai`,
     description: post.description,
-    keywords: [
+    keywords: post.keywords || [
       'AI voice generation',
       'voice cloning',
       'text-to-speech',
@@ -130,7 +130,7 @@ const PostLayout = async (props: {
 
   const breadcrumbSchema = createBreadcrumbSchema([
     { name: 'Home', url: `https://sexyvoice.ai/${lang}` },
-    { name: 'Blog', url: `https://sexyvoice.ai/${lang}/blog` },
+    // { name: 'Blog', url: `https://sexyvoice.ai/${lang}/blog` },
     {
       name: post.title,
       url: `https://sexyvoice.ai/${post.locale}/blog/${post.slug}`,
@@ -144,17 +144,11 @@ const PostLayout = async (props: {
 
   return (
     <>
-      <link
-        rel="preconnect"
-        href="https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
-      />
-
       {/* Enhanced Structured Data for LLM Understanding */}
       <Script
         id="article-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+        type="application/ld+json">
+          {JSON.stringify({
             ...articleSchema,
             wordCount: wordCount,
             timeRequired: `PT${readingTime}M`,
@@ -184,17 +178,14 @@ const PostLayout = async (props: {
               proficiencyLevel: 'Beginner to Advanced',
               dependencies: 'Basic understanding of AI concepts',
             },
-          }),
-        }}
-      />
+          })
+        }</Script>
 
       <Script
         id="breadcrumb-schema"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbSchema),
-        }}
-      />
+      >{JSON.stringify(breadcrumbSchema)}
+      </Script>
 
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
@@ -224,14 +215,14 @@ const PostLayout = async (props: {
 
       <main role="main" itemScope itemType="https://schema.org/WebPage">
         <article
-          className="py-8 mx-auto max-w-2xl prose dark:prose-invert"
+          className="py-8 px-4 md:px-0 md:mx-auto max-w-2xl prose dark:prose-invert"
           itemScope
           itemType="https://schema.org/BlogPosting"
           itemProp="mainEntity"
         >
-          <header className="mb-8 text-center">
-            <nav aria-label="Breadcrumb" className="mb-4">
-              <ol className="inline-flex items-center space-x-1 md:space-x-3">
+          <header className="text-center my-8">
+            {/* <nav aria-label="Breadcrumb" className="mb-4">
+              <ol className="inline-flex items-center space-x-1 sm:space-x-0 list-none">
                 <li className="inline-flex items-center">
                   <a
                     href={`/${lang}`}
@@ -260,7 +251,7 @@ const PostLayout = async (props: {
                   </div>
                 </li>
               </ol>
-            </nav>
+            </nav> */}
 
             <div className="flex items-center justify-center space-x-4 mb-4 text-xs text-gray-600">
               <time
@@ -278,11 +269,11 @@ const PostLayout = async (props: {
               <span itemProp="wordCount">{wordCount} words</span>
             </div>
 
-            <h1 itemProp="headline" className="mb-4">
+            <h1 itemProp="headline" className="mb-4 mt-12">
               {post.title}
             </h1>
 
-            <div itemProp="description" className="text-lg text-gray-600 mb-6">
+            <div itemProp="description" className="mt-8 text-lg text-gray-400 mb-6">
               {post.description}
             </div>
 
@@ -358,7 +349,7 @@ const PostLayout = async (props: {
           </div>
 
           {/* Article metadata for AI understanding */}
-          <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-wrap gap-2 mb-4" itemProp="keywords">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Topics:
@@ -377,21 +368,12 @@ const PostLayout = async (props: {
             <div className="text-sm text-gray-600 dark:text-gray-400">
               <p>
                 This article is part of our comprehensive guide to AI voice
-                technology. For more information about voice cloning and speech
-                synthesis, explore our{' '}
-                <a
-                  href={`/${lang}/blog`}
-                  className="text-blue-600 hover:underline"
-                >
-                  complete blog collection
-                </a>
-                .
+                technology.
               </p>
             </div>
-          </footer>
+          </div>
         </article>
       </main>
-
       <Footer />
     </>
   );

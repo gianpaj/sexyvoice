@@ -71,8 +71,8 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   },
 ];
 
-const getAllPostsByLang = (lang: Locale) => {
-  return allPosts.filter((post) => post.locale === lang);
+const get3PostsByLang = (lang: Locale) => {
+  return allPosts.filter((post) => post.locale === lang).slice(0, 3);
 };
 
 export default async function LandingPage(props: {
@@ -285,8 +285,8 @@ export default async function LandingPage(props: {
 
             {/* Blog posts Section */}
             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mx-auto lg:max-w-[400px]">
-              {getAllPostsByLang(lang).map((post, idx) => (
-                <Card className="lg:max-w-[400px] mx-auto" key={idx}>
+              {get3PostsByLang(lang).map((post, idx) => (
+                <Card className="lg:max-w-[400px] lg:min-w-[400px] mx-auto" key={idx}>
                   <Link href={`/${post.locale}${post.url}`} prefetch>
                     <CardHeader>
                       {post.image && (
@@ -295,6 +295,9 @@ export default async function LandingPage(props: {
                           alt={post.title}
                           width={300}
                           height={100}
+                          priority={false}
+                          loading="lazy"
+                          className="rounded-lg mx-auto"
                         />
                       )}
                       <CardTitle className="text-gray-200 text-lg leading-8 text-center">
