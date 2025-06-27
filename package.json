@@ -72,6 +72,7 @@
     "replicate": "^1.0.1",
     "require-in-the-middle": "^7.5.2",
     "sass": "^1.86.3",
+    "schema-dts": "^1.1.5",
     "sonner": "^1.7.4",
     "stripe": "^17.7.0",
     "tailwind-merge": "^2.5.2",
