@@ -145,46 +145,41 @@ const PostLayout = async (props: {
   return (
     <>
       {/* Enhanced Structured Data for LLM Understanding */}
-      <Script
-        id="article-schema"
-        type="application/ld+json">
-          {JSON.stringify({
-            ...articleSchema,
-            wordCount: wordCount,
-            timeRequired: `PT${readingTime}M`,
-            about: [
-              {
-                '@type': 'Thing',
-                name: 'AI Voice Cloning',
-                description:
-                  'Artificial intelligence technology for replicating human voices',
-              },
-              {
-                '@type': 'Thing',
-                name: 'Speech Synthesis',
-                description:
-                  'Computer generation of human-like speech from text',
-              },
-              {
-                '@type': 'Thing',
-                name: 'Machine Learning',
-                description: 'AI algorithms that learn patterns from data',
-              },
-            ],
-            mainEntity: {
-              '@type': 'TechArticle',
-              name: post.title,
-              description: post.description,
-              proficiencyLevel: 'Beginner to Advanced',
-              dependencies: 'Basic understanding of AI concepts',
+      <Script id="article-schema" type="application/ld+json">
+        {JSON.stringify({
+          ...articleSchema,
+          wordCount: wordCount,
+          timeRequired: `PT${readingTime}M`,
+          about: [
+            {
+              '@type': 'Thing',
+              name: 'AI Voice Cloning',
+              description:
+                'Artificial intelligence technology for replicating human voices',
             },
-          })
-        }</Script>
+            {
+              '@type': 'Thing',
+              name: 'Speech Synthesis',
+              description: 'Computer generation of human-like speech from text',
+            },
+            {
+              '@type': 'Thing',
+              name: 'Machine Learning',
+              description: 'AI algorithms that learn patterns from data',
+            },
+          ],
+          mainEntity: {
+            '@type': 'TechArticle',
+            name: post.title,
+            description: post.description,
+            proficiencyLevel: 'Beginner to Advanced',
+            dependencies: 'Basic understanding of AI concepts',
+          },
+        })}
+      </Script>
 
-      <Script
-        id="breadcrumb-schema"
-        type="application/ld+json"
-      >{JSON.stringify(breadcrumbSchema)}
+      <Script id="breadcrumb-schema" type="application/ld+json">
+        {JSON.stringify(breadcrumbSchema)}
       </Script>
 
       <Suspense fallback={<div>Loading...</div>}>
@@ -273,7 +268,10 @@ const PostLayout = async (props: {
               {post.title}
             </h1>
 
-            <div itemProp="description" className="mt-8 text-lg text-gray-400 mb-6">
+            <div
+              itemProp="description"
+              className="mt-8 text-lg text-gray-400 mb-6"
+            >
               {post.description}
             </div>
 

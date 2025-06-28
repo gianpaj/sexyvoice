@@ -52,6 +52,7 @@
     }
   },
   "landing": {
+    "latestPosts": "Latest Posts",
     "hero": {
       "title": "Expressive Voices, Uncensored",
       "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators, developers, and storytellers. 😉",

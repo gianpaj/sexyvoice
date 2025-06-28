@@ -285,8 +285,12 @@ export default async function LandingPage(props: {
 
             {/* Blog posts Section */}
             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mx-auto lg:max-w-[400px]">
+              <h2 className="text-2xl font-bold mb-4">{dict.latestPosts</h2>
               {get3PostsByLang(lang).map((post, idx) => (
-                <Card className="lg:max-w-[400px] lg:min-w-[400px] mx-auto" key={idx}>
+                <Card
+                  className="lg:max-w-[400px] lg:min-w-[400px] mx-auto"
+                  key={idx}
+                >
                   <Link href={`/${post.locale}${post.url}`} prefetch>
                     <CardHeader>
                       {post.image && (
