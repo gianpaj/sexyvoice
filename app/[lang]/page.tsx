@@ -5,13 +5,16 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
+import Script from 'next/script';
+import { FAQPage, WithContext } from 'schema-dts';
+
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import Script from 'next/script';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
@@ -72,7 +75,13 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
 ];
 
 const get3PostsByLang = (lang: Locale) => {
-  return allPosts.filter((post) => post.locale === lang).slice(0, 3);
+  return allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
+};
+
+export const metadata: Metadata = {
+  other: {
+    preconnect: 'https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
+  },
 };
 
 export default async function LandingPage(props: {
@@ -93,26 +102,26 @@ export default async function LandingPage(props: {
   const firstPart = parts[0];
   const restParts = parts.slice(1).join(',');
 
+  const jsonLd: WithContext<FAQPage> = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: dict.faq.questions.map((q) => ({
+      '@type': 'Question',
+      name: q.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: q.answer,
+      },
+    })),
+  };
+
   return (
     <>
       <link
         rel="preconnect"
         href="https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
       />
-      <Script type="application/ld+json">
-        {JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: dict.faq.questions.map((q) => ({
-            '@type': 'Question',
-            name: q.question,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: q.answer,
-            },
-          })),
-        })}
-      </Script>
+      <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />
@@ -285,7 +294,7 @@ export default async function LandingPage(props: {
 
             {/* Blog posts Section */}
             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mx-auto lg:max-w-[400px]">
-              <h2 className="text-2xl font-bold mb-4">{dict.latestPosts</h2>
+              <h2 className="text-2xl font-bold mb-4">{dict.latestPosts}</h2>
               {get3PostsByLang(lang).map((post, idx) => (
                 <Card
                   className="lg:max-w-[400px] lg:min-w-[400px] mx-auto"
