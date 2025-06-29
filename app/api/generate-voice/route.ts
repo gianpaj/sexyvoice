@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { put } from '@vercel/blob';
+import { checkBotId } from 'botid/server';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -87,6 +88,12 @@ export async function POST(request: Request) {
         ),
         { status: 400 },
       );
+    }
+
+    const verification = await checkBotId();
+
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     const supabase = await createClient();
