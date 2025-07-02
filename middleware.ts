@@ -77,7 +77,7 @@ export const config = {
      * - audio - .mp3
      * - /{2-letter-lang}/blog/* paths
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3)$).*)',
+    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },
