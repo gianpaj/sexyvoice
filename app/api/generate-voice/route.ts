@@ -126,7 +126,7 @@ export async function POST(request: Request) {
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
-      Sentry.captureMessage('Insufficient credits', {
+      logger.warn('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
       });
