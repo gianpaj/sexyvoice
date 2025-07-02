@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { type GenerateContentResponse, GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { put } from '@vercel/blob';
@@ -47,6 +47,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let user: User | null;
   try {
     const body = await request.json();
 
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    user = data?.user;
 
     if (!user) {
       logger.error('User not found', {
@@ -172,42 +173,41 @@ export async function POST(request: Request) {
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro-preview-tts',
-        contents: [{ parts: [{ text }] }],
-        config: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
-              },
+
+      const geminiTTSConfig = {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
             },
           },
-          //   safetySettings: [
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //   ],
         },
-      });
+      };
+      let response: GenerateContentResponse | null;
+      try {
+        modelUsed = 'gemini-2.5-pro-preview-tts';
+        response = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text }] }],
+          config: geminiTTSConfig,
+        });
+      } catch (error) {
+        console.log(
+          `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
+        );
+        console.error(error);
+        modelUsed = 'gemini-2.5-flash-preview-tts';
+        response = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text }] }],
+          config: geminiTTSConfig,
+        });
+      }
       const data =
-        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       const mimeType =
-        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+        response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
       if (!data || !mimeType) {
         throw new Error('Voice generation failed');
       }
@@ -242,6 +242,7 @@ export async function POST(request: Request) {
         };
         Sentry.captureException({
           error: 'Voice generation failed',
+          user: { id: user.id, email: user.email },
           ...errorObj,
         });
         console.error(errorObj);
@@ -314,6 +315,7 @@ export async function POST(request: Request) {
     };
     Sentry.captureException({
       error: 'Voice generation error',
+      user: { id: user.id, email: user.email },
       ...errorObj,
     });
     console.error(errorObj);
