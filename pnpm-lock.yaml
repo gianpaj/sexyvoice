@@ -32,9 +32,15 @@ importers:
       '@google/genai':
         specifier: ^1.6.0
         version: 1.6.0
+      '@iconify-json/logos':
+        specifier: ^1.2.4
+        version: 1.2.4
       '@iconify/react':
         specifier: ^5.2.1
         version: 5.2.1(react@19.1.0)
+      '@iconify/tailwind':
+        specifier: ^1.2.0
+        version: 1.2.0
       '@radix-ui/react-accordion':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@19.0.4(@types/react@19.0.12))(@types/react@19.0.12)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -666,10 +672,16 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  '@iconify-json/logos@1.2.4':
+    resolution: {integrity: sha512-XC4If5D/hbaZvUkTV8iaZuGlQCyG6CNOlaAaJaGa13V5QMYwYjgtKk3vPP8wz3wtTVNVEVk3LRx1fOJz+YnSMw==}
+
   '@iconify/react@5.2.1':
     resolution: {integrity: sha512-37GDR3fYDZmnmUn9RagyaX+zca24jfVOMY8E1IXTqJuE8pxNtN51KWPQe3VODOWvuUurq7q9uUu3CFrpqj5Iqg==}
     peerDependencies:
       react: '>=16'
+
+  '@iconify/tailwind@1.2.0':
+    resolution: {integrity: sha512-KgpIHWOTcRYw1XcoUqyNSrmYyfLLqZYu3AmP8zdfLk0F5TqRO8YerhlvlQmGfn7rJXgPeZN569xPAJnJ53zZxA==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -4992,10 +5004,18 @@ snapshots:
       protobufjs: 7.5.3
       yargs: 17.7.2
 
+  '@iconify-json/logos@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
   '@iconify/react@5.2.1(react@19.1.0)':
     dependencies:
       '@iconify/types': 2.0.0
       react: 19.1.0
+
+  '@iconify/tailwind@1.2.0':
+    dependencies:
+      '@iconify/types': 2.0.0
 
   '@iconify/types@2.0.0': {}
 
