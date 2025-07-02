@@ -129,11 +129,14 @@ importers:
         specifier: ^14.1.0
         version: 14.1.0
       import-in-the-middle:
-        specifier: ^1.13.1
-        version: 1.13.1
+        specifier: 1.14.2
+        version: 1.14.2
       lucide-react:
         specifier: ^0.523.0
         version: 0.523.0(react@19.1.0)
+      mdx-bundler:
+        specifier: ^10.1.1
+        version: 10.1.1(acorn@8.15.0)(esbuild@0.25.5)
       music-metadata:
         specifier: ^11.2.3
         version: 11.2.3
@@ -3154,9 +3157,6 @@ packages:
 
   immutable@5.1.3:
     resolution: {integrity: sha512-+chQdDfvscSF1SJqv2gn4SRO2ZyS3xL3r7IW/wWEEzrzLisnOlKiQu5ytC/BVNcS15C39WT2Hg/bjKjDMcu+zg==}
-
-  import-in-the-middle@1.13.1:
-    resolution: {integrity: sha512-k2V9wNm9B+ysuelDTHjI9d5KPc4l8zAZTGqj+pcynvWkypZd857ryzN8jNC7Pg2YZXNMJcHRPpaDyCBbNyVRpA==}
 
   import-in-the-middle@1.14.2:
     resolution: {integrity: sha512-5tCuY9BV8ujfOpwtAGgsTx9CGUapcFMEEyByLv1B+v2+6DhAcw+Zr0nhQT7uwaZ7DiourxFEscghOR8e1aPLQw==}
@@ -7570,13 +7570,6 @@ snapshots:
   imagescript@1.3.1: {}
 
   immutable@5.1.3: {}
-
-  import-in-the-middle@1.13.1:
-    dependencies:
-      acorn: 8.15.0
-      acorn-import-attributes: 1.9.5(acorn@8.15.0)
-      cjs-module-lexer: 1.4.3
-      module-details-from-path: 1.0.4
 
   import-in-the-middle@1.14.2:
     dependencies:
