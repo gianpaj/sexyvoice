@@ -56,7 +56,6 @@
         "npm:@google/genai@^1.6.0",
         "npm:@iconify/react@^5.2.1",
         "npm:@next/bundle-analyzer@^15.3.0",
-        "npm:@playwright/test@^1.52.0",
         "npm:@radix-ui/react-accordion@^1.2.4",
         "npm:@radix-ui/react-alert-dialog@^1.1.7",
         "npm:@radix-ui/react-dialog@^1.1.7",
