@@ -329,6 +329,18 @@ export async function POST(request: Request) {
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
+    // Gemini - You exceeded your current quota, please check your plan and billing details
+    if (
+      error &&
+      typeof error === 'object' &&
+      'status' in error &&
+      error.status === 429
+    ) {
+      return NextResponse.json(
+        { error: 'Third-party API Quota exceeded' },
+        { status: 429 },
+      );
+    }
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
