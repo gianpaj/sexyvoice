@@ -315,7 +315,7 @@ export async function POST(request: Request) {
     };
     Sentry.captureException({
       error: 'Voice generation error',
-      user: { id: user.id, email: user.email },
+user: user ? { id: user.id, email: user.email } : undefined,
       ...errorObj,
     });
     console.error(errorObj);
