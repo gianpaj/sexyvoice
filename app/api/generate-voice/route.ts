@@ -193,10 +193,11 @@ export async function POST(request: Request) {
           config: geminiTTSConfig,
         });
       } catch (error) {
-        console.log(
-          `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
-        );
         console.error(error);
+        logger.warn(
+          `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
+          { extra: { error } },
+        );
         modelUsed = 'gemini-2.5-flash-preview-tts';
         response = await ai.models.generateContent({
           model: modelUsed,
@@ -315,7 +316,7 @@ export async function POST(request: Request) {
     };
     Sentry.captureException({
       error: 'Voice generation error',
-user: user ? { id: user.id, email: user.email } : undefined,
+      user: user ? { id: user.id, email: user.email } : undefined,
       ...errorObj,
     });
     console.error(errorObj);
