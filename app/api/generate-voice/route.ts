@@ -1,5 +1,6 @@
 import { type GenerateContentResponse, GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
+import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
 import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
-  let user: User | null;
+  let user: User | null = null;
   try {
     const body = await request.json();
 
@@ -261,6 +262,13 @@ export async function POST(request: Request) {
     await redis.set(filename, blobResult.url);
 
     after(async () => {
+      if (!user) {
+        Sentry.captureException({
+          error: 'User not found',
+        });
+        return;
+      }
+
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
       const audioFileDBResult = await saveAudioFile({
