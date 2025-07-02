@@ -147,7 +147,7 @@ export async function POST(request: Request) {
     const path = `audio/${voice}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
-      console.log('request aborted. hash:', hash);
+      logger.warn('Request aborted by client', { hash });
       abortController.abort();
     });
 
@@ -155,6 +155,11 @@ export async function POST(request: Request) {
     const result = await redis.get(filename);
 
     if (result) {
+      logger.info('Cache hit - returning existing audio', {
+        filename,
+        url: result,
+        creditsUsed: 0,
+      });
       await sendPosthogEvent({
         userId: user.id,
         text,
@@ -170,7 +175,9 @@ export async function POST(request: Request) {
     let modelUsed = voiceObj.model;
     let blobResult: any;
 
-    if (GEMINI_VOICES.includes(voice.toLowerCase())) {
+    const isGeminiVoice = GEMINI_VOICES.includes(voice.toLowerCase());
+
+    if (isGeminiVoice) {
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
@@ -194,10 +201,13 @@ export async function POST(request: Request) {
           config: geminiTTSConfig,
         });
       } catch (error) {
-        console.error(error);
+        console.warn(error);
         logger.warn(
           `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
-          { extra: { error } },
+          {
+            error: error instanceof Error ? error.message : String(error),
+            originalModel: modelUsed,
+          },
         );
         modelUsed = 'gemini-2.5-flash-preview-tts';
         response = await ai.models.generateContent({
@@ -211,6 +221,10 @@ export async function POST(request: Request) {
       const mimeType =
         response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
       if (!data || !mimeType) {
+        logger.error('Gemini voice generation failed - no data or mimeType', {
+          hasData: !!data,
+          mimeType,
+        });
         throw new Error('Voice generation failed');
       }
 
@@ -220,7 +234,6 @@ export async function POST(request: Request) {
         contentType: 'audio/wav',
         allowOverwrite: true,
       });
-      modelUsed = 'gemini-2.5-pro-preview-tts';
     } else {
       // uses REPLICATE_API_TOKEN
       const replicate = new Replicate();
@@ -329,6 +342,7 @@ export async function POST(request: Request) {
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
+
     // Gemini - You exceeded your current quota, please check your plan and billing details
     if (
       error &&
@@ -336,6 +350,7 @@ export async function POST(request: Request) {
       'status' in error &&
       error.status === 429
     ) {
+      logger.warn('Third-party API quota exceeded', { status: 429 });
       return NextResponse.json(
         { error: 'Third-party API Quota exceeded' },
         { status: 429 },
@@ -377,6 +392,7 @@ async function sendPosthogEvent({
       text,
       voiceId,
       credits_used: creditUsed,
+      textLength: text.length,
     },
   });
   await posthog.shutdown();
