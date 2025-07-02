@@ -1,5 +1,5 @@
 const { withContentlayer } = require('next-contentlayer2');
-const { withBotId } = require('botid/next/config');
+// const { withBotId } = require('botid/next/config');
 
 /**
  * Content Security Policy Header - Without Nonce
@@ -93,7 +93,7 @@ if (process.env.ANALYZE === 'true') {
 
 nextConfig = withContentlayer(nextConfig);
 
-nextConfig = withBotId(nextConfig);
+// nextConfig = withBotId(nextConfig);
 
 // Injected content via Sentry wizard below
 if (process.env.NODE_ENV === 'production') {
