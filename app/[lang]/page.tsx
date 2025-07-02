@@ -117,10 +117,6 @@ export default async function LandingPage(props: {
 
   return (
     <>
-      <link
-        rel="preconnect"
-        href="https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com"
-      />
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <Suspense fallback={<div>Loading...</div>}>
