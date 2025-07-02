@@ -65,7 +65,6 @@ export async function middleware(req: NextRequest) {
 
   return await updateSession(req);
 }
-
 export const config = {
   matcher: [
     /*
@@ -76,8 +75,9 @@ export const config = {
      * - favicon.ico (favicon file)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      * - audio - .mp3
+     * - /{2-letter-lang}/blog/* paths
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3)$).*)',
+    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },
