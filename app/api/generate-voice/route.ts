@@ -1,7 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -9,6 +8,7 @@ import { convertToWav } from '@/lib/audio';
 import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
+import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCredits,
   getVoiceIdByName,
@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
 const { logger } = Sentry;
+const FOLDER = 'generated-audio';
 
 async function generateHash(
   text: string,
@@ -142,7 +143,7 @@ export async function POST(request: Request) {
 
     const abortController = new AbortController();
 
-    const path = `audio/${voice}-${hash}`;
+    const path = `${FOLDER}/${voice}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
       console.log('request aborted. hash:', hash);
@@ -166,7 +167,7 @@ export async function POST(request: Request) {
 
     let predictionResult: Prediction | undefined;
     let modelUsed = voiceObj.model;
-    let blobResult: any;
+    let uploadUrl = '';
 
     if (GEMINI_VOICES.includes(voice.toLowerCase())) {
       const ai = new GoogleGenAI({
@@ -218,6 +219,7 @@ export async function POST(request: Request) {
         contentType: 'audio/wav',
         allowOverwrite: true,
       });
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
       modelUsed = 'gemini-2.5-pro-preview-tts';
     } else {
       // uses REPLICATE_API_TOKEN
@@ -249,14 +251,15 @@ export async function POST(request: Request) {
         throw new Error(output.error || 'Voice generation failed');
       }
 
-      blobResult = await put(filename, output, {
-        access: 'public',
-        contentType: 'audio/mpeg',
-        allowOverwrite: true,
-      });
+      // blobResult = await put(filename, output, {
+      //   access: 'public',
+      //   contentType: 'audio/mpeg',
+      //   allowOverwrite: true,
+      // });
+      uploadUrl = await uploadFileToR2(filename, output, 'audio/mpeg');
     }
 
-    await redis.set(filename, blobResult.url);
+    await redis.set(filename, uploadUrl);
 
     after(async () => {
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
@@ -265,7 +268,7 @@ export async function POST(request: Request) {
         userId: user.id,
         filename,
         text,
-        url: blobResult.url,
+        url: uploadUrl,
         model: modelUsed,
         predictionId: predictionResult?.id,
         isPublic: false,
@@ -300,7 +303,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        url: blobResult.url,
+        url: uploadUrl,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
       },
