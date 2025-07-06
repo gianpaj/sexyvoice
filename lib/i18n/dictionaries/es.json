@@ -253,6 +253,6 @@
     "abortedCloning": "Clonación de voz cancelada"
   },
   "historyPage": {
-    "retentionInfo": "Los archivos de audio generados se eliminan de todos los sistemas después de 30 días."
+    "retentionInfo": "Para cuentas gratis: Los archivos de audio generados se eliminan de todos los sistemas después de 30 días."
   }
 }

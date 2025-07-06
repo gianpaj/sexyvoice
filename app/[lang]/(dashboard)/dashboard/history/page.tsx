@@ -11,6 +11,7 @@ import { DataTable } from './data-table';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default async function HistoryPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -33,6 +34,7 @@ export default async function HistoryPage(props: {
     <div className="container mx-auto pb-10">
       <h2 className="text-2xl font-bold mb-4">Generation History</h2>
       <Alert className="mb-4">
+        <AlertCircle className="h-4 w-4 -mt-1" />
         <AlertDescription>{dict.retentionInfo}</AlertDescription>
       </Alert>
       <HydrationBoundary state={dehydrate(queryClient)}>

@@ -2,6 +2,7 @@
 
 import { Download, Pause, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -48,7 +49,6 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
         }
         const data = await response.json();
         setAudioFiles(data);
-      } catch (_error) {
       } finally {
         setIsLoading(false);
       }

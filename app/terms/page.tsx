@@ -642,10 +642,9 @@ export default function TermsAndCondition() {
 
         <h2>Audio File Retention</h2>
         <p>
-          Generated audio files are stored for 30 days. After this period the
-          audio files and all associated information are permanently removed
-          from our systems, including Vercel Blob Storage, Redis cache, and our
-          Supabase database.
+          For free accounts, generated audio files are stored for 30 days. After
+          this period the audio files and all associated information are
+          permanently removed from our systems.
         </p>
 
         <h2>Contact Us</h2>
