@@ -20,7 +20,7 @@ export function LanguageSelector({
   currentLang: string;
   isMobile: boolean;
 }) {
-  const currentLanguage =
+  const _currentLanguage =
     languages.find((lang) => lang.code === currentLang)?.label || 'Language';
 
   return (

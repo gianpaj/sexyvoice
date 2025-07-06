@@ -17,7 +17,8 @@
     "format": "biome format ./app components hooks lib middleware.ts",
     "analyze": "ANALYZE=true next build",
     "clean": "knip",
-    "check-translations": "node scripts/check-translations.js"
+    "check-translations": "node scripts/check-translations.js",
+    "clean-old-audio": "node scripts/delete-old-audio.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",

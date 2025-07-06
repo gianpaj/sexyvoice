@@ -208,7 +208,7 @@ const PostLayout = async (props: {
         <meta itemProp="learningResourceType" content="Tutorial" />
       </div>
 
-      <main role="main" itemScope itemType="https://schema.org/WebPage">
+      <main itemScope itemType="https://schema.org/WebPage">
         <article
           className="py-8 px-4 md:px-0 md:mx-auto max-w-2xl prose dark:prose-invert"
           itemScope

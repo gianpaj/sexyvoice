@@ -1,7 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { put } from '@vercel/blob';
+import { put, type PutBlobResult } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -166,7 +166,7 @@ export async function POST(request: Request) {
 
     let predictionResult: Prediction | undefined;
     let modelUsed = voiceObj.model;
-    let blobResult: any;
+    let blobResult: PutBlobResult | undefined;
 
     if (GEMINI_VOICES.includes(voice.toLowerCase())) {
       const ai = new GoogleGenAI({

@@ -48,7 +48,7 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
         }
         const data = await response.json();
         setAudioFiles(data);
-      } catch (error) {
+      } catch (_error) {
       } finally {
         setIsLoading(false);
       }

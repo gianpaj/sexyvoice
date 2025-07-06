@@ -249,5 +249,8 @@
     "resetForm": "Reset Form",
     "downloadAudio": "Download Audio",
     "abortedCloning": "Voice generation aborted."
+  },
+  "historyPage": {
+    "retentionInfo": "Generated audio files are deleted from all systems after 30 days."
   }
 }

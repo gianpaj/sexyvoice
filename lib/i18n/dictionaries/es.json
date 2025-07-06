@@ -251,5 +251,8 @@
     "resetForm": "Reiniciar Formulario",
     "downloadAudio": "Descargar Audio",
     "abortedCloning": "Clonación de voz cancelada"
+  },
+  "historyPage": {
+    "retentionInfo": "Los archivos de audio generados se eliminan de todos los sistemas después de 30 días."
   }
 }
