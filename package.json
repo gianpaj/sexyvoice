@@ -17,7 +17,8 @@
     "format": "biome format ./app components hooks lib middleware.ts",
     "analyze": "ANALYZE=true next build",
     "clean": "knip",
-    "check-translations": "node scripts/check-translations.js"
+    "check-translations": "node scripts/check-translations.js",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
@@ -88,7 +89,9 @@
     "@types/react-dom": "19.1.2",
     "autoprefixer": "^10.4.17",
     "dotenv": "^16.5.0",
+    "husky": "^9.1.7",
     "knip": "^5.50.2",
+    "lint-staged": "^16.1.2",
     "postcss": "^8.4.33",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"

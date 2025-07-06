@@ -84,7 +84,7 @@ describe('formatDate', () => {
   test('formats date with time', () => {
     const result = formatDate('2024-01-01T15:30:00Z', { withTime: true });
     assert.ok(result.includes('January 1, 2024'));
-    assert.ok(/04:30\s?PM/.test(result));
+    assert.ok(/03:30\s?PM/.test(result));
   });
 });
 

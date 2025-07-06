@@ -23,6 +23,7 @@ export function formatDate(
     month: 'long',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'UTC',
     ...(withTime && {
       hour: '2-digit',
       minute: '2-digit',
