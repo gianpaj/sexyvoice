@@ -1,3 +1,4 @@
+import { addIconSelectors } from '@iconify/tailwind';
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
@@ -96,6 +97,11 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@tailwindcss/typography'),
+    // Iconify plugin, requires writing list of icon sets to load
+    addIconSelectors(['logos']),
+  ],
 };
 export default config;

@@ -54,7 +54,6 @@
         "npm:@fal-ai/client@^1.5.0",
         "npm:@formatjs/intl-localematcher@~0.5.10",
         "npm:@google/genai@^1.6.0",
-        "npm:@iconify/react@^5.2.1",
         "npm:@next/bundle-analyzer@^15.3.0",
         "npm:@radix-ui/react-accordion@^1.2.4",
         "npm:@radix-ui/react-alert-dialog@^1.1.7",

@@ -1,6 +1,5 @@
 'use client';
 
-import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
-// import GoogleOneTap from '@/components/google-one-tab';
+import { LogosGoogleIcon } from '@/lib/icons';
 
 export function LoginForm({
   dict,
@@ -108,7 +107,7 @@ export function LoginForm({
         className="w-full"
         disabled={isLoading}
       >
-        <Icon icon="logos:google-icon" width="256" height="262" />
+        <LogosGoogleIcon />
         Login with Google
       </Button>
 

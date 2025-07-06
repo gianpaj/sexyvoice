@@ -3,6 +3,7 @@
 - Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Translate website to French
 - Translate website to German
+- Drip marking - i.e. send an email after the first 5000 credits have been used.
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
