@@ -1,3 +1,4 @@
 module.exports = {
-    '*.{ts,tsx,js,jsx,mjs,cjs}': ['pnpm type-check'],
+  // Run type-check on TypeScript files, but do not pass any filename arguments
+  '**/*.ts?(x)': () => 'pnpm type-check',
 };
