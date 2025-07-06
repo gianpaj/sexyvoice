@@ -11,7 +11,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Frontend**: Next.js 15 with App Router, React 19, TypeScript
 - **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
 - **Database**: Supabase PostgreSQL with planned Drizzle ORM migration
-- **Storage**: Vercel Blob Storage for audio files
+- **Storage**: Cloudflare R2 for audio files
 - **Caching**: Upstash Redis for audio URL caching
 - **Styling**: Tailwind CSS, shadcn/ui components, Radix UI primitives
 - **Payments**: Stripe integration for subscriptions
@@ -62,8 +62,8 @@ Core tables:
 2. API route validates request and checks user credits in Supabase
 3. Request hash is looked up in Redis cache; if found, cached URL is returned
 4. Otherwise, API invokes Replicate (voice generation) or fal.ai (voice cloning) to synthesize audio
-5. Generated audio is uploaded to Vercel Blob Storage
-6. Blob URL is cached in Redis and stored in Supabase with metadata
+5. Generated audio is uploaded to Cloudflare R2 Storage
+6. R2 URL is cached in Redis and stored in Supabase with metadata
 7. Analytics sent to PostHog, errors logged in Sentry
 8. Final audio URL returned to client
 
@@ -231,10 +231,10 @@ pnpm run preview    # Preview production build
 ### Environment Variables
 Key environment variables include:
 - **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob)
+- **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
-- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
+- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICING_ID`, plus top-up pricing IDs (`STRIPE_TOPUP_5_PRICE_ID`, `STRIPE_TOPUP_10_PRICE_ID`, `STRIPE_TOPUP_99_PRICE_ID`)
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog and Crisp configuration
 - Follow `.env.example` for complete list and setup instructions
