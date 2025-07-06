@@ -76,6 +76,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Biome](https://biomejs.dev)** - Fast linter and formatter
 - **[TypeScript](https://typescriptlang.org)** - Type safety and developer experience
 - **[Contentlayer](https://contentlayer.dev)** - Type-safe content management
+- **[Husky](https://typicode.github.io/husky)** - Git hooks for automated tasks
+- **[lint-staged](https://github.com/okonet/lint-staged)** - Runs commands on staged files
 
 ## 🚀 Getting Started
 
