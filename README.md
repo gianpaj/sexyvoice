@@ -13,9 +13,9 @@
 <p align="center">
   <a href="https://sexyvoice.ai">🌐 Live Demo</a> •
   <a href="https://sexyvoice.featurebase.app">🗺️ Roadmap</a> •
-  <a href="#getting-started">🚀 Quick Start</a> •
-  <a href="#features">✨ Features</a> •
-  <a href="#tech-stack">🛠️ Tech Stack</a>
+  <a href="#-getting-started">🚀 Quick Start</a> •
+  <a href="#-features">✨ Features</a> •
+  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a>
 </p>
 
 ---
@@ -29,7 +29,7 @@
 - User authentication and profile management (Google)
 - [Architecture Overview](./ARCHITECTURE.md)
 
-SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, our platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
+SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
 
 ## ✨ Features
 
@@ -76,6 +76,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Biome](https://biomejs.dev)** - Fast linter and formatter
 - **[TypeScript](https://typescriptlang.org)** - Type safety and developer experience
 - **[Contentlayer](https://contentlayer.dev)** - Type-safe content management
+- **[Husky](https://typicode.github.io/husky)** - Git hooks for automated tasks
+- **[lint-staged](https://github.com/okonet/lint-staged)** - Runs commands on staged files
 
 ## 🚀 Getting Started
 
@@ -203,12 +205,12 @@ SexyVoice.ai implements multiple security layers:
 
 ## 🤝 Contributing
 
-<!-- We welcome contributions! Please see our [contribution guidelines](CONTRIBUTING.md) for details on how to: -->
+<!-- We welcome contributions! Please see the [contribution guidelines](CONTRIBUTING.md) for details on how to: -->
 We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
-<!-- - Follow our code of conduct -->
+<!-- - Follow the code of conduct -->
 
 ## 📄 License
 
@@ -223,14 +225,14 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 🏗️ Project Status
 
-SexyVoice.ai is actively developed and maintained. Check our [roadmap](https://sexyvoice.featurebase.app) for upcoming features and improvements.
+SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://sexyvoice.featurebase.app) for upcoming features and improvements.
 
 ### Current Version
 - ✅ Core voice generation functionality
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Multi-language support (EN/ES/IT)
+- ✅ Website multi-language support (EN/ES)
 - 🚧 API access (coming soon)
 
 ---

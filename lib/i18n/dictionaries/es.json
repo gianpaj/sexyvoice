@@ -52,6 +52,7 @@
     }
   },
   "landing": {
+    "latestPosts": "Ultimos Posts",
     "hero": {
       "title": "Voces Expressivas, Sin Censura",
       "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",

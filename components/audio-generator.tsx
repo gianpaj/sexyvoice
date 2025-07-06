@@ -37,12 +37,14 @@ import {
 
 interface AudioGeneratorProps {
   selectedVoice?: Voice;
+  selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
 }
 
 export function AudioGenerator({
   selectedVoice,
+  selectedStyle,
   hasEnoughCredits,
   dict,
 }: AudioGeneratorProps) {
@@ -54,7 +56,7 @@ export function AudioGenerator({
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
-  const showEnhanceText = !GEMINI_VOICES.includes(selectedVoice?.name || '');
+  const isGeminiVoice = GEMINI_VOICES.includes(selectedVoice?.name || '');
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -71,19 +73,25 @@ export function AudioGenerator({
     try {
       abortController.current = new AbortController();
 
+      const styleVariant = isGeminiVoice ? selectedStyle : '';
+
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text, voice: selectedVoice?.name }),
+        body: JSON.stringify({
+          text,
+          voice: selectedVoice?.name,
+          styleVariant,
+        }),
         signal: abortController.current.signal,
       });
 
       if (!response.ok) {
         const error: APIError = await response.json();
 
-        throw new APIError(error.serverMessage, response);
+        throw new APIError(error.error, response);
       }
 
       const { url } = await response.json();
@@ -234,7 +242,7 @@ export function AudioGenerator({
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-16"
             />
-            {showEnhanceText && (
+            {!isGeminiVoice && (
               <>
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>

@@ -1,0 +1,12 @@
+{
+  "deploy": {
+    "project": "b62be7b0-f950-4aca-8df3-6926f162c554",
+    "exclude": ["**/node_modules"],
+    "include": [],
+    "entrypoint": "index.ts"
+  },
+  "compilerOptions": {
+    "strict": true
+  },
+  "unstable": ["sloppy-imports"]
+}

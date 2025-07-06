@@ -12,12 +12,12 @@
     },
     "signup": {
       "title": "Create an account",
-      "subtitle": "Get started with voice cloning",
+      "subtitle": "Get started generating speech",
       "email": "Email address",
       "password": "Password",
       "username": "Username",
       "fullName": "Full name",
-      "submit": "Create account",
+      "submit": "Sign up",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
       "error": "Error creating account",
@@ -52,6 +52,7 @@
     }
   },
   "landing": {
+    "latestPosts": "Latest Posts",
     "hero": {
       "title": "Expressive Voices, Uncensored",
       "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators, developers, and storytellers. 😉",

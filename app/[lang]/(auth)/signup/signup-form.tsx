@@ -1,14 +1,15 @@
 'use client';
 
-import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 import { banList } from '@/lib/banlist';
+import { LogosGoogleIcon } from '@/lib/icons';
 
 export function SignUpForm({
   dict,
@@ -140,7 +141,7 @@ export function SignUpForm({
         className="w-full"
         disabled={isLoading}
       >
-        <Icon icon="logos:google-icon" width="256" height="262" />
+        <LogosGoogleIcon />
         Sign up with Google
       </Button>
 
