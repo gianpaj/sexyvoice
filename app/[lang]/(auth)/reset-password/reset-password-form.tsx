@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 
+import type dictLang from '@/lib/i18n/dictionaries/en.json';
 import { forgotPasswordAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,8 +19,7 @@ export function ResetPasswordForm({
   lang,
   message,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: dictionary can contain various keys
-  dict: any;
+  dict: (typeof dictLang)['auth']['resetPassword'];
   lang: string;
   message: Message;
 }) {
