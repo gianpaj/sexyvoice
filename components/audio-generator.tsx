@@ -306,9 +306,9 @@ export function AudioGenerator({
                 size="icon"
                 onClick={handleCancel}
                 asChild
-                className="ml-2"
+                className="ml-2 border-none cursor-pointer hover:text-gray-400 hover:!bg-transparent size-8"
               >
-                <CircleStop name="cancel" className="size-4" />
+                <CircleStop name="cancel" />
               </Button>
             )}
           </div>

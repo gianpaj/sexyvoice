@@ -8,8 +8,10 @@ function parseMimeType(mimeType: string): WavConversionOptions {
   const [fileType, ...params] = mimeType.split(';').map((s) => s.trim());
   const [_, format] = fileType.split('/');
 
-  const options: Partial<WavConversionOptions> = {
+  const options: WavConversionOptions = {
     numChannels: 1,
+    sampleRate: 24000,
+    bitsPerSample: 16,
   };
 
   if (format?.startsWith('L')) {
@@ -26,7 +28,7 @@ function parseMimeType(mimeType: string): WavConversionOptions {
     }
   }
 
-  return options as WavConversionOptions;
+  return options;
 }
 
 function createWavHeader(
@@ -59,8 +61,10 @@ function createWavHeader(
 // https://github.com/RiverTwilight/Geekits/blob/cc185957ff718d80064a6457fdae44703ae44f17/src/pages/api/ai/tts.ts#L69
 export function convertToWav(rawData: string, mimeType: string): Buffer {
   const options = parseMimeType(mimeType);
-  const wavHeader = createWavHeader(rawData.length, options);
   const buffer = Buffer.from(rawData, 'base64');
+  const wavHeader = createWavHeader(rawData.length, options);
+
+  // const wavHeader = createWavHeader(buffer.length, options); // ✅ Use buffer length
 
   return Buffer.concat([wavHeader, buffer]);
 }

@@ -214,11 +214,6 @@ export async function POST(request: Request) {
       }
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
-      blobResult = await put(filename, audioBuffer, {
-        access: 'public',
-        contentType: 'audio/wav',
-        allowOverwrite: true,
-      });
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
       modelUsed = 'gemini-2.5-pro-preview-tts';
     } else {

@@ -4,8 +4,6 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 
-// import formidable from "formidable";
-
 export const config = {
   api: {
     bodyParser: false,
@@ -30,6 +28,7 @@ export const uploadFileToR2 = async (
     Bucket: process.env.R2_BUCKET_NAME,
     Key: filename,
     Body: buffer,
+    ACL: 'public-read',
     ContentType: contentType,
   };
 
