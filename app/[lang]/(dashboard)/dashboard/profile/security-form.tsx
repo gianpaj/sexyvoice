@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export function SecurityForm({
   email,
-  lang,
+  lang: _lang,
 }: {
   email?: string;
   lang: string;
@@ -21,7 +21,7 @@ export function SecurityForm({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const router = useRouter();
+  const _router = useRouter();
   const supabase = createClient();
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {

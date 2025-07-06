@@ -10,6 +10,7 @@ export function LogosGoogleIcon(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 256 262"
       {...props}
     >
+      <title>Google logo</title>
       {/* Icon from SVG Logos by Gil Barbara - https://raw.githubusercontent.com/gilbarbara/logos/master/LICENSE.txt */}
       <path
         fill="#4285F4"

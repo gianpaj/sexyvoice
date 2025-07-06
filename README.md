@@ -156,6 +156,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm check-translations` | Validate translation files |
 | `pnpm build:content` | Build content layer |
 | `pnpm clean` | Clean unused dependencies with Knip |
+| `pnpm clean-old-audio` | Delete generated audio older than a specified number of days |
 
 ### Testing
 

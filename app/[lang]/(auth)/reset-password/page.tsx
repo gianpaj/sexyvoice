@@ -11,7 +11,7 @@ export default async function ResetPasswordPage(props: {
   const searchParams = await props.searchParams;
 
   const { lang } = params;
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'auth');
 
   return (
     <>
@@ -20,13 +20,13 @@ export default async function ResetPasswordPage(props: {
         <div className="w-full max-w-md">
           <div className="rounded-2xl p-8 bg-background shadow-xl">
             <h1 className="mb-2 text-center text-3xl font-bold">
-              {dict.auth.resetPassword.title}
+              {dict.resetPassword.title}
             </h1>
             <p className="text-sm text-muted-foreground mb-8">
-              {dict.auth.resetPassword.subtitle}
+              {dict.resetPassword.subtitle}
             </p>
             <ResetPasswordForm
-              dict={dict.auth.resetPassword}
+              dict={dict.resetPassword}
               lang={lang}
               message={searchParams}
             />

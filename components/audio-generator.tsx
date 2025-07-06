@@ -124,7 +124,7 @@ export function AudioGenerator({
   };
 
   // Keyboard shortcut handler
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dependencies are static
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
