@@ -4,11 +4,12 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { convertToWav } from '@/lib/audio';
+import { convertToWav, generateHash } from '@/lib/audio';
 import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { checkUserPaidStatus } from '@/lib/stripe/stripe-client';
 import {
   getCredits,
   getVoiceIdByName,
@@ -20,23 +21,6 @@ import { estimateCredits } from '@/lib/utils';
 
 const { logger } = Sentry;
 const FOLDER = 'generated-audio';
-
-async function generateHash(
-  text: string,
-  voice: string,
-  // accent: string,
-  // speed: string,
-) {
-  const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${voice}`;
-  const data = textEncoder.encode(combinedString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 8);
-}
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 60; // seconds - fluid compute is enabled
@@ -138,12 +122,18 @@ export async function POST(request: Request) {
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice, and accent
-    const hash = await generateHash(text, voice);
+    // Generate hash for the combination of text, voice
+    const hash = await generateHash(`${text}-${voice}`);
 
     const abortController = new AbortController();
 
-    const path = `${FOLDER}/${voice}-${hash}`;
+    const { isPaidUser } = await checkUserPaidStatus(user.id);
+
+    let path = `${FOLDER}-free/${voice}-${hash}`;
+
+    if (isPaidUser) {
+      path = `${FOLDER}/${voice}-${hash}`;
+    }
 
     request.signal.addEventListener('abort', () => {
       console.log('request aborted. hash:', hash);
