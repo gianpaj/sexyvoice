@@ -55,6 +55,7 @@
     "@vercel/blob": "^1.0.0",
     "@vercel/speed-insights": "^1.2.0",
     "ai": "^4.3.16",
+    "botid": "^1.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "contentlayer2": "^0.5.7",
