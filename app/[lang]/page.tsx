@@ -80,6 +80,7 @@ const get3PostsByLang = (lang: Locale) => {
 
 export const metadata: Metadata = {
   other: {
+    // TODO upload files to Cloudflare R2
     preconnect: 'https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
   },
 };
@@ -172,6 +173,7 @@ export default async function LandingPage(props: {
                     key={audio.id}
                     name={audio.name}
                     prompt={audio.prompt}
+                    // TODO upload files to Cloudflare R2
                     audioSrc={`https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com/${audio.audioSrc}`}
                   />
                 ))}

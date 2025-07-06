@@ -236,11 +236,6 @@ export async function POST(request: Request) {
         throw new Error(output.error || 'Voice generation failed');
       }
 
-      // blobResult = await put(filename, output, {
-      //   access: 'public',
-      //   contentType: 'audio/mpeg',
-      //   allowOverwrite: true,
-      // });
       uploadUrl = await uploadFileToR2(filename, output, 'audio/mpeg');
     }
 
