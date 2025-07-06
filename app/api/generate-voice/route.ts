@@ -1,5 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
+import { type GenerateContentResponse, GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
+import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let user: User | null = null;
   try {
     const body = await request.json();
 
@@ -77,7 +79,7 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    user = data?.user;
 
     if (!user) {
       logger.error('User not found', {
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
-      Sentry.captureMessage('Insufficient credits', {
+      logger.warn('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
       });
@@ -136,7 +138,7 @@ export async function POST(request: Request) {
     }
 
     request.signal.addEventListener('abort', () => {
-      console.log('request aborted. hash:', hash);
+      logger.warn('Request aborted by client', { hash });
       abortController.abort();
     });
 
@@ -144,6 +146,11 @@ export async function POST(request: Request) {
     const result = await redis.get(filename);
 
     if (result) {
+      logger.info('Cache hit - returning existing audio', {
+        filename,
+        url: result,
+        creditsUsed: 0,
+      });
       await sendPosthogEvent({
         userId: user.id,
         text,
@@ -159,53 +166,62 @@ export async function POST(request: Request) {
     let modelUsed = voiceObj.model;
     let uploadUrl = '';
 
-    if (GEMINI_VOICES.includes(voice.toLowerCase())) {
+    const isGeminiVoice = GEMINI_VOICES.includes(voice.toLowerCase());
+
+    if (isGeminiVoice) {
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro-preview-tts',
-        contents: [{ parts: [{ text }] }],
-        config: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
-              },
+
+      const geminiTTSConfig = {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
             },
           },
-          //   safetySettings: [
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //     {
-          //       category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-          //       threshold: HarmBlockThreshold.BLOCK_NONE,
-          //     },
-          //   ],
         },
-      });
+      };
+      let response: GenerateContentResponse | null;
+      try {
+        modelUsed = 'gemini-2.5-pro-preview-tts';
+        response = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text }] }],
+          config: geminiTTSConfig,
+        });
+      } catch (error) {
+        console.warn(error);
+        logger.warn(
+          `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
+          {
+            error: error instanceof Error ? error.message : String(error),
+            originalModel: modelUsed,
+          },
+        );
+        modelUsed = 'gemini-2.5-flash-preview-tts';
+        response = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text }] }],
+          config: geminiTTSConfig,
+        });
+      }
       const data =
-        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       const mimeType =
-        response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+        response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
       if (!data || !mimeType) {
+        logger.error('Gemini voice generation failed - no data or mimeType', {
+          hasData: !!data,
+          mimeType,
+          responseCandidates: response?.candidates,
+        });
         throw new Error('Voice generation failed');
       }
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
-      modelUsed = 'gemini-2.5-pro-preview-tts';
     } else {
       // uses REPLICATE_API_TOKEN
       const replicate = new Replicate();
@@ -229,6 +245,7 @@ export async function POST(request: Request) {
         };
         Sentry.captureException({
           error: 'Voice generation failed',
+          user: { id: user.id, email: user.email },
           ...errorObj,
         });
         console.error(errorObj);
@@ -242,6 +259,13 @@ export async function POST(request: Request) {
     await redis.set(filename, uploadUrl);
 
     after(async () => {
+      if (!user) {
+        Sentry.captureException({
+          error: 'User not found',
+        });
+        return;
+      }
+
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
       const audioFileDBResult = await saveAudioFile({
@@ -297,11 +321,40 @@ export async function POST(request: Request) {
     };
     Sentry.captureException({
       error: 'Voice generation error',
+      user: user ? { id: user.id, email: user.email } : undefined,
       ...errorObj,
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
+
+    // Gemini - You exceeded your current quota, please check your plan and billing details
+    if (
+      error &&
+      typeof error === 'object' &&
+      'status' in error &&
+      error.status === 429
+    ) {
+      logger.warn('Third-party API quota exceeded', { status: 429 });
+      return NextResponse.json(
+        { error: 'Third-party API Quota exceeded' },
+        { status: 429 },
+      );
+    }
     if (error instanceof Error) {
+      // if Gemini error
+      if (error instanceof Error && error.message.includes('googleapis')) {
+        const message = JSON.parse(error.message);
+        // You exceeded your current quota
+        if (message.error.code === 429) {
+          return NextResponse.json(
+            {
+              error:
+                'We have exceeded our third-party API current quota, please try later or tomorrow',
+            },
+            { status: 500 },
+          );
+        }
+      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json(
@@ -337,6 +390,7 @@ async function sendPosthogEvent({
       text,
       voiceId,
       credits_used: creditUsed,
+      textLength: text.length,
     },
   });
   await posthog.shutdown();
