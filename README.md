@@ -64,7 +64,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Backend & Database
 - **[Supabase](https://supabase.com)** - Authentication and PostgreSQL database with SSR support
 - **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations *(planned)*
-- **[Vercel Blob Storage](https://vercel.com/storage/blob)** - Scalable audio file storage
+- **[Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)** - Scalable audio file storage with global CDN
 
 ### DevOps & Monitoring
 - **[Vercel](https://vercel.com)** - Deployment and hosting platform
@@ -103,24 +103,34 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    cp .env.example .env.local
    ```
    Fill in the required environment variables as defined in [`.env.example`](.env.example):
-   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-   - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram cronjob)
-   - `KV_REST_API_URL` - Your Redis (Upstash) KV REST API URL
-   - `KV_REST_API_TOKEN` - Your Redis (Upstash) KV REST API token
-   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-   - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-   - `FAL_KEY` - Your fal.ai API key for voice cloning
-   - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-   - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
-   - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing
-   - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-   - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-   - `STRIPE_TOPUP_5_PRICE_ID`
-   - `STRIPE_TOPUP_10_PRICE_ID`
-   - `STRIPE_TOPUP_99_PRICE_ID`
-   - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
-   - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Supabase
+      - `NEXT_PUBLIC_SUPABASE_URL`
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+   - Your Redis (Upstash)
+      - `KV_REST_API_URL`
+      - `KV_REST_API_TOKEN`
+   - Cloudflare R2 storage
+      - `R2_ACCESS_KEY_ID`
+      - `R2_SECRET_ACCESS_KEY`
+      - `R2_ACCOUNT_ID`
+      - `R2_BUCKET_NAME`
+      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+   - AI 3rd party services
+      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+      - `FAL_KEY` - Your fal.ai API key for voice cloning
+      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+   - Stripe
+      - `STRIPE_SECRET_KEY`
+      - `STRIPE_WEBHOOK_SECRET`
+      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
+      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
+      - `STRIPE_TOPUP_5_PRICE_ID`
+      - `STRIPE_TOPUP_10_PRICE_ID`
+      - `STRIPE_TOPUP_99_PRICE_ID`
+    - Telegram cronjob
+      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
 4. **Set up Supabase**
@@ -197,7 +207,7 @@ SexyVoice.ai implements multiple security layers:
 - **Authentication**: Secure OAuth integration with Supabase Auth
 - **Data Protection**: Row-level security (RLS) policies in PostgreSQL
 - **API Security**: Rate limiting and request validation
-- **File Security**: Secure blob storage with access controls
+- **File Security**: Secure R2 storage with access controls
 - **Error Handling**: Comprehensive error tracking with Sentry
 - **Environment Isolation**: Separate configurations for development and production
 
