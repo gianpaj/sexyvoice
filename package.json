@@ -85,7 +85,6 @@
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
     "@next/bundle-analyzer": "^15.3.0",
-    "@playwright/test": "^1.52.0",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^22.15.2",
     "@types/react": "19.1.2",
