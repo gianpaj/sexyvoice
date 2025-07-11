@@ -9,6 +9,7 @@ import {
   XIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import PulsatingDots from '@/components/PulsatingDots';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -142,11 +143,10 @@ export default function NewVoiceClient({
         err.message === 'signal is aborted without reason'
       ) {
         return;
-      } else {
-        setErrorMessage(
-          err instanceof Error ? err.message : 'Unexpected error occurred',
-        );
       }
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Unexpected error occurred',
+      );
       setStatus('error');
     }
   }, [dict, file, textToConvert, clearErrors]);

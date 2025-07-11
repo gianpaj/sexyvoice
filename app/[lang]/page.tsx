@@ -1,13 +1,13 @@
 import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import Script from 'next/script';
 import type { ReactNode } from 'react';
 import { Suspense } from 'react';
-import type { Metadata } from 'next';
-import Script from 'next/script';
-import { FAQPage, WithContext } from 'schema-dts';
+import type { FAQPage, WithContext } from 'schema-dts';
 
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';

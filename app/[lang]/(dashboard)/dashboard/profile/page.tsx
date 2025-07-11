@@ -9,6 +9,7 @@ import {
 // import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
+import { DeleteAccountForm } from './delete-account-form';
 import { SecurityForm } from './security-form';
 
 export default async function ProfilePage(props: {
