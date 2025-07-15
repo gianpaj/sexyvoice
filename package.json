@@ -18,7 +18,8 @@
     "analyze": "ANALYZE=true next build",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.js",
-    "clean-old-audio": "node scripts/delete-old-audio.js"
+    "clean-old-audio": "node scripts/delete-old-audio.js",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
@@ -85,14 +86,15 @@
   "devDependencies": {
     "@biomejs/biome": "2.0.6",
     "@next/bundle-analyzer": "^15.3.0",
-    "@playwright/test": "^1.52.0",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^22.15.2",
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
     "autoprefixer": "^10.4.17",
     "dotenv": "^16.5.0",
+    "husky": "^9.1.7",
     "knip": "^5.50.2",
+    "lint-staged": "^16.1.2",
     "postcss": "^8.4.33",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
