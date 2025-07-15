@@ -227,7 +227,7 @@ importers:
         version: 9.1.7
       knip:
         specifier: ^5.50.2
-        version: 5.61.3(@types/node@22.15.33)(typescript@5.7.3)
+        version: 5.61.3(@types/node@22.15.33)(typescript@5.8.3)
       lint-staged:
         specifier: ^16.1.2
         version: 16.1.2
@@ -239,7 +239,7 @@ importers:
         version: 4.19.3
       typescript:
         specifier: ^5.7.3
-        version: 5.7.3
+        version: 5.8.3
 
 packages:
 
@@ -2266,8 +2266,8 @@ packages:
   '@types/node@22.15.33':
     resolution: {integrity: sha512-wzoocdnnpSxZ+6CjW4ADCK1jVmd1S/J3ArNWfn8FDDQtRm8dkDg7TA+mvek2wNrfCgwuZxqEOiB9B1XCJ6+dbw==}
 
-  '@types/node@22.16.0':
-    resolution: {integrity: sha512-B2egV9wALML1JCpv3VQoQ+yesQKAmNMBIAY7OteVrikcOcAkWm+dGL6qpeCktPjAv6N1JLnhbNiqS35UpFyBsQ==}
+  '@types/node@22.16.4':
+    resolution: {integrity: sha512-PYRhNtZdm2wH/NT2k/oAJ6/f2VD2N2Dag0lGlx2vWgMSJXGNmlce5MiTQzoWAiIJtso30mjnfQCOKVH+kAQC/g==}
 
   '@types/pg-pool@2.0.6':
     resolution: {integrity: sha512-TaAUE5rq2VQYxab5Ts7WZhKNmuN78Q6PiFonTDdpbx8a1H0M1vhy3rhiMjl+e2iHmogyMw7jZF4FrE6eJUy5HQ==}
@@ -4424,8 +4424,8 @@ packages:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
 
-  typescript@5.7.3:
-    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
+  typescript@5.8.3:
+    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -6750,7 +6750,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@22.16.0':
+  '@types/node@22.16.4':
     dependencies:
       undici-types: 6.21.0
 
@@ -7815,7 +7815,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.16.0
+      '@types/node': 22.16.4
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -7869,7 +7869,7 @@ snapshots:
 
   kind-of@6.0.3: {}
 
-  knip@5.61.3(@types/node@22.15.33)(typescript@5.7.3):
+  knip@5.61.3(@types/node@22.15.33)(typescript@5.8.3):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
       '@types/node': 22.15.33
@@ -7883,7 +7883,7 @@ snapshots:
       picomatch: 4.0.2
       smol-toml: 1.4.1
       strip-json-comments: 5.0.2
-      typescript: 5.7.3
+      typescript: 5.8.3
       zod: 3.25.67
       zod-validation-error: 3.5.2(zod@3.25.67)
 
@@ -9235,7 +9235,7 @@ snapshots:
 
   type-fest@4.41.0: {}
 
-  typescript@5.7.3: {}
+  typescript@5.8.3: {}
 
   uint8array-extras@1.4.0: {}
 
