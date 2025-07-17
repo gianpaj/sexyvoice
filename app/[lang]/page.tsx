@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { FAQPage, WithContext } from 'schema-dts';
@@ -17,7 +16,6 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
-import { Header } from '@/components/header';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import {
@@ -28,6 +26,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { HeaderStatic } from '@/components/header-static';
 
 // Sample audio preview data
 const sampleAudios = [
@@ -119,9 +118,7 @@ export default async function LandingPage(props: {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-      <Suspense fallback={<div>Loading...</div>}>
-        <Header lang={lang} />
-      </Suspense>
+        <HeaderStatic lang={lang} />
       <main id="main-content">
         {/* <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
         <div className="absolute top-0 left-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
