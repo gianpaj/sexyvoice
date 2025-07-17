@@ -15,7 +15,7 @@ import { Loader2, Zap } from 'lucide-react';
 import { createCheckoutSession } from '@/app/actions/stripe';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
-const getTopupPackages = (dict: any) => [
+const getTopupPackages = (dict: (typeof lang)['credits']) => [
   {
     id: 'standard',
     name: dict.topup.packages.standard.name,

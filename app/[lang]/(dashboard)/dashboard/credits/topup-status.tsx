@@ -96,45 +96,41 @@ export function TopupStatus({ dict }: TopupStatusProps) {
       )}
 
       {status === 'canceled' && (
-        <Alert className="border-yellow-200 bg-yellow-50 text-yellow-800">
+        <Alert className="border-yellow-200 bg-yellow-900">
           <XCircle className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">
+          <AlertTitle className="text-yellow-500">
             {dict.status.canceled.title}
           </AlertTitle>
-          <AlertDescription className="text-yellow-700">
-            {dict.status.canceled.description}
-            <div className="mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
-                className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
-              >
-                {dict.status.canceled.dismiss}
-              </Button>
-            </div>
+          <AlertDescription className="text-yellow-400">
+            <p>{dict.status.canceled.description}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDismiss}
+              className="border-yellow-300 text-yellow-700 hover:bg-yellow-600 mt-2"
+            >
+              {dict.status.canceled.dismiss}
+            </Button>
           </AlertDescription>
         </Alert>
       )}
 
       {status === 'error' && (
-        <Alert className="border-red-200 bg-red-50 text-red-800">
-          <XCircle className="h-4 w-4 text-red-600" />
-          <AlertTitle className="text-red-800">
+        <Alert className="border-red-200 bg-red-950 text-red-800">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle className="text-red-500">
             {dict.status.error.title}
           </AlertTitle>
-          <AlertDescription className="text-red-700">
-            {dict.status.error.description}
-            <div className="mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
-                className="border-red-300 text-red-700 hover:bg-red-100"
-              >
-                {dict.status.error.dismiss}
-              </Button>
-            </div>
+          <AlertDescription className="text-red-400">
+            <p>{dict.status.error.description}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDismiss}
+              className="border-red-300 text-red-700 hover:bg-red-900 mt-2"
+            >
+              {dict.status.error.dismiss}
+            </Button>
           </AlertDescription>
         </Alert>
       )}

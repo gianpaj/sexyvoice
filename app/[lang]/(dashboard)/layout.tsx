@@ -61,7 +61,7 @@ export default function DashboardLayout(props: {
   };
   const posthog = usePostHog();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: effect should run once on mount
   useEffect(() => {
     const getData = async () => {
       const { data } = await supabase.auth.getUser();

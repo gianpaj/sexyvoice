@@ -18,6 +18,7 @@
     "analyze": "ANALYZE=true next build",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.js",
+    "clean-old-audio": "node scripts/delete-old-audio.js",
     "prepare": "husky"
   },
   "dependencies": {

@@ -31,6 +31,7 @@
       "error": "Correo electrónico inválido",
       "success": "Revisa tu correo electrónico para restablecer tu contraseña",
       "backToLogin": "Volver al inicio de sesión",
+      "loading": "Actualizando...",
       "errors": {
         "generic": "No se pudo restablecer la contraseña",
         "email_required": "Correo electrónico requerido"
@@ -251,5 +252,8 @@
     "resetForm": "Reiniciar Formulario",
     "downloadAudio": "Descargar Audio",
     "abortedCloning": "Clonación de voz cancelada"
+  },
+  "historyPage": {
+    "retentionInfo": "Para cuentas gratis: Los archivos de audio generados se eliminan de todos los sistemas después de 30 días."
   }
 }
