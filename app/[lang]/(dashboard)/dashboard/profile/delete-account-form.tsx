@@ -1,11 +1,9 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, OctagonAlert } from 'lucide-react';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { OctagonAlert } from 'lucide-react';
 import { handleDeleteAccountAction } from '@/app/actions';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 export function DeleteAccountForm({ lang }: { lang: string }) {
   const handleDeleteAccount = async () => {
