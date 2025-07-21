@@ -31,6 +31,7 @@
       "error": "Invalid email address",
       "success": "Check your email for a password reset link",
       "backToLogin": "Back to Login",
+      "loading": "Updating...",
       "errors": {
         "generic": "Could not reset password",
         "email_required": "Email is required"
@@ -249,5 +250,8 @@
     "resetForm": "Reset Form",
     "downloadAudio": "Download Audio",
     "abortedCloning": "Voice generation aborted."
+  },
+  "historyPage": {
+    "retentionInfo": "For free accounts: Generated audio files are deleted from all systems after 30 days."
   }
 }

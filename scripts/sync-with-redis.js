@@ -13,7 +13,7 @@ const redis = Redis.fromEnv();
  * Process all blobs with the prefix 'audio/' and store them in Redis
  */
 async function processAllBlobs() {
-  let cursor = undefined;
+  let cursor;
   let hasMore = true;
   let totalProcessed = 0;
 

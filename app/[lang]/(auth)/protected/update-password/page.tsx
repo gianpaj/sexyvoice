@@ -12,7 +12,7 @@ export default async function UpdatePasswordPage(props: {
   const searchParams = await props.searchParams;
 
   const { lang } = params;
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'auth');
 
   return (
     <>
@@ -21,13 +21,13 @@ export default async function UpdatePasswordPage(props: {
         <div className="w-full max-w-md">
           <div className="rounded-2xl p-8 bg-background shadow-xl">
             <h1 className="mb-2 text-center text-3xl font-bold">
-              {dict.auth.updatePassword.title}
+              {dict.updatePassword.title}
             </h1>
             <p className="text-sm text-muted-foreground mb-8">
-              {dict.auth.updatePassword.subtitle}
+              {dict.updatePassword.subtitle}
             </p>
             <UpdatePasswordForm
-              dict={dict.auth.updatePassword}
+              dict={dict.updatePassword}
               lang={lang}
               message={searchParams}
             />

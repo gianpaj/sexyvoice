@@ -2,6 +2,7 @@
 
 import { useFormStatus } from 'react-dom';
 
+import type dictLang from '@/lib/i18n/dictionaries/en.json';
 import { updatePasswordAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,8 +14,7 @@ export function UpdatePasswordForm({
   lang,
   message,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  dict: any;
+  dict: (typeof dictLang)['auth']['updatePassword'];
   lang: string;
   message: Message;
 }) {

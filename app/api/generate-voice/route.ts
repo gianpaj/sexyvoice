@@ -2,7 +2,7 @@ import { type GenerateContentResponse, GoogleGenAI } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
-import { put } from '@vercel/blob';
+import { put, type PutBlobResult } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
 
     let predictionResult: Prediction | undefined;
     let modelUsed = voiceObj.model;
-    let blobResult: any;
+    let blobResult: PutBlobResult | undefined;
 
     const isGeminiVoice = GEMINI_VOICES.includes(voice.toLowerCase());
 
