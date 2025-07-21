@@ -1,4 +1,6 @@
 'use server';
+import * as Sentry from '@sentry/nextjs';
+import { del } from '@vercel/blob';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -83,4 +85,52 @@ export const updatePasswordAction = async (formData: FormData) => {
   }
 
   encodedRedirect('success', `/${lang}/dashboard`, 'passwords_updated');
+};
+
+export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
+  'use server';
+
+  const supabase = await createClient();
+
+  const { data } = await supabase.auth.getUser();
+  const user = data?.user;
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    data: { deleted: new Date() },
+  });
+  const { data: audio_files } = await supabase
+    .from('audio_files')
+    .select()
+    .eq('user_id', user.id);
+  const promises = audio_files?.map((file) => del(file.storage_key));
+  promises && (await Promise.all(promises));
+
+  const { error: deleteError, data: deleteData } = await supabase
+    .from('audio_files')
+    .update({
+      status: 'deleted',
+      deleted_at: new Date().toISOString(),
+    })
+    .eq('user_id', user.id)
+    .select();
+
+  if (error || deleteError) {
+    throw new Error('User deletion failed');
+  }
+  Sentry.logger.info('User deleted', {
+    userId: user.id,
+    deleted: deleteData?.length,
+  });
+
+  console.log('User deleted', {
+    userId: user.id,
+    deleted: deleteData?.length,
+  });
+  await supabase.auth.signOut();
+
+  return encodedRedirect('success', `/${lang}/`, '');
 };

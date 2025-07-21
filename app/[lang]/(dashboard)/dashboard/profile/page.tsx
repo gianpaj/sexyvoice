@@ -65,7 +65,15 @@ export default async function ProfilePage(props: {
           <CardDescription>Manage your email and password</CardDescription>
         </CardHeader>
         <CardContent>
-          <SecurityForm email={user.email} lang={lang} />
+          <SecurityForm email={user.email} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Danger Zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DeleteAccountForm lang={lang} />
         </CardContent>
       </Card>
       {/* </TabsContent> */}

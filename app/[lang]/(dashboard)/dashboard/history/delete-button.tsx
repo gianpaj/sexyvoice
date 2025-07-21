@@ -42,7 +42,6 @@ export function DeleteButton({
     } catch (error) {
       console.error('Failed to delete audio file:', error);
       toast.error('Failed to delete audio file. Please try again later.');
-      // You might want to show a toast notification here
     } finally {
       setIsDeleting(false);
     }
