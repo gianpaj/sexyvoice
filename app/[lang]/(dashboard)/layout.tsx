@@ -109,9 +109,13 @@ export default function DashboardLayout(props: {
       }
     };
 
-    getData().then((user) => {
-      sendUserAnalyticsData(user);
-    });
+    getData()
+      .then((user) => {
+        sendUserAnalyticsData(user);
+      })
+      .catch((error) => {
+        console.error('Failed to initialize dashboard layout:', error);
+      });
   }, []);
 
   // const flagEnabled = useFeatureFlagEnabled('clone-voice');

@@ -106,8 +106,27 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
     .from('audio_files')
     .select()
     .eq('user_id', user.id);
-  const promises = audio_files?.map((file) => del(file.storage_key));
-  promises && (await Promise.all(promises));
+  if (audio_files) {
+    const deletionResults = await Promise.allSettled(
+      audio_files.map((file) => del(file.storage_key)),
+    );
+
+    deletionResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const file = audio_files[index];
+        Sentry.captureException(result.reason, {
+          extra: {
+            message: 'Failed to delete blob from storage.',
+            file,
+          },
+        });
+        console.error(
+          `Failed to delete blob ${file.storage_key}`,
+          result.reason,
+        );
+      }
+    });
+  }
 
   const { error: deleteError, data: deleteData } = await supabase
     .from('audio_files')
