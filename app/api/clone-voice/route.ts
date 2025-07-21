@@ -1,7 +1,7 @@
 import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { head, put } from '@vercel/blob';
+import { del, head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
@@ -340,6 +340,9 @@ export async function POST(request: Request) {
         creditUsed: estimate,
         model: 'chatterbox-tts',
       });
+
+      // delete the audio file uploaded
+      await del(blobUrl);
     });
 
     return NextResponse.json(
