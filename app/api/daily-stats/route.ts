@@ -53,6 +53,21 @@ export async function GET(request: NextRequest) {
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
 
+  if (audioYesterday.count === 0) {
+    const message = `WARNING: No audio files generated yesterday! ${previousDay}-${today}`;
+    await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: '202637584', text: message }),
+    });
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'ok',
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   const audioPrev = await supabase
     .from('audio_files')
     .select('id', { count: 'exact', head: true })
@@ -66,7 +81,7 @@ export async function GET(request: NextRequest) {
   const clonePrevDay = await supabase
     .from('audio_files')
     .select('id', { count: 'exact', head: true })
-    .eq('model', 'clone')
+    .eq('model', 'chatterbox-tts')
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
   // const topVoices = await supabase
@@ -100,29 +115,29 @@ export async function GET(request: NextRequest) {
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
-  const { data: creditsPrevDayData } = await supabase
-    .from('credit_transactions')
-    .select('user_id, type, description')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
+  // const { data: creditsPrevDayData } = await supabase
+  //   .from('credit_transactions')
+  //   .select('user_id, type, description')
+  //   .in('type', ['purchase', 'topup'])
+  //   .gte('created_at', previousDay.toISOString())
+  //   .lt('created_at', today.toISOString());
 
   // Get unique user IDs who made purchases/topups
-  const userIds = creditsPrevDayData?.map((t) => t.user_id) || [];
-  const uniqueUserIds = [...new Set(userIds)];
+  // const userIds = creditsPrevDayData?.map((t) => t.user_id) || [];
+  // const uniqueUserIds = [...new Set(userIds)];
 
   // Get profile data for those users
-  const { data: profilesData } = await supabase
-    .from('profiles')
-    .select('id, username')
-    .in('id', uniqueUserIds);
+  // const { data: profilesData } = await supabase
+  //   .from('profiles')
+  //   .select('id, username')
+  //   .in('id', uniqueUserIds);
 
-  console.log('Credit transactions:', creditsPrevDayData?.length);
-  console.log('Unique paying customers:', uniqueUserIds.length);
-  console.log(
-    'Customer usernames:',
-    profilesData?.map((p) => p.username).join(', '),
-  );
+  // console.log('Credit transactions:', creditsPrevDayData?.length);
+  // console.log('Unique paying customers:', uniqueUserIds.length);
+  // console.log(
+  //   'Customer usernames:',
+  //   profilesData?.map((p) => p.username).join(', '),
+  // );
 
   const creditsPrev = await supabase
     .from('credit_transactions')
