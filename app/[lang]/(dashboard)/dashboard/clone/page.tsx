@@ -1,6 +1,6 @@
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: string }>;

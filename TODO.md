@@ -1,5 +1,8 @@
 # TODO
 
+- add functionality to delete account, audios and delete them too from bucket or vercel
+- merge `r2` branch
+- merge `codex/update-terms-and-conditions-for-retention-policy` branch
 - Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Translate website to French
 - Translate website to German
@@ -7,6 +10,7 @@
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
+- Crist and Posthug: add `isPaidUser` from `r2` branch
 - Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain>
 ---
 - Deploy model
@@ -69,3 +73,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ##  Job scheduler
 
 - upstash QStash - https://upstash.com/docs/qstash/quickstarts/vercel-nextjs
+
+## Documentation / Knowledge base site
+
+- https://nextra.site

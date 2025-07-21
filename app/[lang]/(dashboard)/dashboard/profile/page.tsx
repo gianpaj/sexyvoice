@@ -9,6 +9,7 @@ import {
 // import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
+import { DeleteAccountForm } from './delete-account-form';
 import { SecurityForm } from './security-form';
 
 export default async function ProfilePage(props: {
@@ -64,7 +65,15 @@ export default async function ProfilePage(props: {
           <CardDescription>Manage your email and password</CardDescription>
         </CardHeader>
         <CardContent>
-          <SecurityForm email={user.email} lang={lang} />
+          <SecurityForm email={user.email} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Danger Zone</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DeleteAccountForm lang={lang} />
         </CardContent>
       </Card>
       {/* </TabsContent> */}

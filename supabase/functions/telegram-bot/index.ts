@@ -40,13 +40,11 @@ function formatChange(today: number, yesterday: number): string {
   return diff >= 0 ? `+${diff}` : `${diff}`;
 }
 
-// Function to generate daily stats
-async function generateDailyStats(): Promise<string> {
+async function generateLast24HoursStats(): Promise<string> {
   const now = new Date();
-  const today = startOfDay(now);
-  const previousDay = subtractDays(today, 1);
-  const twoDaysAgo = subtractDays(today, 2);
-  const sevenDaysAgo = subtractDays(today, 7);
+  const previousDay = subtractDays(now, 1);
+  const twoDaysAgo = subtractDays(now, 2);
+  const sevenDaysAgo = subtractDays(now, 7);
 
   try {
     // Audio files stats
@@ -54,7 +52,7 @@ async function generateDailyStats(): Promise<string> {
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const audioPrev = await supabase
       .from('audio_files')
@@ -66,21 +64,21 @@ async function generateDailyStats(): Promise<string> {
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const clonePrevDay = await supabase
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
-      .eq('model', 'clone')
+      .eq('model', 'chatterbox-tts')
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     // Profiles stats
     const profilesPrevDay = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const profilesPrev = await supabase
       .from('profiles')
@@ -92,7 +90,7 @@ async function generateDailyStats(): Promise<string> {
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     // Credit transactions stats
     const creditsPrevDay = await supabase
@@ -100,7 +98,7 @@ async function generateDailyStats(): Promise<string> {
       .select('id', { count: 'exact', head: true })
       .in('type', ['purchase', 'topup'])
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const creditsPrev = await supabase
       .from('credit_transactions')
@@ -114,7 +112,7 @@ async function generateDailyStats(): Promise<string> {
       .select('id', { count: 'exact', head: true })
       .in('type', ['purchase', 'topup'])
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     // Calculate counts
     const audioYesterdayCount = audioYesterday.count ?? 0;
@@ -132,7 +130,8 @@ async function generateDailyStats(): Promise<string> {
 
     // Format message
     const message = [
-      `📊 Daily stats for ${previousDay.toISOString().slice(0, 10)}`,
+      // e.g. 20/7/25, 16:09:01
+      `📊 24h stats from ${new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeStyle: 'long' }).format(previousDay).slice(0, 17)}`,
       '',
       `🎵 Audio files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioPrevCount)})`,
       `  • 7d total: ${audioWeekCount}, avg: ${(audioWeekCount / 7).toFixed(1)}`,
@@ -164,7 +163,7 @@ bot.command('stats', async (ctx) => {
 
   try {
     await ctx.reply('📈 Generating stats...');
-    const statsMessage = await generateDailyStats();
+    const statsMessage = await generateLast24HoursStats();
     await ctx.reply(statsMessage);
   } catch (error) {
     console.error('Error in stats command:', error);
@@ -219,7 +218,7 @@ Use /stats to get detailed analytics about the platform.`);
       break;
     case 'stats': {
       await ctx.reply('📈 Generating stats...');
-      const statsMessage = await generateDailyStats();
+      const statsMessage = await generateLast24HoursStats();
       await ctx.reply(statsMessage);
       break;
     }

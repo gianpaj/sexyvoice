@@ -1,12 +1,12 @@
 import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import type { ReactNode } from 'react';
-import type { Metadata } from 'next';
 import Script from 'next/script';
-import { FAQPage, WithContext } from 'schema-dts';
+import type { ReactNode } from 'react';
+import type { FAQPage, WithContext } from 'schema-dts';
 
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
@@ -16,6 +16,7 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
+import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import {
@@ -26,7 +27,6 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HeaderStatic } from '@/components/header-static';
 
 // Sample audio preview data
 const sampleAudios = [
@@ -39,19 +39,19 @@ const sampleAudios = [
   // },
   {
     id: 2,
-    name: 'Tara (en-US) 🇺🇸',
+    name: 'Tara (en-US) 🇺',
     prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
     audioSrc: 'tara_amazing.mp3',
   },
   // {
   //   id: 3,
-  //   name: 'Tara (en-US) 🇺🇸',
+  //   name: 'Tara (en-US) 🇺',
   //   prompt: '<sigh> Oh my god. This is fantastic! <laugh>',
   //   audioSrc: 'tara_fantastic.mp3',
   // },
   {
     id: 4,
-    name: 'Dan (en-UK) 🇬🇧',
+    name: 'Dan (en-UK) 🇬',
     prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
 Because it's hard to lay down in a square! <laugh>
 I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
@@ -59,14 +59,14 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   },
   {
     id: 5,
-    name: 'Emma (en-US) 🇺🇸',
+    name: 'Emma (en-US) 🇺',
     prompt:
       '<gasp> Ever dreamed ... of wielding legendary power, carving your destiny in a world of magic and wonder?',
     audioSrc: 'emma_wonder.mp3',
   },
   {
     id: 6,
-    name: 'Javi (es-ES) 🇪🇸',
+    name: 'Javi (es-ES) 🇪',
     prompt:
       'Bienvenido a SexyVoice.ai <resoplido> , tu puerta de entrada a la vanguardia de la innovación y el mundo de la tecnología. Soy tu anfitrión, Javi, y cada semana exploramos las últimas tendencias, avances y las personas que están dando forma al futuro de la tecnología.',
     audioSrc: 'javi_anfitrion.mp3',
@@ -118,7 +118,7 @@ export default async function LandingPage(props: {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-        <HeaderStatic lang={lang} />
+      <HeaderStatic lang={lang} />
       <main id="main-content">
         {/* <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
         <div className="absolute top-0 left-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
