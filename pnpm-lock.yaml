@@ -160,7 +160,7 @@ importers:
         version: 1.257.1
       posthog-node:
         specifier: ^4.10.2
-        version: 4.10.2
+        version: 4.18.0
       react:
         specifier: 19.1.0
         version: 19.1.0
@@ -3030,8 +3030,8 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  form-data@4.0.3:
-    resolution: {integrity: sha512-qsITQPfmvMOSAdeyZ+12I1c+CKSstAFAwu+97zrnWAbIr5u8wfsExUzCesVLC8NgHuRUqNN4Zy6UPWUTRGslcA==}
+  form-data@4.0.4:
+    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
     engines: {node: '>= 6'}
 
   format@0.2.2:
@@ -3926,8 +3926,8 @@ packages:
       rrweb-snapshot:
         optional: true
 
-  posthog-node@4.10.2:
-    resolution: {integrity: sha512-mylSjhI3R69FF+2T/HT5ZcFnS0q22/U/JrvfkI4vEr+BLwjSOE8a3CvbXJEDzDXw44wg5iJuXBZYAEu15rvERg==}
+  posthog-node@4.18.0:
+    resolution: {integrity: sha512-XROs1h+DNatgKh/AlIlCtDxWzwrKdYDb2mOs58n4yN8BkGN9ewqeQwG5ApS4/IzwCb7HPttUkOVulkYatd2PIw==}
     engines: {node: '>=15.0.0'}
 
   preact@10.26.9:
@@ -7052,7 +7052,7 @@ snapshots:
   axios@1.10.0:
     dependencies:
       follow-redirects: 1.15.9
-      form-data: 4.0.3
+      form-data: 4.0.4
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
@@ -7520,7 +7520,7 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  form-data@4.0.3:
+  form-data@4.0.4:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
@@ -8660,7 +8660,7 @@ snapshots:
       preact: 10.26.9
       web-vitals: 4.2.4
 
-  posthog-node@4.10.2:
+  posthog-node@4.18.0:
     dependencies:
       axios: 1.10.0
     transitivePeerDependencies:
