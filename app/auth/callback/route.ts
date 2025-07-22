@@ -41,13 +41,16 @@ export async function GET(request: Request) {
 
     const posthog = PostHogClient();
 
+    const login_type =
+      user.app_metadata.provider === 'email' ? 'email' : 'social';
+
     posthog.capture({
       distinctId: user.id,
       event: 'sign-up',
-      // properties: {
-      //   // login_type: 'email',
-      //   is_free_trial: true,
-      // },
+      properties: {
+        login_type,
+        //   is_free_trial: true,
+      },
     });
     await posthog.shutdown();
   }

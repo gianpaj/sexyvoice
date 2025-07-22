@@ -1,9 +1,10 @@
 import { allPosts } from 'contentlayer/generated';
 import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
-import type { Metadata } from 'next/types';
 import Script from 'next/script';
+import type { Metadata } from 'next/types';
 import { Suspense } from 'react';
+
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
@@ -208,7 +209,7 @@ const PostLayout = async (props: {
         <meta itemProp="learningResourceType" content="Tutorial" />
       </div>
 
-      <main role="main" itemScope itemType="https://schema.org/WebPage">
+      <main itemScope itemType="https://schema.org/WebPage">
         <article
           className="py-8 px-4 md:px-0 md:mx-auto max-w-2xl prose dark:prose-invert"
           itemScope

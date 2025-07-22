@@ -1,6 +1,9 @@
 'use client';
 
+import { Loader2, Zap } from 'lucide-react';
 import { useState } from 'react';
+
+import { createCheckoutSession } from '@/app/actions/stripe';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,8 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Zap } from 'lucide-react';
-import { createCheckoutSession } from '@/app/actions/stripe';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
 const getTopupPackages = (dict: any) => [

@@ -13,9 +13,9 @@ import {
   useReactTable,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { ColumnsIcon } from 'lucide-react';
-import { ChevronDownIcon } from 'lucide-react';
+import { ChevronDownIcon, ColumnsIcon } from 'lucide-react';
 import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

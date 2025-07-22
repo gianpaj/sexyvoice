@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
 import { getUserById } from '../supabase/queries';
@@ -64,14 +65,25 @@ export async function getCustomerSession() {
     return null;
   }
 
-  const customerSession = await stripe.customerSessions.create({
-    customer: dbUser.stripe_id,
-    components: {
-      pricing_table: {
-        enabled: true,
+  try {
+    const customerSession = await stripe.customerSessions.create({
+      customer: dbUser.stripe_id,
+      components: {
+        pricing_table: {
+          enabled: true,
+        },
       },
-    },
-  });
+    });
 
-  return customerSession;
+    return customerSession;
+  } catch (error) {
+    Sentry.captureException({
+      message: 'Error creating Stripe customer session',
+      error,
+      userId: user.id,
+      stripe_id: dbUser.stripe_id,
+    });
+    console.error('Error creating Stripe customer session:', error);
+    throw error;
+  }
 }

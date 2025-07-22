@@ -9,12 +9,14 @@
     "test:watch": "tsx --test --watch lib/utils.test.ts",
     "build:content": "contentlayer2 build",
     "dev:content": "contentlayer2 dev",
-    "lint": "biome lint",
-    "lint:fix": "biome lint --write ./app components hooks lib middleware.ts",
-    "preview": "next build && next start",
-    "type-check": "tsc --noEmit",
+    "fixall": "pnpm run lint:write && pnpm run format:write && pnpm run check:fix",
+    "lint:write": "pnpm run lint --write",
+    "lint": "biome lint ./app components hooks lib middleware.ts",
     "format:write": "pnpm run format --write",
     "format": "biome format ./app components hooks lib middleware.ts",
+    "check:fix": "biome check ./app components hooks lib middleware.ts --write",
+    "preview": "next build && next start",
+    "type-check": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.js",
@@ -40,7 +42,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.7",
     "@radix-ui/react-tooltip": "^1.2.0",
-    "@sentry/nextjs": "^9.30.0",
+    "@sentry/nextjs": "^9.39.0",
     "@stripe/stripe-js": "^7.3.1",
     "@supabase-cache-helpers/postgrest-react-query": "^1.13.4",
     "@supabase/ssr": "^0.5.2",
@@ -66,7 +68,7 @@
     "music-metadata": "^11.2.3",
     "nanoid": "^5.0.9",
     "negotiator": "^1.0.0",
-    "next": "15.3.4",
+    "next": "15.4.1",
     "next-contentlayer2": "^0.5.8",
     "posthog-js": "^1.233.1",
     "posthog-node": "^4.10.2",
@@ -84,12 +86,12 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.0.6",
-    "@next/bundle-analyzer": "^15.3.0",
+    "@biomejs/biome": "^2.1.1",
+    "@next/bundle-analyzer": "15.4.1",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^22.15.2",
-    "@types/react": "19.1.2",
-    "@types/react-dom": "19.1.2",
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.6",
     "autoprefixer": "^10.4.17",
     "dotenv": "^16.5.0",
     "husky": "^9.1.7",
@@ -119,5 +121,9 @@
       "undici@>=4.5.0 <5.28.5": ">=5.28.5",
       "whatwg-url": "^14.0.0"
     }
+  },
+  "overrides": {
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.6"
   }
 }

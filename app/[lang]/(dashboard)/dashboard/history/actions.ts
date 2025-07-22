@@ -10,8 +10,6 @@ import { createClient } from '@/lib/supabase/server';
 const redis = Redis.fromEnv();
 
 export const handleDeleteAction = async (id: string) => {
-  'use server';
-
   try {
     const supabase = await createClient();
 

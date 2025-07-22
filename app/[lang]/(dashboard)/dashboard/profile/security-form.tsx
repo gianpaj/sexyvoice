@@ -1,27 +1,20 @@
 'use client';
 
 import { AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 
-export function SecurityForm({
-  email,
-  lang,
-}: {
-  email?: string;
-  lang: string;
-}) {
+export function SecurityForm({ email }: { email?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const router = useRouter();
   const supabase = createClient();
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {

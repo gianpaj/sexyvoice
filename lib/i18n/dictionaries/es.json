@@ -251,5 +251,33 @@
     "resetForm": "Reiniciar Formulario",
     "downloadAudio": "Descargar Audio",
     "abortedCloning": "Clonación de voz cancelada"
+  },
+  "profile": {
+    "title": "Configuración del Perfil",
+    "subtitle": "Gestiona la configuración y preferencias de tu cuenta",
+    "notLoggedIn": "No has iniciado sesión",
+    "tabs": {
+      "profile": "Perfil",
+      "security": "Seguridad"
+    },
+    "personalInfo": {
+      "title": "Información Personal",
+      "description": "Actualiza tu información de perfil y avatar"
+    },
+    "security": {
+      "title": "Configuración de Seguridad",
+      "description": "Gestiona tu correo electrónico y contraseña"
+    },
+    "dangerZone": {
+      "title": "Zona de Peligro",
+      "deleteAccount": {
+        "button": "Eliminar cuenta",
+        "confirmTitle": "¿Estás absolutamente seguro?",
+        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y removerá tus datos de nuestros servidores.",
+        "alertTitle": "Confirma que quieres eliminar tu cuenta",
+        "cancel": "Cancelar",
+        "continue": "Continuar"
+      }
+    }
   }
 }

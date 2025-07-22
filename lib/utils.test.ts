@@ -1,8 +1,12 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
-
-import { capitalizeFirstLetter, cn, formatDate, nanoid } from './utils';
-import { estimateCredits } from './utils';
+import {
+  capitalizeFirstLetter,
+  cn,
+  estimateCredits,
+  formatDate,
+  nanoid,
+} from './utils';
 
 // This model costs approximately $0.015 to run on Replicate, or 66 runs per $1
 //

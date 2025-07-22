@@ -1,5 +1,6 @@
 'use client';
 
+import type { User } from '@supabase/supabase-js';
 import { Crisp } from 'crisp-sdk-web';
 import {
   ChevronUp,
@@ -66,7 +67,7 @@ export default function DashboardLayout(props: {
     const getData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
-      if (!user) return;
+      if (!user) throw new Error('User not found');
 
       // Get user's credits
       const { data: credits } = await supabase
@@ -81,39 +82,40 @@ export default function DashboardLayout(props: {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       setCreditTransactions(credit_transactions);
+      return user;
     };
 
-    const sendUserAnalyticsData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) return;
-
+    const sendUserAnalyticsData = async (user: User) => {
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
         creditsLeft: credits?.amount || 0,
       });
-      user.email && Crisp.user.setEmail(user.email);
-      const nickname =
-        user.user_metadata.full_name || user.user_metadata.username;
-      if (nickname) {
-        Crisp.user.setNickname(nickname);
+      if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
+        Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
+          locale: lang,
+        });
+        user.email && Crisp.user.setEmail(user.email);
+        const nickname =
+          user.user_metadata.full_name || user.user_metadata.username;
+        if (nickname) {
+          Crisp.user.setNickname(nickname);
+        }
+        Crisp.session.setData({
+          user_id: user.id,
+          creditsLeft: credits?.amount || 0,
+          // plan
+        });
       }
-      Crisp.session.setData({
-        user_id: user.id,
-        creditsLeft: credits?.amount || 0,
-        // plan
-      });
     };
 
-    getData();
-
-    if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-        locale: lang,
+    getData()
+      .then((user) => {
+        sendUserAnalyticsData(user);
+      })
+      .catch((error) => {
+        console.error('Failed to initialize dashboard layout:', error);
       });
-      sendUserAnalyticsData();
-    }
   }, []);
 
   // const flagEnabled = useFeatureFlagEnabled('clone-voice');
