@@ -7,7 +7,10 @@ import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
-import { getCustomerSession } from '@/lib/stripe/stripe-admin';
+import {
+  createOrRetrieveCustomer,
+  getCustomerSession,
+} from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
@@ -68,8 +71,23 @@ export default async function CreditsPage(props: {
   const user = data?.user;
 
   const userData = user && (await getUserById(user.id));
-  if (!user || !userData || !userData.stripe_id) {
+  if (!user || !userData) {
     throw new Error('User not found');
+  }
+
+  if (!userData.stripe_id) {
+    const stripe_id = await createOrRetrieveCustomer({
+      uuid: user.id,
+      email: user.email!,
+    });
+    await supabase
+      .from('profiles')
+      .update({
+        stripe_id,
+      })
+      .eq('id', user.id);
+    userData.stripe_id = stripe_id;
+    console.log('created Stripe customer id');
   }
 
   const customerData = await getCustomerData(userData.stripe_id);
