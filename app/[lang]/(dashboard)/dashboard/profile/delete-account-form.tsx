@@ -16,8 +16,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
+import type dictType from '@/lib/i18n/dictionaries/en.json';
 
-export function DeleteAccountForm({ lang }: { lang: string }) {
+export function DeleteAccountForm({
+  lang,
+  dict,
+}: {
+  lang: string;
+  dict: typeof dictType;
+}) {
   const handleDeleteAccount = async () => {
     await handleDeleteAccountAction({ lang });
   };
@@ -28,7 +35,7 @@ export function DeleteAccountForm({ lang }: { lang: string }) {
         <Alert variant="destructive" className="p-4">
           <AlertCircle className="size-4" />
           <AlertDescription>
-            Confirm you want to delete your account
+            {dict.profile.dangerZone.deleteAccount.alertTitle}
           </AlertDescription>
         </Alert>
       </div>
@@ -41,7 +48,9 @@ export function DeleteAccountForm({ lang }: { lang: string }) {
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <div className="flex justify-end">
-              <Button variant="destructive">Delete account</Button>
+              <Button variant="destructive">
+                {dict.profile.dangerZone.deleteAccount.button}
+              </Button>
             </div>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -50,20 +59,21 @@ export function DeleteAccountForm({ lang }: { lang: string }) {
                 <div className="mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                   <OctagonAlert className="h-7 w-7 text-destructive" />
                 </div>
-                Are you absolutely sure?
+                {dict.profile.dangerZone.deleteAccount.confirmTitle}
               </AlertDialogTitle>
               <AlertDialogDescription className="text-[15px] text-center">
-                This action cannot be undone. This will permanently delete your
-                account and remove your data from our servers.
+                {dict.profile.dangerZone.deleteAccount.confirmDescription}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="mt-2 sm:justify-center">
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>
+                {dict.profile.dangerZone.deleteAccount.cancel}
+              </AlertDialogCancel>
               <AlertDialogAction
                 className={buttonVariants({ variant: 'destructive' })}
                 onClick={handleDeleteAccount}
               >
-                Continue
+                {dict.profile.dangerZone.deleteAccount.continue}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

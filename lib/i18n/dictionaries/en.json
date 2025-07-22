@@ -249,5 +249,33 @@
     "resetForm": "Reset Form",
     "downloadAudio": "Download Audio",
     "abortedCloning": "Voice generation aborted."
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Manage your account settings and preferences",
+    "notLoggedIn": "Not logged in",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security"
+    },
+    "personalInfo": {
+      "title": "Personal Information",
+      "description": "Update your profile information and avatar"
+    },
+    "security": {
+      "title": "Security Settings",
+      "description": "Manage your email and password"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "deleteAccount": {
+        "button": "Delete account",
+        "confirmTitle": "Are you absolutely sure?",
+        "confirmDescription": "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+        "alertTitle": "Confirm you want to delete your account",
+        "cancel": "Cancel",
+        "continue": "Continue"
+      }
+    }
   }
 }

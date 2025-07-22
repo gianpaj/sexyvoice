@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 // import { ProfileForm } from './profile-form';
-// import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
@@ -20,13 +20,13 @@ export default async function ProfilePage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  // const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang);
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   if (!user) {
-    return <div>Not logged in</div>;
+    return <div>{dict.profile.notLoggedIn}</div>;
   }
 
   return (
@@ -61,8 +61,8 @@ export default async function ProfilePage(props: {
       {/* <TabsContent value="security"> */}
       <Card>
         <CardHeader>
-          <CardTitle>Security Settings</CardTitle>
-          <CardDescription>Manage your email and password</CardDescription>
+          <CardTitle>{dict.profile.security.title}</CardTitle>
+          <CardDescription>{dict.profile.security.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <SecurityForm email={user.email} />
@@ -70,10 +70,10 @@ export default async function ProfilePage(props: {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Danger Zone</CardTitle>
+          <CardTitle>{dict.profile.dangerZone.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <DeleteAccountForm lang={lang} />
+          <DeleteAccountForm lang={lang} dict={dict} />
         </CardContent>
       </Card>
       {/* </TabsContent> */}
