@@ -12,22 +12,25 @@ export const metadata: Metadata = {
       ? 'https://sexyvoice.ai'
       : 'http://localhost:3000',
   ),
-  title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
-  description:
-    'Create stunning voice clones with advanced AI technology. Our easy-to-use platform helps content creators, developers, and storytellers bring their projects to life with realistic voices.',
+  title: {
+    template: '%s | SexyVoice.ai',
+    default: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+  },
   openGraph: {
-    title: 'SexyVoice.ai',
+    title: {
+      template: '%s | SexyVoice.ai',
+      default: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+    },
     siteName: 'SexyVoice.ai',
     url: 'https://sexyvoice.ai',
-    description:
-      'Create stunning voice clones with advanced AI technology. Our easy-to-use platform helps content creators, developers, and storytellers bring their projects to life with realistic voices.',
     images: [{ url: '/sexyvoice.ai-og-image.jpg' }],
   },
   alternates: {
-    canonical: '/',
+    canonical: './',
     languages: {
-      en: '/en',
-      es: '/es',
+      'x-default': './',
+      en: './en',
+      es: './es',
     },
   },
 };

@@ -279,5 +279,12 @@
         "continue": "Continuar"
       }
     }
+  },
+  "pages": {
+    "description": "Crea impresionantes clones de voz con tecnología IA avanzada. Nuestra plataforma fácil de usar ayuda a creadores de contenido, desarrolladores y narradores a dar vida a sus proyectos con voces realistas.",
+    "/": "",
+    "/login": "Iniciar sesión",
+    "/signup": "Registrarse",
+    "/dashboard/generate": "Generar"
   }
 }

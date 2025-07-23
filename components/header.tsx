@@ -5,11 +5,14 @@ import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 
-export async function Header({ lang }: { lang: string }) {
+export async function Header({ lang }: { lang: 'en' | 'es' }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
+
+  const dict = await getDictionary(lang, 'pages');
 
   return (
     <header className="border-b border-gray-700 bg-gray-900">
@@ -34,19 +37,19 @@ export async function Header({ lang }: { lang: string }) {
           {user ? (
             <Button variant="default" asChild>
               <Link href={`/${lang}/dashboard/generate`} prefetch>
-                Generate
+                {dict['/dashboard/generate']}
               </Link>
             </Button>
           ) : (
             <div className="space-x-4">
               <Button variant="secondary" asChild>
                 <Link href={`/${lang}/login`} prefetch>
-                  Login
+                  {dict['/login']}
                 </Link>
               </Button>
               <Button variant="default" asChild effect="ringHover">
                 <Link href={`/${lang}/signup`} prefetch>
-                  Sign Up
+                  {dict['/signup']}
                 </Link>
               </Button>
             </div>
@@ -63,19 +66,19 @@ export async function Header({ lang }: { lang: string }) {
                 className="w-full"
                 prefetch
               >
-                Generate
+                {dict['/dashboard/generate']}
               </Link>
             </Button>
           ) : (
             <>
               <Button asChild size="sm" variant="secondary">
                 <Link href={`/${lang}/login`} className="w-full" prefetch>
-                  Login
+                  {dict['/login']}
                 </Link>
               </Button>
               <Button asChild size="sm">
                 <Link href={`/${lang}/signup`} className="w-full" prefetch>
-                  Sign Up
+                  {dict['/signup']}
                 </Link>
               </Button>
             </>
