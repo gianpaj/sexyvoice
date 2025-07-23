@@ -1,3 +1,5 @@
+'use server';
+
 import { createClient } from './server';
 
 export async function getCredits(userId: string): Promise<number> {
@@ -216,4 +218,18 @@ export const updateUserCredits = async (
   });
 
   if (error) throw error;
+};
+
+export const getPaidTransactions = async (userId: string) => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup'])
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  return data;
 };
