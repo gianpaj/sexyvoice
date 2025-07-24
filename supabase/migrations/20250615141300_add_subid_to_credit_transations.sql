@@ -7,4 +7,4 @@
 
 -- Add subscription_id column with default value
 ALTER TABLE credit_transactions
-ADD COLUMN subscription_id TEXT
+ADD COLUMN subscription_id TEXT;

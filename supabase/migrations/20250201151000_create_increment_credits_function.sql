@@ -15,7 +15,6 @@ BEGIN
     updated_at = NOW();
 END;
 $$;
-
 -- Create or replace function to safely decrement user credits
 CREATE OR REPLACE FUNCTION decrement_user_credits(user_id UUID, credit_amount INTEGER)
 RETURNS VOID

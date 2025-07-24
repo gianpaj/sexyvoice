@@ -14,17 +14,13 @@ BEGIN
     END IF;
 END
 $$;
-
 -- Add reference_id column to store payment intent ID or session ID
 ALTER TABLE credit_transactions
 ADD COLUMN IF NOT EXISTS reference_id TEXT;
-
 -- Add metadata column to store additional data like priceId, dollarAmount
 ALTER TABLE credit_transactions
 ADD COLUMN IF NOT EXISTS metadata JSONB;
-
 -- Add index for reference_id for faster lookups
 CREATE INDEX IF NOT EXISTS credit_transactions_reference_id_idx ON credit_transactions(reference_id);
-
 -- Add index for metadata for JSONB queries
 CREATE INDEX IF NOT EXISTS credit_transactions_metadata_idx ON credit_transactions USING gin(metadata);

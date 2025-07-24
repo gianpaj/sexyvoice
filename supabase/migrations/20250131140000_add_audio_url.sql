@@ -13,7 +13,6 @@
 -- Add url column initially as nullable
 ALTER TABLE audio_files 
 ADD COLUMN url TEXT;
-
 -- Make url column NOT NULL after population
 ALTER TABLE audio_files 
-ALTER COLUMN url SET NOT NULL; 
+ALTER COLUMN url SET NOT NULL;

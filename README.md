@@ -183,6 +183,11 @@ Push schema changes to Supabase:
 supabase db push
 ```
 
+Fetch database migrations:
+```bash
+supabase migration fetch
+```
+
 ### Video Generation
 
 Generate waveform videos for audio files using [seewav](https://github.com/adefossez/seewav):

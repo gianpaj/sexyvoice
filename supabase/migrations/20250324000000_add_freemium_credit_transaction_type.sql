@@ -16,4 +16,4 @@ BEGIN
         ALTER TYPE credit_transaction_type ADD VALUE 'freemium';
     END IF;
 END
-$$; 
+$$;

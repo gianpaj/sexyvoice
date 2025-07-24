@@ -211,7 +211,7 @@ export const updateUserCredits = async (
   const supabase = await createClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
-    user_id: userId,
+    user_id_var: userId,
     credit_amount: creditAmount,
   });
 
