@@ -42,6 +42,8 @@ interface AudioGeneratorProps {
   dict: (typeof lang)['generate'];
 }
 
+const GEMINI_LIMIT = 1000;
+
 export function AudioGenerator({
   selectedVoice,
   selectedStyle,
@@ -91,7 +93,7 @@ export function AudioGenerator({
       if (!response.ok) {
         const error: APIError = await response.json();
 
-        throw new APIError(error.error, response);
+        throw new APIError(error.error || error.serverMessage, response);
       }
 
       const { url } = await response.json();
@@ -241,6 +243,7 @@ export function AudioGenerator({
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-16"
+              maxLength={isGeminiVoice ? GEMINI_LIMIT : 500}
             />
             {!isGeminiVoice && (
               <>

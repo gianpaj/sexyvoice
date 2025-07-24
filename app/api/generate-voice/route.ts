@@ -41,6 +41,8 @@ async function generateHash(
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 60; // seconds - fluid compute is enabled
 
+const GEMINI_LIMIT = 1000;
+
 // Initialize Redis
 const redis = Redis.fromEnv();
 
@@ -73,7 +75,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (text.length > 500) {
+    const isGeminiVoice = GEMINI_VOICES.includes(voice.toLowerCase());
+
+    if (isGeminiVoice ? text.length > GEMINI_LIMIT : text.length > 500) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
         maxLength: 500,
@@ -174,8 +178,6 @@ export async function POST(request: Request) {
     let predictionResult: Prediction | undefined;
     let modelUsed = voiceObj.model;
     let blobResult: any;
-
-    const isGeminiVoice = GEMINI_VOICES.includes(voice.toLowerCase());
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
