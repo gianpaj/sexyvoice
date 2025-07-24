@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
-import { GEMINI_VOICES } from '@/lib/constants';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -45,16 +44,14 @@ export function VoiceSelector({
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
 }) {
-  const showSelectedStyleOpt = GEMINI_VOICES.includes(
-    selectedVoice?.name || '',
-  );
+  const isGeminiVoice = selectedVoice?.model == 'gpro';
   return (
     <Card>
       <CardHeader>
         {/* TODO: translate */}
         <CardTitle className="flex flex-row">
           Select Voice
-          {!showSelectedStyleOpt && (
+          {!isGeminiVoice && (
             <TooltipProvider>
               <Tooltip delayDuration={100} supportMobileTap>
                 <TooltipTrigger asChild>
@@ -102,7 +99,7 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
-        {showSelectedStyleOpt && (
+        {isGeminiVoice && (
           <Textarea
             onChange={(e) => setSelectedStyle(e.target.value)}
             value={selectedStyle}

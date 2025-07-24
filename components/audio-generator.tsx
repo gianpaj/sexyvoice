@@ -23,7 +23,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import PulsatingDots from './PulsatingDots';
@@ -58,7 +57,7 @@ export function AudioGenerator({
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
-  const isGeminiVoice = GEMINI_VOICES.includes(selectedVoice?.name || '');
+  const isGeminiVoice = selectedVoice?.model == 'gpro';
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display

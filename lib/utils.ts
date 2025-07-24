@@ -30,7 +30,11 @@ export function formatDate(
   });
 }
 
-export function estimateCredits(text: string, voice: string): number {
+export function estimateCredits(
+  text: string,
+  voice: string,
+  model?: string,
+): number {
   // Remove extra whitespace and split into words
   const words = text.trim().split(/\s+/).length;
 
@@ -64,7 +68,7 @@ export function estimateCredits(text: string, voice: string): number {
       break;
   }
 
-  if (GEMINI_VOICES.includes(voice)) {
+  if (model === 'gpro') {
     multiplier = 4;
   }
 

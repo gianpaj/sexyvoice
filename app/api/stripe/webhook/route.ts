@@ -12,6 +12,7 @@ import {
 } from '@/lib/supabase/queries';
 
 export async function POST(req: Request) {
+  // Stripe expects the body to be "untouched" so it can verify the signature.
   const body = await req.text();
   // const body = await req.json();
   const signature = (await headers()).get('Stripe-Signature');
@@ -31,7 +32,6 @@ export async function POST(req: Request) {
 
     await processEvent(event);
     // await processEvent(body);
-    // waitUntil(processEvent(event));
   }
 
   try {

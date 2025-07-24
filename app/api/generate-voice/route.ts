@@ -7,7 +7,6 @@ import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { convertToWav } from '@/lib/audio';
-import { GEMINI_VOICES } from '@/lib/constants';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -75,26 +74,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const isGeminiVoice = GEMINI_VOICES.includes(voice.toLowerCase());
-
-    if (isGeminiVoice ? text.length > GEMINI_LIMIT : text.length > 500) {
-      logger.error('Text exceeds maximum length', {
-        textLength: text.length,
-        maxLength: 500,
-        body,
-        headers: Object.fromEntries(request.headers.entries()),
-      });
-      return NextResponse.json(
-        new APIError(
-          'Text exceeds the maximum length of 500 characters',
-          new Response('Text exceeds the maximum length of 500 characters', {
-            status: 400,
-          }),
-        ),
-        { status: 400 },
-      );
-    }
-
     const supabase = await createClient();
 
     const { data } = await supabase.auth.getUser();
@@ -123,9 +102,29 @@ export async function POST(request: Request) {
       );
     }
 
+    const isGeminiVoice = voiceObj.model == 'gpro';
+
+    if (isGeminiVoice ? text.length > GEMINI_LIMIT : text.length > 500) {
+      logger.error('Text exceeds maximum length', {
+        textLength: text.length,
+        maxLength: 500,
+        body,
+        headers: Object.fromEntries(request.headers.entries()),
+      });
+      return NextResponse.json(
+        new APIError(
+          'Text exceeds the maximum length of 500 characters',
+          new Response('Text exceeds the maximum length of 500 characters', {
+            status: 400,
+          }),
+        ),
+        { status: 400 },
+      );
+    }
+
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voice);
+    const estimate = estimateCredits(text, voice, voiceObj.model);
 
     // console.log({ estimate });
 
