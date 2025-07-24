@@ -3,8 +3,6 @@ import { customAlphabet } from 'nanoid';
 import { redirect } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 
-import { GEMINI_VOICES } from './constants';
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
