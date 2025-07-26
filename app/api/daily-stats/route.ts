@@ -115,12 +115,12 @@ export async function GET(request: NextRequest) {
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
-  // const { data: creditsPrevDayData } = await supabase
-  //   .from('credit_transactions')
-  //   .select('user_id, type, description')
-  //   .in('type', ['purchase', 'topup'])
-  //   .gte('created_at', previousDay.toISOString())
-  //   .lt('created_at', today.toISOString());
+  const { data: creditsPrevDayData } = await supabase
+    .from('credit_transactions')
+    .select('description')
+    .in('type', ['purchase', 'topup'])
+    .gte('created_at', previousDay.toISOString())
+    .lt('created_at', today.toISOString());
 
   // Get unique user IDs who made purchases/topups
   // const userIds = creditsPrevDayData?.map((t) => t.user_id) || [];
@@ -151,6 +151,30 @@ export async function GET(request: NextRequest) {
     .in('type', ['purchase', 'topup'])
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
+  const { data: creditsWeekData } = await supabase
+    .from('credit_transactions')
+    .select('description')
+    .in('type', ['purchase', 'topup'])
+    .gte('created_at', sevenDaysAgo.toISOString())
+    .lt('created_at', today.toISOString());
+
+  function extractDollarAmount(description: string): number {
+    const dollarMatch = description.match(/\$([\d.]+)/);
+    if (dollarMatch) return Number.parseFloat(dollarMatch[1]);
+    const usdMatch = description.match(/^(\d+(?:\.\d+)?)\s*USD/);
+    return usdMatch ? Number.parseFloat(usdMatch[1]) : 0;
+  }
+
+  const creditsTodayAmount =
+    creditsPrevDayData?.reduce(
+      (acc, t) => acc + extractDollarAmount(t.description),
+      0,
+    ) ?? 0;
+  const creditsWeekAmount =
+    creditsWeekData?.reduce(
+      (acc, t) => acc + extractDollarAmount(t.description),
+      0,
+    ) ?? 0;
 
   const audioYesterdayCount = audioYesterday.count ?? 0;
   const audioPrevCount = audioPrev.count ?? 0;
@@ -177,8 +201,8 @@ export async function GET(request: NextRequest) {
     // `  - Top voices: ${topVoiceList}`,
     `Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
     `  - 7d total ${profilesWeekCount}, avg ${(profilesWeekCount / 7).toFixed(1)}`,
-    `Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
-    `  - 7d total ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)}`,
+    `Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) - $${creditsTodayAmount.toFixed(2)} ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
+    `  - 7d total ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)} ($${creditsWeekAmount.toFixed(2)})`,
   ];
 
   try {
