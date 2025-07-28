@@ -147,10 +147,19 @@ export async function GET(request: NextRequest) {
     .lt('created_at', today.toISOString());
 
   function extractDollarAmount(description: string): number {
-    const dollarMatch = description.match(/\$([\d.]+)/);
-    if (dollarMatch) return Number.parseFloat(dollarMatch[1]);
+    // Matches formats like "$12.34"
+    const dollarMatch = description.match(/\$(\d+(?:\.\d+)?)/);
+    if (dollarMatch?.[1]) {
+      return Number.parseFloat(dollarMatch[1]);
+    }
+
+    // Matches formats like "12.34 USD"
     const usdMatch = description.match(/^(\d+(?:\.\d+)?)\s*USD/);
-    return usdMatch ? Number.parseFloat(usdMatch[1]) : 0;
+    if (usdMatch?.[1]) {
+      return Number.parseFloat(usdMatch[1]);
+    }
+
+    return 0;
   }
 
   const creditsTodayAmount =
