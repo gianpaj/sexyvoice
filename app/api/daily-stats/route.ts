@@ -198,8 +198,8 @@ export async function GET(request: NextRequest) {
     // `  - Top voices: ${topVoiceList}`,
     `Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
     `  - 7d total ${profilesWeekCount}, avg ${(profilesWeekCount / 7).toFixed(1)}`,
-    `Credit Transactions: ${creditsTodayCountNum} (${formatChange(creditsTodayCountNum, creditsPrevCount)}) - $${creditsTodayAmount.toFixed(2)} ${creditsTodayCountNum > 0 ? '🤑' : '😿'}`,
-    `  - 7d total ${creditsWeekCountNum}, avg ${(creditsWeekCountNum / 7).toFixed(1)} ($${creditsWeekAmount.toFixed(2)})`,
+    `Credit Transactions: ${creditsTodayCountNum} (${formatChange(creditsTodayCountNum, creditsPrevCount)}) - $${(creditsTodayAmount || 0).toFixed(2)} ${creditsTodayCountNum > 0 ? '🤑' : '😿'}`,
+    `  - 7d total ${creditsWeekCountNum}, avg ${(creditsWeekCountNum / 7).toFixed(1)} ($${(creditsWeekAmount || 0).toFixed(2)})`,
   ];
 
   try {
