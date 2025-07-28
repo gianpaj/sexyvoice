@@ -109,15 +109,9 @@ export async function GET(request: NextRequest) {
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
 
-  const creditsPrevDay = await supabase
+  const { data: creditsPrevDayData, count: creditsTodayCount } = await supabase
     .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-  const { data: creditsPrevDayData } = await supabase
-    .from('credit_transactions')
-    .select('description')
+    .select('description', { count: 'exact' })
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
@@ -145,15 +139,9 @@ export async function GET(request: NextRequest) {
     .in('type', ['purchase', 'topup'])
     .gte('created_at', twoDaysAgo.toISOString())
     .lt('created_at', previousDay.toISOString());
-  const creditsWeek = await supabase
+  const { data: creditsWeekData, count: creditsWeekCount } = await supabase
     .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-  const { data: creditsWeekData } = await supabase
-    .from('credit_transactions')
-    .select('description')
+    .select('description', { count: 'exact' })
     .in('type', ['purchase', 'topup'])
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
@@ -185,9 +173,9 @@ export async function GET(request: NextRequest) {
   const profilesPrevCount = profilesPrev.count ?? 0;
   const profilesWeekCount = profilesWeek.count ?? 0;
 
-  const creditsTodayCount = creditsPrevDay.count ?? 0;
+  const creditsTodayCountNum = creditsTodayCount ?? 0;
   const creditsPrevCount = creditsPrev.count ?? 0;
-  const creditsWeekCount = creditsWeek.count ?? 0;
+  const creditsWeekCountNum = creditsWeekCount ?? 0;
 
   // const topVoiceList =
   //   topVoices.data?.map((v) => `${v.voices.name} (${v.count})`).join(', ') ??
@@ -201,8 +189,8 @@ export async function GET(request: NextRequest) {
     // `  - Top voices: ${topVoiceList}`,
     `Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
     `  - 7d total ${profilesWeekCount}, avg ${(profilesWeekCount / 7).toFixed(1)}`,
-    `Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) - $${creditsTodayAmount.toFixed(2)} ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
-    `  - 7d total ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)} ($${creditsWeekAmount.toFixed(2)})`,
+    `Credit Transactions: ${creditsTodayCountNum} (${formatChange(creditsTodayCountNum, creditsPrevCount)}) - $${creditsTodayAmount.toFixed(2)} ${creditsTodayCountNum > 0 ? '🤑' : '😿'}`,
+    `  - 7d total ${creditsWeekCountNum}, avg ${(creditsWeekCountNum / 7).toFixed(1)} ($${creditsWeekAmount.toFixed(2)})`,
   ];
 
   try {
