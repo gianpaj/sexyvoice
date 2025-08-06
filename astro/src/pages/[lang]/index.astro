@@ -1,0 +1,269 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import '../../styles/global.css';
+
+import { getDictionary } from '#lib/i18n/get-dictionary';
+import { i18n, type Locale } from '#lib/i18n/i18n-config';
+
+// Get language from URL params and validate it
+const { lang } = Astro.params;
+
+// Validate that the language is a supported locale
+if (!i18n.locales.includes(lang as Locale)) {
+  return Astro.redirect(`/${i18n.defaultLocale}`);
+}
+
+const validatedLang = lang as Locale;
+
+// Load dictionary
+const dict = await getDictionary(validatedLang, 'landing');
+
+// Sample audio preview data
+const sampleAudios = [
+  {
+    id: 2,
+    name: 'Tara (en-US) 🇺',
+    prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
+    audioSrc: 'tara_amazing.mp3',
+  },
+  {
+    id: 4,
+    name: 'Dan (en-UK) 🇬',
+    prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
+Because it's hard to lay down in a square! <laugh>
+I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
+    audioSrc: 'dan_joke.mp3',
+  },
+  {
+    id: 5,
+    name: 'Emma (en-US) 🇺',
+    prompt:
+      '<gasp> Ever dreamed ... of wielding legendary power, carving your destiny in a world of magic and wonder?',
+    audioSrc: 'emma_wonder.mp3',
+  },
+  {
+    id: 6,
+    name: 'Javi (es-ES) 🇪',
+    prompt:
+      'Bienvenido a SexyVoice.ai <resoplido> , tu puerta de entrada a la vanguardia de la innovación y el mundo de la tecnología. Soy tu anfitrión, Javi, y cada semana exploramos las últimas tendencias, avances y las personas que están dando forma al futuro de la tecnología.',
+    audioSrc: 'javi_anfitrion.mp3',
+  },
+];
+
+// FAQ Schema.org structured data
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: dict.faq.questions.map((q) => ({
+    '@type': 'Question',
+    name: q.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: q.answer,
+    },
+  })),
+};
+
+const parts = dict.hero.title.split(',');
+const firstPart = parts[0];
+const restParts = parts.slice(1).join(',');
+
+// Generate static paths for all supported languages
+export async function getStaticPaths() {
+  return i18n.locales.map((lang) => ({ params: { lang } }));
+}
+---
+
+<Layout title={`SexyVoice.ai - ${dict.hero.title}`} lang={validatedLang}>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+
+  <main id="main-content">
+    <div class="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+      <div class="container mx-auto px-4">
+        <!-- Hero Section -->
+        <div class="text-center space-y-6 py-20 z-10 md:pb-32">
+          <h1 class="text-5xl md:text-6xl font-bold text-white leading-10">
+            <span class="leading-[3.5rem]">{firstPart}</span>
+            {restParts && (
+              <span class="text-blue-400">{restParts}</span>
+            )}
+          </h1>
+          <p class="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
+            {dict.hero.subtitle}
+          </p>
+          <div class="flex w-fit mx-auto flex-col gap-2">
+            <a
+              href={`/${validatedLang}/signup`}
+              class="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+              {dict.hero.buttonCTA}
+              <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </a>
+            <p class="text-gray-300 text-xs">
+              {dict.hero.noCreditCard}
+            </p>
+          </div>
+        </div>
+
+        <!-- Audio Previews Grid -->
+        <div class="max-w-4xl mx-auto mb-16 md:pb-16">
+          <h2 class="text-2xl font-bold text-white mb-2">
+            Try Our Voice Samples
+          </h2>
+          <p class="text-gray-200 mb-6">
+            Listen to sample voice clones created with our advanced AI technology
+          </p>
+          <div class="grid md:grid-cols-2 gap-6">
+            {sampleAudios.map((audio) => (
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-white mb-2">{audio.name}</h3>
+                <p class="text-gray-300 text-sm mb-4">{audio.prompt}</p>
+                <audio
+                  controls
+                  class="w-full"
+                  preload="none"
+                >
+                  <source src={`https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com/${audio.audioSrc}`} type="audio/mpeg" />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 py-16 xl:px-28">
+          <div class="group shadow-zinc-950/5 bg-white/10 backdrop-blur-sm rounded-lg p-6">
+            <div class="relative mx-auto size-36 duration-200 mb-6">
+              <div class="bg-white/10 absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t rounded">
+                <svg class="size-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="mt-6 font-medium text-center text-white mb-3">
+              {dict.features.voiceCloning.title}
+            </h3>
+            <p class="text-sm text-gray-300">
+              {dict.features.voiceCloning.description}
+            </p>
+          </div>
+
+          <div class="group shadow-zinc-950/5 bg-white/10 backdrop-blur-sm rounded-lg p-6">
+            <div class="relative mx-auto size-36 duration-200 mb-6">
+              <div class="bg-white/10 absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t rounded">
+                <svg class="size-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="mt-6 font-medium text-center text-white mb-3">
+              {dict.features.multiLanguage.title}
+            </h3>
+            <p class="text-sm text-gray-300">
+              {dict.features.multiLanguage.description}
+            </p>
+          </div>
+
+          <div class="group shadow-zinc-950/5 bg-white/10 backdrop-blur-sm rounded-lg p-6">
+            <div class="relative mx-auto size-36 duration-200 mb-6">
+              <div class="bg-white/10 absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t rounded">
+                <svg class="size-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+              </div>
+            </div>
+            <h3 class="mt-6 font-medium text-center text-white mb-3">
+              {dict.features.security.title}
+            </h3>
+            <p class="text-sm text-gray-300">
+              {dict.features.security.description}
+            </p>
+          </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="max-w-3xl mx-auto py-16">
+          <div class="text-left md:text-center mb-12">
+            <h2 class="text-3xl font-bold text-white mb-2">
+              {dict.faq.title}
+            </h2>
+            <p class="text-gray-200">{dict.faq.subtitle}</p>
+          </div>
+
+          <div class="space-y-4">
+            {dict.faq.questions.map((faq, index) => (
+              <details class="border-b border-white/10">
+                <summary class="text-white text-left hover:text-blue-400 cursor-pointer py-5 font-medium">
+                  {faq.question}
+                </summary>
+                <div class="text-gray-200 pb-4">
+                  {faq.answer}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="text-center py-16 space-y-6">
+          <div class="inline-flex items-center px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 mb-4">
+            <svg class="size-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+            </svg>
+            <span>{dict.cta.freeCredits}</span>
+          </div>
+          <h2 class="text-3xl md:text-4xl font-bold text-white">
+            {dict.cta.title}
+          </h2>
+          <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+            {dict.cta.subtitle}
+          </p>
+          <a
+            href={`/${validatedLang}/signup`}
+            class="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 mt-4"
+          >
+            {dict.cta.action}
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .container {
+    max-width: 1200px;
+  }
+
+  details summary {
+    list-style: none;
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details summary::before {
+    content: '+';
+    float: right;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: -0.1em;
+    transition: transform 0.2s ease;
+  }
+
+  details[open] summary::before {
+    transform: rotate(45deg);
+  }
+
+  audio {
+    height: 40px;
+  }
+
+  audio::-webkit-media-controls-panel {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+</style>
