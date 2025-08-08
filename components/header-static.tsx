@@ -6,7 +6,7 @@ import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 
-export async function HeaderStatic({ lang }: { lang: 'en' | 'es' }) {
+export async function HeaderStatic({ lang }: { lang: 'en' | 'es' | 'de' }) {
   const dict = await getDictionary(lang, 'pages');
   return (
     <header className="border-b border-gray-700 bg-gray-900">

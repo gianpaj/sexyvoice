@@ -4,10 +4,10 @@ import Link from 'next/link';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
-import { createClient } from '@/lib/supabase/server';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { createClient } from '@/lib/supabase/server';
 
-export async function Header({ lang }: { lang: 'en' | 'es' }) {
+export async function Header({ lang }: { lang: 'en' | 'es' | 'de' }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;

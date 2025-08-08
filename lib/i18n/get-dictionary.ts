@@ -1,35 +1,49 @@
 'server-only';
 
 import type lang from '@/lib/i18n/dictionaries/en.json';
-import type { Locale } from './i18n-config';
+import { i18n, type Locale } from './i18n-config';
 
 // Helper function with proper overloads
 async function importDictionary<K extends keyof typeof lang>(
-  path: string,
+  locale: string,
   key: K,
 ): Promise<(typeof lang)[K]>;
-async function importDictionary(path: string): Promise<typeof lang>;
+async function importDictionary(locale: string): Promise<typeof lang>;
 async function importDictionary<K extends keyof typeof lang>(
-  path: string,
+  locale: string,
   key?: K,
 ): Promise<(typeof lang)[K] | typeof lang> {
-  const module =
-    path === './dictionaries/en.json'
-      ? await import('./dictionaries/en.json')
-      : await import('./dictionaries/es.json');
+  const module = await import(`./dictionaries/${locale}.json`);
   return key ? module.default[key] : module.default;
 }
 
-const dictionaries = {
-  en: <K extends keyof typeof lang>(key?: K) =>
-    key
-      ? importDictionary('./dictionaries/en.json', key)
-      : importDictionary('./dictionaries/en.json'),
-  es: <K extends keyof typeof lang>(key?: K) =>
-    key
-      ? importDictionary('./dictionaries/es.json', key)
-      : importDictionary('./dictionaries/es.json'),
-};
+/**
+ * Dictionary mapping for supported locales.
+ *
+ * This object dynamically creates dictionary loaders for each supported locale.
+ * To add a new locale:
+ * 1. Add the locale to the Locale type in i18n-config
+ * 2. Create the corresponding dictionary file (e.g., ./dictionaries/fr.json)
+ * 3. The locale will be automatically supported here
+ *
+ * Each locale function accepts an optional key parameter to load specific
+ * sections of the dictionary, or loads the entire dictionary if no key is provided.
+ */
+const dictionaries = Object.fromEntries(
+  // This assumes Locale type contains all supported locale codes
+  i18n.locales.map((locale) => [
+    locale,
+    <K extends keyof typeof lang>(key?: K) =>
+      key ? importDictionary(locale, key) : importDictionary(locale),
+  ]),
+) as Record<
+  Locale,
+  <K extends keyof typeof lang>(
+    key?: K,
+  ) => K extends keyof typeof lang
+    ? Promise<(typeof lang)[K]>
+    : Promise<typeof lang>
+>;
 
 // Function overloads for proper typing
 export function getDictionary<K extends keyof typeof lang>(

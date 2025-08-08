@@ -1,0 +1,288 @@
+{
+  "auth": {
+    "login": {
+      "title": "Willkommen zurück",
+      "subtitle": "Melden Sie sich bei Ihrem Konto an",
+      "email": "E-Mail-Adresse",
+      "password": "Passwort",
+      "submit": "Anmelden",
+      "noAccount": "Haben Sie noch kein Konto?",
+      "signUp": "Registrieren",
+      "error": "Ungültige E-Mail-Adresse oder Passwort"
+    },
+    "signup": {
+      "title": "Konto erstellen",
+      "subtitle": "Beginnen Sie mit der Erstellung von Sprache",
+      "email": "E-Mail-Adresse",
+      "password": "Passwort",
+      "username": "Benutzername",
+      "fullName": "Vollständiger Name",
+      "submit": "Registrieren",
+      "hasAccount": "Haben Sie bereits ein Konto?",
+      "signIn": "Anmelden",
+      "error": "Fehler beim Erstellen des Kontos",
+      "signupSuccess": "Überprüfen Sie Ihren E-Mail-Posteingang zur Bestätigung"
+    },
+    "resetPassword": {
+      "title": "Passwort zurücksetzen",
+      "subtitle": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts",
+      "email": "E-Mail-Adresse",
+      "submit": "Passwort zurücksetzen",
+      "error": "Ungültige E-Mail-Adresse",
+      "success": "Überprüfen Sie Ihre E-Mails auf einen Link zum Zurücksetzen des Passworts",
+      "backToLogin": "Zurück zum Login",
+      "errors": {
+        "generic": "Passwort konnte nicht zurückgesetzt werden",
+        "email_required": "E-Mail ist erforderlich"
+      }
+    },
+    "updatePassword": {
+      "title": "Passwort aktualisieren",
+      "subtitle": "Geben Sie unten Ihr neues Passwort ein",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "updatePassword": "Passwort aktualisieren",
+      "loading": "Wird aktualisiert...",
+      "errors": {
+        "same_password": "Das neue Passwort sollte sich vom alten Passwort unterscheiden",
+        "passwords_do_not_match": "Passwörter stimmen nicht überein",
+        "passwords_required": "Passwort und Bestätigungspasswort sind erforderlich",
+        "success": "Passwort aktualisiert"
+      }
+    }
+  },
+  "landing": {
+    "latestPosts": "Neueste Beiträge",
+    "hero": {
+      "title": "Starke Stimmen, frei",
+      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller, Entwickler und Geschichtenerzähler. 😉",
+      "buttonCTA": "Kostenlos anmelden",
+      "noCreditCard": "Keine Kreditkarte erforderlich",
+      "signIn": "Anmelden"
+    },
+    "features": {
+      "voiceCloning": {
+        "title": "Natürliche Stimmen",
+        "description": "Integrieren Sie natürliche Emotionen – fügen Sie Lachen, Seufzer, Husten und mehr hinzu – um authentische, fesselnde Audioerlebnisse zu schaffen."
+      },
+      "multiLanguage": {
+        "title": "Mehrsprachige Unterstützung",
+        "description": "Klonen Sie Stimmen in mehreren Sprachen und Akzenten, perfekt für die globale Content-Erstellung und Lokalisierung."
+      },
+      "security": {
+        "title": "Sicher & Privat",
+        "description": "Ihre Stimm-Daten sind mit unternehmenstauglicher Sicherheit geschützt. Volle Kontrolle über Datenschutzeinstellungen und Nutzung."
+      }
+    },
+    "cta": {
+      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
+      "title": "Bereit, Ihre Stimme zu finden?",
+      "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform für ihre Bedürfnisse beim Stimmenklonen vertrauen.",
+      "action": "Erstellen Sie Ihre erste Stimme"
+    },
+    "generator": {
+      "title": "Probieren Sie es jetzt aus",
+      "subtitle": "Generieren Sie Ihre erste Sprachprobe",
+      "selectVoice": "Wählen Sie eine Stimme",
+      "enterText": "Geben Sie Text zum Konvertieren ein",
+      "speed": "Geschwindigkeit",
+      "pitch": "Tonhöhe",
+      "generate": "Audio generieren (bald verfügbar)",
+      "generating": "Wird generiert...",
+      "play": "Abspielen",
+      "pause": "Pause",
+      "reset": "Zurücksetzen",
+      "download": "Herunterladen"
+    },
+    "popular": {
+      "title": "Beliebte Audio-Beispiele",
+      "subtitle": "Hören Sie, was andere erstellt haben",
+      "loading": "Beliebte Audios werden geladen..."
+    },
+    "faq": {
+      "title": "Häufig gestellte Fragen",
+      "subtitle": "Alles, was Sie über SexyVoice.ai wissen müssen",
+      "questions": [
+        {
+          "question": "Wie funktioniert das Klonen von Stimmen?",
+          "answer": "Unsere KI analysiert Ihre Sprachproben, um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden Audio können wir eine digitale Stimme erstellen, die genau wie Sie klingt. Das System verwendet fortschrittliche KI, um Ihren Ton, Akzent und Sprechstil anzupassen."
+        },
+        {
+          "question": "Kann ich meine eigene Stimme klonen?",
+          "answer": "Ja! Aus ethischen Gründen benötigen Sie die Erlaubnis, bevor Sie die Stimme einer anderen Person klonen. Wir nehmen Stimmrechte ernst."
+        },
+        {
+          "question": "Sind meine Stimm-Daten sicher?",
+          "answer": "Ja. Wir verschlüsseln alle Stimm-Daten und speichern sie sicher. Sie kontrollieren Ihre Audio-Generationen vollständig und können sie jederzeit löschen. Wir geben Ihre Stimm-Daten niemals ohne Ihre Erlaubnis an Dritte weiter. Ihre Privatsphäre ist unsere Priorität."
+        },
+        {
+          "question": "Wofür kann ich die generierten Stimmen verwenden?",
+          "answer": "Sie können generierte Stimmen für Podcasts, Videos, Social-Media-Inhalte, E-Learning, Hörbücher, Spiele und mehr verwenden. Viele Ersteller verwenden unsere Stimmen, um Zeit bei der Aufnahme zu sparen oder eine konsistente Audioqualität aufrechtzuerhalten. Denken Sie nur daran, dass unsere Nutzungsbedingungen Täuschung oder Identitätsdiebstahl verbieten."
+        },
+        {
+          "question": "Wie viele Credits benötige ich?",
+          "answer": "Ungefähr 1.000 Credits ergeben 1 Minute Audio. Neue Benutzer erhalten 10.000 kostenlose Credits (ca. 10 Minuten Sprache). Unser Starter-Plan enthält 30.000 monatliche Credits, während Pro 500.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
+        },
+        {
+          "question": "Welche Sprachen unterstützen Sie?",
+          "answer": "Wir unterstützen derzeit die Text-zu-Sprache-Generierung in Englisch US 🇺, UK 🇬, Spanisch 🇪 und Italienisch 🇮. Wir arbeiten hart daran, in Zukunft weitere Sprachen hinzuzufügen. Unser Fokus liegt auf der Erweiterung der Sprachunterstützung bei gleichbleibend höchster Qualität der Stimmgenerierung. Wir werden neue Sprachoptionen bekannt geben, sobald sie verfügbar sind."
+        },
+        {
+          "question": "Haben Sie eine API für Entwickler?",
+          "answer": "Sie kommt bald! Mit unserer API können Entwickler die Sprachgenerierung zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert mit einfachen API-Aufrufen verwalten."
+        },
+        {
+          "question": "Warum SexyVoice.ai wählen?",
+          "answer": "Wir bieten die beste Kombination aus Sprachqualität, Benutzerfreundlichkeit und erschwinglichen Preisen. Im Gegensatz zu Wettbewerbern bieten wir professionelle Stimmen für Entwickler jeder Größe. Mit großzügigen kostenlosen Credits und ohne Verträge können Sie sofort mit der Erstellung erstaunlicher Sprachinhalte beginnen."
+        },
+        {
+          "question": "Ist die Erstellung von erotischen oder nicht jugendfreien Inhalten erlaubt?",
+          "answer": "Ja, wir erlauben die Erstellung von nicht jugendfreien und erotischen Inhalten auf unserer Plattform. Wir glauben an kreative Freiheit bei gleichzeitig verantwortungsvoller Nutzung. Alle Inhalte müssen jedoch unseren Nutzungsbedingungen und den geltenden Gesetzen entsprechen. Wir verbieten Inhalte, die Minderjährige, nicht einvernehmliche Szenarien oder illegale Aktivitäten beinhalten."
+        }
+      ]
+    }
+  },
+  "credits": {
+    "pricingPlan": "Preispläne",
+    "title": "Pläne für Kreative und Unternehmen jeder Größe",
+    "description": "Wählen Sie den Plan, der Ihren Anforderungen am besten entspricht",
+    "availableCredits": "Verfügbare Credits",
+    "creditsUsage": "Credits werden für die Sprachgenerierung verwendet",
+    "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
+    "billing": {
+      "monthly": "Monatlich",
+      "annually": "Jährlich",
+      "monthsFree": "2 Monate kostenlos",
+      "forever": "für immer"
+    },
+    "plans": {
+      "popular": "Am beliebtesten",
+      "subscribe": "Abonnieren",
+      "free": {
+        "name": "Kostenlos",
+        "description": "Für Einzelpersonen, die das fortschrittlichste KI-Audio ausprobieren möchten.",
+        "credits": "10.000 Credits (~10 Min. Audio)",
+        "features": [
+          "Sprache in einzigartigen Stimmen generieren",
+          "Benutzerdefinierte, synthetische Stimmen erstellen",
+          "Soundeffekte generieren",
+          "API-Zugang (bald verfügbar)"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
+        "credits": "30.000 Credits pro Monat (~30 Min. Audio)",
+        "features": [
+          "Alles im kostenlosen Plan, plus",
+          "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Für größere Kreative, die ihre Inhaltsproduktion steigern.",
+        "credits": "500.000 Credits pro Monat (~10 Stunden Audio)",
+        "features": [
+          "Alles im Starter-Plan, plus",
+          "Höhere Audioqualität",
+          "44,1 kHz PCM-Audioausgabe über API (bald verfügbar)"
+        ]
+      }
+    },
+    "topup": {
+      "title": "Credits kaufen",
+      "description": "Füllen Sie Ihre Credits sofort mit einem einmaligen Kauf auf",
+      "buyCredits": "Credits kaufen",
+      "onetimePurchase": "Einmaliger Kauf",
+      "processing": "Wird verarbeitet...",
+      "packages": {
+        "standard": {
+          "name": "10.000 Credits",
+          "description": "Perfekt für den Einstieg"
+        },
+        "base": {
+          "name": "25.000 Credits",
+          "description": "Beliebteste Wahl",
+          "value": "Bestes Preis-Leistungs-Verhältnis"
+        },
+        "premium": {
+          "name": "220.000 Credits",
+          "description": "Für Power-User",
+          "value": "Pro-Paket"
+        }
+      },
+      "mostPopular": "Am beliebtesten"
+    },
+    "status": {
+      "success": {
+        "title": "Zahlung erfolgreich!",
+        "description": "Ihre Credits wurden Ihrem Konto erfolgreich gutgeschrieben.",
+        "descriptionWithAmount": "Ihrem Konto wurden {amount} Credits gutgeschrieben.",
+        "dismiss": "Schließen"
+      },
+      "canceled": {
+        "title": "Zahlung storniert",
+        "description": "Ihre Zahlung wurde storniert. Es wurden keine Belastungen auf Ihrem Konto vorgenommen.",
+        "dismiss": "Schließen"
+      },
+      "error": {
+        "title": "Zahlung fehlgeschlagen",
+        "description": "Bei der Verarbeitung Ihrer Zahlung ist ein Problem aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht.",
+        "dismiss": "Schließen"
+      },
+      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden"
+    },
+    "history": {
+      "title": "Credit-Verlauf"
+    }
+  },
+  "generate": {
+    "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
+    "success": "Audio erfolgreich generiert!",
+    "error": "Audio konnte nicht generiert werden",
+    "errorCloning": "Stimme konnte nicht geklont werden",
+    "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
+    "generating": "Wird generiert",
+    "playAudio": "Audio abspielen",
+    "cancel": "Generierung abbrechen",
+    "ctaButton": "Audio generieren",
+    "resetForm": "Formular zurücksetzen",
+    "downloadAudio": "Audio herunterladen",
+    "abortedCloning": "Sprachgenerierung abgebrochen."
+  },
+  "profile": {
+    "title": "Profileinstellungen",
+    "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Präferenzen",
+    "notLoggedIn": "Nicht angemeldet",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Sicherheit"
+    },
+    "personalInfo": {
+      "title": "Persönliche Informationen",
+      "description": "Aktualisieren Sie Ihre Profilinformationen und Ihren Avatar"
+    },
+    "security": {
+      "title": "Sicherheitseinstellungen",
+      "description": "Verwalten Sie Ihre E-Mail und Ihr Passwort"
+    },
+    "dangerZone": {
+      "title": "Gefahrenzone",
+      "deleteAccount": {
+        "button": "Konto löschen",
+        "confirmTitle": "Sind Sie sich absolut sicher?",
+        "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht und Ihre Daten von unseren Servern entfernt.",
+        "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
+        "cancel": "Abbrechen",
+        "continue": "Weiter"
+      }
+    }
+  },
+  "pages": {
+    "description": "Erstellen Sie atemberaubende Stimmklone mit fortschrittlicher KI-Technologie. Unsere benutzerfreundliche Plattform hilft Content-Erstellern, Entwicklern und Geschichtenerzählern, ihre Projekte mit realistischen Stimmen zum Leben zu erwecken.",
+    "/": "",
+    "/login": "Anmelden",
+    "/signup": "Registrieren",
+    "/dashboard/generate": "Generieren"
+  }
+}
