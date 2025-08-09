@@ -8,7 +8,7 @@ import { Suspense } from 'react';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
   createBreadcrumbSchema,
@@ -22,10 +22,17 @@ export const generateStaticParams = ({
   params: { lang: string };
 }) =>
   allPosts
-    .map((post) => ({
-      slug: post._raw.flattenedPath,
-      locale: post._raw.flattenedPath.endsWith('.es') ? 'es' : 'en',
-    }))
+    .map((post) => {
+      // Determine locale from file extension or default to 'en'
+      const locale = i18n.locales.find((loc) =>
+        post._raw.flattenedPath.endsWith(`.${loc}`)
+      ) || i18n.defaultLocale;
+
+      return {
+        slug: post._raw.flattenedPath,
+        locale,
+      };
+    })
     .filter((post) => post.locale === lang);
 
 interface PostProps {
@@ -101,10 +108,12 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: postUrl,
-      languages: {
-        en: `/en/blog/${post.slug}`,
-        es: `/es/blog/${post.slug}`,
-      },
+      languages: Object.fromEntries(
+        i18n.locales.map((locale) => [
+          locale,
+          `/${locale}/blog/${post.slug}`,
+        ])
+      ),
     },
   };
 }
