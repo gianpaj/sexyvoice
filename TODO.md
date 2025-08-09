@@ -64,6 +64,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 - Implement rate limiting to prevent abuse.
 - Block temporary email addresses.
 - Add Cloudflare Captcha protection.
+- Add hCaptcha to Login and Registration forms <https://docs.hcaptcha.com>
 
 ## Maintenance
 

@@ -4,6 +4,8 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
+import { i18n } from '@/lib/i18n/i18n-config';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -29,8 +31,9 @@ export const metadata: Metadata = {
     canonical: './',
     languages: {
       'x-default': './',
-      en: './en',
-      es: './es',
+      ...Object.fromEntries(
+        i18n.locales.map((locale) => [locale, `./${locale}`]),
+      ),
     },
   },
 };

@@ -27,51 +27,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-// Sample audio preview data
-const sampleAudios = [
-  // {
-  //   id: 1,
-  //   name: 'Tara',
-  //   prompt:
-  //     "Life is like a box of chocolates, you never know what you're gonna get.",
-  //   audioSrc: '/audios/tara_20250320_130636.mp3',
-  // },
-  {
-    id: 2,
-    name: 'Tara (en-US) 🇺',
-    prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
-    audioSrc: 'tara_amazing.mp3',
-  },
-  // {
-  //   id: 3,
-  //   name: 'Tara (en-US) 🇺',
-  //   prompt: '<sigh> Oh my god. This is fantastic! <laugh>',
-  //   audioSrc: 'tara_fantastic.mp3',
-  // },
-  {
-    id: 4,
-    name: 'Dan (en-UK) 🇬',
-    prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
-Because it's hard to lay down in a square! <laugh>
-I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
-    audioSrc: 'dan_joke.mp3',
-  },
-  {
-    id: 5,
-    name: 'Emma (en-US) 🇺',
-    prompt:
-      '<gasp> Ever dreamed ... of wielding legendary power, carving your destiny in a world of magic and wonder?',
-    audioSrc: 'emma_wonder.mp3',
-  },
-  {
-    id: 6,
-    name: 'Javi (es-ES) 🇪',
-    prompt:
-      'Bienvenido a SexyVoice.ai <resoplido> , tu puerta de entrada a la vanguardia de la innovación y el mundo de la tecnología. Soy tu anfitrión, Javi, y cada semana exploramos las últimas tendencias, avances y las personas que están dando forma al futuro de la tecnología.',
-    audioSrc: 'javi_anfitrion.mp3',
-  },
-];
+import { getSampleAudiosByLang } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) => {
   return allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
@@ -164,12 +120,12 @@ export default async function LandingPage(props: {
                 technology
               </p>
               <div className="grid md:grid-cols-2 gap-6">
-                {sampleAudios.map((audio) => (
+                {getSampleAudiosByLang(lang).map((audio) => (
                   <AudioPreviewCard
                     key={audio.id}
                     name={audio.name}
                     prompt={audio.prompt}
-                    audioSrc={`https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com/${audio.audioSrc}`}
+                    audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
                   />
                 ))}
               </div>
