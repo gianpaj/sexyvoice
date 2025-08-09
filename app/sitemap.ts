@@ -38,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
   pages = pages.filter((page) => !page.endsWith('blog/[slug]/page.tsx'));
 
-  const BASE_URL = process.env.VERCEL_URL || 'https://sexyvoice.ai';
+  const BASE_URL = 'https://sexyvoice.ai';
 
   const routes: MetadataRoute.Sitemap = [];
   i18n.locales.forEach(async (lang: string) => {
