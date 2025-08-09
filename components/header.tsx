@@ -5,9 +5,10 @@ import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 
-export async function Header({ lang }: { lang: 'en' | 'es' | 'de' }) {
+export async function Header({ lang }: { lang: Locale }) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;

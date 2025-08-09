@@ -5,8 +5,9 @@ import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
-export async function HeaderStatic({ lang }: { lang: 'en' | 'es' | 'de' }) {
+export async function HeaderStatic({ lang }: { lang: Locale }) {
   const dict = await getDictionary(lang, 'pages');
   return (
     <header className="border-b border-gray-700 bg-gray-900">
