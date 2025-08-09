@@ -29,19 +29,20 @@ function checkPostExists(slug: string, locale: string): boolean {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let pages = await globby([
     'app/**/page{.ts,.tsx}',
+    '!app/**/protected/**',
+    '!app/**/dashboard/**',
     // '!app/**/blog/[slug]',
     '!app/_*.js',
-    '!app/**/{update-password}/**.{ts,tsx}',
     '!app/{sitemap,layout}.{ts,tsx}',
     '!app/api',
   ]);
+  pages = pages.filter((page) => !page.endsWith('blog/[slug]/page.tsx'));
 
   const BASE_URL = process.env.VERCEL_URL || 'https://sexyvoice.ai';
 
-  pages = pages.filter((page) => !page.endsWith('blog/[slug]/page.tsx'));
-
   const routes: MetadataRoute.Sitemap = [];
   i18n.locales.forEach(async (lang: string) => {
+    // Process each page
     pages.forEach((page: string) => {
       let url = addPage(page);
 
@@ -55,10 +56,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         routes.push({
           url: `${BASE_URL}${url}`,
           alternates: {
-            languages: {
-              es: `${BASE_URL}${url.replace('/en', '/es')}`,
-              de: `${BASE_URL}${url.replace('/en', '/de')}`,
-            },
+            languages: Object.fromEntries(
+              i18n.locales
+                .filter((locale) => locale !== lang)
+                .map((locale) => [
+                  locale,
+                  `${BASE_URL}${url.replace('/en', `/${locale}`)}`,
+                ]),
+            ),
           },
         });
       } else {
@@ -66,6 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     });
 
+    // Add individual entries for translated posts in non-default locales
     generateStaticParams({ params: { lang } }).forEach(({ slug, locale }) => {
       if (lang === i18n.defaultLocale) {
         // Build alternates only for locales where the post actually exists

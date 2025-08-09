@@ -2,7 +2,7 @@ import { Inter } from 'next/font/google';
 
 import { i18n } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
-import { Metadata, ResolvingMetadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 const inter = Inter({ subsets: ['latin'] });
