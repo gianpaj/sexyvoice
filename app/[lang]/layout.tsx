@@ -1,6 +1,6 @@
 import { Inter } from 'next/font/google';
 
-import { i18n } from '@/lib/i18n/i18n-config';
+import { i18n, Locale } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -12,7 +12,7 @@ export async function generateStaticParams() {
 }
 
 type Props = {
-  params: Promise<{ lang: 'en' | 'es' }>;
+  params: Promise<{ lang: Locale }>;
 };
 
 export async function generateMetadata(
@@ -47,7 +47,7 @@ export default async function LangLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ lang: 'es' | 'de' }>;
+  params: Promise<{ lang: Locale }>;
 }>) {
   return (
     <html lang={(await params).lang}>
