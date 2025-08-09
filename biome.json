@@ -53,7 +53,7 @@
         "organizeImports": {
           "level": "on",
           "options": {
-            "groups": [":PACKAGE:", ":BLANK_LINE:", "@/**"]
+            "groups": [":NODE:", ":PACKAGE:", ":BLANK_LINE:", ":ALIAS:"]
           }
         }
       }
