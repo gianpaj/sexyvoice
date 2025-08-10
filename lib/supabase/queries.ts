@@ -122,39 +122,64 @@ export const insertCreditTransaction = async (
 ) => {
   const supabase = await createClient();
 
-  try {
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('subscription_id', subscriptionId)
-      .single();
+  // Check for existing transaction first
+  const { data: existingTransaction, error: selectError } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('subscription_id', subscriptionId)
+    // .eq('type', 'purchase')
+    .single();
 
-    if (data) {
-      console.log('Transaction already exists', {
-        userId,
-        subscriptionId,
-        data,
-      });
-    } else {
-      await supabase.from('credit_transactions').insert({
+  // If SELECT failed for reasons other than "no rows", throw the error
+  if (selectError && selectError.code !== 'PGRST116') {
+    console.error('Error checking for existing transaction:', selectError);
+    throw selectError;
+  }
+
+  // If transaction already exists, log and return early
+  if (existingTransaction) {
+    console.error('Transaction already exists', {
+      userId,
+      subscriptionId,
+      data: existingTransaction,
+    });
+    return;
+  }
+
+  // Transaction doesn't exist, proceed with insertion
+  try {
+    const { error: insertError } = await supabase
+      .from('credit_transactions')
+      .insert({
         user_id: userId,
         subscription_id: subscriptionId,
         amount,
         type: 'purchase',
         description: `${subAmount} USD subscription`,
       });
-      await updateUserCredits(userId, amount);
+
+    if (insertError) {
+      // Check if it's a unique constraint violation (race condition)
+      if (insertError.code === '23505') {
+        console.error(
+          'Transaction already inserted by another process (race condition)',
+          {
+            userId,
+            subscriptionId,
+            error: insertError.message,
+          },
+        );
+        return; // Don't throw error, just return as this is expected in race conditions
+      }
+      throw insertError;
     }
-  } catch (_error) {
-    await supabase.from('credit_transactions').insert({
-      user_id: userId,
-      subscription_id: subscriptionId,
-      amount,
-      type: 'purchase',
-      description: `${subAmount} USD subscription`,
-    });
+
+    // Successfully inserted, now update user credits
     await updateUserCredits(userId, amount);
+  } catch (error) {
+    console.error('Error inserting credit transaction:', error);
+    throw error;
   }
 };
 
@@ -167,41 +192,69 @@ export const insertTopupTransaction = async (
 ) => {
   const supabase = await createClient();
 
-  try {
-    // Check if transaction already exists to prevent duplicates
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check for existing transaction first
+  const { data: existingTransaction, error: selectError } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('reference_id', paymentIntentId)
+    // .eq('type', 'topup')
+    .single();
 
-    if (data) {
-      console.log('Topup transaction already exists', {
-        userId,
-        paymentIntentId,
-        data,
-      });
-      return;
-    }
-  } catch (_error) {
-    // Transaction doesn't exist, continue with insertion
+  // If SELECT failed for reasons other than "no rows", throw the error
+  if (selectError && selectError.code !== 'PGRST116') {
+    console.error(
+      'Error checking for existing topup transaction:',
+      selectError,
+    );
+    throw selectError;
   }
 
-  // Insert the transaction
-  const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
-    amount: amount,
-    type: 'topup',
-    description: `Credit top-up - $${dollarAmount}`,
-    reference_id: paymentIntentId,
-    metadata: { priceId, dollarAmount },
-  });
+  // If transaction already exists, log and return early
+  if (existingTransaction) {
+    console.log('Topup transaction already exists', {
+      userId,
+      paymentIntentId,
+      data: existingTransaction,
+    });
+    return;
+  }
 
-  if (error) throw error;
+  // Transaction doesn't exist, proceed with insertion
+  try {
+    const { error: insertError } = await supabase
+      .from('credit_transactions')
+      .insert({
+        user_id: userId,
+        amount: amount,
+        type: 'topup',
+        description: `Credit top-up - $${dollarAmount}`,
+        reference_id: paymentIntentId,
+        metadata: { priceId, dollarAmount },
+      });
 
-  // Update user's credit balance using the database function
-  await updateUserCredits(userId, amount);
+    if (insertError) {
+      // Check if it's a unique constraint violation (race condition)
+      if (insertError.code === '23505') {
+        console.error(
+          'Topup transaction already inserted by another process (race condition)',
+          {
+            userId,
+            paymentIntentId,
+            error: insertError.message,
+          },
+        );
+        return; // Don't throw error, just return as this is expected in race conditions
+      }
+      throw insertError;
+    }
+
+    // Successfully inserted, now update user credits
+    await updateUserCredits(userId, amount);
+  } catch (error) {
+    console.error('Error inserting topup transaction:', error);
+    throw error;
+  }
 };
 
 export const updateUserCredits = async (
