@@ -113,11 +113,10 @@ export default async function LandingPage(props: {
             {/* Audio Previews Grid */}
             <div className="max-w-4xl mx-auto mb-16 md:pb-16">
               <h2 className="text-2xl font-bold text-white mb-2">
-                Try Our Voice Samples
+                {dict.popular.trySamplesTitle}
               </h2>
               <p className="text-gray-200 mb-6">
-                Listen to sample voice clones created with our advanced AI
-                technology
+                {dict.popular.trySamplesSubtitle}
               </p>
               <div className="grid md:grid-cols-2 gap-6">
                 {getSampleAudiosByLang(lang).map((audio) => (

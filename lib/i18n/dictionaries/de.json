@@ -97,7 +97,9 @@
     "popular": {
       "title": "Beliebte Audio-Beispiele",
       "subtitle": "Hören Sie, was andere erstellt haben",
-      "loading": "Beliebte Audios werden geladen..."
+      "loading": "Beliebte Audios werden geladen...",
+      "trySamplesTitle": "Probieren Sie unsere Sprachmuster",
+      "trySamplesSubtitle": "Hören Sie sich Beispiel-Stimmenklone an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden"
     },
     "faq": {
       "title": "Häufig gestellte Fragen",
