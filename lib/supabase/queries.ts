@@ -139,7 +139,7 @@ export const insertCreditTransaction = async (
 
   // If transaction already exists, log and return early
   if (existingTransaction) {
-    console.error('Transaction already exists', {
+    console.warn('Transaction already exists', {
       userId,
       subscriptionId,
       data: existingTransaction,
@@ -162,7 +162,7 @@ export const insertCreditTransaction = async (
     if (insertError) {
       // Check if it's a unique constraint violation (race condition)
       if (insertError.code === '23505') {
-        console.error(
+        console.warn(
           'Transaction already inserted by another process (race condition)',
           {
             userId,
@@ -212,7 +212,7 @@ export const insertTopupTransaction = async (
 
   // If transaction already exists, log and return early
   if (existingTransaction) {
-    console.log('Topup transaction already exists', {
+    console.warn('Topup transaction already exists', {
       userId,
       paymentIntentId,
       data: existingTransaction,
