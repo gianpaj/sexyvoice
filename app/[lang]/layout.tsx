@@ -21,23 +21,31 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const lang = (await params).lang;
 
-  const { alternates, openGraph } = await parent;
+  const { alternates, openGraph, title: parentTitle } = await parent;
 
   const pathname = new URL(alternates?.canonical?.url!).pathname;
+  const pagePath = pathname.replace(`/${lang}`, '') || '/';
 
   const dict = await getDictionary(lang);
   // @ts-ignore FIXME
-  const title = dict.pages[pathname.replace(`/${lang}`, '')];
+  const pageTitle = dict.pages[pagePath];
+  // @ts-ignore FIXME
+  const defaultTitle = dict.pages.defaultTitle;
+
+  const title = pageTitle || defaultTitle;
+
   return {
-    ...(title ? { title } : {}),
+    title: {
+      template: (parentTitle as any).template,
+      default: title,
+    },
     description: dict.pages.description,
     openGraph: {
-      // ...openGraph,
-      ...(title ? { title } : {}),
+      title: title,
+      description: dict.pages.description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
       ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
-      description: dict.pages.description,
     },
   };
 }
