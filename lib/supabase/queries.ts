@@ -149,6 +149,7 @@ export const insertCreditTransaction = async (
 
   // Transaction doesn't exist, proceed with insertion
   try {
+    const description = `Subscription payment - ${subAmount}`;
     const { error: insertError } = await supabase
       .from('credit_transactions')
       .insert({
@@ -156,7 +157,8 @@ export const insertCreditTransaction = async (
         subscription_id: subscriptionId,
         amount,
         type: 'purchase',
-        description: `${subAmount} USD subscription`,
+        description,
+        metadata: { priceId: 'subscription', dollarAmount: subAmount },
       });
 
     if (insertError) {
