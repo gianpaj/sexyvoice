@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
   const previousDay = subtractDays(today, 1);
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
+  const thirtyDaysAgo = subtractDays(today, 30);
 
   const audioYesterday = await supabase
     .from('audio_files')
@@ -152,6 +153,35 @@ export async function GET(request: NextRequest) {
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
 
+  const { data: totalAmountUsdData, error: totalAmountUsdError } =
+    await supabase
+      .from('credit_transactions')
+      .select('amount_usd')
+      .in('type', ['purchase', 'topup']);
+  const totalAmountUsd =
+    totalAmountUsdData?.reduce((acc, row) => acc + row.amount_usd, 0) ?? 0;
+
+  const { data: totalAmountUsdWeekData, error: totalAmountUsdWeekError } =
+    await supabase
+      .from('credit_transactions')
+      .select('amount_usd')
+      .in('type', ['purchase', 'topup'])
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .lt('created_at', today.toISOString());
+  const totalAmountUsdWeek =
+    totalAmountUsdWeekData?.reduce((acc, row) => acc + row.amount_usd, 0) ?? 0;
+
+  const { data: totalAmountUsdMonthData, error: totalAmountUsdMonthError } =
+    await supabase
+      .from('credit_transactions')
+      .select('amount_usd')
+      .in('type', ['purchase', 'topup'])
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .lt('created_at', today.toISOString());
+  const totalAmountUsdMonth =
+    totalAmountUsdMonthData?.reduce((acc, row) => acc + row.amount_usd, 0) ??
+    0;
+
   const audioYesterdayCount = audioYesterday.count ?? 0;
   const audioPrevCount = audioPrev.count ?? 0;
   const audioWeekCount = audioWeek.count ?? 0;
@@ -179,6 +209,9 @@ export async function GET(request: NextRequest) {
     `  - 7d total ${profilesWeekCount}, avg ${(profilesWeekCount / 7).toFixed(1)}`,
     `Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d total ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)}`,
+    `Total USD: $${totalAmountUsd.toFixed(2)}`,
+    `  - 7d total $${totalAmountUsdWeek.toFixed(2)}`,
+    `  - 30d total $${totalAmountUsdMonth.toFixed(2)}`,
   ];
 
   try {
