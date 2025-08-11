@@ -281,6 +281,7 @@
     }
   },
   "pages": {
+    "defaultTitle": "SexyVoice.ai - Free Text to Speech & AI Voice Generator",
     "description": "Create stunning voice clones with advanced AI technology. Our easy-to-use platform helps content creators, developers, and storytellers bring their projects to life with realistic voices.",
     "/": "",
     "/login": "Log in",

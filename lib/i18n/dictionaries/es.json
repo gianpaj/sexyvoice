@@ -283,7 +283,8 @@
     }
   },
   "pages": {
-    "description": "Crea impresionantes clones de voz con tecnología IA avanzada. Nuestra plataforma fácil de usar ayuda a creadores de contenido, desarrolladores y narradores a dar vida a sus proyectos con voces realistas.",
+    "defaultTitle": "SexyVoice.ai - Generador de Voz con IA y Texto a Voz Gratis",
+    "description": "El mejor generador de voz con IA que te permite convertir texto a voz en línea de forma gratuita, crear locuciones y generar habla con sonido natural en cualquier idioma.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse",
