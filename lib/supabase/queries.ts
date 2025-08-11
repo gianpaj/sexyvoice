@@ -137,12 +137,14 @@ export const insertCreditTransaction = async (
         data,
       });
     } else {
+      const description = `Subscription payment - ${subAmount}`;
       await supabase.from('credit_transactions').insert({
         user_id: userId,
         subscription_id: subscriptionId,
         amount,
         type: 'purchase',
-        description: `${subAmount} USD subscription`,
+        description,
+        metadata: { priceId: 'subscription', dollarAmount: subAmount },
       });
       await updateUserCredits(userId, amount);
     }
