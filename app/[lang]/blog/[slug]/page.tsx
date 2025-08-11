@@ -382,7 +382,7 @@ const PostLayout = async (props: {
           </div>
         </article>
       </main>
-      <Footer />
+      <Footer lang={lang} />
     </>
   );
 };

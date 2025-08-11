@@ -1,6 +1,6 @@
 import { Inter } from 'next/font/google';
 
-import { i18n, Locale } from '@/lib/i18n/i18n-config';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { getDictionary } from '@/lib/i18n/get-dictionary';

@@ -1,4 +1,5 @@
 import Footer from '@/components/footer';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 import './privacy-policy.css';
 
@@ -711,7 +712,7 @@ export default function PrivacyPolicy() {
           </li>
         </ul>
       </div>
-      <Footer />
+      <Footer lang={'en' as Locale} />
     </main>
   );
 }

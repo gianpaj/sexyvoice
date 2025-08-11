@@ -97,7 +97,9 @@
     "popular": {
       "title": "Popular Audio Samples",
       "subtitle": "Listen to what others have created",
-      "loading": "Loading popular audios..."
+      "loading": "Loading popular audios...",
+      "trySamplesTitle": "Try Our Voice Samples",
+      "trySamplesSubtitle": "Listen to sample voice clones created with our advanced AI technology"
     },
     "faq": {
       "title": "Frequently Asked Questions",
@@ -284,5 +286,11 @@
     "/login": "Log in",
     "/signup": "Signup",
     "/dashboard/generate": "Generate"
+  },
+  "footer": {
+    "statusPage": "Status page",
+    "privacyPolicy": "Privacy Policy",
+    "termsAndConditions": "Terms and Conditions",
+    "copyright": "SexyVoice.ai. All rights reserved."
   }
 }
