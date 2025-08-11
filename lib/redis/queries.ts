@@ -28,15 +28,20 @@ export function getCustomerData(
 }
 
 export async function countActiveCustomerSubscriptions() {
-  const keys = await redis.keys('stripe:customer:*');
+  let cursor: string | number = 0;
+  let activeCount = 0;
+  do {
+    const [nextCursor, keys]: [string, string[]] = await redis.scan(cursor, {
+      match: 'stripe:customer:*',
+    });
 
-  if (keys.length === 0) {
-    return 0;
-  }
-
-  const customerDataList = await redis.mget<CustomerData[]>(...keys);
-
-  return customerDataList.filter(
-    (data) => data !== null && data.status === 'active',
-  ).length;
+    cursor = nextCursor;
+    if (keys.length > 0) {
+      const customerDataList = await redis.mget<CustomerData[]>(...keys);
+      activeCount += customerDataList.filter(
+        (data) => data !== null && data.status === 'active',
+      ).length;
+    }
+  } while (cursor !== '0');
+  return activeCount;
 }

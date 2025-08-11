@@ -302,5 +302,8 @@ const reduceAmountUsd = (acc: number, row: { metadata: any }) => {
     priceId: string;
     dollarAmount: number;
   };
-  return acc + dollarAmount;
+  if (typeof dollarAmount === 'number') {
+    return acc + dollarAmount;
+  }
+  return acc;
 };
