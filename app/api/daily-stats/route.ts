@@ -259,20 +259,20 @@ export async function GET(request: NextRequest) {
   ];
 
   try {
-    // await fetch(webhook, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ chat_id: '202637584', text: message.join('\n') }),
-    // });
-    // Sentry.captureCheckIn({
-    //   // Make sure this variable is named `checkInId`
-    //   checkInId,
-    //   monitorSlug: 'telegram-bot-daily-stats',
-    //   status: 'ok',
-    // });
-    // return NextResponse.json({ ok: true });
+    await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: '202637584', text: message.join('\n') }),
+    });
+    Sentry.captureCheckIn({
+      // Make sure this variable is named `checkInId`
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'ok',
+    });
+    return NextResponse.json({ ok: true });
 
-    return new Response(message.join('\n'));
+    // return new Response(message.join('\n'));
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
     // Sentry.captureCheckIn({
