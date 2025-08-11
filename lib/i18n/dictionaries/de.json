@@ -286,5 +286,11 @@
     "/login": "Anmelden",
     "/signup": "Registrieren",
     "/dashboard/generate": "Generieren"
+  },
+  "footer": {
+    "statusPage": "Statusseite",
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "termsAndConditions": "Allgemeine Geschäftsbedingungen",
+    "copyright": "SexyVoice.ai. Alle Rechte vorbehalten."
   }
 }

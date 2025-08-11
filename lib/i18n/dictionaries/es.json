@@ -288,5 +288,11 @@
     "/login": "Iniciar sesión",
     "/signup": "Registrarse",
     "/dashboard/generate": "Generar"
+  },
+  "footer": {
+    "statusPage": "Página de estado",
+    "privacyPolicy": "Política de privacidad",
+    "termsAndConditions": "Términos y condiciones",
+    "copyright": "SexyVoice.ai. Todos los derechos reservados."
   }
 }

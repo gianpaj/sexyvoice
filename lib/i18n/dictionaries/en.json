@@ -286,5 +286,11 @@
     "/login": "Log in",
     "/signup": "Signup",
     "/dashboard/generate": "Generate"
+  },
+  "footer": {
+    "statusPage": "Status page",
+    "privacyPolicy": "Privacy Policy",
+    "termsAndConditions": "Terms and Conditions",
+    "copyright": "SexyVoice.ai. All rights reserved."
   }
 }

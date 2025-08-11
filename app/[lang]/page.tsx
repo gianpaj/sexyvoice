@@ -293,7 +293,7 @@ export default async function LandingPage(props: {
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer lang={lang} />
     </>
   );
 }

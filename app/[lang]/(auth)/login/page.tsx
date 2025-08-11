@@ -32,7 +32,7 @@ export default async function LoginPage(props: {
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer lang={lang} />
     </>
   );
 }

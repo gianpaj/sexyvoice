@@ -1,4 +1,5 @@
 import Footer from '@/components/footer';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 import '../privacy-policy/privacy-policy.css';
 
@@ -655,7 +656,7 @@ export default function TermsAndCondition() {
         </ul>
       </div>
 
-      <Footer />
+      <Footer lang={'en' as Locale} />
     </main>
   );
 }

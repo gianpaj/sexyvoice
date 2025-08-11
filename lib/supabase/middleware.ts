@@ -17,7 +17,7 @@ const publicRoutes = [
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
-export const updateSession = async (request: NextRequest) => {
+export const updateSession = async (request: NextRequest, locale: string) => {
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = NextResponse.next({
@@ -47,7 +47,9 @@ export const updateSession = async (request: NextRequest) => {
     const authRoutes = routesPerLocale(['/signup', '/login']);
 
     if (user && authRoutes.includes(pathname)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(
+        new URL(`/${locale}/dashboard`, request.url),
+      );
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

@@ -3,8 +3,12 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
-function Footer() {
+async function Footer({ lang }: { lang: Locale }) {
+  const dict = await getDictionary(lang);
+  const currentYear = new Date().getFullYear();
   return (
     <footer className="bg-gray-900 py-12">
       <div className="container mx-auto px-4 md:px-6">
@@ -56,7 +60,7 @@ function Footer() {
           </div> */}
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
-              © 2025 SexyVoice.ai. All rights reserved.
+              © {currentYear} {dict.footer.copyright}
             </p>
             <p className="text-sm text-muted-foreground mt-4">
               <a
@@ -65,7 +69,7 @@ function Footer() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Status page
+                {dict.footer.statusPage}
               </a>
               {' - '}
               <a
@@ -73,7 +77,7 @@ function Footer() {
                 className="hover:text-primary hover:underline"
                 rel="noreferrer"
               >
-                Privacy Policy
+                {dict.footer.privacyPolicy}
               </a>
               {' - '}
               <a
@@ -81,7 +85,7 @@ function Footer() {
                 className="hover:text-primary hover:underline"
                 rel="noreferrer"
               >
-                Terms and Conditions
+                {dict.footer.termsAndConditions}
               </a>
             </p>
           </div>
