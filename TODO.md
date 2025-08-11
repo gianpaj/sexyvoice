@@ -4,6 +4,13 @@
 - merge `r2` branch
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
 - Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
+- Translate pages in Dashboard:
+  - Generate
+  - Clone
+  - History
+  - Credits (table headers)
+    - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
+  - Sidebar
 - Translate website to French
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>

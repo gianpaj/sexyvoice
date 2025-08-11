@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { updateSession } from '@/lib/supabase/middleware';
-import { i18n, type Locale } from './lib/i18n/i18n-config';
+import { i18n } from './lib/i18n/i18n-config';
 
 // Determines the best matching locale based on the request's Accept-Language headers
 function getLocale(request: NextRequest): string {
@@ -19,13 +19,11 @@ function getLocale(request: NextRequest): string {
 
 function getLocaleFromPathname(request: NextRequest): string {
   const pathname = request.nextUrl.pathname;
-  const locale = pathname.split('/')[1] as Locale;
-
-  if (!i18n.locales.includes(locale)) {
-    return i18n.defaultLocale;
+  const potentialLocale = pathname.split('/')[1] ?? '';
+  if ((i18n.locales as readonly string[]).includes(potentialLocale)) {
+    return potentialLocale;
   }
-
-  return locale;
+  return i18n.defaultLocale;
 }
 
 const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
