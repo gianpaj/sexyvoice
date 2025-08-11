@@ -26,3 +26,17 @@ export function getCustomerData(
 ): Promise<CustomerData | null> {
   return redis.get(`stripe:customer:${customerId}`);
 }
+
+export async function countActiveCustomerSubscriptions() {
+  const keys = await redis.keys('stripe:customer:*');
+
+  if (keys.length === 0) {
+    return 0;
+  }
+
+  const customerDataList = await redis.mget<CustomerData[]>(...keys);
+
+  return customerDataList.filter(
+    (data) => data !== null && data.status === 'active',
+  ).length;
+}

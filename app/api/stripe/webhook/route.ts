@@ -146,6 +146,7 @@ export const isAllowedStripeEvent = (
 ): event is AllowedStripeEvent =>
   allowedEvents.includes(event.type as AllowedEventType);
 
+// Handles completed Stripe checkout sessions for both one-time credit purchases and subscription checkouts
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
 ) {
