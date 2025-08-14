@@ -5,6 +5,7 @@
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
 - Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts)
+- Translate SEO title and description to English, Spanish and German
 - Translate pages in Dashboard:
   - Generate
   - Clone

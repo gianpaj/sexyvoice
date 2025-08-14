@@ -73,9 +73,11 @@ Core tables:
 
 #### Essential Commands (Always run before committing)
 ```bash
-pnpm run lint:fix    # Fix linting issues automatically
-pnpm run format      # Format code with Biome
-pnpm run type-check  # Verify TypeScript types
+pnpm run fixall      # Run all fixes: lint, format, and check
+# OR run individually:
+pnpm run lint --write    # Fix linting issues automatically
+pnpm run format --write  # Format code with Biome
+pnpm run type-check      # Verify TypeScript types
 ```
 
 #### Code Style
@@ -148,12 +150,16 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Code Quality
 - `pnpm lint` - Run Biome linting
-- `pnpm lint:fix` - Auto-fix linting issues in app/, components/, hooks/, lib/, middleware.ts
+- `pnpm lint --write` - Auto-fix linting issues in app/, components/, hooks/, lib/, middleware.ts
 - `pnpm format` - Format code with Biome
+- `pnpm format --write` - Auto-format code with Biome
+- `pnpm check:fix` - Run Biome check with fixes
+- `pnpm fixall` - Run all code quality fixes (lint, format, check)
 - `pnpm type-check` - Run TypeScript type checking
 
 ### Testing
 - `pnpm test` - Run unit tests (lib/utils.test.ts)
+- `pnpm test:watch` - Run unit tests in watch mode
 
 ### Content & Data
 - `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)
@@ -165,7 +171,9 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `supabase gen types typescript --project-id PROJECT_ID > database.types.ts` - Generate TypeScript types from database schema
 
 ### Additional Commands
-- `pnpm run analyze` - Analyze bundle size
+- `pnpm run analyze` - Analyze bundle size with ANALYZE=true
+- `pnpm clean` - Remove unused dependencies with knip
+- `pnpm prepare` - Setup Husky git hooks
 
 ## Security and Privacy
 
@@ -190,7 +198,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Use Google Generative AI for text-to-speech and text enhancement (emotion tags)
 - Implement credit tracking for API usage
 - Handle voice cloning with proper permissions
-- Support multiple languages (EN/ES/IT with more planned)
+- Support multiple languages (EN/ES/DE with more planned)
 - Implement audio preview functionality
 
 ### Content Moderation
@@ -208,7 +216,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Internationalization
 - Add translations to `lib/i18n/dictionaries/`
-- Support English (`en.json`) and Spanish (`es.json`)
+- Support English (`en.json`), Spanish (`es.json`), German (`de.json`)
 - Use `getDictionary()` for server components
 - Run `pnpm run check-translations` before commits
 
@@ -236,20 +244,22 @@ Key environment variables include:
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
-- **Analytics**: PostHog and Crisp configuration
+- **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`) and Crisp configuration
+- **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
 - Follow `.env.example` for complete list and setup instructions
 
 ## Feature Development Priorities
 
-Based on ROADMAP.md and TODO.md, current priorities include:
+Based on TODO.md, current priorities include:
 
-1. **Voice Features**: Voice cloning (✅ implemented with fal.ai), pre-cloned voices, long-form PDF conversion
-2. **User Experience**: History page, regeneration functionality, sharing pages
-3. **Security**: Email verification, rate limiting, Cloudflare protection
-4. **Analytics**: Enhanced PostHog integration, user behavior tracking
-5. **Testing**: Playwright E2E tests, GitHub Actions CI/CD
-6. **Performance**: Bundle optimization, Redis caching (✅ implemented)
-7. **Content Tools**: Video generation with seewav for waveform visualization
+1. **Data Management**: Account deletion with audio cleanup, branch merges (r2, terms-and-conditions)
+2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
+3. **Internationalization**: Translate dashboard pages and SEO content to German, French; expand voice models to French, German, Korean, Mandarin
+4. **User Experience**: Share pages for audio files, usage statistics, history page with regeneration
+5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
+6. **Analytics**: Add PostHog to auth pages, track paid user status, usage monitoring
+7. **Testing**: Playwright E2E tests with test database, GitHub Actions CI/CD
+8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors
 
 ## Claude-Specific Instructions
 
@@ -257,11 +267,12 @@ Based on ROADMAP.md and TODO.md, current priorities include:
 
 1. **Always analyze the project context first** by reading relevant files
 2. **Follow the existing code patterns** and architectural decisions
-3. **Run linting and type checking** before committing changes
+3. **Run `pnpm run fixall` before committing** to ensure code quality
 4. **Update documentation** when adding new features or changing APIs
-5. **Consider internationalization** for user-facing text
+5. **Consider internationalization** for user-facing text (currently EN/ES/DE, expanding to FR/IT/KO/PT/ZH)
 6. **Implement proper error handling** and loading states
 7. **Follow security best practices** for voice-related features
+8. **Use TodoWrite tool** for multi-step tasks to track progress
 
 ### Pull Request Requirements
 
@@ -283,6 +294,8 @@ Based on ROADMAP.md and TODO.md, current priorities include:
 ```bash
 pnpm run type-check              # Check TypeScript issues
 pnpm run lint                    # Check code quality issues
+pnpm run fixall                  # Fix all code quality issues
+pnpm clean                       # Check for unused dependencies
 supabase status                  # Check Supabase connection
 pnpm run analyze                 # Analyze bundle size
 ```
