@@ -162,11 +162,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Testing
 
 Run the test suite:
+
 ```bash
 pnpm test
 ```
 
 For continuous testing during development:
+
 ```bash
 pnpm test:watch
 ```
@@ -174,16 +176,19 @@ pnpm test:watch
 ### Database Operations
 
 Generate TypeScript types from Supabase:
+
 ```bash
 supabase gen types typescript --project-id PROJECT_ID > database.types.ts
 ```
 
 Push schema changes to Supabase:
+
 ```bash
 supabase db push
 ```
 
 Fetch database migrations:
+
 ```bash
 supabase migration fetch
 ```

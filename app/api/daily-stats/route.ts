@@ -21,8 +21,7 @@ function formatChange(today: number, yesterday: number): string {
 }
 
 export async function GET(request: NextRequest) {
-  // const isLocalTest = true;
-  const isLocalTest = false;
+  const isLocalTest = process.env.NODE_ENV === 'development';
 
   const authHeader = request.headers.get('authorization');
   if (!isLocalTest && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
