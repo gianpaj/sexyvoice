@@ -27,7 +27,7 @@ export default async function GeneratePage(props: {
   const { data: creditsData } = (await supabase
     .from('credits')
     .select('amount')
-    .eq('user_id', user?.id)
+    .eq('user_id', user.id)
     .single()) || { amount: 0 };
 
   const credits = creditsData || { amount: 0 };

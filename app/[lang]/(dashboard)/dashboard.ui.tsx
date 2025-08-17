@@ -75,26 +75,26 @@ export default function DashboardUI({
       if (!user) throw new Error('User not found');
 
       // Get user's credits
-      const { data: credits } = await supabase
+      const { data: creditsData } = await supabase
         .from('credits')
         .select('amount')
         .eq('user_id', user?.id)
         .single();
-      setCredits(credits);
+      setCredits(creditsData);
       const { data: credit_transactions } = await supabase
         .from('credit_transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       setCreditTransactions(credit_transactions);
-      return user;
+      return { user, creditsData };
     };
 
-    const sendUserAnalyticsData = async (user: User) => {
+    const sendUserAnalyticsData = async (user: User, creditsData: Pick<Credit, 'amount'> | null | undefined) => {
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft: credits?.amount || 0,
+        creditsLeft: creditsData?.amount || 0,
       });
       if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
         Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
@@ -108,15 +108,15 @@ export default function DashboardUI({
         }
         Crisp.session.setData({
           user_id: user.id,
-          creditsLeft: credits?.amount || 0,
+          creditsLeft: creditsData?.amount || 0,
           // plan
         });
       }
     };
 
     getData()
-      .then((user) => {
-        sendUserAnalyticsData(user);
+      .then(({ user, creditsData }) => {
+        sendUserAnalyticsData(user, creditsData);
       })
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
