@@ -296,7 +296,8 @@
     }
   },
   "pages": {
-    "description": "Erstellen Sie atemberaubende Stimmklone mit fortschrittlicher KI-Technologie. Unsere benutzerfreundliche Plattform hilft Content-Erstellern, Entwicklern und Geschichtenerzählern, ihre Projekte mit realistischen Stimmen zum Leben zu erwecken.",
+    "defaultTitle": "SexyVoice.ai - Kostenloser Text-zu-Sprache & KI-Stimmengenerator",
+    "description": "Der beste KI-Stimmengenerator, mit dem Sie Text kostenlos online in Sprache umwandeln, Voiceovers erstellen und natürlich klingende Sprache in jeder Sprache erzeugen können.",
     "/": "",
     "/login": "Anmelden",
     "/signup": "Registrieren",
