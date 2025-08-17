@@ -4,7 +4,7 @@
 - add functionality to delete account, audios and delete them too from bucket or vercel
 - merge `r2` branch
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
-- Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts)
+- Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts). If using LLM, use batch mode.
 - Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - Translate pages in Dashboard:
   - Generate

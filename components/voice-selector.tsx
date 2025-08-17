@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
+import type lang from '@/lib/i18n/dictionaries/en.json';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -30,50 +31,51 @@ import {
 } from './ui/tooltip';
 
 export function VoiceSelector({
-  // userVoices,
   publicVoices,
   selectedVoice,
   setSelectedVoice,
   selectedStyle,
   setSelectedStyle,
+  dict,
 }: {
-  // userVoices: Voice[];
   publicVoices: Voice[];
   selectedVoice?: Voice;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
+  dict: (typeof lang)['generate'];
 }) {
-  const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const isGeminiVoice = selectedVoice?.model === 'gpro';
   return (
     <Card>
       <CardHeader>
-        {/* TODO: translate */}
         <CardTitle className="flex flex-row">
-          Select Voice
-          {!isGeminiVoice && (
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Button
-                    className="h-auto w-auto self-end pb-[2px]"
-                    variant="link"
-                    size="icon"
-                  >
-                    <Info className="w-4 h-4 ml-2" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
+          {dict.voiceSelector.title}
+          <TooltipProvider>
+            <Tooltip delayDuration={100} supportMobileTap>
+              <TooltipTrigger asChild>
+                <Button
+                  className="h-auto w-auto self-end pb-[2px]"
+                  variant="link"
+                  size="icon"
+                >
+                  <Info className="w-4 h-4 ml-2" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="whitespace-break-spaces lg:max-w-80">
+                {isGeminiVoice ? (
+                  <p>{dict.voiceSelector.geminiInfo.replaceAll(', ', ',\n')}</p>
+                ) : (
                   <p>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial
                     use ✔️
                   </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
-        <CardDescription>Choose from public voices</CardDescription>
+        <CardDescription>{dict.voiceSelector.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
@@ -103,15 +105,16 @@ export function VoiceSelector({
           <Textarea
             onChange={(e) => setSelectedStyle(e.target.value)}
             value={selectedStyle}
+            placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
           />
         )}
         {selectedVoice?.sample_url && (
-          <div className="flex gap-2 items-center justify-between p-4 lg:w-1/2">
+          <div className="flex gap-2 items-center justify-start p-4 lg:w-2/3">
             <AudioPlayer url={selectedVoice.sample_url} />
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">
-                {capitalizeFirstLetter(selectedVoice.name)} sample prompt:{' '}
-                <i>{selectedVoice.sample_prompt}</i>
+                <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
+                prompt: <i>{selectedVoice.sample_prompt}</i>
               </p>
               {getEmotionTags(selectedVoice.language) && (
                 <TooltipProvider>
@@ -127,7 +130,7 @@ export function VoiceSelector({
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        <strong>Supported emotion tags:</strong>
+                        <strong>{dict.voiceSelector.toolTipEmotionTags}</strong>
                         <br />
                         {getEmotionTags(selectedVoice.language)}
                       </p>

@@ -250,7 +250,14 @@
     "ctaButton": "Audio generieren",
     "resetForm": "Formular zurücksetzen",
     "downloadAudio": "Audio herunterladen",
-    "abortedCloning": "Sprachgenerierung abgebrochen."
+    "abortedCloning": "Sprachgenerierung abgebrochen.",
+    "voiceSelector": {
+      "title": "Stimme auswählen",
+      "description": "Wählen Sie aus verfügbaren Stimmen",
+      "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
+      "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
+      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
+    }
   },
   "profile": {
     "title": "Profileinstellungen",
