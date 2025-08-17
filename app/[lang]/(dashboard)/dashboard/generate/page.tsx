@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { redirect } from 'next/navigation';
 
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -20,7 +20,7 @@ export default async function GeneratePage(props: {
     error,
   } = await supabase.auth.getUser();
   if (!user || error) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    redirect(`/${lang}/login`);
   }
 
   // Get user's credits
