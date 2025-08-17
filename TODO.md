@@ -1,11 +1,12 @@
 # TODO
 
+- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
 - add functionality to delete account, audios and delete them too from bucket or vercel
 - merge `r2` branch
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
-- Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
-- Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts)
 - Translate SEO title and description to English, Spanish and German
+- Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts). If using LLM, use batch mode.
+- Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - Translate pages in Dashboard:
   - Generate
   - Clone
@@ -14,12 +15,14 @@
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
 - Translate website to French
+- Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add VoiceGeneration component in home page with Play button
 - Add a Share page for individual generated audio files
 - Crist and Posthug: add `isPaidUser` from `r2` branch
-- Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain>
+- Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
+  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
 ---
 - Deploy model
   - FR: pierre, amelie, marie
@@ -40,7 +43,6 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ## SEO
 
-- sitemap
 - show more info on the side of the signup page. see <https://ui.shadcn.com/blocks/authentication>
 - Page to compare with other TTS services
   - Google HD voice: https://cloud.google.com/text-to-speech?hl=en - doesn't support Speech Synthesis Markup Language (SSML) - price: free up to 1 million characters/month , US$30 per 1 million characters (Chirp 3: HD voices)

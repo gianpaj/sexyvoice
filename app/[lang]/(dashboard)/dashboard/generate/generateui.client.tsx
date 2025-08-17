@@ -33,6 +33,7 @@ export function GenerateUI({
         selectedStyle={selectedStyle}
         setSelectedStyle={setSelectedStyle}
         publicVoices={publicVoices}
+        dict={dict}
       />
       <AudioGenerator
         selectedVoice={selectedVoiceSample}
