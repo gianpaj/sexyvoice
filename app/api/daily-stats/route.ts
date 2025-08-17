@@ -21,8 +21,11 @@ function formatChange(today: number, yesterday: number): string {
 }
 
 export async function GET(request: NextRequest) {
+  // const isLocalTest = true;
+  const isLocalTest = false;
+
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isLocalTest && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', {
       status: 401,
     });
@@ -36,10 +39,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const checkInId = Sentry.captureCheckIn({
-    monitorSlug: 'telegram-bot-daily-stats',
-    status: 'in_progress',
-  });
+  let checkInId = '';
+  if (!isLocalTest) {
+    checkInId = Sentry.captureCheckIn({
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'in_progress',
+    });
+  }
 
   const supabase = createAdminClient();
   const now = new Date();
@@ -62,11 +68,13 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message }),
     });
-    Sentry.captureCheckIn({
-      checkInId,
-      monitorSlug: 'telegram-bot-daily-stats',
-      status: 'ok',
-    });
+    if (!isLocalTest) {
+      Sentry.captureCheckIn({
+        checkInId,
+        monitorSlug: 'telegram-bot-daily-stats',
+        status: 'ok',
+      });
+    }
     return NextResponse.json({ ok: true });
   }
 
@@ -259,20 +267,25 @@ export async function GET(request: NextRequest) {
   ];
 
   try {
-    await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: '202637584', text: message.join('\n') }),
-    });
-    Sentry.captureCheckIn({
-      // Make sure this variable is named `checkInId`
-      checkInId,
-      monitorSlug: 'telegram-bot-daily-stats',
-      status: 'ok',
-    });
-    return NextResponse.json({ ok: true });
+    if (!isLocalTest) {
+      await fetch(webhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: '202637584',
+          text: message.join('\n'),
+        }),
+      });
+      Sentry.captureCheckIn({
+        // Make sure this variable is named `checkInId`
+        checkInId,
+        monitorSlug: 'telegram-bot-daily-stats',
+        status: 'ok',
+      });
 
-    // return new Response(message.join('\n'));
+      return NextResponse.json({ ok: true });
+    }
+    return new Response(message.join('\n'));
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
     // Sentry.captureCheckIn({
