@@ -127,7 +127,7 @@
         },
         {
           "question": "¿Qué idiomas soportas?",
-          "answer": "Actualmente, soportamos el texto a voz en inglés US 🇺🇸, UK 🇬🇧, español 🇪🇸 y italiano 🇮🇹. Estamos trabajando duro para añadir más idiomas en el futuro. Nuestra prioridad es expandir el soporte de idiomas manteniendo la calidad de voz más alta. Anunciamos nuevas opciones de idioma tan pronto como estén disponibles."
+          "answer": "El soporte de idiomas depende de la voz seleccionada al generar el discurso.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat) soportan 24 idiomas incluyendo árabe (egipcio), inglés (EE.UU.), francés (Francia), alemán (Alemania), español (EE.UU.), hindi (India), indonesio (Indonesia), italiano (Italia), japonés (Japón), coreano (Corea), portugués (Brasil), ruso (Rusia), holandés (Países Bajos), polaco (Polonia), tailandés (Tailandia), turco (Turquía), vietnamita (Vietnam), rumano (Rumania), ucraniano (Ucrania), bengalí (Bangladesh), inglés/hindi (India), marathi (India), tamil (India), y telugu (India).\n\nOtras voces son específicas del idioma: Dan (inglés Reino Unido 🇬🇧), Pietro (italiano 🇮🇹), Emma (inglés EE.UU. 🇺🇸), Javi (español 🇪🇸), Josh (inglés EE.UU. 🇺🇸), y Tara (inglés EE.UU. 🇺🇸).\nElige tu voz basándote en tu idioma objetivo para obtener los mejores resultados."
         },
         {
           "question": "¿Tenéis una API para desarrolladores?",

@@ -127,7 +127,7 @@
         },
         {
           "question": "Welche Sprachen unterstützen Sie?",
-          "answer": "Wir unterstützen derzeit die Text-zu-Sprache-Generierung in Englisch US 🇺, UK 🇬, Spanisch 🇪 und Italienisch 🇮. Wir arbeiten hart daran, in Zukunft weitere Sprachen hinzuzufügen. Unser Fokus liegt auf der Erweiterung der Sprachunterstützung bei gleichbleibend höchster Qualität der Stimmgenerierung. Wir werden neue Sprachoptionen bekannt geben, sobald sie verfügbar sind."
+          "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter Arabisch (Ägyptisch), Englisch (US), Französisch (Frankreich), Deutsch (Deutschland), Spanisch (US), Hindi (Indien), Indonesisch (Indonesien), Italienisch (Italien), Japanisch (Japan), Koreanisch (Korea), Portugiesisch (Brasilien), Russisch (Russland), Niederländisch (Niederlande), Polnisch (Polen), Thailändisch (Thailand), Türkisch (Türkei), Vietnamesisch (Vietnam), Rumänisch (Rumänien), Ukrainisch (Ukraine), Bengali (Bangladesch), Englisch/Hindi (Indien), Marathi (Indien), Tamil (Indien) und Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch: Dan (Englisch UK 🇬🇧), Pietro (Italienisch 🇮🇹), Emma (Englisch US 🇺🇸), Javi (Spanisch 🇪🇸), Josh (Englisch US 🇺🇸) und tara (Englisch US 🇺🇸).\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die besten Ergebnisse."
         },
         {
           "question": "Haben Sie eine API für Entwickler?",

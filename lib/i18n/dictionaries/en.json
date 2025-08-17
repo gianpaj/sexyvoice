@@ -127,7 +127,7 @@
         },
         {
           "question": "What languages do you support?",
-          "answer": "We currently support text to speech generation in English US 🇺🇸, UK 🇬🇧, Spanish 🇪🇸 and Italian 🇮🇹. We're working hard to add more languages in the future. Our focus is on expanding language support while maintaining the highest quality voice generation. We'll announce new language options as soon as they're available."
+          "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including Arabic (Egyptian), English (US), French (France), German (Germany), Spanish (US), Hindi (India), Indonesian (Indonesia), Italian (Italy), Japanese (Japan), Korean (Korea), Portuguese (Brazil), Russian (Russia), Dutch (Netherlands), Polish (Poland), Thai (Thailand), Turkish (Turkey), Vietnamese (Vietnam), Romanian (Romania), Ukrainian (Ukraine), Bengali (Bangladesh), English/Hindi (India), Marathi (India), Tamil (India), and Telugu (India).\n\nOther voices are language-specific: Dan (English UK 🇬🇧), Pietro (Italian 🇮🇹), Emma (English US 🇺🇸), Javi (Spanish 🇪🇸), Josh (English US 🇺🇸), and tara (English US 🇺🇸).\nChoose your voice based on your target language for the best results."
         },
         {
           "question": "Do you have an API for developers?",
