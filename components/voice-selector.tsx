@@ -64,7 +64,7 @@ export function VoiceSelector({
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
                 {isGeminiVoice ? (
-                  <p>{dict.voiceSelector.geminiInfo.replaceAll(', ', ',\n')}</p>
+                  <p>{dict.voiceSelector.geminiInfo}</p>
                 ) : (
                   <p>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial

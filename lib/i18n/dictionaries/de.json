@@ -238,7 +238,15 @@
       "title": "Credit-Verlauf"
     }
   },
+  "creditsSection": {
+    "title": "Guthaben",
+    "topupButton": "Aufladen",
+    "totalCredits": "Gesamt",
+    "remainingCredits": "Verbleibend"
+  },
   "generate": {
+    "title": "Audio generieren",
+    "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "success": "Audio erfolgreich generiert!",
     "error": "Audio konnte nicht generiert werden",

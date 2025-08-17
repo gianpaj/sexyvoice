@@ -11,7 +11,7 @@ export default async function GeneratePage(props: {
 }) {
   const params = await props.params;
   const { lang } = params;
-  const dict = await getDictionary(lang, 'generate');
+  const dict = await getDictionary(lang);
 
   const supabase = await createClient();
 
@@ -57,15 +57,16 @@ export default async function GeneratePage(props: {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Generate Audio</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{dict['generate'].title}</h2>
         <p className="text-muted-foreground">
-          Select a voice and generate audio from text
+          {dict['generate'].subtitle}
         </p>
       </div>
 
       <div className="lg:hidden">
         <CreditsSection
           lang={lang}
+          dict={dict['creditsSection']}
           credits={credits.amount || 0}
           credit_transactions={credit_transactions || []}
         />
@@ -73,7 +74,7 @@ export default async function GeneratePage(props: {
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
-          dict={dict}
+          dict={dict['generate']}
           hasEnoughCredits={credits.amount >= 1}
           publicVoices={publicVoices}
         />

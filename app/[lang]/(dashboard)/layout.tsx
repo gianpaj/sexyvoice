@@ -39,10 +39,11 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { createClient } from '@/lib/supabase/client';
+import { Locale } from '@/lib/i18n/i18n-config';
 
 export default function DashboardLayout(props: {
   children: React.ReactNode;
-  params: Promise<{ lang: string }>;
+  params: Promise<{ lang: Locale }>;
 }) {
   const params = use(props.params);
 

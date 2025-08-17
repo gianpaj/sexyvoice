@@ -240,7 +240,15 @@
       "title": "Historial de Créditos"
     }
   },
+  "creditsSection": {
+    "title": "Créditos",
+    "topupButton": "Recargar",
+    "totalCredits": "Total",
+    "remainingCredits": "Restantes"
+  },
   "generate": {
+    "title": "Generar Audio",
+    "subtitle": "Selecciona una voz y genera audio desde texto",
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "success": "Audio generado con éxito!",
     "error": "Error al generar audio",
