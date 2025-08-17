@@ -232,7 +232,7 @@ export default async function LandingPage(props: {
                     <AccordionTrigger className="text-white text-left hover:text-blue-400 hover:no-underline py-5">
                       {faq.question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-gray-200">
+                    <AccordionContent className="text-gray-200 whitespace-break-spaces">
                       {faq.answer}
                     </AccordionContent>
                   </AccordionItem>
