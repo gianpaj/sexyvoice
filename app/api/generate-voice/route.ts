@@ -102,21 +102,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const isGeminiVoice = voiceObj.model == 'gpro';
+    const isGeminiVoice = voiceObj.model === 'gpro';
 
-    if (isGeminiVoice ? text.length > GEMINI_LIMIT : text.length > 500) {
+    const maxLength = isGeminiVoice ? GEMINI_LIMIT : 500;
+    if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
-        maxLength: 500,
+        maxLength,
         body,
         headers: Object.fromEntries(request.headers.entries()),
       });
       return NextResponse.json(
         new APIError(
-          'Text exceeds the maximum length of 500 characters',
-          new Response('Text exceeds the maximum length of 500 characters', {
-            status: 400,
-          }),
+          `Text exceeds the maximum length of ${maxLength} characters`,
+          new Response(
+            `Text exceeds the maximum length of ${maxLength} characters`,
+            {
+              status: 400,
+            },
+          ),
         ),
         { status: 400 },
       );
