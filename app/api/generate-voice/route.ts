@@ -51,14 +51,14 @@ export async function POST(request: Request) {
   let styleVariant = '';
   let user: User | null = null;
   try {
-    const body = await request.json();
-
     if (request.body === null) {
       logger.error('Request body is empty', {
         headers: Object.fromEntries(request.headers.entries()),
       });
       return new Response('Request body is empty', { status: 400 });
     }
+
+    const body = await request.json();
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
@@ -113,15 +113,7 @@ export async function POST(request: Request) {
         headers: Object.fromEntries(request.headers.entries()),
       });
       return NextResponse.json(
-        new APIError(
-          `Text exceeds the maximum length of ${maxLength} characters`,
-          new Response(
-            `Text exceeds the maximum length of ${maxLength} characters`,
-            {
-              status: 400,
-            },
-          ),
-        ),
+        { error: `Text exceeds the maximum length of ${maxLength} characters` },
         { status: 400 },
       );
     }
