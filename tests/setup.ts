@@ -313,24 +313,24 @@ process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
 // }
 
 // Mock Next.js modules that aren't available in test environment
-// vi.mock('next/server', () => ({
-//   NextResponse: {
-//     json: (data: any, init?: any) => {
-//       const response = new Response(JSON.stringify(data), {
-//         ...init,
-//         headers: {
-//           'content-type': 'application/json',
-//           ...(init?.headers || {}),
-//         },
-//       });
-//       return response;
-//     },
-//   },
-//   after: (fn: () => Promise<void>) => {
-//     // In tests, execute immediately instead of after response
-//     return fn();
-//   },
-// }));
+vi.mock('next/server', () => ({
+  NextResponse: {
+    json: (data: any, init?: any) => {
+      const response = new Response(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'content-type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+      return response;
+    },
+  },
+  after: (fn: () => Promise<void>) => {
+    // In tests, execute immediately instead of after response
+    return fn();
+  },
+}));
 
 // Mock Next.js cookies
 // vi.mock('next/headers', () => ({
@@ -448,13 +448,13 @@ vi.mock('@upstash/redis', () => ({
 }));
 
 // Export mocks for test access
-export { mockRedisGet, mockRedisSet, mockRedisDel }
+export { mockRedisGet, mockRedisSet, mockRedisDel };
 
 // Mock Vercel Blob
-const mockBlobPut =  vi.fn().mockResolvedValue({url:''})
+const mockBlobPut = vi.fn().mockResolvedValue({ url: '' });
 
 vi.mock('@vercel/blob', () => ({
-  put: mockBlobPut
+  put: mockBlobPut,
 }));
 
 // Export mocks for test access

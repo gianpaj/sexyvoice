@@ -189,7 +189,7 @@ describe('Generate Voice API Route', () => {
     });
   });
 
-  describe.only('Voice Generation - Replicate', () => {
+  describe('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
       mockBlobPut.mockResolvedValueOnce({
         url: 'https://blob.vercel-storage.com',
