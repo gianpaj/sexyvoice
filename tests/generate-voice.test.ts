@@ -2,14 +2,15 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import { server } from './setup';
+import * as queries from '@/lib/supabase/queries';
+import { mockBlobPut, mockRedisGet, mockRedisSet, server } from './setup';
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe.only('Input Validation', () => {
+  describe('Input Validation', () => {
     it('should return 400 when request body is null', async () => {
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -137,18 +138,14 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(404);
-      expect(json.error).toBe('Voice not found');
+      expect(json.serverMessage).toBe('Voice not found');
     });
   });
 
   describe('Credit System', () => {
     it('should return 402 when user has insufficient credits', async () => {
-      // Mock insufficient credits
-      server.use(
-        http.get('https://*.supabase.co/rest/v1/credits', () => {
-          return HttpResponse.json([{ amount: 10 }]); // Low credits
-        }),
-      );
+      // Override the getCredits mock for this specific test
+      vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -173,12 +170,8 @@ describe('Generate Voice API Route', () => {
     it('should return cached result when audio exists in Redis', async () => {
       const cachedUrl = 'https://example.com/cached-audio.wav';
 
-      // Mock cache hit
-      server.use(
-        http.get('https://*.upstash.io/*', () => {
-          return HttpResponse.json({ result: cachedUrl });
-        }),
-      );
+      // Mock Redis.get to return cached URL for this test
+      mockRedisGet.mockResolvedValueOnce(cachedUrl);
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -196,14 +189,11 @@ describe('Generate Voice API Route', () => {
     });
   });
 
-  describe('Voice Generation - Replicate', () => {
+  describe.only('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
-      // Mock cache miss to force generation
-      server.use(
-        http.get('https://*.upstash.io/*', () => {
-          return HttpResponse.json({ result: null });
-        }),
-      );
+      mockBlobPut.mockResolvedValueOnce({
+        url: 'https://blob.vercel-storage.com',
+      });
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -246,23 +236,15 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should handle Replicate API errors', async () => {
-      // Mock cache miss
+      // Mock Replicate API to return error
       server.use(
-        http.get('https://*.upstash.io/*', () => {
-          return HttpResponse.json({ result: null });
+        http.post('https://api.replicate.com/v1/predictions', () => {
+          return HttpResponse.json(
+            { detail: 'Model not found' },
+            { status: 404 },
+          );
         }),
       );
-
-      // Mock Replicate error
-      vi.doMock('replicate', () => {
-        return {
-          default: class Replicate {
-            async run() {
-              return { error: 'Replicate API error' };
-            }
-          },
-        };
-      });
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',

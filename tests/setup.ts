@@ -1,20 +1,20 @@
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 // Mock handlers for external services
 export const handlers = [
   // Supabase Auth Mock - multiple endpoints for different auth methods
-  http.get('https://*.supabase.co/auth/v1/user', () => {
-    return HttpResponse.json({
-      user: {
-        id: 'test-user-id',
-        email: 'test@example.com',
-        app_metadata: {},
-        user_metadata: {},
-      },
-    });
-  }),
+  // http.get('https://*.supabase.co/auth/v1/user', () => {
+  //   return HttpResponse.json({
+  //     user: {
+  //       id: 'test-user-id',
+  //       email: 'test@example.com',
+  //       app_metadata: {},
+  //       user_metadata: {},
+  //     },
+  //   });
+  // }),
 
   // SSR auth endpoint
   http.post('https://*.supabase.co/auth/v1/token', () => {
@@ -47,9 +47,9 @@ export const handlers = [
   // Supabase Database Mocks
   http.get('https://*.supabase.co/rest/v1/credits', ({ request }) => {
     const url = new URL(request.url);
-    if (url.searchParams.get('user_id')) {
-      return HttpResponse.json([{ amount: 1000 }]);
-    }
+    // if (url.searchParams.get('user_id')) {
+    //   return HttpResponse.json([{ amount: 1000 }]);
+    // }
     return HttpResponse.json([]);
   }),
 
@@ -135,22 +135,24 @@ export const handlers = [
   ),
 
   // Upstash Redis Mock
-  http.get('https://*.upstash.io/*', ({ request }) => {
-    const url = new URL(request.url);
-    if (url.pathname.includes('/get/')) {
-      // Return null for cache miss
-      return HttpResponse.json({ result: null });
-    }
-    return HttpResponse.json({ result: 'OK' });
-  }),
+  // http.get('https://*.upstash.io/*', ({ request }) => {
+  //   const url = new URL(request.url);
 
-  http.post('https://*.upstash.io/*', ({ request }) => {
-    const url = new URL(request.url);
-    if (url.pathname.includes('/set/')) {
-      return HttpResponse.json({ result: 'OK' });
-    }
-    return HttpResponse.json({ result: 'OK' });
-  }),
+  //   if (url.pathname.includes('/get/')) {
+  //     // Return null for cache miss
+  //     return HttpResponse.json({ result: null });
+  //   }
+  //   return HttpResponse.json({ result: 'OK' });
+  // }),
+
+  // http.post('https://*.upstash.io/*', ({ request }) => {
+  //   const url = new URL(request.url);
+  //   console.log({ request });
+  //   if (url.pathname.includes('/set/')) {
+  //     return HttpResponse.json({ result: 'OK' });
+  //   }
+  //   return HttpResponse.json({ result: 'OK' });
+  // }),
 
   // Vercel Blob Storage Mock
   http.put('https://blob.vercel-storage.com/*', () => {
@@ -188,8 +190,8 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
-process.env.KV_REST_API_URL = 'https://test.upstash.io';
-process.env.KV_REST_API_TOKEN = 'test-redis-token';
+process.env.KV_REST_API_URL = 'http://localhost:8079';
+process.env.KV_REST_API_TOKEN = 'example_token';
 process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
 
 // Polyfill Response for test environment
@@ -401,7 +403,8 @@ vi.mock('@/lib/supabase/queries', () => ({
         id: 'voice-tara-id',
         name: 'tara',
         language: 'en',
-        model: 'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
       });
     }
     if (voiceName === 'poe') {
@@ -414,7 +417,7 @@ vi.mock('@/lib/supabase/queries', () => ({
     }
     return Promise.resolve(null);
   }),
-  getCredits: vi.fn().mockResolvedValue({ amount: 1000 }),
+  getCredits: vi.fn().mockResolvedValue(1000),
   reduceCredits: vi.fn().mockResolvedValue(true),
   saveAudioFile: vi.fn().mockResolvedValue({ id: 'test-audio-file-id' }),
 }));
@@ -426,6 +429,36 @@ vi.mock('@/lib/audio', () => ({
     return Buffer.from('mock-audio-data');
   }),
 }));
+
+// Mock Upstash Redis with reconfigurable functions
+const mockRedisGet = vi.fn().mockResolvedValue(null);
+const mockRedisSet = vi.fn().mockResolvedValue('OK');
+const mockRedisDel = vi.fn().mockResolvedValue(1);
+
+const mockRedisInstance = {
+  get: mockRedisGet,
+  set: mockRedisSet,
+  del: mockRedisDel,
+};
+
+vi.mock('@upstash/redis', () => ({
+  Redis: {
+    fromEnv: vi.fn(() => mockRedisInstance),
+  },
+}));
+
+// Export mocks for test access
+export { mockRedisGet, mockRedisSet, mockRedisDel }
+
+// Mock Vercel Blob
+const mockBlobPut =  vi.fn().mockResolvedValue({url:''})
+
+vi.mock('@vercel/blob', () => ({
+  put: mockBlobPut
+}));
+
+// Export mocks for test access
+export { mockBlobPut };
 
 // Mock crypto.subtle for hash generation
 Object.defineProperty(global, 'crypto', {
@@ -441,8 +474,3 @@ Object.defineProperty(global, 'crypto', {
     },
   },
 });
-
-// Mock ReadableStream for Replicate output
-// global.ReadableStream = class ReadableStream {
-//   constructor() {}
-// } as any;
