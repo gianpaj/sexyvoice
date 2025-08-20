@@ -107,33 +107,6 @@ export const handlers = [
     });
   }),
 
-  // Google Generative AI Mock
-  http.post(
-    'https://generativelanguage.googleapis.com/v1beta/models/*:generateContent',
-    () => {
-      // Mock audio data (base64 encoded dummy audio)
-      const mockAudioData =
-        'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-
-      return HttpResponse.json({
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  inlineData: {
-                    data: mockAudioData,
-                    mimeType: 'audio/wav',
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      });
-    },
-  ),
-
   // Upstash Redis Mock
   // http.get('https://*.upstash.io/*', ({ request }) => {
   //   const url = new URL(request.url);
@@ -451,7 +424,9 @@ vi.mock('@upstash/redis', () => ({
 export { mockRedisGet, mockRedisSet, mockRedisDel };
 
 // Mock Vercel Blob
-const mockBlobPut = vi.fn().mockResolvedValue({ url: '' });
+const mockBlobPut = vi.fn().mockResolvedValue({
+  url: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
+});
 
 vi.mock('@vercel/blob', () => ({
   put: mockBlobPut,
@@ -459,6 +434,30 @@ vi.mock('@vercel/blob', () => ({
 
 // Export mocks for test access
 export { mockBlobPut };
+
+// Mock Google Generative AI module
+vi.mock('@google/genai', () => ({
+  GoogleGenAI: vi.fn().mockImplementation(() => ({
+    models: {
+      generateContent: vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    },
+  })),
+}));
 
 // Mock crypto.subtle for hash generation
 Object.defineProperty(global, 'crypto', {
