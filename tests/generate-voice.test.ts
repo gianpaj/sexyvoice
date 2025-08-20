@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
 import * as queries from '@/lib/supabase/queries';
-import { mockBlobPut, mockRedisGet, mockRedisSet, server } from './setup';
+import {
+  mockBlobPut,
+  mockRedisGet,
+  mockRedisKeys,
+  mockRedisSet,
+  server,
+} from './setup';
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
@@ -559,6 +565,31 @@ describe('Integration Tests', () => {
         return HttpResponse.json({ result: null });
       }),
     );
+
+    // Set up mock Redis data for Gemini API keys
+    const mockApiKeyData = JSON.stringify({
+      id: 'test-key',
+      apiKey: 'test-gemini-key',
+      requestsPerMinute: 0,
+      tokensPerMinute: 0,
+      requestsPerDay: 0,
+      maxRequestsPerMinute: 15,
+      maxTokensPerMinute: 1000000,
+      maxRequestsPerDay: 1500,
+      lastMinuteReset: Date.now(),
+      lastDayReset: Date.now(),
+      isActive: true,
+      failureCount: 0,
+    });
+
+    // Mock Redis to return API key data
+    mockRedisKeys.mockResolvedValue(['gemini_api_key:test-key']);
+    mockRedisGet.mockImplementation((key: string) => {
+      if (key === 'gemini_api_key:test-key') {
+        return Promise.resolve(mockApiKeyData);
+      }
+      return Promise.resolve(null);
+    });
 
     const request = new Request('http://localhost/api/generate-voice', {
       method: 'POST',

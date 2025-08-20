@@ -407,11 +407,13 @@ vi.mock('@/lib/audio', () => ({
 const mockRedisGet = vi.fn().mockResolvedValue(null);
 const mockRedisSet = vi.fn().mockResolvedValue('OK');
 const mockRedisDel = vi.fn().mockResolvedValue(1);
+const mockRedisKeys = vi.fn().mockResolvedValue([]);
 
 const mockRedisInstance = {
   get: mockRedisGet,
   set: mockRedisSet,
   del: mockRedisDel,
+  keys: mockRedisKeys,
 };
 
 vi.mock('@upstash/redis', () => ({
@@ -421,7 +423,7 @@ vi.mock('@upstash/redis', () => ({
 }));
 
 // Export mocks for test access
-export { mockRedisGet, mockRedisSet, mockRedisDel };
+export { mockRedisGet, mockRedisSet, mockRedisDel, mockRedisKeys };
 
 // Mock Vercel Blob
 const mockBlobPut = vi.fn().mockResolvedValue({

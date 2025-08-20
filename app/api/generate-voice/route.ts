@@ -1,4 +1,4 @@
-import { type GenerateContentResponse, GoogleGenAI } from '@google/genai';
+import type { GenerateContentResponse } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
@@ -8,6 +8,7 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { convertToWav } from '@/lib/audio';
 import { APIError } from '@/lib/error-ts';
+import { GeminiRetrySystem } from '@/lib/gemini/retry-system';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
@@ -42,8 +43,18 @@ export const maxDuration = 60; // seconds - fluid compute is enabled
 
 const GEMINI_LIMIT = 1000;
 
-// Initialize Redis
+// Initialize Redis and Gemini Retry System
 const redis = Redis.fromEnv();
+const geminiRetrySystem = new GeminiRetrySystem(redis);
+
+// Initialize the retry system (will load API keys from environment)
+let isGeminiRetrySystemInitialized = false;
+async function ensureGeminiRetrySystemInitialized() {
+  if (!isGeminiRetrySystemInitialized) {
+    await geminiRetrySystem.initialize();
+    isGeminiRetrySystemInitialized = true;
+  }
+}
 
 export async function POST(request: Request) {
   let text = '';
@@ -122,7 +133,7 @@ export async function POST(request: Request) {
 
     const estimate = estimateCredits(text, voice, voiceObj.model);
 
-    // console.log({ estimate });
+    // console.log({ estimate, currentAmount, user });
 
     if (currentAmount < estimate) {
       logger.warn('Insufficient credits', {
@@ -175,43 +186,52 @@ export async function POST(request: Request) {
     let blobResult: any;
 
     if (isGeminiVoice) {
-      const ai = new GoogleGenAI({
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      });
+      // Ensure Gemini retry system is initialized
+      await ensureGeminiRetrySystemInitialized();
 
-      const geminiTTSConfig = {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
-            },
-          },
-        },
-      };
-      let response: GenerateContentResponse | null;
+      let response: GenerateContentResponse;
+
       try {
+        // Try with pro model first
         modelUsed = 'gemini-2.5-pro-preview-tts';
-        response = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text }] }],
-          config: geminiTTSConfig,
-        });
-      } catch (error) {
-        console.warn(error);
-        logger.warn(
-          `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
+        response = await geminiRetrySystem.retryWithEnhancedBackoff(
           {
-            error: error instanceof Error ? error.message : String(error),
+            model: modelUsed,
+            text,
+            voice,
+          },
+          {
+            initialDelayMs: 1000,
+            maxDelayMs: 30000,
+            operation: `gemini_tts_${modelUsed}`,
+            maxRetries: 2, // Fewer retries per model since we'll try flash model next
+          },
+        );
+      } catch (proError) {
+        logger.warn(
+          `${modelUsed} failed with all API keys, retrying with gemini-2.5-flash-preview-tts`,
+          {
+            error:
+              proError instanceof Error ? proError.message : String(proError),
             originalModel: modelUsed,
           },
         );
+
+        // Try with flash model as fallback
         modelUsed = 'gemini-2.5-flash-preview-tts';
-        response = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text }] }],
-          config: geminiTTSConfig,
-        });
+        response = await geminiRetrySystem.retryWithEnhancedBackoff(
+          {
+            model: modelUsed,
+            text,
+            voice,
+          },
+          {
+            initialDelayMs: 1000,
+            maxDelayMs: 30000,
+            operation: `gemini_tts_${modelUsed}`,
+            maxRetries: 3, // More retries for the fallback model
+          },
+        );
       }
       const data =
         response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -221,8 +241,9 @@ export async function POST(request: Request) {
         logger.error('Gemini voice generation failed - no data or mimeType', {
           hasData: !!data,
           mimeType,
+          model: modelUsed,
         });
-        throw new Error('Voice generation failed');
+        throw new Error('Voice generation failed - no audio data returned');
       }
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
@@ -262,12 +283,16 @@ export async function POST(request: Request) {
         throw new Error(output.error || 'Voice generation failed');
       }
 
+      // console.log({ output });
+
       blobResult = await put(filename, output, {
         access: 'public',
         contentType: 'audio/mpeg',
         allowOverwrite: true,
       });
     }
+
+    // console.log({ blobResult });
 
     await redis.set(filename, blobResult.url);
 
@@ -337,8 +362,8 @@ export async function POST(request: Request) {
       user: user ? { id: user.id, email: user.email } : undefined,
       ...errorObj,
     });
-    console.error(errorObj);
-    console.error('Voice generation error:', error);
+    // console.error(errorObj);
+    // console.error('Voice generation error:', error);
 
     // Gemini - You exceeded your current quota, please check your plan and billing details
     if (
@@ -407,4 +432,20 @@ async function sendPosthogEvent({
     },
   });
   await posthog.shutdown();
+}
+
+// Optional: Add an endpoint to check API key usage stats
+export async function GET() {
+  try {
+    await ensureGeminiRetrySystemInitialized();
+    const stats = await geminiRetrySystem.getUsageStats();
+
+    return NextResponse.json(stats, { status: 200 });
+  } catch (error) {
+    logger.error('Failed to get Gemini usage stats', { error });
+    return NextResponse.json(
+      { error: 'Failed to get usage stats' },
+      { status: 500 },
+    );
+  }
 }

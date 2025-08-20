@@ -24,9 +24,10 @@ export const generateStaticParams = ({
   allPosts
     .map((post) => {
       // Determine locale from file extension or default to 'en'
-      const locale = i18n.locales.find((loc) =>
-        post._raw.flattenedPath.endsWith(`.${loc}`)
-      ) || i18n.defaultLocale;
+      const locale =
+        i18n.locales.find((loc) =>
+          post._raw.flattenedPath.endsWith(`.${loc}`),
+        ) || i18n.defaultLocale;
 
       return {
         slug: post._raw.flattenedPath,
@@ -109,10 +110,7 @@ export async function generateMetadata({
     alternates: {
       canonical: postUrl,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [
-          locale,
-          `/${locale}/blog/${post.slug}`,
-        ])
+        i18n.locales.map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
       ),
     },
   };

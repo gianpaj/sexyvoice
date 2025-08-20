@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/generate-voice.test.ts']
+    include: ['tests/generate-voice.test.ts'],
     // exclude: ['lib/utils.test.ts'],
   },
   resolve: {
