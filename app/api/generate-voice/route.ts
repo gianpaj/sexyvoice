@@ -47,13 +47,13 @@ const GEMINI_LIMIT = 1000;
 const redis = Redis.fromEnv();
 const geminiRetrySystem = new GeminiRetrySystem(redis);
 
-// Initialize the retry system (will load API keys from environment)
-let isGeminiRetrySystemInitialized = false;
-async function ensureGeminiRetrySystemInitialized() {
-  if (!isGeminiRetrySystemInitialized) {
-    await geminiRetrySystem.initialize();
-    isGeminiRetrySystemInitialized = true;
+// Memoized initialization to prevent redundant calls in serverless environments
+let initializationPromise: Promise<void> | null = null;
+async function ensureGeminiRetrySystemInitialized(): Promise<void> {
+  if (!initializationPromise) {
+    initializationPromise = geminiRetrySystem.initialize();
   }
+  return initializationPromise;
 }
 
 export async function POST(request: Request) {
