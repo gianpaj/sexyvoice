@@ -90,7 +90,10 @@ export default function DashboardUI({
       return { user, creditsData };
     };
 
-    const sendUserAnalyticsData = async (user: User, creditsData: Pick<Credit, 'amount'> | null | undefined) => {
+    const sendUserAnalyticsData = async (
+      user: User,
+      creditsData: Pick<Credit, 'amount'> | null | undefined,
+    ) => {
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
