@@ -6,7 +6,7 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import type { Redis } from '@upstash/redis';
 
-import { GeminiApiKeyManager, type GeminiError } from './api-key-manager';
+import { GeminiApiKeyManager, type GeminiError } from '../gemini/api-key-manager';
 
 const { logger } = Sentry;
 
