@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import PulsatingDots from './PulsatingDots';
@@ -40,8 +41,6 @@ interface AudioGeneratorProps {
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
 }
-
-const GEMINI_LIMIT = 1000;
 
 export function AudioGenerator({
   selectedVoice,
@@ -242,7 +241,7 @@ export function AudioGenerator({
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-16"
-              maxLength={isGeminiVoice ? GEMINI_LIMIT : 500}
+              maxLength={getCharactersLimit(selectedVoice?.model || '')}
             />
             {!isGeminiVoice && (
               <>
@@ -272,6 +271,9 @@ export function AudioGenerator({
                 </Button>
               </>
             )}
+          </div>
+          <div className="text-sm text-muted-foreground text-right">
+            {text.length} / {getCharactersLimit(selectedVoice?.model || '')}
           </div>
         </div>
 
