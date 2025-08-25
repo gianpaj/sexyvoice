@@ -356,7 +356,7 @@ export async function POST(request: Request) {
     ) {
       logger.warn('Third-party API quota exceeded', { status: 429 });
       return NextResponse.json(
-        { error: 'Third-party API quota exceeded' },
+        { error: 'Third-party API Quota exceeded' },
         { status: 429 },
       );
     }
