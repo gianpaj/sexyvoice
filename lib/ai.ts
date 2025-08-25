@@ -10,3 +10,13 @@ export const getEmotionTags = (language: string) => {
     return '<laugh>, <chuckle>, <sigh>, <cough>, <sniffle>, <groan>, <yawn>, <gasp>';
   }
 };
+
+const GEMINI_LIMIT = 1000;
+const DEFAULT_LIMIT = 500;
+
+export const getCharactersLimit = (model: string) => {
+  if (model === 'gpro') {
+    return GEMINI_LIMIT;
+  }
+  return DEFAULT_LIMIT;
+};
