@@ -89,7 +89,8 @@ export async function GET(request: NextRequest) {
     .lt('created_at', today.toISOString());
   const audioTotal = await supabase
     .from('audio_files')
-    .select('id', { count: 'exact', head: true });
+    .select('id', { count: 'exact', head: true })
+    .lt('created_at', today.toISOString());
 
   const clonePrevDay = await supabase
     .from('audio_files')
@@ -129,7 +130,8 @@ export async function GET(request: NextRequest) {
     .lt('created_at', today.toISOString());
   const profilesTotal = await supabase
     .from('profiles')
-    .select('id', { count: 'exact', head: true });
+    .select('id', { count: 'exact', head: true })
+    .lt('created_at', today.toISOString());
 
   const creditsPrevDay = await supabase
     .from('credit_transactions')
@@ -184,12 +186,24 @@ export async function GET(request: NextRequest) {
   const creditsTotal = await supabase
     .from('credit_transactions')
     .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup']);
+    .in('type', ['purchase', 'topup'])
+    .lt('created_at', today.toISOString());
+
+  const { data: paidUsersData } = await supabase
+    .from('credit_transactions')
+    .select('user_id')
+    .in('type', ['purchase', 'topup'])
+    .lt('created_at', today.toISOString());
+
+  const totalUniquePaidUsers = paidUsersData
+    ? new Set(paidUsersData.map((t) => t.user_id)).size
+    : 0;
 
   const { data: totalAmountUsdData } = await supabase
     .from('credit_transactions')
     .select('metadata')
-    .in('type', ['purchase', 'topup']);
+    .in('type', ['purchase', 'topup'])
+    .lt('created_at', today.toISOString());
 
   const totalAmountUsd = totalAmountUsdData?.reduce(reduceAmountUsd, 0) ?? 0;
 
@@ -259,6 +273,7 @@ export async function GET(request: NextRequest) {
     `  - 7d total: ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)}`,
     `  - 30d total: ${creditsMonthCount}, avg ${(creditsMonthCount / 30).toFixed(1)}`,
     `  - Total: ${creditsTotalCount}`,
+    `  - Total unique paid users: ${totalUniquePaidUsers}`,
     `Total USD: $${totalAmountUsd.toFixed(2)}`,
     `  - 7d total: $${totalAmountUsdWeek.toFixed(2)}, avg $${(totalAmountUsdWeek / 7).toFixed(2)}`,
     `  - 30d total: $${totalAmountUsdMonth.toFixed(2)}, avg $${(totalAmountUsdMonth / 30).toFixed(2)}`,
