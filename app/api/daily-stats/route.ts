@@ -179,6 +179,15 @@ export async function GET(request: NextRequest) {
     .select('id', { count: 'exact', head: true })
     .in('type', ['purchase', 'topup']);
 
+  const { data: paidUsersData } = await supabase
+    .from('credit_transactions')
+    .select('user_id')
+    .in('type', ['purchase', 'topup']);
+
+  const totalUniquePaidUsers = paidUsersData
+    ? new Set(paidUsersData.map((t) => t.user_id)).size
+    : 0;
+
   const { data: totalAmountUsdData } = await supabase
     .from('credit_transactions')
     .select('metadata')
@@ -252,6 +261,7 @@ export async function GET(request: NextRequest) {
     `  - 7d total: ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)}`,
     `  - 30d total: ${creditsMonthCount}, avg ${(creditsMonthCount / 30).toFixed(1)}`,
     `  - Total: ${creditsTotalCount}`,
+    `  - Total unique paid users: ${totalUniquePaidUsers}`,
     `Total USD: $${totalAmountUsd.toFixed(2)}`,
     `  - 7d total: $${totalAmountUsdWeek.toFixed(2)}, avg $${(totalAmountUsdWeek / 7).toFixed(2)}`,
     `  - 30d total: $${totalAmountUsdMonth.toFixed(2)}, avg $${(totalAmountUsdMonth / 30).toFixed(2)}`,
