@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -57,6 +57,10 @@ export function AudioGenerator({
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
   const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const charactersLimit = useMemo(
+    () => getCharactersLimit(selectedVoice?.model || ''),
+    [selectedVoice],
+  );
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -241,7 +245,7 @@ export function AudioGenerator({
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-16"
-              maxLength={getCharactersLimit(selectedVoice?.model || '')}
+              maxLength={charactersLimit}
             />
             {!isGeminiVoice && (
               <>
@@ -273,7 +277,7 @@ export function AudioGenerator({
             )}
           </div>
           <div className="text-sm text-muted-foreground text-right">
-            {text.length} / {getCharactersLimit(selectedVoice?.model || '')}
+            {text.length} / {charactersLimit}
           </div>
         </div>
 
