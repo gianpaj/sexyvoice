@@ -82,7 +82,8 @@ export async function GET(request: NextRequest) {
     .lt('created_at', today.toISOString());
   const audioTotal = await supabase
     .from('audio_files')
-    .select('id', { count: 'exact', head: true });
+    .select('id', { count: 'exact', head: true })
+    .lt('created_at', today.toISOString());
 
   const clonePrevDay = await supabase
     .from('audio_files')
@@ -122,7 +123,8 @@ export async function GET(request: NextRequest) {
     .lt('created_at', today.toISOString());
   const profilesTotal = await supabase
     .from('profiles')
-    .select('id', { count: 'exact', head: true });
+    .select('id', { count: 'exact', head: true })
+    .lt('created_at', today.toISOString());
 
   const creditsPrevDay = await supabase
     .from('credit_transactions')
@@ -177,12 +179,14 @@ export async function GET(request: NextRequest) {
   const creditsTotal = await supabase
     .from('credit_transactions')
     .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup']);
+    .in('type', ['purchase', 'topup'])
+    .lt('created_at', today.toISOString());
 
   const { data: paidUsersData } = await supabase
     .from('credit_transactions')
     .select('user_id')
-    .in('type', ['purchase', 'topup']);
+    .in('type', ['purchase', 'topup'])
+    .lt('created_at', today.toISOString());
 
   const totalUniquePaidUsers = paidUsersData
     ? new Set(paidUsersData.map((t) => t.user_id)).size
@@ -191,7 +195,8 @@ export async function GET(request: NextRequest) {
   const { data: totalAmountUsdData } = await supabase
     .from('credit_transactions')
     .select('metadata')
-    .in('type', ['purchase', 'topup']);
+    .in('type', ['purchase', 'topup'])
+    .lt('created_at', today.toISOString());
 
   const totalAmountUsd = totalAmountUsdData?.reduce(reduceAmountUsd, 0) ?? 0;
 
