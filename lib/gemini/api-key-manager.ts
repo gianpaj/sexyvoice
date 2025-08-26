@@ -292,7 +292,7 @@ export class GeminiApiKeyManager {
 
   private generateKeyId(apiKey: string): string {
     // Create a hash-like ID from the API key for storage
-    return apiKey.slice(-8); // Use last 8 characters
+    return createHash('sha256').update(apiKey).digest('hex').slice(0, 8);
   }
 
   private async getAllApiKeys(): Promise<GeminiApiKeyMetrics[]> {
