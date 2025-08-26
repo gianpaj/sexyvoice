@@ -6,6 +6,7 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
@@ -39,8 +40,6 @@ async function generateHash(
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 60; // seconds - fluid compute is enabled
-
-const GEMINI_LIMIT = 1000;
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -104,7 +103,7 @@ export async function POST(request: Request) {
 
     const isGeminiVoice = voiceObj.model === 'gpro';
 
-    const maxLength = isGeminiVoice ? GEMINI_LIMIT : 500;
+    const maxLength = getCharactersLimit(voiceObj.model);
     if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,

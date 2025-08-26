@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import PulsatingDots from './PulsatingDots';
@@ -41,8 +42,6 @@ interface AudioGeneratorProps {
   dict: (typeof lang)['generate'];
 }
 
-const GEMINI_LIMIT = 1000;
-
 export function AudioGenerator({
   selectedVoice,
   selectedStyle,
@@ -58,6 +57,10 @@ export function AudioGenerator({
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
   const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const charactersLimit = useMemo(
+    () => getCharactersLimit(selectedVoice?.model || ''),
+    [selectedVoice],
+  );
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -242,7 +245,7 @@ export function AudioGenerator({
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-16"
-              maxLength={isGeminiVoice ? GEMINI_LIMIT : 500}
+              maxLength={charactersLimit}
             />
             {!isGeminiVoice && (
               <>
@@ -272,6 +275,9 @@ export function AudioGenerator({
                 </Button>
               </>
             )}
+          </div>
+          <div className="text-sm text-muted-foreground text-right">
+            {text.length} / {charactersLimit}
           </div>
         </div>
 
