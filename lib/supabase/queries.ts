@@ -245,17 +245,17 @@ export const isFreemiumUserOverLimit = async (
     return false;
   }
 
-  // If the user is a freemium user, count their 'gpro' audio files.
-  const { count, error: audioFilesError } = await supabase
+  // If the user is a freemium user, count their voice model 'gpro' audio files.
+  const { data: audioFiles, error: audioFilesError } = await supabase
     .from('audio_files')
-    .select('id', { count: 'exact', head: true })
+    .select('id, voices(model)')
     .eq('user_id', userId)
-    .eq('model', 'gpro');
+    .filter('voices.model', 'eq', 'gpro');
 
   if (audioFilesError) {
     throw audioFilesError;
   }
 
   // The limit is 2 generations. If the user already has 2 or more, they are over the limit.
-  return (count ?? 0) >= 2;
+  return (audioFiles.length ?? 0) >= 2;
 };
