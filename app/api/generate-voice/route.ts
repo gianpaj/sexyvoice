@@ -13,6 +13,7 @@ import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
   getVoiceIdByName,
+  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -102,6 +103,19 @@ export async function POST(request: Request) {
     }
 
     const isGeminiVoice = voiceObj.model === 'gpro';
+
+    if (isGeminiVoice) {
+      const isOverLimit = await isFreemiumUserOverLimit(user.id);
+      if (isOverLimit) {
+        return NextResponse.json(
+          {
+            error:
+              'You have exceeded the limit for gpro voice generation as a free user.',
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     const maxLength = getCharactersLimit(voiceObj.model);
     if (text.length > maxLength) {

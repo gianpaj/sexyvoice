@@ -217,3 +217,36 @@ export const updateUserCredits = async (
 
   if (error) throw error;
 };
+
+export const isFreemiumUserOverLimit = async (
+  userId: string,
+): Promise<boolean> => {
+  const supabase = await createClient();
+
+  const { data: freemiumTransaction, error: freemiumError } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'freemium')
+    .single();
+
+  if (freemiumError || !freemiumTransaction) {
+    // This user is not a freemium user, so they are not over the limit.
+    return false;
+  }
+
+  const { data: audioFiles, error: audioFilesError } = await supabase
+    .from('audio_files')
+    .select('id, voices(model)')
+    .eq('user_id', userId);
+
+  if (audioFilesError) {
+    throw audioFilesError;
+  }
+
+  const gproAudioCount = audioFiles.filter(
+    (file) => file.voices?.model === 'gpro',
+  ).length;
+
+  return gproAudioCount > 2;
+};
