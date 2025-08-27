@@ -39,7 +39,7 @@ const getTopupPackages = (dict: any) => [
     id: 'premium',
     name: dict.topup.packages.premium.name,
     price: '$99',
-    credits: '220,000',
+    credits: '300,000',
     value: dict.topup.packages.premium.value,
     popular: false,
     description: dict.topup.packages.premium.description,
