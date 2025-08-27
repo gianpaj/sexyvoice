@@ -259,6 +259,7 @@
     "resetForm": "Reset Form",
     "downloadAudio": "Download Audio",
     "abortedCloning": "Voice generation aborted.",
+    "gproLimitExceeded": "You have exceeded the limit of 3 gpro voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
     "voiceSelector": {
       "title": "Select Voice",
       "description": "Choose from available voices",
