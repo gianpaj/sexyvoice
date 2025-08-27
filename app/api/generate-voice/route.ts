@@ -104,19 +104,6 @@ export async function POST(request: Request) {
 
     const isGeminiVoice = voiceObj.model === 'gpro';
 
-    if (isGeminiVoice) {
-      const isOverLimit = await isFreemiumUserOverLimit(user.id);
-      if (isOverLimit) {
-        return NextResponse.json(
-          {
-            error:
-              'You have exceeded the limit for gpro voice generation as a free user.',
-          },
-          { status: 403 },
-        );
-      }
-    }
-
     const maxLength = getCharactersLimit(voiceObj.model);
     if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
@@ -189,6 +176,19 @@ export async function POST(request: Request) {
       });
       // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
+    }
+
+    if (isGeminiVoice) {
+      const isOverLimit = await isFreemiumUserOverLimit(user.id);
+      if (isOverLimit) {
+        return NextResponse.json(
+          {
+            error:
+              'You have exceeded the limit for gpro voice generation as a free user.',
+          },
+          { status: 403 },
+        );
+      }
     }
 
     let predictionResult: Prediction | undefined;
