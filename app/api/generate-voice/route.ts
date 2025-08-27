@@ -184,7 +184,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error:
-              'You have exceeded the limit for gpro voice generation as a free user.',
+              'You have exceeded the limit of 3 gpro voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
           },
           { status: 403 },
         );
