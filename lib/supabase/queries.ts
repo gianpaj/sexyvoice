@@ -223,30 +223,39 @@ export const isFreemiumUserOverLimit = async (
 ): Promise<boolean> => {
   const supabase = await createClient();
 
+  // First, check if the user has a 'freemium' credit transaction
   const { data: freemiumTransaction, error: freemiumError } = await supabase
     .from('credit_transactions')
-    .select('id')
+    .select('type')
     .eq('user_id', userId)
     .eq('type', 'freemium')
+    .limit(1)
     .single();
 
-  if (freemiumError || !freemiumTransaction) {
-    // This user is not a freemium user, so they are not over the limit.
+  if (freemiumError) {
+    // For "No rows found", it's not an error, just not a freemium user.
+    if (freemiumError.code === 'PGRST116') {
+      return false;
+    }
+    throw freemiumError;
+  }
+
+  if (!freemiumTransaction) {
+    // If the user is not a freemium user, they are not over the limit.
     return false;
   }
 
-  const { data: audioFiles, error: audioFilesError } = await supabase
+  // If the user is a freemium user, count their 'gpro' audio files.
+  const { count, error: audioFilesError } = await supabase
     .from('audio_files')
-    .select('id, voices(model)')
-    .eq('user_id', userId);
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('model', 'gpro');
 
   if (audioFilesError) {
     throw audioFilesError;
   }
 
-  const gproAudioCount = audioFiles.filter(
-    (file) => file.voices?.model === 'gpro',
-  ).length;
-
-  return gproAudioCount > 2;
+  // The limit is 2 generations. If the user already has 2 or more, they are over the limit.
+  return (count ?? 0) >= 2;
 };
