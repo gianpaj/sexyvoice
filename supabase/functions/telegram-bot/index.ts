@@ -68,7 +68,7 @@ async function generateLast24HoursStats(): Promise<string> {
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const audioPrev = await supabase
       .from('audio_files')
@@ -80,33 +80,33 @@ async function generateLast24HoursStats(): Promise<string> {
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const audioTotal = await supabase
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const clonePrevDay = await supabase
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .eq('model', 'chatterbox-tts')
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const cloneWeek = await supabase
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .eq('model', 'chatterbox-tts')
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     // Profiles stats
     const profilesPrevDay = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const profilesPrev = await supabase
       .from('profiles')
@@ -118,12 +118,12 @@ async function generateLast24HoursStats(): Promise<string> {
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const profilesTotal = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     // Credit transactions stats
     const creditsPrevDay = await supabase
@@ -131,7 +131,7 @@ async function generateLast24HoursStats(): Promise<string> {
       .select('id', { count: 'exact', head: true })
       .in('type', ['purchase', 'topup'])
       .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const creditsPrev = await supabase
       .from('credit_transactions')
@@ -145,27 +145,27 @@ async function generateLast24HoursStats(): Promise<string> {
       .select('id', { count: 'exact', head: true })
       .in('type', ['purchase', 'topup'])
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const creditsMonth = await supabase
       .from('credit_transactions')
       .select('id', { count: 'exact', head: true })
       .in('type', ['purchase', 'topup'])
       .gte('created_at', thirtyDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const creditsTotal = await supabase
       .from('credit_transactions')
       .select('id', { count: 'exact', head: true })
       .in('type', ['purchase', 'topup'])
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     // Paid users stats
     const { data: paidUsersData } = await supabase
       .from('credit_transactions')
       .select('user_id')
       .in('type', ['purchase', 'topup'])
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const totalUniquePaidUsers = paidUsersData
       ? new Set(paidUsersData.map((t) => t.user_id)).size
@@ -176,7 +176,7 @@ async function generateLast24HoursStats(): Promise<string> {
       .from('credit_transactions')
       .select('metadata')
       .in('type', ['purchase', 'topup'])
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const totalAmountUsd = totalAmountUsdData?.reduce(reduceAmountUsd, 0) ?? 0;
 
@@ -185,7 +185,7 @@ async function generateLast24HoursStats(): Promise<string> {
       .select('metadata')
       .in('type', ['purchase', 'topup'])
       .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const totalAmountUsdWeek =
       totalAmountUsdWeekData?.reduce(reduceAmountUsd, 0) ?? 0;
@@ -195,7 +195,7 @@ async function generateLast24HoursStats(): Promise<string> {
       .select('metadata')
       .in('type', ['purchase', 'topup'])
       .gte('created_at', thirtyDaysAgo.toISOString())
-      .lt('created_at', today.toISOString());
+      .lt('created_at', now.toISOString());
 
     const totalAmountUsdMonth =
       totalAmountUsdMonthData?.reduce(reduceAmountUsd, 0) ?? 0;
