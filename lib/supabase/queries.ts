@@ -223,15 +223,16 @@ export const isFreemiumUserOverLimit = async (
 ): Promise<boolean> => {
   const supabase = await createClient();
 
-  // First, check if the user has a 'freemium' credit transaction
-  const { data: freemiumTransaction, error: freemiumError } = await supabase
+  // First, check if the user has only a 'freemium' credit transaction
+  const { data: allTransactions, error: freemiumError } = await supabase
     .from('credit_transactions')
     .select('type')
-    .eq('user_id', userId)
-    .eq('type', 'freemium')
-    .limit(1)
-    .single();
+    .eq('user_id', userId);
 
+  // Check if user has only freemium transactions
+  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 && 
+    allTransactions?.every(transaction => transaction.type === 'freemium');
+ 
   if (freemiumError) {
     // For "No rows found", it's not an error, just not a freemium user.
     if (freemiumError.code === 'PGRST116') {
@@ -240,7 +241,7 @@ export const isFreemiumUserOverLimit = async (
     throw freemiumError;
   }
 
-  if (!freemiumTransaction) {
+  if (!hasOnlyFreemium) {
     // If the user is not a freemium user, they are not over the limit.
     return false;
   }
