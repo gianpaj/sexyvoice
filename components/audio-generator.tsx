@@ -40,6 +40,7 @@ interface AudioGeneratorProps {
   selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
+  locale: string;
 }
 
 export function AudioGenerator({
@@ -47,6 +48,7 @@ export function AudioGenerator({
   selectedStyle,
   hasEnoughCredits,
   dict,
+  locale,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -83,6 +85,7 @@ export function AudioGenerator({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Locale': locale,
         },
         body: JSON.stringify({
           text,
