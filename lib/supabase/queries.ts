@@ -230,7 +230,7 @@ export const isFreemiumUserOverLimit = async (
     .eq('user_id', userId);
 
   // Check if user has only freemium transactions
-  const hasOnlyFreemium = allTransactions?.length > 0 && 
+  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 && 
     allTransactions.every(transaction => transaction.type === 'freemium');
  
   if (freemiumError) {
