@@ -39,7 +39,7 @@ function CreditsSection({
           asChild
           className="pr-0 hover:no-underline bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
         >
-          <Link href={`/${lang}/credits`}>{dict.topupButton}</Link>
+          <Link href={`/${lang}/dashboard/credits`}>{dict.topupButton}</Link>
         </Button>
       </div>
       <div className="flex items-center gap-4">
