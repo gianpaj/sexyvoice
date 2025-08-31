@@ -9,8 +9,6 @@ import Replicate, { type Prediction } from 'replicate';
 import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
 import { APIError } from '@/lib/error-ts';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
-import type { Locale } from '@/lib/i18n/i18n-config';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
@@ -183,13 +181,10 @@ export async function POST(request: Request) {
     if (isGeminiVoice) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
       if (isOverLimit) {
-        // Get locale from header for translation
-        const locale = (request.headers.get('X-Locale') || 'en') as Locale;
-        const dict = await getDictionary(locale, 'generate');
-        
         return NextResponse.json(
           {
-            error: dict.gproLimitExceeded,
+            error: 'You have exceeded the limit of 2 gpro voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+            errorCode: 'gproLimitExceeded',
           },
           { status: 403 },
         );

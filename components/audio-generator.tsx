@@ -85,7 +85,6 @@ export function AudioGenerator({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Locale': locale,
         },
         body: JSON.stringify({
           text,
@@ -96,8 +95,14 @@ export function AudioGenerator({
       });
 
       if (!response.ok) {
-        const error: APIError = await response.json();
+        const error: any = await response.json();
 
+        // Check if we have an error code for translation
+        if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
+          throw new APIError(dict[error.errorCode as keyof typeof dict] as string, response);
+        }
+
+        // Fallback to the default English error message from API
         throw new APIError(error.error || error.serverMessage, response);
       }
 

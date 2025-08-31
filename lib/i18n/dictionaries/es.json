@@ -261,7 +261,7 @@
     "resetForm": "Reiniciar Formulario",
     "downloadAudio": "Descargar Audio",
     "abortedCloning": "Clonación de voz cancelada",
-    "gproLimitExceeded": "Has excedido el límite de 3 generaciones de voz gpro como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
+    "gproLimitExceeded": "Has excedido el límite de 2 generaciones de voz gpro como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
     "voiceSelector": {
       "title": "Seleccionar Voz",
       "description": "Elige entre las voces disponibles",
