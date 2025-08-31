@@ -6,7 +6,7 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { getCharactersLimit } from '@/lib/ai';
+import { estimateCredits, getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
@@ -18,7 +18,6 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
 
 const { logger } = Sentry;
 

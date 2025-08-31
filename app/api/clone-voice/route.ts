@@ -12,7 +12,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
+import { estimateCredits } from '@/lib/ai';
 
 // File validation constants
 const ALLOWED_TYPES = [

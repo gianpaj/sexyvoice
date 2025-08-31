@@ -5,8 +5,8 @@
     "prebuild": "pnpm run check-translations && pnpm run build:content",
     "build": "SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
     "start": "next start",
-    "test": "tsx --test lib/utils.test.ts",
-    "test:watch": "tsx --test --watch lib/utils.test.ts",
+    "test": "tsx --test lib/utils.test.ts lib/ai.test.ts",
+    "test:watch": "tsx --test --watch lib/utils.test.ts lib/ai.test.ts",
     "build:content": "contentlayer2 build",
     "dev:content": "contentlayer2 dev",
     "fixall": "pnpm run lint:write && pnpm run format:write && pnpm run check:fix",
@@ -25,6 +25,7 @@
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
     "@ai-sdk/react": "^1.2.12",
+    "@dbdq/tiktoken": "^1.0.15",
     "@fal-ai/client": "^1.5.0",
     "@formatjs/intl-localematcher": "^0.5.10",
     "@google/genai": "^1.6.0",
