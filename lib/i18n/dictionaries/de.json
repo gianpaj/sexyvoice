@@ -259,7 +259,7 @@
     "resetForm": "Formular zurücksetzen",
     "downloadAudio": "Audio herunterladen",
     "abortedCloning": "Sprachgenerierung abgebrochen.",
-    "gproLimitExceeded": "Sie haben das Limit von 2 gpro Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
+    "gproLimitExceeded": "Sie haben das Limit von 4 gpro Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "voiceSelector": {
       "title": "Stimme auswählen",
       "description": "Wählen Sie aus verfügbaren Stimmen",

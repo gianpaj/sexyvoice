@@ -256,6 +256,6 @@ export const isFreemiumUserOverLimit = async (
     throw audioFilesError;
   }
 
-  // The limit is 2 generations. If the user already has 2 or more, they are over the limit.
-  return (audioFiles.length ?? 0) >= 2;
+  // The limit is 4 generations. If the user already has 4 or more, they are over the limit.
+  return (audioFiles.length ?? 0) >= 4;
 };
