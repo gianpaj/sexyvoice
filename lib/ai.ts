@@ -3,6 +3,8 @@ import wasm from 'tiktoken/lite/tiktoken_bg.wasm?module';
 import model from 'tiktoken/encoders/cl100k_base.json';
 import { init, Tiktoken } from 'tiktoken/lite/init';
 
+export const config = { runtime: "edge" };
+
 // Initialize tiktoken WASM module once at module load time for better performance
 const initPromise = init((imports) => WebAssembly.instantiate(wasm, imports));
 
