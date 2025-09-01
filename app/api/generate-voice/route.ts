@@ -183,8 +183,8 @@ export async function POST(request: Request) {
       if (isOverLimit) {
         return NextResponse.json(
           {
-            error:
-              'You have exceeded the limit for gpro voice generation as a free user.',
+            error: 'You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+            errorCode: 'gproLimitExceeded',
           },
           { status: 403 },
         );

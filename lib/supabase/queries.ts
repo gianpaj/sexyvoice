@@ -256,10 +256,11 @@ export const isFreemiumUserOverLimit = async (
     throw audioFilesError;
   }
 
+  // The limit is 4 generations.
   const gproAudioCount = audioFiles.filter(
     (file) => file.voices?.model === 'gpro',
   ).length;
 
   // The limit is 2 generations. If the user already has 2 or more, they are over the limit.
-  return (gproAudioCount ?? 0) >= 2;
+  return (gproAudioCount ?? 0) >= 4;
 };

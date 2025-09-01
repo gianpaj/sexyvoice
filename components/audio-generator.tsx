@@ -40,6 +40,7 @@ interface AudioGeneratorProps {
   selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
+  locale: string;
 }
 
 export function AudioGenerator({
@@ -47,6 +48,7 @@ export function AudioGenerator({
   selectedStyle,
   hasEnoughCredits,
   dict,
+  locale,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -93,8 +95,14 @@ export function AudioGenerator({
       });
 
       if (!response.ok) {
-        const error: APIError = await response.json();
+        const error: any = await response.json();
 
+        // Check if we have an error code for translation
+        if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
+          throw new APIError(dict[error.errorCode as keyof typeof dict] as string, response);
+        }
+
+        // Fallback to the default English error message from API
         throw new APIError(error.error || error.serverMessage, response);
       }
 
