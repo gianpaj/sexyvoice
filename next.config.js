@@ -17,10 +17,18 @@ const cspHeader = `
     form-action 'self';
     frame-ancestors 'none';
     upgrade-insecure-requests;
-`;
+`;    
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
+  // webassembly support for @dqbd/tiktoken
+  webpack(config, { isServer }) {
+    config.experiments = {
+      asyncWebAssembly: true,
+      layers: true,
+    };
+    return config;
+  },
   images: {
     remotePatterns: [
       {
@@ -34,7 +42,7 @@ let nextConfig = {
         hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
         port: '',
       },
-    ],
+    ]y,
   },
   eslint: {
     ignoreDuringBuilds: true,
