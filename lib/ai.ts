@@ -3,6 +3,9 @@ import wasm from 'tiktoken/lite/tiktoken_bg.wasm?module';
 import model from 'tiktoken/encoders/cl100k_base.json';
 import { init, Tiktoken } from 'tiktoken/lite/init';
 
+// Initialize tiktoken WASM module once at module load time for better performance
+const initPromise = init((imports) => WebAssembly.instantiate(wasm, imports));
+
 // Emotion tags for each voice based on language
 export const getEmotionTags = (language: string) => {
   if (language.startsWith('it-')) {
@@ -29,7 +32,7 @@ export const getCharactersLimit = (model: string) => {
 export async function estimateCredits(
   text: string,
   voice: string,
-  model?: string,
+  modelName?: string,
 ): Promise<number> {
   if (!text.trim()) {
     return 0;
@@ -39,8 +42,8 @@ export async function estimateCredits(
     throw new Error('Voice is required');
   }
 
-  // Initialize tiktoken for Edge Runtime
-  await init((imports) => WebAssembly.instantiate(wasm, imports));
+  // Wait for the WASM module initialization to complete
+  await initPromise;
 
   const encoding = new Tiktoken(
     model.bpe_ranks,
@@ -72,7 +75,7 @@ export async function estimateCredits(
         break;
     }
 
-    if (model === 'gpro') {
+    if (modelName === 'gpro') {
       multiplier = 4;
     }
 
