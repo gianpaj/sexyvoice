@@ -42,7 +42,7 @@ let nextConfig = {
         hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
         port: '',
       },
-    ]y,
+    ],
   },
   eslint: {
     ignoreDuringBuilds: true,
