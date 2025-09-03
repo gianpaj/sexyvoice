@@ -37,6 +37,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { createClient } from '@/lib/supabase/client';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -56,6 +57,7 @@ export default function DashboardUI({
   const pathname = usePathname();
   const supabase = createClient();
   const router = useRouter();
+  const { isMobile, toggleSidebar } = useSidebar();
   const [credit_transactions, setCreditTransactions] = useState<
     CreditTransaction[] | null
   >([]);
@@ -221,7 +223,16 @@ export default function DashboardUI({
                       className="w-[--radix-popper-anchor-width]"
                     >
                       <DropdownMenuItem asChild>
-                        <Link href={`/${lang}/dashboard/profile`}>Profile</Link>
+                        <Link 
+                          href={`/${lang}/dashboard/profile`}
+                          onClick={() => {
+                            if (isMobile) {
+                              toggleSidebar();
+                            }
+                          }}
+                        >
+                          Profile
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleSignOut}>
                         <span>Sign out</span>
