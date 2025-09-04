@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePostHog } from 'posthog-js/react';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
@@ -28,6 +28,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarContext,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
@@ -37,7 +38,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { createClient } from '@/lib/supabase/client';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -57,7 +57,11 @@ export default function DashboardUI({
   const pathname = usePathname();
   const supabase = createClient();
   const router = useRouter();
-  const { isMobile, toggleSidebar } = useSidebar();
+  
+  // Safely access the sidebar context without throwing an error
+  const sidebarContext = useContext(SidebarContext);
+  const isMobile = sidebarContext?.isMobile || false;
+  const toggleSidebar = sidebarContext?.toggleSidebar || (() => {});
   const [credit_transactions, setCreditTransactions] = useState<
     CreditTransaction[] | null
   >([]);

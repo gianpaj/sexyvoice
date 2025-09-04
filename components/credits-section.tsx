@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useContext } from 'react';
 
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
-import { useSidebar } from './ui/sidebar';
+import { SidebarContext } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
@@ -20,7 +21,10 @@ function CreditsSection({
   credits: number;
   credit_transactions: CreditTransaction[];
 }) {
-  const { isMobile, toggleSidebar } = useSidebar();
+  // Safely access the sidebar context without throwing an error
+  const sidebarContext = useContext(SidebarContext);
+  const isMobile = sidebarContext?.isMobile || false;
+  const toggleSidebar = sidebarContext?.toggleSidebar || (() => {});
   const total_credits =
     credit_transactions?.reduce(
       (acc, transaction) => acc + transaction.amount,
