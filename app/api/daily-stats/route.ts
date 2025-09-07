@@ -207,6 +207,16 @@ export async function GET(request: NextRequest) {
 
   const totalAmountUsd = totalAmountUsdData?.reduce(reduceAmountUsd, 0) ?? 0;
 
+  const { data: totalAmountUsdTodayData } = await supabase
+    .from('credit_transactions')
+    .select('metadata')
+    .in('type', ['purchase', 'topup'])
+    .gte('created_at', previousDay.toISOString())
+    .lt('created_at', today.toISOString());
+
+  const totalAmountUsdToday =
+    totalAmountUsdTodayData?.reduce(reduceAmountUsd, 0) ?? 0;
+
   const { data: totalAmountUsdWeekData } = await supabase
     .from('credit_transactions')
     .select('metadata')
@@ -259,25 +269,27 @@ export async function GET(request: NextRequest) {
   //   'N/A';
 
   const message = [
-    `Daily stats for ${previousDay.toISOString().slice(0, 10)}`,
-    `Audio files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioPrevCount)} from yesterday)`,
-    `  - Cloned voices: ${clonePrevCount}`,
-    `  - 7d cloned: ${cloneWeekCount}, avg ${(cloneWeekCount / 7).toFixed(1)}`,
-    `  - 7d total: ${audioWeekCount}, avg ${(audioWeekCount / 7).toFixed(1)}`,
-    `  - Total: ${audioTotalCount}`,
-    // `  - Top voices: ${topVoiceList}`,
-    `Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)} from yesterday)`,
-    `  - 7d total: ${profilesWeekCount}, avg ${(profilesWeekCount / 7).toFixed(1)}`,
-    `  - Total: ${profilesTotalCount}`,
-    `Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)} from yesterday) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
-    `  - 7d total: ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)}`,
-    `  - 30d total: ${creditsMonthCount}, avg ${(creditsMonthCount / 30).toFixed(1)}`,
-    `  - Total: ${creditsTotalCount}`,
-    `  - Total unique paid users: ${totalUniquePaidUsers}`,
-    `Total USD: $${totalAmountUsd.toFixed(2)}`,
-    `  - 7d total: $${totalAmountUsdWeek.toFixed(2)}, avg $${(totalAmountUsdWeek / 7).toFixed(2)}`,
-    `  - 30d total: $${totalAmountUsdMonth.toFixed(2)}, avg $${(totalAmountUsdMonth / 30).toFixed(2)}`,
-    `  - num active subscribers: ${activeSubscribersCount}`,
+    `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
+    '',
+    `🎧 Audio Files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioPrevCount)})`,
+    `  - Cloned: ${clonePrevCount} | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
+    `  - 7d Total: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
+    `  - All-time: ${audioTotalCount.toLocaleString()}`,
+    '',
+    `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
+    `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
+    `  - All-time: ${profilesTotalCount.toLocaleString()}`,
+    '',
+    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : ''}`,
+    `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
+    `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
+    '',
+    '💰 Revenue',
+    `  - All-time: $${totalAmountUsd.toFixed(2)}`,
+    `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
+    `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
+    `  - 30d: $${totalAmountUsdMonth.toFixed(2)} (avg $${(totalAmountUsdMonth / 30).toFixed(2)})`,
+    `  - Subscribers: ${activeSubscribersCount} active`,
   ];
 
   try {
