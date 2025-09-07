@@ -8,18 +8,18 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 
 ### Key Technologies
 
-- **Frontend**: Next.js 15.4.1 with App Router, React 19.1.0, TypeScript 5.7.3
+- **Frontend**: Next.js 15 with App Router, React 19, TypeScript 5
 - **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
 - **Database**: Supabase PostgreSQL
 - **Storage**: Vercel Blob Storage for audio files
 - **Caching**: Upstash Redis for audio URL caching
-- **Styling**: Tailwind CSS 3.4.1, shadcn/ui components, Radix UI primitives
+- **Styling**: Tailwind CSS 3.4, shadcn/ui components, Radix UI primitives
 - **Content**: Contentlayer2 for MDX blog processing
 - **Payments**: Stripe integration
 - **Monitoring**: Sentry error tracking and PostHog analytics
 - **AI Services**: Google Generative AI for text enhancement
 - **Code Quality**: Biome for linting and formatting
-- **Package Manager**: pnpm 9.15.4
+- **Package Manager**: pnpm 9
 - **Internationalization**: English, Spanish, and German support
 
 ## Architecture Overview
@@ -89,10 +89,9 @@ pnpm run type-check      # Verify TypeScript types
 - 2-space indentation, single quotes, 80 character line width
 - Automatic import organization with Node, Package, Alias groups
 - TypeScript strict mode with `strictNullChecks` enabled
-- Import/export type enforcement via Biome rules
+- Use import/export types when appropriate
 - Prefer `const` over `let`, use proper type annotations
 - Follow React Server Components (RSC) patterns
-- ES2017 target for broad browser compatibility
 
 ### File Structure Conventions
 
@@ -174,10 +173,9 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Database (Supabase)
 - `supabase db push` - Apply migrations to database
-- `supabase status` - Check Supabase connection status
 - `supabase gen types typescript --project-id PROJECT_ID > database.types.ts` - Generate TypeScript types from database schema
 - Migration files located in `supabase/migrations/` with timestamp format
-- Telegram bot function available in `supabase/functions/telegram-bot/`
+- Telegram bot function available in `supabase/functions/telegram-bot/` using Deno and deployed on Deno Deploy
 
 ### Additional Commands
 - `pnpm run analyze` - Analyze bundle size with ANALYZE=true
@@ -255,7 +253,8 @@ Key environment variables include:
 - **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob Storage)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
-- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`
+- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
+- **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
 - **Production**: Environment-specific configurations for Sentry and CSP
