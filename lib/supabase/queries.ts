@@ -143,6 +143,7 @@ export const insertCreditTransaction = async (
         amount,
         type: 'purchase',
         description: `${subAmount} USD subscription`,
+        metadata: { dollarAmount: subAmount },
       });
       await updateUserCredits(userId, amount);
     }
@@ -153,6 +154,7 @@ export const insertCreditTransaction = async (
       amount,
       type: 'purchase',
       description: `${subAmount} USD subscription`,
+      metadata: { dollarAmount: subAmount },
     });
     await updateUserCredits(userId, amount);
   }
@@ -230,9 +232,10 @@ export const isFreemiumUserOverLimit = async (
     .eq('user_id', userId);
 
   // Check if user has only freemium transactions
-  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 && 
-    allTransactions?.every(transaction => transaction.type === 'freemium');
- 
+  const hasOnlyFreemium =
+    (allTransactions?.length ?? 0) > 0 &&
+    allTransactions?.every((transaction) => transaction.type === 'freemium');
+
   if (freemiumError) {
     // For "No rows found", it's not an error, just not a freemium user.
     if (freemiumError.code === 'PGRST116') {
