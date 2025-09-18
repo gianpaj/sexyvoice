@@ -12,7 +12,7 @@ A Telegram bot for SexyVoice.ai platform that provides real-time statistics and 
 ## Commands
 
 - `/start` - Welcome message
-- `/ping` - Test bot responsiveness  
+- `/ping` - Test bot responsiveness
 - `/stats` - Get daily platform statistics
 - `/menu` - Show interactive menu with callback options
 
@@ -57,7 +57,7 @@ This sets the webhook URL that Telegram will send updates to when users interact
 
 The `/stats` command provides:
 - Audio files generated (yesterday vs previous day comparison)
-- New user profiles created  
+- New user profiles created
 - Credit transactions and revenue
 - Weekly totals and averages
 - Voice cloning usage statistics
