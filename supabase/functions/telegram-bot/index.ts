@@ -258,9 +258,9 @@ bot.command('stats', async (ctx) => {
   console.log('stats command received', ctx.chat.id, ctx.from?.id);
 
   try {
-    await ctx.reply('📈 Generating stats...');
+    const msg = await ctx.reply("📈 Generating stats...");
     const statsMessage = await generateLast24HoursStats();
-    await ctx.reply(statsMessage);
+    await bot.api.editMessageText(ctx.chatId, msg.message_id, statsMessage);
   } catch (error) {
     console.error('Error in stats command:', error);
     await ctx.reply('❌ Failed to generate stats. Please try again later.');
