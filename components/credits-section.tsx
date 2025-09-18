@@ -15,11 +15,13 @@ function CreditsSection({
   dict,
   credits,
   credit_transactions,
+  doNotToggleSidebar,
 }: {
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
   credits: number;
   credit_transactions: CreditTransaction[];
+  doNotToggleSidebar?: boolean;
 }) {
   // Safely access the sidebar context without throwing an error
   const sidebarContext = useContext(SidebarContext);
@@ -47,10 +49,10 @@ function CreditsSection({
           asChild
           className="pr-0 hover:no-underline bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
         >
-          <Link 
+          <Link
             href={`/${lang}/dashboard/credits`}
             onClick={() => {
-              if (isMobile) {
+              if (isMobile && !doNotToggleSidebar) {
                 toggleSidebar();
               }
             }}

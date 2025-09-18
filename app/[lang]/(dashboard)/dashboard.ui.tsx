@@ -57,7 +57,7 @@ export default function DashboardUI({
   const pathname = usePathname();
   const supabase = createClient();
   const router = useRouter();
-  
+
   // Safely access the sidebar context without throwing an error
   const sidebarContext = useContext(SidebarContext);
   const isMobile = sidebarContext?.isMobile || false;
@@ -227,7 +227,7 @@ export default function DashboardUI({
                       className="w-[--radix-popper-anchor-width]"
                     >
                       <DropdownMenuItem asChild>
-                        <Link 
+                        <Link
                           href={`/${lang}/dashboard/profile`}
                           onClick={() => {
                             if (isMobile) {

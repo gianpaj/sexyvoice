@@ -69,6 +69,7 @@ export default async function GeneratePage(props: {
           dict={dict['creditsSection']}
           credits={credits.amount || 0}
           credit_transactions={credit_transactions || []}
+          doNotToggleSidebar
         />
       </div>
 
