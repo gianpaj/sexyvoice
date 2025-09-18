@@ -8,22 +8,26 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 
 ### Key Technologies
 
-- **Frontend**: Next.js 15 with App Router, React 19, TypeScript
+- **Frontend**: Next.js 15 with App Router, React 19, TypeScript 5
 - **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
-- **Database**: Supabase PostgreSQL with planned Drizzle ORM migration
+- **Database**: Supabase PostgreSQL
 - **Storage**: Vercel Blob Storage for audio files
 - **Caching**: Upstash Redis for audio URL caching
-- **Styling**: Tailwind CSS, shadcn/ui components, Radix UI primitives
-- **Payments**: Stripe integration for subscriptions
+- **Styling**: Tailwind CSS 3.4, shadcn/ui components, Radix UI primitives
+- **Content**: Contentlayer2 for MDX blog processing
+- **Payments**: Stripe integration
 - **Monitoring**: Sentry error tracking and PostHog analytics
-- **Internationalization**: English and Spanish support (with plans for Italian, French, German, Korean, Portuguese, and Mandarin)
+- **AI Services**: Google Generative AI for text enhancement
+- **Code Quality**: Biome for linting and formatting
+- **Package Manager**: pnpm 9
+- **Internationalization**: English, Spanish, and German support
 
 ## Architecture Overview
 
 ### Application Structure
 This is a Next.js 15 App Router application with the following key architectural patterns:
 
-- **Internationalization**: Route-based i18n with English (en) and Spanish (es) support using `[lang]` dynamic segments
+- **Internationalization**: Route-based i18n with English (en), Spanish (es), and German (de) support using `[lang]` dynamic segments
 - **Authentication**: Supabase Auth with SSR support, session management in middleware
 - **Database**: Supabase PostgreSQL with type-safe operations
 - **Content**: Contentlayer2 for MDX blog posts with locale support
@@ -82,10 +86,11 @@ pnpm run type-check      # Verify TypeScript types
 
 #### Code Style
 - Use **Biome** for linting and formatting (configured in `biome.json`)
-- Follow TypeScript strict mode conventions
-- Use 2-space indentation, single quotes for strings
-- Prefer `const` over `let`, use proper type annotations
+- 2-space indentation, single quotes, 80 character line width
+- Automatic import organization with Node, Package, Alias groups
+- TypeScript strict mode with `strictNullChecks` enabled
 - Use import/export types when appropriate
+- Prefer `const` over `let`, use proper type annotations
 - Follow React Server Components (RSC) patterns
 
 ### File Structure Conventions
@@ -144,17 +149,17 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Core Commands
 - `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Build production application
+- `pnpm build` - Build production application (includes content build and translation checks)
 - `pnpm start` - Start production server
 - `pnpm preview` - Build and start (preview production locally)
 
 ### Code Quality
-- `pnpm lint` - Run Biome linting
-- `pnpm lint --write` - Auto-fix linting issues in app/, components/, hooks/, lib/, middleware.ts
+- `pnpm lint` - Run Biome linting on app/, components/, hooks/, lib/, middleware.ts
+- `pnpm lint:write` / `pnpm lint --write` - Auto-fix linting issues
 - `pnpm format` - Format code with Biome
-- `pnpm format --write` - Auto-format code with Biome
+- `pnpm format:write` / `pnpm format --write` - Auto-format code
 - `pnpm check:fix` - Run Biome check with fixes
-- `pnpm fixall` - Run all code quality fixes (lint, format, check)
+- `pnpm fixall` - Run all code quality fixes (lint:write + format:write + check:fix)
 - `pnpm type-check` - Run TypeScript type checking
 
 ### Testing
@@ -169,6 +174,8 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 ### Database (Supabase)
 - `supabase db push` - Apply migrations to database
 - `supabase gen types typescript --project-id PROJECT_ID > database.types.ts` - Generate TypeScript types from database schema
+- Migration files located in `supabase/migrations/` with timestamp format
+- Telegram bot function available in `supabase/functions/telegram-bot/` using Deno and deployed on Deno Deploy
 
 ### Additional Commands
 - `pnpm run analyze` - Analyze bundle size with ANALYZE=true
@@ -178,12 +185,13 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 ## Security and Privacy
 
 ### Security Requirements
-- Implement rate limiting to prevent abuse
-- Validate and sanitize all user inputs
-- Use Content Security Policy (CSP) headers
-- Follow voice cloning ethical guidelines (require permission)
-- Implement proper authentication checks
-- Block temporary email addresses for signups
+- **Content Security Policy**: Comprehensive CSP headers configured in `next.config.js`
+- **Security Headers**: X-Content-Type-Options set to `nosniff`
+- **Authentication**: Supabase Auth with SSR support and middleware session management
+- **API Security**: Rate limiting and input validation on API routes
+- **Voice Ethics**: Follow voice cloning ethical guidelines (require permission)
+- **Email Security**: Block temporary email addresses for signups
+- **Error Monitoring**: Sentry integration with production tunneling through `/monitoring`
 
 ### Privacy Considerations
 - Implement data retention policies
@@ -216,7 +224,10 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Internationalization
 - Add translations to `lib/i18n/dictionaries/`
-- Support English (`en.json`), Spanish (`es.json`), German (`de.json`)
+- Currently supports English (`en.json`), Spanish (`es.json`), German (`de.json`)
+- Configured in `lib/i18n/i18n-config.ts` with `en` as default locale
+- Uses route-based i18n with `[lang]` dynamic segments
+- Middleware handles locale detection and routing
 - Use `getDictionary()` for server components
 - Run `pnpm run check-translations` before commits
 
@@ -239,13 +250,14 @@ pnpm run preview    # Preview production build
 ### Environment Variables
 Key environment variables include:
 - **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob)
+- **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob Storage)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
-- **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`) and Crisp configuration
+- **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
+- **Production**: Environment-specific configurations for Sentry and CSP
 - Follow `.env.example` for complete list and setup instructions
 
 ## Feature Development Priorities

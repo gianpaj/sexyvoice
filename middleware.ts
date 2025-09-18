@@ -26,7 +26,11 @@ function getLocaleFromPathname(request: NextRequest): string {
   return i18n.defaultLocale;
 }
 
-const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
+const publicRoutesWithoutLocale = [
+  '/privacy-policy',
+  '/terms',
+  '/manifest.json',
+];
 
 const publicRoutesWithoutAuth = ['/api/stripe/webhook', '/api/daily-stats'];
 
