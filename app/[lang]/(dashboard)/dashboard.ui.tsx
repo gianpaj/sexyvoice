@@ -3,32 +3,24 @@
 import type { User } from '@supabase/supabase-js';
 import { Crisp } from 'crisp-sdk-web';
 import {
-  ChevronUp,
   CreditCard,
   FileClock,
   Mic2,
-  User2,
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { usePostHog } from 'posthog-js/react';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
 import { PostHogProvider } from '@/components/PostHogProvider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+
 import {
   Sidebar,
   SidebarContent,
-  SidebarContext,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
@@ -42,6 +34,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
+import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 
 interface DashboardUIProps {
   children: React.ReactNode;
@@ -56,21 +49,12 @@ export default function DashboardUI({
 }: DashboardUIProps) {
   const pathname = usePathname();
   const supabase = createClient();
-  const router = useRouter();
 
-  // Safely access the sidebar context without throwing an error
-  const sidebarContext = useContext(SidebarContext);
-  const isMobile = sidebarContext?.isMobile || false;
-  const toggleSidebar = sidebarContext?.toggleSidebar || (() => {});
   const [credit_transactions, setCreditTransactions] = useState<
     CreditTransaction[] | null
   >([]);
   const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push(`/${lang}`);
-  };
   const posthog = usePostHog();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: credits state dependency
@@ -213,38 +197,7 @@ export default function DashboardUI({
                 credit_transactions={credit_transactions || []}
               />
 
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton>
-                        <User2 /> Profile
-                        <ChevronUp className="ml-auto" />
-                      </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      side="top"
-                      className="w-[--radix-popper-anchor-width]"
-                    >
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/${lang}/dashboard/profile`}
-                          onClick={() => {
-                            if (isMobile) {
-                              toggleSidebar();
-                            }
-                          }}
-                        >
-                          Profile
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleSignOut}>
-                        <span>Sign out</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <SidebarMenuCustom lang={lang} />
             </SidebarFooter>
           </Sidebar>
 
