@@ -296,21 +296,27 @@ bot.command('menu', async (ctx) => {
   await ctx.reply('Choose an option:', mainMenuOptions);
 });
 
-// Handle callback queries from inline keyboard
-bot.on('callback_query', async (ctx) => {
-  const callbackData = ctx.callbackQuery.data;
+bot.command("help", async (ctx) => {
+  await ctx.reply(helpText);
+});
 
-  await ctx.answerCallbackQuery();
-
-  switch (callbackData) {
-    case 'help':
-      await ctx.reply(`🤖 Available commands:
+const helpText = `🤖 Available commands:
 /start - Welcome message
 /ping - Test bot responsiveness
 /stats - Get daily platform statistics
 /menu - Show interactive menu
 
-Use /stats to get detailed analytics about the platform.`);
+Use /stats to get detailed analytics about the platform.`;
+
+// Handle callback queries from inline keyboard
+bot.on("callback_query", async (ctx) => {
+  const callbackData = ctx.callbackQuery.data;
+
+  await ctx.answerCallbackQuery();
+
+  switch (callbackData) {
+    case "help":
+      await ctx.reply(helpText);
       break;
     case 'stats': {
       await ctx.reply('📈 Generating stats...');
