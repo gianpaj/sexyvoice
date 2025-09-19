@@ -10,6 +10,8 @@ import {
 } from "https://deno.land/x/grammy@v1.36.3/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 
+// import { Redis } from 'https://esm.sh/@upstash/redis@1.35.3';
+
 const bot = new Bot(Deno.env.get("TELEGRAM_BOT_TOKEN") || "");
 
 // Initialize Supabase client with admin access
@@ -200,6 +202,8 @@ async function generateLast24HoursStats(): Promise<string> {
     const totalAmountUsdMonth =
       totalAmountUsdMonthData?.reduce(reduceAmountUsd, 0) ?? 0;
 
+    // const activeSubscribersCount = await countActiveCustomerSubscriptions();
+
     // Calculate counts
     const audioYesterdayCount = audioYesterday.count ?? 0;
     const audioPrevCount = audioPrev.count ?? 0;
@@ -222,31 +226,62 @@ async function generateLast24HoursStats(): Promise<string> {
     // Format message
     const message = [
       `📊 Daily stats for ${previousDay.toISOString().slice(0, 10)}`,
-      `🎵 Audio files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioPrevCount)
+      `🎵 Audio files: ${audioYesterdayCount} (${
+        formatChange(
+          audioYesterdayCount,
+          audioPrevCount,
+        )
       } from yesterday)`,
-      `  • Cloned voices: ${clonePrevCount}`,
-      `  • 7d cloned: ${cloneWeekCount}, avg ${(cloneWeekCount / 7).toFixed(1)
+      `  - Cloned voices: ${clonePrevCount}`,
+      `  - 7d cloned: ${cloneWeekCount}, avg ${
+        (cloneWeekCount / 7).toFixed(
+          1,
+        )
       }`,
-      `  • 7d total: ${audioWeekCount}, avg ${(audioWeekCount / 7).toFixed(1)}`,
-      `  • Total: ${audioTotalCount}`,
-      `👥 Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)
+      `  - 7d total: ${audioWeekCount}, avg ${(audioWeekCount / 7).toFixed(1)}`,
+      `  - Total: ${audioTotalCount}`,
+      `👥 Profiles: ${profilesTodayCount} (${
+        formatChange(
+          profilesTodayCount,
+          profilesPrevCount,
+        )
       } from yesterday)`,
-      `  • 7d total: ${profilesWeekCount}, avg ${(profilesWeekCount / 7).toFixed(1)
+      `  - 7d total: ${profilesWeekCount}, avg ${
+        (
+          profilesWeekCount / 7
+        ).toFixed(1)
       }`,
-      `  • Total: ${profilesTotalCount}`,
-      `💰 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)
+      `  - Total: ${profilesTotalCount}`,
+      `💰 Credit Transactions: ${creditsTodayCount} (${
+        formatChange(
+          creditsTodayCount,
+          creditsPrevCount,
+        )
       } from yesterday) ${creditsTodayCount > 0 ? "🤑" : "😿"}`,
-      `  • 7d total: ${creditsWeekCount}, avg ${(creditsWeekCount / 7).toFixed(1)
+      `  - 7d total: ${creditsWeekCount}, avg ${
+        (creditsWeekCount / 7).toFixed(
+          1,
+        )
       }`,
-      `  • 30d total: ${creditsMonthCount}, avg ${(creditsMonthCount / 30).toFixed(1)
+      `  - 30d total: ${creditsMonthCount}, avg ${
+        (
+          creditsMonthCount / 30
+        ).toFixed(1)
       }`,
-      `  • Total: ${creditsTotalCount}`,
-      `  • Total unique paid users: ${totalUniquePaidUsers}`,
+      `  - Total: ${creditsTotalCount}`,
+      `  - Total unique paid users: ${totalUniquePaidUsers}`,
       `💵 Total USD: $${totalAmountUsd.toFixed(2)}`,
-      `  • 7d total: $${totalAmountUsdWeek.toFixed(2)}, avg $${(totalAmountUsdWeek / 7).toFixed(2)
+      `  - 7d total: $${totalAmountUsdWeek.toFixed(2)}, avg $${
+        (
+          totalAmountUsdWeek / 7
+        ).toFixed(2)
       }`,
-      `  • 30d total: $${totalAmountUsdMonth.toFixed(2)}, avg $${(totalAmountUsdMonth / 30).toFixed(2)
+      `  - 30d total: $${totalAmountUsdMonth.toFixed(2)}, avg $${
+        (
+          totalAmountUsdMonth / 30
+        ).toFixed(2)
       }`,
+      // `  - Subscribers: ${activeSubscribersCount} active`,
     ];
 
     return message.join("\n");

@@ -206,6 +206,13 @@ Fetch database migrations:
 supabase migration fetch
 ```
 
+Backup database and schema:
+
+```bash
+export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
+sh ./scripts/db_backups.sh
+```
+
 ### Video Generation
 
 Generate waveform videos for audio files using [seewav](https://github.com/adefossez/seewav):

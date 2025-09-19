@@ -34,6 +34,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 1. Deploy to Deno Deploy
 
 ```bash
+cd supabase/functions/telegram-bot
 deployctl deploy --project=sv-telegram-bot --entrypoint=./index.ts --prod --token=$DENO_TOKEN
 ```
 
