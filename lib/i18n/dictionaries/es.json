@@ -97,7 +97,9 @@
     "popular": {
       "title": "Voces Populares",
       "subtitle": "Escucha lo que otros han creado",
-      "loading": "Cargando audios populares..."
+      "loading": "Cargando audios populares...",
+      "trySamplesTitle": "Pruebe nuestras muestras de voz",
+      "trySamplesSubtitle": "Escuche clones de voz de muestra creados con nuestra avanzada tecnología de IA"
     },
     "faq": {
       "title": "Preguntas Frecuentes",
@@ -125,7 +127,7 @@
         },
         {
           "question": "¿Qué idiomas soportas?",
-          "answer": "Actualmente, soportamos el texto a voz en inglés US 🇺🇸, UK 🇬🇧, español 🇪🇸 y italiano 🇮🇹. Estamos trabajando duro para añadir más idiomas en el futuro. Nuestra prioridad es expandir el soporte de idiomas manteniendo la calidad de voz más alta. Anunciamos nuevas opciones de idioma tan pronto como estén disponibles."
+          "answer": "El soporte de idiomas depende de la voz seleccionada al generar el discurso.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat) soportan 24 idiomas incluyendo árabe (egipcio), inglés (EE.UU.), francés (Francia), alemán (Alemania), español (EE.UU.), hindi (India), indonesio (Indonesia), italiano (Italia), japonés (Japón), coreano (Corea), portugués (Brasil), ruso (Rusia), holandés (Países Bajos), polaco (Polonia), tailandés (Tailandia), turco (Turquía), vietnamita (Vietnam), rumano (Rumania), ucraniano (Ucrania), bengalí (Bangladesh), inglés/hindi (India), marathi (India), tamil (India), y telugu (India).\n\nOtras voces son específicas del idioma: Dan (inglés Reino Unido 🇬🇧), Pietro (italiano 🇮🇹), Emma (inglés EE.UU. 🇺🇸), Javi (español 🇪🇸), Josh (inglés EE.UU. 🇺🇸), y Tara (inglés EE.UU. 🇺🇸).\nElige tu voz basándote en tu idioma objetivo para obtener los mejores resultados."
         },
         {
           "question": "¿Tenéis una API para desarrolladores?",
@@ -208,7 +210,7 @@
           "value": "Mejor Valor"
         },
         "premium": {
-          "name": "220,000 Créditos",
+          "name": "300,000 Créditos",
           "description": "Para usuarios avanzados",
           "value": "Paquete Pro"
         }
@@ -238,7 +240,15 @@
       "title": "Historial de Créditos"
     }
   },
+  "creditsSection": {
+    "title": "Créditos",
+    "topupButton": "Recargar",
+    "totalCredits": "Total",
+    "remainingCredits": "Restantes"
+  },
   "generate": {
+    "title": "Generar Audio",
+    "subtitle": "Selecciona una voz y genera audio desde texto",
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "success": "Audio generado con éxito!",
     "error": "Error al generar audio",
@@ -250,7 +260,15 @@
     "ctaButton": "Generar audio",
     "resetForm": "Reiniciar Formulario",
     "downloadAudio": "Descargar Audio",
-    "abortedCloning": "Clonación de voz cancelada"
+    "abortedCloning": "Clonación de voz cancelada",
+    "gproLimitExceeded": "Has excedido el límite de 4 generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
+    "voiceSelector": {
+      "title": "Seleccionar Voz",
+      "description": "Elige entre las voces disponibles",
+      "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
+      "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
+      "geminiInfo": "Soporta 24 idiomas:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
+    }
   },
   "profile": {
     "title": "Configuración del Perfil",
@@ -281,10 +299,17 @@
     }
   },
   "pages": {
-    "description": "Crea impresionantes clones de voz con tecnología IA avanzada. Nuestra plataforma fácil de usar ayuda a creadores de contenido, desarrolladores y narradores a dar vida a sus proyectos con voces realistas.",
+    "defaultTitle": "SexyVoice.ai - Generador de Voz con IA y Texto a Voz Gratis",
+    "description": "El mejor generador de voz con IA que te permite convertir texto a voz en línea de forma gratuita, crear locuciones y generar habla con sonido natural en cualquier idioma.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse",
     "/dashboard/generate": "Generar"
+  },
+  "footer": {
+    "statusPage": "Página de estado",
+    "privacyPolicy": "Política de privacidad",
+    "termsAndConditions": "Términos y condiciones",
+    "copyright": "SexyVoice.ai. Todos los derechos reservados."
   }
 }

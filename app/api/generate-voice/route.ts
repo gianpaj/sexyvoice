@@ -6,12 +6,14 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
 import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
   getVoiceIdByName,
+  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -38,9 +40,7 @@ async function generateHash(
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration
-export const maxDuration = 60; // seconds - fluid compute is enabled
-
-const GEMINI_LIMIT = 1000;
+export const maxDuration = 320; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -102,21 +102,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const isGeminiVoice = voiceObj.model == 'gpro';
+    const isGeminiVoice = voiceObj.model === 'gpro';
 
-    if (isGeminiVoice ? text.length > GEMINI_LIMIT : text.length > 500) {
+    const maxLength = getCharactersLimit(voiceObj.model);
+    if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
-        maxLength: 500,
+        maxLength,
         body,
         headers: Object.fromEntries(request.headers.entries()),
       });
       return NextResponse.json(
         new APIError(
-          'Text exceeds the maximum length of 500 characters',
-          new Response('Text exceeds the maximum length of 500 characters', {
-            status: 400,
-          }),
+          `Text exceeds the maximum length of ${maxLength} characters`,
+          new Response(
+            `Text exceeds the maximum length of ${maxLength} characters`,
+            {
+              status: 400,
+            },
+          ),
         ),
         { status: 400 },
       );
@@ -172,6 +176,19 @@ export async function POST(request: Request) {
       });
       // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
+    }
+
+    if (isGeminiVoice) {
+      const isOverLimit = await isFreemiumUserOverLimit(user.id);
+      if (isOverLimit) {
+        return NextResponse.json(
+          {
+            error: 'You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+            errorCode: 'gproLimitExceeded',
+          },
+          { status: 403 },
+        );
+      }
     }
 
     let predictionResult: Prediction | undefined;

@@ -97,7 +97,9 @@
     "popular": {
       "title": "Beliebte Audio-Beispiele",
       "subtitle": "Hören Sie, was andere erstellt haben",
-      "loading": "Beliebte Audios werden geladen..."
+      "loading": "Beliebte Audios werden geladen...",
+      "trySamplesTitle": "Probieren Sie unsere Sprachmuster",
+      "trySamplesSubtitle": "Hören Sie sich Beispiel-Stimmenklone an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden"
     },
     "faq": {
       "title": "Häufig gestellte Fragen",
@@ -125,7 +127,7 @@
         },
         {
           "question": "Welche Sprachen unterstützen Sie?",
-          "answer": "Wir unterstützen derzeit die Text-zu-Sprache-Generierung in Englisch US 🇺, UK 🇬, Spanisch 🇪 und Italienisch 🇮. Wir arbeiten hart daran, in Zukunft weitere Sprachen hinzuzufügen. Unser Fokus liegt auf der Erweiterung der Sprachunterstützung bei gleichbleibend höchster Qualität der Stimmgenerierung. Wir werden neue Sprachoptionen bekannt geben, sobald sie verfügbar sind."
+          "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter Arabisch (Ägyptisch), Englisch (US), Französisch (Frankreich), Deutsch (Deutschland), Spanisch (US), Hindi (Indien), Indonesisch (Indonesien), Italienisch (Italien), Japanisch (Japan), Koreanisch (Korea), Portugiesisch (Brasilien), Russisch (Russland), Niederländisch (Niederlande), Polnisch (Polen), Thailändisch (Thailand), Türkisch (Türkei), Vietnamesisch (Vietnam), Rumänisch (Rumänien), Ukrainisch (Ukraine), Bengali (Bangladesch), Englisch/Hindi (Indien), Marathi (Indien), Tamil (Indien) und Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch: Dan (Englisch UK 🇬🇧), Pietro (Italienisch 🇮🇹), Emma (Englisch US 🇺🇸), Javi (Spanisch 🇪🇸), Josh (Englisch US 🇺🇸) und tara (Englisch US 🇺🇸).\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die besten Ergebnisse."
         },
         {
           "question": "Haben Sie eine API für Entwickler?",
@@ -206,7 +208,7 @@
           "value": "Bestes Preis-Leistungs-Verhältnis"
         },
         "premium": {
-          "name": "220.000 Credits",
+          "name": "300.000 Credits",
           "description": "Für Power-User",
           "value": "Pro-Paket"
         }
@@ -236,7 +238,15 @@
       "title": "Credit-Verlauf"
     }
   },
+  "creditsSection": {
+    "title": "Guthaben",
+    "topupButton": "Aufladen",
+    "totalCredits": "Gesamt",
+    "remainingCredits": "Verbleibend"
+  },
   "generate": {
+    "title": "Audio generieren",
+    "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "success": "Audio erfolgreich generiert!",
     "error": "Audio konnte nicht generiert werden",
@@ -248,7 +258,15 @@
     "ctaButton": "Audio generieren",
     "resetForm": "Formular zurücksetzen",
     "downloadAudio": "Audio herunterladen",
-    "abortedCloning": "Sprachgenerierung abgebrochen."
+    "abortedCloning": "Sprachgenerierung abgebrochen.",
+    "gproLimitExceeded": "Sie haben das Limit von 4 mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
+    "voiceSelector": {
+      "title": "Stimme auswählen",
+      "description": "Wählen Sie aus verfügbaren Stimmen",
+      "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
+      "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
+      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
+    }
   },
   "profile": {
     "title": "Profileinstellungen",
@@ -279,10 +297,17 @@
     }
   },
   "pages": {
-    "description": "Erstellen Sie atemberaubende Stimmklone mit fortschrittlicher KI-Technologie. Unsere benutzerfreundliche Plattform hilft Content-Erstellern, Entwicklern und Geschichtenerzählern, ihre Projekte mit realistischen Stimmen zum Leben zu erwecken.",
+    "defaultTitle": "SexyVoice.ai - Kostenloser Text-zu-Sprache & KI-Stimmengenerator",
+    "description": "Der beste KI-Stimmengenerator, mit dem Sie Text kostenlos online in Sprache umwandeln, Voiceovers erstellen und natürlich klingende Sprache in jeder Sprache erzeugen können.",
     "/": "",
     "/login": "Anmelden",
     "/signup": "Registrieren",
     "/dashboard/generate": "Generieren"
+  },
+  "footer": {
+    "statusPage": "Statusseite",
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "termsAndConditions": "Allgemeine Geschäftsbedingungen",
+    "copyright": "SexyVoice.ai. Alle Rechte vorbehalten."
   }
 }

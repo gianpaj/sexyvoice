@@ -38,7 +38,7 @@ export default async function SignUpPage(props: {
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer lang={lang} />
     </>
   );
 }

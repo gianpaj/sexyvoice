@@ -1,7 +1,7 @@
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
-import { Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;

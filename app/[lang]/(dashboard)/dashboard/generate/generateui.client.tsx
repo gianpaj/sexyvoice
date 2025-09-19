@@ -10,6 +10,7 @@ interface GenerateUIProps {
   publicVoices: Voice[];
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
+  locale: string;
 }
 
 const STYLE_PROMPT_VARIANT_MOAN =
@@ -19,8 +20,9 @@ export function GenerateUI({
   publicVoices,
   hasEnoughCredits,
   dict,
+  locale,
 }: GenerateUIProps) {
-  const [selectedVoice, setSelectedVoice] = useState('tara');
+  const [selectedVoice, setSelectedVoice] = useState('zephyr');
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
   const selectedVoiceSample = publicVoices.find(
     (file) => file.name === selectedVoice,
@@ -33,12 +35,14 @@ export function GenerateUI({
         selectedStyle={selectedStyle}
         setSelectedStyle={setSelectedStyle}
         publicVoices={publicVoices}
+        dict={dict}
       />
       <AudioGenerator
         selectedVoice={selectedVoiceSample}
         selectedStyle={selectedStyle}
         hasEnoughCredits={hasEnoughCredits}
         dict={dict}
+        locale={locale}
       />
     </div>
   );

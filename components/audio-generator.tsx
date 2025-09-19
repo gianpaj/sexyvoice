@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import PulsatingDots from './PulsatingDots';
@@ -39,15 +40,15 @@ interface AudioGeneratorProps {
   selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
+  locale: string;
 }
-
-const GEMINI_LIMIT = 1000;
 
 export function AudioGenerator({
   selectedVoice,
   selectedStyle,
   hasEnoughCredits,
   dict,
+  locale,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -58,6 +59,10 @@ export function AudioGenerator({
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
   const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const charactersLimit = useMemo(
+    () => getCharactersLimit(selectedVoice?.model || ''),
+    [selectedVoice],
+  );
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -90,8 +95,14 @@ export function AudioGenerator({
       });
 
       if (!response.ok) {
-        const error: APIError = await response.json();
+        const error: any = await response.json();
 
+        // Check if we have an error code for translation
+        if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
+          throw new APIError(dict[error.errorCode as keyof typeof dict] as string, response);
+        }
+
+        // Fallback to the default English error message from API
         throw new APIError(error.error || error.serverMessage, response);
       }
 
@@ -242,7 +253,7 @@ export function AudioGenerator({
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               className="h-32 pr-16"
-              maxLength={isGeminiVoice ? GEMINI_LIMIT : 500}
+              maxLength={charactersLimit}
             />
             {!isGeminiVoice && (
               <>
@@ -272,6 +283,9 @@ export function AudioGenerator({
                 </Button>
               </>
             )}
+          </div>
+          <div className="text-sm text-muted-foreground text-right">
+            {text.length} / {charactersLimit}
           </div>
         </div>
 

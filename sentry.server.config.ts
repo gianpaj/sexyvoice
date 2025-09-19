@@ -8,7 +8,7 @@ Sentry.init({
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  tracesSampleRate: 0.66,
   integrations: [
     // Add the Vercel AI SDK integration
     Sentry.vercelAIIntegration({

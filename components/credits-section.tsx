@@ -1,18 +1,32 @@
-import Link from 'next/link';
+'use client';
 
+import Link from 'next/link';
+import { useContext } from 'react';
+
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
+import { SidebarContext } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
   lang,
+  dict,
   credits,
   credit_transactions,
+  doNotToggleSidebar,
 }: {
-  lang: string;
+  lang: Locale;
+  dict: (typeof langDict)['creditsSection'];
   credits: number;
   credit_transactions: CreditTransaction[];
+  doNotToggleSidebar?: boolean;
 }) {
+  // Safely access the sidebar context without throwing an error
+  const sidebarContext = useContext(SidebarContext);
+  const isMobile = sidebarContext?.isMobile || false;
+  const toggleSidebar = sidebarContext?.toggleSidebar || (() => {});
   const total_credits =
     credit_transactions?.reduce(
       (acc, transaction) => acc + transaction.amount,
@@ -26,7 +40,7 @@ function CreditsSection({
       <div className="flex items-center justify-between mb-4 w-50">
         <div className="flex items-center">
           <span className="text-xs text-gray-200 whitespace-nowrap">
-            Credit quota
+            {dict.title}
           </span>
         </div>
         <Button
@@ -35,20 +49,29 @@ function CreditsSection({
           asChild
           className="pr-0 hover:no-underline bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent"
         >
-          <Link href={`/${lang}/credits`}>Upgrade</Link>
+          <Link
+            href={`/${lang}/dashboard/credits`}
+            onClick={() => {
+              if (isMobile && !doNotToggleSidebar) {
+                toggleSidebar();
+              }
+            }}
+          >
+            {dict.topupButton}
+          </Link>
         </Button>
       </div>
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <div className="flex flex-col gap-1">
             <div className="flex justify-between items-center text-xs">
-              <span className=" text-gray-200">Total</span>
+              <span className=" text-gray-200">{dict.totalCredits}</span>
               <span className=" font-medium">
                 {total_credits.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs">
-              <span className=" text-gray-200">Remaining</span>
+              <span className=" text-gray-200">{dict.remainingCredits}</span>
               <span className=" font-medium">{credits.toLocaleString()}</span>
             </div>
           </div>

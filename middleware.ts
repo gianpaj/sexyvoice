@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 import { i18n } from './lib/i18n/i18n-config';
 
+// Determines the best matching locale based on the request's Accept-Language headers
 function getLocale(request: NextRequest): string {
   const negotiatorHeaders = Object.fromEntries(
     Array.from(request.headers.entries()).map(([key, value]) => [key, value]),
@@ -16,7 +17,20 @@ function getLocale(request: NextRequest): string {
   return matchLocale(languages, i18n.locales, i18n.defaultLocale);
 }
 
-const publicRoutesWithoutLocale = ['/privacy-policy', '/terms'];
+function getLocaleFromPathname(request: NextRequest): string {
+  const pathname = request.nextUrl.pathname;
+  const potentialLocale = pathname.split('/')[1] ?? '';
+  if ((i18n.locales as readonly string[]).includes(potentialLocale)) {
+    return potentialLocale;
+  }
+  return i18n.defaultLocale;
+}
+
+const publicRoutesWithoutLocale = [
+  '/privacy-policy',
+  '/terms',
+  '/manifest.json',
+];
 
 const publicRoutesWithoutAuth = ['/api/stripe/webhook', '/api/daily-stats'];
 
@@ -46,9 +60,10 @@ export async function middleware(req: NextRequest) {
 
   // console.log({ pathnameIsMissingLocale, pathname });
 
-  // Redirect if there is no locale
+  // Redirect if there is no locale in the path
   if (pathnameIsMissingLocale) {
     try {
+      // get the locale from the headers
       const locale = getLocale(req);
       return NextResponse.redirect(new URL(`/${locale}${pathname}`, req.url));
     } catch (_error) {
@@ -63,7 +78,9 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  return await updateSession(req);
+  const locale = getLocaleFromPathname(req);
+
+  return await updateSession(req, locale);
 }
 export const config = {
   matcher: [

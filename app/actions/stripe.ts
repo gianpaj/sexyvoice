@@ -20,7 +20,7 @@ const TOPUP_PACKAGES = {
   },
   premium: {
     priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
-    credits: 220000,
+    credits: 300000,
     amount: 9900, // $99.00
   },
 } as const;

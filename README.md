@@ -34,6 +34,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ## ✨ Features
 
 ### 🎯 Core Functionality
+
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
@@ -41,12 +42,14 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
+
 - **Secure Authentication**: Multiple login options with Google (more coming soon)
 - **Credit-based System**: Fair usage tracking with transparent pricing
 - **Profile Management**: Personalized dashboard and settings
 - **Audio History**: Track and manage all your generated content
 
 ### 🌍 Platform Features
+
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **International Support**: Full i18n implementation for global accessibility
 - **Rate Limiting**: Fair usage policies to ensure platform stability
@@ -55,6 +58,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **[Next.js 15](https://nextjs.org)** - React framework with App Router and TypeScript
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
 - **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
@@ -62,17 +66,20 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 
 ### Backend & Database
+
 - **[Supabase](https://supabase.com)** - Authentication and PostgreSQL database with SSR support
 - **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations *(planned)*
 - **[Vercel Blob Storage](https://vercel.com/storage/blob)** - Scalable audio file storage
 
 ### DevOps & Monitoring
+
 - **[Vercel](https://vercel.com)** - Deployment and hosting platform
 - **[Sentry](https://sentry.io)** - Error tracking and performance monitoring
 - **[PostHog](https://posthog.com)** - Product analytics and feature flags
 - **[Stripe](https://stripe.com)** - Payment processing and subscription management
 
 ### Development Tools
+
 - **[Biome](https://biomejs.dev)** - Fast linter and formatter
 - **[TypeScript](https://typescriptlang.org)** - Type safety and developer experience
 - **[Contentlayer](https://contentlayer.dev)** - Type-safe content management
@@ -90,20 +97,24 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/gianpaj/sexyvoice.git
    cd sexyvoice
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
+
    Fill in the required environment variables as defined in [`.env.example`](.env.example):
    - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
@@ -128,11 +139,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 4. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
+
    ```bash
    supabase db push
    ```
 
 5. **Start the development server**
+
    ```bash
    pnpm dev
    ```
@@ -144,29 +157,31 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start development server with Turbopack |
-| `pnpm build` | Build production application |
-| `pnpm start` | Start production server |
-| `pnpm test` | Run test suite |
-| `pnpm test:watch` | Run tests in watch mode |
-| `pnpm lint` | Lint codebase with Biome |
-| `pnpm lint:fix` | Fix linting issues automatically |
-| `pnpm type-check` | Run TypeScript type checking |
-| `pnpm format` | Format code with Biome |
-| `pnpm check-translations` | Validate translation files |
-| `pnpm build:content` | Build content layer |
-| `pnpm clean` | Clean unused dependencies with Knip |
+| Command                   | Description                             |
+| ------------------------- | --------------------------------------- |
+| `pnpm dev`                | Start development server with Turbopack |
+| `pnpm build`              | Build production application            |
+| `pnpm start`              | Start production server                 |
+| `pnpm test`               | Run test suite                          |
+| `pnpm test:watch`         | Run tests in watch mode                 |
+| `pnpm lint`               | Lint codebase with Biome                |
+| `pnpm lint:fix`           | Fix linting issues automatically        |
+| `pnpm type-check`         | Run TypeScript type checking            |
+| `pnpm format`             | Format code with Biome                  |
+| `pnpm check-translations` | Validate translation files              |
+| `pnpm build:content`      | Build content layer                     |
+| `pnpm clean`              | Clean unused dependencies with Knip     |
 
 ### Testing
 
 Run the test suite:
+
 ```bash
 pnpm test
 ```
 
 For continuous testing during development:
+
 ```bash
 pnpm test:watch
 ```
@@ -174,18 +189,28 @@ pnpm test:watch
 ### Database Operations
 
 Generate TypeScript types from Supabase:
+
 ```bash
 supabase gen types typescript --project-id PROJECT_ID > database.types.ts
 ```
 
 Push schema changes to Supabase:
+
 ```bash
 supabase db push
 ```
 
 Fetch database migrations:
+
 ```bash
 supabase migration fetch
+```
+
+Backup database and schema:
+
+```bash
+export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
+sh ./scripts/db_backups.sh
 ```
 
 ### Video Generation
@@ -212,6 +237,7 @@ SexyVoice.ai implements multiple security layers:
 
 <!-- We welcome contributions! Please see the [contribution guidelines](CONTRIBUTING.md) for details on how to: -->
 We welcome contributions!
+
 - Report bugs
 - Suggest features
 - Submit pull requests
@@ -233,12 +259,36 @@ This project is licensed under the [MIT License](LICENSE).
 SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://sexyvoice.featurebase.app) for upcoming features and improvements.
 
 ### Current Version
+
 - ✅ Core voice generation functionality
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
 - ✅ Website multi-language support (EN/ES)
 - 🚧 API access (coming soon)
+
+### Supported Languages by these Google Gemini TTS Models
+
+- Puck
+- Zephyr
+- Gacrux
+- Kore
+- Sulafat
+
+| Language               | BCP-47 Code              | Language             | BCP-47 Code |
+| ---------------------- | ------------------------ | -------------------- | ----------- |
+| Arabic (Egyptian)      | `ar-EG`                  | German (Germany)     | `de-DE`     |
+| English (US)           | `en-US`                  | Spanish (US)         | `es-US`     |
+| French (France)        | `fr-FR`                  | Hindi (India)        | `hi-IN`     |
+| Indonesian (Indonesia) | `id-ID`                  | Italian (Italy)      | `it-IT`     |
+| Japanese (Japan)       | `ja-JP`                  | Korean (Korea)       | `ko-KR`     |
+| Portuguese (Brazil)    | `pt-BR`                  | Russian (Russia)     | `ru-RU`     |
+| Dutch (Netherlands)    | `nl-NL`                  | Polish (Poland)      | `pl-PL`     |
+| Thai (Thailand)        | `th-TH`                  | Turkish (Turkey)     | `tr-TR`     |
+| Vietnamese (Vietnam)   | `vi-VN`                  | Romanian (Romania)   | `ro-RO`     |
+| Ukrainian (Ukraine)    | `uk-UA`                  | Bengali (Bangladesh) | `bn-BD`     |
+| English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
+| Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
 
 ---
 
