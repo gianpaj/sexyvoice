@@ -280,7 +280,7 @@ export async function GET(request: NextRequest) {
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
     '',
-    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : ''}`,
+    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     '',
