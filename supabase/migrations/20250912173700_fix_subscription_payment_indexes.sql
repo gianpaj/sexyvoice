@@ -18,7 +18,7 @@ ON public.credit_transactions USING btree (reference_id)
 WHERE ((type = 'topup'::credit_transaction_type) AND (reference_id IS NOT NULL));
 
 -- Create new unique index for subscription purchase transactions using reference_id
--- This allows recurring subscription payments as each payment has a unique payment_intent
+-- This allows recurring subscription payments as each payment has a unique invoice_id
 CREATE UNIQUE INDEX unique_reference_purchase_idx
 ON public.credit_transactions USING btree (reference_id)
 WHERE ((type = 'purchase'::credit_transaction_type) AND (reference_id IS NOT NULL));
