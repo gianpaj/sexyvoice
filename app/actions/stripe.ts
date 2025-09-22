@@ -27,6 +27,103 @@ const TOPUP_PACKAGES = {
 
 type PackageType = keyof typeof TOPUP_PACKAGES;
 
+export async function createCustomCheckoutSession(
+  credits: number,
+): Promise<{ client_secret: string | null; url: string | null }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const userData = user && (await getUserById(user.id));
+    if (!userData || !userData.stripe_id) {
+      const error = new Error('User not found or Stripe ID missing');
+      Sentry.captureException(error, {
+        tags: {
+          section: 'stripe_actions',
+          event_type: 'user_validation_error',
+        },
+        extra: {
+          user_id: user?.id,
+          has_user_data: !!userData,
+          has_stripe_id: !!userData?.stripe_id,
+          credits,
+        },
+      });
+      throw error;
+    }
+
+    const amountInCents = Math.round(credits * 0.0005 * 100); // $0.0005 per credit
+    const lang = 'en';
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: 'usd',
+      customer: userData.stripe_id,
+      payment_method_types: ['card'],
+      statement_descriptor: 'SexyVoice Credits',
+      metadata: {
+        userId: user.id,
+        credits: credits.toString(),
+        dollarAmount: (amountInCents / 100).toString(),
+        type: 'custom_topup',
+        packageType: 'custom',
+      },
+    });
+
+    // Create a checkout session using the payment intent
+    const checkoutSession: Stripe.Checkout.Session =
+      await stripe.checkout.sessions.create({
+        mode: 'payment',
+        customer: userData.stripe_id,
+        payment_intent_data: {
+          setup_future_usage: undefined,
+        },
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `${credits.toLocaleString()} Voice Credits`,
+                description: `Custom credit package for ${credits.toLocaleString()} voice generation credits`,
+              },
+              unit_amount: amountInCents,
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&amount=${credits}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
+        metadata: {
+          userId: user.id,
+          credits: credits.toString(),
+          dollarAmount: (amountInCents / 100).toString(),
+          type: 'custom_topup',
+          packageType: 'custom',
+        },
+      });
+
+    return {
+      client_secret: checkoutSession.client_secret,
+      url: checkoutSession.url,
+    };
+  } catch (error) {
+    console.error('Error creating custom checkout session:', error);
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_actions',
+        event_type: 'custom_checkout_session_creation_error',
+      },
+      extra: {
+        credits,
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+      },
+    });
+    throw error;
+  }
+}
+
 export async function createCheckoutSession(
   data: FormData,
   packageType: PackageType,
