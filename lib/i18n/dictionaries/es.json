@@ -140,6 +140,10 @@
         {
           "question": "¿Está permitida la generación de contenido erótico o para adultos?",
           "answer": "Sí, permitimos la generación de contenido para adultos y erótico en nuestra plataforma. Creemos en la libertad creativa manteniendo un uso responsable. Sin embargo, todo el contenido debe cumplir con nuestros términos de servicio y las leyes aplicables. Prohibimos el contenido que involucre menores, escenarios no consensuales o actividades ilegales."
+        },
+        {
+          "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o de pirata?",
+          "answer": "¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) y añade tu instrucción en el cuadro de estilo, por ejemplo: 'Habla con acento británico' o 'Habla como un pirata'. La voz se adaptará al instante. Puedes usar esto para acentos, voces de personajes o estilos de habla únicos—experimenta con distintas indicaciones hasta que encuentres el ajuste perfecto."
         }
       ]
     }

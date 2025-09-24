@@ -140,6 +140,10 @@
         {
           "question": "Ist die Erstellung von erotischen oder nicht jugendfreien Inhalten erlaubt?",
           "answer": "Ja, wir erlauben die Erstellung von nicht jugendfreien und erotischen Inhalten auf unserer Plattform. Wir glauben an kreative Freiheit bei gleichzeitig verantwortungsvoller Nutzung. Alle Inhalte müssen jedoch unseren Nutzungsbedingungen und den geltenden Gesetzen entsprechen. Wir verbieten Inhalte, die Minderjährige, nicht einvernehmliche Szenarien oder illegale Aktivitäten beinhalten."
+        },
+        {
+          "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, z. B. britisch oder wie ein Pirat?",
+          "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (zum Beispiel Zephyr) und fügen Sie Ihre Anweisung im Stil-Eingabefeld hinzu, z. B.: 'Sprich mit einem britischen Akzent' oder 'Sprich wie ein Pirat.' Die Stimme passt sich sofort an. Sie können dies für Akzente, Charakterstimmen oder einzigartige Sprechstile verwenden – experimentieren Sie mit verschiedenen Prompts, bis Sie die perfekte Variante gefunden haben."
         }
       ]
     }

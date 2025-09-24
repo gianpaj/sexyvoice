@@ -140,6 +140,10 @@
         {
           "question": "Is erotica or adult content generation allowed?",
           "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
+        },
+        {
+          "question": "Can I make a voice speak with a specific accent or style, like British or pirate?",
+          "answer": "Yes! Choose a multilingual voice (for example, Zephyr) and add your instruction in the style box, like: 'Speak with a British accent' or 'Speak like a pirate.' The voice will instantly adapt. You can use this for accents, character voices, or unique speaking styles—experiment with different prompts until you find the perfect fit."
         }
       ]
     }
