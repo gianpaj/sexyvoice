@@ -2,6 +2,7 @@ import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { del, head, put } from '@vercel/blob';
+import { checkBotId } from 'botid/server';
 import { after, NextResponse } from 'next/server';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
@@ -94,6 +95,12 @@ export async function POST(request: Request) {
         'Missing required parameters: text and audio file',
         400,
       );
+    }
+
+    const verification = await checkBotId();
+
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     if (text.length > 500) {
