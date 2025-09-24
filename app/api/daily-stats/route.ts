@@ -33,6 +33,11 @@ function formatChange(today: number, yesterday: number): string {
   return diff >= 0 ? `+${diff}` : `${diff}`;
 }
 
+function formatCurrencyChange(current: number, previous: number): string {
+  const diff = current - previous;
+  return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
+}
+
 export async function GET(request: NextRequest) {
   const isLocalTest = process.env.NODE_ENV === 'development';
 
@@ -252,13 +257,9 @@ export async function GET(request: NextRequest) {
   const mtdRevenue = mtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
 
   // Previous month-to-date revenue (same day range in previous month)
-  const dayOfMonth = now.getUTCDate();
-  const previousMonthSameDay = new Date(
-    Date.UTC(
-      previousMonthStart.getUTCFullYear(),
-      previousMonthStart.getUTCMonth(),
-      dayOfMonth,
-    ),
+  const duration = today.getTime() - monthStart.getTime();
+  const previousMonthPeriodEnd = new Date(
+    previousMonthStart.getTime() + duration,
   );
 
   const { data: prevMtdRevenueData } = await supabase
@@ -266,7 +267,7 @@ export async function GET(request: NextRequest) {
     .select('metadata')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousMonthStart.toISOString())
-    .lt('created_at', previousMonthSameDay.toISOString());
+    .lt('created_at', previousMonthPeriodEnd.toISOString());
 
   const prevMtdRevenue = prevMtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
 
@@ -322,7 +323,7 @@ export async function GET(request: NextRequest) {
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
     `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
     `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
-    `  - MTD: $${mtdRevenue.toFixed(2)} vs Prev MTD: $${prevMtdRevenue.toFixed(2)} (${mtdRevenue >= prevMtdRevenue ? '+' : ''}${(mtdRevenue - prevMtdRevenue).toFixed(2)})`,
+    `  - MTD: $${mtdRevenue.toFixed(2)} vs Prev MTD: $${prevMtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
   ];
 
