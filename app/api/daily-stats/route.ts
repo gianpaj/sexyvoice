@@ -20,12 +20,7 @@ function startOfMonth(date: Date): Date {
 }
 
 function startOfPreviousMonth(date: Date): Date {
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth();
-  if (month === 0) {
-    return new Date(Date.UTC(year - 1, 11, 1));
-  }
-  return new Date(Date.UTC(year, month - 1, 1));
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
 }
 
 function formatChange(today: number, yesterday: number): string {
