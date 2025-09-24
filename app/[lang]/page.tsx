@@ -35,7 +35,7 @@ const get3PostsByLang = (lang: Locale) => {
 
 export const metadata: Metadata = {
   other: {
-    preconnect: 'https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
+    preconnect: 'https://files.sexyvoice.ai',
   },
 };
 
