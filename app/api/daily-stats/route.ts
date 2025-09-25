@@ -15,9 +15,22 @@ function subtractDays(date: Date, days: number): Date {
   return new Date(date.getTime() - days * 86400_000);
 }
 
+function startOfMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+function startOfPreviousMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
+}
+
 function formatChange(today: number, yesterday: number): string {
   const diff = today - yesterday;
   return diff >= 0 ? `+${diff}` : `${diff}`;
+}
+
+function formatCurrencyChange(current: number, previous: number): string {
+  const diff = current - previous;
+  return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
 }
 
 export async function GET(request: NextRequest) {
@@ -53,6 +66,8 @@ export async function GET(request: NextRequest) {
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
   const thirtyDaysAgo = subtractDays(today, 30);
+  const monthStart = startOfMonth(now);
+  const previousMonthStart = startOfPreviousMonth(now);
 
   const audioYesterday = await supabase
     .from('audio_files')
@@ -226,15 +241,30 @@ export async function GET(request: NextRequest) {
   const totalAmountUsdWeek =
     totalAmountUsdWeekData?.reduce(reduceAmountUsd, 0) ?? 0;
 
-  const { data: totalAmountUsdMonthData } = await supabase
+  // Month-to-date revenue (current month)
+  const { data: mtdRevenueData } = await supabase
     .from('credit_transactions')
     .select('metadata')
     .in('type', ['purchase', 'topup'])
-    .gte('created_at', thirtyDaysAgo.toISOString())
+    .gte('created_at', monthStart.toISOString())
     .lt('created_at', today.toISOString());
 
-  const totalAmountUsdMonth =
-    totalAmountUsdMonthData?.reduce(reduceAmountUsd, 0) ?? 0;
+  const mtdRevenue = mtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
+
+  // Previous month-to-date revenue (same day range in previous month)
+  const duration = today.getTime() - monthStart.getTime();
+  const previousMonthPeriodEnd = new Date(
+    previousMonthStart.getTime() + duration,
+  );
+
+  const { data: prevMtdRevenueData } = await supabase
+    .from('credit_transactions')
+    .select('metadata')
+    .in('type', ['purchase', 'topup'])
+    .gte('created_at', previousMonthStart.toISOString())
+    .lt('created_at', previousMonthPeriodEnd.toISOString());
+
+  const prevMtdRevenue = prevMtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
 
   // const activeSubscribersData = await supabase
   //   .from('credit_transactions')
@@ -288,7 +318,7 @@ export async function GET(request: NextRequest) {
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
     `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
     `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
-    `  - 30d: $${totalAmountUsdMonth.toFixed(2)} (avg $${(totalAmountUsdMonth / 30).toFixed(2)})`,
+    `  - MTD: $${mtdRevenue.toFixed(2)} vs Prev MTD: $${prevMtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
   ];
 
@@ -335,6 +365,7 @@ export async function GET(request: NextRequest) {
 }
 const reduceAmountUsd = (acc: number, row: { metadata: any }) => {
   if (!row.metadata || typeof row.metadata !== 'object') {
+    console.log('Invalid metadata:', row.metadata);
     return acc;
   }
   const { dollarAmount } = row.metadata as {
