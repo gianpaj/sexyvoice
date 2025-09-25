@@ -151,8 +151,8 @@ async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
 ) {
   try {
-    if (session.mode === 'payment' && session.metadata?.type === 'topup') {
-      // This is a one-time credit purchase
+    if (session.mode === 'payment' && (session.metadata?.type === 'topup' || session.metadata?.type === 'custom_topup')) {
+      // This is a one-time credit purchase (either fixed package or custom amount)
       const { userId, packageType, credits, dollarAmount } = session.metadata;
 
       if (!userId || !credits || !dollarAmount) {
@@ -178,7 +178,7 @@ async function handleCheckoutSessionCompleted(
       const dollarAmountNum = Number.parseFloat(dollarAmount);
 
       console.log(
-        `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
+        `[STRIPE HOOK] Processing ${session.metadata.type}: ${creditAmount} credits for user ${userId}`,
       );
 
       await insertTopupTransaction(
