@@ -76,6 +76,8 @@ Rules:
       maxTokens: 500,
       experimental_telemetry: {
         isEnabled: true,
+        recordInputs: true,
+        recordOutputs: true,
       },
     });
 
