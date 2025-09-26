@@ -23,6 +23,8 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
+import { Input } from './ui/input';
+import { Slider } from './ui/slider';
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +38,8 @@ export function VoiceSelector({
   setSelectedVoice,
   selectedStyle,
   setSelectedStyle,
+  selectedTemperature,
+  setSelectedTemperature,
   dict,
 }: {
   publicVoices: Voice[];
@@ -43,6 +47,8 @@ export function VoiceSelector({
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
+  selectedTemperature: number;
+  setSelectedTemperature: Dispatch<SetStateAction<number>>;
   dict: (typeof lang)['generate'];
 }) {
   const isGeminiVoice = selectedVoice?.model === 'gpro';
@@ -102,11 +108,63 @@ export function VoiceSelector({
           </SelectContent>
         </Select>
         {isGeminiVoice && (
-          <Textarea
-            onChange={(e) => setSelectedStyle(e.target.value)}
-            value={selectedStyle}
-            placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
-          />
+          <>
+            <Textarea
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              value={selectedStyle}
+              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
+            />
+            <div className="flex items-center gap-3">
+              <TooltipProvider>
+                <Tooltip delayDuration={100} supportMobileTap>
+                  <TooltipTrigger asChild>
+                    <div className="w-full">
+                      <Slider
+                        min={0.5}
+                        max={2}
+                        step={0.1}
+                        value={[selectedTemperature ?? 1]}
+                        onValueChange={(values) => {
+                          const val = values?.[0] ?? 1;
+                          const clamped = Math.max(0.5, Math.min(2, val));
+                          setSelectedTemperature(Number.parseFloat(clamped.toFixed(1)));
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{dict.voiceSelector.temperatureTooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip delayDuration={100} supportMobileTap>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Input
+                        type="number"
+                        min={0.5}
+                        max={2}
+                        step={0.1}
+                        value={(selectedTemperature ?? 1).toFixed(1)}
+                        onChange={(e) => {
+                          const raw = Number(e.target.value);
+                          if (!Number.isFinite(raw)) return;
+                          const clamped = Math.max(0.5, Math.min(2, raw));
+                          setSelectedTemperature(Number.parseFloat(clamped.toFixed(1)));
+                        }}
+                        className="w-20"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{dict.voiceSelector.temperatureTooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </>
         )}
         {selectedVoice?.sample_url && (
           <div className="flex gap-2 items-center justify-start p-4 lg:w-2/3">

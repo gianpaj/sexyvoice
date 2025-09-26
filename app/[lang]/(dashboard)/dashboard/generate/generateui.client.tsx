@@ -24,6 +24,7 @@ export function GenerateUI({
 }: GenerateUIProps) {
   const [selectedVoice, setSelectedVoice] = useState('zephyr');
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
+  const [selectedTemperature, setSelectedTemperature] = useState(1);
   const selectedVoiceSample = publicVoices.find(
     (file) => file.name === selectedVoice,
   );
@@ -34,12 +35,15 @@ export function GenerateUI({
         selectedVoice={selectedVoiceSample}
         selectedStyle={selectedStyle}
         setSelectedStyle={setSelectedStyle}
+        selectedTemperature={selectedTemperature}
+        setSelectedTemperature={setSelectedTemperature}
         publicVoices={publicVoices}
         dict={dict}
       />
       <AudioGenerator
         selectedVoice={selectedVoiceSample}
         selectedStyle={selectedStyle}
+        selectedTemperature={selectedTemperature}
         hasEnoughCredits={hasEnoughCredits}
         dict={dict}
         locale={locale}
