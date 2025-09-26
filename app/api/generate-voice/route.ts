@@ -183,7 +183,8 @@ export async function POST(request: Request) {
       if (isOverLimit) {
         return NextResponse.json(
           {
-            error: 'You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+            error:
+              'You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
             errorCode: 'gproLimitExceeded',
           },
           { status: 403 },
@@ -245,6 +246,17 @@ export async function POST(request: Request) {
         });
         throw new Error('Voice generation failed');
       }
+      Sentry.captureMessage('Gemini voice generation succeeded', {
+        user: {
+          id: user.id,
+        },
+        extra: {
+          voice,
+          model: modelUsed,
+          responseId: response.responseId,
+          text,
+        },
+      });
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
       blobResult = await put(filename, audioBuffer, {
