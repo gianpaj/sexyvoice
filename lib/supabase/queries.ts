@@ -117,6 +117,7 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
 export const insertCreditTransaction = async (
   userId: string,
   subscriptionId: string,
+  paymentId: string,
   amount: number,
   subAmount: number,
 ) => {
@@ -128,6 +129,7 @@ export const insertCreditTransaction = async (
     .select('id')
     .eq('user_id', userId)
     .eq('subscription_id', subscriptionId)
+    .eq('reference_id', paymentId)
     // .eq('type', 'purchase')
     .single();
 
@@ -142,6 +144,7 @@ export const insertCreditTransaction = async (
     console.warn('Transaction already exists', {
       userId,
       subscriptionId,
+      paymentId,
       data: existingTransaction,
     });
     return;
@@ -155,6 +158,7 @@ export const insertCreditTransaction = async (
       .insert({
         user_id: userId,
         subscription_id: subscriptionId,
+        reference_id: paymentId,
         amount,
         type: 'purchase',
         description,
@@ -169,6 +173,7 @@ export const insertCreditTransaction = async (
           {
             userId,
             subscriptionId,
+            paymentId,
             error: insertError.message,
           },
         );
@@ -285,9 +290,10 @@ export const isFreemiumUserOverLimit = async (
     .eq('user_id', userId);
 
   // Check if user has only freemium transactions
-  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 && 
-    allTransactions?.every(transaction => transaction.type === 'freemium');
- 
+  const hasOnlyFreemium =
+    (allTransactions?.length ?? 0) > 0 &&
+    allTransactions?.every((transaction) => transaction.type === 'freemium');
+
   if (freemiumError) {
     // For "No rows found", it's not an error, just not a freemium user.
     if (freemiumError.code === 'PGRST116') {

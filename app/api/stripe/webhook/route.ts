@@ -59,15 +59,13 @@ async function processEvent(event: Stripe.Event) {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(
-          event.data.object as Stripe.Checkout.Session,
-        );
+        await handleCheckoutSessionCompleted(event.data.object);
         break;
-      case 'payment_intent.succeeded':
-        await handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent,
-        );
-        break;
+      // case 'payment_intent.succeeded':
+      //   await handlePaymentIntentSucceeded(
+      //     event.data.object as Stripe.PaymentIntent,
+      //   );
+      //   break;
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
@@ -83,15 +81,13 @@ async function processEvent(event: Stripe.Event) {
       case 'invoice.marked_uncollectible':
       case 'invoice.payment_succeeded': {
         // Handle subscription events as before
-        const { customer: customerId } = event.data.object as {
-          customer: string;
-        };
+        const { customer: customerId, id } = event.data.object;
         if (typeof customerId !== 'string') {
           throw new Error(
             `[STRIPE HOOK] Customer ID isn't string.\nEvent type: ${event.type}`,
           );
         }
-        await syncStripeDataToKV(customerId);
+        await syncStripeDataToKV(customerId, id);
         break;
       }
       default:
@@ -194,11 +190,12 @@ async function handleCheckoutSessionCompleted(
       );
     } else if (session.mode === 'subscription') {
       // Handle subscription checkout
-      const customerId = session.customer as string;
+      const customerId = session.customer;
       if (customerId) {
-        await syncStripeDataToKV(customerId);
+        await syncStripeDataToKV(customerId.toString(), session.id);
       }
     }
+    throw new Error('Unhandled session mode');
   } catch (error) {
     console.error(
       '[STRIPE HOOK] Error in handleCheckoutSessionCompleted:',
@@ -245,9 +242,10 @@ async function handlePaymentIntentSucceeded(
   }
 }
 
-// The contents of this function should probably be wrapped in a try/catch
-// export async function syncStripeDataToKV(body, customerId) {
-export async function syncStripeDataToKV(customerId: string) {
+export async function syncStripeDataToKV(
+  customerId: string,
+  paymentId: string,
+) {
   try {
     // Fetch latest subscription data from Stripe
     // const subscriptions = body;
@@ -270,6 +268,7 @@ export async function syncStripeDataToKV(customerId: string) {
     // Store complete subscription state
     const subData = {
       subscriptionId: subscription.id,
+      paymentId,
       status: subscription.status,
       // priceId: subscription.plan.id,
       priceId: subscription.items.data[0].price.id,
@@ -336,6 +335,7 @@ export async function syncStripeDataToKV(customerId: string) {
       await insertCreditTransaction(
         userId,
         subData.subscriptionId,
+        paymentId,
         amount,
         subAmount,
       );
