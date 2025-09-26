@@ -85,7 +85,7 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.1.1",
+    "@biomejs/biome": "^2.2.4",
     "@next/bundle-analyzer": "15.4.1",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^22.15.2",
