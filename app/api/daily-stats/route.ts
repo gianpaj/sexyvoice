@@ -119,15 +119,38 @@ export async function GET(request: NextRequest) {
     .eq('model', 'chatterbox-tts')
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
-  // const topVoices = await supabase
-  //   .from('audio_files')
-  //   .select('voice_id, voices(name), count:id')
-  //   .gte('created_at', yesterday.toISOString())
-  //   .lt('created_at', today.toISOString())
-  //   .group('voice_id, voices(name)')
-  //   .order('count', { ascending: false })
-  //   .limit(3);
+  const { data: audioFilesYesterday, error: audioFilesYesterdayError } =
+    await supabase
+      .from('audio_files')
+      .select(`
+        voice_id,
+        voices ( name )
+      `)
+      // .neq('model', 'chatterbox-tts')
+      .gte('created_at', previousDay.toISOString())
+      .lt('created_at', today.toISOString());
 
+  const voiceCounts = new Map<string, number>();
+  for (const row of audioFilesYesterday ?? []) {
+    voiceCounts.set(
+      row.voices.name,
+      (voiceCounts.get(row.voices.name) ?? 0) + 1,
+    );
+  }
+
+  const topVoiceEntries = [...voiceCounts.entries()]
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 3);
+  console.log('topVoiceEntries', topVoiceEntries);
+  const topVoiceList = await (async () => {
+    if (topVoiceEntries.length === 0) {
+      return 'N/A';
+    }
+
+    return topVoiceEntries
+      .map(([voiceName, count]) => `${voiceName} (${count})`)
+      .join(', ');
+  })();
   const profilesPrevDay = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
@@ -294,10 +317,6 @@ export async function GET(request: NextRequest) {
   const creditsMonthCount = creditsMonth.count ?? 0;
   const creditsTotalCount = creditsTotal.count ?? 0;
 
-  // const topVoiceList =
-  //   topVoices.data?.map((v) => `${v.voices.name} (${v.count})`).join(', ') ??
-  //   'N/A';
-
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
     '',
@@ -305,6 +324,7 @@ export async function GET(request: NextRequest) {
     `  - Cloned: ${clonePrevCount} | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
     `  - 7d Total: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
+    `  - Top voices: ${topVoiceList}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
