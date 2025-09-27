@@ -67,7 +67,7 @@
       },
       "multiLanguage": {
         "title": "Mehrsprachige Unterstützung",
-        "description": "Klonen Sie Stimmen in mehreren Sprachen und Akzenten, perfekt für die globale Content-Erstellung und Lokalisierung."
+        "description": "Wählen Sie aus über 20 einzigartigen Stimmen in mehreren Sprachen – perfekt für Ihre speziellen Bedürfnisse und Vorlieben."
       },
       "security": {
         "title": "Sicher & Privat",
@@ -77,7 +77,7 @@
     "cta": {
       "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
       "title": "Bereit, Ihre Stimme zu finden?",
-      "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform für ihre Bedürfnisse beim Stimmenklonen vertrauen.",
+      "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
       "action": "Erstellen Sie Ihre erste Stimme"
     },
     "generator": {
@@ -99,7 +99,7 @@
       "subtitle": "Hören Sie, was andere erstellt haben",
       "loading": "Beliebte Audios werden geladen...",
       "trySamplesTitle": "Probieren Sie unsere Sprachmuster",
-      "trySamplesSubtitle": "Hören Sie sich Beispiel-Stimmenklone an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden"
+      "trySamplesSubtitle": "Hören Sie sich Sprachproben an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden"
     },
     "faq": {
       "title": "Häufig gestellte Fragen",
@@ -150,48 +150,40 @@
   },
   "credits": {
     "pricingPlan": "Preispläne",
-    "title": "Pläne für Kreative und Unternehmen jeder Größe",
-    "description": "Wählen Sie den Plan, der Ihren Anforderungen am besten entspricht",
-    "availableCredits": "Verfügbare Credits",
-    "creditsUsage": "Credits werden für die Sprachgenerierung verwendet",
+    "title": "Credits für Kreative und Unternehmen jeder Größe kaufen",
+    "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
     "billing": {
-      "monthly": "Monatlich",
-      "annually": "Jährlich",
-      "monthsFree": "2 Monate kostenlos",
-      "forever": "für immer"
+      "forever": "(für immer)"
     },
     "plans": {
       "popular": "Am beliebtesten",
-      "subscribe": "Abonnieren",
+      "buyCredits": "Credits kaufen",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die das fortschrittlichste KI-Audio ausprobieren möchten.",
         "credits": "10.000 Credits (~10 Min. Audio)",
         "features": [
           "Sprache in einzigartigen Stimmen generieren",
-          "Benutzerdefinierte, synthetische Stimmen erstellen",
-          "Soundeffekte generieren",
-          "API-Zugang (bald verfügbar)"
+          "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
         ]
       },
       "starter": {
         "name": "Starter",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "credits": "30.000 Credits pro Monat (~30 Min. Audio)",
+        "credits": "25.000 Credits (~25 Min. Audio)",
         "features": [
           "Alles im kostenlosen Plan, plus",
-          "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
+          "API-Zugang (bald verfügbar)"
         ]
       },
       "pro": {
         "name": "Pro",
         "description": "Für größere Kreative, die ihre Inhaltsproduktion steigern.",
-        "credits": "500.000 Credits pro Monat (~10 Stunden Audio)",
+        "credits": "220.000 Credits (~200 Min. Audio)",
         "features": [
           "Alles im Starter-Plan, plus",
-          "Höhere Audioqualität",
-          "44,1 kHz PCM-Audioausgabe über API (bald verfügbar)"
+          "Weitere Funktionen folgen bald"
         ]
       }
     },

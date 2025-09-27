@@ -15,18 +15,18 @@ async function PricingTable({ lang }: { lang: Locale }) {
       price: '0',
       billing: credits.billing.forever,
       description: pPlans.free.description,
-      buttonText: pPlans.subscribe,
+      buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
       credits: pPlans.free.credits,
       features: pPlans.free.features,
     },
     {
       name: pPlans.starter.name,
-      price: '5',
+      price: '10',
       isPopular: true,
-      billing: credits.billing.monthly,
+
       description: pPlans.starter.description,
-      buttonText: pPlans.subscribe,
+      buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
       credits: pPlans.starter.credits,
       features: pPlans.starter.features,
@@ -34,9 +34,9 @@ async function PricingTable({ lang }: { lang: Locale }) {
     {
       name: pPlans.pro.name,
       price: '99',
-      billing: credits.billing.monthly,
+
       description: pPlans.pro.description,
-      buttonText: pPlans.subscribe,
+      buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
       credits: pPlans.pro.credits,
       features: pPlans.pro.features,
@@ -65,7 +65,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
               <div className="flex items-baseline">
                 <span className="text-3xl font-bold">${plan.price}</span>
                 <span className="text-sm text-muted-foreground">
-                  /{plan.billing}
+                  {plan.billing}
                 </span>
               </div>
             </div>

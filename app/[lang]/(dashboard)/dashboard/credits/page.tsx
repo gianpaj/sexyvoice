@@ -126,20 +126,6 @@ export default async function CreditsPage(props: {
         <CreditTopup dict={dict} />
       </div>
 
-      {/* <div className="flex justify-center space-x-4">
-        <ToggleGroup type="single" defaultValue="monthly">
-          <ToggleGroupItem value="monthly">
-            {dict.billing.monthly}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="annually">
-            {dict.billing.annually}
-            <span className="ml-2 rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
-              {dict.billing.monthsFree}
-            </span>
-          </ToggleGroupItem>
-        </ToggleGroup>
-      </div> */}
-
       {/* {products.map((product) => (
         <Card key={product.id}>
           <CardHeader>

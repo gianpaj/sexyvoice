@@ -67,17 +67,17 @@
       },
       "multiLanguage": {
         "title": "Multi-Language Support",
-        "description": "Clone voices in multiple languages and accents, perfect for global content creation and localization."
+        "description": "Pick from 20+ unique voices in multiple languages, perfect for your specific needs and preferences."
       },
       "security": {
         "title": "Secure & Private",
-        "description": "Your voice data is protected with enterprise-grade security. Full control over privacy settings and usage."
+        "description": "Your voice data is protected with enterprise-grade security. Full control over privacy, profile and history."
       }
     },
     "cta": {
       "freeCredits": "Start with 10,000 free credits",
       "title": "Ready to find your voice?",
-      "subtitle": "Join thousands of creators who trust our platform for their voice cloning needs.",
+      "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create Your First Voice"
     },
     "generator": {
@@ -99,7 +99,7 @@
       "subtitle": "Listen to what others have created",
       "loading": "Loading popular audios...",
       "trySamplesTitle": "Try Our Voice Samples",
-      "trySamplesSubtitle": "Listen to sample voice clones created with our advanced AI technology"
+      "trySamplesSubtitle": "Listen to voice samples created with our advanced AI technology"
     },
     "faq": {
       "title": "Frequently Asked Questions",
@@ -149,50 +149,36 @@
     }
   },
   "credits": {
-    "pricingPlan": "Pricing Plans",
-    "title": "Plans built for creators and businesses of all sizes",
-    "description": "Choose the plan that best fits your needs",
-    "availableCredits": "Available Credits",
-    "creditsUsage": "Credits are used for voice generation",
+    "pricingPlan": "Pricing",
+    "title": "Purchase credits for creators and businesses of all sizes",
+    "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
-      "monthly": "Monthly",
-      "annually": "Annually",
-      "monthsFree": "2 months free",
-      "forever": "forever"
+      "forever": "(forever)"
     },
     "plans": {
       "popular": "Most Popular",
-      "subscribe": "Subscribe",
+      "buyCredits": "Buy credits",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio.",
-        "credits": "10,000 credits (~10 min audio)",
+        "credits": "10,000 credits (~10 min of audio)",
         "features": [
           "Generate speech in unique voices",
-          "Create custom, synthetic voices",
-          "Generate sound effects",
-          "API access (coming soon)"
+          "Clone your voice with as little as 10 seconds of audio"
         ]
       },
       "starter": {
         "name": "Starter",
         "description": "For hobbyists creating projects with AI audio and create custom voices.",
-        "credits": "30,000 credits per month (~30 min audio)",
-        "features": [
-          "Everything in free, plus",
-          "Clone your voice with as little as 10 seconds of audio"
-        ]
+        "credits": "25,000 credits (~25 min of audio)",
+        "features": ["Everything in free, plus", "API access (coming soon)"]
       },
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-        "credits": "500,000 credits per month (~10 hours audio)",
-        "features": [
-          "Everything in starter, plus",
-          "Higher quality audio",
-          "44.1 kHz PCM audio output via API (coming soon)"
-        ]
+        "credits": "220,000 credits (~200 minutes of audio)",
+        "features": ["Everything in starter, plus", "More features coming soon"]
       }
     },
     "topup": {
@@ -212,7 +198,7 @@
           "value": "Best Value"
         },
         "premium": {
-          "name": "300,000 Credits",
+          "name": "220,000 Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }

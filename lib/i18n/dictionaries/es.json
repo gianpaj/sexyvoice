@@ -67,7 +67,7 @@
       },
       "multiLanguage": {
         "title": "Soporte Multilingüe",
-        "description": "Clona voces en múltiples idiomas y acentos, perfecto para la creación de contenido global y localización."
+        "description": "Elige entre más de 20 voces únicas en varios idiomas, ideal para tus necesidades y preferencias."
       },
       "security": {
         "title": "Seguro y Privado",
@@ -77,7 +77,7 @@
     "cta": {
       "freeCredits": "Comienza con 10,000 créditos gratis",
       "title": "¿Listo para encontrar tu voz?",
-      "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para sus necesidades de clonación de voz.",
+      "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
       "action": "Crea Tu Primera Voz"
     },
     "generator": {
@@ -99,7 +99,7 @@
       "subtitle": "Escucha lo que otros han creado",
       "loading": "Cargando audios populares...",
       "trySamplesTitle": "Pruebe nuestras muestras de voz",
-      "trySamplesSubtitle": "Escuche clones de voz de muestra creados con nuestra avanzada tecnología de IA"
+      "trySamplesSubtitle": "Escucha muestras de voz creadas con nuestra avanzada tecnología de IA"
     },
     "faq": {
       "title": "Preguntas Frecuentes",
@@ -150,50 +150,40 @@
   },
   "credits": {
     "pricingPlan": "Tarifas",
-    "title": "Planes diseñados para creadores y empresas de todos los tamaños",
-    "description": "Elige el plan que mejor se adapte a tus necesidades",
-    "availableCredits": "Créditos Disponibles",
-    "creditsUsage": "Los créditos se utilizan para la generación de voz",
+    "title": "Compra créditos para creadores y empresas de todos los tamaños",
+    "description": "Elige la cantidad de créditos que mejor se adapte a tus necesidades",
     "historyEmpty": "Tu historial de uso de créditos aparecerá aquí",
     "billing": {
-      "monthly": "Mensual",
-      "annually": "Anual",
-      "monthsFree": "2 meses gratis",
-      "forever": "para siempre"
+      "forever": "(para siempre)"
     },
     "plans": {
       "popular": "Más Popular",
-      "subscribe": "Empezar",
+      "buyCredits": "Comprar créditos",
       "free": {
         "name": "Gratis",
-        "description": "Para personas que quieren probar el audio de IA más avanzado.",
+        "description": "Para particulares que quieran probar el audio de IA más avanzado.",
         "credits": "10,000 créditos (~10 min de audio)",
         "features": [
           "Genera voz con voces únicas",
-          "Traduce contenido con doblaje automático",
-          "Crea voces sintéticas personalizadas",
-          "Genera efectos de sonido",
-          "Acceso a API (próximamente)"
+          "Clona tu voz con tan solo 10 segundos de audio"
         ]
       },
       "starter": {
         "name": "Inicial",
-        "description": "Para aficionados que crean proyectos con audio de IA.",
-        "credits": "30,000 créditos por mes (~30 min de audio)",
+        "description": "Para aficionados que crean proyectos con audio de IA y voces personalizadas.",
+        "credits": "25,000 créditos (~25 min de audio)",
         "features": [
-          "Todo lo incluido en el plan gratuito, más",
-          "Clona tu voz con tan solo 10 segundos de audio",
-          "Acceso al editor de doblaje para mayor control sobre la traducción y el tiempo"
+          "Todo lo incluido en el plan Gratis, además",
+          "Acceso a la API (próximamente)"
         ]
       },
       "pro": {
-        "name": "Profesional",
-        "description": "Para creadores más grandes que aumentan su producción de contenido.",
-        "credits": "500,000 créditos por mes (~10 horas de audio)",
+        "name": "Pro",
+        "description": "Para creadores más grandes que incrementan su producción de contenido.",
+        "credits": "220,000 créditos (~200 min de audio)",
         "features": [
-          "Todo lo incluido en el plan creador, más",
-          "Audio de mayor calidad",
-          "Salida de audio PCM 44.1 kHz a través de API (próximamente)"
+          "Todo lo incluido en el plan Inicial, además",
+          "Más funciones próximamente"
         ]
       }
     },
