@@ -191,7 +191,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - **API Security**: Rate limiting and input validation on API routes
 - **Voice Ethics**: Follow voice cloning ethical guidelines (require permission)
 - **Email Security**: Block temporary email addresses for signups
-- **Error Monitoring**: Sentry integration with production tunneling through `/monitoring`
+- **Error Monitoring**: Sentry integration with production tunneling (Generates a random route for each build)
 
 ### Privacy Considerations
 - Implement data retention policies
