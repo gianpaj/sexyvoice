@@ -1,8 +1,9 @@
 # TODO
 
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
-- add functionality to delete account, audios and delete them too from bucket or vercel
 - merge `r2` branch
+  - share link & page after an audio has been generated
+  - listened counter?
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
 - Translate SEO title and description to English, Spanish and German
 - Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts). If using LLM, use batch mode.

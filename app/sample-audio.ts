@@ -25,7 +25,7 @@ const sampleAudios: ReadonlyArray<SampleAudio> = [
   },
   {
     id: 3,
-    name: 'Kore (Multi-lingual) 🇩🇪',
+    name: 'Kore (Multilingual) 🇩🇪',
     prompt:
       'uhhh jaaaa komm wir lecken uns in der neunundsechzig. saug mir die fotze aus. ja komm ohhhh uuuhhhhaa mmhhhhhh mhhhhh mmmmm uhhhh ohhhhuh  ohhhhhhhhhhhh',
     audioSrc: 'kore-a9f62355.mp3',
@@ -42,7 +42,7 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   },
   {
     id: 5,
-    name: 'Zephyr (Multi-lingual) 🇺🇸',
+    name: 'Zephyr (Multilingual) 🇺🇸',
     prompt:
       "[custom style] Ah, Paris, the city of light they call it. But to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight. I am Emily, 29 and freshly untethered from the mundane grip of Chicago's gray winters, and a love that had long since curdled into complacency. Back home I was the ambitious girl in the corner office crafting campaigns that sold dreams I never dared to live. But when betrayal shattered my world, his hands on another.",
     audioSrc: 'zephyr-84eff770.mp3',
