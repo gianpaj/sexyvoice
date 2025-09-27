@@ -2,6 +2,19 @@ import { createClient } from './server';
 
 const MAX_FREE_GENERATIONS = 6;
 
+// API Keys types
+export interface ApiKey {
+  id: string;
+  user_id: string;
+  name: string;
+  key_hash: string;
+  key_preview: string;
+  created_at: string;
+  last_used_at: string | null;
+  is_active: boolean;
+  updated_at: string;
+}
+
 export async function getCredits(userId: string): Promise<number> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -64,6 +77,7 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  api_key_id,
 }: {
   userId: string;
   filename: string;
@@ -75,6 +89,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  api_key_id?: string;
 }) {
   const supabase = await createClient();
 
@@ -89,6 +104,7 @@ export async function saveAudioFile({
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    api_key_id: api_key_id || null,
   });
 }
 
@@ -264,3 +280,102 @@ export const isFreemiumUserOverLimit = async (
 
   return (gproAudioCount ?? 0) >= MAX_FREE_GENERATIONS;
 };
+
+// API Keys functions
+export async function createApiKey({
+  userId,
+  name,
+  keyHash,
+  keyPreview,
+}: {
+  userId: string;
+  name: string;
+  keyHash: string;
+  keyPreview: string;
+}): Promise<ApiKey> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('api_keys')
+    .insert({
+      user_id: userId,
+      name,
+      key_hash: keyHash,
+      key_preview: keyPreview,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getUserApiKeys(userId: string): Promise<ApiKey[]> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function validateApiKey(keyHash: string): Promise<ApiKey | null> {
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('*')
+    .eq('key_hash', keyHash)
+    .eq('is_active', true)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null; // Not found
+    throw error;
+  }
+
+  // Update last_used_at
+  await supabase
+    .from('api_keys')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('id', data.id);
+
+  return data;
+}
+
+export async function deleteApiKey(keyId: string, userId: string): Promise<void> {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('api_keys')
+    .update({ is_active: false })
+    .eq('id', keyId)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}
+
+export async function updateApiKeyName({
+  keyId,
+  userId,
+  name,
+}: {
+  keyId: string;
+  userId: string;
+  name: string;
+}): Promise<void> {
+  const supabase = await createClient();
+  
+  const { error } = await supabase
+    .from('api_keys')
+    .update({ name })
+    .eq('id', keyId)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}
