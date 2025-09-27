@@ -42,10 +42,10 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   },
   {
     id: 5,
-    name: 'Emma (en-US) 🇺🇸',
+    name: 'Zephyr (Multi-lingual) 🇺🇸',
     prompt:
-      '<gasp> Ever dreamed ... of wielding legendary power, carving your destiny in a world of magic and wonder?',
-    audioSrc: 'emma_wonder.mp3',
+      "[custom style] Ah, Paris, the city of light they call it. But to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight. I am Emily, 29 and freshly untethered from the mundane grip of Chicago's gray winters, and a love that had long since curdled into complacency. Back home I was the ambitious girl in the corner office crafting campaigns that sold dreams I never dared to live. But when betrayal shattered my world, his hands on another.",
+    audioSrc: 'zephyr-84eff770.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
   },
   {

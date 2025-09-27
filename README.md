@@ -222,6 +222,19 @@ pip3 install seewav
 seewav your_audio.mp3 --color '0.8,0.0,0.4'
 ```
 
+### wav to mp3
+
+```bash
+# Convert WAV to MP3 with specific audio settings
+# -i input.wav: Input file
+# -acodec libmp3lame: Use LAME MP3 encoder
+# -q:a 2: Variable bit rate quality (0=highest, 9=lowest)
+# -ar 24000: Set audio sample rate to 24kHz
+# -ac 1: Set audio channels to mono (1 channel)
+# output.mp3: Output file
+ffmpeg -i input.wav -acodec libmp3lame -q:a 2 -ar 24000 -ac 1 output.mp3
+```
+
 ## 🔒 Security
 
 SexyVoice.ai implements multiple security layers:
