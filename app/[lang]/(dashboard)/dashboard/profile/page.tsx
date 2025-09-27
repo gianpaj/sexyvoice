@@ -11,6 +11,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
 import { SecurityForm } from './security-form';
+import { ApiKeys } from './api-keys';
 
 export default async function ProfilePage(props: {
   params: Promise<{ lang: Locale }>;
@@ -68,6 +69,7 @@ export default async function ProfilePage(props: {
           <SecurityForm email={user.email} />
         </CardContent>
       </Card>
+      <ApiKeys dict={dict} />
       <Card>
         <CardHeader>
           <CardTitle>{dict.profile.dangerZone.title}</CardTitle>

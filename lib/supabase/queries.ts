@@ -64,6 +64,7 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  api_key_id,
 }: {
   userId: string;
   filename: string;
@@ -75,6 +76,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  api_key_id?: string;
 }) {
   const supabase = await createClient();
 
@@ -89,6 +91,7 @@ export async function saveAudioFile({
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    api_key_id,
   });
 }
 

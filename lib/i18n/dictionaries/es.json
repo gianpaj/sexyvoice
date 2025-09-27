@@ -280,6 +280,69 @@
       "title": "Configuración de Seguridad",
       "description": "Gestiona tu correo electrónico y contraseña"
     },
+    "apiKeys": {
+      "title": "Claves API",
+      "description": "Gestiona tus claves API para acceso programático a SexyVoice.ai",
+      "createNew": "Crear Nueva Clave",
+      "noKeys": "No se encontraron claves API",
+      "createFirst": "Crea tu primera clave API",
+      "table": {
+        "name": "Nombre",
+        "description": "Descripción",
+        "key": "Clave",
+        "created": "Creado",
+        "lastUsed": "Último Uso",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "actions": {
+        "copy": "Copiar",
+        "delete": "Eliminar",
+        "show": "Mostrar",
+        "hide": "Ocultar"
+      },
+      "dialog": {
+        "create": {
+          "title": "Crear Nueva Clave API",
+          "description": "Crear una nueva clave API para acceder a la API de SexyVoice.ai",
+          "nameLabel": "Nombre",
+          "namePlaceholder": "Ingresa un nombre para tu clave API",
+          "descriptionLabel": "Descripción (opcional)",
+          "descriptionPlaceholder": "Describe para qué se usará esta clave",
+          "cancel": "Cancelar",
+          "create": "Crear Clave",
+          "creating": "Creando..."
+        },
+        "delete": {
+          "title": "Eliminar Clave API",
+          "description": "¿Estás seguro de que quieres eliminar esta clave API? Esta acción no se puede deshacer.",
+          "cancel": "Cancelar",
+          "delete": "Eliminar",
+          "deleting": "Eliminando..."
+        },
+        "success": {
+          "title": "Clave API Creada",
+          "description": "Tu nueva clave API ha sido creada exitosamente.",
+          "keyPrefix": "Tu Clave API:",
+          "copyKey": "Copiar Clave",
+          "warning": "⚠️ Asegúrate de copiar tu clave API ahora. ¡No podrás verla otra vez!",
+          "close": "Cerrar"
+        }
+      },
+      "toast": {
+        "created": "Clave API Creada",
+        "deleted": "Clave API Eliminada",
+        "copied": "Copiado al Portapapeles",
+        "copyError": "Error al copiar al portapapeles",
+        "createError": "Error al crear la clave API",
+        "deleteError": "Error al eliminar la clave API",
+        "loadError": "Error al cargar las claves API"
+      }
+    },
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {

@@ -280,6 +280,69 @@
       "title": "Sicherheitseinstellungen",
       "description": "Verwalten Sie Ihre E-Mail und Ihr Passwort"
     },
+    "apiKeys": {
+      "title": "API-Schlüssel",
+      "description": "Verwalten Sie Ihre API-Schlüssel für den programmatischen Zugriff auf SexyVoice.ai",
+      "createNew": "Neuen Schlüssel Erstellen",
+      "noKeys": "Keine API-Schlüssel gefunden",
+      "createFirst": "Erstellen Sie Ihren ersten API-Schlüssel",
+      "table": {
+        "name": "Name",
+        "description": "Beschreibung",
+        "key": "Schlüssel",
+        "created": "Erstellt",
+        "lastUsed": "Zuletzt Verwendet",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "inactive": "Inaktiv"
+      },
+      "actions": {
+        "copy": "Kopieren",
+        "delete": "Löschen",
+        "show": "Anzeigen",
+        "hide": "Verbergen"
+      },
+      "dialog": {
+        "create": {
+          "title": "Neuen API-Schlüssel Erstellen",
+          "description": "Erstellen Sie einen neuen API-Schlüssel für den Zugriff auf die SexyVoice.ai API",
+          "nameLabel": "Name",
+          "namePlaceholder": "Geben Sie einen Namen für Ihren API-Schlüssel ein",
+          "descriptionLabel": "Beschreibung (optional)",
+          "descriptionPlaceholder": "Beschreiben Sie, wofür dieser Schlüssel verwendet wird",
+          "cancel": "Abbrechen",
+          "create": "Schlüssel Erstellen",
+          "creating": "Erstelle..."
+        },
+        "delete": {
+          "title": "API-Schlüssel Löschen",
+          "description": "Sind Sie sicher, dass Sie diesen API-Schlüssel löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+          "cancel": "Abbrechen",
+          "delete": "Löschen",
+          "deleting": "Lösche..."
+        },
+        "success": {
+          "title": "API-Schlüssel Erstellt",
+          "description": "Ihr neuer API-Schlüssel wurde erfolgreich erstellt.",
+          "keyPrefix": "Ihr API-Schlüssel:",
+          "copyKey": "Schlüssel Kopieren",
+          "warning": "⚠️ Stellen Sie sicher, dass Sie Ihren API-Schlüssel jetzt kopieren. Sie werden ihn nicht noch einmal sehen können!",
+          "close": "Schließen"
+        }
+      },
+      "toast": {
+        "created": "API-Schlüssel Erstellt",
+        "deleted": "API-Schlüssel Gelöscht",
+        "copied": "In Zwischenablage Kopiert",
+        "copyError": "Fehler beim Kopieren in die Zwischenablage",
+        "createError": "Fehler beim Erstellen des API-Schlüssels",
+        "deleteError": "Fehler beim Löschen des API-Schlüssels",
+        "loadError": "Fehler beim Laden der API-Schlüssel"
+      }
+    },
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
