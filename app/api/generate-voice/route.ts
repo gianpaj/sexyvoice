@@ -25,11 +25,13 @@ const { logger } = Sentry;
 async function generateHash(
   text: string,
   voice: string,
+  temperature?: number,
   // accent: string,
   // speed: string,
 ) {
   const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${voice}`;
+  const temperatureStr = temperature ? `-temp${temperature}` : '';
+  const combinedString = `${text}-${voice}${temperatureStr}`;
   const data = textEncoder.encode(combinedString);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -49,6 +51,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let temperature: number | undefined;
   let user: User | null = null;
   try {
     const body = await request.json();
@@ -62,6 +65,7 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
+    temperature = body.temperature;
 
     if (!text || !voice) {
       logger.error('Missing required parameters: text or voice', {
@@ -146,8 +150,8 @@ export async function POST(request: Request) {
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice, and accent
-    const hash = await generateHash(text, voice);
+    // Generate hash for the combination of text, voice, and temperature
+    const hash = await generateHash(text, voice, temperature);
 
     const abortController = new AbortController();
 
@@ -209,6 +213,7 @@ export async function POST(request: Request) {
             },
           },
         },
+        generationConfig: temperature ? { temperature } : undefined,
       };
       let response: GenerateContentResponse | null;
       try {

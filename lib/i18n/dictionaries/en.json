@@ -269,6 +269,7 @@
       "description": "Choose from available voices",
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
+      "temperatureTooltip": "Creativity allowed in the responses",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
     }
   },

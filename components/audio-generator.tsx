@@ -38,6 +38,7 @@ import {
 interface AudioGeneratorProps {
   selectedVoice?: Voice;
   selectedStyle?: string;
+  temperature: number;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
@@ -46,6 +47,7 @@ interface AudioGeneratorProps {
 export function AudioGenerator({
   selectedVoice,
   selectedStyle,
+  temperature,
   hasEnoughCredits,
   dict,
   locale,
@@ -90,6 +92,7 @@ export function AudioGenerator({
           text,
           voice: selectedVoice?.name,
           styleVariant,
+          temperature: isGeminiVoice ? temperature : undefined,
         }),
         signal: abortController.current.signal,
       });
