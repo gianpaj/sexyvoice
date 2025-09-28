@@ -119,16 +119,15 @@ export async function GET(request: NextRequest) {
     .eq('model', 'chatterbox-tts')
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
-  const { data: audioFilesYesterday, error: audioFilesYesterdayError } =
-    await supabase
-      .from('audio_files')
-      .select(`
+  const { data: audioFilesYesterday } = await supabase
+    .from('audio_files')
+    .select(`
         voice_id,
         voices ( name )
       `)
-      // .neq('model', 'chatterbox-tts')
-      .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString());
+    // .neq('model', 'chatterbox-tts')
+    .gte('created_at', previousDay.toISOString())
+    .lt('created_at', today.toISOString());
 
   const voiceCounts = new Map<string, number>();
   for (const row of audioFilesYesterday ?? []) {
@@ -141,7 +140,7 @@ export async function GET(request: NextRequest) {
   const topVoiceEntries = [...voiceCounts.entries()]
     .sort(([, countA], [, countB]) => countB - countA)
     .slice(0, 3);
-  console.log('topVoiceEntries', topVoiceEntries);
+
   const topVoiceList = await (async () => {
     if (topVoiceEntries.length === 0) {
       return 'N/A';
@@ -177,29 +176,54 @@ export async function GET(request: NextRequest) {
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
-  // const { data: creditsPrevDayData } = await supabase
-  //   .from('credit_transactions')
-  //   .select('user_id, type, description')
-  //   .in('type', ['purchase', 'topup'])
-  //   .gte('created_at', previousDay.toISOString())
-  //   .lt('created_at', today.toISOString());
 
-  // Get unique user IDs who made purchases/topups
-  // const userIds = creditsPrevDayData?.map((t) => t.user_id) || [];
-  // const uniqueUserIds = [...new Set(userIds)];
+  // Get top 3 unique paying customers by total transactions (all-time)
+  const { data: topPayingCustomersData } = await supabase
+    .from('credit_transactions')
+    .select('user_id, metadata')
+    .in('type', ['purchase', 'topup'])
+    .gte('created_at', previousDay.toISOString())
+    .lt('created_at', today.toISOString());
 
-  // Get profile data for those users
-  // const { data: profilesData } = await supabase
-  //   .from('profiles')
-  //   .select('id, username')
-  //   .in('id', uniqueUserIds);
+  // Calculate total spending per customer
+  const customerSpending = new Map<string, number>();
+  for (const transaction of topPayingCustomersData ?? []) {
+    const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
+    const { dollarAmount } = transaction.metadata as {
+      dollarAmount?: number;
+    };
+    if (dollarAmount) {
+      customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
+    }
+  }
 
-  // console.log('Credit transactions:', creditsPrevDayData?.length);
-  // console.log('Unique paying customers:', uniqueUserIds.length);
-  // console.log(
-  //   'Customer usernames:',
-  //   profilesData?.map((p) => p.username).join(', '),
-  // );
+  // Get top 3 customers by spending
+  const topCustomerIds = [...customerSpending.entries()]
+    .sort(([, spendingA], [, spendingB]) => spendingB - spendingA)
+    .slice(0, 3)
+    .map(([userId]) => userId);
+
+  // Get profile data for top customers
+  const { data: topCustomerProfiles } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', topCustomerIds);
+
+  const topCustomersList = await (async () => {
+    if (!topCustomerProfiles || topCustomerProfiles.length === 0) {
+      return 'N/A';
+    }
+
+    // Preserve the spending order
+    return topCustomerIds
+      .map((userId) => {
+        const profile = topCustomerProfiles.find((p) => p.id === userId);
+        const spending = customerSpending.get(userId) ?? 0;
+        const username = profile?.username || 'Unknown';
+        return `${username} ($${spending.toFixed(2)})`;
+      })
+      .join(', ');
+  })();
 
   const creditsPrev = await supabase
     .from('credit_transactions')
@@ -333,6 +357,7 @@ export async function GET(request: NextRequest) {
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
+    `  - Top 3 Customers: ${topCustomersList}`,
     '',
     '💰 Revenue',
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
