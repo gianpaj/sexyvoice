@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
+import { HalloweenBanner } from '@/components/halloween-banner';
 import { PostHogProvider } from '@/components/PostHogProvider';
 
 import {
@@ -40,12 +41,14 @@ interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
+  halloweenDict: (typeof langDict)['halloween'];
 }
 
 export default function DashboardUI({
   children,
   lang,
   dict,
+  halloweenDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
   const supabase = createClient();
@@ -143,6 +146,13 @@ export default function DashboardUI({
   return (
     <PostHogProvider>
       <div className="bg-background min-h-screen">
+        <HalloweenBanner
+          lang={lang}
+          text={halloweenDict.banner.text}
+          ctaText={halloweenDict.banner.ctaLoggedIn}
+          ctaLink={`/${lang}/dashboard/credits`}
+          isEnabled={process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true'}
+        />
         <SidebarProvider defaultOpen>
           <Sidebar collapsible="icon">
             <SidebarHeader>

@@ -6,8 +6,10 @@ import type { Metadata } from 'next/types';
 import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
+import { HalloweenBanner } from '@/components/halloween-banner';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
@@ -124,6 +126,7 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
+  const halloweenDict = await getDictionary(lang, 'halloween');
 
   if (post === undefined) {
     return <div>Post not found ({params.slug})</div>;
@@ -191,6 +194,14 @@ const PostLayout = async (props: {
       <Script id="breadcrumb-schema" type="application/ld+json">
         {JSON.stringify(breadcrumbSchema)}
       </Script>
+
+      <HalloweenBanner
+        lang={lang}
+        text={halloweenDict.banner.text}
+        ctaText={halloweenDict.banner.ctaLoggedOut}
+        ctaLink={`/${lang}/signup`}
+        isEnabled={process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true'}
+      />
 
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />

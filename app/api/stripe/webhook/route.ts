@@ -187,6 +187,7 @@ async function handleCheckoutSessionCompleted(
         creditAmount,
         dollarAmountNum,
         packageType || 'unknown',
+        session.metadata?.promo || null,
       );
 
       console.log(

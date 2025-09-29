@@ -16,35 +16,39 @@ import {
 } from '@/components/ui/card';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
-const getTopupPackages = (dict: any) => [
-  {
-    id: 'standard',
-    name: dict.topup.packages.standard.name,
-    price: '$5',
-    credits: '10,000',
-    value: '',
-    popular: false,
-    description: dict.topup.packages.standard.description,
-  },
-  {
-    id: 'base',
-    name: dict.topup.packages.base.name,
-    price: '$10',
-    credits: '25,000',
-    value: dict.topup.packages.base.value,
-    popular: true,
-    description: dict.topup.packages.base.description,
-  },
-  {
-    id: 'premium',
-    name: dict.topup.packages.premium.name,
-    price: '$99',
-    credits: '300,000',
-    value: dict.topup.packages.premium.value,
-    popular: false,
-    description: dict.topup.packages.premium.description,
-  },
-];
+const getTopupPackages = (dict: any) => {
+  const isHalloweenActive = process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
+  
+  return [
+    {
+      id: 'standard',
+      name: dict.topup.packages.standard.name,
+      price: '$5',
+      credits: isHalloweenActive ? '13,000 🎃' : '10,000',
+      value: isHalloweenActive ? 'Halloween Bonus!' : '',
+      popular: false,
+      description: dict.topup.packages.standard.description,
+    },
+    {
+      id: 'base',
+      name: dict.topup.packages.base.name,
+      price: '$10',
+      credits: isHalloweenActive ? '30,000 🎃' : '25,000',
+      value: isHalloweenActive ? 'Halloween Bonus!' : dict.topup.packages.base.value,
+      popular: true,
+      description: dict.topup.packages.base.description,
+    },
+    {
+      id: 'premium',
+      name: dict.topup.packages.premium.name,
+      price: '$99',
+      credits: isHalloweenActive ? '235,000 🎃' : '220,000',
+      value: isHalloweenActive ? 'Halloween Bonus!' : dict.topup.packages.premium.value,
+      popular: false,
+      description: dict.topup.packages.premium.description,
+    },
+  ];
+};
 
 interface CreditTopupProps {
   dict: (typeof lang)['credits'];

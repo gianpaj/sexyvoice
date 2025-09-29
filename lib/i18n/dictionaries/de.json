@@ -305,5 +305,12 @@
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten."
+  },
+  "halloween": {
+    "banner": {
+      "text": "🎃 Halloween-Special: Erhalten Sie zusätzliche Credits bei jedem Kauf! Zeitlich begrenztes Angebot.",
+      "ctaLoggedIn": "Credits Erhalten",
+      "ctaLoggedOut": "Jetzt Registrieren"
+    }
   }
 }

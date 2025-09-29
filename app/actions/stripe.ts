@@ -7,23 +7,29 @@ import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-const TOPUP_PACKAGES = {
-  standard: {
-    priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
-    credits: 10000,
-    amount: 500, // $5.00
-  },
-  base: {
-    priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
-    credits: 25000,
-    amount: 1000, // $10.00
-  },
-  premium: {
-    priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
-    credits: 300000,
-    amount: 9900, // $99.00
-  },
-} as const;
+const getTopupPackages = () => {
+  const isHalloweenActive = process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
+  
+  return {
+    standard: {
+      priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
+      credits: isHalloweenActive ? 13000 : 10000,
+      amount: 500, // $5.00
+    },
+    base: {
+      priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
+      credits: isHalloweenActive ? 30000 : 25000,
+      amount: 1000, // $10.00
+    },
+    premium: {
+      priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
+      credits: isHalloweenActive ? 235000 : 220000,
+      amount: 9900, // $99.00
+    },
+  } as const;
+};
+
+const TOPUP_PACKAGES = getTopupPackages();
 
 type PackageType = keyof typeof TOPUP_PACKAGES;
 
@@ -100,6 +106,9 @@ export async function createCheckoutSession(
           credits: package_.credits.toString(),
           dollarAmount: (package_.amount / 100).toString(),
           type: 'topup',
+          ...(process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true' && {
+            promo: 'halloween_2025'
+          }),
         },
       });
 
