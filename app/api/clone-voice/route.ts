@@ -8,9 +8,9 @@ import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
-  reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
+import { deductCredits } from '@/lib/supabase/credits';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
@@ -302,7 +302,21 @@ export async function POST(request: Request) {
 
     // Background tasks
     after(async () => {
-      await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+      // Deduct credits using new event-sourced system
+      await deductCredits({
+        userId: user.id,
+        amount: estimate,
+        referenceId: filename, // Will be updated with audio file ID once created
+        referenceType: 'voice_cloning',
+        description: `Voice cloning: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`,
+        metadata: {
+          model: 'chatterbox-tts',
+          textLength: text.length,
+          predictionId: requestId,
+          audioFileName: audioFile?.name
+        },
+        idempotencyKey: `clone_${filename}`
+      });
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
@@ -315,6 +329,8 @@ export async function POST(request: Request) {
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
         duration: duration.toString(),
         credits_used: estimate,
+        estimated_credits: estimate,
+        status: 'completed',
       });
 
       if (audioFileDBResult.error) {
