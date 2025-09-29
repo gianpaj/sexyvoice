@@ -16,35 +16,63 @@ import {
 } from '@/components/ui/card';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
-const getTopupPackages = (dict: any) => [
-  {
-    id: 'standard',
-    name: dict.topup.packages.standard.name,
-    price: '$5',
-    credits: '10,000',
-    value: '',
-    popular: false,
-    description: dict.topup.packages.standard.description,
-  },
-  {
-    id: 'base',
-    name: dict.topup.packages.base.name,
-    price: '$10',
-    credits: '25,000',
-    value: dict.topup.packages.base.value,
-    popular: true,
-    description: dict.topup.packages.base.description,
-  },
-  {
-    id: 'premium',
-    name: dict.topup.packages.premium.name,
-    price: '$99',
-    credits: '300,000',
-    value: dict.topup.packages.premium.value,
-    popular: false,
-    description: dict.topup.packages.premium.description,
-  },
-];
+// Base credit amounts
+const BASE_CREDITS = {
+  standard: 10000,
+  base: 25000,
+  premium: 300000,
+};
+
+// Get promotion bonuses from client-side environment variables
+const getPromoBonuses = () => ({
+  standard: Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0'),
+  base: Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_BASE || '0'),
+  premium: Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PREMIUM || '0'),
+});
+
+const isPromoEnabled = () => process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+const getPromoId = () => process.env.NEXT_PUBLIC_PROMO_ID || '';
+
+const getTopupPackages = (dict: any) => {
+  const promoBonuses = getPromoBonuses();
+  const promoEnabled = isPromoEnabled();
+
+  return [
+    {
+      id: 'standard',
+      name: dict.topup.packages.standard.name,
+      price: '$5',
+      credits: (BASE_CREDITS.standard + (promoEnabled ? promoBonuses.standard : 0)).toLocaleString(),
+      baseCredits: BASE_CREDITS.standard.toLocaleString(),
+      bonusCredits: promoEnabled ? promoBonuses.standard : 0,
+      value: '',
+      popular: false,
+      description: dict.topup.packages.standard.description,
+    },
+    {
+      id: 'base',
+      name: dict.topup.packages.base.name,
+      price: '$10',
+      credits: (BASE_CREDITS.base + (promoEnabled ? promoBonuses.base : 0)).toLocaleString(),
+      baseCredits: BASE_CREDITS.base.toLocaleString(),
+      bonusCredits: promoEnabled ? promoBonuses.base : 0,
+      value: dict.topup.packages.base.value,
+      popular: true,
+      description: dict.topup.packages.base.description,
+    },
+    {
+      id: 'premium',
+      name: dict.topup.packages.premium.name,
+      price: '$99',
+      credits: (BASE_CREDITS.premium + (promoEnabled ? promoBonuses.premium : 0)).toLocaleString(),
+      baseCredits: BASE_CREDITS.premium.toLocaleString(),
+      bonusCredits: promoEnabled ? promoBonuses.premium : 0,
+      value: dict.topup.packages.premium.value,
+      popular: false,
+      description: dict.topup.packages.premium.description,
+    },
+  ];
+};
 
 interface CreditTopupProps {
   dict: (typeof lang)['credits'];
@@ -113,6 +141,14 @@ export function CreditTopup({ dict }: CreditTopupProps) {
               <div className="text-3xl font-bold text-primary">
                 {package_.price}
               </div>
+              <div className="text-lg font-medium mt-2">
+                {package_.credits} credits
+              </div>
+              {package_.bonusCredits > 0 && (
+                <div className="text-sm text-green-600 font-medium">
+                  +{package_.bonusCredits.toLocaleString()} bonus credits!
+                </div>
+              )}
               {package_.value && (
                 <Badge variant="secondary" className="mt-2">
                   {package_.value}

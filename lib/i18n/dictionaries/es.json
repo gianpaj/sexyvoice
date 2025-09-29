@@ -153,6 +153,10 @@
     "title": "Compra créditos para creadores y empresas de todos los tamaños",
     "description": "Elige la cantidad de créditos que mejor se adapte a tus necesidades",
     "historyEmpty": "Tu historial de uso de créditos aparecerá aquí",
+    "promo": {
+      "banner": "🎃 Oferta especial: ¡Obtén créditos extra con cada compra! Oferta por tiempo limitado.",
+      "bonusCredits": "¡Créditos extra!"
+    },
     "billing": {
       "forever": "(para siempre)"
     },

@@ -45,6 +45,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **Secure Authentication**: Multiple login options with Google (more coming soon)
 - **Credit-based System**: Fair usage tracking with transparent pricing
+- **Promotion System**: Generic promotional system with configurable bonus credits
 - **Profile Management**: Personalized dashboard and settings
 - **Audio History**: Track and manage all your generated content
 
@@ -134,6 +135,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `STRIPE_TOPUP_99_PRICE_ID`
    - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
    - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   
+   **Generic Promotion System**:
+   - `NEXT_PUBLIC_PROMO_ENABLED` - Enable/disable promotions (`true`/`false`)
+   - `NEXT_PUBLIC_PROMO_ID` - Unique identifier for current promotion (e.g., `halloween_2025`)
+   - `PROMO_BONUS_STANDARD` - Bonus credits for $5 tier (server-side)
+   - `PROMO_BONUS_BASE` - Bonus credits for $10 tier (server-side)
+   - `PROMO_BONUS_PREMIUM` - Bonus credits for $99 tier (server-side)
+   - `NEXT_PUBLIC_PROMO_BONUS_STANDARD` - Bonus credits for $5 tier (client-side UI)
+   - `NEXT_PUBLIC_PROMO_BONUS_BASE` - Bonus credits for $10 tier (client-side UI)
+   - `NEXT_PUBLIC_PROMO_BONUS_PREMIUM` - Bonus credits for $99 tier (client-side UI)
+   
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
 4. **Set up Supabase**

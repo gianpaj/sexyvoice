@@ -153,6 +153,10 @@
     "title": "Purchase credits for creators and businesses of all sizes",
     "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
+    "promo": {
+      "banner": "🎃 Special offer: Get bonus credits with every purchase! Limited time offer.",
+      "bonusCredits": "Bonus credits!"
+    },
     "billing": {
       "forever": "(forever)"
     },

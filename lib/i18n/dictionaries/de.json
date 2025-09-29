@@ -153,6 +153,10 @@
     "title": "Credits für Kreative und Unternehmen jeder Größe kaufen",
     "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
+    "promo": {
+      "banner": "🎃 Sonderangebot: Erhalten Sie zusätzliche Credits bei jedem Kauf! Zeitlich begrenztes Angebot.",
+      "bonusCredits": "Bonus-Credits!"
+    },
     "billing": {
       "forever": "(für immer)"
     },

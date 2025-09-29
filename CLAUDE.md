@@ -209,6 +209,18 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Support multiple languages (EN/ES/DE with more planned)
 - Implement audio preview functionality
 
+### Promotion System
+- **Generic Design**: System supports any type of promotion, not just Halloween-specific
+- **Environment Variables**: 
+  - `NEXT_PUBLIC_PROMO_ENABLED` - Enable/disable promotions
+  - `NEXT_PUBLIC_PROMO_ID` - Unique identifier for tracking (e.g., `halloween_2025`)
+  - Bonus credit amounts for each tier (both server-side and client-side variables)
+- **Credit Bonuses**: Configurable bonus credits added to base amounts per pricing tier
+- **Database Tracking**: Promo ID stored in credit transaction metadata for analytics
+- **UI Integration**: Dynamic pricing tables and credit displays show bonus amounts
+- **Single Active Promotion**: System designed to support one promotion at a time
+- **Multilingual**: Promotion banners translated across all supported languages
+
 ### Content Moderation
 - Implement voice privacy controls (public/private)
 - Validate audio content before storage
@@ -254,6 +266,7 @@ Key environment variables include:
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
+- **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, bonus credit amounts for each tier
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)

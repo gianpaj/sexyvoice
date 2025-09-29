@@ -153,7 +153,7 @@ async function handleCheckoutSessionCompleted(
   try {
     if (session.mode === 'payment' && session.metadata?.type === 'topup') {
       // This is a one-time credit purchase
-      const { userId, packageType, credits, dollarAmount } = session.metadata;
+      const { userId, packageType, credits, dollarAmount, promo } = session.metadata;
 
       if (!userId || !credits || !dollarAmount) {
         const error = new Error('Missing metadata for topup transaction');
@@ -187,6 +187,7 @@ async function handleCheckoutSessionCompleted(
         creditAmount,
         dollarAmountNum,
         packageType || 'unknown',
+        promo || undefined,
       );
 
       console.log(
