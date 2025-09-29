@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import FeedbackButton from '@/components/feedback-button';
 
 import {
   Sidebar,
@@ -39,7 +40,10 @@ import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
+  dict: {
+    creditsSection: (typeof langDict)['creditsSection'];
+    feedback: (typeof langDict)['feedback'];
+  };
 }
 
 export default function DashboardUI({
@@ -192,7 +196,7 @@ export default function DashboardUI({
             <SidebarFooter>
               <CreditsSection
                 lang={lang}
-                dict={dict}
+                dict={dict.creditsSection}
                 credits={credits?.amount || 0}
                 credit_transactions={credit_transactions || []}
               />
@@ -204,6 +208,15 @@ export default function DashboardUI({
           <div className="flex flex-col flex-1 w-full">
             <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
+            </div>
+
+            {/* Non-sticky header for all dashboard routes */}
+            <div className="flex h-16 items-center justify-between border-b px-4 sm:px-6 lg:px-8 bg-background">
+              <div className="hidden lg:block"></div>
+              <div className="lg:hidden">
+                <SidebarTrigger />
+              </div>
+              <FeedbackButton lang={lang} dict={{ feedback: dict.feedback }} />
             </div>
 
             <main
