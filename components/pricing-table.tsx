@@ -9,6 +9,17 @@ import { Card } from './ui/card';
 async function PricingTable({ lang }: { lang: Locale }) {
   const credits = await getDictionary(lang, 'credits');
   const { plans: pPlans } = credits;
+  
+  // Check if promotion is enabled
+  const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+  const promoId = process.env.NEXT_PUBLIC_PROMO_ID || '';
+  
+  // Get promo bonuses
+  const promoBonuses = {
+    starter: Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_BASE || '0'),
+    pro: Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PREMIUM || '0'),
+  };
+  
   const plans = [
     {
       name: pPlans.free.name,
@@ -24,22 +35,26 @@ async function PricingTable({ lang }: { lang: Locale }) {
       name: pPlans.starter.name,
       price: '10',
       isPopular: true,
-
       description: pPlans.starter.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      credits: pPlans.starter.credits,
+      credits: isPromoEnabled 
+        ? `30,000 credits ${promoBonuses.starter > 0 ? `(+${promoBonuses.starter.toLocaleString()} bonus!)` : ''}` 
+        : pPlans.starter.credits,
       features: pPlans.starter.features,
+      hasPromoBonus: isPromoEnabled && promoBonuses.starter > 0,
     },
     {
       name: pPlans.pro.name,
       price: '99',
-
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      credits: pPlans.pro.credits,
+      credits: isPromoEnabled 
+        ? `315,000 credits ${promoBonuses.pro > 0 ? `(+${promoBonuses.pro.toLocaleString()} bonus!)` : ''}` 
+        : pPlans.pro.credits,
       features: pPlans.pro.features,
+      hasPromoBonus: isPromoEnabled && promoBonuses.pro > 0,
     },
   ];
   return (
@@ -78,7 +93,9 @@ async function PricingTable({ lang }: { lang: Locale }) {
               <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
             </Button>
             <div className="space-y-2">
-              <div className="text-sm font-medium">{plan.credits}</div>
+              <div className={`text-sm font-medium ${(plan as any).hasPromoBonus ? 'text-green-600' : ''}`}>
+                {plan.credits}
+              </div>
               {/* @ts-ignore */}
               {plan.features.map((feature, i) => (
                 <div key={i} className="flex items-center text-sm">

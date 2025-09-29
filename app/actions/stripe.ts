@@ -7,23 +7,52 @@ import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-const TOPUP_PACKAGES = {
+// Base credit amounts for each package
+const BASE_PACKAGES = {
   standard: {
     priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
-    credits: 10000,
+    baseCredits: 10000,
     amount: 500, // $5.00
   },
   base: {
     priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
-    credits: 25000,
+    baseCredits: 25000,
     amount: 1000, // $10.00
   },
   premium: {
     priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
-    credits: 300000,
+    baseCredits: 300000,
     amount: 9900, // $99.00
   },
 } as const;
+
+// Get promotion bonuses from environment variables
+const getPromoBonuses = () => ({
+  standard: Number.parseInt(process.env.PROMO_BONUS_STANDARD || '0'),
+  base: Number.parseInt(process.env.PROMO_BONUS_BASE || '0'),
+  premium: Number.parseInt(process.env.PROMO_BONUS_PREMIUM || '0'),
+});
+
+// Check if promotion is enabled
+const isPromoEnabled = () => process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+const getPromoId = () => process.env.NEXT_PUBLIC_PROMO_ID || '';
+
+// Calculate final credit amounts with promotion bonuses
+const getTopupPackages = () => {
+  const promoBonuses = getPromoBonuses();
+  const promoEnabled = isPromoEnabled();
+
+  return Object.entries(BASE_PACKAGES).reduce((acc, [key, package_]) => {
+    const bonusCredits = promoEnabled ? promoBonuses[key as keyof typeof promoBonuses] : 0;
+    acc[key as keyof typeof BASE_PACKAGES] = {
+      ...package_,
+      credits: package_.baseCredits + bonusCredits,
+    };
+    return acc;
+  }, {} as Record<keyof typeof BASE_PACKAGES, typeof BASE_PACKAGES[keyof typeof BASE_PACKAGES] & { credits: number }>);
+};
+
+const TOPUP_PACKAGES = getTopupPackages();
 
 type PackageType = keyof typeof TOPUP_PACKAGES;
 
@@ -100,6 +129,7 @@ export async function createCheckoutSession(
           credits: package_.credits.toString(),
           dollarAmount: (package_.amount / 100).toString(),
           type: 'topup',
+          ...(isPromoEnabled() && { promo: getPromoId() }),
         },
       });
 

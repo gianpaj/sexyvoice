@@ -166,6 +166,7 @@ export const insertTopupTransaction = async (
   amount: number,
   dollarAmount: number,
   priceId: string,
+  promoId?: string,
 ) => {
   const supabase = await createClient();
 
@@ -195,9 +196,13 @@ export const insertTopupTransaction = async (
     user_id: userId,
     amount: amount,
     type: 'topup',
-    description: `Credit top-up - $${dollarAmount}`,
+    description: `Credit top-up - $${dollarAmount}${promoId ? ` (${promoId})` : ''}`,
     reference_id: paymentIntentId,
-    metadata: { priceId, dollarAmount },
+    metadata: { 
+      priceId, 
+      dollarAmount,
+      ...(promoId && { promo: promoId })
+    },
   });
 
   if (error) throw error;
