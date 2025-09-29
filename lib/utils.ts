@@ -92,3 +92,49 @@ export function encodedRedirect(
 ): never {
   return redirect(`${path}?${type}=${encodeURIComponent(message)}`);
 }
+
+/**
+ * Validates and adjusts credit amount to meet minimum and increment requirements
+ * @param {number} amount - The credit amount to validate
+ * @returns {number} The adjusted credit amount
+ */
+export function validateCreditAmount(amount: number): number {
+  const MIN_CREDITS = 5000;
+  const INCREMENT = 500;
+
+  if (amount < MIN_CREDITS) {
+    return MIN_CREDITS;
+  }
+
+  // Round to nearest increment
+  return Math.round(amount / INCREMENT) * INCREMENT;
+}
+
+/**
+ * Calculates the price for a given amount of credits
+ * Rate: $5 per 10,000 credits (0.0005 per credit)
+ * @param {number} credits - Number of credits
+ * @returns {number} Price in cents
+ */
+export function calculateCreditPrice(credits: number): number {
+  const RATE_PER_CREDIT = 0.0005; // $0.0005 per credit
+  return Math.round(credits * RATE_PER_CREDIT * 100); // Convert to cents
+}
+
+/**
+ * Formats credits with thousand separators
+ * @param {number} credits - Number of credits
+ * @returns {string} Formatted credit string
+ */
+export function formatCredits(credits: number): string {
+  return credits.toLocaleString();
+}
+
+/**
+ * Formats price in dollars
+ * @param {number} cents - Price in cents
+ * @returns {string} Formatted price string
+ */
+export function formatPrice(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
