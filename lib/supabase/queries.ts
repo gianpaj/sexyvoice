@@ -64,6 +64,7 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  api_key_id,
 }: {
   userId: string;
   filename: string;
@@ -75,6 +76,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  api_key_id?: string;
 }) {
   const supabase = await createClient();
 
@@ -89,6 +91,7 @@ export async function saveAudioFile({
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    api_key_id,
   });
 }
 
@@ -264,3 +267,82 @@ export const isFreemiumUserOverLimit = async (
 
   return (gproAudioCount ?? 0) >= MAX_FREE_GENERATIONS;
 };
+
+// API key management functions
+export async function createApiKey({
+  userId,
+  keyHash,
+  description,
+}: {
+  userId: string;
+  keyHash: string;
+  description?: string;
+}) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('api_keys')
+    .insert({
+      user_id: userId,
+      key_hash: keyHash,
+      description,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getApiKeysByUserId(userId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('id, description, created_at, last_used_at, is_active')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function validateApiKey(keyHash: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('api_keys')
+    .select('id, user_id, profiles!inner(*)')
+    .eq('key_hash', keyHash)
+    .eq('is_active', true)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // No rows found
+      return null;
+    }
+    throw error;
+  }
+
+  // Update last_used_at
+  await supabase
+    .from('api_keys')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('id', data.id);
+
+  return data;
+}
+
+export async function deleteApiKey(id: string, userId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from('api_keys')
+    .update({ is_active: false })
+    .eq('id', id)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}

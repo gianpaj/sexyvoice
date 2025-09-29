@@ -292,6 +292,31 @@
       }
     }
   },
+  "apiKeys": {
+    "title": "API-Schlüssel",
+    "description": "Verwalten Sie Ihre API-Schlüssel für externen Zugang zu SexyVoice.ai",
+    "createKey": "Neuen API-Schlüssel erstellen",
+    "keyDescription": "Beschreibung",
+    "keyDescriptionPlaceholder": "z.B. Meine mobile App",
+    "create": "API-Schlüssel erstellen",
+    "cancel": "Abbrechen",
+    "noKeys": "Keine API-Schlüssel gefunden",
+    "noKeysDescription": "Erstellen Sie Ihren ersten API-Schlüssel, um mit dem externen Zugang zu beginnen.",
+    "createdAt": "Erstellt",
+    "lastUsed": "Zuletzt verwendet",
+    "never": "Nie",
+    "copyKey": "Schlüssel kopieren",
+    "deleteKey": "Schlüssel löschen",
+    "keyCreated": "API-Schlüssel erstellt",
+    "keyCreatedDescription": "Bitte kopieren und speichern Sie Ihren API-Schlüssel jetzt. Sie werden ihn nicht wieder sehen können.",
+    "keyDeleted": "API-Schlüssel erfolgreich gelöscht",
+    "error": "Fehler beim Verwalten des API-Schlüssels",
+    "deleteConfirm": "API-Schlüssel löschen",
+    "deleteConfirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dieser API-Schlüssel wird dauerhaft deaktiviert und alle Anwendungen, die ihn verwenden, funktionieren nicht mehr.",
+    "delete": "Löschen",
+    "documentation": "API-Dokumentation",
+    "viewDocs": "Dokumentation anzeigen"
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Kostenloser Text-zu-Sprache & KI-Stimmengenerator",
     "description": "Der beste KI-Stimmengenerator, mit dem Sie Text kostenlos online in Sprache umwandeln, Voiceovers erstellen und natürlich klingende Sprache in jeder Sprache erzeugen können.",

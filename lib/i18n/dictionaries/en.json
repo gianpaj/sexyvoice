@@ -286,6 +286,31 @@
       }
     }
   },
+  "apiKeys": {
+    "title": "API Keys",
+    "description": "Manage your API keys for external access to SexyVoice.ai",
+    "createKey": "Create New API Key",
+    "keyDescription": "Description",
+    "keyDescriptionPlaceholder": "e.g., My mobile app",
+    "create": "Create API Key",
+    "cancel": "Cancel",
+    "noKeys": "No API keys found",
+    "noKeysDescription": "Create your first API key to get started with external access.",
+    "createdAt": "Created",
+    "lastUsed": "Last used",
+    "never": "Never",
+    "copyKey": "Copy Key",
+    "deleteKey": "Delete Key",
+    "keyCreated": "API Key Created",
+    "keyCreatedDescription": "Please copy and save your API key now. You won't be able to see it again.",
+    "keyDeleted": "API key deleted successfully",
+    "error": "Failed to manage API key",
+    "deleteConfirm": "Delete API Key",
+    "deleteConfirmDescription": "This action cannot be undone. This API key will be permanently disabled and any applications using it will stop working.",
+    "delete": "Delete",
+    "documentation": "API Documentation",
+    "viewDocs": "View Documentation"
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Free Text to Speech & AI Voice Generator",
     "description": "The best AI voice generator that allows you to convert text to speech online for free, create voiceovers, and generate natural-sounding speech in any language.",

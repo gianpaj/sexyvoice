@@ -292,6 +292,31 @@
       }
     }
   },
+  "apiKeys": {
+    "title": "Claves API",
+    "description": "Gestiona tus claves API para acceso externo a SexyVoice.ai",
+    "createKey": "Crear Nueva Clave API",
+    "keyDescription": "Descripción",
+    "keyDescriptionPlaceholder": "ej., Mi aplicación móvil",
+    "create": "Crear Clave API",
+    "cancel": "Cancelar",
+    "noKeys": "No se encontraron claves API",
+    "noKeysDescription": "Crea tu primera clave API para empezar con el acceso externo.",
+    "createdAt": "Creado",
+    "lastUsed": "Último uso",
+    "never": "Nunca",
+    "copyKey": "Copiar Clave",
+    "deleteKey": "Eliminar Clave",
+    "keyCreated": "Clave API Creada",
+    "keyCreatedDescription": "Por favor copia y guarda tu clave API ahora. No podrás verla nuevamente.",
+    "keyDeleted": "Clave API eliminada exitosamente",
+    "error": "Error al gestionar la clave API",
+    "deleteConfirm": "Eliminar Clave API",
+    "deleteConfirmDescription": "Esta acción no se puede deshacer. Esta clave API será deshabilitada permanentemente y cualquier aplicación que la use dejará de funcionar.",
+    "delete": "Eliminar",
+    "documentation": "Documentación API",
+    "viewDocs": "Ver Documentación"
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Generador de Voz con IA y Texto a Voz Gratis",
     "description": "El mejor generador de voz con IA que te permite convertir texto a voz en línea de forma gratuita, crear locuciones y generar habla con sonido natural en cualquier idioma.",
