@@ -177,7 +177,7 @@
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-        "credits": "220,000 credits (~200 minutes of audio)",
+        "credits": "300,000 credits (~250 minutes of audio)",
         "features": ["Everything in starter, plus", "More features coming soon"]
       }
     },
@@ -198,7 +198,7 @@
           "value": "Best Value"
         },
         "premium": {
-          "name": "220,000 Credits",
+          "name": "300,000 Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }
