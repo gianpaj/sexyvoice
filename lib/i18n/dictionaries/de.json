@@ -162,7 +162,7 @@
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die das fortschrittlichste KI-Audio ausprobieren möchten.",
-        "credits": "10.000 Credits (~10 Min. Audio)",
+        "credits": "10.000 Credits (~4 Min. Audio)",
         "features": [
           "Sprache in einzigartigen Stimmen generieren",
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
@@ -171,7 +171,7 @@
       "starter": {
         "name": "Starter",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "credits": "25.000 Credits (~25 Min. Audio)",
+        "credits": "25.000 Credits (~11 Min. Audio)",
         "features": [
           "Alles im kostenlosen Plan, plus",
           "API-Zugang (bald verfügbar)"
@@ -180,7 +180,7 @@
       "pro": {
         "name": "Pro",
         "description": "Für größere Kreative, die ihre Inhaltsproduktion steigern.",
-        "credits": "300.000 Credits (~250 Min. Audio)",
+        "credits": "300.000 Credits (~125 Min. Audio)",
         "features": [
           "Alles im Starter-Plan, plus",
           "Weitere Funktionen folgen bald"
