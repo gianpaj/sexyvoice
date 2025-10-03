@@ -20,7 +20,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
-const { logger } = Sentry;
+const { logger, captureException } = Sentry;
 
 async function generateHash(
   text: string,
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     const voiceObj = await getVoiceIdByName(voice);
 
     if (!voiceObj) {
-      Sentry.captureException({ error: 'Voice not found', voice, text });
+      captureException({ error: 'Voice not found', voice, text });
       return NextResponse.json(
         new APIError(
           'Voice not found',
@@ -246,7 +246,7 @@ export async function POST(request: Request) {
         });
         throw new Error('Voice generation failed');
       }
-      Sentry.captureMessage('Gemini voice generation succeeded', {
+      logger.info('Gemini voice generation succeeded', {
         user: {
           id: user.id,
         },
@@ -285,7 +285,7 @@ export async function POST(request: Request) {
           model: voiceObj.model,
           errorData: output.error,
         };
-        Sentry.captureException({
+        captureException({
           error: 'Voice generation failed',
           user: { id: user.id, email: user.email },
           ...errorObj,
@@ -306,7 +306,7 @@ export async function POST(request: Request) {
 
     after(async () => {
       if (!user) {
-        Sentry.captureException({
+        captureException({
           error: 'User not found',
         });
         return;
@@ -334,7 +334,7 @@ export async function POST(request: Request) {
           model: modelUsed,
           errorData: audioFileDBResult.error,
         };
-        Sentry.captureException({
+        captureException({
           error: 'Failed to insert audio file row',
           ...errorObj,
         });
@@ -365,7 +365,7 @@ export async function POST(request: Request) {
       voice,
       errorData: error,
     };
-    Sentry.captureException({
+    captureException({
       error: 'Voice generation error',
       user: user ? { id: user.id, email: user.email } : undefined,
       ...errorObj,
