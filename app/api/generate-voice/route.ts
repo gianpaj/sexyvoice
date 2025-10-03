@@ -246,7 +246,7 @@ export async function POST(request: Request) {
         });
         throw new Error('Voice generation failed');
       }
-      Sentry.captureMessage('Gemini voice generation succeeded', {
+      logger.info('Gemini voice generation succeeded', {
         user: {
           id: user.id,
         },
