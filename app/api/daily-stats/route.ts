@@ -172,29 +172,28 @@ export async function GET(request: NextRequest) {
 
   const creditsPrevDay = await supabase
     .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
+    .select('id, user_id, metadata')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
+
+  let hasInvalidMetadata = false;
 
   // Get top 3 unique paying customers by total transactions (all-time)
-  const { data: topPayingCustomersData } = await supabase
-    .from('credit_transactions')
-    .select('user_id, metadata')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-
   // Calculate total spending per customer
   const customerSpending = new Map<string, number>();
-  for (const transaction of topPayingCustomersData ?? []) {
-    const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
-    const { dollarAmount } = transaction.metadata as {
-      dollarAmount?: number;
-    };
-    if (dollarAmount) {
-      customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
+  for (const transaction of creditsPrevDay.data ?? []) {
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      console.log('Invalid metadata in transaction:', transaction);
+      hasInvalidMetadata = true;
+      continue;
     }
+    const { dollarAmount } = transaction.metadata as {
+      dollarAmount: number;
+    };
+
+    const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
+    customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
   }
 
   // Get top 3 customers by spending
@@ -335,7 +334,7 @@ export async function GET(request: NextRequest) {
   const profilesWeekCount = profilesWeek.count ?? 0;
   const profilesTotalCount = profilesTotal.count ?? 0;
 
-  const creditsTodayCount = creditsPrevDay.count ?? 0;
+  const creditsTodayCount = creditsPrevDay.data?.length ?? 0;
   const creditsPrevCount = creditsPrev.count ?? 0;
   const creditsWeekCount = creditsWeek.count ?? 0;
   const creditsMonthCount = creditsMonth.count ?? 0;
@@ -365,6 +364,14 @@ export async function GET(request: NextRequest) {
     `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
     `  - MTD: $${mtdRevenue.toFixed(2)} vs Prev MTD: $${prevMtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
+    '',
+    ...(hasInvalidMetadata
+      ? [
+          //
+          '‼️ Info',
+          '  - Invalid Metadata in credit_transactions',
+        ]
+      : []),
   ];
 
   try {
@@ -410,7 +417,7 @@ export async function GET(request: NextRequest) {
 }
 const reduceAmountUsd = (acc: number, row: { metadata: any }) => {
   if (!row.metadata || typeof row.metadata !== 'object') {
-    console.log('Invalid metadata:', row.metadata);
+    console.log('Invalid metadata in row:', row);
     return acc;
   }
   const { dollarAmount } = row.metadata as {
