@@ -9,10 +9,11 @@ import { Card } from './ui/card';
 async function PricingTable({ lang }: { lang: Locale }) {
   const credits = await getDictionary(lang, 'credits');
   const { plans: pPlans } = credits;
-  
+
   // Check if Halloween promo is active
-  const isHalloweenActive = process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
-  
+  const isHalloweenActive =
+    process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
+
   const plans = [
     {
       name: pPlans.free.name,
@@ -25,23 +26,19 @@ async function PricingTable({ lang }: { lang: Locale }) {
       features: pPlans.free.features,
     },
     {
-      name: "Basic",
-      price: '5',
-      description: "Perfect for getting started",
-      buttonText: isHalloweenActive ? `${pPlans.buyCredits} 🎃` : pPlans.buyCredits,
-      buttonVariant: 'default',
-      credits: isHalloweenActive ? '13,000 credits (~13 min of audio) 🎃' : '10,000 credits (~10 min of audio)',
-      features: ["Everything in free, plus", "Extra credits with Halloween promo"],
-    },
-    {
       name: pPlans.starter.name,
       price: '10',
       isPopular: true,
 
       description: pPlans.starter.description,
-      buttonText: isHalloweenActive ? `${pPlans.buyCredits} 🎃` : pPlans.buyCredits,
+      buttonText: isHalloweenActive
+        ? `${pPlans.buyCredits} 🎃`
+        : pPlans.buyCredits,
       buttonVariant: 'default',
-      credits: isHalloweenActive ? '30,000 credits (~30 min of audio) 🎃' : pPlans.starter.credits,
+      credits: isHalloweenActive
+        ? // FIXME
+          '30,000 credits (~30 min of audio) 🎃'
+        : pPlans.starter.credits,
       features: pPlans.starter.features,
     },
     {
@@ -49,9 +46,13 @@ async function PricingTable({ lang }: { lang: Locale }) {
       price: '99',
 
       description: pPlans.pro.description,
-      buttonText: isHalloweenActive ? `${pPlans.buyCredits} 🎃` : pPlans.buyCredits,
+      buttonText: isHalloweenActive
+        ? `${pPlans.buyCredits} 🎃`
+        : pPlans.buyCredits,
       buttonVariant: 'default',
-      credits: isHalloweenActive ? '235,000 credits (~235 minutes of audio) 🎃' : pPlans.pro.credits,
+      credits: isHalloweenActive
+        ? '235,000 credits (~235 minutes of audio) 🎃'
+        : pPlans.pro.credits,
       features: pPlans.pro.features,
     },
   ];
@@ -60,17 +61,19 @@ async function PricingTable({ lang }: { lang: Locale }) {
       <h2 className="text-2xl font-semibold mb-4 mx-auto">
         {credits.pricingPlan}
       </h2>
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
+            className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-orange-400' : ''}`}
+            // className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
             <div>
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold">{plan.name}</h3>
                 {plan.isPopular && (
-                  <span className="rounded-full bg-green-800 px-2 py-0.5 text-xs text-white">
+                  <span className="rounded-full bg-orange-600 px-2 py-0.5 text-xs text-white">
+                    {/*<span className="rounded-full bg-green-800 px-2 py-0.5 text-xs text-white">*/}
                     {pPlans.popular}
                   </span>
                 )}

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
+import { TOPUP_PACKAGES } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
@@ -315,18 +316,18 @@ export async function syncStripeDataToKV(customerId: string) {
       // first is prod, 2nd is test
       case 'price_1R4m50J2uQQSTCBsvH8hpjN2':
       case 'price_1QncR5J2uQQSTCBsWa87AaEG':
-        amount = 10000;
-        subAmount = 5;
+        amount = TOPUP_PACKAGES.standard.credits;
+        subAmount = TOPUP_PACKAGES.standard.amount;
         break;
       case 'price_1R4m50J2uQQSTCBsKdEsgflW':
       case 'price_1QnczMJ2uQQSTCBsUzEnvPKj':
-        amount = 25000;
-        subAmount = 10;
+        amount = TOPUP_PACKAGES.base.credits;
+        subAmount = TOPUP_PACKAGES.base.amount;
         break;
       case 'price_1R4m50J2uQQSTCBs5j9ERzXC':
       case 'price_1QnkyTJ2uQQSTCBsgyw7xYb8':
-        amount = 220_000;
-        subAmount = 99;
+        amount = TOPUP_PACKAGES.premium.credits;
+        subAmount = TOPUP_PACKAGES.premium.amount;
         break;
       default:
         amount = 0;
