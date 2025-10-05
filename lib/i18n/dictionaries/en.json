@@ -302,8 +302,8 @@
   },
   "halloween": {
     "banner": {
-      "text": "🎃 Halloween Special: Get extra credits with every purchase! Limited time offer.",
-      "ctaLoggedIn": "Get Credits",
+      "text": "🎃 Halloween Special! Get up to 30% extra credits with a purchase! 👻 Limited time offer 🦇",
+      "ctaLoggedIn": "Claim Offer",
       "ctaLoggedOut": "Sign Up Now"
     }
   }

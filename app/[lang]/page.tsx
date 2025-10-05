@@ -97,7 +97,7 @@ export default async function LandingPage(props: {
               <h1 className="text-5xl md:text-6xl font-bold text-white leading-10">
                 <span className="leading-[3.5rem]">{firstPart}</span>
                 {restParts && (
-                  <span className="text-blue-400">{restParts}</span>
+                  <span className="text-orange-300">{restParts}</span>
                 )}
               </h1>
               <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
