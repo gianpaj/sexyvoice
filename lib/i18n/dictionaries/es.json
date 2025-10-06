@@ -162,16 +162,18 @@
       "free": {
         "name": "Gratis",
         "description": "Para particulares que quieran probar el audio de IA más avanzado.",
-        "credits": "10,000 créditos (~4 min de audio)",
+        "credits": "__NUM_CREDITS__ créditos",
+        "creditsWithAudio": "__NUM_CREDITS__ créditos (~4 min de audio)",
         "features": [
           "Genera voz con voces únicas",
           "Clona tu voz con tan solo 10 segundos de audio"
         ]
       },
-      "starter": {
-        "name": "Inicial",
+      "standard": {
+        "name": "Standard",
         "description": "Para aficionados que crean proyectos con audio de IA y voces personalizadas.",
-        "credits": "25,000 créditos (~11 min de audio)",
+        "credits": "__NUM_CREDITS__ créditos (~11 min de audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
           "Todo lo incluido en el plan Gratis, además",
           "Acceso a la API (próximamente)"
@@ -180,7 +182,8 @@
       "pro": {
         "name": "Pro",
         "description": "Para creadores más grandes que incrementan su producción de contenido.",
-        "credits": "300,000 créditos (~125 min de audio)",
+        "credits": "__NUM_CREDITS__ créditos (~125 min de audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
           "Todo lo incluido en el plan Inicial, además",
           "Más funciones próximamente"
@@ -194,17 +197,17 @@
       "onetimePurchase": "Compra única",
       "processing": "Procesando...",
       "packages": {
-        "standard": {
-          "name": "10,000 Créditos",
+        "starter": {
+          "name": "__NUM_CREDITS__ Créditos",
           "description": "Perfecto para empezar"
         },
-        "base": {
-          "name": "25,000 Créditos",
+        "standard": {
+          "name": "__NUM_CREDITS__ Créditos",
           "description": "La opción más popular",
           "value": "Mejor Valor"
         },
-        "premium": {
-          "name": "300,000 Créditos",
+        "pro": {
+          "name": "__NUM_CREDITS__ Créditos",
           "description": "Para usuarios avanzados",
           "value": "Paquete Pro"
         }

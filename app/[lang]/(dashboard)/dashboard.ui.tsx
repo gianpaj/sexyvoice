@@ -2,12 +2,7 @@
 
 import type { User } from '@supabase/supabase-js';
 import { Crisp } from 'crisp-sdk-web';
-import {
-  CreditCard,
-  FileClock,
-  Mic2,
-  Wand2,
-} from 'lucide-react';
+import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -18,7 +13,7 @@ import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
 import { HalloweenBanner } from '@/components/halloween-banner';
 import { PostHogProvider } from '@/components/PostHogProvider';
-
+import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -32,10 +27,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { createClient } from '@/lib/supabase/client';
-import type { Locale } from '@/lib/i18n/i18n-config';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
-import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { createClient } from '@/lib/supabase/client';
 
 interface DashboardUIProps {
   children: React.ReactNode;
@@ -83,7 +77,10 @@ export default function DashboardUI({
       return { user, creditsData };
     };
 
-    const sendUserAnalyticsData = async (user: User, creditsData: Pick<Credit, 'amount'> | null | undefined) => {
+    const sendUserAnalyticsData = async (
+      user: User,
+      creditsData: Pick<Credit, 'amount'> | null | undefined,
+    ) => {
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
@@ -147,11 +144,10 @@ export default function DashboardUI({
     <PostHogProvider>
       <div className="bg-background min-h-screen">
         <HalloweenBanner
-          lang={lang}
           text={halloweenDict.banner.text}
           ctaText={halloweenDict.banner.ctaLoggedIn}
           ctaLink={`/${lang}/dashboard/credits`}
-          isEnabled={process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true'}
+          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
         />
         <SidebarProvider defaultOpen>
           <Sidebar collapsible="icon">

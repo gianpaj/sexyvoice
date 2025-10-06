@@ -158,27 +158,34 @@
     },
     "plans": {
       "popular": "Most Popular",
+      "startFree": "Start of Free",
       "buyCredits": "Buy credits",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio.",
-        "credits": "10,000 credits (~4 min of audio)",
+        "credits": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
         "features": [
           "Generate speech in unique voices",
           "Clone your voice with as little as 10 seconds of audio"
         ]
       },
-      "starter": {
-        "name": "Starter",
+      "standard": {
+        "name": "Standard",
         "description": "For hobbyists creating projects with AI audio and create custom voices.",
-        "credits": "25,000 credits (~11 min of audio)",
-        "features": ["Everything in free, plus", "API access (coming soon)"]
+        "credits": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
+        "features": ["Everything in Free", "API access (coming soon)"]
       },
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-        "credits": "300,000 credits (~125 minutes of audio)",
-        "features": ["Everything in starter, plus", "More features coming soon"]
+        "credits": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
+        "features": [
+          "Everything in Standard",
+          "Quick style and voice preview of your short sentence"
+        ]
       }
     },
     "topup": {
@@ -188,17 +195,17 @@
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
       "packages": {
-        "standard": {
-          "name": "10,000 Credits",
+        "starter": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Perfect for getting started"
         },
-        "base": {
-          "name": "25,000 Credits",
+        "standard": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Most popular choice",
           "value": "Best Value"
         },
-        "premium": {
-          "name": "300,000 Credits",
+        "pro": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }

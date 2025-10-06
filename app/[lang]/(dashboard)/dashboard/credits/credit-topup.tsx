@@ -15,37 +15,43 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type lang from '@/lib/i18n/dictionaries/en.json';
+import type { PackageType } from '@/lib/stripe/pricing';
 
-const getTopupPackages = (dict: any) => {
-  const isHalloweenActive = process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
-  
+const getTopupPackages = (dict: (typeof lang)['credits']) => {
+  const isHalloweenActive =
+    process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
+
   return [
     {
-      id: 'standard',
-      name: dict.topup.packages.standard.name,
+      id: 'starter',
+      name: dict.topup.packages.starter.name,
       price: '$5',
       credits: isHalloweenActive ? '13,000 🎃' : '10,000',
       value: isHalloweenActive ? 'Halloween Bonus!' : '',
       popular: false,
+      description: dict.topup.packages.starter.description,
+    },
+    {
+      id: 'standard',
+      name: dict.topup.packages.standard.name,
+      price: '$10',
+      credits: isHalloweenActive ? '30,000 🎃' : '25,000',
+      value: isHalloweenActive
+        ? 'Halloween Bonus!'
+        : dict.topup.packages.standard.value,
+      popular: true,
       description: dict.topup.packages.standard.description,
     },
     {
-      id: 'base',
-      name: dict.topup.packages.base.name,
-      price: '$10',
-      credits: isHalloweenActive ? '30,000 🎃' : '25,000',
-      value: isHalloweenActive ? 'Halloween Bonus!' : dict.topup.packages.base.value,
-      popular: true,
-      description: dict.topup.packages.base.description,
-    },
-    {
-      id: 'premium',
-      name: dict.topup.packages.premium.name,
+      id: 'pro',
+      name: dict.topup.packages.pro.name,
       price: '$99',
       credits: isHalloweenActive ? '235,000 🎃' : '220,000',
-      value: isHalloweenActive ? 'Halloween Bonus!' : dict.topup.packages.premium.value,
+      value: isHalloweenActive
+        ? 'Halloween Bonus!'
+        : dict.topup.packages.pro.value,
       popular: false,
-      description: dict.topup.packages.premium.description,
+      description: dict.topup.packages.pro.description,
     },
   ];
 };
@@ -60,10 +66,7 @@ export function CreditTopup({ dict }: CreditTopupProps) {
   const TOPUP_PACKAGES = getTopupPackages(dict);
 
   const formAction = async (data: FormData): Promise<void> => {
-    const packageType = data.get('packageType') as
-      | 'standard'
-      | 'base'
-      | 'premium';
+    const packageType = data.get('packageType') as PackageType;
 
     setLoading(packageType);
     setError(null);

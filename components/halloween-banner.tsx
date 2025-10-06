@@ -1,14 +1,12 @@
 'use client';
 
-import { X, XIcon } from 'lucide-react';
+import { XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import type { Locale } from '@/lib/i18n/i18n-config';
 
 interface HalloweenBannerProps {
-  lang: Locale;
   text: string;
   ctaText: string;
   ctaLink: string;
@@ -19,7 +17,6 @@ const HALLOWEEN_BANNER_COOKIE = 'halloween-banner-dismissed-2025';
 const COOKIE_EXPIRY_DAYS = 30;
 
 export function HalloweenBanner({
-  lang,
   text,
   ctaText,
   ctaLink,

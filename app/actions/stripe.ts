@@ -3,7 +3,7 @@
 import * as Sentry from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
-import { type PackageType, TOPUP_PACKAGES } from '@/lib/stripe/pricing';
+import { getTopupPackages, type PackageType } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -17,7 +17,7 @@ export async function createCheckoutSession(
       'uiMode',
     ) as Stripe.Checkout.SessionCreateParams.UiMode;
 
-    const package_ = TOPUP_PACKAGES[packageType as PackageType];
+    const package_ = getTopupPackages('en')[packageType];
 
     // Verify the price ID exists to avoid runtime errors
     if (!package_.priceId) {
@@ -30,7 +30,7 @@ export async function createCheckoutSession(
         },
         extra: {
           package_type: packageType,
-          available_packages: Object.keys(TOPUP_PACKAGES),
+          available_packages: Object.keys(getTopupPackages('en')),
         },
       });
       throw error;

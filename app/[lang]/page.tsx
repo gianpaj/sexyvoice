@@ -77,11 +77,10 @@ export default async function LandingPage(props: {
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <HalloweenBanner
-        lang={lang}
         text={halloweenDict.banner.text}
         ctaText={halloweenDict.banner.ctaLoggedOut}
         ctaLink={`/${lang}/signup`}
-        isEnabled={process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true'}
+        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
       />
       <HeaderStatic lang={lang} />
       <main id="main-content">

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
-import { TOPUP_PACKAGES } from '@/lib/stripe/pricing';
+import { getTopupPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
@@ -310,6 +310,8 @@ export async function syncStripeDataToKV(customerId: string) {
       return;
     }
 
+    const TOPUP_PACKAGES = getTopupPackages('en');
+
     let amount = 0;
     let subAmount = 0;
     switch (subData.priceId) {
@@ -321,13 +323,13 @@ export async function syncStripeDataToKV(customerId: string) {
         break;
       case 'price_1R4m50J2uQQSTCBsKdEsgflW':
       case 'price_1QnczMJ2uQQSTCBsUzEnvPKj':
-        amount = TOPUP_PACKAGES.base.credits;
-        subAmount = TOPUP_PACKAGES.base.amount;
+        amount = TOPUP_PACKAGES.starter.credits;
+        subAmount = TOPUP_PACKAGES.starter.amount;
         break;
       case 'price_1R4m50J2uQQSTCBs5j9ERzXC':
       case 'price_1QnkyTJ2uQQSTCBsgyw7xYb8':
-        amount = TOPUP_PACKAGES.premium.credits;
-        subAmount = TOPUP_PACKAGES.premium.amount;
+        amount = TOPUP_PACKAGES.pro.credits;
+        subAmount = TOPUP_PACKAGES.pro.amount;
         break;
       default:
         amount = 0;

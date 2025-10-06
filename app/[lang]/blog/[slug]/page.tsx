@@ -26,9 +26,10 @@ export const generateStaticParams = ({
   allPosts
     .map((post) => {
       // Determine locale from file extension or default to 'en'
-      const locale = i18n.locales.find((loc) =>
-        post._raw.flattenedPath.endsWith(`.${loc}`)
-      ) || i18n.defaultLocale;
+      const locale =
+        i18n.locales.find((loc) =>
+          post._raw.flattenedPath.endsWith(`.${loc}`),
+        ) || i18n.defaultLocale;
 
       return {
         slug: post._raw.flattenedPath,
@@ -111,10 +112,7 @@ export async function generateMetadata({
     alternates: {
       canonical: postUrl,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [
-          locale,
-          `/${locale}/blog/${post.slug}`,
-        ])
+        i18n.locales.map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
       ),
     },
   };
@@ -196,11 +194,10 @@ const PostLayout = async (props: {
       </Script>
 
       <HalloweenBanner
-        lang={lang}
         text={halloweenDict.banner.text}
         ctaText={halloweenDict.banner.ctaLoggedOut}
         ctaLink={`/${lang}/signup`}
-        isEnabled={process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true'}
+        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
       />
 
       <Suspense fallback={<div>Loading...</div>}>
