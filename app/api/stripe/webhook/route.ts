@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
+import { getTopupPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
@@ -187,6 +188,7 @@ async function handleCheckoutSessionCompleted(
         creditAmount,
         dollarAmountNum,
         packageType || 'unknown',
+        session.metadata?.promo || null,
       );
 
       console.log(
@@ -308,24 +310,26 @@ export async function syncStripeDataToKV(customerId: string) {
       return;
     }
 
+    const TOPUP_PACKAGES = getTopupPackages('en');
+
     let amount = 0;
     let subAmount = 0;
     switch (subData.priceId) {
       // first is prod, 2nd is test
       case 'price_1R4m50J2uQQSTCBsvH8hpjN2':
       case 'price_1QncR5J2uQQSTCBsWa87AaEG':
-        amount = 10000;
-        subAmount = 5;
+        amount = TOPUP_PACKAGES.standard.credits;
+        subAmount = TOPUP_PACKAGES.standard.amount;
         break;
       case 'price_1R4m50J2uQQSTCBsKdEsgflW':
       case 'price_1QnczMJ2uQQSTCBsUzEnvPKj':
-        amount = 25000;
-        subAmount = 10;
+        amount = TOPUP_PACKAGES.starter.credits;
+        subAmount = TOPUP_PACKAGES.starter.amount;
         break;
       case 'price_1R4m50J2uQQSTCBs5j9ERzXC':
       case 'price_1QnkyTJ2uQQSTCBsgyw7xYb8':
-        amount = 300_000;
-        subAmount = 99;
+        amount = TOPUP_PACKAGES.pro.credits;
+        subAmount = TOPUP_PACKAGES.pro.amount;
         break;
       default:
         amount = 0;

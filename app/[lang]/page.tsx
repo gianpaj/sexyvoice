@@ -16,6 +16,7 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
+import { HalloweenBanner } from '@/components/halloween-banner';
 import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
@@ -52,6 +53,7 @@ export default async function LandingPage(props: {
   }
 
   const dict = await getDictionary(lang, 'landing');
+  const halloweenDict = await getDictionary(lang, 'halloween');
 
   const parts = dict.hero.title.split(',');
   const firstPart = parts[0];
@@ -74,6 +76,12 @@ export default async function LandingPage(props: {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
+      <HalloweenBanner
+        text={halloweenDict.banner.text}
+        ctaText={halloweenDict.banner.ctaLoggedOut}
+        ctaLink={`/${lang}/signup`}
+        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+      />
       <HeaderStatic lang={lang} />
       <main id="main-content">
         {/* <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
@@ -88,7 +96,7 @@ export default async function LandingPage(props: {
               <h1 className="text-5xl md:text-6xl font-bold text-white leading-10">
                 <span className="leading-[3.5rem]">{firstPart}</span>
                 {restParts && (
-                  <span className="text-blue-400">{restParts}</span>
+                  <span className="text-orange-300">{restParts}</span>
                 )}
               </h1>
               <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
