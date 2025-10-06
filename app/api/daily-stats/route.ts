@@ -34,11 +34,11 @@ function formatCurrencyChange(current: number, previous: number): string {
 }
 
 export async function GET(request: NextRequest) {
-  const isLocalTest = process.env.NODE_ENV === 'development';
+  const isProd = process.env.NODE_ENV === 'production';
 
   const authHeader = request.headers.get('authorization');
-  if (!isLocalTest && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', {
+  if (isProd && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new NextResponse('Unauthorized', {
       status: 401,
     });
   }
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   }
 
   let checkInId = '';
-  if (!isLocalTest) {
+  if (isProd) {
     checkInId = Sentry.captureCheckIn({
       monitorSlug: 'telegram-bot-daily-stats',
       status: 'in_progress',
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message }),
     });
-    if (!isLocalTest) {
+    if (isProd) {
       Sentry.captureCheckIn({
         checkInId,
         monitorSlug: 'telegram-bot-daily-stats',
@@ -119,15 +119,37 @@ export async function GET(request: NextRequest) {
     .eq('model', 'chatterbox-tts')
     .gte('created_at', sevenDaysAgo.toISOString())
     .lt('created_at', today.toISOString());
-  // const topVoices = await supabase
-  //   .from('audio_files')
-  //   .select('voice_id, voices(name), count:id')
-  //   .gte('created_at', yesterday.toISOString())
-  //   .lt('created_at', today.toISOString())
-  //   .group('voice_id, voices(name)')
-  //   .order('count', { ascending: false })
-  //   .limit(3);
+  const { data: audioFilesYesterday } = await supabase
+    .from('audio_files')
+    .select(`
+        voice_id,
+        voices ( name )
+      `)
+    // .neq('model', 'chatterbox-tts')
+    .gte('created_at', previousDay.toISOString())
+    .lt('created_at', today.toISOString());
 
+  const voiceCounts = new Map<string, number>();
+  for (const row of audioFilesYesterday ?? []) {
+    voiceCounts.set(
+      row.voices.name,
+      (voiceCounts.get(row.voices.name) ?? 0) + 1,
+    );
+  }
+
+  const topVoiceEntries = [...voiceCounts.entries()]
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 3);
+
+  const topVoiceList = await (async () => {
+    if (topVoiceEntries.length === 0) {
+      return 'N/A';
+    }
+
+    return topVoiceEntries
+      .map(([voiceName, count]) => `${voiceName} (${count})`)
+      .join(', ');
+  })();
   const profilesPrevDay = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
@@ -150,33 +172,57 @@ export async function GET(request: NextRequest) {
 
   const creditsPrevDay = await supabase
     .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
+    .select('id, user_id, metadata')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
     .lt('created_at', today.toISOString());
-  // const { data: creditsPrevDayData } = await supabase
-  //   .from('credit_transactions')
-  //   .select('user_id, type, description')
-  //   .in('type', ['purchase', 'topup'])
-  //   .gte('created_at', previousDay.toISOString())
-  //   .lt('created_at', today.toISOString());
 
-  // Get unique user IDs who made purchases/topups
-  // const userIds = creditsPrevDayData?.map((t) => t.user_id) || [];
-  // const uniqueUserIds = [...new Set(userIds)];
+  let hasInvalidMetadata = false;
 
-  // Get profile data for those users
-  // const { data: profilesData } = await supabase
-  //   .from('profiles')
-  //   .select('id, username')
-  //   .in('id', uniqueUserIds);
+  // Get top 3 unique paying customers by total transactions (all-time)
+  // Calculate total spending per customer
+  const customerSpending = new Map<string, number>();
+  for (const transaction of creditsPrevDay.data ?? []) {
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      console.log('Invalid metadata in transaction:', transaction);
+      hasInvalidMetadata = true;
+      continue;
+    }
+    const { dollarAmount } = transaction.metadata as {
+      dollarAmount: number;
+    };
 
-  // console.log('Credit transactions:', creditsPrevDayData?.length);
-  // console.log('Unique paying customers:', uniqueUserIds.length);
-  // console.log(
-  //   'Customer usernames:',
-  //   profilesData?.map((p) => p.username).join(', '),
-  // );
+    const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
+    customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
+  }
+
+  // Get top 3 customers by spending
+  const topCustomerIds = [...customerSpending.entries()]
+    .sort(([, spendingA], [, spendingB]) => spendingB - spendingA)
+    .slice(0, 3)
+    .map(([userId]) => userId);
+
+  // Get profile data for top customers
+  const { data: topCustomerProfiles } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', topCustomerIds);
+
+  const topCustomersList = await (async () => {
+    if (!topCustomerProfiles || topCustomerProfiles.length === 0) {
+      return 'N/A';
+    }
+
+    // Preserve the spending order
+    return topCustomerIds
+      .map((userId) => {
+        const profile = topCustomerProfiles.find((p) => p.id === userId);
+        const spending = customerSpending.get(userId) ?? 0;
+        const username = profile?.username || 'Unknown';
+        return `${username} ($${spending.toFixed(2)})`;
+      })
+      .join(', ');
+  })();
 
   const creditsPrev = await supabase
     .from('credit_transactions')
@@ -288,15 +334,11 @@ export async function GET(request: NextRequest) {
   const profilesWeekCount = profilesWeek.count ?? 0;
   const profilesTotalCount = profilesTotal.count ?? 0;
 
-  const creditsTodayCount = creditsPrevDay.count ?? 0;
+  const creditsTodayCount = creditsPrevDay.data?.length ?? 0;
   const creditsPrevCount = creditsPrev.count ?? 0;
   const creditsWeekCount = creditsWeek.count ?? 0;
   const creditsMonthCount = creditsMonth.count ?? 0;
   const creditsTotalCount = creditsTotal.count ?? 0;
-
-  // const topVoiceList =
-  //   topVoices.data?.map((v) => `${v.voices.name} (${v.count})`).join(', ') ??
-  //   'N/A';
 
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
@@ -305,6 +347,7 @@ export async function GET(request: NextRequest) {
     `  - Cloned: ${clonePrevCount} | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
     `  - 7d Total: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
+    `  - Top voices: ${topVoiceList}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
@@ -313,6 +356,7 @@ export async function GET(request: NextRequest) {
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
+    `  - Top 3 Customers: ${topCustomersList}`,
     '',
     '💰 Revenue',
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
@@ -320,52 +364,53 @@ export async function GET(request: NextRequest) {
     `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
     `  - MTD: $${mtdRevenue.toFixed(2)} vs Prev MTD: $${prevMtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
+    '',
+    ...(hasInvalidMetadata
+      ? [
+          //
+          '‼️ Info',
+          '  - Invalid Metadata in credit_transactions',
+        ]
+      : []),
   ];
 
   try {
-    if (!isLocalTest) {
-      await fetch(webhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: '202637584',
-          text: message.join('\n'),
-        }),
-      });
-      Sentry.captureCheckIn({
-        // Make sure this variable is named `checkInId`
-        checkInId,
-        monitorSlug: 'telegram-bot-daily-stats',
-        status: 'ok',
-      });
-
-      return NextResponse.json({ ok: true });
+    if (!isProd) {
+      return new NextResponse(message.join('\n'));
     }
-    return new Response(message.join('\n'));
+    await fetch(webhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: '202637584',
+        text: message.join('\n'),
+      }),
+    });
+    Sentry.captureCheckIn({
+      // Make sure this variable is named `checkInId`
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'ok',
+    });
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
-    // Sentry.captureCheckIn({
-    //   checkInId,
-    //   monitorSlug: 'telegram-bot-daily-stats',
-    //   status: 'error',
-    // });
-    return NextResponse.json({
-      error: 'Failed to send Telegram message',
+    if (!isProd) {
+      return NextResponse.json({
+        error: 'Failed to send Telegram message',
+      });
+    }
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'error',
     });
   }
-
-  // return NextResponse.json({
-  //   body: {
-  //     title: `Daily stats for ${previousDay.toISOString().slice(0, 10)}`,
-  //     audio_files: { info: message[1], total: message[2], cloned: message[3] },
-  //     profiles: { info: message[4], total: message[5] },
-  //     credit_transactions: { info: message[6], total: message[7] },
-  //   },
-  // });
 }
 const reduceAmountUsd = (acc: number, row: { metadata: any }) => {
   if (!row.metadata || typeof row.metadata !== 'object') {
-    console.log('Invalid metadata:', row.metadata);
+    console.log('Invalid metadata in row:', row);
     return acc;
   }
   const { dollarAmount } = row.metadata as {
