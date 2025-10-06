@@ -175,6 +175,7 @@
         "description": "For hobbyists creating projects with AI audio and create custom voices.",
         "credits": "__NUM_CREDITS__ credits",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": ["Everything in Free", "API access (coming soon)"]
       },
       "pro": {
@@ -182,6 +183,7 @@
         "description": "For larger creators ramping up their content production.",
         "credits": "__NUM_CREDITS__ credits",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
           "Everything in Standard",
           "Quick style and voice preview of your short sentence"

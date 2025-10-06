@@ -158,20 +158,24 @@
     },
     "plans": {
       "popular": "Am beliebtesten",
+      "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die das fortschrittlichste KI-Audio ausprobieren möchten.",
-        "credits": "10.000 Credits (~4 Min. Audio)",
+        "credits": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "__NUM_CREDITS__ Credits (~4 Min. Audio)",
         "features": [
           "Sprache in einzigartigen Stimmen generieren",
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
         ]
       },
-      "starter": {
-        "name": "Starter",
+      "standard": {
+        "name": "Standard",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "credits": "25.000 Credits (~11 Min. Audio)",
+        "credits": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "__NUM_CREDITS__ Credits (~11 Min. Audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [
           "Alles im kostenlosen Plan, plus",
           "API-Zugang (bald verfügbar)"
@@ -180,9 +184,11 @@
       "pro": {
         "name": "Pro",
         "description": "Für größere Kreative, die ihre Inhaltsproduktion steigern.",
-        "credits": "300.000 Credits (~125 Min. Audio)",
+        "credits": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "__NUM_CREDITS__ Credits (~125 Min. Audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [
-          "Alles im Starter-Plan, plus",
+          "Alles im Standard-Plan, plus",
           "Weitere Funktionen folgen bald"
         ]
       }
@@ -194,17 +200,17 @@
       "onetimePurchase": "Einmaliger Kauf",
       "processing": "Wird verarbeitet...",
       "packages": {
-        "standard": {
-          "name": "10.000 Credits",
+        "starter": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Perfekt für den Einstieg"
         },
-        "base": {
-          "name": "25.000 Credits",
+        "standard": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Beliebteste Wahl",
           "value": "Bestes Preis-Leistungs-Verhältnis"
         },
-        "premium": {
-          "name": "300.000 Credits",
+        "pro": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Für Power-User",
           "value": "Pro-Paket"
         }

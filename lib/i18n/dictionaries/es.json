@@ -158,6 +158,7 @@
     },
     "plans": {
       "popular": "Más Popular",
+      "startFree": "Comenzar Gratis",
       "buyCredits": "Comprar créditos",
       "free": {
         "name": "Gratis",
@@ -172,7 +173,8 @@
       "standard": {
         "name": "Standard",
         "description": "Para aficionados que crean proyectos con audio de IA y voces personalizadas.",
-        "credits": "__NUM_CREDITS__ créditos (~11 min de audio)",
+        "credits": "__NUM_CREDITS__ créditos",
+        "creditsWithAudio": "__NUM_CREDITS__ créditos (~11 min de audio)",
         "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
           "Todo lo incluido en el plan Gratis, además",
@@ -182,10 +184,11 @@
       "pro": {
         "name": "Pro",
         "description": "Para creadores más grandes que incrementan su producción de contenido.",
-        "credits": "__NUM_CREDITS__ créditos (~125 min de audio)",
+        "credits": "__NUM_CREDITS__ créditos",
+        "creditsWithAudio": "__NUM_CREDITS__ créditos (~125 min de audio)",
         "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
-          "Todo lo incluido en el plan Inicial, además",
+          "Todo lo incluido en el plan Standard, además",
           "Más funciones próximamente"
         ]
       }
