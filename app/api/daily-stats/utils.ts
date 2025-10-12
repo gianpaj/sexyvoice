@@ -5,7 +5,8 @@ export function startOfDay(date: Date): Date {
 }
 
 export function subtractDays(date: Date, days: number): Date {
-  return new Date(date.getTime() - days * 86400_000);
+  // 86_400_000 milliseconds in 24 hours
+  return new Date(date.getTime() - days * 86_400_000);
 }
 
 export function startOfMonth(date: Date): Date {
@@ -29,13 +30,12 @@ export function formatCurrencyChange(
   return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
 }
 
-export function reduceAmountUsd(acc: number, row: { metadata: any }) {
+export function reduceAmountUsd(acc: number, row: { metadata: any }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     console.log('Invalid metadata in row:', row);
     return acc;
   }
   const { dollarAmount } = row.metadata as {
-    priceId: string;
     dollarAmount: number;
   };
   if (typeof dollarAmount === 'number') {
@@ -55,6 +55,8 @@ export function maskUsername(username?: string): string | undefined {
     } else if (localPart.length > 3) {
       const first3 = localPart.slice(0, 3);
       maskedUsername = `${first3}...@${domain}`;
+    } else {
+      maskedUsername = `${localPart.slice(0, 1)}...@${domain}`;
     }
   }
   return maskedUsername;
