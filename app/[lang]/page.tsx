@@ -53,11 +53,10 @@ export default async function LandingPage(props: {
   }
 
   const dict = await getDictionary(lang, 'landing');
-  const halloweenDict = await getDictionary(lang, 'halloween');
+  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
 
-  const parts = dict.hero.title.split(',');
-  const firstPart = parts[0];
-  const restParts = parts.slice(1).join(',');
+  const [firstPart, ...restParts] = dict.hero.title.split(',');
+  const titleRestParts = restParts.slice(1).join(',');
 
   const jsonLd: WithContext<FAQPage> = {
     '@context': 'https://schema.org',
@@ -77,17 +76,14 @@ export default async function LandingPage(props: {
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <HalloweenBanner
-        text={halloweenDict.banner.text}
-        ctaText={halloweenDict.banner.ctaLoggedOut}
+        text={halloweenDict.text}
+        ctaText={halloweenDict.ctaLoggedOut}
+        arialLabelDismiss={halloweenDict.arialLabelDismiss}
         ctaLink={`/${lang}/signup`}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
       />
       <HeaderStatic lang={lang} />
       <main id="main-content">
-        {/* <div className="hidden sm:block absolute inset-0 overflow-hidden h-[102rem] md:h-[76.5rem]">
-        <div className="absolute top-0 left-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_30%_20%,rgba(142,129,171,0.1)_0%,rgba(0,0,0,0)_50%)]" />
-        <div className="absolute bottom-0 right-0 w-full h-full disable-bg-firefox bg-[radial-gradient(circle_at_70%_80%,rgba(221,193,70,0.1)_0%,rgba(0,0,0,0)_50%)]" />
-      </div> */}
         <div className="min-h-screen dark:bg-gradient-to-br disable-bg-firefox dark:from-gray-900 dark:to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
@@ -95,8 +91,8 @@ export default async function LandingPage(props: {
               <LandingHero />
               <h1 className="text-5xl md:text-6xl font-bold text-white leading-10">
                 <span className="leading-[3.5rem]">{firstPart}</span>
-                {restParts && (
-                  <span className="text-orange-300">{restParts}</span>
+                {titleRestParts && (
+                  <span className="text-orange-300">{titleRestParts}</span>
                 )}
               </h1>
               <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">

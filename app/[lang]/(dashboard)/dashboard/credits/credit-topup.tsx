@@ -3,7 +3,7 @@
 import { Loader2, Zap } from 'lucide-react';
 import { useState } from 'react';
 
-import { createCheckoutSession } from '@/app/actions/stripe';
+import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

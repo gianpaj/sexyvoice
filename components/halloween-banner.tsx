@@ -4,26 +4,29 @@ import { XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import { dismissBannerAction } from '@/app/[lang]/actions/promos';
 import { Button } from '@/components/ui/button';
 
 interface HalloweenBannerProps {
   text: string;
-  ctaText: string;
   ctaLink: string;
+  ctaText: string;
+  arialLabelDismiss: string;
   isEnabled?: boolean;
 }
 
 const HALLOWEEN_BANNER_COOKIE = 'halloween-banner-dismissed-2025';
-const COOKIE_EXPIRY_DAYS = 30;
 
 export function HalloweenBanner({
   text,
-  ctaText,
   ctaLink,
+  ctaText,
+  arialLabelDismiss,
   isEnabled = false,
 }: HalloweenBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: no need
   useEffect(() => {
     if (!isEnabled) {
       return;
@@ -41,14 +44,8 @@ export function HalloweenBanner({
     }
   }, []);
 
-  const dismissBanner = () => {
-    // Set cookie to expire in 30 days
-    const expiryDate = new Date();
-    expiryDate.setTime(
-      expiryDate.getTime() + COOKIE_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-    );
-
-    document.cookie = `${HALLOWEEN_BANNER_COOKIE}=true; expires=${expiryDate.toUTCString()}; path=/`;
+  const handleDismissBanner = async () => {
+    await dismissBannerAction();
     setIsVisible(false);
   };
 
@@ -58,17 +55,19 @@ export function HalloweenBanner({
 
   return (
     <div className=" from-orange-600 to-purple-600 text-white px-4 py-3 relative">
-      <div className="container mx-auto px-4 h-8 flex items-center justify-between">
-        <div className="flex-1 text-center">
-          <p className="text-sm md:text-base font-medium truncate">{text}</p>
+      <div className="container mx-auto px-4 sm:h-8 sm:flex flex-inline items-center justify-between">
+        <div className="flex-1 sm:text-center text-left">
+          <p className="text-sm md:text-base font-medium truncate text-wrap sm:text-nowrap sm:whitespace-normal whitespace-pre-line">
+            {text}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-center sm:mt-0 mt-3">
           <Button
             asChild
             size="sm"
             variant="outline"
-            className="bg-white text-orange-600 hover:bg-gray-900 font-semibold whitespace-nowrap"
+            className="text-orange-600 hover:bg-gray-900 font-semibold whitespace-nowrap"
           >
             <Link href={ctaLink}>{ctaText} 🎃</Link>
           </Button>
@@ -76,9 +75,9 @@ export function HalloweenBanner({
           <Button
             size="sm"
             variant="outline"
-            className="shrink-0 text-secondary bg-transparent hover:bg-background/10 hover:text-background"
-            onClick={dismissBanner}
-            aria-label="Dismiss Halloween banner"
+            className="text-orange-700 hover:bg-gray-900"
+            onClick={handleDismissBanner}
+            aria-label={arialLabelDismiss}
           >
             <XIcon size={18} strokeWidth={3} />
           </Button>

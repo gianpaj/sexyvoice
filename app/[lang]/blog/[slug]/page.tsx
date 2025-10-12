@@ -124,7 +124,7 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
-  const halloweenDict = await getDictionary(lang, 'halloween');
+  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
 
   if (post === undefined) {
     return <div>Post not found ({params.slug})</div>;
@@ -194,9 +194,10 @@ const PostLayout = async (props: {
       </Script>
 
       <HalloweenBanner
-        text={halloweenDict.banner.text}
-        ctaText={halloweenDict.banner.ctaLoggedOut}
+        text={halloweenDict.text}
+        ctaText={halloweenDict.ctaLoggedOut}
         ctaLink={`/${lang}/signup`}
+        arialLabelDismiss={halloweenDict.arialLabelDismiss}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
       />
 

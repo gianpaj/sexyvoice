@@ -78,7 +78,7 @@
       "freeCredits": "Start with 10,000 free credits",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
-      "action": "Create Your First Voice"
+      "action": "Create your first voice"
     },
     "generator": {
       "title": "Try it now",
@@ -123,7 +123,7 @@
         },
         {
           "question": "How many credits do I need?",
-          "answer": "About 1,000 credits makes 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
+          "answer": "About 1,000 credits make 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
         },
         {
           "question": "What languages do you support?",
@@ -131,7 +131,7 @@
         },
         {
           "question": "Do you have an API for developers?",
-          "answer": "It's coming soon! Our API will let developers add voice generation to apps, websites, and games. You'll be able to create speech on-demand and manage voice models programmatically with simple API calls."
+          "answer": "It's coming soon! Our API will let developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically with simple API calls."
         },
         {
           "question": "Why choose SexyVoice.ai?",
@@ -172,7 +172,7 @@
       },
       "standard": {
         "name": "Standard",
-        "description": "For hobbyists creating projects with AI audio and create custom voices.",
+        "description": "For hobbyists creating projects with AI audio and creating custom voices.",
         "credits": "__NUM_CREDITS__ credits",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
@@ -222,7 +222,7 @@
         "dismiss": "Dismiss"
       },
       "canceled": {
-        "title": "Payment Canceled",
+        "title": "Payment Cancelled",
         "description": "Your payment was canceled. No charges were made to your account.",
         "dismiss": "Dismiss"
       },
@@ -309,11 +309,12 @@
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved."
   },
-  "halloween": {
-    "banner": {
-      "text": "🎃 Halloween Special! Get up to 30% extra credits with a purchase! 👻 Limited time offer 🦇",
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Halloween Special – Get up to 30% extra credits with a purchase 👻\nLimited time offer 🦇",
       "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Sign Up Now"
+      "ctaLoggedOut": "Sign Up Now",
+      "arialLabelDismiss": "Dismiss Halloween banner"
     }
   }
 }

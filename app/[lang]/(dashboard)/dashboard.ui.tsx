@@ -35,7 +35,7 @@ interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
-  halloweenDict: (typeof langDict)['halloween'];
+  halloweenDict: (typeof langDict)['promos']['halloweenBanner'];
 }
 
 export default function DashboardUI({
@@ -144,9 +144,10 @@ export default function DashboardUI({
     <PostHogProvider>
       <div className="bg-background min-h-screen">
         <HalloweenBanner
-          text={halloweenDict.banner.text}
-          ctaText={halloweenDict.banner.ctaLoggedIn}
+          text={halloweenDict.text}
           ctaLink={`/${lang}/dashboard/credits`}
+          ctaText={halloweenDict.ctaLoggedIn}
+          arialLabelDismiss={halloweenDict.arialLabelDismiss}
           isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
         />
         <SidebarProvider defaultOpen>

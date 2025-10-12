@@ -12,7 +12,7 @@
     },
     "signup": {
       "title": "Crear una cuenta",
-      "subtitle": "Comienza con la clonación de voz",
+      "subtitle": "Empieza a generar voz",
       "email": "Correo electrónico",
       "password": "Contraseña",
       "username": "Nombre de usuario",
@@ -78,7 +78,7 @@
       "freeCredits": "Comienza con 10,000 créditos gratis",
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
-      "action": "Crea Tu Primera Voz"
+      "action": "Crea tu primera voz"
     },
     "generator": {
       "title": "Pruébalo ahora",
@@ -312,11 +312,12 @@
     "termsAndConditions": "Términos y condiciones",
     "copyright": "SexyVoice.ai. Todos los derechos reservados."
   },
-  "halloween": {
-    "banner": {
-      "text": "🎃 Especial de Halloween: ¡Obtén créditos extra con cada compra! Oferta por tiempo limitado.",
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Especial Halloween – Consigue hasta un 30% de créditos extra con tu compra 👻\nOferta por tiempo limitado 🦇",
       "ctaLoggedIn": "Obtener Créditos",
-      "ctaLoggedOut": "Regístrate Ahora"
+      "ctaLoggedOut": "Regístrate Ahora",
+      "arialLabelDismiss": "Descartar banner de Halloween"
     }
   }
 }
