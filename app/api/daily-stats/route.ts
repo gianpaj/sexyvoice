@@ -4,34 +4,16 @@ import { NextResponse } from 'next/server';
 
 import { countActiveCustomerSubscriptions } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
-
-function startOfDay(date: Date): Date {
-  return new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
-  );
-}
-
-function subtractDays(date: Date, days: number): Date {
-  return new Date(date.getTime() - days * 86400_000);
-}
-
-function startOfMonth(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-}
-
-function startOfPreviousMonth(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
-}
-
-function formatChange(today: number, yesterday: number): string {
-  const diff = today - yesterday;
-  return diff >= 0 ? `+${diff}` : `${diff}`;
-}
-
-function formatCurrencyChange(current: number, previous: number): string {
-  const diff = current - previous;
-  return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
-}
+import {
+  formatChange,
+  formatCurrencyChange,
+  maskUsername,
+  reduceAmountUsd,
+  startOfDay,
+  startOfMonth,
+  startOfPreviousMonth,
+  subtractDays,
+} from './utils';
 
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
@@ -59,15 +41,21 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  let dateParam: string | null = null;
+  if (!isProd) {
+    const { searchParams } = request.nextUrl;
+    dateParam = searchParams.get('date');
+  }
+
   const supabase = createAdminClient();
-  const now = new Date();
-  const today = startOfDay(now);
+  const untilNow = dateParam ? new Date(dateParam) : new Date();
+  const today = startOfDay(untilNow);
   const previousDay = subtractDays(today, 1);
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
   const thirtyDaysAgo = subtractDays(today, 30);
-  const monthStart = startOfMonth(now);
-  const previousMonthStart = startOfPreviousMonth(now);
+  const monthStart = startOfMonth(untilNow);
+  const previousMonthStart = startOfPreviousMonth(untilNow);
 
   const audioYesterday = await supabase
     .from('audio_files')
@@ -179,7 +167,7 @@ export async function GET(request: NextRequest) {
 
   let hasInvalidMetadata = false;
 
-  // Get top 3 unique paying customers by total transactions (all-time)
+  // Get top 3 unique paying customers by total transactions (until now)
   // Calculate total spending per customer
   const customerSpending = new Map<string, number>();
   for (const transaction of creditsPrevDay.data ?? []) {
@@ -217,8 +205,9 @@ export async function GET(request: NextRequest) {
     return topCustomerIds
       .map((userId) => {
         const profile = topCustomerProfiles.find((p) => p.id === userId);
+
+        const username = maskUsername(profile?.username) || 'Unknown';
         const spending = customerSpending.get(userId) ?? 0;
-        const username = profile?.username || 'Unknown';
         return `${username} ($${spending.toFixed(2)})`;
       })
       .join(', ');
@@ -278,14 +267,14 @@ export async function GET(request: NextRequest) {
   const totalAmountUsdToday =
     totalAmountUsdTodayData?.reduce(reduceAmountUsd, 0) ?? 0;
 
-  const { data: totalAmountUsdWeekData } = await supabase
-    .from('credit_transactions')
-    .select('metadata')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-  const totalAmountUsdWeek =
-    totalAmountUsdWeekData?.reduce(reduceAmountUsd, 0) ?? 0;
+  // const { data: totalAmountUsdWeekData } = await supabase
+  //   .from('credit_transactions')
+  //   .select('metadata')
+  //   .in('type', ['purchase', 'topup'])
+  //   .gte('created_at', sevenDaysAgo.toISOString())
+  //   .lt('created_at', today.toISOString());
+  // const totalAmountUsdWeek =
+  //   totalAmountUsdWeekData?.reduce(reduceAmountUsd, 0) ?? 0;
 
   // Month-to-date revenue (current month)
   const { data: mtdRevenueData } = await supabase
@@ -361,8 +350,8 @@ export async function GET(request: NextRequest) {
     '💰 Revenue',
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
     `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
-    `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
-    `  - MTD: $${mtdRevenue.toFixed(2)} vs Prev MTD: $${prevMtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
+    // `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
+    `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
     '',
     ...(hasInvalidMetadata
@@ -408,17 +397,3 @@ export async function GET(request: NextRequest) {
     });
   }
 }
-const reduceAmountUsd = (acc: number, row: { metadata: any }) => {
-  if (!row.metadata || typeof row.metadata !== 'object') {
-    console.log('Invalid metadata in row:', row);
-    return acc;
-  }
-  const { dollarAmount } = row.metadata as {
-    priceId: string;
-    dollarAmount: number;
-  };
-  if (typeof dollarAmount === 'number') {
-    return acc + dollarAmount;
-  }
-  return acc;
-};
