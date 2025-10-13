@@ -143,13 +143,6 @@ export default function DashboardUI({
   return (
     <PostHogProvider>
       <div className="bg-background min-h-screen">
-        <HalloweenBanner
-          text={halloweenDict.text}
-          ctaLink={`/${lang}/dashboard/credits`}
-          ctaText={halloweenDict.ctaLoggedIn}
-          arialLabelDismiss={halloweenDict.arialLabelDismiss}
-          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        />
         <SidebarProvider defaultOpen>
           <Sidebar collapsible="icon">
             <SidebarHeader>
@@ -209,8 +202,16 @@ export default function DashboardUI({
           </Sidebar>
 
           <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
+            <div className="sticky top-4 z-30 flex items-start border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
+              <HalloweenBanner
+                inDashboard
+                text={halloweenDict.text}
+                ctaLink={`/${lang}/dashboard/credits`}
+                ctaText={halloweenDict.ctaLoggedIn}
+                arialLabelDismiss={halloweenDict.arialLabelDismiss}
+                isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+              />
             </div>
 
             <main
