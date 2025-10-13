@@ -8,7 +8,6 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
-import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
@@ -51,14 +50,14 @@ export async function POST(request: Request) {
   let styleVariant = '';
   let user: User | null = null;
   try {
-    const body = await request.json();
-
     if (request.body === null) {
       logger.error('Request body is empty', {
         headers: Object.fromEntries(request.headers.entries()),
       });
       return new Response('Request body is empty', { status: 400 });
     }
+
+    const body = await request.json();
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
@@ -91,15 +90,7 @@ export async function POST(request: Request) {
 
     if (!voiceObj) {
       captureException({ error: 'Voice not found', voice, text });
-      return NextResponse.json(
-        new APIError(
-          'Voice not found',
-          new Response('Voice not found', {
-            status: 400,
-          }),
-        ),
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
     const isGeminiVoice = voiceObj.model === 'gpro';
@@ -113,15 +104,7 @@ export async function POST(request: Request) {
         headers: Object.fromEntries(request.headers.entries()),
       });
       return NextResponse.json(
-        new APIError(
-          `Text exceeds the maximum length of ${maxLength} characters`,
-          new Response(
-            `Text exceeds the maximum length of ${maxLength} characters`,
-            {
-              status: 400,
-            },
-          ),
-        ),
+        { error: `Text exceeds the maximum length of ${maxLength} characters` },
         { status: 400 },
       );
     }
@@ -243,6 +226,7 @@ export async function POST(request: Request) {
         logger.error('Gemini voice generation failed - no data or mimeType', {
           hasData: !!data,
           mimeType,
+          model: modelUsed,
         });
         throw new Error('Voice generation failed');
       }
