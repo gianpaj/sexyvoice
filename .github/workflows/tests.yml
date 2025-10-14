@@ -1,5 +1,9 @@
 name: Run Unit Tests
 
+permissions:
+  # e.g. contents: read permits an action to list the commits, and contents: write allows the action to create a release
+  contents: read
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -34,8 +38,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
