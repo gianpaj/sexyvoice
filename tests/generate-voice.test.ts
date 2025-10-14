@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/generate-voice/route';
 import * as queries from '@/lib/supabase/queries';
 import type { GoogleApiError } from '@/utils/googleErrors';
-import { mockBlobPut, mockRedisGet, mockRedisKeys, server } from './setup';
+import {
+  mockBlobPut,
+  mockRedisGet,
+  mockRedisKeys,
+  mockRedisSet,
+  server,
+} from './setup';
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
@@ -144,7 +150,7 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Credit System', () => {
-    it('should return 402 when user has insufficient credits', async () => {
+    it('should return 402 when user has insufficient credits for Replicate voice', async () => {
       // Override the getCredits mock for this specific test
       vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
 
@@ -168,7 +174,8 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Caching', () => {
-    it('should return cached result when audio exists in Redis', async () => {
+    it('should return cached result for Replicate voice without consuming credits', async () => {
+      const queries = await import('@/lib/supabase/queries');
       const cachedUrl = 'https://example.com/cached-audio.wav';
 
       // Mock Redis.get to return cached URL for this test
@@ -187,6 +194,83 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.url).toBe(cachedUrl);
+
+      // Verify no credits were consumed on cache hit
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+
+      // Verify Redis.get was called with correct filename
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringContaining('audio/tara-'),
+      );
+    });
+
+    it('should return cached result for Gemini voice without consuming credits', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      const cachedUrl = 'https://example.com/cached-gpro-audio.wav';
+
+      // Mock Redis.get to return cached URL for this test
+      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toBe(cachedUrl);
+
+      // Verify no credits were consumed on cache hit
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+
+      // Verify Redis.get was called with correct filename
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringContaining('audio/poe-'),
+      );
+    });
+
+    it('should generate new audio when cache miss occurs', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      // Mock cache miss
+      mockRedisGet.mockResolvedValueOnce(null);
+
+      server.use(
+        http.get('https://*.upstash.io/*', () => {
+          return HttpResponse.json({ result: null });
+        }),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('blob.vercel-storage.com');
+
+      // Verify audio was generated and saved
+      expect(queries.reduceCredits).toHaveBeenCalled();
+      expect(queries.saveAudioFile).toHaveBeenCalled();
+
+      // Verify new URL was cached
+      expect(mockRedisSet).toHaveBeenCalledWith(
+        expect.stringContaining('audio/tara-'),
+        expect.stringContaining('blob.vercel-storage.com'),
+      );
     });
   });
 
@@ -280,6 +364,11 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
+
+      // Verify credits were consumed
+      expect(queries.reduceCredits).toHaveBeenCalledOnce();
+      expect(queries.saveAudioFile).toHaveBeenCalledOnce();
+      expect(mockBlobPut).toHaveBeenCalledOnce();
     });
 
     it('should fallback to flash model when pro model fails', async () => {
@@ -412,6 +501,62 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(500);
       expect(json.error).toContain(
         'We have exceeded our third-party API current quota',
+      );
+    });
+
+    it('should return 403 when freemium user exceeds gpro voice limit', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      // Mock isFreemiumUserOverLimit to return true
+      vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(json.error).toContain('exceeded the limit');
+      expect(json.errorCode).toBe('gproLimitExceeded');
+      expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
+        'test-user-id',
+      );
+    });
+
+    it('should allow voice generation when freemium user is under limit', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      // Mock isFreemiumUserOverLimit to return false (under limit)
+      vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(false);
+
+      // Mock cache miss
+      server.use(
+        http.get('https://*.upstash.io/*', () => {
+          return HttpResponse.json({ result: null });
+        }),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
+        'test-user-id',
       );
     });
   });
@@ -562,13 +707,6 @@ describe('Generate Voice API Route', () => {
 
 describe('Integration Tests', () => {
   it('should complete full voice generation flow for Replicate', async () => {
-    // Mock cache miss to force full generation
-    server.use(
-      http.get('https://*.upstash.io/*', () => {
-        return HttpResponse.json({ result: null });
-      }),
-    );
-
     const request = new Request('http://localhost/api/generate-voice', {
       method: 'POST',
       headers: {
@@ -587,13 +725,6 @@ describe('Integration Tests', () => {
   });
 
   it('should complete full voice generation flow for Gemini', async () => {
-    // Mock cache miss to force full generation
-    server.use(
-      http.get('https://*.upstash.io/*', () => {
-        return HttpResponse.json({ result: null });
-      }),
-    );
-
     // Set up mock Redis data for Gemini API keys
     const mockApiKeyData = JSON.stringify({
       id: 'test-key',

@@ -4,100 +4,6 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 // Mock handlers for external services
 export const handlers = [
-  // Supabase Auth Mock - multiple endpoints for different auth methods
-  // http.get('https://*.supabase.co/auth/v1/user', () => {
-  //   return HttpResponse.json({
-  //     user: {
-  //       id: 'test-user-id',
-  //       email: 'test@example.com',
-  //       app_metadata: {},
-  //       user_metadata: {},
-  //     },
-  //   });
-  // }),
-
-  // SSR auth endpoint
-  http.post('https://*.supabase.co/auth/v1/token', () => {
-    return HttpResponse.json({
-      access_token: 'test-access-token',
-      token_type: 'bearer',
-      expires_in: 3600,
-      refresh_token: 'test-refresh-token',
-      user: {
-        id: 'test-user-id',
-        email: 'test@example.com',
-        app_metadata: {},
-        user_metadata: {},
-      },
-    });
-  }),
-
-  // Additional auth endpoints that might be used by SSR
-  http.get('https://*.supabase.co/auth/v1/token', () => {
-    return HttpResponse.json({
-      user: {
-        id: 'test-user-id',
-        email: 'test@example.com',
-        app_metadata: {},
-        user_metadata: {},
-      },
-    });
-  }),
-
-  // Supabase Database Mocks
-  http.get('https://*.supabase.co/rest/v1/credits', ({ request }) => {
-    // const url = new URL(request.url);
-    // if (url.searchParams.get('user_id')) {
-    //   return HttpResponse.json([{ amount: 1000 }]);
-    // }
-    return HttpResponse.json([]);
-  }),
-
-  http.get('https://*.supabase.co/rest/v1/voices', ({ request }) => {
-    const url = new URL(request.url);
-    const voice = url.searchParams.get('name')?.replace('eq.', '');
-
-    if (voice === 'tara') {
-      return HttpResponse.json([
-        {
-          id: 'voice-tara-id',
-          name: 'tara',
-          language: 'en',
-          model:
-            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
-        },
-      ]);
-    }
-
-    if (voice === 'poe') {
-      return HttpResponse.json([
-        {
-          id: 'voice-poe-id',
-          name: 'poe',
-          language: 'en',
-          model: 'gpro',
-        },
-      ]);
-    }
-
-    return HttpResponse.json([]);
-  }),
-
-  http.patch('https://*.supabase.co/rest/v1/credits', () => {
-    return HttpResponse.json({ success: true });
-  }),
-
-  http.post('https://*.supabase.co/rest/v1/audio_files', () => {
-    return HttpResponse.json({
-      id: 'test-audio-file-id',
-      success: true,
-    });
-  }),
-
-  http.post('https://*.supabase.co/rest/v1/rpc/increment_user_credits', () => {
-    return HttpResponse.json({ success: true });
-  }),
-
   // Replicate API Mock
   http.post('https://api.replicate.com/v1/predictions', () => {
     return HttpResponse.json({
@@ -105,40 +11,6 @@ export const handlers = [
       status: 'succeeded',
       output: 'https://example.com/audio.mp3',
     });
-  }),
-
-  // Upstash Redis Mock
-  // http.get('https://*.upstash.io/*', ({ request }) => {
-  //   const url = new URL(request.url);
-
-  //   if (url.pathname.includes('/get/')) {
-  //     // Return null for cache miss
-  //     return HttpResponse.json({ result: null });
-  //   }
-  //   return HttpResponse.json({ result: 'OK' });
-  // }),
-
-  // http.post('https://*.upstash.io/*', ({ request }) => {
-  //   const url = new URL(request.url);
-  //   console.log({ request });
-  //   if (url.pathname.includes('/set/')) {
-  //     return HttpResponse.json({ result: 'OK' });
-  //   }
-  //   return HttpResponse.json({ result: 'OK' });
-  // }),
-
-  // Vercel Blob Storage Mock
-  http.put('https://blob.vercel-storage.com/*', () => {
-    return HttpResponse.json({
-      url: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
-      downloadUrl: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
-      pathname: 'test-audio-xyz.wav',
-    });
-  }),
-
-  // PostHog Mock
-  http.post('https://us.i.posthog.com/capture/', () => {
-    return HttpResponse.json({ success: true });
   }),
 ];
 
@@ -167,124 +39,6 @@ process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
 
-// Polyfill Response for test environment
-// if (!global.Response) {
-//   global.Response = class Response {
-//     body: ReadableStream | null;
-//     status: number;
-//     statusText: string;
-//     headers: Headers;
-//     ok: boolean;
-//     redirected: boolean;
-//     type: ResponseType;
-//     url: string;
-//     private _bodyText: string;
-
-//     constructor(body?: BodyInit | null, init?: ResponseInit) {
-//       this.status = init?.status || 200;
-//       this.statusText = init?.statusText || '';
-//       this.headers = new Headers(init?.headers);
-//       this.ok = this.status >= 200 && this.status < 300;
-//       this.redirected = false;
-//       this.type = 'basic' as ResponseType;
-//       this.url = '';
-
-//       if (body === null || body === undefined) {
-//         this._bodyText = '';
-//         this.body = null;
-//       } else if (typeof body === 'string') {
-//         this._bodyText = body;
-//         this.body = null; // Simplified for tests
-//       } else {
-//         this._bodyText = String(body);
-//         this.body = null;
-//       }
-//     }
-
-//     async text(): Promise<string> {
-//       return this._bodyText;
-//     }
-
-//     async json(): Promise<any> {
-//       return JSON.parse(this._bodyText);
-//     }
-
-//     async blob(): Promise<Blob> {
-//       return new Blob([this._bodyText]);
-//     }
-
-//     async arrayBuffer(): Promise<ArrayBuffer> {
-//       return new TextEncoder().encode(this._bodyText).buffer;
-//     }
-
-//     clone(): Response {
-//       return new Response(this._bodyText, {
-//         status: this.status,
-//         statusText: this.statusText,
-//         headers: this.headers,
-//       });
-//     }
-//   } as any;
-// }
-
-// Polyfill Request for test environment
-// if (!global.Request) {
-//   global.Request = class Request {
-//     url: string;
-//     method: string;
-//     headers: Headers;
-//     body: ReadableStream | null;
-//     private _bodyText: string | null;
-//     private _bodyUsed: boolean = false;
-
-//     constructor(input: RequestInfo | URL, init?: RequestInit) {
-//       this.url = typeof input === 'string' ? input : input.toString();
-//       this.method = init?.method || 'GET';
-//       this.headers = new Headers(init?.headers);
-
-//       if (init?.body === null || init?.body === undefined) {
-//         this._bodyText = null;
-//         this.body = null;
-//       } else if (typeof init?.body === 'string') {
-//         this._bodyText = init.body;
-//         this.body = null;
-//       } else {
-//         this._bodyText = String(init?.body);
-//         this.body = null;
-//       }
-//     }
-
-//     async json(): Promise<any> {
-//       if (this._bodyUsed) {
-//         throw new TypeError('body used already');
-//       }
-//       this._bodyUsed = true;
-
-//       if (this._bodyText === null) {
-//         throw new SyntaxError('Unexpected end of JSON input');
-//       }
-
-//       return JSON.parse(this._bodyText);
-//     }
-
-//     async text(): Promise<string> {
-//       if (this._bodyUsed) {
-//         throw new TypeError('body used already');
-//       }
-//       this._bodyUsed = true;
-//       return this._bodyText || '';
-//     }
-
-//     clone(): Request {
-//       return new Request(this.url, {
-//         method: this.method,
-//         headers: this.headers,
-//         body: this._bodyText,
-//       });
-//     }
-//   } as any;
-// }
-
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/server', () => ({
   NextResponse: {
@@ -305,17 +59,6 @@ vi.mock('next/server', () => ({
   },
 }));
 
-// Mock Next.js cookies
-// vi.mock('next/headers', () => ({
-//   cookies: () => ({
-//     get: vi.fn().mockReturnValue(null),
-//     getAll: vi.fn().mockReturnValue([]),
-//     has: vi.fn().mockReturnValue(false),
-//     set: vi.fn(),
-//     delete: vi.fn(),
-//   }),
-// }));
-
 // Mock Sentry
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
@@ -324,14 +67,6 @@ vi.mock('@sentry/nextjs', () => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
-}));
-
-// Mock PostHog
-vi.mock('@/lib/posthog', () => ({
-  default: () => ({
-    capture: vi.fn(),
-    shutdown: vi.fn().mockResolvedValue(undefined),
-  }),
 }));
 
 // Mock Supabase client
@@ -396,14 +131,6 @@ vi.mock('@/lib/supabase/queries', () => ({
   isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
 }));
 
-// Mock audio conversion utility
-vi.mock('@/lib/audio', () => ({
-  convertToWav: vi.fn((data: string, mimeType: string) => {
-    // Return a mock audio buffer
-    return Buffer.from('mock-audio-data');
-  }),
-}));
-
 // Mock Upstash Redis with reconfigurable functions
 const mockRedisGet = vi.fn().mockResolvedValue(null);
 const mockRedisSet = vi.fn().mockResolvedValue('OK');
@@ -462,7 +189,7 @@ vi.mock('@google/genai', () => ({
   })),
 }));
 
-// Mock crypto.subtle for hash generation
+// Mock crypto.subtle for filename hash generation
 Object.defineProperty(global, 'crypto', {
   value: {
     subtle: {

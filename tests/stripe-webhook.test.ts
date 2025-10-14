@@ -876,7 +876,11 @@ describe('Stripe Webhook Route', () => {
       } as unknown as Request;
 
       const { POST } = await import('@/app/api/stripe/webhook/route');
-      await POST(request);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(json).toEqual({ received: true });
 
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.any(Error),
