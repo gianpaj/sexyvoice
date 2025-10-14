@@ -370,20 +370,18 @@ export async function POST(request: Request) {
         { status: 429 },
       );
     }
-    if (error instanceof Error) {
-      // if Gemini error
-      if (error instanceof Error && error.message.includes('googleapis')) {
-        const message = JSON.parse(error.message);
-        // You exceeded your current quota
-        if (message.error.code === 429) {
-          return NextResponse.json(
-            {
-              error:
-                'We have exceeded our third-party API current quota, please try later or tomorrow',
-            },
-            { status: 500 },
-          );
-        }
+    // if Gemini error
+    if (error instanceof Error && error.message.includes('googleapis')) {
+      const message = JSON.parse(error.message);
+      // You exceeded your current quota
+      if (message.error.code === 429) {
+        return NextResponse.json(
+          {
+            error:
+              'We have exceeded our third-party API current quota, please try later or tomorrow',
+          },
+          { status: 500 },
+        );
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
