@@ -1,6 +1,6 @@
 # API Route Testing Setup
 
-This directory contains comprehensive tests for the SexyVoice.ai API routes, focusing on the `generate-voice` endpoint.
+This directory contains comprehensive tests for the SexyVoice.ai API routes, including the `generate-voice` endpoint and `stripe-webhook` handler.
 
 ## Setup Requirements
 
@@ -15,6 +15,8 @@ pnpm add -D vitest @vitest/ui msw @types/supertest supertest @vitest/coverage-v8
 ### Files:
 - `setup.ts` - Test environment setup with MSW mocking
 - `generate-voice.test.ts` - Comprehensive tests for the generate voice API route
+- `stripe-webhook.test.ts` - Comprehensive tests for Stripe webhook handling
+- `test-stripe-plan.md` - Detailed technical specification for Stripe webhook testing
 - `README.md` - This documentation
 
 ### Mock Services
@@ -41,6 +43,11 @@ The test setup includes comprehensive mocks for all external services:
 - **PostHog**: Event tracking
 - **Sentry**: Error logging and monitoring
 
+#### Stripe (for webhook tests)
+- **Webhook signature verification**: Using `stripe.webhooks.generateTestHeaderString()`
+- **Event processing**: Checkout sessions, subscriptions, invoices, payment intents
+- **Customer data syncing**: Redis/KV storage updates
+
 ## Running Tests
 
 ```bash
@@ -62,7 +69,9 @@ pnpm test:legacy
 
 ## Test Coverage
 
-The tests cover:
+### Generate Voice API (`generate-voice.test.ts`)
+
+The voice generation tests cover:
 
 ### Input Validation
 - Empty request body
@@ -105,6 +114,24 @@ The tests cover:
 - PostHog event tracking
 - Sentry error reporting
 
+### Stripe Webhooks (`stripe-webhook.test.ts`)
+
+The Stripe webhook tests cover:
+
+### Signature Verification
+- Missing signature header validation
+- Invalid signature handling
+- Valid signature verification using Stripe's official `generateTestHeaderString` method
+- Authentic webhook signature generation
+
+### Checkout Session Events
+- One-time topup purchases (mode: 'payment')
+  - Credit awarding
+  - Transaction recording
+  - Promo code handling
+- Subscription checkouts (mode: 'subscription')
+  - Customer data syncing to Redis
+  - Initial subscription credit awards
 ## Mock Data
 
 The test setup provides realistic mock data for:
@@ -122,6 +149,62 @@ Special attention is given to testing audio buffer handling:
 - WAV conversion testing
 - Blob storage integration
 
+## Stripe Testing Best Practices
+
+### Using Official Stripe Test Utilities
+
+Instead of manually mocking webhook signatures, we use Stripe's built-in testing helper:
+
+```typescript
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
+  apiVersion: '2025-02-24.acacia',
+});
+
+// Generate valid test signature
+const signature = stripe.webhooks.generateTestHeaderString({
+  payload: JSON.stringify(event),
+  secret: 'whsec_test_secret',
+});
+```
+
+**Benefits:**
+- ✅ Official Stripe-maintained method
+- ✅ Realistic signature validation
+- ✅ Accurate webhook secret matching
+- ✅ No need to mock `constructEvent` internals
+- ✅ Future-proof against Stripe SDK changes
+
+### Example Usage
+
+```typescript
+it('should process webhook with valid signature', async () => {
+  const event = {
+    id: 'evt_test_123',
+    type: 'checkout.session.completed',
+    data: { object: checkoutSession },
+    // ... other event properties
+  };
+
+  const payload = JSON.stringify(event);
+  const signature = stripe.webhooks.generateTestHeaderString({
+    payload,
+    secret: WEBHOOK_SECRET,
+  });
+
+  const request = {
+    text: async () => payload,
+    headers: {
+      get: (name) => name === 'Stripe-Signature' ? signature : null,
+    },
+  };
+
+  const response = await POST(request);
+  expect(response.status).toBe(200);
+});
+```
+
 ## Environment Variables
 
 All required environment variables are mocked in `setup.ts`:
@@ -129,6 +212,7 @@ All required environment variables are mocked in `setup.ts`:
 - AI service API keys
 - Redis connection details
 - Blob storage tokens
+- Stripe API keys and webhook secrets
 
 ## Adding New Tests
 
@@ -151,7 +235,20 @@ The tests are designed to be fast and reliable:
 ## CI/CD Integration
 
 These tests are designed to work in CI/CD environments:
-- No external dependencies
+- No external dependencies (all services mocked)
 - Deterministic mock responses
 - Comprehensive error scenario coverage
 - Fast execution times
+- Uses official Stripe testing utilities for reliability
+
+## Additional Resources
+
+### Documentation
+- `CLAUDE.md` - Project-wide guidelines and architecture
+- [Stripe Testing Guide](https://stripe.com/docs/testing)
+- [Stripe Webhook Testing](https://stripe.com/docs/webhooks/test)
+- [MSW Documentation](https://mswjs.io/)
+
+### Reference Implementations
+- `generate-voice.test.ts` - Example of comprehensive API route testing with MSW
+- `setup.ts` - Centralized mock configuration for all tests

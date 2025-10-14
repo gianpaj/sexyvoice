@@ -252,7 +252,6 @@ async function handlePaymentIntentSucceeded(
 export async function syncStripeDataToKV(customerId: string) {
   try {
     // Fetch latest subscription data from Stripe
-    // const subscriptions = body;
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       limit: 1,
@@ -292,7 +291,7 @@ export async function syncStripeDataToKV(customerId: string) {
     await setCustomerData(customerId, subData);
 
     // console.log({ subscription });
-    console.log({ subData });
+    console.log('[STRIPE HOOK]', { subData });
 
     const userId = await getUserIdByStripeCustomerId(customerId);
     if (!userId) {
@@ -315,25 +314,36 @@ export async function syncStripeDataToKV(customerId: string) {
     let amount = 0;
     let subAmount = 0;
     switch (subData.priceId) {
-      // first is prod, 2nd is test
-      case 'price_1R4m50J2uQQSTCBsvH8hpjN2':
-      case 'price_1QncR5J2uQQSTCBsWa87AaEG':
-        amount = TOPUP_PACKAGES.standard.credits;
-        subAmount = TOPUP_PACKAGES.standard.amount;
-        break;
-      case 'price_1R4m50J2uQQSTCBsKdEsgflW':
-      case 'price_1QnczMJ2uQQSTCBsUzEnvPKj':
+      case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
         amount = TOPUP_PACKAGES.starter.credits;
         subAmount = TOPUP_PACKAGES.starter.amount;
         break;
-      case 'price_1R4m50J2uQQSTCBs5j9ERzXC':
-      case 'price_1QnkyTJ2uQQSTCBsgyw7xYb8':
+      case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+        amount = TOPUP_PACKAGES.standard.credits;
+        subAmount = TOPUP_PACKAGES.standard.amount;
+        break;
+      case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
         amount = TOPUP_PACKAGES.pro.credits;
         subAmount = TOPUP_PACKAGES.pro.amount;
         break;
       default:
         amount = 0;
         break;
+    }
+    if (amount === 0) {
+      const extra = {
+        customer_id: customerId,
+        priceId: subData.priceId,
+      };
+      console.error('[STRIPE HOOK] Invalid subscription price ID', extra);
+      Sentry.captureException(new Error('Invalid subscription price ID'), {
+        tags: {
+          section: 'stripe_webhook',
+          event_type: 'sync_stripe_data',
+        },
+        extra,
+      });
+      return;
     }
 
     if (subData.status === 'active') {

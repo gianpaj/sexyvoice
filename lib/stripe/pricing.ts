@@ -7,10 +7,10 @@ export const getTopupPackages = (lang: Locale) => {
   const promoBonuses = {
     standard: isPromoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0')
-      : '0',
+      : 0,
     pro: isPromoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0')
-      : '0',
+      : 0,
   };
 
   return {
@@ -48,7 +48,7 @@ export const getTopupPackages = (lang: Locale) => {
       // credits to add
       get credits() {
         return isPromoEnabled
-          ? this.baseCredits + (promoBonuses.standard as number) // 32_500
+          ? this.baseCredits + promoBonuses.standard // 32_500
           : this.baseCredits;
       },
       // pricePer1kCredits: isPromoEnabled ? 0.3076 : 0.4, //
@@ -67,7 +67,7 @@ export const getTopupPackages = (lang: Locale) => {
       // credits to add
       get credits() {
         return isPromoEnabled
-          ? this.baseCredits + (promoBonuses.pro as number) // 405_000
+          ? this.baseCredits + promoBonuses.pro // 405_000
           : this.baseCredits;
       },
       // pricePer1kCredits: isPromoEnabled ? 0.2444 : 0.33, // -20.54% : -17.5% from previous plan

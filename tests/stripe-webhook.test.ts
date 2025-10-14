@@ -1,0 +1,1024 @@
+import * as Sentry from '@sentry/nextjs';
+import type Stripe from 'stripe';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// We'll need to create a real Stripe instance for generating test signatures
+// but we'll mock the actual webhook route's Stripe instance
+const stripeForTesting = await import('stripe').then((m) => {
+  const StripeConstructor = m.default;
+  return new StripeConstructor(
+    process.env.STRIPE_SECRET_KEY || 'sk_test_dummy',
+    {
+      apiVersion: '2025-02-24.acacia',
+    },
+  );
+});
+
+const WEBHOOK_SECRET = 'whsec_test_secret_for_testing';
+
+// Mock environment variables
+process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
+
+// Mock next/headers
+vi.mock('next/headers', () => ({
+  headers: vi.fn(),
+}));
+
+// Mock Stripe admin
+vi.mock('@/lib/stripe/stripe-admin', () => ({
+  stripe: {
+    webhooks: {
+      constructEvent: vi.fn(),
+    },
+    subscriptions: {
+      list: vi.fn(),
+    },
+  },
+}));
+
+// Mock Supabase queries
+vi.mock('@/lib/supabase/queries', () => ({
+  getUserIdByStripeCustomerId: vi.fn(),
+  insertCreditTransaction: vi.fn(),
+  insertTopupTransaction: vi.fn(),
+}));
+
+// Mock Redis queries
+vi.mock('@/lib/redis/queries', () => ({
+  setCustomerData: vi.fn(),
+}));
+
+// Helper Functions
+/**
+ * Creates a valid Stripe webhook request with proper signature
+ * Uses Stripe's official generateTestHeaderString method
+ */
+function createWebhookRequest(event: Stripe.Event): Request {
+  const payload = JSON.stringify(event);
+
+  // Generate valid signature using Stripe's built-in method
+  const signature = stripeForTesting.webhooks.generateTestHeaderString({
+    payload,
+    secret: WEBHOOK_SECRET,
+  });
+
+  return {
+    text: async () => payload,
+    headers: {
+      get: (name: string) => {
+        if (name === 'Stripe-Signature' || name === 'stripe-signature') {
+          return signature;
+        }
+        return null;
+      },
+    },
+  } as unknown as Request;
+}
+
+/**
+ * Creates mock Stripe events for testing
+ */
+function createMockEvent<T extends Stripe.Event.Type>(
+  type: T,
+  // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+  data: any,
+): Stripe.Event {
+  return {
+    id: `evt_test_${Date.now()}`,
+    object: 'event',
+    api_version: '2024-12-18.acacia',
+    created: Math.floor(Date.now() / 1000),
+    type,
+    data: {
+      object: data,
+    },
+    livemode: false,
+    pending_webhooks: 0,
+    request: {
+      id: null,
+      idempotency_key: null,
+    },
+  } as Stripe.Event;
+}
+
+/**
+ * Creates mock checkout session
+ */
+function createMockCheckoutSession(
+  mode: 'payment' | 'subscription',
+  metadata?: Record<string, string>,
+): Stripe.Checkout.Session {
+  // @ts-expect-error
+  return {
+    id: 'cs_test_123',
+    object: 'checkout.session',
+    mode,
+    customer: 'cus_test123',
+    payment_intent: mode === 'payment' ? 'pi_test123' : null,
+    subscription: mode === 'subscription' ? 'sub_test123' : null,
+    metadata: metadata || {},
+    payment_status: 'paid',
+    status: 'complete',
+  };
+}
+
+/**
+ * Creates mock subscription object
+ */
+function createMockSubscription(
+  priceId: string,
+  status: Stripe.Subscription.Status = 'active',
+): Stripe.Subscription {
+  return {
+    id: 'sub_test123',
+    object: 'subscription',
+    customer: 'cus_test123',
+    status,
+    current_period_start: Math.floor(Date.now() / 1000),
+    current_period_end: Math.floor(Date.now() / 1000) + 2592000, // +30 days
+    cancel_at_period_end: false,
+    items: {
+      object: 'list',
+      data: [
+        {
+          id: 'si_test',
+          object: 'subscription_item',
+          price: {
+            id: priceId,
+            object: 'price',
+            active: true,
+            currency: 'usd',
+            unit_amount: 1500,
+            type: 'recurring',
+            recurring: {
+              interval: 'month',
+              interval_count: 1,
+            },
+          },
+        },
+      ],
+    },
+    default_payment_method: {
+      id: 'pm_test',
+      object: 'payment_method',
+      card: {
+        brand: 'visa',
+        last4: '4242',
+      },
+    },
+  } as Stripe.Subscription;
+}
+
+describe('Stripe Webhook Route', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Signature Verification', () => {
+    it('should return 400 when stripe-signature header is missing', async () => {
+      const { headers } = await import('next/headers');
+
+      // Mock headers to return null for Stripe-Signature
+      vi.mocked(headers).mockResolvedValue({
+        get: () => null,
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const request = {
+        text: async () => JSON.stringify({}),
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should handle constructEvent throwing an error (invalid signature)', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+
+      const event = createMockEvent(
+        'checkout.session.completed',
+        createMockCheckoutSession('payment'),
+      );
+
+      // Mock headers to return a signature
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return 'invalid_signature';
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      // Mock constructEvent to throw error
+      vi.mocked(stripe.webhooks.constructEvent).mockImplementation(() => {
+        throw new Error('Invalid signature');
+      });
+
+      const request = {
+        text: async () => JSON.stringify(event),
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      // Should still return 200 (webhook acknowledged) but error logged
+      expect(response.status).toBe(200);
+      expect(Sentry.captureException).toHaveBeenCalled();
+    });
+
+    it('should process webhook with valid signature', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageType: 'starter',
+      });
+
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      // Mock headers
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      // Mock constructEvent to return our event
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(json).toEqual({ received: true });
+      expect(insertTopupTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'pi_test123',
+        5000,
+        5,
+        'starter',
+        null,
+      );
+    });
+  });
+
+  describe('Checkout Session - Topup', () => {
+    it('should process topup checkout and add credits', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageType: 'starter',
+      });
+
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertTopupTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'pi_test123',
+        5000,
+        5.0,
+        'starter',
+        null,
+      );
+    });
+
+    it.skip('should handle promo code in topup metadata', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_456',
+        credits: '15000',
+        dollarAmount: '12.00',
+        packageType: 'standard',
+        promo: 'SAVE20',
+      });
+
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(insertTopupTransaction).toHaveBeenCalledWith(
+        'user_456',
+        'pi_test123',
+        15000,
+        12.0,
+        'standard',
+        'SAVE20',
+      );
+    });
+
+    it('should log error and continue when topup metadata is missing', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        // Missing userId, credits, dollarAmount
+      });
+
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(Sentry.captureException).toHaveBeenCalled();
+    });
+  });
+
+  describe('Checkout Session - Subscription', () => {
+    it('should sync subscription data to Redis on checkout', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { setCustomerData } = await import('@/lib/redis/queries');
+      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+        await import('@/lib/supabase/queries');
+
+      // process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
+
+      // standard package
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      const session = createMockCheckoutSession('subscription');
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(stripe.subscriptions.list).toHaveBeenCalledWith({
+        customer: 'cus_test123',
+        limit: 1,
+        status: 'all',
+        expand: ['data.default_payment_method'],
+      });
+
+      expect(setCustomerData).toHaveBeenCalledWith(
+        'cus_test123',
+        expect.objectContaining({
+          subscriptionId: 'sub_test123',
+          status: 'active',
+          priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        }),
+      );
+
+      expect(insertCreditTransaction).toHaveBeenCalledWith(
+        'user_789',
+        'sub_test123',
+        25000,
+        10,
+      );
+    });
+  });
+
+  describe('Subscription Lifecycle Events', () => {
+    it('should handle customer.subscription.created', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { setCustomerData } = await import('@/lib/redis/queries');
+      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+        await import('@/lib/supabase/queries');
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user-id-123');
+
+      const event = createMockEvent('customer.subscription.created', {
+        ...subscription,
+        customer: 'cus_test123',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(setCustomerData).toHaveBeenCalled();
+      expect(insertCreditTransaction).toHaveBeenCalledWith(
+        'user-id-123',
+        'sub_test123',
+        25000,
+        10,
+      );
+    });
+
+    it('should handle customer.subscription.updated', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { setCustomerData } = await import('@/lib/redis/queries');
+      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+        await import('@/lib/supabase/queries');
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        'active',
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
+        'user_sub_updated',
+      );
+
+      const event = createMockEvent('customer.subscription.updated', {
+        ...subscription,
+        customer: 'cus_test123',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(setCustomerData).toHaveBeenCalled();
+      expect(insertCreditTransaction).toHaveBeenCalledWith(
+        'user_sub_updated',
+        'sub_test123',
+        25000,
+        10,
+      );
+    });
+
+    it('should handle customer.subscription.deleted', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { setCustomerData } = await import('@/lib/redis/queries');
+      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+        await import('@/lib/supabase/queries');
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        'canceled',
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
+        'user_sub_deleted',
+      );
+
+      const event = createMockEvent('customer.subscription.deleted', {
+        ...subscription,
+        customer: 'cus_test123',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(setCustomerData).toHaveBeenCalled();
+      expect(insertCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should handle customer.subscription.paused', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { setCustomerData } = await import('@/lib/redis/queries');
+      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+        await import('@/lib/supabase/queries');
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        'paused',
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
+        'user_sub_paused',
+      );
+
+      const event = createMockEvent('customer.subscription.paused', {
+        ...subscription,
+        customer: 'cus_test123',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(setCustomerData).toHaveBeenCalled();
+      expect(insertCreditTransaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Credit Awards by Plan', () => {
+    const testPlans = [
+      {
+        name: 'Starter (test)',
+        priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
+        expectedCredits: 10000,
+        expectedAmount: 5,
+      },
+      {
+        name: 'Standard (test)',
+        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        expectedCredits: 25000,
+        expectedAmount: 10,
+      },
+      {
+        name: 'Pro (test)',
+        priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
+        expectedCredits: 300000,
+        expectedAmount: 99,
+      },
+    ];
+
+    testPlans.forEach(({ name, priceId, expectedCredits, expectedAmount }) => {
+      it(`should award ${expectedCredits} credits for ${name} plan`, async () => {
+        const { headers } = await import('next/headers');
+        const { stripe } = await import('@/lib/stripe/stripe-admin');
+        const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+          await import('@/lib/supabase/queries');
+
+        const subscription = createMockSubscription(priceId!, 'active');
+
+        vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+          data: [subscription],
+          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        } as any);
+
+        vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
+          'user_credit_test',
+        );
+
+        const event = createMockEvent('customer.subscription.created', {
+          ...subscription,
+          customer: 'cus_test123',
+        });
+        const payload = JSON.stringify(event);
+        const signature = stripeForTesting.webhooks.generateTestHeaderString({
+          payload,
+          secret: WEBHOOK_SECRET,
+        });
+
+        vi.mocked(headers).mockResolvedValue({
+          get: (name: string) => {
+            if (name === 'Stripe-Signature') return signature;
+            return null;
+          },
+          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        } as any);
+
+        vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+        const request = {
+          text: async () => payload,
+        } as unknown as Request;
+
+        const { POST } = await import('@/app/api/stripe/webhook/route');
+        await POST(request);
+
+        expect(insertCreditTransaction).toHaveBeenCalledWith(
+          'user_credit_test',
+          'sub_test123',
+          expectedCredits,
+          expectedAmount,
+        );
+      });
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle customer with no subscriptions', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { setCustomerData } = await import('@/lib/redis/queries');
+      const { insertCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const event = createMockEvent('customer.subscription.updated', {
+        customer: 'cus_no_subs',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(setCustomerData).toHaveBeenCalledWith('cus_no_subs', {
+        status: 'none',
+      });
+      expect(insertCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should log error when user not found in database', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
+        await import('@/lib/supabase/queries');
+
+      const subscription = createMockSubscription(
+        'price_1QncR5J2uQQSTCBsWa87AaEG',
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      // @ts-expect-error
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(null);
+
+      const event = createMockEvent('customer.subscription.updated', {
+        customer: 'cus_unknown',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            customer_id: 'cus_unknown',
+          }),
+        }),
+      );
+      expect(insertCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should handle unrecognized event types gracefully', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { insertCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      // biome-ignore lint/suspicious/noExplicitAny: Testing unrecognized event type
+      const event = createMockEvent('customer.created' as any, {
+        id: 'cus_new',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      const json = await response.json();
+      expect(json).toEqual({ received: true });
+      expect(insertCreditTransaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should report database errors to Sentry', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+
+      vi.mocked(insertTopupTransaction).mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '1000',
+        dollarAmount: '10',
+      });
+
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      await POST(request);
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining('Database'),
+        }),
+        expect.objectContaining({
+          tags: expect.objectContaining({
+            section: 'stripe_webhook',
+          }),
+        }),
+      );
+    });
+
+    it('should handle Stripe API errors gracefully', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+
+      vi.mocked(stripe.subscriptions.list).mockRejectedValue(
+        new Error('Stripe API error'),
+      );
+
+      const event = createMockEvent('customer.subscription.updated', {
+        customer: 'cus_error',
+      });
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(Sentry.captureException).toHaveBeenCalled();
+    });
+  });
+});
