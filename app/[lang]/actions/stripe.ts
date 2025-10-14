@@ -81,8 +81,8 @@ export async function createCheckoutSession(
           credits: package_.credits.toString(),
           dollarAmount: package_.amount.toString(),
           type: 'topup',
-          ...(process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true' && {
-            promo: 'halloween_2025',
+          ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
+            promo: process.env.NEXT_PUBLIC_PROMO_ID,
           }),
         },
       });

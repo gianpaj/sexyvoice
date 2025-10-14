@@ -18,8 +18,7 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 import type { PackageType } from '@/lib/stripe/pricing';
 
 const getTopupPackages = (dict: (typeof lang)['credits']) => {
-  const isHalloweenActive =
-    process.env.NEXT_PUBLIC_HALLOWEEN_PROMO_ENABLED === 'true';
+  const isHalloweenActive = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
 
   return [
     {

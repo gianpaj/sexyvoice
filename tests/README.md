@@ -241,6 +241,13 @@ These tests are designed to work in CI/CD environments:
 - Fast execution times
 - Uses official Stripe testing utilities for reliability
 
+### GitHub Actions
+
+The project includes automated CI/CD workflows in `.github/workflows/`:
+
+#### `tests.yml` - Automated Test Runner
+
+Runs automatically on every PR and commit to `main`/`develop` branches:
 ## Additional Resources
 
 ### Documentation
@@ -251,4 +258,8 @@ These tests are designed to work in CI/CD environments:
 
 ### Reference Implementations
 - `generate-voice.test.ts` - Example of comprehensive API route testing with MSW
+- `stripe-webhook.test.ts` - Stripe webhook testing with official signature generation
 - `setup.ts` - Centralized mock configuration for all tests
+
+### Workflow Files
+- `.github/workflows/tests.yml` - Main test automation workflow
