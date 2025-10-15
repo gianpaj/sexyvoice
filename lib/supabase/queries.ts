@@ -116,7 +116,7 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
-export const insertCreditTransaction = async (
+export const insertSubscriptionCreditTransaction = async (
   userId: string,
   subscriptionId: string,
   amount: number,
@@ -160,7 +160,7 @@ export const insertCreditTransaction = async (
   }
 };
 
-export const insertTopupTransaction = async (
+export const insertTopupCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
   amount: number,
@@ -198,10 +198,10 @@ export const insertTopupTransaction = async (
     type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
     reference_id: paymentIntentId,
-    metadata: { 
-      priceId, 
-      dollarAmount, 
-      ...(promo && { promo }) 
+    metadata: {
+      priceId,
+      dollarAmount,
+      ...(promo && { promo }),
     },
   });
 
@@ -237,8 +237,9 @@ export const isFreemiumUserOverLimit = async (
     .eq('user_id', userId);
 
   // Check if user has only freemium transactions
-  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 &&
-    allTransactions?.every(transaction => transaction.type === 'freemium');
+  const hasOnlyFreemium =
+    (allTransactions?.length ?? 0) > 0 &&
+    allTransactions?.every((transaction) => transaction.type === 'freemium');
 
   if (freemiumError) {
     // For "No rows found", it's not an error, just not a freemium user.

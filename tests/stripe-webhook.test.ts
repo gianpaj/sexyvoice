@@ -39,8 +39,8 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 // Mock Supabase queries
 vi.mock('@/lib/supabase/queries', () => ({
   getUserIdByStripeCustomerId: vi.fn(),
-  insertCreditTransaction: vi.fn(),
-  insertTopupTransaction: vi.fn(),
+  insertSubscriptionCreditTransaction: vi.fn(),
+  insertTopupCreditTransaction: vi.fn(),
 }));
 
 // Mock Redis queries
@@ -236,7 +236,9 @@ describe('Stripe Webhook Route', () => {
     it('should process webhook with valid signature', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
-      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+      const { insertTopupCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
 
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
@@ -275,7 +277,7 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       const json = await response.json();
       expect(json).toEqual({ received: true });
-      expect(insertTopupTransaction).toHaveBeenCalledWith(
+      expect(insertTopupCreditTransaction).toHaveBeenCalledWith(
         'user_123',
         'pi_test123',
         5000,
@@ -290,7 +292,9 @@ describe('Stripe Webhook Route', () => {
     it('should process topup checkout and add credits', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
-      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+      const { insertTopupCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
 
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
@@ -325,7 +329,7 @@ describe('Stripe Webhook Route', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      expect(insertTopupTransaction).toHaveBeenCalledWith(
+      expect(insertTopupCreditTransaction).toHaveBeenCalledWith(
         'user_123',
         'pi_test123',
         5000,
@@ -338,7 +342,9 @@ describe('Stripe Webhook Route', () => {
     it.skip('should handle promo code in topup metadata', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
-      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+      const { insertTopupCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
 
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
@@ -373,7 +379,7 @@ describe('Stripe Webhook Route', () => {
       const { POST } = await import('@/app/api/stripe/webhook/route');
       await POST(request);
 
-      expect(insertTopupTransaction).toHaveBeenCalledWith(
+      expect(insertTopupCreditTransaction).toHaveBeenCalledWith(
         'user_456',
         'pi_test123',
         15000,
@@ -426,8 +432,10 @@ describe('Stripe Webhook Route', () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
       const { setCustomerData } = await import('@/lib/redis/queries');
-      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-        await import('@/lib/supabase/queries');
+      const {
+        getUserIdByStripeCustomerId,
+        insertSubscriptionCreditTransaction,
+      } = await import('@/lib/supabase/queries');
 
       // process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
 
@@ -484,7 +492,7 @@ describe('Stripe Webhook Route', () => {
         }),
       );
 
-      expect(insertCreditTransaction).toHaveBeenCalledWith(
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user_789',
         'sub_test123',
         25000,
@@ -498,8 +506,10 @@ describe('Stripe Webhook Route', () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
       const { setCustomerData } = await import('@/lib/redis/queries');
-      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-        await import('@/lib/supabase/queries');
+      const {
+        getUserIdByStripeCustomerId,
+        insertSubscriptionCreditTransaction,
+      } = await import('@/lib/supabase/queries');
 
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
@@ -541,7 +551,7 @@ describe('Stripe Webhook Route', () => {
 
       expect(response.status).toBe(200);
       expect(setCustomerData).toHaveBeenCalled();
-      expect(insertCreditTransaction).toHaveBeenCalledWith(
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user-id-123',
         'sub_test123',
         25000,
@@ -553,8 +563,10 @@ describe('Stripe Webhook Route', () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
       const { setCustomerData } = await import('@/lib/redis/queries');
-      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-        await import('@/lib/supabase/queries');
+      const {
+        getUserIdByStripeCustomerId,
+        insertSubscriptionCreditTransaction,
+      } = await import('@/lib/supabase/queries');
 
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
@@ -598,7 +610,7 @@ describe('Stripe Webhook Route', () => {
       await POST(request);
 
       expect(setCustomerData).toHaveBeenCalled();
-      expect(insertCreditTransaction).toHaveBeenCalledWith(
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user_sub_updated',
         'sub_test123',
         25000,
@@ -610,8 +622,10 @@ describe('Stripe Webhook Route', () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
       const { setCustomerData } = await import('@/lib/redis/queries');
-      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-        await import('@/lib/supabase/queries');
+      const {
+        getUserIdByStripeCustomerId,
+        insertSubscriptionCreditTransaction,
+      } = await import('@/lib/supabase/queries');
 
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
@@ -655,15 +669,17 @@ describe('Stripe Webhook Route', () => {
       await POST(request);
 
       expect(setCustomerData).toHaveBeenCalled();
-      expect(insertCreditTransaction).not.toHaveBeenCalled();
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
 
     it('should handle customer.subscription.paused', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
       const { setCustomerData } = await import('@/lib/redis/queries');
-      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-        await import('@/lib/supabase/queries');
+      const {
+        getUserIdByStripeCustomerId,
+        insertSubscriptionCreditTransaction,
+      } = await import('@/lib/supabase/queries');
 
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
@@ -707,7 +723,7 @@ describe('Stripe Webhook Route', () => {
       await POST(request);
 
       expect(setCustomerData).toHaveBeenCalled();
-      expect(insertCreditTransaction).not.toHaveBeenCalled();
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -737,8 +753,10 @@ describe('Stripe Webhook Route', () => {
       it(`should award ${expectedCredits} credits for ${name} plan`, async () => {
         const { headers } = await import('next/headers');
         const { stripe } = await import('@/lib/stripe/stripe-admin');
-        const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-          await import('@/lib/supabase/queries');
+        const {
+          getUserIdByStripeCustomerId,
+          insertSubscriptionCreditTransaction,
+        } = await import('@/lib/supabase/queries');
 
         const subscription = createMockSubscription(priceId!, 'active');
 
@@ -778,7 +796,7 @@ describe('Stripe Webhook Route', () => {
         const { POST } = await import('@/app/api/stripe/webhook/route');
         await POST(request);
 
-        expect(insertCreditTransaction).toHaveBeenCalledWith(
+        expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
           'user_credit_test',
           'sub_test123',
           expectedCredits,
@@ -793,7 +811,7 @@ describe('Stripe Webhook Route', () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
       const { setCustomerData } = await import('@/lib/redis/queries');
-      const { insertCreditTransaction } = await import(
+      const { insertSubscriptionCreditTransaction } = await import(
         '@/lib/supabase/queries'
       );
 
@@ -831,18 +849,18 @@ describe('Stripe Webhook Route', () => {
       expect(setCustomerData).toHaveBeenCalledWith('cus_no_subs', {
         status: 'none',
       });
-      expect(insertCreditTransaction).not.toHaveBeenCalled();
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
 
     it('should log error when user not found in database', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
-      const { getUserIdByStripeCustomerId, insertCreditTransaction } =
-        await import('@/lib/supabase/queries');
+      const {
+        getUserIdByStripeCustomerId,
+        insertSubscriptionCreditTransaction,
+      } = await import('@/lib/supabase/queries');
 
-      const subscription = createMockSubscription(
-        'price_1QncR5J2uQQSTCBsWa87AaEG',
-      );
+      const subscription = createMockSubscription('price_xxx');
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
@@ -890,13 +908,13 @@ describe('Stripe Webhook Route', () => {
           }),
         }),
       );
-      expect(insertCreditTransaction).not.toHaveBeenCalled();
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
 
     it('should handle unrecognized event types gracefully', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
-      const { insertCreditTransaction } = await import(
+      const { insertSubscriptionCreditTransaction } = await import(
         '@/lib/supabase/queries'
       );
 
@@ -930,7 +948,7 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       const json = await response.json();
       expect(json).toEqual({ received: true });
-      expect(insertCreditTransaction).not.toHaveBeenCalled();
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -938,9 +956,11 @@ describe('Stripe Webhook Route', () => {
     it('should report database errors to Sentry', async () => {
       const { headers } = await import('next/headers');
       const { stripe } = await import('@/lib/stripe/stripe-admin');
-      const { insertTopupTransaction } = await import('@/lib/supabase/queries');
+      const { insertTopupCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
 
-      vi.mocked(insertTopupTransaction).mockRejectedValue(
+      vi.mocked(insertTopupCreditTransaction).mockRejectedValue(
         new Error('Database connection failed'),
       );
 

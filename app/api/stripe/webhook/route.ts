@@ -8,8 +8,8 @@ import { getTopupPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
-  insertCreditTransaction,
-  insertTopupTransaction,
+  insertSubscriptionCreditTransaction,
+  insertTopupCreditTransaction,
 } from '@/lib/supabase/queries';
 
 export async function POST(req: Request) {
@@ -182,7 +182,7 @@ async function handleCheckoutSessionCompleted(
         `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
       );
 
-      await insertTopupTransaction(
+      await insertTopupCreditTransaction(
         userId,
         session.payment_intent as string,
         creditAmount,
@@ -192,11 +192,11 @@ async function handleCheckoutSessionCompleted(
       );
 
       console.log(
-        `[STRIPE HOOK] Credits added: ${creditAmount} for user ${userId}`,
+        `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
       );
     } else if (session.mode === 'subscription') {
       // Handle subscription checkout
-      const customerId = session.customer as string;
+      const customerId = session.customer as string | null;
       if (customerId) {
         await syncStripeDataToKV(customerId);
       }
@@ -347,7 +347,7 @@ export async function syncStripeDataToKV(customerId: string) {
     }
 
     if (subData.status === 'active') {
-      await insertCreditTransaction(
+      await insertSubscriptionCreditTransaction(
         userId,
         subData.subscriptionId,
         amount,
