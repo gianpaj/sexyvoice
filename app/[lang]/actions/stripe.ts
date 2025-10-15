@@ -79,7 +79,7 @@ export async function createCheckoutSession(
           userId: user.id,
           packageType,
           credits: package_.credits.toString(),
-          dollarAmount: package_.amount.toString(),
+          dollarAmount: package_.dollarAmount.toString(),
           type: 'topup',
           ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
             promo: process.env.NEXT_PUBLIC_PROMO_ID,

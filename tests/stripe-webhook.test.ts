@@ -727,30 +727,30 @@ describe('Stripe Webhook Route', () => {
     });
   });
 
-  describe('Credit Awards by Plan', () => {
+  describe('Credit Awards by Subscription Plan', () => {
     const testPlans = [
       {
-        name: 'Starter (test)',
+        name: 'Starter',
         priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
-        expectedCredits: 10000,
+        expectedCredits: 10_000,
         expectedAmount: 5,
       },
       {
-        name: 'Standard (test)',
+        name: 'Standard',
         priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
-        expectedCredits: 25000,
+        expectedCredits: 25_000,
         expectedAmount: 10,
       },
       {
-        name: 'Pro (test)',
+        name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
-        expectedCredits: 300000,
+        expectedCredits: 300_000,
         expectedAmount: 99,
       },
     ];
 
     testPlans.forEach(({ name, priceId, expectedCredits, expectedAmount }) => {
-      it(`should award ${expectedCredits} credits for ${name} plan`, async () => {
+      it(`should award ${expectedCredits.toLocaleString()} credits for ${name} plan`, async () => {
         const { headers } = await import('next/headers');
         const { stripe } = await import('@/lib/stripe/stripe-admin');
         const {

@@ -26,7 +26,7 @@ export const getTopupPackages = (lang: Locale) => {
       get credits() {
         return this.baseCredits;
       },
-      amount: 0,
+      dollarAmount: 0,
     },
     // not shown on landing page, only in /credits page
     starter: {
@@ -43,7 +43,7 @@ export const getTopupPackages = (lang: Locale) => {
       },
       promoBonus: promoBonuses.stater.toLocaleString(lang),
       // pricePer1kCredits: isPromoEnabled ? 0.4166 : 0.5,
-      amount: 5, // $5.00
+      dollarAmount: 5, // $5.00
     },
     standard: {
       priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
@@ -59,10 +59,10 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // pricePer1kCredits: isPromoEnabled ? 0.3076 : 0.4, //
       get pricePer1kCredits() {
-        return ((this.amount / this.credits) * 1000).toFixed(3); // isPromoEnabled ? $0.308 : $0.4
+        return ((this.dollarAmount / this.credits) * 1000).toFixed(3); // isPromoEnabled ? $0.308 : $0.4
       },
       promoBonus: promoBonuses.standard.toLocaleString(lang),
-      amount: 10, // $10.00
+      dollarAmount: 10, // $10.00
     },
     pro: {
       priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
@@ -78,10 +78,10 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // pricePer1kCredits: isPromoEnabled ? 0.2444 : 0.33, // -20.54% : -17.5% from previous plan
       get pricePer1kCredits() {
-        return ((this.amount / this.credits) * 1000).toFixed(3); // isPromoEnabled ? $0.244 : 0.33
+        return ((this.dollarAmount / this.credits) * 1000).toFixed(3); // isPromoEnabled ? $0.244 : 0.33
       },
       promoBonus: promoBonuses.pro.toLocaleString(lang),
-      amount: 99, // $99.00
+      dollarAmount: 99, // $99.00
     },
   } as const;
 };

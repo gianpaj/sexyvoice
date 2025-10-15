@@ -120,7 +120,7 @@ export const insertSubscriptionCreditTransaction = async (
   userId: string,
   subscriptionId: string,
   amount: number,
-  subAmount: number,
+  dollarAmount: number,
 ) => {
   const supabase = await createClient();
 
@@ -144,7 +144,7 @@ export const insertSubscriptionCreditTransaction = async (
         subscription_id: subscriptionId,
         amount,
         type: 'purchase',
-        description: `${subAmount} USD subscription`,
+        description: `${dollarAmount} USD subscription`,
       });
       await updateUserCredits(userId, amount);
     }
@@ -154,7 +154,7 @@ export const insertSubscriptionCreditTransaction = async (
       subscription_id: subscriptionId,
       amount,
       type: 'purchase',
-      description: `${subAmount} USD subscription`,
+      description: `${dollarAmount} USD subscription`,
     });
     await updateUserCredits(userId, amount);
   }

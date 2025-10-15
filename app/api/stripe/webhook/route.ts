@@ -311,26 +311,26 @@ export async function syncStripeDataToKV(customerId: string) {
 
     const TOPUP_PACKAGES = getTopupPackages('en');
 
-    let amount = 0;
-    let subAmount = 0;
+    let credits = 0;
+    let dollarAmount = 0;
     switch (subData.priceId) {
       case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-        amount = TOPUP_PACKAGES.starter.credits;
-        subAmount = TOPUP_PACKAGES.starter.amount;
+        credits = TOPUP_PACKAGES.starter.credits;
+        dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
         break;
       case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-        amount = TOPUP_PACKAGES.standard.credits;
-        subAmount = TOPUP_PACKAGES.standard.amount;
+        credits = TOPUP_PACKAGES.standard.credits;
+        dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
         break;
       case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-        amount = TOPUP_PACKAGES.pro.credits;
-        subAmount = TOPUP_PACKAGES.pro.amount;
+        credits = TOPUP_PACKAGES.pro.credits;
+        dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
         break;
       default:
-        amount = 0;
+        credits = 0;
         break;
     }
-    if (amount === 0) {
+    if (credits === 0) {
       const extra = {
         customer_id: customerId,
         priceId: subData.priceId,
@@ -350,8 +350,8 @@ export async function syncStripeDataToKV(customerId: string) {
       await insertSubscriptionCreditTransaction(
         userId,
         subData.subscriptionId,
-        amount,
-        subAmount,
+        credits,
+        dollarAmount,
       );
     }
 

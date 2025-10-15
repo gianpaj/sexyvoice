@@ -32,7 +32,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
     },
     {
       name: pPlans.standard.name,
-      price: TOPUP_PACKAGES.standard.amount,
+      price: TOPUP_PACKAGES.standard.dollarAmount,
       isPopular: true,
       pricePer1kCredits: TOPUP_PACKAGES.standard.pricePer1kCredits,
       description: pPlans.standard.description,
@@ -50,7 +50,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
     },
     {
       name: pPlans.pro.name,
-      price: TOPUP_PACKAGES.pro.amount,
+      price: TOPUP_PACKAGES.pro.dollarAmount,
 
       pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
       saveFromPrevPlanPer1kCredits: 0.333,
