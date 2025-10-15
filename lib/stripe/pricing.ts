@@ -5,6 +5,9 @@ export const getTopupPackages = (lang: Locale) => {
 
   // Get promo bonuses
   const promoBonuses = {
+    stater: isPromoEnabled
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER || '0')
+      : 0,
     standard: isPromoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0')
       : 0,
@@ -34,8 +37,11 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // credits to add
       get credits() {
-        return isPromoEnabled ? 12_000 : this.baseCredits; // +20%
+        return isPromoEnabled
+          ? this.baseCredits + promoBonuses.stater // 12_000
+          : this.baseCredits;
       },
+      promoBonus: promoBonuses.stater.toLocaleString(lang),
       // pricePer1kCredits: isPromoEnabled ? 0.4166 : 0.5,
       amount: 5, // $5.00
     },

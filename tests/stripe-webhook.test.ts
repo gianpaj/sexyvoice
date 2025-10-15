@@ -806,6 +806,257 @@ describe('Stripe Webhook Route', () => {
     });
   });
 
+  describe('Promo Enabled - Topup Transactions', () => {
+    const originalPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED;
+    const originalStarterBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER;
+    const originalStandardBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD;
+    const originalProBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_PRO;
+
+    beforeEach(() => {
+      // Enable promo for these tests
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = '2000';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = '7500';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = '105000';
+    });
+
+    afterEach(() => {
+      // Restore original values
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = originalPromoEnabled;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = originalStarterBonus;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = originalStandardBonus;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = originalProBonus;
+    });
+
+    const userId = 'user_sub_promo_test';
+    const testTopupPlans = [
+      {
+        name: 'Starter',
+        packageType: 'starter',
+        credits: 12000,
+        dollarAmount: 5.0,
+      },
+      {
+        name: 'Standard',
+        packageType: 'standard',
+        credits: 32500,
+        dollarAmount: 10.0,
+      },
+      {
+        name: 'Pro',
+        packageType: 'pro',
+        credits: 405000,
+        dollarAmount: 99.0,
+      },
+    ];
+
+    testTopupPlans.forEach(({ name, packageType, credits, dollarAmount }) => {
+      it(`should process ${name.toLowerCase()} topup with promo bonus (${credits.toLocaleString()} credits)`, async () => {
+        const { headers } = await import('next/headers');
+        const { stripe } = await import('@/lib/stripe/stripe-admin');
+        const { insertTopupCreditTransaction } = await import(
+          '@/lib/supabase/queries'
+        );
+
+        const session = createMockCheckoutSession('payment', {
+          type: 'topup',
+          userId: userId,
+          credits: credits.toString(),
+          dollarAmount: dollarAmount.toFixed(2),
+          packageType: packageType,
+        });
+
+        const event = createMockEvent('checkout.session.completed', session);
+        const payload = JSON.stringify(event);
+        const signature = stripeForTesting.webhooks.generateTestHeaderString({
+          payload,
+          secret: WEBHOOK_SECRET,
+        });
+
+        vi.mocked(headers).mockResolvedValue({
+          get: (name: string) => {
+            if (name === 'Stripe-Signature') return signature;
+            return null;
+          },
+          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        } as any);
+
+        vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+        const request = {
+          text: async () => payload,
+        } as unknown as Request;
+
+        const { POST } = await import('@/app/api/stripe/webhook/route');
+        const response = await POST(request);
+
+        expect(response.status).toBe(200);
+        expect(insertTopupCreditTransaction).toHaveBeenCalledWith(
+          userId,
+          'pi_test123',
+          credits,
+          dollarAmount,
+          packageType,
+          null,
+        );
+      });
+    });
+
+    it('should handle topup with promo code in metadata', async () => {
+      const { headers } = await import('next/headers');
+      const { stripe } = await import('@/lib/stripe/stripe-admin');
+      const { insertTopupCreditTransaction } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_promo_with_code',
+        credits: '32500',
+        dollarAmount: '10.00',
+        packageType: 'standard',
+        promo: 'LAUNCH2024',
+      });
+
+      const event = createMockEvent('checkout.session.completed', session);
+      const payload = JSON.stringify(event);
+      const signature = stripeForTesting.webhooks.generateTestHeaderString({
+        payload,
+        secret: WEBHOOK_SECRET,
+      });
+
+      vi.mocked(headers).mockResolvedValue({
+        get: (name: string) => {
+          if (name === 'Stripe-Signature') return signature;
+          return null;
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+      const request = {
+        text: async () => payload,
+      } as unknown as Request;
+
+      const { POST } = await import('@/app/api/stripe/webhook/route');
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertTopupCreditTransaction).toHaveBeenCalledWith(
+        'user_promo_with_code',
+        'pi_test123',
+        32500,
+        10.0,
+        'standard',
+        'LAUNCH2024', // Promo code should be included
+      );
+    });
+  });
+
+  describe('Promo Enabled - Subscription Transactions', () => {
+    const originalPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED;
+    const originalStarterBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER;
+    const originalStandardBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD;
+    const originalProBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_PRO;
+
+    beforeEach(() => {
+      // Enable promo for these tests
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = '2000';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = '7500';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = '105000';
+    });
+
+    afterEach(() => {
+      // Restore original values
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = originalPromoEnabled;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = originalStarterBonus;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = originalStandardBonus;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = originalProBonus;
+    });
+
+    const userId = 'user_sub_promo_test';
+
+    const testSubscriptionPlans = [
+      {
+        name: 'Starter',
+        priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
+        expectedCredits: 12000,
+        expectedAmount: 5,
+      },
+      {
+        name: 'Standard',
+        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        expectedCredits: 32500,
+        expectedAmount: 10,
+      },
+      {
+        name: 'Pro',
+        priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
+        expectedCredits: 405000,
+        expectedAmount: 99,
+      },
+    ];
+
+    testSubscriptionPlans.forEach(
+      ({ name, priceId, expectedCredits, expectedAmount }) => {
+        it(`should award bonus subscription credits for ${name.toLowerCase()} plan`, async () => {
+          const { headers } = await import('next/headers');
+          const { stripe } = await import('@/lib/stripe/stripe-admin');
+          const {
+            getUserIdByStripeCustomerId,
+            insertSubscriptionCreditTransaction,
+          } = await import('@/lib/supabase/queries');
+
+          const subscription = createMockSubscription(priceId!, 'active');
+
+          vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+            data: [subscription],
+            // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+          } as any);
+
+          vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(userId);
+
+          const event = createMockEvent('customer.subscription.created', {
+            ...subscription,
+            customer: 'cus_test123',
+          });
+          const payload = JSON.stringify(event);
+          const signature = stripeForTesting.webhooks.generateTestHeaderString({
+            payload,
+            secret: WEBHOOK_SECRET,
+          });
+
+          vi.mocked(headers).mockResolvedValue({
+            get: (name: string) => {
+              if (name === 'Stripe-Signature') return signature;
+              return null;
+            },
+            // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+          } as any);
+
+          vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
+
+          const request = {
+            text: async () => payload,
+          } as unknown as Request;
+
+          const { POST } = await import('@/app/api/stripe/webhook/route');
+          await POST(request);
+
+          // Subscriptions should award credits with bonus
+          expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+            userId,
+            'sub_test123',
+            expectedCredits,
+            expectedAmount,
+          );
+        });
+      },
+    );
+  });
+
   describe('Edge Cases', () => {
     it('should handle customer with no subscriptions', async () => {
       const { headers } = await import('next/headers');
