@@ -169,6 +169,10 @@ describe('Stripe Webhook Route', () => {
   });
 
   describe('Checkout Session - Topup', () => {
+    // NOTE to self
+    // for Top-ups we create a Stripe checkout session (`createCheckoutSession()`)
+    // where we send the num of credits as metadata
+    // later, the webhook uses that number to insert into the Database
     it('should process topup checkout and add credits', async () => {
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
@@ -212,14 +216,17 @@ describe('Stripe Webhook Route', () => {
       );
     });
 
-    it.skip('should handle promo code in topup metadata', async () => {
+    it('should handle promo in topup metadata', async () => {
+      // process.env.NEXT_PUBLIC_PROMO_ID
+      const PROMO_ID = 'halloween_2025';
+
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
         userId: 'user_456',
         credits: '15000',
         dollarAmount: '12.00',
         packageType: 'standard',
-        promo: 'SAVE20',
+        promo: PROMO_ID,
       });
 
       const event = createMockEvent('checkout.session.completed', session);
@@ -251,7 +258,7 @@ describe('Stripe Webhook Route', () => {
         15000,
         12.0,
         'standard',
-        'SAVE20',
+        PROMO_ID,
       );
     });
 

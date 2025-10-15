@@ -17,7 +17,7 @@ interface HalloweenBannerProps {
   isEnabled?: boolean;
 }
 
-const HALLOWEEN_BANNER_COOKIE = 'halloween-banner-dismissed-2025';
+const PROMO_BANNER_COOKIE = `${process.env.NEXT_PUBLIC_PROMO_ID}-dismissed`;
 
 export function HalloweenBanner({
   inDashboard,
@@ -38,9 +38,7 @@ export function HalloweenBanner({
     // Check if banner was previously dismissed
     const isDismissed = document.cookie
       .split(';')
-      .some((cookie) =>
-        cookie.trim().startsWith(`${HALLOWEEN_BANNER_COOKIE}=`),
-      );
+      .some((cookie) => cookie.trim().startsWith(`${PROMO_BANNER_COOKIE}=`));
 
     if (!isDismissed) {
       setIsVisible(true);
