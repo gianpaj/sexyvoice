@@ -4,7 +4,8 @@ import { vi } from 'vitest';
 
 import { stripe } from '@/lib/stripe/stripe-admin';
 
-const WEBHOOK_SECRET = 'whsec_test_secret_for_testing';
+const WEBHOOK_SECRET =
+  process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_secret_for_testing';
 
 // We'll need to create a real Stripe instance for generating test signatures
 // but we'll mock the actual webhook route's Stripe instance

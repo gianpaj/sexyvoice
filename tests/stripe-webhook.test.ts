@@ -17,23 +17,6 @@ import {
   createMockSubscription,
 } from './utils/stripe-test-utils';
 
-// We'll need to create a real Stripe instance for generating test signatures
-// but we'll mock the actual webhook route's Stripe instance
-const stripeForTesting = await import('stripe').then((m) => {
-  const StripeConstructor = m.default;
-  return new StripeConstructor(
-    process.env.STRIPE_SECRET_KEY || 'sk_test_dummy',
-    {
-      apiVersion: '2025-02-24.acacia',
-    },
-  );
-});
-
-const WEBHOOK_SECRET = 'whsec_test_secret_for_testing';
-
-// Mock environment variables
-process.env.STRIPE_WEBHOOK_SECRET = WEBHOOK_SECRET;
-
 // Mock next/headers
 vi.mock('next/headers', () => ({
   headers: vi.fn(),
@@ -129,29 +112,7 @@ describe('Stripe Webhook Route', () => {
         packageType: 'starter',
       });
 
-      const event = createMockEvent('checkout.session.completed', session);
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      // Mock headers
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      // Mock constructEvent to return our event
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
-
+      const request = createMockRequest('checkout.session.completed', session);
       const response = await POST(request);
 
       expect(response.status).toBe(200);
@@ -182,27 +143,7 @@ describe('Stripe Webhook Route', () => {
         packageType: 'starter',
       });
 
-      const event = createMockEvent('checkout.session.completed', session);
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
-
+      const request = createMockRequest('checkout.session.completed', session);
       const response = await POST(request);
 
       expect(response.status).toBe(200);
@@ -229,27 +170,7 @@ describe('Stripe Webhook Route', () => {
         promo: PROMO_ID,
       });
 
-      const event = createMockEvent('checkout.session.completed', session);
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
-
+      const request = createMockRequest('checkout.session.completed', session);
       await POST(request);
 
       expect(insertTopupCreditTransaction).toHaveBeenCalledWith(
@@ -268,27 +189,7 @@ describe('Stripe Webhook Route', () => {
         // Missing userId, credits, dollarAmount
       });
 
-      const event = createMockEvent('checkout.session.completed', session);
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
-
+      const request = createMockRequest('checkout.session.completed', session);
       const response = await POST(request);
 
       expect(response.status).toBe(200);
@@ -313,26 +214,7 @@ describe('Stripe Webhook Route', () => {
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
 
       const session = createMockCheckoutSession('subscription');
-      const event = createMockEvent('checkout.session.completed', session);
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
+      const request = createMockRequest('checkout.session.completed', session);
 
       await POST(request);
 
@@ -374,29 +256,10 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user-id-123');
 
-      const event = createMockEvent('customer.subscription.created', {
+      const request = createMockRequest('customer.subscription.created', {
         ...subscription,
         customer: 'cus_test123',
       });
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
 
       const response = await POST(request);
 
@@ -425,29 +288,10 @@ describe('Stripe Webhook Route', () => {
         'user_sub_updated',
       );
 
-      const event = createMockEvent('customer.subscription.updated', {
+      const request = createMockRequest('customer.subscription.updated', {
         ...subscription,
         customer: 'cus_test123',
       });
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
 
       await POST(request);
 
@@ -475,29 +319,10 @@ describe('Stripe Webhook Route', () => {
         'user_sub_deleted',
       );
 
-      const event = createMockEvent('customer.subscription.deleted', {
+      const request = createMockRequest('customer.subscription.deleted', {
         ...subscription,
         customer: 'cus_test123',
       });
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
 
       await POST(request);
 
@@ -520,29 +345,10 @@ describe('Stripe Webhook Route', () => {
         'user_sub_paused',
       );
 
-      const event = createMockEvent('customer.subscription.paused', {
+      const request = createMockRequest('customer.subscription.paused', {
         ...subscription,
         customer: 'cus_test123',
       });
-      const payload = JSON.stringify(event);
-      const signature = stripeForTesting.webhooks.generateTestHeaderString({
-        payload,
-        secret: WEBHOOK_SECRET,
-      });
-
-      vi.mocked(headers).mockResolvedValue({
-        get: (name: string) => {
-          if (name === 'Stripe-Signature') return signature;
-          return null;
-        },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-      const request = {
-        text: async () => payload,
-      } as unknown as Request;
 
       await POST(request);
 
@@ -586,29 +392,10 @@ describe('Stripe Webhook Route', () => {
           'user_credit_test',
         );
 
-        const event = createMockEvent('customer.subscription.created', {
+        const request = createMockRequest('customer.subscription.created', {
           ...subscription,
           customer: 'cus_test123',
         });
-        const payload = JSON.stringify(event);
-        const signature = stripeForTesting.webhooks.generateTestHeaderString({
-          payload,
-          secret: WEBHOOK_SECRET,
-        });
-
-        vi.mocked(headers).mockResolvedValue({
-          get: (name: string) => {
-            if (name === 'Stripe-Signature') return signature;
-            return null;
-          },
-          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-        } as any);
-
-        vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event);
-
-        const request = {
-          text: async () => payload,
-        } as unknown as Request;
 
         await POST(request);
 
