@@ -221,7 +221,7 @@
       "success": {
         "title": "Zahlung erfolgreich!",
         "description": "Ihre Credits wurden Ihrem Konto erfolgreich gutgeschrieben.",
-        "descriptionWithAmount": "Ihrem Konto wurden {amount} Credits gutgeschrieben.",
+        "descriptionWithAmount": "Ihrem Konto wurden {creditsAmount} Credits gutgeschrieben.",
         "dismiss": "Schließen"
       },
       "canceled": {

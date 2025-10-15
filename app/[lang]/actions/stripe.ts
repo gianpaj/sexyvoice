@@ -71,7 +71,7 @@ export async function createCheckoutSession(
           },
         ],
         ...(ui_mode === 'hosted' && {
-          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&amount=${package_.credits}`,
+          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,

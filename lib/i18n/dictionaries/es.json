@@ -221,7 +221,7 @@
       "success": {
         "title": "¡Pago Exitoso!",
         "description": "Tus créditos han sido añadidos exitosamente a tu cuenta.",
-        "descriptionWithAmount": "Tu cuenta ha sido acreditada con {amount} créditos.",
+        "descriptionWithAmount": "Tu cuenta ha sido acreditada con {creditsAmount} créditos.",
         "dismiss": "Descartar"
       },
       "canceled": {

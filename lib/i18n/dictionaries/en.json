@@ -218,7 +218,7 @@
       "success": {
         "title": "Payment Successful!",
         "description": "Your credits have been successfully added to your account.",
-        "descriptionWithAmount": "Your account has been credited with {amount} credits.",
+        "descriptionWithAmount": "Your account has been credited with {creditsAmount} credits.",
         "dismiss": "Dismiss"
       },
       "canceled": {
