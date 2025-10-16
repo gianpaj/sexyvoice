@@ -228,7 +228,9 @@ export async function POST(request: Request) {
           mimeType,
           model: modelUsed,
         });
-        throw new Error('Voice generation failed');
+        throw new Error('Voice generation failed, please retry', {
+          cause: 'no_data_or_mime_type',
+        });
       }
       logger.info('Gemini voice generation succeeded', {
         user: {
@@ -275,8 +277,13 @@ export async function POST(request: Request) {
           ...errorObj,
         });
         console.error(errorObj);
-        // @ts-ignore
-        throw new Error(output.error || 'Voice generation failed');
+        throw new Error(
+          // @ts-ignore
+          output.error || 'Voice generation failed, please try again',
+          {
+            cause: 'replicate_error',
+          },
+        );
       }
 
       blobResult = await put(filename, output, {
@@ -385,6 +392,16 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    if (
+      error instanceof Error &&
+      ['no_data_or_mime_type', 'replicate_error'].includes(String(error.cause))
+    ) {
+      return NextResponse.json(
+        { error: 'Voice generation failed, please retry' },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to generate voice' },
       { status: 500 },

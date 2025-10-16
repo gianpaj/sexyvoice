@@ -9,6 +9,7 @@ import {
   mockRedisGet,
   mockRedisKeys,
   mockRedisSet,
+  mockReplicateRun,
   server,
 } from './setup';
 
@@ -320,16 +321,10 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsRemaining).toBeDefined();
     });
 
-    it('should handle Replicate API errors', async () => {
-      // Mock Replicate API to return error
-      server.use(
-        http.post('https://api.replicate.com/v1/predictions', () => {
-          return HttpResponse.json(
-            { detail: 'Model not found' },
-            { status: 404 },
-          );
-        }),
-      );
+    it('should throw error when Replicate output contains error property', async () => {
+      mockReplicateRun.mockResolvedValueOnce({
+        error: 'Model execution failed due to timeout',
+      });
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -343,7 +338,8 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBeDefined();
+      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(mockReplicateRun).toHaveBeenCalled();
     });
   });
 
@@ -558,6 +554,92 @@ describe('Generate Voice API Route', () => {
       expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
         'test-user-id',
       );
+    });
+
+    it('should throw error when Gemini response has no data', async () => {
+      const { GoogleGenAI } = await import('@google/genai');
+
+      // Mock Gemini to return response without data (both pro and flash will fail)
+      vi.mocked(GoogleGenAI).mockImplementationOnce(
+        () =>
+          ({
+            models: {
+              generateContent: vi.fn().mockResolvedValue({
+                candidates: [
+                  {
+                    content: {
+                      parts: [
+                        {
+                          inlineData: {
+                            // Missing data field
+                            mimeType: 'audio/wav',
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              }),
+            },
+          }) as any,
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Voice generation failed, please retry');
+    });
+
+    it('should throw error when Gemini response has no mimeType', async () => {
+      const { GoogleGenAI } = await import('@google/genai');
+
+      // Mock Gemini to return response without mimeType (both pro and flash will fail)
+      vi.mocked(GoogleGenAI).mockImplementationOnce(
+        () =>
+          ({
+            models: {
+              generateContent: vi.fn().mockResolvedValue({
+                candidates: [
+                  {
+                    content: {
+                      parts: [
+                        {
+                          inlineData: {
+                            data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                            // Missing mimeType field
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              }),
+            },
+          }) as any,
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Voice generation failed, please retry');
     });
   });
 

@@ -23,6 +23,14 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/generate-voice.test.ts', 'tests/stripe-webhook.test.ts'],
     // exclude: ['lib/utils.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: [
+        // app/api/clone-voice/route.ts
+        'app/api/generate-voice/*.ts',
+        'app/api/stripe/webhook/route.ts',
+      ],
+    },
   },
   resolve: {
     alias: {

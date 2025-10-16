@@ -203,3 +203,26 @@ Object.defineProperty(global, 'crypto', {
     },
   },
 });
+
+const mockReplicateRun = vi.fn().mockImplementation(async () => {
+  // Return a ReadableStream mock for successful responses
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array([1, 2, 3, 4]));
+      controller.close();
+    },
+  });
+});
+
+const mockReplicateConstructor = vi.fn().mockImplementation(() => ({
+  run: mockReplicateRun,
+}));
+
+vi.mock('replicate', () => {
+  return {
+    default: mockReplicateConstructor,
+    Replicate: mockReplicateConstructor,
+  };
+});
+
+export { mockReplicateRun };
