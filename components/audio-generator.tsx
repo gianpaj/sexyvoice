@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
+import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -58,7 +59,7 @@ export function AudioGenerator({
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
-  const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || ''),
     [selectedVoice],
@@ -99,7 +100,10 @@ export function AudioGenerator({
 
         // Check if we have an error code for translation
         if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
-          throw new APIError(dict[error.errorCode as keyof typeof dict] as string, response);
+          throw new APIError(
+            dict[error.errorCode as keyof typeof dict] as string,
+            response,
+          );
         }
 
         // Fallback to the default English error message from API
@@ -252,8 +256,11 @@ export function AudioGenerator({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
-              className="h-32 pr-16"
+              className="pr-16 min-h-6 textarea-animation"
               maxLength={charactersLimit}
+              ref={(textarea) => {
+                resizeTextarea(textarea);
+              }}
             />
             {!isGeminiVoice && (
               <>
