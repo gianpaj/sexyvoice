@@ -1,9 +1,9 @@
 'use client';
 
-import { Loader2, Zap } from 'lucide-react';
+import { Loader2, Minus, Plus, Zap } from 'lucide-react';
 import { useState } from 'react';
 
-import { createCheckoutSession } from '@/app/actions/stripe';
+import { createCheckoutSession, createCustomCheckoutSession } from '@/app/actions/stripe';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  calculateCreditPrice,
+  formatCredits,
+  formatPrice,
+  validateCreditAmount,
+} from '@/lib/utils';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
 const getTopupPackages = (dict: any) => [
@@ -53,19 +61,30 @@ interface CreditTopupProps {
 export function CreditTopup({ dict }: CreditTopupProps) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [customCredits, setCustomCredits] = useState<number>(5000);
   const TOPUP_PACKAGES = getTopupPackages(dict);
 
   const formAction = async (data: FormData): Promise<void> => {
     const packageType = data.get('packageType') as
       | 'standard'
       | 'base'
-      | 'premium';
+      | 'premium'
+      | 'custom';
 
     setLoading(packageType);
     setError(null);
 
     try {
-      const { url } = await createCheckoutSession(data, packageType);
+      let url: string | null = null;
+
+      if (packageType === 'custom') {
+        const validatedCredits = validateCreditAmount(customCredits);
+        const result = await createCustomCheckoutSession(validatedCredits);
+        url = result.url;
+      } else {
+        const result = await createCheckoutSession(data, packageType);
+        url = result.url;
+      }
 
       if (url) {
         window.location.assign(url);
@@ -80,6 +99,16 @@ export function CreditTopup({ dict }: CreditTopupProps) {
     }
   };
 
+  const handleCustomAmountChange = (value: string) => {
+    const numValue = Number.parseInt(value) || 5000;
+    setCustomCredits(validateCreditAmount(numValue));
+  };
+
+  const adjustCustomAmount = (increment: number) => {
+    const newAmount = customCredits + increment;
+    setCustomCredits(validateCreditAmount(Math.max(5000, newAmount)));
+  };
+
   return (
     <>
       {error && (
@@ -87,7 +116,7 @@ export function CreditTopup({ dict }: CreditTopupProps) {
           <p className="text-red-600 text-sm">{error}</p>
         </div>
       )}
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-4">
         {TOPUP_PACKAGES.map((package_) => (
           <Card
             key={package_.id}
@@ -146,6 +175,88 @@ export function CreditTopup({ dict }: CreditTopupProps) {
             </CardFooter>
           </Card>
         ))}
+
+        {/* Custom Credits Card */}
+        <Card className="relative">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Custom Amount
+            </CardTitle>
+            <CardDescription>
+              Choose your own credit amount (min. 5,000)
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="text-center space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="custom-credits">Credits</Label>
+              <div className="flex items-center space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustCustomAmount(-500)}
+                  disabled={customCredits <= 5000}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  id="custom-credits"
+                  type="number"
+                  min="5000"
+                  step="500"
+                  value={customCredits}
+                  onChange={(e) => handleCustomAmountChange(e.target.value)}
+                  className="text-center"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustCustomAmount(500)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Increments of 500
+              </div>
+            </div>
+
+            <div className="text-3xl font-bold text-primary">
+              {formatPrice(calculateCreditPrice(customCredits))}
+            </div>
+            <div className="text-sm font-medium">
+              {formatCredits(customCredits)} credits
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {dict.topup.onetimePurchase}
+            </div>
+          </CardContent>
+
+          <CardFooter>
+            <form action={formAction} className="w-full">
+              <input type="hidden" name="packageType" value="custom" />
+              <input type="hidden" name="uiMode" value="hosted" />
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading === 'custom'}
+                size="lg"
+              >
+                {loading === 'custom' ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {dict.topup.processing}
+                  </>
+                ) : (
+                  dict.topup.buyCredits
+                )}
+              </Button>
+            </form>
+          </CardFooter>
+        </Card>
       </div>
     </>
   );
