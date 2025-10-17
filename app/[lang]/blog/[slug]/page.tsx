@@ -6,9 +6,9 @@ import type { Metadata } from 'next/types';
 import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
-import { HalloweenBanner } from '@/components/halloween-banner';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
+import { PromoBanner } from '@/components/promo-banner';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
@@ -193,7 +193,7 @@ const PostLayout = async (props: {
         {JSON.stringify(breadcrumbSchema)}
       </Script>
 
-      <HalloweenBanner
+      <PromoBanner
         text={halloweenDict.text}
         ctaText={halloweenDict.ctaLoggedOut}
         ctaLink={`/${lang}/signup`}

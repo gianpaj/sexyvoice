@@ -11,8 +11,8 @@ import { useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
-import { HalloweenBanner } from '@/components/halloween-banner';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { PromoBanner } from '@/components/promo-banner';
 import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 import {
   Sidebar,
@@ -204,7 +204,7 @@ export default function DashboardUI({
           <div className="flex flex-col flex-1 w-full">
             <div className="sticky top-4 z-30 flex items-start border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
-              <HalloweenBanner
+              <PromoBanner
                 inDashboard
                 text={halloweenDict.text}
                 ctaLink={`/${lang}/dashboard/credits`}

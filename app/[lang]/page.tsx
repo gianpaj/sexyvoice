@@ -16,10 +16,10 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
-import { HalloweenBanner } from '@/components/halloween-banner';
 import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
+import { PromoBanner } from '@/components/promo-banner';
 import {
   Accordion,
   AccordionContent,
@@ -75,7 +75,7 @@ export default async function LandingPage(props: {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-      <HalloweenBanner
+      <PromoBanner
         text={halloweenDict.text}
         ctaText={halloweenDict.ctaLoggedOut}
         arialLabelDismiss={halloweenDict.arialLabelDismiss}

@@ -8,7 +8,7 @@ import { dismissBannerAction } from '@/app/[lang]/actions/promos';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface HalloweenBannerProps {
+interface PromoBannerProps {
   inDashboard?: boolean;
   text: string;
   ctaLink: string;
@@ -19,14 +19,14 @@ interface HalloweenBannerProps {
 
 const PROMO_BANNER_COOKIE = `${process.env.NEXT_PUBLIC_PROMO_ID}-dismissed`;
 
-export function HalloweenBanner({
+export function PromoBanner({
   inDashboard,
   text,
   ctaLink,
   ctaText,
   arialLabelDismiss,
   isEnabled = false,
-}: HalloweenBannerProps) {
+}: PromoBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: no need
