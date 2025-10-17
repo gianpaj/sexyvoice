@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
     customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
   }
 
-  // Get top 3 customers by spending
+  // Get top 3 (max 3) customers by spending
   const topCustomerIds = [...customerSpending.entries()]
     .sort(([, spendingA], [, spendingB]) => spendingB - spendingA)
     .slice(0, 3)
@@ -195,6 +195,8 @@ export async function GET(request: NextRequest) {
     .from('profiles')
     .select('id, username')
     .in('id', topCustomerIds);
+
+  const topCustomerProfilesCount = topCustomerProfiles?.length ?? '';
 
   const topCustomersList = await (async () => {
     if (!topCustomerProfiles || topCustomerProfiles.length === 0) {
@@ -345,7 +347,7 @@ export async function GET(request: NextRequest) {
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
-    `  - Top 3 Customers: ${topCustomersList}`,
+    `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
     '',
     '💰 Revenue',
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
