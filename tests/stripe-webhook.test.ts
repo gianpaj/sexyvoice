@@ -1,15 +1,33 @@
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 
 import { POST } from '@/app/api/stripe/webhook/route';
-import { setCustomerData } from '@/lib/redis/queries';
+import {
+  getCustomerData,
+  setCustomerData,
+  setTestRedisClient,
+} from '@/lib/redis/queries';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
   insertSubscriptionCreditTransaction,
   insertTopupCreditTransaction,
 } from '@/lib/supabase/queries';
+import {
+  clearRedis,
+  setupRedis,
+  teardownRedis,
+} from './utils/redis-test-utils';
 import {
   createMockCheckoutSession,
   createMockEvent,
@@ -41,14 +59,23 @@ vi.mock('@/lib/supabase/queries', () => ({
   insertTopupCreditTransaction: vi.fn(),
 }));
 
-// Mock Redis queries
-vi.mock('@/lib/redis/queries', () => ({
-  setCustomerData: vi.fn(),
-}));
-
 describe('Stripe Webhook Route', () => {
-  beforeEach(() => {
+  // Setup in-memory Redis before all tests
+  beforeAll(async () => {
+    const redisClient = await setupRedis();
+    setTestRedisClient(redisClient);
+  });
+
+  // Teardown Redis after all tests
+  afterAll(async () => {
+    setTestRedisClient(null);
+    await teardownRedis();
+  });
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Clear Redis data before each test
+    await clearRedis();
   });
 
   afterEach(() => {
@@ -202,6 +229,7 @@ describe('Stripe Webhook Route', () => {
       // process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
 
       // standard package
+      const customerId = 'cus_test123';
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
       );
@@ -219,20 +247,19 @@ describe('Stripe Webhook Route', () => {
       await POST(request);
 
       expect(stripe.subscriptions.list).toHaveBeenCalledWith({
-        customer: 'cus_test123',
+        customer: customerId,
         limit: 1,
         status: 'all',
         expand: ['data.default_payment_method'],
       });
 
-      expect(setCustomerData).toHaveBeenCalledWith(
-        'cus_test123',
-        expect.objectContaining({
-          subscriptionId: 'sub_test123',
-          status: 'active',
-          priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
-        }),
-      );
+      // Verify Redis has the correct data
+      const customerData = await getCustomerData(customerId);
+      expect(customerData).toMatchObject({
+        subscriptionId: 'sub_test123',
+        status: 'active',
+        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+      });
 
       expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user_789',
@@ -245,6 +272,7 @@ describe('Stripe Webhook Route', () => {
 
   describe('Subscription Lifecycle Events', () => {
     it('should handle customer.subscription.created', async () => {
+      const customerId = 'cus_test123';
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
       );
@@ -258,13 +286,18 @@ describe('Stripe Webhook Route', () => {
 
       const request = createMockRequest('customer.subscription.created', {
         ...subscription,
-        customer: 'cus_test123',
+        customer: customerId,
       });
 
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      expect(setCustomerData).toHaveBeenCalled();
+
+      // Verify Redis has the subscription data
+      const customerData = await getCustomerData(customerId);
+      expect(customerData).toBeDefined();
+      expect(customerData?.status).toBe('active');
+
       expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user-id-123',
         'sub_test123',
@@ -274,6 +307,7 @@ describe('Stripe Webhook Route', () => {
     });
 
     it('should handle customer.subscription.updated', async () => {
+      const customerId = 'cus_test123';
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
         'active',
@@ -290,12 +324,16 @@ describe('Stripe Webhook Route', () => {
 
       const request = createMockRequest('customer.subscription.updated', {
         ...subscription,
-        customer: 'cus_test123',
+        customer: customerId,
       });
 
       await POST(request);
 
-      expect(setCustomerData).toHaveBeenCalled();
+      // Verify Redis has the updated subscription data
+      const customerData = await getCustomerData(customerId);
+      expect(customerData).toBeDefined();
+      expect(customerData?.status).toBe('active');
+
       expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user_sub_updated',
         'sub_test123',
@@ -304,7 +342,8 @@ describe('Stripe Webhook Route', () => {
       );
     });
 
-    it('should handle customer.subscription.deleted', async () => {
+    it('should handle customer.subscription.deleted and update Redis with canceled status', async () => {
+      const customerId = 'cus_test123';
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
         'canceled',
@@ -321,16 +360,27 @@ describe('Stripe Webhook Route', () => {
 
       const request = createMockRequest('customer.subscription.deleted', {
         ...subscription,
-        customer: 'cus_test123',
+        customer: customerId,
       });
 
       await POST(request);
 
-      expect(setCustomerData).toHaveBeenCalled();
+      // Verify that setCustomerData was called (via syncStripeDataToKV)
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+
+      // Verify Redis has the canceled status
+      const customerData = await getCustomerData(customerId);
+      expect(customerData).toBeDefined();
+      expect(customerData?.status).toBe('canceled');
+      expect(customerData).toMatchObject({
+        subscriptionId: 'sub_test123',
+        status: 'canceled',
+        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+      });
     });
 
     it('should handle customer.subscription.paused', async () => {
+      const customerId = 'cus_test123';
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
         'paused',
@@ -347,12 +397,16 @@ describe('Stripe Webhook Route', () => {
 
       const request = createMockRequest('customer.subscription.paused', {
         ...subscription,
-        customer: 'cus_test123',
+        customer: customerId,
       });
 
       await POST(request);
 
-      expect(setCustomerData).toHaveBeenCalled();
+      // Verify Redis has the paused status
+      const customerData = await getCustomerData(customerId);
+      expect(customerData).toBeDefined();
+      expect(customerData?.status).toBe('paused');
+
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
   });
@@ -585,18 +639,21 @@ describe('Stripe Webhook Route', () => {
 
   describe('Edge Cases', () => {
     it('should handle customer with no subscriptions', async () => {
+      const customerId = 'cus_no_subs';
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [],
         // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       const request = createMockRequest('customer.subscription.updated', {
-        customer: 'cus_no_subs',
+        customer: customerId,
       });
 
       await POST(request);
 
-      expect(setCustomerData).toHaveBeenCalledWith('cus_no_subs', {
+      // Verify Redis has status 'none' for customer with no subscriptions
+      const customerData = await getCustomerData(customerId);
+      expect(customerData).toEqual({
         status: 'none',
       });
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
