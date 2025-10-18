@@ -21,6 +21,9 @@ const cspHeader = `
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
+  experimental: {
+    reactCompiler: true,
+  },
   images: {
     remotePatterns: [
       {
