@@ -35,14 +35,12 @@ interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
-  halloweenDict: (typeof langDict)['promos']['halloweenBanner'];
 }
 
 export default function DashboardUI({
   children,
   lang,
   dict,
-  halloweenDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
   const supabase = createClient();
@@ -204,14 +202,6 @@ export default function DashboardUI({
           <div className="flex flex-col flex-1 w-full">
             <div className="sticky top-4 z-30 flex items-start border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
-              <PromoBanner
-                inDashboard
-                text={halloweenDict.text}
-                ctaLink={`/${lang}/dashboard/credits`}
-                ctaText={halloweenDict.ctaLoggedIn}
-                arialLabelDismiss={halloweenDict.arialLabelDismiss}
-                isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-              />
             </div>
 
             <main
