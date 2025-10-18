@@ -21,6 +21,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Code Quality**: Biome for linting and formatting
 - **Package Manager**: pnpm 9
 - **Internationalization**: English, Spanish, and German support
+- **Notifications**: Novu for real-time in-app notifications
 
 ## Architecture Overview
 
@@ -255,6 +256,7 @@ Key environment variables include:
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
+- **Novu Notifications**: `NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER`, `NOVU_API_KEY`, `NEXT_PUBLIC_NOVU_SOCKET_URL`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
 - **Production**: Environment-specific configurations for Sentry and CSP

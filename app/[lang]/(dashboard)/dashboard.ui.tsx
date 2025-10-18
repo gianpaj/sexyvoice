@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { NovuInbox } from '@/components/notifications/novu-inbox';
 
 import {
   Sidebar,
@@ -39,7 +40,7 @@ import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
+  dict: typeof langDict;
 }
 
 export default function DashboardUI({
@@ -146,24 +147,33 @@ export default function DashboardUI({
         <SidebarProvider defaultOpen>
           <Sidebar collapsible="icon">
             <SidebarHeader>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0 items-end"
-                  >
-                    <div className="aspect-square group-data-[collapsible=icon]:size-9">
-                      <Image
-                        src={logoSmall}
-                        alt="Logo"
-                        width={221 / 8}
-                        height={292 / 8}
-                      />
-                    </div>
-                    <span className="text-xl font-semibold">exyVoice.ai</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <div className="flex items-center justify-between w-full p-2">
+                <SidebarMenu className="flex-1">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0 items-end flex-1"
+                    >
+                      <div className="aspect-square group-data-[collapsible=icon]:size-9">
+                        <Image
+                          src={logoSmall}
+                          alt="Logo"
+                          width={221 / 8}
+                          height={292 / 8}
+                        />
+                      </div>
+                      <span className="text-xl font-semibold">exyVoice.ai</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+                <div className="group-data-[collapsible=icon]:hidden">
+                  <NovuInbox
+                    locale={lang}
+                    dictionary={dict}
+                    className="ml-2"
+                  />
+                </div>
+              </div>
             </SidebarHeader>
 
             <SidebarContent>
@@ -192,7 +202,7 @@ export default function DashboardUI({
             <SidebarFooter>
               <CreditsSection
                 lang={lang}
-                dict={dict}
+                dict={dict.creditsSection}
                 credits={credits?.amount || 0}
                 credit_transactions={credit_transactions || []}
               />
@@ -202,8 +212,12 @@ export default function DashboardUI({
           </Sidebar>
 
           <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
+            <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
+              <NovuInbox
+                locale={lang}
+                dictionary={dict}
+              />
             </div>
 
             <main
