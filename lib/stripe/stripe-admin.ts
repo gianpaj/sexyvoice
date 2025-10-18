@@ -77,13 +77,16 @@ export async function getCustomerSession() {
 
     return customerSession;
   } catch (error) {
+    console.error('Error creating Stripe customer session:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      return null;
+    }
     Sentry.captureException({
       message: 'Error creating Stripe customer session',
       error,
       userId: user.id,
       stripe_id: dbUser.stripe_id,
     });
-    console.error('Error creating Stripe customer session:', error);
     throw error;
   }
 }

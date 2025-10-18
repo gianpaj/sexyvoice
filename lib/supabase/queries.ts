@@ -116,11 +116,11 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
-export const insertCreditTransaction = async (
+export const insertSubscriptionCreditTransaction = async (
   userId: string,
   subscriptionId: string,
   amount: number,
-  subAmount: number,
+  dollarAmount: number,
 ) => {
   const supabase = await createClient();
 
@@ -144,7 +144,7 @@ export const insertCreditTransaction = async (
         subscription_id: subscriptionId,
         amount,
         type: 'purchase',
-        description: `${subAmount} USD subscription`,
+        description: `${dollarAmount} USD subscription`,
       });
       await updateUserCredits(userId, amount);
     }
@@ -154,18 +154,19 @@ export const insertCreditTransaction = async (
       subscription_id: subscriptionId,
       amount,
       type: 'purchase',
-      description: `${subAmount} USD subscription`,
+      description: `${dollarAmount} USD subscription`,
     });
     await updateUserCredits(userId, amount);
   }
 };
 
-export const insertTopupTransaction = async (
+export const insertTopupCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
   amount: number,
   dollarAmount: number,
   priceId: string,
+  promo?: string | null,
 ) => {
   const supabase = await createClient();
 
@@ -197,7 +198,11 @@ export const insertTopupTransaction = async (
     type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
     reference_id: paymentIntentId,
-    metadata: { priceId, dollarAmount },
+    metadata: {
+      priceId,
+      dollarAmount,
+      ...(promo && { promo }),
+    },
   });
 
   if (error) throw error;
@@ -232,8 +237,9 @@ export const isFreemiumUserOverLimit = async (
     .eq('user_id', userId);
 
   // Check if user has only freemium transactions
-  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 &&
-    allTransactions?.every(transaction => transaction.type === 'freemium');
+  const hasOnlyFreemium =
+    (allTransactions?.length ?? 0) > 0 &&
+    allTransactions?.every((transaction) => transaction.type === 'freemium');
 
   if (freemiumError) {
     // For "No rows found", it's not an error, just not a freemium user.

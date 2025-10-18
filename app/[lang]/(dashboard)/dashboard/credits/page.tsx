@@ -169,6 +169,8 @@ export default async function CreditsPage(props: {
     </div>
   );
 }
+
+// Subscription plans
 const NextStripePricingTable = ({
   clientSecret,
 }: {

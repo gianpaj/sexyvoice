@@ -3,29 +3,10 @@
 import * as Sentry from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
+import { getTopupPackages, type PackageType } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-
-const TOPUP_PACKAGES = {
-  standard: {
-    priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
-    credits: 10000,
-    amount: 500, // $5.00
-  },
-  base: {
-    priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
-    credits: 25000,
-    amount: 1000, // $10.00
-  },
-  premium: {
-    priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
-    credits: 300000,
-    amount: 9900, // $99.00
-  },
-} as const;
-
-type PackageType = keyof typeof TOPUP_PACKAGES;
 
 export async function createCheckoutSession(
   data: FormData,
@@ -36,7 +17,7 @@ export async function createCheckoutSession(
       'uiMode',
     ) as Stripe.Checkout.SessionCreateParams.UiMode;
 
-    const package_ = TOPUP_PACKAGES[packageType as PackageType];
+    const package_ = getTopupPackages('en')[packageType];
 
     // Verify the price ID exists to avoid runtime errors
     if (!package_.priceId) {
@@ -49,7 +30,7 @@ export async function createCheckoutSession(
         },
         extra: {
           package_type: packageType,
-          available_packages: Object.keys(TOPUP_PACKAGES),
+          available_packages: Object.keys(getTopupPackages('en')),
         },
       });
       throw error;
@@ -90,7 +71,7 @@ export async function createCheckoutSession(
           },
         ],
         ...(ui_mode === 'hosted' && {
-          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&amount=${package_.credits}`,
+          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,
@@ -98,8 +79,11 @@ export async function createCheckoutSession(
           userId: user.id,
           packageType,
           credits: package_.credits.toString(),
-          dollarAmount: (package_.amount / 100).toString(),
+          dollarAmount: package_.dollarAmount.toString(),
           type: 'topup',
+          ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
+            promo: process.env.NEXT_PUBLIC_PROMO_ID,
+          }),
         },
       });
 
