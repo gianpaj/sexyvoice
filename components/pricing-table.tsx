@@ -37,9 +37,6 @@ async function PricingTable({ lang }: { lang: Locale }) {
       pricePer1kCredits: TOPUP_PACKAGES.standard.pricePer1kCredits,
       description: pPlans.standard.description,
       buttonText: pPlans.buyCredits,
-      // buttonText: isPromoEnabled
-      //   ? `${pPlans.buyCredits} 🎃`
-      //   : pPlans.buyCredits,
       buttonVariant: 'default',
       creditsText: pPlans.standard.credits.replace(
         '__NUM_CREDITS__',
@@ -56,9 +53,6 @@ async function PricingTable({ lang }: { lang: Locale }) {
       saveFromPrevPlanPer1kCredits: 0.333,
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
-      // buttonText: isPromoEnabled
-      //   ? `${pPlans.buyCredits} 🎃`
-      //   : pPlans.buyCredits,
       buttonVariant: 'default',
       creditsText: pPlans.pro.credits.replace(
         '__NUM_CREDITS__',
@@ -99,7 +93,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
                       variant="secondary"
                       className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
                     >
-                      26.7% cheaper
+                      20% cheaper
                     </Badge>
                   )
                 )}
@@ -142,7 +136,6 @@ async function PricingTable({ lang }: { lang: Locale }) {
                   </span>
                 )}
               </div>
-              {/* @ts-ignore */}
               {plan.features.map((feature, i) => (
                 <div key={i} className="flex items-center text-sm">
                   <Check className="mr-2 size-4 min-w-fit" />

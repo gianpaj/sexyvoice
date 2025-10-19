@@ -123,7 +123,7 @@ export default async function CreditsPage(props: {
       <div>
         <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
         <p className="text-muted-foreground mb-6">{dict.topup.description}</p>
-        <CreditTopup dict={dict} />
+        <CreditTopup dict={dict} lang={lang} />
       </div>
 
       {/* {products.map((product) => (

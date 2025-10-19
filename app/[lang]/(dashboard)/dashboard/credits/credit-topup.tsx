@@ -15,58 +15,72 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type lang from '@/lib/i18n/dictionaries/en.json';
-import type { PackageType } from '@/lib/stripe/pricing';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { getTopupPackages, PackageType } from '@/lib/stripe/pricing';
 
-const getTopupPackages = (dict: (typeof lang)['credits']) => {
-  const isHalloweenActive = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+interface CreditTopupProps {
+  dict: (typeof lang)['credits'];
+  lang: Locale;
+}
 
-  return [
+export function CreditTopup({ dict, lang }: CreditTopupProps) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const pricingPackages = getTopupPackages(lang);
+  const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+
+  const promoEmoji = isPromoEnabled ? ' 🎃' : '';
+
+  const TOPUP_PACKAGES = [
     {
       id: 'starter',
-      name: dict.topup.packages.starter.name,
-      price: '$5',
-      credits: isHalloweenActive ? '13,000 🎃' : '10,000',
-      value: isHalloweenActive ? 'Halloween Bonus!' : '',
+      name: dict.topup.packages.starter.name.replace(
+        '__NUM_CREDITS__',
+        pricingPackages.standard.baseCreditsLocale,
+      ),
+      price: `$${pricingPackages.starter.dollarAmount}`,
+      credits: pricingPackages.starter.credits.toLocaleString(lang),
+      value: isPromoEnabled
+        ? `Promo Bonus! ${promoEmoji} +${pricingPackages.starter.promoBonus}`
+        : '',
       popular: false,
       description: dict.topup.packages.starter.description,
     },
     {
       id: 'standard',
-      name: dict.topup.packages.standard.name,
-      price: '$10',
-      credits: isHalloweenActive ? '30,000 🎃' : '25,000',
-      value: isHalloweenActive
-        ? 'Halloween Bonus!'
+      name: dict.topup.packages.standard.name.replace(
+        '__NUM_CREDITS__',
+        pricingPackages.standard.baseCreditsLocale,
+      ),
+      price: `$${pricingPackages.standard.dollarAmount}`,
+      credits: pricingPackages.standard.credits.toLocaleString(lang),
+      value: isPromoEnabled
+        ? `Promo Bonus! ${promoEmoji} +${pricingPackages.standard.promoBonus}`
         : dict.topup.packages.standard.value,
       popular: true,
       description: dict.topup.packages.standard.description,
     },
     {
       id: 'pro',
-      name: dict.topup.packages.pro.name,
-      price: '$99',
-      credits: isHalloweenActive ? '235,000 🎃' : '220,000',
-      value: isHalloweenActive
-        ? 'Halloween Bonus!'
+      name: dict.topup.packages.pro.name.replace(
+        '__NUM_CREDITS__',
+        pricingPackages.pro.baseCreditsLocale,
+      ),
+      price: `$${pricingPackages.pro.dollarAmount}`,
+      credits: pricingPackages.pro.credits.toLocaleString(lang),
+      value: isPromoEnabled
+        ? `Promo Bonus! ${promoEmoji} +${pricingPackages.pro.promoBonus}`
         : dict.topup.packages.pro.value,
       popular: false,
       description: dict.topup.packages.pro.description,
     },
   ];
-};
-
-interface CreditTopupProps {
-  dict: (typeof lang)['credits'];
-}
-
-export function CreditTopup({ dict }: CreditTopupProps) {
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const TOPUP_PACKAGES = getTopupPackages(dict);
 
   const formAction = async (data: FormData): Promise<void> => {
-    const packageType = data.get('packageType') as PackageType;
-
+    const packageType = data.get('packageType') as
+      | 'starter'
+      | 'standard'
+      | 'pro';
     setLoading(packageType);
     setError(null);
 

@@ -12,11 +12,7 @@ import {
 } from 'vitest';
 
 import { POST } from '@/app/api/stripe/webhook/route';
-import {
-  getCustomerData,
-  setCustomerData,
-  setTestRedisClient,
-} from '@/lib/redis/queries';
+import { getCustomerData, setTestRedisClient } from '@/lib/redis/queries';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
