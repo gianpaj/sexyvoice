@@ -57,10 +57,9 @@ export function PromoBanner({
   return (
     <div
       className={cn(
-        'container text-white sm:py-3 py-1 relative mx-auto px-4 sm:h-8 sm:flex flex-inline items-center justify-between',
+        'portrait:container container text-white sm:py-6 py-4 relative mx-auto px-4 sm:h-8 sm:flex flex-inline items-center justify-between pb-3',
         {
-          'px-2': inDashboard,
-          'pb-3': inDashboard,
+          'bg-red-900/30 backdrop-blur-sm absolute z-50': inDashboard,
         },
       )}
     >
@@ -75,15 +74,15 @@ export function PromoBanner({
           asChild
           size="sm"
           variant="outline"
-          className="text-orange-600 hover:bg-gray-900 font-semibold whitespace-nowrap"
+          className="text-orange-600 hover:bg-gray-900 bg-gray-800/70 font-semibold whitespace-nowrap"
         >
           <Link href={ctaLink}>{ctaText} 🎃</Link>
         </Button>
 
         <Button
           size="sm"
-          variant="outline"
-          className="text-orange-700 hover:bg-gray-900"
+          variant="ghost"
+          className="text-orange-700"
           onClick={handleDismissBanner}
           aria-label={arialLabelDismiss}
         >
