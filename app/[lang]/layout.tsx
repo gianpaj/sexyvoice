@@ -1,9 +1,9 @@
+import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
 
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,6 +25,13 @@ export async function generateMetadata(
 
   const pathname = new URL(alternates?.canonical?.url!).pathname;
   const pagePath = pathname.replace(`/${lang}`, '') || '/';
+
+  // Validate that the language is a supported locale
+  if (!i18n.locales.includes(lang as Locale)) {
+    return {
+      title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+    };
+  }
 
   const dict = await getDictionary(lang);
   // @ts-ignore FIXME

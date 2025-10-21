@@ -26,25 +26,10 @@ function getLocaleFromPathname(request: NextRequest): string {
   return i18n.defaultLocale;
 }
 
-const publicRoutesWithoutLocale = [
-  '/privacy-policy',
-  '/terms',
-  '/manifest.json',
-];
-
 const publicRoutesWithoutAuth = ['/api/stripe/webhook', '/api/daily-stats'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
-  // Skip middleware for static files that should be served directly
-  if (pathname.match(/\.(ico|png|jpg|jpeg|gif|webp|svg|mp3)$/)) {
-    return NextResponse.next();
-  }
-
-  if (publicRoutesWithoutLocale.includes(pathname)) {
-    return NextResponse.next();
-  }
 
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) =>
@@ -90,11 +75,15 @@ export const config = {
      * - _next/image (image optimization files)
      * - ingest (Posthug rewrites)
      * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
+     * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
+     * - sitemap - xml
      * - /{2-letter-lang}/blog/* paths
+     * - /privacy-policy
+     * - /terms
+     * - /manifest.json
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3|xml)$).*)',
+    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|privacy-policy|terms|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },
