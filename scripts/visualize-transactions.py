@@ -110,37 +110,44 @@ def create_monthly_trends(df, save_path):
 
     # Monthly transaction count
     monthly_transactions = df.groupby('month').size()
-    axes[0, 0].plot(range(len(monthly_transactions)), monthly_transactions.values, marker='o', linewidth=2, markersize=6)
+    month_labels = [str(m) for m in monthly_transactions.index]
+    x_pos = range(len(monthly_transactions))
+
+    axes[0, 0].plot(x_pos, monthly_transactions.values, marker='o', linewidth=2, markersize=6)
     axes[0, 0].set_title('Monthly Transaction Count')
     axes[0, 0].set_ylabel('Number of Transactions')
+    axes[0, 0].set_xticks(x_pos)
+    axes[0, 0].set_xticklabels(month_labels, rotation=45)
     axes[0, 0].grid(True, alpha=0.3)
-    axes[0, 0].tick_params(axis='x', rotation=45)
 
     # Monthly unique users
     if 'user_id' in df.columns:
         monthly_users = df.groupby('month')['user_id'].nunique()
-        axes[0, 1].plot(range(len(monthly_users)), monthly_users.values, marker='s', linewidth=2, markersize=6, color='orange')
+        axes[0, 1].plot(x_pos, monthly_users.values, marker='s', linewidth=2, markersize=6, color='orange')
         axes[0, 1].set_title('Monthly Unique Users')
         axes[0, 1].set_ylabel('Unique Users')
+        axes[0, 1].set_xticks(x_pos)
+        axes[0, 1].set_xticklabels(month_labels, rotation=45)
         axes[0, 1].grid(True, alpha=0.3)
-        axes[0, 1].tick_params(axis='x', rotation=45)
 
     # Monthly revenue
     if 'dollarAmount' in df.columns:
         monthly_revenue = df.groupby('month')['dollarAmount'].sum()
-        axes[1, 0].plot(range(len(monthly_revenue)), monthly_revenue.values, marker='^', linewidth=2, markersize=6, color='green')
+        axes[1, 0].plot(x_pos, monthly_revenue.values, marker='^', linewidth=2, markersize=6, color='green')
         axes[1, 0].set_title('Monthly Revenue')
         axes[1, 0].set_ylabel('Revenue ($)')
+        axes[1, 0].set_xticks(x_pos)
+        axes[1, 0].set_xticklabels(month_labels, rotation=45)
         axes[1, 0].grid(True, alpha=0.3)
-        axes[1, 0].tick_params(axis='x', rotation=45)
 
         # Average transaction value
         monthly_avg = df.groupby('month')['dollarAmount'].mean()
-        axes[1, 1].plot(range(len(monthly_avg)), monthly_avg.values, marker='d', linewidth=2, markersize=6, color='red')
+        axes[1, 1].plot(x_pos, monthly_avg.values, marker='d', linewidth=2, markersize=6, color='red')
         axes[1, 1].set_title('Monthly Average Transaction Value')
         axes[1, 1].set_ylabel('Average Value ($)')
+        axes[1, 1].set_xticks(x_pos)
+        axes[1, 1].set_xticklabels(month_labels, rotation=45)
         axes[1, 1].grid(True, alpha=0.3)
-        axes[1, 1].tick_params(axis='x', rotation=45)
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
