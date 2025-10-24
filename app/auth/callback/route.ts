@@ -28,16 +28,7 @@ export async function GET(request: Request) {
 
   // Add Stripe customer creation
   if (user) {
-    const stripe_id = await createOrRetrieveCustomer({
-      uuid: user.id,
-      email,
-    });
-    await supabase
-      .from('profiles')
-      .update({
-        stripe_id,
-      })
-      .eq('id', user.id);
+    await createOrRetrieveCustomer(user.id, email);
 
     const posthog = PostHogClient();
 

@@ -76,18 +76,8 @@ export default async function CreditsPage(props: {
   }
 
   if (!userData.stripe_id) {
-    const stripe_id = await createOrRetrieveCustomer({
-      uuid: user.id,
-      email: user.email!,
-    });
-    await supabase
-      .from('profiles')
-      .update({
-        stripe_id,
-      })
-      .eq('id', user.id);
+    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
     userData.stripe_id = stripe_id;
-    console.log('created Stripe customer id');
   }
 
   const customerData = await getCustomerData(userData.stripe_id);
