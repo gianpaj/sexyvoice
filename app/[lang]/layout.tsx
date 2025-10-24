@@ -36,7 +36,6 @@ export async function generateMetadata(
   const dict = await getDictionary(lang);
   // @ts-ignore FIXME
   const pageTitle = dict.pages[pagePath];
-  // @ts-ignore FIXME
   const defaultTitle = dict.pages.defaultTitle;
 
   const title = pageTitle || defaultTitle;

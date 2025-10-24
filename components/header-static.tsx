@@ -21,7 +21,6 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
               height={292 / 8}
             />
           </div>
-          {/* <div className="flex h-16 items-center px-6"> */}
           <span className="text-xl text-white font-semibold">exyVoice.ai</span>
         </Link>
 

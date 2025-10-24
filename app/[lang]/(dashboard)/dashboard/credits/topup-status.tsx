@@ -18,17 +18,15 @@ export function TopupStatus({ dict }: TopupStatusProps) {
   const [status, setStatus] = useState<'success' | 'error' | 'canceled' | null>(
     null,
   );
-  const [amount, setAmount] = useState<string | null>(null);
+  const creditsAmount = searchParams.get('creditsAmount');
 
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
     const error = searchParams.get('error');
-    const creditAmount = searchParams.get('amount');
 
     if (success === 'true') {
       setStatus('success');
-      setAmount(creditAmount);
       setIsVisible(true);
     } else if (canceled === 'true') {
       setStatus('canceled');
@@ -85,10 +83,10 @@ export function TopupStatus({ dict }: TopupStatusProps) {
           </div>
           <div className="grid grid-cols-[2fr,1fr,auto]">
             <AlertDescription className="text-muted-foreground">
-              {amount
+              {creditsAmount
                 ? dict.status.success.descriptionWithAmount.replace(
-                    '{amount}',
-                    Number(amount).toLocaleString(),
+                    '{creditsAmount}',
+                    Number(creditsAmount).toLocaleString(),
                   )
                 : dict.status.success.description}
             </AlertDescription>

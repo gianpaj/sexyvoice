@@ -8,6 +8,8 @@ import { Suspense } from 'react';
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
+import { PromoBanner } from '@/components/promo-banner';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
@@ -24,9 +26,10 @@ export const generateStaticParams = ({
   allPosts
     .map((post) => {
       // Determine locale from file extension or default to 'en'
-      const locale = i18n.locales.find((loc) =>
-        post._raw.flattenedPath.endsWith(`.${loc}`)
-      ) || i18n.defaultLocale;
+      const locale =
+        i18n.locales.find((loc) =>
+          post._raw.flattenedPath.endsWith(`.${loc}`),
+        ) || i18n.defaultLocale;
 
       return {
         slug: post._raw.flattenedPath,
@@ -109,10 +112,7 @@ export async function generateMetadata({
     alternates: {
       canonical: postUrl,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [
-          locale,
-          `/${locale}/blog/${post.slug}`,
-        ])
+        i18n.locales.map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
       ),
     },
   };
@@ -124,6 +124,7 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
+  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
 
   if (post === undefined) {
     return <div>Post not found ({params.slug})</div>;
@@ -191,6 +192,14 @@ const PostLayout = async (props: {
       <Script id="breadcrumb-schema" type="application/ld+json">
         {JSON.stringify(breadcrumbSchema)}
       </Script>
+
+      <PromoBanner
+        text={halloweenDict.text}
+        ctaText={halloweenDict.ctaLoggedOut}
+        ctaLink={`/${lang}/signup`}
+        arialLabelDismiss={halloweenDict.arialLabelDismiss}
+        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+      />
 
       <Suspense fallback={<div>Loading...</div>}>
         <Header lang={lang} />

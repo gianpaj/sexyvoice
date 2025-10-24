@@ -15,10 +15,11 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Caching**: Upstash Redis for audio URL caching
 - **Styling**: Tailwind CSS 3.4, shadcn/ui components, Radix UI primitives
 - **Content**: Contentlayer2 for MDX blog processing
-- **Payments**: Stripe integration
+- **Payments**: Stripe integration with promotional bonus system
 - **Monitoring**: Sentry error tracking and PostHog analytics
 - **AI Services**: Google Generative AI for text enhancement
 - **Code Quality**: Biome for linting and formatting
+- **Testing**: Vitest for unit/integration tests, MSW for API mocking
 - **Package Manager**: pnpm 9
 - **Internationalization**: English, Spanish, and German support
 
@@ -40,17 +41,24 @@ app/[lang]/                    # Internationalized routes
 ├── (auth)/                    # Auth-related pages (login, sign up, etc.)
 ├── (dashboard)/               # Protected dashboard routes
 │   └── dashboard/             # Main dashboard with nested routes
+├── actions/                   # Server actions (promos, stripe)
 ├── blog/[slug]/               # Dynamic blog post pages
 └── page.tsx                   # Landing page
 
 lib/
 ├── supabase/                  # Database client, queries, types
 ├── i18n/                      # Internationalization config and dictionaries
-└── stripe/                    # Payment processing
+└── stripe/                    # Payment processing, pricing configuration
 
 components/
 ├── ui/                        # shadcn/ui components
+├── promo-banner.tsx           # Generic promotion banner
 └── [feature-components]       # App-specific components
+
+tests/
+├── utils/                     # Test utilities and helpers
+├── setup.ts                   # Vitest setup and mocks
+└── *.test.ts                  # Test files
 ```
 
 ### Database Schema
@@ -163,8 +171,11 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `pnpm type-check` - Run TypeScript type checking
 
 ### Testing
-- `pnpm test` - Run unit tests (lib/utils.test.ts)
-- `pnpm test:watch` - Run unit tests in watch mode
+- `pnpm test` - Run all tests with Vitest
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm test:ui` - Run tests with UI interface
+- `pnpm test:coverage` - Generate test coverage report
+- `pnpm test:legacy` - Run legacy tests with tsx (lib/utils.test.ts)
 
 ### Content & Data
 - `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)
@@ -213,12 +224,19 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Implement voice privacy controls (public/private)
 - Validate audio content before storage
 
-## Testing Requirements
+### Testing Requirements
 
 ### Testing Guidelines
-- Write unit tests for utility functions (`lib/utils.test.ts`)
-- Plan to implement Playwright for E2E testing
-- Plan to test critical user flows (authentication, voice generation, credit management)
+- **Framework**: Vitest with MSW for API mocking
+- **Test Files**: Located in `tests/` directory with `*.test.ts` naming
+- **Coverage**: Voice generation API, Stripe webhooks, utility functions
+- **Mocking**: MSW handlers for external APIs (Replicate, Stripe, Supabase)
+- **Setup**: Global test setup in `tests/setup.ts` with environment variable mocking
+- **Utilities**: Reusable test helpers in `tests/utils/`
+- **CI/CD**: GitHub Actions workflow for automated testing
+- **E2E**: Plan to implement Playwright for end-to-end testing
+- Test critical flows: voice generation, credit management, payment webhooks
+- See `tests/README.md` for detailed testing documentation
 
 ## Content Management
 
@@ -253,12 +271,31 @@ Key environment variables include:
 - **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob Storage)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
-- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups
+- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
+- **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_BASE`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
 - **Production**: Environment-specific configurations for Sentry and CSP
 - Follow `.env.example` for complete list and setup instructions
+
+## Promotion System
+
+### Generic Promotion Framework
+The platform includes a flexible promotion system for credit bonuses:
+
+- **Configuration**: Environment variables control promotion state and bonus amounts
+- **Banner Component**: `promo-banner.tsx` displays dismissible promotion banners
+- **Server Actions**: `app/[lang]/actions/promos.ts` handles banner dismissal with cookie tracking
+- **Pricing Integration**: `lib/stripe/pricing.ts` calculates credit bonuses based on promotion status
+- **Client-side State**: Cookie-based dismissal tracking (30-day expiry)
+
+### Implementation Pattern
+1. Enable promotion via `NEXT_PUBLIC_PROMO_ENABLED=true`
+2. Set promotion ID (e.g., `halloween_2025`) and bonus amounts
+3. Banner displays on landing and dashboard pages with CTA
+4. Users can dismiss banner (stored in cookies)
+5. Credit packages automatically include bonus credits when enabled
 
 ## Feature Development Priorities
 
@@ -270,7 +307,7 @@ Based on TODO.md, current priorities include:
 4. **User Experience**: Share pages for audio files, usage statistics, history page with regeneration
 5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
 6. **Analytics**: Add PostHog to auth pages, track paid user status, usage monitoring
-7. **Testing**: Playwright E2E tests with test database, GitHub Actions CI/CD
+7. **Testing**: Expand test coverage, Playwright E2E tests with test database
 8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors
 
 ## Claude-Specific Instructions

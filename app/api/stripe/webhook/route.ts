@@ -4,11 +4,12 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
+import { getTopupPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
-  insertCreditTransaction,
-  insertTopupTransaction,
+  insertSubscriptionCreditTransaction,
+  insertTopupCreditTransaction,
 } from '@/lib/supabase/queries';
 
 export async function POST(req: Request) {
@@ -181,20 +182,21 @@ async function handleCheckoutSessionCompleted(
         `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
       );
 
-      await insertTopupTransaction(
+      await insertTopupCreditTransaction(
         userId,
         session.payment_intent as string,
         creditAmount,
         dollarAmountNum,
         packageType || 'unknown',
+        session.metadata?.promo || null,
       );
 
       console.log(
-        `[STRIPE HOOK] Credits added: ${creditAmount} for user ${userId}`,
+        `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
       );
     } else if (session.mode === 'subscription') {
       // Handle subscription checkout
-      const customerId = session.customer as string;
+      const customerId = session.customer as string | null;
       if (customerId) {
         await syncStripeDataToKV(customerId);
       }
@@ -250,7 +252,6 @@ async function handlePaymentIntentSucceeded(
 export async function syncStripeDataToKV(customerId: string) {
   try {
     // Fetch latest subscription data from Stripe
-    // const subscriptions = body;
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       limit: 1,
@@ -290,7 +291,7 @@ export async function syncStripeDataToKV(customerId: string) {
     await setCustomerData(customerId, subData);
 
     // console.log({ subscription });
-    console.log({ subData });
+    console.log('[STRIPE HOOK]', { subData });
 
     const userId = await getUserIdByStripeCustomerId(customerId);
     if (!userId) {
@@ -308,36 +309,49 @@ export async function syncStripeDataToKV(customerId: string) {
       return;
     }
 
-    let amount = 0;
-    let subAmount = 0;
+    const TOPUP_PACKAGES = getTopupPackages('en');
+
+    let credits = 0;
+    let dollarAmount = 0;
     switch (subData.priceId) {
-      // first is prod, 2nd is test
-      case 'price_1R4m50J2uQQSTCBsvH8hpjN2':
-      case 'price_1QncR5J2uQQSTCBsWa87AaEG':
-        amount = 10000;
-        subAmount = 5;
+      case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
+        credits = TOPUP_PACKAGES.starter.credits;
+        dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
         break;
-      case 'price_1R4m50J2uQQSTCBsKdEsgflW':
-      case 'price_1QnczMJ2uQQSTCBsUzEnvPKj':
-        amount = 25000;
-        subAmount = 10;
+      case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+        credits = TOPUP_PACKAGES.standard.credits;
+        dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
         break;
-      case 'price_1R4m50J2uQQSTCBs5j9ERzXC':
-      case 'price_1QnkyTJ2uQQSTCBsgyw7xYb8':
-        amount = 300_000;
-        subAmount = 99;
+      case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
+        credits = TOPUP_PACKAGES.pro.credits;
+        dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
         break;
       default:
-        amount = 0;
+        credits = 0;
         break;
+    }
+    if (credits === 0) {
+      const extra = {
+        customer_id: customerId,
+        priceId: subData.priceId,
+      };
+      console.error('[STRIPE HOOK] Invalid subscription price ID', extra);
+      Sentry.captureException(new Error('Invalid subscription price ID'), {
+        tags: {
+          section: 'stripe_webhook',
+          event_type: 'sync_stripe_data',
+        },
+        extra,
+      });
+      return;
     }
 
     if (subData.status === 'active') {
-      await insertCreditTransaction(
+      await insertSubscriptionCreditTransaction(
         userId,
         subData.subscriptionId,
-        amount,
-        subAmount,
+        credits,
+        dollarAmount,
       );
     }
 

@@ -2,12 +2,7 @@
 
 import type { User } from '@supabase/supabase-js';
 import { Crisp } from 'crisp-sdk-web';
-import {
-  CreditCard,
-  FileClock,
-  Mic2,
-  Wand2,
-} from 'lucide-react';
+import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -17,7 +12,8 @@ import { useEffect, useState } from 'react';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
 import { PostHogProvider } from '@/components/PostHogProvider';
-
+import { PromoBanner } from '@/components/promo-banner';
+import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -31,21 +27,22 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { createClient } from '@/lib/supabase/client';
-import type { Locale } from '@/lib/i18n/i18n-config';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
-import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { createClient } from '@/lib/supabase/client';
 
 interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
+  halloweenDict: (typeof langDict)['promos']['halloweenBanner'];
 }
 
 export default function DashboardUI({
   children,
   lang,
   dict,
+  halloweenDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
   const supabase = createClient();
@@ -80,7 +77,10 @@ export default function DashboardUI({
       return { user, creditsData };
     };
 
-    const sendUserAnalyticsData = async (user: User, creditsData: Pick<Credit, 'amount'> | null | undefined) => {
+    const sendUserAnalyticsData = async (
+      user: User,
+      creditsData: Pick<Credit, 'amount'> | null | undefined,
+    ) => {
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
@@ -201,8 +201,16 @@ export default function DashboardUI({
             </SidebarFooter>
           </Sidebar>
 
+          <PromoBanner
+            inDashboard
+            text={halloweenDict.text}
+            ctaLink={`/${lang}/dashboard/credits`}
+            ctaText={halloweenDict.ctaLoggedIn}
+            arialLabelDismiss={halloweenDict.arialLabelDismiss}
+            isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+          />
           <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
+            <div className="sticky top-4 z-30 flex items-start border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
             </div>
 

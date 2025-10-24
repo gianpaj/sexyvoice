@@ -1,7 +1,19 @@
 import { Redis } from '@upstash/redis';
+import type { Redis as IORedis } from 'ioredis';
 
 // Initialize Redis
 const redis = Redis.fromEnv();
+
+// Allow injecting a test Redis client for testing
+let testRedisClient: IORedis | null = null;
+
+export function setTestRedisClient(client: IORedis | null) {
+  testRedisClient = client;
+}
+
+function getRedisClient() {
+  return testRedisClient || redis;
+}
 
 export interface CustomerData {
   // Stripe subscription
@@ -18,13 +30,23 @@ export interface CustomerData {
 }
 
 export function setCustomerData(customerId: string, data: CustomerData) {
-  return redis.set(`stripe:customer:${customerId}`, data);
+  return getRedisClient().set(
+    `stripe:customer:${customerId}`,
+    JSON.stringify(data),
+  );
 }
 
-export function getCustomerData(
+export async function getCustomerData(
   customerId: string,
 ): Promise<CustomerData | null> {
-  return redis.get(`stripe:customer:${customerId}`);
+  const result = await getRedisClient().get(`stripe:customer:${customerId}`);
+  if (!result) return null;
+
+  // Handle both string (from ioredis) and object (from upstash) responses
+  if (typeof result === 'string') {
+    return JSON.parse(result);
+  }
+  return result as CustomerData;
 }
 
 export async function countActiveCustomerSubscriptions() {
