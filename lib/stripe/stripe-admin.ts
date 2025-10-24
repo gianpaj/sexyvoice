@@ -4,8 +4,6 @@ import Stripe from 'stripe';
 import { getUserById } from '../supabase/queries';
 import { createClient } from '../supabase/server';
 
-// import { createClient } from '../supabase/server';
-
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
 }
@@ -15,21 +13,70 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // https://github.com/Domogo/t3-supabase-drizzle-app-starter
-export async function createOrRetrieveCustomer({
-  uuid,
-  email,
-}: {
-  uuid: string;
-  email: string;
-}) {
+export async function createOrRetrieveCustomer(userId: string, email: string) {
+  const constomersResults = await stripe.customers.search({
+    query: `metadata['supabaseUUID']:'${userId}'`,
+  });
+
+  if (constomersResults.data.length > 1) {
+    console.error(
+      `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
+    );
+    Sentry.captureMessage(
+      `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
+      {
+        level: 'warning',
+        extra: {
+          customerCount: constomersResults.data.length,
+          email,
+          userId,
+        },
+      },
+    );
+  }
+
+  if (constomersResults.data.length && constomersResults.data[0]?.id) {
+    return constomersResults.data[0].id;
+  }
+
   const customers = await stripe.customers.list({ email });
 
-  if (customers.data.length && customers.data[0]?.id === uuid)
+  if (customers.data.length > 1) {
+    console.error(
+      `Multiple customers found for email ${email}. Using the first one.`,
+    );
+    Sentry.captureMessage(
+      `Multiple customers found for email ${email}. Using the first one.`,
+      {
+        level: 'warning',
+        extra: { customerCount: customers.data.length, email, userId },
+      },
+    );
+  }
+
+  if (customers.data.length && customers.data[0]?.id) {
     return customers.data[0].id;
+  }
 
   const customer = await stripe.customers.create({
     email,
-    metadata: { supabaseUUID: uuid },
+    metadata: { supabaseUUID: userId },
+  });
+
+  const supabase = await createClient();
+  await supabase
+    .from('profiles')
+    .update({
+      stripe_id: customer.id,
+    })
+    .eq('id', userId);
+
+  console.info(
+    `Created new Stripe customer with id ${customer.id} (${userId}) for email ${email}`,
+  );
+  Sentry.captureMessage('Created new Stripe customer', {
+    level: 'info',
+    extra: { customerId: customer.id, email, userId },
   });
 
   return customer.id;
