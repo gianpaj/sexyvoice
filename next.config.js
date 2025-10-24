@@ -21,6 +21,7 @@ const cspHeader = `
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
+  reactCompiler: true,
   images: {
     remotePatterns: [
       {
@@ -35,9 +36,6 @@ let nextConfig = {
         port: '',
       },
     ],
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   // images: { unoptimized: true },
 
