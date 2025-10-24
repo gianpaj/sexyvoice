@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
@@ -29,6 +30,14 @@ export async function GET(request: Request) {
   // Add Stripe customer creation
   if (user) {
     await createOrRetrieveCustomer(user.id, email);
+    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
+    if (!stripe_id) {
+      console.error('Failed to create Stripe customer.');
+      Sentry.captureMessage('Failed to create Stripe customer.', {
+        level: 'error',
+        extra: { userId: user.id, email: user.email },
+      });
+    }
 
     const posthog = PostHogClient();
 
