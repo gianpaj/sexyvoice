@@ -54,7 +54,7 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
     );
   }
 
-  if (customers.data.length && customers.data[0]?.id === userId) {
+  if (customers.data.length && customers.data[0]?.id) {
     return customers.data[0].id;
   }
 
