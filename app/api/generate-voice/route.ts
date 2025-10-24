@@ -18,7 +18,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
+import { estimateCredits } from '@/lib/ai';
 
 const { logger, captureException } = Sentry;
 
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voice, voiceObj.model);
+    const estimate = await estimateCredits(text, voice, voiceObj.model);
 
     // console.log({ estimate });
 

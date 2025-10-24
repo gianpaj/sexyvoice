@@ -12,7 +12,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
+import { estimateCredits } from '@/lib/ai';
 
 // File validation constants
 const ALLOWED_TYPES = [
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
     const currentAmount = await getCredits(user.id);
 
     // Estimate credits for voice cloning generation (higher cost than regular)
-    const estimate = estimateCredits(text, 'clone');
+    const estimate = await estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
       Sentry.captureMessage('Insufficient credits', {
