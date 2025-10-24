@@ -29,7 +29,6 @@ export async function GET(request: Request) {
 
   // Add Stripe customer creation
   if (user) {
-    await createOrRetrieveCustomer(user.id, email);
     const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
     if (!stripe_id) {
       console.error('Failed to create Stripe customer.');

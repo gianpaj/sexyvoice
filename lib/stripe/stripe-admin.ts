@@ -74,9 +74,10 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
   console.info(
     `Created new Stripe customer with id ${customer.id} (${userId}) for email ${email}`,
   );
-  Sentry.captureMessage('Created new Stripe customer', {
-    level: 'info',
-    extra: { customerId: customer.id, email, userId },
+  Sentry.logger.info('Created new Stripe customer', {
+    customerId: customer.id,
+    email,
+    userId,
   });
 
   return customer.id;
