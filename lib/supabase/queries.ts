@@ -1,18 +1,11 @@
 import { createClient } from './server';
+import { getCurrentBalance } from './credits';
 
 const MAX_FREE_GENERATIONS = 6;
 
 export async function getCredits(userId: string): Promise<number> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) throw error;
-
-  return data.amount;
+  // Use new event-sourced balance calculation
+  return await getCurrentBalance(userId);
 }
 
 export async function getVoiceIdByName(
@@ -32,6 +25,8 @@ export async function getVoiceIdByName(
   return data;
 }
 
+// DEPRECATED: Use deductCredits from './credits' instead
+// Kept for backward compatibility during migration
 export async function reduceCredits({
   userId,
   currentAmount,
@@ -41,16 +36,12 @@ export async function reduceCredits({
   currentAmount: number;
   amount: number;
 }) {
-  const supabase = await createClient();
-
-  const newAmount = (currentAmount || 0) - amount;
-
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: newAmount })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
+  // This function is deprecated - credits are now managed via transactions
+  // The actual deduction should be done via deductCredits() in the new system
+  console.warn('reduceCredits() is deprecated. Use deductCredits() from ./credits instead.');
+  
+  // For now, we'll skip the direct balance update since transactions handle it
+  // This prevents double-deduction during the migration period
 }
 
 export async function saveAudioFile({
@@ -64,6 +55,8 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  estimated_credits,
+  status = 'completed',
 }: {
   userId: string;
   filename: string;
@@ -75,6 +68,8 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  estimated_credits?: number;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
 }) {
   const supabase = await createClient();
 
@@ -89,6 +84,8 @@ export async function saveAudioFile({
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    estimated_credits: estimated_credits || credits_used,
+    status,
   });
 }
 
@@ -122,42 +119,20 @@ export const insertCreditTransaction = async (
   amount: number,
   subAmount: number,
 ) => {
-  const supabase = await createClient();
-
-  try {
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('subscription_id', subscriptionId)
-      .single();
-
-    if (data) {
-      console.log('Transaction already exists', {
-        userId,
-        subscriptionId,
-        data,
-      });
-    } else {
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        subscription_id: subscriptionId,
-        amount,
-        type: 'purchase',
-        description: `${subAmount} USD subscription`,
-      });
-      await updateUserCredits(userId, amount);
-    }
-  } catch (_error) {
-    await supabase.from('credit_transactions').insert({
-      user_id: userId,
-      subscription_id: subscriptionId,
-      amount,
-      type: 'purchase',
-      description: `${subAmount} USD subscription`,
-    });
-    await updateUserCredits(userId, amount);
-  }
+  // Use new addCredits function for proper event-sourced approach
+  const { addCredits } = await import('./credits');
+  
+  return await addCredits({
+    userId,
+    amount,
+    type: 'subscription_grant',
+    subscriptionId,
+    referenceId: subscriptionId,
+    referenceType: 'subscription',
+    description: `${subAmount} USD subscription`,
+    metadata: { dollarAmount: subAmount },
+    idempotencyKey: `sub_${subscriptionId}_${userId}`
+  });
 };
 
 export const insertTopupTransaction = async (
@@ -167,57 +142,30 @@ export const insertTopupTransaction = async (
   dollarAmount: number,
   priceId: string,
 ) => {
-  const supabase = await createClient();
-
-  try {
-    // Check if transaction already exists to prevent duplicates
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
-
-    if (data) {
-      console.log('Topup transaction already exists', {
-        userId,
-        paymentIntentId,
-        data,
-      });
-      return;
-    }
-  } catch (_error) {
-    // Transaction doesn't exist, continue with insertion
-  }
-
-  // Insert the transaction
-  const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
-    amount: amount,
+  // Use new addCredits function for proper event-sourced approach
+  const { addCredits } = await import('./credits');
+  
+  return await addCredits({
+    userId,
+    amount,
     type: 'topup',
+    referenceId: paymentIntentId,
+    referenceType: 'stripe_payment',
     description: `Credit top-up - $${dollarAmount}`,
-    reference_id: paymentIntentId,
     metadata: { priceId, dollarAmount },
+    idempotencyKey: `topup_${paymentIntentId}`
   });
-
-  if (error) throw error;
-
-  // Update user's credit balance using the database function
-  await updateUserCredits(userId, amount);
 };
 
+// DEPRECATED: Credits are now managed via transactions
+// Kept for backward compatibility during migration
 export const updateUserCredits = async (
   userId: string,
   creditAmount: number,
 ) => {
-  const supabase = await createClient();
-
-  const { error } = await supabase.rpc('increment_user_credits', {
-    user_id_var: userId,
-    credit_amount: creditAmount,
-  });
-
-  if (error) throw error;
+  console.warn('updateUserCredits() is deprecated. Credits are now managed via event-sourced transactions.');
+  // In the new system, credits are automatically calculated from transactions
+  // No direct balance updates needed
 };
 
 export const isFreemiumUserOverLimit = async (
