@@ -269,6 +269,66 @@ def create_transaction_types_analysis(df, save_path):
     plt.close()
     print(f"Transaction types chart saved to: {save_path}")
 
+def create_transaction_amounts_analysis(df, save_path):
+    """Create transaction dollar amounts analysis chart"""
+    if 'dollarAmount' not in df.columns:
+        print("Missing dollarAmount column")
+        exit(1)
+
+    # Filter out null dollar amounts
+    df_amounts = df[df['dollarAmount'].notna()].copy()
+
+    if len(df_amounts) == 0:
+        print("No transactions with dollar amounts found")
+        return
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    fig.suptitle('Transaction Dollar Amounts Analysis', fontsize=16, fontweight='bold')
+
+    # Dollar amounts distribution (pie chart by ranges)
+    # Create dollar amount ranges
+    bins = [5, 10, 99, float('inf')]
+    labels = ['$5', '$10', '$99']
+    df_amounts['amount_range'] = pd.cut(df_amounts['dollarAmount'], bins=bins, labels=labels, include_lowest=True)
+
+    amount_counts = df_amounts['amount_range'].value_counts()
+    axes[0].pie(amount_counts.values, labels=amount_counts.index, autopct='%1.1f%%', startangle=90)
+    axes[0].set_title('Dollar Amount Distribution')
+
+    # Dollar amounts over time
+    if 'month' in df_amounts.columns:
+        monthly_amounts = df_amounts.groupby('month')['dollarAmount'].agg(['sum', 'mean', 'count'])
+
+        revenue_color = "darkgreen"
+        average_color= "orange"
+        # Create a bar chart for total revenue per month
+        x_pos = range(len(monthly_amounts))
+        axes[1].bar(x_pos, monthly_amounts['sum'], alpha=0.7, color=revenue_color, label='Total Revenue')
+
+        # Add a line for average transaction amount
+        ax2 = axes[1].twinx()
+        ax2.plot(x_pos, monthly_amounts['mean'], color=average_color, marker='o', linewidth=2, label='Avg Amount')
+
+        axes[1].set_title('Transaction Amounts Over Time')
+        axes[1].set_xlabel('Month')
+        axes[1].set_ylabel('Total Revenue ($)', color=revenue_color)
+        ax2.set_ylabel('Average Amount ($)', color=average_color)
+        axes[1].set_xticks(x_pos)
+        axes[1].set_xticklabels([str(m) for m in monthly_amounts.index], rotation=45)
+        axes[1].tick_params(axis='y', labelcolor=revenue_color)
+        ax2.grid(False)
+        ax2.tick_params(axis='y', labelcolor=average_color)
+
+        # Combine legends
+        lines1, labels1 = axes[1].get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        axes[1].legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Transaction amounts chart saved to: {save_path}")
+
 def get_weekly_comparison_data(df):
     """Extract weekly comparison data for MTD vs previous month"""
     if 'created_at' not in df.columns:
@@ -612,6 +672,7 @@ def main():
     create_user_behavior_charts(df, f"{base_name}_user_behavior.png")
     create_daily_patterns(df, f"{base_name}_daily_patterns.png")
     create_transaction_types_analysis(df, f"{base_name}_transaction_types.png")
+    create_transaction_amounts_analysis(df, f"{base_name}_transaction_amounts.png")
 
     print("\nAll visualizations created! 📊")
     print(f"Files saved with prefix: {base_name}_")
