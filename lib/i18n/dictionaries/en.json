@@ -299,5 +299,27 @@
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved."
+  },
+  "feedback": {
+    "button": "Feedback",
+    "whatWouldYouLikeToShare": "What would you like to share?",
+    "issue": {
+      "title": "Issue",
+      "description": "with my project"
+    },
+    "idea": {
+      "title": "Idea",
+      "description": "to improve SexyVoice"
+    },
+    "modal": {
+      "title": "What would you like to share?",
+      "placeholder": "Describe your idea or suggestion...",
+      "attachScreenshot": "Attach screenshot",
+      "technicalIssue": "Have a technical issue?",
+      "support": "support",
+      "docs": "see docs",
+      "cancel": "Cancel",
+      "send": "Send"
+    }
   }
 }
