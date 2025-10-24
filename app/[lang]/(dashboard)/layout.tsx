@@ -11,7 +11,7 @@ export default async function DashboardLayout(props: {
   const dict = await getDictionary(lang);
 
   return (
-    <DashboardUI lang={lang} dict={dict.creditsSection}>
+    <DashboardUI lang={lang} dict={dict}>
       {props.children}
     </DashboardUI>
   );
