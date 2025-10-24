@@ -99,7 +99,7 @@ export default async function CreditsPage(props: {
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(10);
+    .limit(100);
 
   return (
     <div className="space-y-8">
