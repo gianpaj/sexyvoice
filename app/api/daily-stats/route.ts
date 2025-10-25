@@ -160,10 +160,11 @@ export async function GET(request: NextRequest) {
 
   const creditsPrevDay = await supabase
     .from('credit_transactions')
-    .select('id, user_id, metadata')
+    .select('id, user_id, metadata, description')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
   let hasInvalidMetadata = false;
 
@@ -220,51 +221,52 @@ export async function GET(request: NextRequest) {
     .select('id', { count: 'exact', head: true })
     .in('type', ['purchase', 'topup'])
     .gte('created_at', twoDaysAgo.toISOString())
-    .lt('created_at', previousDay.toISOString());
+    .lt('created_at', previousDay.toISOString())
+    .not('description', 'ilike', '%manual%');
+
   const creditsWeek = await supabase
     .from('credit_transactions')
     .select('id', { count: 'exact', head: true })
     .in('type', ['purchase', 'topup'])
     .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
   const creditsMonth = await supabase
     .from('credit_transactions')
     .select('id', { count: 'exact', head: true })
     .in('type', ['purchase', 'topup'])
     .gte('created_at', thirtyDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
   const creditsTotal = await supabase
     .from('credit_transactions')
     .select('id', { count: 'exact', head: true })
     .in('type', ['purchase', 'topup'])
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
-  const { data: paidUsersData } = await supabase
+  const { data: totalPaidUsersData } = await supabase
     .from('credit_transactions')
-    .select('user_id')
+    .select('user_id, metadata')
     .in('type', ['purchase', 'topup'])
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
-  const totalUniquePaidUsers = paidUsersData
-    ? new Set(paidUsersData.map((t) => t.user_id)).size
+  const totalUniquePaidUsers = totalPaidUsersData
+    ? new Set(totalPaidUsersData.map((t) => t.user_id)).size
     : 0;
 
-  const { data: totalAmountUsdData } = await supabase
-    .from('credit_transactions')
-    .select('metadata')
-    .in('type', ['purchase', 'topup'])
-    .lt('created_at', today.toISOString());
-
-  const totalAmountUsd = totalAmountUsdData?.reduce(reduceAmountUsd, 0) ?? 0;
+  const totalAmountUsd = totalPaidUsersData?.reduce(reduceAmountUsd, 0) ?? 0;
 
   const { data: totalAmountUsdTodayData } = await supabase
     .from('credit_transactions')
     .select('metadata')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
   const totalAmountUsdToday =
     totalAmountUsdTodayData?.reduce(reduceAmountUsd, 0) ?? 0;
@@ -284,7 +286,8 @@ export async function GET(request: NextRequest) {
     .select('metadata')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', monthStart.toISOString())
-    .lt('created_at', today.toISOString());
+    .lt('created_at', today.toISOString())
+    .not('description', 'ilike', '%manual%');
 
   const mtdRevenue = mtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
 
@@ -299,16 +302,10 @@ export async function GET(request: NextRequest) {
     .select('metadata')
     .in('type', ['purchase', 'topup'])
     .gte('created_at', previousMonthStart.toISOString())
-    .lt('created_at', previousMonthPeriodEnd.toISOString());
+    .lt('created_at', previousMonthPeriodEnd.toISOString())
+    .not('description', 'ilike', '%manual%');
 
   const prevMtdRevenue = prevMtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
-
-  // const activeSubscribersData = await supabase
-  //   .from('credit_transactions')
-  //   .select('id', { count: 'exact', head: true })
-  //   .eq('type', 'purchase');
-
-  // const activeSubscribersCount = activeSubscribersData?.count ?? 0;
 
   const activeSubscribersCount = await countActiveCustomerSubscriptions();
 
