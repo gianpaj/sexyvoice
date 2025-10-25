@@ -14,9 +14,9 @@ import {
   getCredits,
   getVoiceIdByName,
   isFreemiumUserOverLimit,
-  reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
+import { deductCredits } from '@/lib/supabase/credits';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
@@ -312,7 +312,21 @@ export async function POST(request: Request) {
         return;
       }
 
-      await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+      // Deduct credits using new event-sourced system
+      await deductCredits({
+        userId: user.id,
+        amount: estimate,
+        referenceId: filename, // Will be updated with audio file ID once created
+        referenceType: 'audio_generation',
+        description: `Voice generation: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`,
+        metadata: {
+          voice: voiceObj.id,
+          model: modelUsed,
+          textLength: text.length,
+          predictionId: predictionResult?.id
+        },
+        idempotencyKey: `audio_${filename}`
+      });
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
@@ -325,6 +339,8 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: estimate,
+        estimated_credits: estimate,
+        status: 'completed',
       });
 
       if (audioFileDBResult.error) {
