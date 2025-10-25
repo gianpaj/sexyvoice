@@ -47,6 +47,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **Credit-based System**: Fair usage tracking with transparent pricing
 - **Profile Management**: Personalized dashboard and settings
 - **Audio History**: Track and manage all your generated content
+- **Real-time Notifications**: Novu-powered notification system with multi-language support
 
 ### 🌍 Platform Features
 
@@ -134,6 +135,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `STRIPE_TOPUP_99_PRICE_ID`
    - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
    - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - `NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER` - Novu application identifier for notifications
+   - `NOVU_API_KEY` - Novu API key for server-side operations
+   - `NEXT_PUBLIC_NOVU_SOCKET_URL` - Novu WebSocket URL (optional, defaults to wss://ws.novu.co)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
 4. **Set up Supabase**

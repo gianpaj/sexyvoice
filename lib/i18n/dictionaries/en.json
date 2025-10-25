@@ -299,5 +299,12 @@
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved."
+  },
+  "notifications": {
+    "inbox": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications yet",
+    "loading": "Loading notifications...",
+    "error": "Failed to load notifications"
   }
 }

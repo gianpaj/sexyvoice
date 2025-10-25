@@ -305,5 +305,12 @@
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten."
+  },
+  "notifications": {
+    "inbox": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "noNotifications": "Noch keine Benachrichtigungen",
+    "loading": "Benachrichtigungen laden...",
+    "error": "Fehler beim Laden der Benachrichtigungen"
   }
 }
