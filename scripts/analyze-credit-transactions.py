@@ -18,7 +18,7 @@ import sys
 import warnings
 warnings.filterwarnings('ignore')
 
-def load_and_clean_data(file_path):
+def load_and_clean_data(file_path: str) -> pd.DataFrame:
     """Load CSV file and clean the data"""
     print(f"Loading CSV file: {file_path}")
 
@@ -39,7 +39,7 @@ def load_and_clean_data(file_path):
             df[col] = pd.to_datetime(df[col], errors='coerce', utc=True)
 
     # Extract dollarAmount from metadata JSON
-    def extract_dollar_amount(metadata):
+    def extract_dollar_amount(metadata: str) -> float | None:
         if pd.isna(metadata):
             return None
         try:
@@ -68,7 +68,7 @@ def load_and_clean_data(file_path):
 
     return df
 
-def get_date_ranges():
+def get_date_ranges() -> dict[str, pd.Timestamp]:
     """Get current month, previous month, and date ranges"""
     # Use UTC timezone to match the data - pandas will handle timezone conversion
     today = pd.Timestamp.now(tz='UTC')
@@ -84,7 +84,7 @@ def get_date_ranges():
         'today': today
     }
 
-def analyze_monthly_metrics(df):
+def analyze_monthly_metrics(df: pd.DataFrame) -> None:
     """Analyze month-to-date vs previous month metrics"""
     print("\n" + "="*60)
     print("MONTHLY ANALYSIS")
@@ -104,7 +104,7 @@ def analyze_monthly_metrics(df):
     ]
 
     # Calculate metrics
-    def calculate_metrics(data, period_name):
+    def calculate_metrics(data: pd.DataFrame, period_name: str) -> dict[str, str | int | float]:
         total_transactions = len(data)
         total_revenue = data['dollarAmount'].sum() if 'dollarAmount' in data.columns else 0
         unique_users = data['user_id'].nunique() if 'user_id' in data.columns else 0
@@ -145,9 +145,9 @@ def analyze_monthly_metrics(df):
         print(f"  • Revenue: {revenue_growth:+.1f}%")
         print(f"  • Unique Users: {user_growth:+.1f}%")
 
-    return current_metrics, prev_metrics
+    # return current_metrics, prev_metrics
 
-# def analyze_time_patterns(df):
+def analyze_time_patterns(df: pd.DataFrame) -> None:
     """Analyze time-based patterns"""
     print("\n" + "="*60)
     print("TIME PATTERN ANALYSIS")
@@ -178,7 +178,7 @@ def analyze_monthly_metrics(df):
         peak_count = daily_transactions.max()
         print(f"\nPeak Day: {peak_day} ({peak_count:,} transactions)")
 
-def analyze_user_behavior(df):
+def analyze_user_behavior(df: pd.DataFrame) -> None:
     """Analyze user purchasing behavior"""
     print("\n" + "="*60)
     print("USER BEHAVIOR ANALYSIS")
@@ -215,7 +215,7 @@ def analyze_user_behavior(df):
         print(f"  • Median revenue per user: ${user_revenue.median():.2f}")
         print(f"  • Top 10% of users generate: ${user_revenue.quantile(0.9):.2f}+ each")
 
-def analyze_transaction_patterns(df):
+def analyze_transaction_patterns(df: pd.DataFrame) -> None:
     """Analyze transaction amount and type patterns"""
     print("\n" + "="*60)
     print("TRANSACTION PATTERN ANALYSIS")
@@ -243,7 +243,7 @@ def analyze_transaction_patterns(df):
         for amount, count in common_amounts.items():
             print(f"  • ${amount}: {count:,} transactions")
 
-def analyze_trends(df):
+def analyze_trends(df: pd.DataFrame) -> None:
     """Analyze trends over time"""
     print("\n" + "="*60)
     print("TREND ANALYSIS")
@@ -272,7 +272,7 @@ def analyze_trends(df):
         else:
             print(f"  • {month}: {row['Transactions']:,.0f} transactions, {row['Unique_Users']:,.0f} users")
 
-def generate_insights(df):
+def generate_insights(df: pd.DataFrame) -> None:
     """Generate key insights and recommendations"""
     print("\n" + "="*60)
     print("KEY INSIGHTS & RECOMMENDATIONS")
@@ -314,7 +314,7 @@ def generate_insights(df):
     # print("  • Develop retention strategies to increase repeat purchase rate")
     # print("  • Analyze high-value customers for upselling opportunities")
 
-def save_summary_report(df, output_path):
+def save_summary_report(df: pd.DataFrame, output_path: str) -> None:
     """Save a summary report to file"""
     try:
         with open(output_path, 'w') as f:
@@ -334,7 +334,7 @@ def save_summary_report(df, output_path):
     except Exception as e:
         print(f"Error saving summary report: {e}")
 
-def main():
+def main() -> None:
     """Main analysis function"""
     if len(sys.argv) < 2:
         print("Usage: python analyze-credit-transactions.py <csv_file_path>")
@@ -362,8 +362,8 @@ def main():
     generate_insights(df)
 
     # Save summary report
-    output_path = file_path.replace('.csv', '_analysis_report.txt')
-    save_summary_report(df, output_path)
+    # output_path = file_path.replace('.csv', '_analysis_report.txt')
+    # save_summary_report(df, output_path)
 
     print("\nAnalysis complete! 🎉")
 

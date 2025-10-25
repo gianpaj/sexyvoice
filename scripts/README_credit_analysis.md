@@ -39,11 +39,6 @@ Install required Python packages:
 pip install -r requirements.txt
 ```
 
-Or install individually:
-```bash
-pip install pandas numpy matplotlib seaborn
-```
-
 ## Usage
 
 ### Basic Analysis
@@ -87,10 +82,6 @@ uuid2,user456,500,usage,Voice generation,2024-01-15 11:45:00,null
 
 ## Output Files
 
-### Analysis Script Output
-- Console output with detailed analysis
-- `*_analysis_report.txt` - Summary report file
-
 ### Visualization Script Output
 - `*_dashboard.png` - Comprehensive dashboard
 - `*_weekly_mtd_comparison.png` - Weekly MTD vs previous month (transactions & revenue)
@@ -133,6 +124,14 @@ uuid2,user456,500,usage,Voice generation,2024-01-15 11:45:00,null
 ## Example Output
 
 ```
+Loading CSV file: backups/credit_transactions_rows_2025-10-25T15-38_cleaned.csv
+Successfully loaded x rows
+Filtered from x to x transactions (purchase/topup only)
+
+Analyzing x credit transactions...
+============================================================
+
+============================================================
 MONTHLY ANALYSIS
 ============================================================
 
@@ -153,67 +152,65 @@ Growth Rates (vs Previous Month)
   • Revenue: +5.3%
   • Unique Users: +5.6%
 
-TIME PATTERN ANALYSIS
+============================================================
+USER BEHAVIOR ANALYSIS
 ============================================================
 
-Most Popular Hours (Top 5):
-  •  2:00 PM: 127 transactions
-  •  3:00 PM: 115 transactions
-  •  1:00 PM: 108 transactions
-  •  4:00 PM: 94 transactions
-  •  11:00 AM: 89 transactions
+User Purchase Frequency:
+  • Total unique users: x
+  • Average transactions per user: x.x
+  • Median transactions per user: x.x
 
-Peak Day: Wednesday (245 transactions)
+User Segments:
+  • Single purchase users: x (x%)
+  • Repeat users (2+ purchases): xx (x%)
+  • Power users (5+ purchases): y (x%)
+
+Revenue Analysis:
+  • Average revenue per user: $xx.xx
+  • Median revenue per user: $xx.xx
+  • Top 10% of users generate: $xx.xx+ each
+
+============================================================
+TRANSACTION PATTERN ANALYSIS
+============================================================
+
+Transaction Types:
+  • topup: 1xx transactions (xx.x%)
+  • purchase: xx transactions (xx.x%)
+
+Revenue Statistics:
+  • Total Revenue: $xxx.00
+  • Average Transaction: $xx.00
+  • Median Transaction: $xx.00
+
+Most Common Transaction Amounts:
+  • $10.0: xx transactions
+  • $5.0: xx transactions
+  • $99.0: xx transactions
+
+============================================================
+TREND ANALYSIS
+============================================================
+
+Monthly Trends (Last 6 months):
+  • 2025-07: xx transactions, xx users, $xxx.00 revenue
+  • 2025-08: xx transactions, xx users, $xxx.00 revenue
+  • 2025-09: xx transactions, xx users, $xxx.00 revenue
+  • 2025-10: xx transactions, xx users, $xxx.00 revenue
+
+============================================================
+KEY INSIGHTS & RECOMMENDATIONS
+============================================================
+
+Key Insights:
+  1. Peak usage occurs on Thursdays at 12:00 PM
+  2. Repeat purchase rate is xx.x%
+  3. Average transaction value is $xx.xx
+  4. Total revenue analyzed: $xxx.xx
+
+Analysis complete! 🎉
 ```
-
-## Database Integration
-
-To export data directly from Supabase:
-
-```sql
--- Export recent credit transactions
-SELECT 
-    id,
-    user_id,
-    amount,
-    type,
-    description,
-    created_at,
-    updated_at,
-    metadata,
-    reference_id,
-    subscription_id
-FROM credit_transactions
-WHERE created_at >= NOW() - INTERVAL '6 months'
-    AND type IN ('purchase', 'topup')
-ORDER BY created_at DESC;
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Missing columns error**
-   - Check that your CSV has the required columns
-   - Ensure column names match exactly (case-sensitive)
-
-2. **Date parsing errors**
-   - Verify `created_at` column is in a valid datetime format
-   - Common formats: `YYYY-MM-DD HH:MM:SS` or ISO 8601
-
-3. **No data after filtering**
-   - Check if your data contains 'purchase' or 'topup' transaction types
-   - Verify the `type` column values
-
-4. **Visualization errors**
-   - Ensure matplotlib and seaborn are installed
-   - Check that you have sufficient data points for meaningful charts
-
-### Performance Notes
-
-- For large datasets (>100k rows), consider filtering by date range first
-- Visualization script may take longer with very large datasets
-- Consider using data sampling for initial exploration of massive datasets
 
 ## Integration with SexyVoice.ai Workflow
 
@@ -224,19 +221,3 @@ These scripts are designed to work with the SexyVoice.ai credit system:
 3. **Analyze patterns** using `analyze-credit-transactions.py`
 4. **Create visuals** using `visualize-transactions.py`
 5. **Review insights** to inform business decisions
-
-## Contributing
-
-When modifying these scripts:
-
-1. Follow the existing code patterns
-2. Add error handling for new features
-3. Update this README with new functionality
-4. Test with sample data before committing
-
-## Dependencies
-
-- pandas >= 2.0.0
-- numpy >= 1.24.0
-- matplotlib >= 3.6.0
-- seaborn >= 0.12.0
