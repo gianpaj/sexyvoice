@@ -16,7 +16,7 @@
     "format": "biome format ./app components hooks lib middleware.ts",
     "check:fix": "biome check ./app components hooks lib middleware.ts --write",
     "preview": "next build && next start",
-    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.js",

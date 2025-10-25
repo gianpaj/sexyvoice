@@ -166,7 +166,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm test:watch`         | Run tests in watch mode                 |
 | `pnpm lint`               | Lint codebase with Biome                |
 | `pnpm lint:fix`           | Fix linting issues automatically        |
-| `pnpm type-check`         | Run TypeScript type checking            |
+| `pnpm typecheck`          | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
 | `pnpm check-translations` | Validate translation files              |
 | `pnpm build:content`      | Build content layer                     |

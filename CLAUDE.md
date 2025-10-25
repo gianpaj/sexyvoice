@@ -81,7 +81,7 @@ pnpm run fixall      # Run all fixes: lint, format, and check
 # OR run individually:
 pnpm run lint --write    # Fix linting issues automatically
 pnpm run format --write  # Format code with Biome
-pnpm run type-check      # Verify TypeScript types
+pnpm run typecheck      # Verify TypeScript types
 ```
 
 #### Code Style
@@ -160,7 +160,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `pnpm format:write` / `pnpm format --write` - Auto-format code
 - `pnpm check:fix` - Run Biome check with fixes
 - `pnpm fixall` - Run all code quality fixes (lint:write + format:write + check:fix)
-- `pnpm type-check` - Run TypeScript type checking
+- `pnpm typecheck` - Run TypeScript type checking
 
 ### Testing
 - `pnpm test` - Run unit tests (lib/utils.test.ts)
@@ -304,7 +304,7 @@ Based on TODO.md, current priorities include:
 
 ### Debug Commands
 ```bash
-pnpm run type-check              # Check TypeScript issues
+pnpm run typecheck              # Check TypeScript issues
 pnpm run lint                    # Check code quality issues
 pnpm run fixall                  # Fix all code quality issues
 pnpm clean                       # Check for unused dependencies

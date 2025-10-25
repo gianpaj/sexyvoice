@@ -61,3 +61,16 @@ export function maskUsername(username?: string): string | undefined {
   }
   return maskedUsername;
 }
+
+export const filterByDateRange = <T extends { created_at: string }>(
+  items: T[],
+  start: Date,
+  end: Date,
+) => {
+  const startTime = start.getTime();
+  const endTime = end.getTime();
+  return items.filter((item) => {
+    const itemTime = new Date(item.created_at).getTime();
+    return itemTime >= startTime && itemTime < endTime;
+  });
+};
