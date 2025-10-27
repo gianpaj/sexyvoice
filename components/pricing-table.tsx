@@ -1,12 +1,12 @@
 import { Check } from 'lucide-react';
 import Link from 'next/link';
 
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getTopupPackages } from '@/lib/stripe/pricing';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
 
 async function PricingTable({ lang }: { lang: Locale }) {
   const credits = await getDictionary(lang, 'credits');
@@ -24,7 +24,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       description: pPlans.free.description,
       buttonText: pPlans.startFree,
       buttonVariant: 'default',
-      creditsText: pPlans.free.credits.replace(
+      creditsText: pPlans.x_credits.replace(
         '__NUM_CREDITS__',
         TOPUP_PACKAGES.free.baseCreditsLocale,
       ),
@@ -38,7 +38,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       description: pPlans.standard.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.standard.credits.replace(
+      creditsText: pPlans.x_credits.replace(
         '__NUM_CREDITS__',
         TOPUP_PACKAGES.standard.baseCreditsLocale,
       ),
@@ -54,7 +54,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.pro.credits.replace(
+      creditsText: pPlans.x_credits.replace(
         '__NUM_CREDITS__',
         TOPUP_PACKAGES.pro.baseCreditsLocale,
       ),
@@ -62,6 +62,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       features: pPlans.pro.features,
     },
   ];
+
   return (
     <div className="xl:px-28 py-16 flex flex-col gap-6">
       <h2 className="text-2xl font-semibold mb-4 mx-auto">
@@ -71,7 +72,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-orange-400' : ''} relative overflow-hidden`}
+            className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'ring-orange-400 ring-2 border-none' : ''} relative overflow-hidden`}
             // className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
             {isPromoEnabled && plan.price > 0 && (

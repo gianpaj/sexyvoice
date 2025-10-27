@@ -160,20 +160,22 @@
       "popular": "Most Popular",
       "startFree": "Start of Free",
       "buyCredits": "Buy credits",
+      "x_credits": "__NUM_CREDITS__ credits",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio.",
-        "credits": "__NUM_CREDITS__ credits",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
         "features": [
           "Generate speech in unique voices",
           "Clone your voice with as little as 10 seconds of audio"
         ]
       },
+      "starter": {
+        "name": "Starter"
+      },
       "standard": {
         "name": "Standard",
         "description": "For hobbyists creating projects with AI audio and creating custom voices.",
-        "credits": "__NUM_CREDITS__ credits",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": ["Everything in Free", "API access (coming soon)"]
@@ -181,7 +183,6 @@
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-        "credits": "__NUM_CREDITS__ credits",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [

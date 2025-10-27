@@ -160,20 +160,22 @@
       "popular": "Am beliebtesten",
       "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
+      "x_credits": "__NUM_CREDITS__ Credits",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die das fortschrittlichste KI-Audio ausprobieren möchten.",
-        "credits": "__NUM_CREDITS__ Credits",
         "creditsWithAudio": "__NUM_CREDITS__ Credits (~4 Min. Audio)",
         "features": [
           "Sprache in einzigartigen Stimmen generieren",
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
         ]
       },
+      "starter": {
+        "name": "Starter"
+      },
       "standard": {
         "name": "Standard",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "credits": "__NUM_CREDITS__ Credits",
         "creditsWithAudio": "__NUM_CREDITS__ Credits (~11 Min. Audio)",
         "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [
@@ -184,7 +186,6 @@
       "pro": {
         "name": "Pro",
         "description": "Für größere Kreative, die ihre Inhaltsproduktion steigern.",
-        "credits": "__NUM_CREDITS__ Credits",
         "creditsWithAudio": "__NUM_CREDITS__ Credits (~125 Min. Audio)",
         "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [

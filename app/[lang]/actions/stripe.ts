@@ -10,26 +10,26 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function createCheckoutSession(
   data: FormData,
-  packageType: PackageType,
+  packageId: PackageType,
 ): Promise<{ client_secret: string | null; url: string | null }> {
   try {
     const ui_mode = data.get(
       'uiMode',
     ) as Stripe.Checkout.SessionCreateParams.UiMode;
 
-    const package_ = getTopupPackages('en')[packageType];
+    const package_ = getTopupPackages('en')[packageId];
 
     // Verify the price ID exists to avoid runtime errors
-    if (!package_.priceId) {
-      const error = new Error('Invalid package type');
-      console.error(`Missing price ID for package type: ${packageType}`);
+    if (!package_ || !package_.priceId) {
+      const error = new Error('Invalid package id');
+      console.error(`Missing price ID for package id: ${packageId}`);
       Sentry.captureException(error, {
         tags: {
           section: 'stripe_actions',
           event_type: 'missing_price_id',
         },
         extra: {
-          package_type: packageType,
+          packageId,
           available_packages: Object.keys(getTopupPackages('en')),
         },
       });
@@ -53,7 +53,7 @@ export async function createCheckoutSession(
           user_id: user?.id,
           has_user_data: !!userData,
           has_stripe_id: !!userData?.stripe_id,
-          package_type: packageType,
+          packageId,
         },
       });
       throw error;
@@ -77,7 +77,7 @@ export async function createCheckoutSession(
         ui_mode,
         metadata: {
           userId: user.id,
-          packageType,
+          packageId,
           credits: package_.credits.toString(),
           dollarAmount: package_.dollarAmount.toString(),
           type: 'topup',
@@ -99,7 +99,7 @@ export async function createCheckoutSession(
         event_type: 'checkout_session_creation_error',
       },
       extra: {
-        package_type: packageType,
+        packageId,
         ui_mode: data.get('uiMode'),
         error_message: error instanceof Error ? error.message : 'Unknown error',
       },

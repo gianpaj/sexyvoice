@@ -104,10 +104,10 @@ export default async function CreditsPage(props: {
   return (
     <div className="space-y-8">
       <TopupStatus dict={dict} />
-      <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h2 className="text-3xl font-bold tracking-tight">{dict.title}</h2>
-          <p className="text-muted-foreground">{dict.description}</p>
+          <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
+          <p className="text-muted-foreground">{dict.topup.description}</p>
         </div>
         <Button asChild>
           <Link
@@ -120,11 +120,7 @@ export default async function CreditsPage(props: {
       </div>
 
       {/* Add Credit Top-up Section */}
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
-        <p className="text-muted-foreground mb-6">{dict.topup.description}</p>
-        <CreditTopup dict={dict} lang={lang} />
-      </div>
+      <CreditTopup dict={dict} lang={lang} />
 
       {/* {products.map((product) => (
         <Card key={product.id}>
