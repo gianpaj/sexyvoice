@@ -58,7 +58,7 @@ export function AudioGenerator({
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
-  const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || ''),
     [selectedVoice],
