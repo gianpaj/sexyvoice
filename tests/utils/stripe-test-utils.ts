@@ -99,7 +99,7 @@ export function createMockCheckoutSession(
 export function createMockSubscription(
   priceId: string,
   status: Stripe.Subscription.Status = 'active',
-): Stripe.Subscription {
+): Stripe.Response<Stripe.Subscription> {
   return {
     id: 'sub_test123',
     object: 'subscription',
@@ -137,7 +137,51 @@ export function createMockSubscription(
         last4: '4242',
       },
     },
-  } as Stripe.Subscription;
+  } as Stripe.Response<Stripe.Subscription>;
+}
+
+/**
+ * Creates mock invoice object
+ */
+export function createMockInvoice(
+  subscriptionId: string,
+  customerId: string,
+  paymentIntentId: string,
+  priceId: string,
+  billingReason: Stripe.Invoice.BillingReason = 'subscription_cycle',
+): Stripe.Invoice {
+  return {
+    id: 'in_test123',
+    object: 'invoice',
+    customer: customerId,
+    subscription: subscriptionId,
+    payment_intent: paymentIntentId,
+    billing_reason: billingReason,
+    status: 'paid',
+    amount_paid: 1000,
+    amount_due: 1000,
+    lines: {
+      object: 'list',
+      data: [
+        {
+          id: 'il_test',
+          object: 'line_item',
+          price: {
+            id: priceId,
+            object: 'price',
+            active: true,
+            currency: 'usd',
+            unit_amount: 1000,
+            type: 'recurring',
+            recurring: {
+              interval: 'month',
+              interval_count: 1,
+            },
+          },
+        },
+      ],
+    },
+  } as Stripe.Invoice;
 }
 
 export function createMockRequest<T extends Stripe.Event.Type>(

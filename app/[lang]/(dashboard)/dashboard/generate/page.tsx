@@ -57,16 +57,16 @@ export default async function GeneratePage(props: {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">{dict['generate'].title}</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{dict.generate.title}</h2>
         <p className="text-muted-foreground">
-          {dict['generate'].subtitle}
+          {dict.generate.subtitle}
         </p>
       </div>
 
       <div className="lg:hidden">
         <CreditsSection
           lang={lang}
-          dict={dict['creditsSection']}
+          dict={dict.creditsSection}
           credits={credits.amount || 0}
           credit_transactions={credit_transactions || []}
           doNotToggleSidebar
@@ -75,7 +75,7 @@ export default async function GeneratePage(props: {
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
-          dict={dict['generate']}
+          dict={dict.generate}
           hasEnoughCredits={credits.amount >= 1}
           publicVoices={publicVoices}
           locale={lang}

@@ -76,7 +76,7 @@ export function SignUpForm({
           </Button>
         ),
       });
-    } catch (error) {
+    } catch (_error) {
       setIsLoading(false);
       setError(dict.error || 'Error creating account');
     }

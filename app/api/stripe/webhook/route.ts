@@ -15,7 +15,6 @@ import {
 export async function POST(req: Request) {
   // Stripe expects the body to be "untouched" so it can verify the signature.
   const body = await req.text();
-  // const body = await req.json();
   const signature = (await headers()).get('Stripe-Signature');
 
   if (!signature) return NextResponse.json({}, { status: 400 });
@@ -32,7 +31,6 @@ export async function POST(req: Request) {
     );
 
     await processEvent(event);
-    // await processEvent(body);
   }
 
   try {
@@ -49,7 +47,6 @@ export async function POST(req: Request) {
       },
     });
   }
-  // console.log('Event processed successfully');
 
   return NextResponse.json({ received: true });
 }
@@ -59,12 +56,22 @@ async function processEvent(event: Stripe.Event) {
 
   try {
     switch (event.type) {
-      // top-up
+      // Top-up purchases
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session,
         );
         break;
+
+      // Subscription recurring payments - this is where credits are awarded for renewals
+      case 'invoice.payment_succeeded': {
+        await handleInvoicePaymentSucceeded(
+          event.data.object as Stripe.Invoice,
+        );
+        break;
+      }
+
+      // Subscription lifecycle events - only update Redis cache
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
@@ -77,9 +84,7 @@ async function processEvent(event: Stripe.Event) {
       case 'invoice.payment_failed':
       case 'invoice.payment_action_required':
       case 'invoice.upcoming':
-      case 'invoice.marked_uncollectible':
-      case 'invoice.payment_succeeded': {
-        // Handle subscription events as before
+      case 'invoice.marked_uncollectible': {
         const { customer: customerId } = event.data.object as {
           customer: string;
         };
@@ -88,9 +93,11 @@ async function processEvent(event: Stripe.Event) {
             `[STRIPE HOOK] Customer ID isn't string.\nEvent type: ${event.type}`,
           );
         }
+        // Only sync subscription status to Redis, no credit insertion
         await syncStripeDataToKV(customerId);
         break;
       }
+
       default:
         console.log(`[STRIPE HOOK] Unhandled event type: ${event.type}`);
     }
@@ -191,11 +198,98 @@ async function handleCheckoutSessionCompleted(
         `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
       );
     } else if (session.mode === 'subscription') {
-      // Handle subscription checkout
+      // Handle initial subscription checkout
       const customerId = session.customer as string | null;
-      if (customerId) {
-        await syncStripeDataToKV(customerId);
+      const subscriptionId = session.subscription as string | null;
+
+      if (!customerId || !subscriptionId) {
+        const error = new Error('Missing customer or subscription ID');
+        console.error(
+          '[STRIPE HOOK] Missing customer or subscription ID in subscription checkout',
+          { customerId, subscriptionId },
+        );
+        Sentry.captureException(error, {
+          tags: {
+            section: 'stripe_webhook',
+            event_type: 'checkout_session_completed',
+          },
+          extra: {
+            session_id: session.id,
+          },
+        });
+        return;
       }
+
+      // Sync subscription data to Redis
+      await syncStripeDataToKV(customerId);
+
+      // Award initial subscription credits
+      const userId = await getUserIdByStripeCustomerId(customerId);
+      if (!userId) {
+        const error = new Error(
+          `User not found with stripe_id: "${customerId}"`,
+        );
+        console.error(`User not found with stripe_id: "${customerId}"`);
+        Sentry.captureException(error, {
+          tags: {
+            section: 'stripe_webhook',
+            event_type: 'checkout_session_completed',
+          },
+          extra: {
+            customer_id: customerId,
+          },
+        });
+        return;
+      }
+
+      // Get subscription details to determine credit amount
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const priceId = subscription.items.data[0].price.id;
+
+      const TOPUP_PACKAGES = getTopupPackages('en');
+      let credits = 0;
+      let dollarAmount = 0;
+
+      switch (priceId) {
+        case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
+          credits = TOPUP_PACKAGES.starter.credits;
+          dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
+          break;
+        case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+          credits = TOPUP_PACKAGES.standard.credits;
+          dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
+          break;
+        case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
+          credits = TOPUP_PACKAGES.pro.credits;
+          dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
+          break;
+        default:
+          console.error('[STRIPE HOOK] Invalid subscription price ID', {
+            priceId,
+          });
+          return;
+      }
+
+      // Get payment intent from the session (for initial subscription payment)
+      const paymentIntentId = session.payment_intent as string | null;
+      if (!paymentIntentId) {
+        console.error(
+          '[STRIPE HOOK] No payment intent in subscription checkout session',
+        );
+        return;
+      }
+
+      await insertSubscriptionCreditTransaction(
+        userId,
+        paymentIntentId,
+        subscriptionId,
+        credits,
+        dollarAmount,
+      );
+
+      console.log(
+        `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
+      );
     }
   } catch (error) {
     console.error(
@@ -217,8 +311,115 @@ async function handleCheckoutSessionCompleted(
   }
 }
 
-// The contents of this function should probably be wrapped in a try/catch
-// export async function syncStripeDataToKV(body, customerId) {
+// Handles successful invoice payments (recurring subscription payments)
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  try {
+    // Only process subscription invoices, not one-time invoices
+    if (!invoice.subscription || invoice.billing_reason === 'manual') {
+      console.log(
+        '[STRIPE HOOK] Skipping non-subscription invoice or manual invoice',
+      );
+      return;
+    }
+
+    const customerId = invoice.customer as string;
+    const subscriptionId = invoice.subscription as string;
+    const paymentIntentId = invoice.payment_intent as string | null;
+
+    if (!paymentIntentId) {
+      console.error(
+        '[STRIPE HOOK] No payment intent in invoice.payment_succeeded',
+        {
+          invoice_id: invoice.id,
+          subscription_id: subscriptionId,
+        },
+      );
+      return;
+    }
+
+    // Get user ID
+    const userId = await getUserIdByStripeCustomerId(customerId);
+    if (!userId) {
+      const error = new Error(`User not found with stripe_id: "${customerId}"`);
+      console.error(`User not found with stripe_id: "${customerId}"`);
+      Sentry.captureException(error, {
+        tags: {
+          section: 'stripe_webhook',
+          event_type: 'invoice_payment_succeeded',
+        },
+        extra: {
+          customer_id: customerId,
+          invoice_id: invoice.id,
+        },
+      });
+      return;
+    }
+
+    // Get subscription details
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const priceId = subscription.items.data[0].price.id;
+
+    const TOPUP_PACKAGES = getTopupPackages('en');
+    let credits = 0;
+    let dollarAmount = 0;
+
+    switch (priceId) {
+      case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
+        credits = TOPUP_PACKAGES.starter.credits;
+        dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
+        break;
+      case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+        credits = TOPUP_PACKAGES.standard.credits;
+        dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
+        break;
+      case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
+        credits = TOPUP_PACKAGES.pro.credits;
+        dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
+        break;
+      default:
+        console.error('[STRIPE HOOK] Invalid subscription price ID', {
+          priceId,
+        });
+        return;
+    }
+
+    // Insert credit transaction using payment_intent as reference_id
+    await insertSubscriptionCreditTransaction(
+      userId,
+      paymentIntentId,
+      subscriptionId,
+      credits,
+      dollarAmount,
+    );
+
+    console.log(
+      `[STRIPE HOOK] Recurring subscription credits added: ${credits} to user: ${userId}`,
+    );
+
+    // Also update Redis cache with latest subscription status
+    await syncStripeDataToKV(customerId);
+  } catch (error) {
+    console.error(
+      '[STRIPE HOOK] Error in handleInvoicePaymentSucceeded:',
+      error,
+    );
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'invoice_payment_succeeded',
+      },
+      extra: {
+        invoice_id: invoice.id,
+        subscription_id: invoice.subscription,
+        customer_id: invoice.customer,
+      },
+    });
+    throw error;
+  }
+}
+
+// Syncs Stripe subscription data to Redis KV store
+// This function ONLY updates the cache and does NOT insert credit transactions
 export async function syncStripeDataToKV(customerId: string) {
   try {
     // Fetch latest subscription data from Stripe
@@ -242,7 +443,6 @@ export async function syncStripeDataToKV(customerId: string) {
     const subData = {
       subscriptionId: subscription.id,
       status: subscription.status,
-      // priceId: subscription.plan.id,
       priceId: subscription.items.data[0].price.id,
       currentPeriodEnd: subscription.current_period_end,
       currentPeriodStart: subscription.current_period_start,
@@ -257,79 +457,14 @@ export async function syncStripeDataToKV(customerId: string) {
           : null,
     };
 
-    // Store the data in your KV
+    // Store the data in Redis KV
     await setCustomerData(customerId, subData);
 
-    // console.log({ subscription });
-    console.log('[STRIPE HOOK]', { subData });
-
-    const userId = await getUserIdByStripeCustomerId(customerId);
-    if (!userId) {
-      const error = new Error(`User not found with stripe_id: "${customerId}"`);
-      console.error(`User not found with stripe_id: "${customerId}"`);
-      Sentry.captureException(error, {
-        tags: {
-          section: 'stripe_webhook',
-          event_type: 'sync_stripe_data',
-        },
-        extra: {
-          customer_id: customerId,
-        },
-      });
-      return;
-    }
-
-    const TOPUP_PACKAGES = getTopupPackages('en');
-
-    let credits = 0;
-    let dollarAmount = 0;
-    switch (subData.priceId) {
-      case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-        credits = TOPUP_PACKAGES.starter.credits;
-        dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
-        break;
-      case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-        credits = TOPUP_PACKAGES.standard.credits;
-        dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
-        break;
-      case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-        credits = TOPUP_PACKAGES.pro.credits;
-        dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
-        break;
-      default:
-        credits = 0;
-        break;
-    }
-    if (credits === 0) {
-      const extra = {
-        customer_id: customerId,
-        priceId: subData.priceId,
-      };
-      console.error('[STRIPE HOOK] Invalid subscription price ID', extra);
-      Sentry.captureException(new Error('Invalid subscription price ID'), {
-        tags: {
-          section: 'stripe_webhook',
-          event_type: 'sync_stripe_data',
-        },
-        extra,
-      });
-      return;
-    }
-
-    if (subData.status === 'active') {
-      await insertSubscriptionCreditTransaction(
-        userId,
-        subData.subscriptionId,
-        credits,
-        dollarAmount,
-      );
-      console.log(`[STRIPE HOOK] Credits added: ${credits} to user: ${userId}`);
-    }
-
-    // if cancelled and complete refund
-    // if (subData.status === 'canceled') {
-    //   await insertDebitTransaction(userId, subData.subscriptionId, amount);
-    // }
+    console.log('[STRIPE HOOK] Synced subscription data to Redis:', {
+      customerId,
+      status: subData.status,
+      subscriptionId: subData.subscriptionId,
+    });
 
     return subData;
   } catch (error) {
