@@ -59,6 +59,7 @@ async function processEvent(event: Stripe.Event) {
 
   try {
     switch (event.type) {
+      // top-up
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(
           event.data.object as Stripe.Checkout.Session,
@@ -322,6 +323,7 @@ export async function syncStripeDataToKV(customerId: string) {
         credits,
         dollarAmount,
       );
+      console.log(`[STRIPE HOOK] Credits added: ${credits} to user: ${userId}`);
     }
 
     // if cancelled and complete refund

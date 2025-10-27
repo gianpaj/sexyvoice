@@ -160,7 +160,7 @@ export default async function CreditsPage(props: {
       </div>
 
       {(!customerData || customerData?.status !== 'active') && (
-        <NextStripePricingTable clientSecret={clientSecret} />
+        <NextStripePricingTable clientSecret={clientSecret} userId={user.id} />
       )}
     </div>
   );
@@ -169,13 +169,16 @@ export default async function CreditsPage(props: {
 // Subscription plans
 const NextStripePricingTable = ({
   clientSecret,
+  userId,
 }: {
   clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
+  userId: string;
 }) => {
   const pricingTableId = process.env.STRIPE_PRICING_ID;
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
 
   if (!pricingTableId || !publishableKey || !clientSecret) return null;
+
   return (
     <>
       <Script
@@ -188,6 +191,7 @@ const NextStripePricingTable = ({
         pricing-table-id={pricingTableId}
         publishable-key={publishableKey}
         customer-session-client-secret={clientSecret.client_secret}
+        client-reference-id={userId}
       />
     </>
   );
