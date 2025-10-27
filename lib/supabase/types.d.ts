@@ -7,7 +7,7 @@ declare type Json =
   | Json[];
 
 declare type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: '12.2.3 (519615d)';
@@ -237,11 +237,11 @@ declare type Database = {
     };
     Functions: {
       decrement_user_credits: {
-        Args: { user_id: string; credit_amount: number };
+        Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
       increment_user_credits: {
-        Args: { user_id_var: string; credit_amount: number };
+        Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
     };

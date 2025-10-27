@@ -214,7 +214,7 @@ export const updateUserCredits = async (
 
   const { error } = await supabase.rpc('increment_user_credits', {
     user_id_var: userId,
-    credit_amount: creditAmount,
+    credit_amount_var: creditAmount,
   });
 
   if (error) throw error;
