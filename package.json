@@ -6,7 +6,6 @@
     "build": "SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
     "start": "next start",
     "test": "vitest",
-    "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:legacy": "tsx --test lib/utils.test.ts",

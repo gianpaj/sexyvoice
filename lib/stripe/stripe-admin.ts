@@ -4,8 +4,6 @@ import Stripe from 'stripe';
 import { getUserById } from '../supabase/queries';
 import { createClient } from '../supabase/server';
 
-// import { createClient } from '../supabase/server';
-
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
 }
@@ -34,20 +32,6 @@ export async function createOrRetrieveCustomer({
 
   return customer.id;
 }
-
-// export async function getStripePlan() {
-//   const supabase = createClient()
-//   const {
-//     data: { user }
-//   } = await supabase.auth.getUser()
-//   if (!user) {
-//     throw new Error('User not found')
-//   }
-//   const subscription = await stripe.subscriptions.retrieve(user.plan)
-//   const productId = subscription.items.data[0].plan.product as string
-//   const product = await stripe.products.retrieve(productId)
-//   return product.name
-// }
 
 export async function getCustomerSession() {
   const supabase = await createClient();

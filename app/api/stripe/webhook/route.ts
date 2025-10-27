@@ -64,11 +64,6 @@ async function processEvent(event: Stripe.Event) {
           event.data.object as Stripe.Checkout.Session,
         );
         break;
-      case 'payment_intent.succeeded':
-        await handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent,
-        );
-        break;
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
@@ -215,32 +210,6 @@ async function handleCheckoutSessionCompleted(
         session_id: session.id,
         session_mode: session.mode,
         metadata: session.metadata,
-      },
-    });
-    throw error;
-  }
-}
-
-async function handlePaymentIntentSucceeded(
-  paymentIntent: Stripe.PaymentIntent,
-) {
-  try {
-    // Additional handling if needed for payment confirmations
-    console.log(`[STRIPE HOOK] Payment succeeded: ${paymentIntent.id}`);
-  } catch (error) {
-    console.error(
-      '[STRIPE HOOK] Error in handlePaymentIntentSucceeded:',
-      error,
-    );
-    Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_webhook',
-        event_type: 'payment_intent_succeeded',
-      },
-      extra: {
-        payment_intent_id: paymentIntent.id,
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
       },
     });
     throw error;
