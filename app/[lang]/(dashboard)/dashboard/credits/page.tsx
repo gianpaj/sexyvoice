@@ -1,3 +1,4 @@
+import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import Script from 'next/script';
 import type Stripe from 'stripe';
@@ -8,8 +9,8 @@ import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import {
+  createCustomerSession,
   createOrRetrieveCustomer,
-  getCustomerSession,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -92,7 +93,10 @@ export default async function CreditsPage(props: {
 
   const customerData = await getCustomerData(userData.stripe_id);
 
-  const clientSecret = await getCustomerSession();
+  const clientSecret = await createCustomerSession(
+    userData.id,
+    userData.stripe_id,
+  );
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
@@ -109,7 +113,7 @@ export default async function CreditsPage(props: {
           <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
           <p className="text-muted-foreground">{dict.topup.description}</p>
         </div>
-        <Button asChild>
+        <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
             href={'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww'}
             target="_blank"
@@ -160,7 +164,7 @@ export default async function CreditsPage(props: {
       </div>
 
       {(!customerData || customerData?.status !== 'active') && (
-        <NextStripePricingTable clientSecret={clientSecret} userId={user.id} />
+        <NextStripePricingTable clientSecret={clientSecret} />
       )}
     </div>
   );
@@ -169,10 +173,8 @@ export default async function CreditsPage(props: {
 // Subscription plans
 const NextStripePricingTable = ({
   clientSecret,
-  userId,
 }: {
   clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
-  userId: string;
 }) => {
   const pricingTableId = process.env.STRIPE_PRICING_ID;
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
@@ -191,7 +193,6 @@ const NextStripePricingTable = ({
         pricing-table-id={pricingTableId}
         publishable-key={publishableKey}
         customer-session-client-secret={clientSecret.client_secret}
-        client-reference-id={userId}
       />
     </>
   );

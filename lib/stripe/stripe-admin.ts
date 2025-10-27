@@ -1,9 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
-import { getUserById } from '../supabase/queries';
-import { createClient } from '../supabase/server';
-
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
 }
@@ -33,25 +30,10 @@ export async function createOrRetrieveCustomer({
   return customer.id;
 }
 
-export async function getCustomerSession() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const dbUser = await getUserById(user.id);
-
-  if (!dbUser || !dbUser.stripe_id) {
-    return null;
-  }
-
+export async function createCustomerSession(userId: string, stripe_id: string) {
   try {
     const customerSession = await stripe.customerSessions.create({
-      customer: dbUser.stripe_id,
+      customer: stripe_id,
       components: {
         pricing_table: {
           enabled: true,
@@ -68,8 +50,8 @@ export async function getCustomerSession() {
     Sentry.captureException({
       message: 'Error creating Stripe customer session',
       error,
-      userId: user.id,
-      stripe_id: dbUser.stripe_id,
+      userId,
+      stripe_id,
     });
     throw error;
   }
