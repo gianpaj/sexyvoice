@@ -1,3 +1,4 @@
+import { createAdminClient } from './admin';
 import { createClient } from './server';
 
 const MAX_FREE_GENERATIONS = 6;
@@ -122,7 +123,7 @@ export const insertSubscriptionCreditTransaction = async (
   amount: number,
   dollarAmount: number,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   try {
     const { data } = await supabase
@@ -168,7 +169,7 @@ export const insertTopupCreditTransaction = async (
   priceId: string,
   promo?: string | null,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   try {
     // Check if transaction already exists to prevent duplicates
@@ -215,11 +216,11 @@ export const updateUserCredits = async (
   userId: string,
   creditAmount: number,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
     user_id_var: userId,
-    credit_amount: creditAmount,
+    credit_amount_var: creditAmount,
   });
 
   if (error) throw error;
