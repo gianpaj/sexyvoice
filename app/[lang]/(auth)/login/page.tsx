@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -28,7 +30,9 @@ export default async function LoginPage(props: {
             <p className="mb-8 text-center text-muted-foreground">
               {dict.auth.login.subtitle}
             </p>
-            <LoginForm dict={dict.auth.login} lang={lang} />
+            <Suspense>
+              <LoginForm dict={dict.auth.login} lang={lang} />
+            </Suspense>
           </div>
         </div>
       </main>

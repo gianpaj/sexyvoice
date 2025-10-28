@@ -349,6 +349,10 @@ supabase status                  # Check Supabase connection
 pnpm run analyze                 # Analyze bundle size
 ```
 
+## Rules
+
+- Do not execute any `supabase` CLI commands or SQL queries that can write data
+
 ---
 
 This document should be updated as the project evolves and new patterns emerge.
