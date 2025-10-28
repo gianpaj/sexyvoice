@@ -56,38 +56,37 @@ export function PromoBanner({
 
   return (
     <div
-      className={cn(
-        'portrait:container container text-white sm:py-6 py-4 relative mx-auto px-4 sm:h-8 sm:flex flex-inline items-center justify-between pb-3',
-        {
-          'bg-red-900/30 backdrop-blur-sm absolute z-50': inDashboard,
-        },
-      )}
+      className={cn('w-full ', {
+        'bg-red-900/30 backdrop-blur-sm fixed z-50': inDashboard,
+      })}
     >
-      <div className="flex-1 sm:text-center text-left">
-        <p className="text-sm md:text-base font-medium truncate text-wrap sm:text-nowrap sm:whitespace-normal whitespace-pre-line">
-          {text}
-        </p>
-      </div>
+      <div className="portrait:container lg:container text-white sm:py-6 py-4 relative mx-auto px-4 sm:h-8 sm:flex flex-inline items-center justify-between pb-3">
+        <div className="flex-1 sm:text-center text-left">
+          <p className="text-sm md:text-base font-medium truncate text-wrap sm:text-nowrap sm:whitespace-normal whitespace-pre-line">
+            {text}
+          </p>
+        </div>
 
-      <div className="flex items-center gap-2 justify-center sm:mt-0 mt-3">
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="text-orange-600 hover:bg-gray-900 bg-gray-800/70 font-semibold whitespace-nowrap"
-        >
-          <Link href={ctaLink}>{ctaText} 🎃</Link>
-        </Button>
+        <div className="flex items-center justify-center sm:mt-0 mt-3 relative">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="text-orange-600 hover:bg-gray-900 bg-gray-800/70 font-semibold whitespace-nowrap"
+          >
+            <Link href={ctaLink}>{ctaText} 🎃</Link>
+          </Button>
 
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-orange-700"
-          onClick={handleDismissBanner}
-          aria-label={arialLabelDismiss}
-        >
-          <XIcon size={18} strokeWidth={3} />
-        </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-orange-700 absolute md:relative right-0"
+            onClick={handleDismissBanner}
+            aria-label={arialLabelDismiss}
+          >
+            <XIcon size={18} strokeWidth={3} />
+          </Button>
+        </div>
       </div>
     </div>
   );
