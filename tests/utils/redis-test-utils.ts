@@ -26,7 +26,7 @@ export async function setupRedis(): Promise<Redis> {
  */
 export async function teardownRedis(): Promise<void> {
   if (redisClient) {
-    await redisClient.quit();
+    redisClient.disconnect();
     redisClient = null;
   }
   if (redisServer) {
