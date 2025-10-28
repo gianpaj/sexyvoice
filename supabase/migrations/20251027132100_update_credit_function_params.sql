@@ -1,12 +1,9 @@
 -- Migration: Update credit function parameter names to match production
 -- This updates the parameter names to user_id_var and credit_amount_var to match the cloud database
 
--- Drop the old functions with old parameter names
-DROP FUNCTION IF EXISTS public.increment_user_credits(user_id UUID, credit_amount INTEGER);
-DROP FUNCTION IF EXISTS public.decrement_user_credits(user_id UUID, credit_amount INTEGER);
-
--- Create increment_user_credits function with new parameter names
-CREATE FUNCTION public.increment_user_credits(user_id_var UUID, credit_amount_var INTEGER)
+-- Drop and recreate increment_user_credits function with new parameter names
+DROP FUNCTION IF EXISTS public.increment_user_credits(uuid, integer);
+CREATE OR REPLACE FUNCTION public.increment_user_credits(user_id_var UUID, credit_amount_var INTEGER)
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -22,9 +19,9 @@ BEGIN
     updated_at = NOW();
 END;
 $$;
-
--- Create decrement_user_credits function with new parameter names
-CREATE FUNCTION public.decrement_user_credits(user_id_var UUID, credit_amount_var INTEGER)
+-- Drop and recreate decrement_user_credits function with new parameter names
+DROP FUNCTION IF EXISTS public.decrement_user_credits(uuid, integer);
+CREATE OR REPLACE FUNCTION public.decrement_user_credits(user_id_var UUID, credit_amount_var INTEGER)
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
