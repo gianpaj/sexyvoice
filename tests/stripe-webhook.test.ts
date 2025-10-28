@@ -875,12 +875,17 @@ describe('Stripe Webhook Route', () => {
       },
     ];
 
-    // FIXME
     testSubscriptionPlans.forEach(
       ({ name, priceId, expectedCredits, expectedAmount }) => {
-        it.skip(`should award bonus subscription credits for ${name.toLowerCase()} plan`, async () => {
+        it(`should award bonus subscription credits for ${name.toLowerCase()} plan`, async () => {
+          const customerId = 'cus_test123';
+          const subscriptionId = 'sub_test123';
+          const paymentIntentId = `pi_promo_${name.toLowerCase()}_test`;
           const subscription = createMockSubscription(priceId!, 'active');
 
+          vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(
+            subscription,
+          );
           vi.mocked(stripe.subscriptions.list).mockResolvedValue({
             data: [subscription],
             // biome-ignore lint/suspicious/noExplicitAny: Test mock data
@@ -888,16 +893,29 @@ describe('Stripe Webhook Route', () => {
 
           vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(userId);
 
-          const request = createMockRequest('customer.subscription.created', {
-            ...subscription,
-            customer: 'cus_test123',
-          });
+          const invoice = createMockInvoice(
+            subscriptionId,
+            customerId,
+            paymentIntentId,
+            priceId!,
+            'subscription_cycle',
+          );
+
+          const request = createMockRequest(
+            'invoice.payment_succeeded',
+            invoice,
+          );
 
           await POST(request);
 
-          // Note: This test is outdated - subscription credits are now awarded
-          // via invoice.payment_succeeded, not customer.subscription.updated
-          expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+          // Subscription credits are awarded via invoice.payment_succeeded with promo bonus
+          expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+            userId,
+            paymentIntentId,
+            subscriptionId,
+            expectedCredits,
+            expectedAmount,
+          );
         });
       },
     );
