@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useActionState } from 'react';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { Badge } from '@/components/ui/badge';
@@ -16,9 +16,17 @@ interface CreditTopupProps {
   lang: Locale;
 }
 
+type ActionState = {
+  error: string | null;
+  success: boolean;
+};
+
+const initialState: ActionState = {
+  error: null,
+  success: false,
+};
+
 export function CreditTopup({ dict, lang }: CreditTopupProps) {
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
 
   const { plans: pPlans } = dict;
@@ -70,122 +78,158 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
     },
   ];
 
-  const formAction = async (data: FormData): Promise<void> => {
-    const packageId = data.get('packageId') as 'starter' | 'standard' | 'pro';
-    setLoading(packageId);
-    setError(null);
-
-    try {
-      const { url } = await createCheckoutSession(data, packageId);
-
-      if (url) {
-        window.location.assign(url);
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      setError(dict.status.checkoutError);
-    } finally {
-      setLoading(null);
-    }
-  };
-
   return (
     <>
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
-          <Card
-            key={plan.name}
-            className={`grid gap-2 grid-rows-auto p-6 ${plan.isPopular ? 'ring-orange-400 ring-2 border-none' : ''} relative overflow-hidden`}
-          >
-            {isPromoEnabled && plan.price > 0 && (
-              <div className="absolute top-0 right-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                🎃 Halloween Special
-              </div>
-            )}
-            {/*{plan.isPopular && (
-                    <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">
-                      {dict.topup.mostPopular}
-                    </Badge>
-                  )}*/}
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
-                {!isPromoEnabled && plan.isPopular ? (
-                  <Badge className="rounded-full bg-orange-600">
-                    {/*<Badge className="rounded-full bg-green-600">*/}
-                    {pPlans.popular}
-                  </Badge>
-                ) : (
-                  plan.price > 10 && (
-                    <Badge
-                      variant="secondary"
-                      className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                    >
-                      20% cheaper
-                    </Badge>
-                  )
-                )}
-              </div>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold">${plan.price}</span>
-                {/*<span className="text-sm text-muted-foreground">
-                        {plan.billing}
-                      </span>*/}
-              </div>
-              {!isPromoEnabled && plan.pricePer1kCredits ? (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  ${plan.pricePer1kCredits} per 1k credits{' '}
-                  {plan.saveFromPrevPlanPer1kCredits && (
-                    <span className="text-green-600 dark:text-green-400 font-medium">
-                      (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-1 text-xs text-muted-foreground">
-                  <br />
-                </div>
-              )}
-            </div>
-            {/*<p className="text-sm text-muted-foreground">{plan.description}</p>*/}
-
-            <div className="text-sm font-medium">
-              {plan.creditsText}{' '}
-              {isPromoEnabled && plan.promoBonus && (
-                <span className="text-orange-600 dark:text-orange-400 font-semibold">
-                  (+{plan.promoBonus} bonus)
-                </span>
-              )}
-            </div>
-
-            <form action={formAction}>
-              <input type="hidden" name="packageId" value={plan.id} />
-              <input type="hidden" name="uiMode" value="hosted" />
-              <Button
-                type="submit"
-                className="w-full my-4"
-                variant={plan.buttonVariant as 'outline' | 'default'}
-              >
-                {loading === plan.name ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {dict.topup.processing}
-                  </>
-                ) : (
-                  dict.topup.buyCredits
-                )}
-              </Button>
-            </form>
-          </Card>
+          <CreditCard
+            key={plan.id}
+            plan={plan}
+            dict={dict}
+            isPromoEnabled={isPromoEnabled}
+            pPlans={pPlans}
+          />
         ))}
       </div>
     </>
+  );
+}
+
+function CreditCard({
+  plan,
+  dict,
+  isPromoEnabled,
+  pPlans,
+}: {
+  plan: {
+    id: string;
+    name: string;
+    price: number;
+    isPopular?: boolean;
+    pricePer1kCredits?: string;
+    saveFromPrevPlanPer1kCredits?: number;
+    buttonText: string;
+    buttonVariant: string;
+    creditsText: string;
+    promoBonus?: string;
+  };
+  dict: (typeof lang)['credits'];
+  isPromoEnabled: boolean;
+  pPlans: (typeof lang)['credits']['plans'];
+}) {
+  const formAction = async (
+    _prevState: ActionState,
+    formData: FormData,
+  ): Promise<ActionState> => {
+    try {
+      const packageId = formData.get('packageId') as
+        | 'starter'
+        | 'standard'
+        | 'pro';
+
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const { url } = await createCheckoutSession(formData, packageId);
+
+      if (url) {
+        window.location.assign(url);
+        return { error: null, success: true };
+      }
+
+      throw new Error('No checkout URL received');
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      return {
+        error: dict.status.checkoutError,
+        success: false,
+      };
+    }
+  };
+  const [state, formActionDispatch, pending] = useActionState(
+    formAction,
+    initialState,
+  );
+
+  return (
+    <Card
+      className={`grid gap-2 grid-rows-auto p-6 ${plan.isPopular ? 'ring-orange-400 ring-2 border-none' : ''} relative overflow-hidden`}
+    >
+      {isPromoEnabled && plan.price > 0 && (
+        <div className="absolute top-0 right-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+          🎃 Halloween Special
+        </div>
+      )}
+      <div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-semibold">{plan.name}</h3>
+          {!isPromoEnabled && plan.isPopular ? (
+            <Badge className="rounded-full bg-orange-600">
+              {pPlans.popular}
+            </Badge>
+          ) : (
+            plan.price > 10 && (
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+              >
+                20% cheaper
+              </Badge>
+            )
+          )}
+        </div>
+        <div className="flex items-baseline">
+          <span className="text-3xl font-bold">${plan.price}</span>
+        </div>
+        {!isPromoEnabled && plan.pricePer1kCredits ? (
+          <div className="mt-1 text-xs text-muted-foreground">
+            ${plan.pricePer1kCredits} per 1k credits{' '}
+            {plan.saveFromPrevPlanPer1kCredits && (
+              <span className="text-green-600 dark:text-green-400 font-medium">
+                (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="mt-1 text-xs text-muted-foreground">
+            <br />
+          </div>
+        )}
+      </div>
+
+      <div className="text-sm font-medium">
+        {plan.creditsText}{' '}
+        {isPromoEnabled && plan.promoBonus && (
+          <span className="text-orange-600 dark:text-orange-400 font-semibold">
+            (+{plan.promoBonus} bonus)
+          </span>
+        )}
+      </div>
+
+      {state.error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-600 text-xs">{state.error}</p>
+        </div>
+      )}
+
+      <form action={formActionDispatch}>
+        <input type="hidden" name="packageId" value={plan.id} />
+        <input type="hidden" name="uiMode" value="hosted" />
+        <Button
+          type="submit"
+          className="w-full my-4"
+          variant={plan.buttonVariant as 'outline' | 'default'}
+          disabled={pending}
+        >
+          {pending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {dict.topup.processing}
+            </>
+          ) : (
+            dict.topup.buyCredits
+          )}
+        </Button>
+      </form>
+    </Card>
   );
 }
