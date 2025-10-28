@@ -1,12 +1,11 @@
 # TODO
 
-- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
 - merge `r2` branch
   - share link & page after an audio has been generated
   - listened counter?
+- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
-- Translate SEO title and description to English, Spanish and German
-- Get stats of most used voice and model (e.g. zephyr and gemini-2.5-flash-preview-tts). If using LLM, use batch mode.
+- Get stats of `audio_files`. language, style. If using LLM, use batch mode.
 - Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - Translate pages in Dashboard:
   - Generate
@@ -19,8 +18,9 @@
 - Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
-- Add VoiceGeneration component in home page with Play button
-- Add a Share page for individual generated audio files
+- Add a Share page for individual generated audio files.
+  - Allow user to toggle Sharing profile page in Settings.
+  - Allow user to upload profile picture? – after `r2` branch is merged
 - Crist and Posthug: add `isPaidUser` from `r2` branch
 - Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
   - `curl -X GET https://api.usercheck.com/domain/fursee.com`

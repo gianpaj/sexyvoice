@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { banList } from '@/lib/banlist';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export function SignUpForm({
   dict,
@@ -23,6 +24,7 @@ export function SignUpForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,9 +61,7 @@ export function SignUpForm({
         console.error(signUpError, data);
         // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
         if (signUpError?.message.includes('already registered')) {
-          // setError(
-          //   'An account with this email already exists. Please login instead.',
-          // );
+          router.push(`/${lang}/login?email=${encodeURIComponent(email)}`);
         } else {
           setError(signUpError?.message || dict.error);
         }
@@ -76,7 +76,7 @@ export function SignUpForm({
           </Button>
         ),
       });
-    } catch (error) {
+    } catch (_error) {
       setIsLoading(false);
       setError(dict.error || 'Error creating account');
     }
@@ -102,13 +102,11 @@ export function SignUpForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
         <div className="grid gap-2">
           <Label htmlFor="email">{dict.email}</Label>
           <Input
             id="email"
             type="email"
-            placeholder={dict.email}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -120,14 +118,12 @@ export function SignUpForm({
           <Input
             id="password"
             type="password"
-            placeholder={dict.password}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="new-password"
           />
         </div>
-      </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 

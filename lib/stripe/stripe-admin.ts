@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
-import { getUserById } from '../supabase/queries';
 import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -83,39 +82,10 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
   return customer.id;
 }
 
-// export async function getStripePlan() {
-//   const supabase = createClient()
-//   const {
-//     data: { user }
-//   } = await supabase.auth.getUser()
-//   if (!user) {
-//     throw new Error('User not found')
-//   }
-//   const subscription = await stripe.subscriptions.retrieve(user.plan)
-//   const productId = subscription.items.data[0].plan.product as string
-//   const product = await stripe.products.retrieve(productId)
-//   return product.name
-// }
-
-export async function getCustomerSession() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return null;
-  }
-
-  const dbUser = await getUserById(user.id);
-
-  if (!dbUser || !dbUser.stripe_id) {
-    return null;
-  }
-
+export async function createCustomerSession(userId: string, stripe_id: string) {
   try {
     const customerSession = await stripe.customerSessions.create({
-      customer: dbUser.stripe_id,
+      customer: stripe_id,
       components: {
         pricing_table: {
           enabled: true,
@@ -125,13 +95,16 @@ export async function getCustomerSession() {
 
     return customerSession;
   } catch (error) {
+    console.error('Error creating Stripe customer session:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      return null;
+    }
     Sentry.captureException({
       message: 'Error creating Stripe customer session',
       error,
-      userId: user.id,
-      stripe_id: dbUser.stripe_id,
+      userId,
+      stripe_id,
     });
-    console.error('Error creating Stripe customer session:', error);
     throw error;
   }
 }

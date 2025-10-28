@@ -1,3 +1,4 @@
+import { createAdminClient } from './admin';
 import { createClient } from './server';
 
 const MAX_FREE_GENERATIONS = 6;
@@ -116,58 +117,76 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
-export const insertCreditTransaction = async (
+export const insertSubscriptionCreditTransaction = async (
   userId: string,
+  paymentIntentId: string,
   subscriptionId: string,
   amount: number,
-  subAmount: number,
+  dollarAmount: number,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   try {
+    // Check if transaction already exists using reference_id (payment_intent)
+    // This prevents duplicate credits when multiple webhook events fire
     const { data } = await supabase
       .from('credit_transactions')
       .select('id')
       .eq('user_id', userId)
-      .eq('subscription_id', subscriptionId)
+      .eq('reference_id', paymentIntentId)
       .single();
 
     if (data) {
-      console.log('Transaction already exists', {
+      console.log('Subscription transaction already exists', {
         userId,
+        paymentIntentId,
         subscriptionId,
         data,
       });
-    } else {
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        subscription_id: subscriptionId,
-        amount,
-        type: 'purchase',
-        description: `${subAmount} USD subscription`,
-      });
-      await updateUserCredits(userId, amount);
+      return;
     }
   } catch (_error) {
-    await supabase.from('credit_transactions').insert({
-      user_id: userId,
-      subscription_id: subscriptionId,
-      amount,
-      type: 'purchase',
-      description: `${subAmount} USD subscription`,
-    });
-    await updateUserCredits(userId, amount);
+    // Transaction doesn't exist, continue with insertion
   }
+
+  // Insert the transaction with reference_id (payment_intent)
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    reference_id: paymentIntentId,
+    subscription_id: subscriptionId,
+    amount,
+    type: 'purchase',
+    description: `Subscription payment - $${dollarAmount}`,
+    metadata: {
+      dollarAmount,
+      // Figure out how to send promo metadata with a Stripe pricing table
+      // ...(promo && { promo }),
+    },
+  });
+
+  if (error) {
+    console.error('Error inserting subscription transaction:', {
+      userId,
+      subscriptionId,
+      paymentIntentId,
+      error: error.message,
+    });
+    throw error;
+  }
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, amount);
 };
 
-export const insertTopupTransaction = async (
+export const insertTopupCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
   amount: number,
   dollarAmount: number,
   priceId: string,
+  promo?: string | null,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   try {
     // Check if transaction already exists to prevent duplicates
@@ -197,7 +216,11 @@ export const insertTopupTransaction = async (
     type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
     reference_id: paymentIntentId,
-    metadata: { priceId, dollarAmount },
+    metadata: {
+      priceId,
+      dollarAmount,
+      ...(promo && { promo }),
+    },
   });
 
   if (error) throw error;
@@ -210,7 +233,7 @@ export const updateUserCredits = async (
   userId: string,
   creditAmount: number,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
     user_id_var: userId,
