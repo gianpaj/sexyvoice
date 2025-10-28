@@ -79,19 +79,17 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
   ];
 
   return (
-    <>
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <CreditCard
-            key={plan.id}
-            plan={plan}
-            dict={dict}
-            isPromoEnabled={isPromoEnabled}
-            pPlans={pPlans}
-          />
-        ))}
-      </div>
-    </>
+    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+      {plans.map((plan) => (
+        <CreditCard
+          key={plan.id}
+          plan={plan}
+          dict={dict}
+          isPromoEnabled={isPromoEnabled}
+          pPlans={pPlans}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -126,8 +124,6 @@ function CreditCard({
         | 'starter'
         | 'standard'
         | 'pro';
-
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const { url } = await createCheckoutSession(formData, packageId);
 

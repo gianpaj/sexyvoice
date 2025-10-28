@@ -35,7 +35,8 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
   }
 
   if (constomersResults.data.length && constomersResults.data[0]?.id) {
-    return constomersResults.data[0].id;
+    const stripe_id = constomersResults.data[0].id;
+    return updateStripeId(userId, stripe_id);
   }
 
   const customers = await stripe.customers.list({ email });
@@ -54,7 +55,8 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
   }
 
   if (customers.data.length && customers.data[0]?.id) {
-    return customers.data[0].id;
+    const stripe_id = customers.data[0].id;
+    return updateStripeId(userId, stripe_id);
   }
 
   const customer = await stripe.customers.create({
@@ -62,13 +64,7 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
     metadata: { supabaseUUID: userId },
   });
 
-  const supabase = await createClient();
-  await supabase
-    .from('profiles')
-    .update({
-      stripe_id: customer.id,
-    })
-    .eq('id', userId);
+  const stripe_id = updateStripeId(userId, customer.id);
 
   console.info(
     `Created new Stripe customer with id ${customer.id} (${userId}) for email ${email}`,
@@ -79,8 +75,18 @@ export async function createOrRetrieveCustomer(userId: string, email: string) {
     userId,
   });
 
-  return customer.id;
+  return stripe_id;
 }
+
+// Helper function to update stripe_id in database
+const updateStripeId = async (userId: string, stripeId: string) => {
+  const supabase = await createClient();
+  await supabase
+    .from('profiles')
+    .update({ stripe_id: stripeId })
+    .eq('id', userId);
+  return stripeId;
+};
 
 export async function createCustomerSession(userId: string, stripe_id: string) {
   try {
