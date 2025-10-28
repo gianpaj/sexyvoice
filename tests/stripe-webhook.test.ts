@@ -63,13 +63,13 @@ describe('Stripe Webhook Route', () => {
   beforeAll(async () => {
     const redisClient = await setupRedis();
     setTestRedisClient(redisClient);
-  });
+  }, 60000); // 60 seconds timeout for Redis binary download
 
   // Teardown Redis after all tests
   afterAll(async () => {
     setTestRedisClient(null);
     await teardownRedis();
-  });
+  }, 30000); // 30 seconds timeout for cleanup
 
   beforeEach(async () => {
     vi.clearAllMocks();
