@@ -1,9 +1,9 @@
 import { ArrowTopRightIcon } from '@radix-ui/react-icons';
+import * as Sentry from '@sentry/nextjs';
 import Link from 'next/link';
 import Script from 'next/script';
 import type Stripe from 'stripe';
 
-// import Stripe from 'stripe';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -77,18 +77,15 @@ export default async function CreditsPage(props: {
   }
 
   if (!userData.stripe_id) {
-    const stripe_id = await createOrRetrieveCustomer({
-      uuid: user.id,
-      email: user.email!,
-    });
-    await supabase
-      .from('profiles')
-      .update({
-        stripe_id,
-      })
-      .eq('id', user.id);
+    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
+    if (!stripe_id) {
+      console.error('Failed to create or retrieve Stripe customer.');
+      Sentry.captureMessage('Failed to create or retrieve Stripe customer.', {
+        level: 'error',
+        extra: { userId: user.id, email: user.email },
+      });
+    }
     userData.stripe_id = stripe_id;
-    console.log('created Stripe customer id');
   }
 
   const customerData = await getCustomerData(userData.stripe_id);
@@ -103,7 +100,7 @@ export default async function CreditsPage(props: {
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(10);
+    .limit(100);
 
   return (
     <div className="space-y-8">

@@ -38,7 +38,7 @@ const sampleAudios: ReadonlyArray<SampleAudio> = [
 Because it's hard to lay down in a square! <laugh>
 I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
     audioSrc: 'dan_joke.mp3',
-    showOnSiteLangs: ['es', 'de'],
+    showOnSiteLangs: ['es'],
   },
   {
     id: 5,
@@ -50,11 +50,11 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
   },
   {
     id: 6,
-    name: 'Javi (es-ES) 🇪🇸',
+    name: 'Sulafat (Multilingual) 🇺🇸',
     prompt:
-      'Bienvenido a SexyVoice.ai <resoplido> , tu puerta de entrada a la vanguardia de la innovación y el mundo de la tecnología. Soy tu anfitrión, Javi, y cada semana exploramos las últimas tendencias, avances y las personas que están dando forma al futuro de la tecnología.',
-    audioSrc: 'javi_anfitrion.mp3',
-    showOnSiteLangs: ['en', 'es'],
+      "[custom style] Oh, Paris—the City of Light, they call it, but to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight.",
+    audioSrc: 'sulafat.mp3',
+    showOnSiteLangs: ['en', 'es', 'de'],
   },
 ];
 

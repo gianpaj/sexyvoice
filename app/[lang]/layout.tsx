@@ -26,6 +26,13 @@ export async function generateMetadata(
   const pathname = new URL(alternates?.canonical?.url!).pathname;
   const pagePath = pathname.replace(`/${lang}`, '') || '/';
 
+  // Validate that the language is a supported locale
+  if (!i18n.locales.includes(lang as Locale)) {
+    return {
+      title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+    };
+  }
+
   const dict = await getDictionary(lang);
   // @ts-ignore FIXME
   const pageTitle = dict.pages[pagePath];
