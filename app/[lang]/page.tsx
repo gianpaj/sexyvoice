@@ -56,7 +56,7 @@ export default async function LandingPage(props: {
   const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
 
   const [firstPart, ...restParts] = dict.hero.title.split(',');
-  const titleRestParts = restParts.slice(1).join(',');
+  const titleRestParts = restParts.join(',');
 
   const jsonLd: WithContext<FAQPage> = {
     '@context': 'https://schema.org',

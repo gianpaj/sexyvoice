@@ -54,20 +54,34 @@ export function PromoBanner({
     return null;
   }
 
+  const isLongText = text.length > 100;
+
   return (
     <div
       className={cn('w-full ', {
         'bg-red-900/30 backdrop-blur-sm fixed z-50': inDashboard,
       })}
     >
-      <div className="portrait:container lg:container text-white sm:py-6 py-4 relative mx-auto px-4 sm:h-8 sm:flex flex-inline items-center justify-between pb-3">
+      <div
+        className={cn(
+          'portrait:container lg:container text-white sm:py-6 py-4 relative mx-auto px-4 sm:flex flex-inline items-center justify-between pb-3 gap-4',
+          isLongText ? 'sm:h-16' : 'sm:h-8',
+        )}
+      >
         <div className="flex-1 sm:text-center text-left">
-          <p className="text-sm md:text-base font-medium truncate text-wrap sm:text-nowrap sm:whitespace-normal whitespace-pre-line">
+          <p
+            className={cn(
+              'text-sm md:text-base font-medium truncate text-wrap sm:whitespace-normal whitespace-pre-line',
+              {
+                'sm:text-nowrap': !isLongText,
+              },
+            )}
+          >
             {text}
           </p>
         </div>
 
-        <div className="flex items-center justify-center sm:mt-0 mt-3 relative">
+        <div className="flex items-center justify-center sm:mt-0 mt-3 relative gap-2">
           <Button
             asChild
             size="sm"
