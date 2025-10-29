@@ -188,10 +188,13 @@ async function handleCheckoutSessionCompleted(
       console.log(
         `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
       );
-
+      const paymentIntentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent.id;
       await insertTopupCreditTransaction(
         userId,
-        session.payment_intent.toString(),
+        paymentIntentId,
         creditAmount,
         dollarAmountNum,
         packageId,
@@ -275,7 +278,10 @@ async function handleCheckoutSessionCompleted(
       }
 
       // Get payment intent from the session (for initial subscription payment)
-      const paymentIntentId = session.payment_intent as string | null;
+      const paymentIntentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id;
       if (!paymentIntentId) {
         console.error(
           '[STRIPE HOOK] No payment intent in subscription checkout session',

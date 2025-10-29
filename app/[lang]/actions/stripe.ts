@@ -32,7 +32,7 @@ export async function createCheckoutSession(
     if (!package_ || !package_.priceId) {
       const error = new Error('Invalid package id');
       console.error(
-        `Missing price ID for package id: ${packageId} - priceId: ${package_.priceId}`,
+        `Missing price ID for package id: ${packageId} - priceId: ${package_?.priceId}`,
       );
       Sentry.captureException(error, {
         tags: {
@@ -41,7 +41,7 @@ export async function createCheckoutSession(
         },
         extra: {
           packageId,
-          priceId: package_.priceId,
+          priceId: package_?.priceId,
           available_packages: Object.keys(getTopupPackages('en')),
         },
       });
