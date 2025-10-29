@@ -14,6 +14,8 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
+const { logger, captureException } = Sentry;
+
 // File validation constants
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -172,7 +174,7 @@ export async function POST(request: Request) {
     // ]);
 
     // if (error) {
-    //   Sentry.captureException({
+    //   captureException({
     //     error: 'Failed to save voice profile',
     //     errorData: error,
     //   });
@@ -204,7 +206,7 @@ export async function POST(request: Request) {
     const estimate = estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
-      Sentry.captureMessage('Insufficient credits', {
+      logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { text, estimate, currentCreditsAmount: currentAmount },
       });
@@ -329,7 +331,7 @@ export async function POST(request: Request) {
           model: 'chatterbox-tts',
           errorData: audioFileDBResult.error,
         };
-        Sentry.captureException({
+        captureException({
           error: 'Failed to insert audio file row',
           ...errorObj,
         });
@@ -365,7 +367,7 @@ export async function POST(request: Request) {
       audioPromptUrl,
       errorData: error,
     };
-    Sentry.captureException({
+    captureException({
       error: 'Voice cloning error',
       ...errorObj,
     });

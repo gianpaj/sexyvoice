@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
-      logger.warn('Insufficient credits', {
+      logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
       });
