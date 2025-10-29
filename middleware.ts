@@ -26,7 +26,11 @@ function getLocaleFromPathname(request: NextRequest): string {
   return i18n.defaultLocale;
 }
 
-const publicRoutesWithoutAuth = ['/api/stripe/webhook', '/api/daily-stats'];
+const publicRoutesWithoutAuth = [
+  '/api/stripe/webhook',
+  '/api/daily-stats',
+  '/api/inngest',
+];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

@@ -1,10 +1,11 @@
 import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { del, head, put } from '@vercel/blob';
+import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
+import { inngest } from '@/lib/inngest/client';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
@@ -349,7 +350,13 @@ export async function POST(request: Request) {
       });
 
       // delete the audio file uploaded
-      // await del(blobUrl);
+      await inngest.send({
+        name: 'clone-audio/cleanup.scheduled',
+        data: {
+          blobUrl: blobUrl,
+          userId: user.id,
+        },
+      });
     });
 
     return NextResponse.json(

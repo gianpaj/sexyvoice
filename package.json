@@ -64,6 +64,7 @@
     "date-fns": "^3.6.0",
     "globby": "^14.1.0",
     "import-in-the-middle": "1.14.2",
+    "inngest": "^3.44.3",
     "lucide-react": "^0.523.0",
     "mdx-bundler": "^10.1.1",
     "music-metadata": "^11.2.3",
