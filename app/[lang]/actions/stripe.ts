@@ -8,6 +8,15 @@ import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
+export interface CheckoutMetadata {
+  userId: string;
+  packageId: PackageType;
+  credits: string;
+  dollarAmount: string;
+  type: 'topup';
+  promo?: string;
+}
+
 export async function createCheckoutSession(
   data: FormData,
   packageId: PackageType,
@@ -22,7 +31,9 @@ export async function createCheckoutSession(
     // Verify the price ID exists to avoid runtime errors
     if (!package_ || !package_.priceId) {
       const error = new Error('Invalid package id');
-      console.error(`Missing price ID for package id: ${packageId}`);
+      console.error(
+        `Missing price ID for package id: ${packageId} - priceId: ${package_.priceId}`,
+      );
       Sentry.captureException(error, {
         tags: {
           section: 'stripe_actions',
@@ -30,6 +41,7 @@ export async function createCheckoutSession(
         },
         extra: {
           packageId,
+          priceId: package_.priceId,
           available_packages: Object.keys(getTopupPackages('en')),
         },
       });
@@ -58,6 +70,16 @@ export async function createCheckoutSession(
       });
       throw error;
     }
+    const metadata: CheckoutMetadata = {
+      userId: user.id,
+      packageId,
+      credits: package_.credits.toString(),
+      dollarAmount: package_.dollarAmount.toString(),
+      type: 'topup',
+      ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
+        promo: process.env.NEXT_PUBLIC_PROMO_ID,
+      }),
+    };
 
     const lang = 'en';
     const checkoutSession: Stripe.Checkout.Session =
@@ -75,16 +97,7 @@ export async function createCheckoutSession(
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,
-        metadata: {
-          userId: user.id,
-          packageId,
-          credits: package_.credits.toString(),
-          dollarAmount: package_.dollarAmount.toString(),
-          type: 'topup',
-          ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
-            promo: process.env.NEXT_PUBLIC_PROMO_ID,
-          }),
-        },
+        metadata: metadata as unknown as Stripe.MetadataParam,
       });
 
     return {
