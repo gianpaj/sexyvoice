@@ -128,10 +128,10 @@ export async function GET(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .lt('created_at', today.toISOString()),
 
-    // Fetch all credit transactions (small dataset, excluding manual ones)
+    // Fetch all credit transactions (small dataset, excluding manual ones) with auth email
     supabase
       .from('credit_transactions')
-      .select('id, user_id, created_at, type, description, metadata')
+      .select('id, user_id, created_at, type, description, metadata, auth(email)')
       .in('type', ['purchase', 'topup'])
       .not('description', 'ilike', '%manual%')
       .lt('created_at', today.toISOString()),
@@ -277,9 +277,12 @@ export async function GET(request: NextRequest) {
       ? 'N/A'
       : topCustomerIds
           .map((userId) => {
-            const profile = profilesRecentData.find((p) => p.id === userId);
-
-            const username = maskUsername(profile?.username) || 'Unknown';
+            // Find the transaction for this user to get their auth email
+            const transaction = creditsPrevDayData.find(
+              (t) => t.user_id === userId,
+            );
+            const username =
+              maskUsername(transaction?.auth?.email) || 'Unknown';
             const spending = customerSpending.get(userId) ?? 0;
             return `${username} ($${spending.toFixed(2)})`;
           })
