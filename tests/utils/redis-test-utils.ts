@@ -32,6 +32,12 @@ export async function setupRedis(): Promise<Redis> {
   redisClient = new Redis({
     host,
     port,
+    retryStrategy: (times) => {
+      if (times > 3) {
+        return null; // Stop retrying after 3 attempts
+      }
+      return Math.min(times * 50, 2000);
+    },
   });
 
   return redisClient;
