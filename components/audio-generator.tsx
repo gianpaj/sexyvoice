@@ -99,7 +99,10 @@ export function AudioGenerator({
 
         // Check if we have an error code for translation
         if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
-          throw new APIError(dict[error.errorCode as keyof typeof dict] as string, response);
+          throw new APIError(
+            dict[error.errorCode as keyof typeof dict] as string,
+            response,
+          );
         }
 
         // Fallback to the default English error message from API

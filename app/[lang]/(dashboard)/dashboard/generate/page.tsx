@@ -57,10 +57,10 @@ export default async function GeneratePage(props: {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">{dict.generate.title}</h2>
-        <p className="text-muted-foreground">
-          {dict.generate.subtitle}
-        </p>
+        <h2 className="text-3xl font-bold tracking-tight">
+          {dict.generate.title}
+        </h2>
+        <p className="text-muted-foreground">{dict.generate.subtitle}</p>
       </div>
 
       <div className="lg:hidden">
