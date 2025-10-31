@@ -13,6 +13,7 @@ import {
   getCredits,
   getVoiceIdByName,
   isFreemiumUserOverLimit,
+  MAX_FREE_GENERATIONS,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -166,8 +167,7 @@ export async function POST(request: Request) {
       if (isOverLimit) {
         return NextResponse.json(
           {
-            error:
-              'You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+            error: `You have exceeded the limit of ${MAX_FREE_GENERATIONS} multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.`,
             errorCode: 'gproLimitExceeded',
           },
           { status: 403 },

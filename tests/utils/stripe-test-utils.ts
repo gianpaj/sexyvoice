@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import type Stripe from 'stripe';
 import { vi } from 'vitest';
 
+import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
 import { stripe } from '@/lib/stripe/stripe-admin';
 
 const WEBHOOK_SECRET =
@@ -77,7 +78,7 @@ export function createMockEvent<T extends Stripe.Event.Type>(
  */
 export function createMockCheckoutSession(
   mode: 'payment' | 'subscription',
-  metadata?: Record<string, string>,
+  metadata?: CheckoutMetadata,
 ): Stripe.Checkout.Session {
   // @ts-expect-error
   return {
@@ -87,7 +88,7 @@ export function createMockCheckoutSession(
     customer: 'cus_test123',
     payment_intent: mode === 'payment' ? 'pi_test123' : null,
     subscription: mode === 'subscription' ? 'sub_test123' : null,
-    metadata: metadata || {},
+    metadata: (metadata as unknown as Stripe.Metadata) || {},
     payment_status: 'paid',
     status: 'complete',
   };

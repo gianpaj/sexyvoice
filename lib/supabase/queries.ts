@@ -1,7 +1,7 @@
 import { createAdminClient } from './admin';
 import { createClient } from './server';
 
-const MAX_FREE_GENERATIONS = 6;
+export const MAX_FREE_GENERATIONS = 6;
 
 export async function getCredits(userId: string): Promise<number> {
   const supabase = await createClient();
@@ -121,7 +121,7 @@ export const insertSubscriptionCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
   subscriptionId: string,
-  amount: number,
+  creditAmount: number,
   dollarAmount: number,
 ) => {
   const supabase = createAdminClient();
@@ -154,7 +154,7 @@ export const insertSubscriptionCreditTransaction = async (
     user_id: userId,
     reference_id: paymentIntentId,
     subscription_id: subscriptionId,
-    amount,
+    amount: creditAmount,
     type: 'purchase',
     description: `Subscription payment - $${dollarAmount}`,
     metadata: {
@@ -175,15 +175,15 @@ export const insertSubscriptionCreditTransaction = async (
   }
 
   // Update user's credit balance using the database function
-  await updateUserCredits(userId, amount);
+  await updateUserCredits(userId, creditAmount);
 };
 
 export const insertTopupCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
-  amount: number,
+  creditAmount: number,
   dollarAmount: number,
-  priceId: string,
+  packageId: string,
   promo?: string | null,
 ) => {
   const supabase = createAdminClient();
@@ -212,12 +212,12 @@ export const insertTopupCreditTransaction = async (
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
-    amount: amount,
+    amount: creditAmount,
     type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
     reference_id: paymentIntentId,
     metadata: {
-      priceId,
+      packageId,
       dollarAmount,
       ...(promo && { promo }),
     },
@@ -226,7 +226,7 @@ export const insertTopupCreditTransaction = async (
   if (error) throw error;
 
   // Update user's credit balance using the database function
-  await updateUserCredits(userId, amount);
+  await updateUserCredits(userId, creditAmount);
 };
 
 export const updateUserCredits = async (

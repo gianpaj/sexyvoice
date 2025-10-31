@@ -104,32 +104,38 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 // Mock Supabase queries specifically
-vi.mock('@/lib/supabase/queries', () => ({
-  getVoiceIdByName: vi.fn((voiceName: string) => {
-    if (voiceName === 'tara') {
-      return Promise.resolve({
-        id: 'voice-tara-id',
-        name: 'tara',
-        language: 'en',
-        model:
-          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
-      });
-    }
-    if (voiceName === 'poe') {
-      return Promise.resolve({
-        id: 'voice-poe-id',
-        name: 'poe',
-        language: 'en',
-        model: 'gpro',
-      });
-    }
-    return Promise.resolve(null);
-  }),
-  getCredits: vi.fn().mockResolvedValue(1000),
-  reduceCredits: vi.fn().mockResolvedValue(true),
-  saveAudioFile: vi.fn().mockResolvedValue({ id: 'test-audio-file-id' }),
-  isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
-}));
+vi.mock('@/lib/supabase/queries', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/supabase/queries')>(
+    '@/lib/supabase/queries',
+  );
+  return {
+    ...actual,
+    getVoiceIdByName: vi.fn((voiceName: string) => {
+      if (voiceName === 'tara') {
+        return Promise.resolve({
+          id: 'voice-tara-id',
+          name: 'tara',
+          language: 'en',
+          model:
+            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+        });
+      }
+      if (voiceName === 'poe') {
+        return Promise.resolve({
+          id: 'voice-poe-id',
+          name: 'poe',
+          language: 'en',
+          model: 'gpro',
+        });
+      }
+      return Promise.resolve(null);
+    }),
+    getCredits: vi.fn().mockResolvedValue(1000),
+    reduceCredits: vi.fn().mockResolvedValue(true),
+    saveAudioFile: vi.fn().mockResolvedValue({ id: 'test-audio-file-id' }),
+    isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
+  };
+});
 
 // Mock Upstash Redis with reconfigurable functions
 const mockRedisGet = vi.fn().mockResolvedValue(null);

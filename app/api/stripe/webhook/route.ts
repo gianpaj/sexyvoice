@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
+import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
 import { getTopupPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
@@ -157,23 +158,26 @@ async function handleCheckoutSessionCompleted(
   try {
     if (session.mode === 'payment' && session.metadata?.type === 'topup') {
       // This is a one-time credit purchase
-      const { userId, packageType, credits, dollarAmount } = session.metadata;
+      const { userId, packageId, credits, dollarAmount, promo } =
+        session.metadata as unknown as CheckoutMetadata;
 
-      if (!userId || !credits || !dollarAmount) {
+      if (!userId || !credits || !dollarAmount || !session.payment_intent) {
         const error = new Error('Missing metadata for topup transaction');
+        const extra = {
+          session_id: session.id,
+          metadata: session.metadata,
+          payment_intent: session.payment_intent,
+        };
         console.error(
           '[STRIPE HOOK] Missing metadata for topup transaction',
-          session.metadata,
+          extra,
         );
         Sentry.captureException(error, {
           tags: {
             section: 'stripe_webhook',
             event_type: 'checkout_session_completed',
           },
-          extra: {
-            session_id: session.id,
-            metadata: session.metadata,
-          },
+          extra,
         });
         return;
       }
@@ -184,14 +188,17 @@ async function handleCheckoutSessionCompleted(
       console.log(
         `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
       );
-
+      const paymentIntentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent.id;
       await insertTopupCreditTransaction(
         userId,
-        session.payment_intent as string,
+        paymentIntentId,
         creditAmount,
         dollarAmountNum,
-        packageType || 'unknown',
-        session.metadata?.promo || null,
+        packageId,
+        promo,
       );
 
       console.log(
@@ -271,7 +278,10 @@ async function handleCheckoutSessionCompleted(
       }
 
       // Get payment intent from the session (for initial subscription payment)
-      const paymentIntentId = session.payment_intent as string | null;
+      const paymentIntentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id;
       if (!paymentIntentId) {
         console.error(
           '[STRIPE HOOK] No payment intent in subscription checkout session',
@@ -292,20 +302,21 @@ async function handleCheckoutSessionCompleted(
       );
     }
   } catch (error) {
+    const extra = {
+      session_id: session.id,
+      session_mode: session.mode,
+      metadata: session.metadata,
+    };
     console.error(
       '[STRIPE HOOK] Error in handleCheckoutSessionCompleted:',
-      error,
+      extra,
     );
     Sentry.captureException(error, {
       tags: {
         section: 'stripe_webhook',
         event_type: 'checkout_session_completed',
       },
-      extra: {
-        session_id: session.id,
-        session_mode: session.mode,
-        metadata: session.metadata,
-      },
+      extra,
     });
     throw error;
   }

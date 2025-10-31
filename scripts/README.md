@@ -25,10 +25,10 @@ Successfully loaded 154 rows
 First few rows:
                                      id  ...                                    metadata
 0  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...                                         NaN
-1  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...  {"priceId": "standard", "dollarAmount": 5}
+1  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...{"packageId": "standard", "dollarAmount": 5}
 2  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...                         {"dollarAmount": 5}
-3  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...     {"priceId": "base", "dollarAmount": 10}
-4  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...     {"priceId": "base", "dollarAmount": 10}
+3  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...{"packageId": "starter", "dollarAmount": 10}
+4  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...{"packageId": "starter", "dollarAmount": 10}
 
 [5 rows x 10 columns]
 
