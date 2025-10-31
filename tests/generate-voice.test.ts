@@ -518,7 +518,9 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(403);
-      expect(json.error).toContain('exceeded the limit');
+      expect(json.error).toMatch(
+        'You have exceeded the limit of 6 multilingual',
+      );
       expect(json.errorCode).toBe('gproLimitExceeded');
       expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
         'test-user-id',

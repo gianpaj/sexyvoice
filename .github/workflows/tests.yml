@@ -48,5 +48,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Redis binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/redis-binaries
+          key: ${{ runner.os }}-redis-binaries-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-redis-binaries-
+
       - name: Run tests
         run: pnpm test
+        env:
+          REDIS_MEMORY_SERVER_CACHE_DIR: ~/.cache/redis-binaries
