@@ -188,10 +188,10 @@ pnpm test:watch
 
 ### Database Operations
 
-Generate TypeScript types from Supabase:
+Generate TypeScript types from Supabase Cloud Database:
 
 ```bash
-supabase gen types typescript --project-id PROJECT_ID > database.types.ts
+pnpm run generate-supabase-types
 ```
 
 Push schema changes to Supabase:
