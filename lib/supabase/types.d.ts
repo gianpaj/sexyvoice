@@ -29,6 +29,7 @@ declare type Database = {
           text_content: string;
           total_votes: number;
           url: string;
+          usage: Json | null;
           user_id: string | null;
           voice_id: string;
         };
@@ -46,6 +47,7 @@ declare type Database = {
           text_content: string;
           total_votes?: number;
           url: string;
+          usage?: Json | null;
           user_id?: string | null;
           voice_id: string;
         };
@@ -63,6 +65,7 @@ declare type Database = {
           text_content?: string;
           total_votes?: number;
           url?: string;
+          usage?: Json | null;
           user_id?: string | null;
           voice_id?: string;
         };
@@ -120,7 +123,15 @@ declare type Database = {
           updated_at?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'credit_transactions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       credits: {
         Row: {
@@ -381,14 +392,3 @@ declare const Constants = {
     },
   },
 } as const;
-
-declare type AudioFile = Database['public']['Tables']['audio_files']['Row'];
-
-declare type CreditTransaction =
-  Database['public']['Tables']['credit_transactions']['Row'];
-
-declare type Credit = Database['public']['Tables']['credits']['Row'];
-
-declare type Profile = Database['public']['Tables']['profiles']['Row'];
-
-declare type Voice = Database['public']['Tables']['voices']['Row'];

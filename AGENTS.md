@@ -184,7 +184,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Database (Supabase)
 - `supabase db push` - Apply migrations to database
-- `supabase gen types typescript --project-id PROJECT_ID > database.types.ts` - Generate TypeScript types from database schema
+- `pnpm run generate-supabase-types` - Generate TypeScript types from database schema
 - Migration files located in `supabase/migrations/` with timestamp format
 - Telegram bot function available in `supabase/functions/telegram-bot/` using Deno and deployed on Deno Deploy
 
