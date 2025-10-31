@@ -128,10 +128,12 @@ export async function GET(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .lt('created_at', today.toISOString()),
 
-    // Fetch all credit transactions (small dataset, excluding manual ones) with auth email
+    // Fetch all credit transactions (small dataset, excluding manual ones) with username join
     supabase
       .from('credit_transactions')
-      .select('id, user_id, created_at, type, description, metadata, auth(email)')
+      .select(
+        'id, user_id, created_at, type, description, metadata, profiles(username)',
+      )
       .in('type', ['purchase', 'topup'])
       .not('description', 'ilike', '%manual%')
       .lt('created_at', today.toISOString()),
@@ -192,18 +194,22 @@ export async function GET(request: NextRequest) {
   // Early exit if no audio files yesterday
   if (audioYesterdayCount === 0) {
     const message = `WARNING: No audio files generated yesterday! ${previousDay}-${today}`;
+    console.warn({ message });
+    if (!isProd) {
+      return NextResponse.json({ ok: true });
+    }
     await fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message }),
     });
-    if (isProd) {
-      Sentry.captureCheckIn({
-        checkInId,
-        monitorSlug: 'telegram-bot-daily-stats',
-        status: 'ok',
-      });
-    }
+
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'ok',
+    });
+
     return NextResponse.json({ ok: true });
   }
 
@@ -277,12 +283,12 @@ export async function GET(request: NextRequest) {
       ? 'N/A'
       : topCustomerIds
           .map((userId) => {
-            // Find the transaction for this user to get their auth email
+            // Find the transaction for this user to get their profile data
             const transaction = creditsPrevDayData.find(
               (t) => t.user_id === userId,
             );
             const username =
-              maskUsername(transaction?.auth?.email) || 'Unknown';
+              maskUsername(transaction?.profiles?.username) || 'Unknown';
             const spending = customerSpending.get(userId) ?? 0;
             return `${username} ($${spending.toFixed(2)})`;
           })
