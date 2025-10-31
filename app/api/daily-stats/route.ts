@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { countActiveCustomerSubscriptions } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
+  filterByDateRange,
   formatChange,
   formatCurrencyChange,
   maskUsername,
@@ -57,120 +58,209 @@ export async function GET(request: NextRequest) {
   const monthStart = startOfMonth(untilNow);
   const previousMonthStart = startOfPreviousMonth(untilNow);
 
-  const audioYesterday = await supabase
-    .from('audio_files')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
+  // Calculate previous month period end for comparison
+  const duration = today.getTime() - monthStart.getTime();
+  const previousMonthPeriodEnd = new Date(
+    previousMonthStart.getTime() + duration,
+  );
 
-  if (audioYesterday.count === 0) {
+  // Fetch data in parallel - combine related queries and filter in memory
+  const [
+    // Audio files - fetch for lastpecific ranges
+    audioYesterdayResult,
+    audioPreviousDayResult,
+    audioWeekResult,
+    audioTotalCountResult,
+    clonesResult,
+    // Profiles - fetch for specific ranges
+    profilesRecentResult,
+    profilesTotalCountResult,
+    // Credit transactions - fetch all (small dataset)
+    allCreditTransactionsResult,
+    // Active subscribers
+    activeSubscribersCount,
+  ] = await Promise.all([
+    // Audio files yesterday with voice information
+    supabase
+      .from('audio_files')
+      .select('id, created_at, model, voice_id, voices(name)')
+      .gte('created_at', previousDay.toISOString())
+      .lt('created_at', today.toISOString()),
+
+    // Audio files previous day (for comparison)
+    supabase
+      .from('audio_files')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', twoDaysAgo.toISOString())
+      .lt('created_at', previousDay.toISOString()),
+
+    // Audio files last 7 days
+    supabase
+      .from('audio_files')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .lt('created_at', today.toISOString()),
+
+    // Total audio files count
+    supabase
+      .from('audio_files')
+      .select('id', { count: 'exact', head: true })
+      .lt('created_at', today.toISOString()),
+
+    // Cloned audio files last 7 days (includes yesterday)
+    supabase
+      .from('audio_files')
+      .select('id, created_at')
+      .eq('model', 'chatterbox-tts')
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .lt('created_at', today.toISOString()),
+
+    // Profiles last 7 days (includes yesterday and previous day)
+    supabase
+      .from('profiles')
+      .select('id, created_at, username')
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .lt('created_at', today.toISOString()),
+
+    // Total profiles count
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .lt('created_at', today.toISOString()),
+
+    // Fetch all credit transactions (small dataset, excluding manual ones) with username join
+    supabase
+      .from('credit_transactions')
+      .select(
+        'id, user_id, created_at, type, description, metadata, profiles(username)',
+      )
+      .in('type', ['purchase', 'topup'])
+      .not('description', 'ilike', '%manual%')
+      .lt('created_at', today.toISOString()),
+
+    // Fetch active subscribers count
+    countActiveCustomerSubscriptions(),
+  ]);
+
+  if (audioYesterdayResult.error) throw audioYesterdayResult.error;
+  if (audioPreviousDayResult.error) throw audioPreviousDayResult.error;
+  if (audioWeekResult.error) throw audioWeekResult.error;
+  if (audioTotalCountResult.error) throw audioTotalCountResult.error;
+  if (clonesResult.error) throw clonesResult.error;
+  if (profilesRecentResult.error) throw profilesRecentResult.error;
+  if (profilesTotalCountResult.error) throw profilesTotalCountResult.error;
+  if (allCreditTransactionsResult.error)
+    throw allCreditTransactionsResult.error;
+
+  const audioYesterdayData = audioYesterdayResult.data ?? [];
+  const audioYesterdayCount = audioYesterdayData.length;
+  const audioPrevCount = audioPreviousDayResult.count ?? 0;
+  const audioWeekCount = audioWeekResult.count ?? 0;
+  const audioTotalCount = audioTotalCountResult.count ?? 0;
+
+  const clonesData = (clonesResult.data ?? []).filter(
+    (item): item is { id: string; created_at: string } =>
+      item.created_at !== null,
+  );
+  const profilesRecentData = (profilesRecentResult.data ?? []).filter(
+    (item): item is { id: string; created_at: string; username: string } =>
+      item.created_at !== null,
+  );
+  const profilesTotalCount = profilesTotalCountResult.count ?? 0;
+  const creditTransactions = allCreditTransactionsResult.data ?? [];
+
+  // Filter clones by date ranges
+  const clonePrevCount = filterByDateRange(
+    clonesData,
+    previousDay,
+    today,
+  ).length;
+  const cloneWeekCount = clonesData.length;
+
+  // Filter profiles by date ranges
+  const profilesYesterdayData = filterByDateRange(
+    profilesRecentData,
+    previousDay,
+    today,
+  );
+  const profilesTodayCount = profilesYesterdayData.length;
+  const profilesPrevCount = filterByDateRange(
+    profilesRecentData,
+    twoDaysAgo,
+    previousDay,
+  ).length;
+  const profilesWeekCount = profilesRecentData.length;
+
+  // Early exit if no audio files yesterday
+  if (audioYesterdayCount === 0) {
     const message = `WARNING: No audio files generated yesterday! ${previousDay}-${today}`;
+    console.warn({ message });
+    if (!isProd) {
+      return NextResponse.json({ ok: true });
+    }
     await fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message }),
     });
-    if (isProd) {
-      Sentry.captureCheckIn({
-        checkInId,
-        monitorSlug: 'telegram-bot-daily-stats',
-        status: 'ok',
-      });
-    }
+
+    Sentry.captureCheckIn({
+      checkInId,
+      monitorSlug: 'telegram-bot-daily-stats',
+      status: 'ok',
+    });
+
     return NextResponse.json({ ok: true });
   }
 
-  const audioPrev = await supabase
-    .from('audio_files')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', twoDaysAgo.toISOString())
-    .lt('created_at', previousDay.toISOString());
-  const audioWeek = await supabase
-    .from('audio_files')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-  const audioTotal = await supabase
-    .from('audio_files')
-    .select('id', { count: 'exact', head: true })
-    .lt('created_at', today.toISOString());
-
-  const clonePrevDay = await supabase
-    .from('audio_files')
-    .select('id', { count: 'exact', head: true })
-    .eq('model', 'chatterbox-tts')
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-  const cloneWeek = await supabase
-    .from('audio_files')
-    .select('id', { count: 'exact', head: true })
-    .eq('model', 'chatterbox-tts')
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-  const { data: audioFilesYesterday } = await supabase
-    .from('audio_files')
-    .select(`
-        voice_id,
-        voices ( name )
-      `)
-    // .neq('model', 'chatterbox-tts')
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-
+  // Top voices calculation
   const voiceCounts = new Map<string, number>();
-  for (const row of audioFilesYesterday ?? []) {
-    voiceCounts.set(
-      row.voices.name,
-      (voiceCounts.get(row.voices.name) ?? 0) + 1,
-    );
+  for (const audio of audioYesterdayData) {
+    if (audio.voices?.name) {
+      voiceCounts.set(
+        audio.voices.name,
+        (voiceCounts.get(audio.voices.name) ?? 0) + 1,
+      );
+    }
   }
 
-  const topVoiceEntries = [...voiceCounts.entries()]
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, 3);
+  const topVoiceList =
+    voiceCounts.size === 0
+      ? 'N/A'
+      : [...voiceCounts.entries()]
+          .sort(([, countA], [, countB]) => countB - countA)
+          .slice(0, 3)
+          .map(([voiceName, count]) => `${voiceName} (${count})`)
+          .join(', ');
 
-  const topVoiceList = await (async () => {
-    if (topVoiceEntries.length === 0) {
-      return 'N/A';
-    }
+  // Filter credit transactions by date ranges
+  const creditsPrevDayData = filterByDateRange(
+    creditTransactions,
+    previousDay,
+    today,
+  );
+  const creditsPrevCount = filterByDateRange(
+    creditTransactions,
+    twoDaysAgo,
+    previousDay,
+  ).length;
+  const creditsWeekCount = filterByDateRange(
+    creditTransactions,
+    sevenDaysAgo,
+    today,
+  ).length;
+  const creditsMonthCount = filterByDateRange(
+    creditTransactions,
+    thirtyDaysAgo,
+    today,
+  ).length;
+  const creditsTotalCount = creditTransactions.length;
 
-    return topVoiceEntries
-      .map(([voiceName, count]) => `${voiceName} (${count})`)
-      .join(', ');
-  })();
-  const profilesPrevDay = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-  const profilesPrev = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', twoDaysAgo.toISOString())
-    .lt('created_at', previousDay.toISOString());
-  const profilesWeek = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-  const profilesTotal = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .lt('created_at', today.toISOString());
-
-  const creditsPrevDay = await supabase
-    .from('credit_transactions')
-    .select('id, user_id, metadata')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-
+  // Top customers calculation
   let hasInvalidMetadata = false;
-
-  // Get top 3 unique paying customers by total transactions (until now)
-  // Calculate total spending per customer
   const customerSpending = new Map<string, number>();
-  for (const transaction of creditsPrevDay.data ?? []) {
+
+  for (const transaction of creditsPrevDayData) {
     if (!transaction.metadata || typeof transaction.metadata !== 'object') {
       console.log('Invalid metadata in transaction:', transaction);
       hasInvalidMetadata = true;
@@ -179,157 +269,55 @@ export async function GET(request: NextRequest) {
     const { dollarAmount } = transaction.metadata as {
       dollarAmount: number;
     };
-
     const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
     customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
   }
 
-  // Get top 3 (max 3) customers by spending
   const topCustomerIds = [...customerSpending.entries()]
     .sort(([, spendingA], [, spendingB]) => spendingB - spendingA)
     .slice(0, 3)
     .map(([userId]) => userId);
 
-  // Get profile data for top customers
-  const { data: topCustomerProfiles } = await supabase
-    .from('profiles')
-    .select('id, username')
-    .in('id', topCustomerIds);
+  const topCustomersList =
+    topCustomerIds.length === 0
+      ? 'N/A'
+      : topCustomerIds
+          .map((userId) => {
+            // Find the transaction for this user to get their profile data
+            const transaction = creditsPrevDayData.find(
+              (t) => t.user_id === userId,
+            );
+            const username =
+              maskUsername(transaction?.profiles?.username) || 'Unknown';
+            const spending = customerSpending.get(userId) ?? 0;
+            return `${username} ($${spending.toFixed(2)})`;
+          })
+          .join(', ');
 
-  const topCustomerProfilesCount = topCustomerProfiles?.length ?? '';
+  const topCustomerProfilesCount = topCustomerIds.length || '';
 
-  const topCustomersList = await (async () => {
-    if (!topCustomerProfiles || topCustomerProfiles.length === 0) {
-      return 'N/A';
-    }
+  // Revenue calculations
+  const totalUniquePaidUsers = new Set(creditTransactions.map((t) => t.user_id))
+    .size;
+  const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
+  const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
 
-    // Preserve the spending order
-    return topCustomerIds
-      .map((userId) => {
-        const profile = topCustomerProfiles.find((p) => p.id === userId);
-
-        const username = maskUsername(profile?.username) || 'Unknown';
-        const spending = customerSpending.get(userId) ?? 0;
-        return `${username} ($${spending.toFixed(2)})`;
-      })
-      .join(', ');
-  })();
-
-  const creditsPrev = await supabase
-    .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', twoDaysAgo.toISOString())
-    .lt('created_at', previousDay.toISOString());
-  const creditsWeek = await supabase
-    .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-
-  const creditsMonth = await supabase
-    .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', thirtyDaysAgo.toISOString())
-    .lt('created_at', today.toISOString());
-
-  const creditsTotal = await supabase
-    .from('credit_transactions')
-    .select('id', { count: 'exact', head: true })
-    .in('type', ['purchase', 'topup'])
-    .lt('created_at', today.toISOString());
-
-  const { data: paidUsersData } = await supabase
-    .from('credit_transactions')
-    .select('user_id')
-    .in('type', ['purchase', 'topup'])
-    .lt('created_at', today.toISOString());
-
-  const totalUniquePaidUsers = paidUsersData
-    ? new Set(paidUsersData.map((t) => t.user_id)).size
-    : 0;
-
-  const { data: totalAmountUsdData } = await supabase
-    .from('credit_transactions')
-    .select('metadata')
-    .in('type', ['purchase', 'topup'])
-    .lt('created_at', today.toISOString());
-
-  const totalAmountUsd = totalAmountUsdData?.reduce(reduceAmountUsd, 0) ?? 0;
-
-  const { data: totalAmountUsdTodayData } = await supabase
-    .from('credit_transactions')
-    .select('metadata')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', previousDay.toISOString())
-    .lt('created_at', today.toISOString());
-
-  const totalAmountUsdToday =
-    totalAmountUsdTodayData?.reduce(reduceAmountUsd, 0) ?? 0;
-
-  // const { data: totalAmountUsdWeekData } = await supabase
-  //   .from('credit_transactions')
-  //   .select('metadata')
-  //   .in('type', ['purchase', 'topup'])
-  //   .gte('created_at', sevenDaysAgo.toISOString())
-  //   .lt('created_at', today.toISOString());
-  // const totalAmountUsdWeek =
-  //   totalAmountUsdWeekData?.reduce(reduceAmountUsd, 0) ?? 0;
-
-  // Month-to-date revenue (current month)
-  const { data: mtdRevenueData } = await supabase
-    .from('credit_transactions')
-    .select('metadata')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', monthStart.toISOString())
-    .lt('created_at', today.toISOString());
-
-  const mtdRevenue = mtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
-
-  // Previous month-to-date revenue (same day range in previous month)
-  const duration = today.getTime() - monthStart.getTime();
-  const previousMonthPeriodEnd = new Date(
-    previousMonthStart.getTime() + duration,
+  // MTD revenue calculations
+  const mtdRevenueData = filterByDateRange(
+    creditTransactions,
+    monthStart,
+    today,
   );
+  const mtdRevenue = mtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const { data: prevMtdRevenueData } = await supabase
-    .from('credit_transactions')
-    .select('metadata')
-    .in('type', ['purchase', 'topup'])
-    .gte('created_at', previousMonthStart.toISOString())
-    .lt('created_at', previousMonthPeriodEnd.toISOString());
+  const prevMtdRevenueData = filterByDateRange(
+    creditTransactions,
+    previousMonthStart,
+    previousMonthPeriodEnd,
+  );
+  const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const prevMtdRevenue = prevMtdRevenueData?.reduce(reduceAmountUsd, 0) ?? 0;
-
-  // const activeSubscribersData = await supabase
-  //   .from('credit_transactions')
-  //   .select('id', { count: 'exact', head: true })
-  //   .eq('type', 'purchase');
-
-  // const activeSubscribersCount = activeSubscribersData?.count ?? 0;
-
-  const activeSubscribersCount = await countActiveCustomerSubscriptions();
-
-  const audioYesterdayCount = audioYesterday.count ?? 0;
-  const audioPrevCount = audioPrev.count ?? 0;
-  const audioWeekCount = audioWeek.count ?? 0;
-  const audioTotalCount = audioTotal.count ?? 0;
-
-  const clonePrevCount = clonePrevDay.count ?? 0;
-  const cloneWeekCount = cloneWeek.count ?? 0;
-
-  const profilesTodayCount = profilesPrevDay.count ?? 0;
-  const profilesPrevCount = profilesPrev.count ?? 0;
-  const profilesWeekCount = profilesWeek.count ?? 0;
-  const profilesTotalCount = profilesTotal.count ?? 0;
-
-  const creditsTodayCount = creditsPrevDay.data?.length ?? 0;
-  const creditsPrevCount = creditsPrev.count ?? 0;
-  const creditsWeekCount = creditsWeek.count ?? 0;
-  const creditsMonthCount = creditsMonth.count ?? 0;
-  const creditsTotalCount = creditsTotal.count ?? 0;
+  const creditsTodayCount = creditsPrevDayData.length;
 
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
@@ -352,7 +340,6 @@ export async function GET(request: NextRequest) {
     '💰 Revenue',
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
     `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
-    // `  - 7d: $${totalAmountUsdWeek.toFixed(2)} (avg $${(totalAmountUsdWeek / 7).toFixed(2)})`,
     `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
     '',

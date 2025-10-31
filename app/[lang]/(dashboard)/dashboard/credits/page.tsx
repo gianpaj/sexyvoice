@@ -1,15 +1,16 @@
+import { ArrowTopRightIcon } from '@radix-ui/react-icons';
+import * as Sentry from '@sentry/nextjs';
 import Link from 'next/link';
 import Script from 'next/script';
 import type Stripe from 'stripe';
 
-// import Stripe from 'stripe';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import {
+  createCustomerSession,
   createOrRetrieveCustomer,
-  getCustomerSession,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -76,40 +77,40 @@ export default async function CreditsPage(props: {
   }
 
   if (!userData.stripe_id) {
-    const stripe_id = await createOrRetrieveCustomer({
-      uuid: user.id,
-      email: user.email!,
-    });
-    await supabase
-      .from('profiles')
-      .update({
-        stripe_id,
-      })
-      .eq('id', user.id);
+    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
+    if (!stripe_id) {
+      console.error('Failed to create or retrieve Stripe customer.');
+      Sentry.captureMessage('Failed to create or retrieve Stripe customer.', {
+        level: 'error',
+        extra: { userId: user.id, email: user.email },
+      });
+    }
     userData.stripe_id = stripe_id;
-    console.log('created Stripe customer id');
   }
 
   const customerData = await getCustomerData(userData.stripe_id);
 
-  const clientSecret = await getCustomerSession();
+  const clientSecret = await createCustomerSession(
+    userData.id,
+    userData.stripe_id,
+  );
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(10);
+    .limit(100);
 
   return (
     <div className="space-y-8">
       <TopupStatus dict={dict} />
-      <div className="flex flex-col items-center justify-between gap-4 lg:flex-row">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h2 className="text-3xl font-bold tracking-tight">{dict.title}</h2>
-          <p className="text-muted-foreground">{dict.description}</p>
+          <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
+          <p className="text-muted-foreground">{dict.topup.description}</p>
         </div>
-        <Button asChild>
+        <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
             href={'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww'}
             target="_blank"
@@ -120,11 +121,7 @@ export default async function CreditsPage(props: {
       </div>
 
       {/* Add Credit Top-up Section */}
-      <div>
-        <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
-        <p className="text-muted-foreground mb-6">{dict.topup.description}</p>
-        <CreditTopup dict={dict} />
-      </div>
+      <CreditTopup dict={dict} lang={lang} />
 
       {/* {products.map((product) => (
         <Card key={product.id}>
@@ -169,6 +166,8 @@ export default async function CreditsPage(props: {
     </div>
   );
 }
+
+// Subscription plans
 const NextStripePricingTable = ({
   clientSecret,
 }: {
@@ -178,6 +177,7 @@ const NextStripePricingTable = ({
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
 
   if (!pricingTableId || !publishableKey || !clientSecret) return null;
+
   return (
     <>
       <Script
