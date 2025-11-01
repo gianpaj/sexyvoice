@@ -10,12 +10,14 @@ export default async function DashboardLayout(props: {
 
   const dict = await getDictionary(lang);
   const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
+  const feedbackDict = (await getDictionary(lang, 'feedback'));
 
   return (
     <DashboardUI
       lang={lang}
       dict={dict.creditsSection}
       halloweenDict={halloweenDict}
+      feedbackDict={feedbackDict}
     >
       {props.children}
     </DashboardUI>

@@ -317,5 +317,28 @@
       "ctaLoggedOut": "Sign Up Now",
       "arialLabelDismiss": "Dismiss Halloween banner"
     }
+  },
+  "feedback": {
+    "title": "Feedback",
+    "description": "Help us improve! Share your ideas or report issues.",
+    "issueButton": {
+      "title": "Report Issue",
+      "description": "Having a technical problem?"
+    },
+    "ideaButton": {
+      "title": "Share Idea",
+      "description": "Suggest a new feature"
+    },
+    "textareaPlaceholder": "Describe your idea or suggestion in detail...",
+    "sendButton": "Send Feedback",
+    "backButton": "Back",
+    "submitting": "Sending...",
+    "success": "Thank you for your feedback!",
+    "technicalIssueText": "Have a technical issue?<br>Contact {supportLink}.",
+    "supportLinkText": "support",
+    "errors": {
+      "emptyText": "Please enter your feedback",
+      "submitFailed": "Failed to submit feedback. Please try again."
+    }
   }
 }

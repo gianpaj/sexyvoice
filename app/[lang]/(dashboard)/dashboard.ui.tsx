@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
+import { FeedbackDialog } from '@/components/feedback-dialog';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { PromoBanner } from '@/components/promo-banner';
 import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
@@ -36,6 +37,7 @@ interface DashboardUIProps {
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
   halloweenDict: (typeof langDict)['promos']['halloweenBanner'];
+  feedbackDict: (typeof langDict)['feedback'];
 }
 
 export default function DashboardUI({
@@ -43,6 +45,7 @@ export default function DashboardUI({
   lang,
   dict,
   halloweenDict,
+  feedbackDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
   const supabase = createClient();
@@ -213,6 +216,10 @@ export default function DashboardUI({
             <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
             </div>
+
+            <header className="flex h-16 items-center justify-end border-b px-4 sm:px-6 lg:px-8 bg-background">
+              <FeedbackDialog dict={feedbackDict} />
+            </header>
 
             <main
               id="main-content"
