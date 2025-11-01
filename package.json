@@ -78,6 +78,7 @@
     "react-dom": "19.1.0",
     "replicate": "^1.0.1",
     "require-in-the-middle": "^7.5.2",
+    "resend": "^4.0.1",
     "sass": "^1.86.3",
     "schema-dts": "^1.1.5",
     "sonner": "^1.7.4",
