@@ -50,15 +50,31 @@ CREATE TABLE feedback (
   text TEXT NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('issue', 'idea')),
   status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'in_progress', 'completed', 'rejected')),
+  metadata JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
+```
+
+**Metadata Structure:**
+The `metadata` column stores browser and device information in JSONB format:
+```json
+{
+  "browser": "Chrome",
+  "browserVersion": "120.0.0.0",
+  "deviceType": "Desktop",
+  "screenWidth": 1920,
+  "screenHeight": 1080,
+  "language": "en-US",
+  "userAgent": "Mozilla/5.0..."
+}
 ```
 
 **Indexes:**
 - `idx_feedback_user_id` - For user-specific queries
 - `idx_feedback_status` - For filtering by status
 - `idx_feedback_created_at` - For chronological sorting
+- `idx_feedback_metadata` - GIN index for efficient JSONB querying
 
 **RLS Policies:**
 - Users can insert their own feedback
@@ -86,6 +102,7 @@ Emails include:
 - Feedback type (Issue/Idea)
 - Submission timestamp
 - User information (ID, email, name)
+- Device and browser information (browser, version, device type, screen size, language)
 - Full feedback text
 - Unique feedback ID for tracking
 - Reply-to header set to user's email for direct responses
@@ -119,12 +136,23 @@ const response = await fetch('/api/feedback', {
   body: JSON.stringify({
     text: 'My feedback text here',
     category: 'idea', // or 'issue'
+    metadata: {
+      browser: 'Chrome',
+      browserVersion: '120.0.0.0',
+      deviceType: 'Desktop',
+      screenWidth: 1920,
+      screenHeight: 1080,
+      language: 'en-US',
+      userAgent: navigator.userAgent,
+    },
   }),
 });
 
 const data = await response.json();
 // Returns: { success: true, message: '...', feedbackId: 'uuid' }
 ```
+
+**Note**: The FeedbackDialog component automatically collects and sends browser metadata.
 
 #### Querying Feedback (Backend)
 
