@@ -6,6 +6,8 @@ import {
   Download,
   Info,
   Loader2,
+  Maximize2,
+  Minimize2,
   Pause,
   Play,
   RotateCcw,
@@ -27,6 +29,7 @@ import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { cn } from '@/lib/utils';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -243,41 +246,75 @@ export function AudioGenerator({
       setIsEnhancingText(false);
     }
   };
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [windowHeight, setWindowHeight] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      setWindowHeight(window.innerHeight);
+    };
+
+    if (isFullscreen) {
+      updateHeight();
+
+      window.addEventListener('resize', updateHeight);
+    }
+
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [isFullscreen]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
+  useEffect(() => {
+    // Auto-resize textarea when content changes
+    if (textareaRef.current) {
+      resizeTextarea(textareaRef.current);
+    }
+  }, [text]);
+
+  const textareaHeight = isFullscreen ? windowHeight * 0.7 : -1;
+  const textIsOverLimit = text.length > charactersLimit;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Generate Audio</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 sm:p-6 p-4">
         <div className="space-y-2">
           <div className="relative">
             <Textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
-              className="pr-16 min-h-6 textarea-animation"
-              maxLength={charactersLimit}
-              ref={(textarea) => {
-                resizeTextarea(textarea);
-              }}
+              maxLength={charactersLimit * 2}
+              className={cn(
+                'textarea-2 transition-[height] duration-200 ease-in-out',
+                [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
+              )}
+              style={
+                {
+                  '--ta2-height': isFullscreen ? `${textareaHeight}px` : '8rem',
+                } as React.CSSProperties
+              }
+              ref={textareaRef}
             />
             {!isGeminiVoice && (
               <>
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>
                     <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 ml-2 absolute top-4 right-12" />
+                      <Info className="w-4 h-4 ml-2 absolute top-4 right-24" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Add emotion tags</p>
+                      <p>This model supports emotion tags</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="absolute top-2 right-2 h-8 w-8 bg-neutral-600"
+                  className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
                   onClick={handleEnhanceText}
                   disabled={!text.trim() || isEnhancingText || isGenerating}
                   title="Enhance text with AI emotion tags"
@@ -290,8 +327,27 @@ export function AudioGenerator({
                 </Button>
               </>
             )}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className={
+                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }
+              title="Fullscreen"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-          <div className="text-sm text-muted-foreground text-right">
+          <div
+            className={cn('text-sm text-muted-foreground text-right', [
+              textIsOverLimit ? 'text-red-500 font-bold' : '',
+            ])}
+          >
             {text.length} / {charactersLimit}
           </div>
         </div>
@@ -312,7 +368,8 @@ export function AudioGenerator({
                 isGenerating ||
                 !text.trim() ||
                 !selectedVoice ||
-                !hasEnoughCredits
+                !hasEnoughCredits ||
+                textIsOverLimit
               }
               size="lg"
             >
@@ -344,7 +401,7 @@ export function AudioGenerator({
             )}
           </div>
 
-          <div className="">
+          <div>
             {audio && (
               <div className="flex sm:w-full justify-center sm:justify-start gap-2">
                 <Button

@@ -210,7 +210,7 @@ export default function DashboardUI({
             isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
           />
           <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-4 z-30 flex items-start border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
               <SidebarTrigger className="lg:hidden" />
             </div>
 

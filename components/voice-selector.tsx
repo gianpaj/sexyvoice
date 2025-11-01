@@ -1,5 +1,12 @@
-import { Info } from 'lucide-react';
-import type { Dispatch, SetStateAction } from 'react';
+'use client';
+import { Info, Maximize2, Minimize2 } from 'lucide-react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
 import {
@@ -12,14 +19,13 @@ import {
 import {
   Select,
   SelectContent,
-  // SelectGroup,
   SelectItem,
-  // SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
 import type lang from '@/lib/i18n/dictionaries/en.json';
+import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -46,9 +52,40 @@ export function VoiceSelector({
   dict: (typeof lang)['generate'];
 }) {
   const isGeminiVoice = selectedVoice?.model === 'gpro';
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [windowHeight, setWindowHeight] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      setWindowHeight(window.innerHeight);
+    };
+
+    if (isFullscreen) {
+      updateHeight();
+
+      window.addEventListener('resize', updateHeight);
+    }
+
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [isFullscreen]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we need selectedStyle
+  useEffect(() => {
+    // Auto-resize textarea when content changes
+    if (textareaRef.current) {
+      console.log('s');
+
+      resizeTextarea(textareaRef.current, '--ta1-height');
+    }
+  }, [selectedStyle]);
+
+  const textareaHeight = isFullscreen ? windowHeight * 0.7 : -1;
+  console.log({ isFullscreen, textareaHeight });
+  // const textIsOverLimit = text.length > charactersLimit;
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="sm:p-6 p-4 pt-6 sm:pb-2">
         <CardTitle className="flex flex-row">
           {dict.voiceSelector.title}
           <TooltipProvider>
@@ -77,39 +114,57 @@ export function VoiceSelector({
         </CardTitle>
         <CardDescription>{dict.voiceSelector.description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 sm:p-6 p-4">
         <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
           <SelectContent>
-            {/* {userVoices.length > 0 && (
-              <SelectGroup>
-                <SelectLabel>Your Voices</SelectLabel>
-                {userVoices.map((voice) => (
-                  <SelectItem key={voice.id} value={voice.id}>
-                    {voice.name} ({voice.language})
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            )} */}
             {publicVoices.length > 0 &&
               publicVoices.map((voice) => (
-                <SelectItem key={voice.id} value={voice.name}>
+                <SelectItem
+                  className="py-3 cursor-pointer"
+                  key={voice.id}
+                  value={voice.name}
+                >
                   {capitalizeFirstLetter(voice.name)} | {voice.language}
                 </SelectItem>
               ))}
           </SelectContent>
         </Select>
         {isGeminiVoice && (
-          <Textarea
-            onChange={(e) => setSelectedStyle(e.target.value)}
-            value={selectedStyle}
-            placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
-          />
+          <div className="relative">
+            <Textarea
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              value={selectedStyle}
+              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
+              className="textarea-1 transition-[height] duration-200 ease-in-out"
+              style={
+                {
+                  '--ta1-height': isFullscreen ? `${textareaHeight}px` : '8rem',
+                } as React.CSSProperties
+              }
+              ref={textareaRef}
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className={
+                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }
+              title="Fullscreen"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         )}
         {selectedVoice?.sample_url && (
-          <div className="flex gap-2 items-center justify-start p-4 lg:w-2/3">
+          <div className="flex gap-2 items-center justify-start py-2 lg:w-2/3">
             <AudioPlayer url={selectedVoice.sample_url} />
             <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground">

@@ -12,13 +12,9 @@ const HIDDEN_TEXTAREA_STYLE = {
 } as const;
 
 const forceHiddenStyles = (node: HTMLElement) => {
-  Object.keys(HIDDEN_TEXTAREA_STYLE).forEach((key) => {
-    node.style.setProperty(
-      key,
-      HIDDEN_TEXTAREA_STYLE[key as keyof typeof HIDDEN_TEXTAREA_STYLE],
-      'important',
-    );
-  });
+  for (const [key, value] of Object.entries(HIDDEN_TEXTAREA_STYLE)) {
+    node.style.setProperty(key, value, 'important');
+  }
 };
 
 export default forceHiddenStyles;
