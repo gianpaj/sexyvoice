@@ -134,6 +134,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `STRIPE_TOPUP_99_PRICE_ID`
    - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
    - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - `RESEND_API_KEY` - Your Resend API key for email notifications (feedback system)
+   - `SUPPORT_EMAIL_TO` - Email address to receive feedback submissions
+   - `SUPPORT_EMAIL_FROM` - From email address for outgoing notifications (must be verified in Resend)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
 4. **Set up Supabase**
