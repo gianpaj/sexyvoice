@@ -320,5 +320,28 @@
       "ctaLoggedOut": "Regístrate Ahora",
       "arialLabelDismiss": "Descartar banner de Halloween"
     }
+  },
+  "feedback": {
+    "title": "Comentarios",
+    "description": "¡Ayúdanos a mejorar! Comparte tus ideas o reporta problemas.",
+    "issueButton": {
+      "title": "Reportar Problema",
+      "description": "¿Tienes un problema técnico?"
+    },
+    "ideaButton": {
+      "title": "Compartir Idea",
+      "description": "Sugiere una nueva función"
+    },
+    "textareaPlaceholder": "Describe tu idea o sugerencia en detalle...",
+    "sendButton": "Enviar Comentario",
+    "backButton": "Volver",
+    "submitting": "Enviando...",
+    "success": "¡Gracias por tu comentario!",
+    "technicalIssueText": "¿Tienes un problema técnico?<br>Contacta {supportLink}.",
+    "supportLinkText": "soporte",
+    "errors": {
+      "emptyText": "Por favor ingresa tu comentario",
+      "submitFailed": "Error al enviar comentario. Por favor intenta de nuevo."
+    }
   }
 }

@@ -320,5 +320,28 @@
       "ctaLoggedOut": "Jetzt Registrieren",
       "arialLabelDismiss": "Halloween-Banner schließen"
     }
+  },
+  "feedback": {
+    "title": "Feedback",
+    "description": "Helfen Sie uns zu verbessern! Teilen Sie Ihre Ideen oder melden Sie Probleme.",
+    "issueButton": {
+      "title": "Problem melden",
+      "description": "Haben Sie ein technisches Problem?"
+    },
+    "ideaButton": {
+      "title": "Idee teilen",
+      "description": "Schlagen Sie eine neue Funktion vor"
+    },
+    "textareaPlaceholder": "Beschreiben Sie Ihre Idee oder Ihren Vorschlag im Detail...",
+    "sendButton": "Feedback senden",
+    "backButton": "Zurück",
+    "submitting": "Wird gesendet...",
+    "success": "Vielen Dank für Ihr Feedback!",
+    "technicalIssueText": "Haben Sie ein technisches Problem?<br>Kontaktieren Sie {supportLink}.",
+    "supportLinkText": "Support",
+    "errors": {
+      "emptyText": "Bitte geben Sie Ihr Feedback ein",
+      "submitFailed": "Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    }
   }
 }
