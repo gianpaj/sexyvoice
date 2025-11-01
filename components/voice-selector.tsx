@@ -53,35 +53,16 @@ export function VoiceSelector({
 }) {
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [windowHeight, setWindowHeight] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  useEffect(() => {
-    const updateHeight = () => {
-      setWindowHeight(window.innerHeight);
-    };
-
-    if (isFullscreen) {
-      updateHeight();
-
-      window.addEventListener('resize', updateHeight);
-    }
-
-    return () => window.removeEventListener('resize', updateHeight);
-  }, [isFullscreen]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need selectedStyle
   useEffect(() => {
     // Auto-resize textarea when content changes
-    if (textareaRef.current) {
-      console.log('s');
-
+    if (textareaRef.current && !isFullscreen) {
       resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
     }
   }, [selectedStyle]);
 
-  const textareaHeight = isFullscreen ? windowHeight * 0.7 : -1;
-  console.log({ isFullscreen, textareaHeight });
   // const textIsOverLimit = text.length > charactersLimit;
   return (
     <Card>
@@ -141,7 +122,7 @@ export function VoiceSelector({
               className="textarea-1 transition-[height] duration-200 ease-in-out"
               style={
                 {
-                  '--ta1-height': isFullscreen ? `${textareaHeight}px` : '8rem',
+                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
                 } as React.CSSProperties
               }
               ref={textareaRef}

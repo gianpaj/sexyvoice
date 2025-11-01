@@ -247,32 +247,16 @@ export function AudioGenerator({
     }
   };
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [windowHeight, setWindowHeight] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  useEffect(() => {
-    const updateHeight = () => {
-      setWindowHeight(window.innerHeight);
-    };
-
-    if (isFullscreen) {
-      updateHeight();
-
-      window.addEventListener('resize', updateHeight);
-    }
-
-    return () => window.removeEventListener('resize', updateHeight);
-  }, [isFullscreen]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
   useEffect(() => {
     // Auto-resize textarea when content changes
-    if (textareaRef.current) {
+    if (textareaRef.current && !isFullscreen) {
       resizeTextarea(textareaRef.current, 6);
     }
-  }, [text]);
+  }, [text, isFullscreen]);
 
-  const textareaHeight = isFullscreen ? windowHeight * 0.7 : -1;
   const textIsOverLimit = text.length > charactersLimit;
 
   return (
@@ -294,7 +278,7 @@ export function AudioGenerator({
               )}
               style={
                 {
-                  '--ta2-height': isFullscreen ? `${textareaHeight}px` : '8rem',
+                  '--ta2-height': isFullscreen ? '30vh' : '8rem',
                 } as React.CSSProperties
               }
               ref={textareaRef}
