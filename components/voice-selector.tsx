@@ -76,7 +76,7 @@ export function VoiceSelector({
     if (textareaRef.current) {
       console.log('s');
 
-      resizeTextarea(textareaRef.current, '--ta1-height');
+      resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
     }
   }, [selectedStyle]);
 

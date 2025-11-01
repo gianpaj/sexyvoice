@@ -268,7 +268,7 @@ export function AudioGenerator({
   useEffect(() => {
     // Auto-resize textarea when content changes
     if (textareaRef.current) {
-      resizeTextarea(textareaRef.current);
+      resizeTextarea(textareaRef.current, 6);
     }
   }, [text]);
 

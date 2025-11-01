@@ -3,11 +3,11 @@ import getSizingData from './getSizingData';
 
 export function resizeTextarea(
   textarea: HTMLTextAreaElement | null,
+  minRows = 0,
+  maxRows = 10,
   cssVariable = '--ta2-height',
 ) {
   if (!textarea) return;
-  const minRows = 6;
-  const maxRows = 10;
   // Use RAF to ensure DOM measurements are accurate
   requestAnimationFrame(() => {
     const nodeSizingData = getSizingData(textarea);
