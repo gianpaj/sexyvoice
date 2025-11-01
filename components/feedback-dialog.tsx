@@ -22,6 +22,53 @@ interface FeedbackDialogProps {
 
 type FeedbackCategory = 'issue' | 'idea' | null;
 
+interface BrowserMetadata {
+  browser: string;
+  browserVersion: string;
+  deviceType: string;
+  screenWidth: number;
+  screenHeight: number;
+  language: string;
+  userAgent: string;
+}
+
+function getBrowserMetadata(): BrowserMetadata {
+  const ua = navigator.userAgent;
+
+  // Detect browser
+  let browser = 'Unknown';
+  let browserVersion = '';
+
+  if (ua.includes('Firefox/')) {
+    browser = 'Firefox';
+    browserVersion = ua.match(/Firefox\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('Chrome/') && !ua.includes('Edg')) {
+    browser = 'Chrome';
+    browserVersion = ua.match(/Chrome\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('Safari/') && !ua.includes('Chrome')) {
+    browser = 'Safari';
+    browserVersion = ua.match(/Version\/([\d.]+)/)?.[1] || '';
+  } else if (ua.includes('Edg/')) {
+    browser = 'Edge';
+    browserVersion = ua.match(/Edg\/([\d.]+)/)?.[1] || '';
+  }
+
+  // Detect device type
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  const isTablet = /iPad|Android/i.test(ua) && !/Mobile/i.test(ua);
+  const deviceType = isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop';
+
+  return {
+    browser,
+    browserVersion,
+    deviceType,
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    language: navigator.language,
+    userAgent: ua,
+  };
+}
+
 export function FeedbackDialog({ dict }: FeedbackDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [category, setCategory] = useState<FeedbackCategory>(null);
@@ -52,6 +99,9 @@ export function FeedbackDialog({ dict }: FeedbackDialogProps) {
     setIsSubmitting(true);
 
     try {
+      // Collect browser and device metadata
+      const metadata = getBrowserMetadata();
+
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: {
@@ -60,6 +110,7 @@ export function FeedbackDialog({ dict }: FeedbackDialogProps) {
         body: JSON.stringify({
           text: feedbackText,
           category,
+          metadata,
         }),
       });
 

@@ -10,6 +10,17 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const feedbackSchema = z.object({
   text: z.string().min(1).max(5000),
   category: z.enum(['issue', 'idea']),
+  metadata: z
+    .object({
+      browser: z.string().optional(),
+      browserVersion: z.string().optional(),
+      deviceType: z.string().optional(),
+      screenWidth: z.number().optional(),
+      screenHeight: z.number().optional(),
+      language: z.string().optional(),
+      userAgent: z.string().optional(),
+    })
+    .optional(),
 });
 
 export async function POST(request: Request) {
@@ -57,6 +68,7 @@ export async function POST(request: Request) {
         text: validatedData.text,
         category: validatedData.category,
         status: 'new',
+        metadata: validatedData.metadata || {},
       })
       .select()
       .single();
@@ -97,6 +109,13 @@ User Information:
 User ID: ${user.id}
 Email: ${profile.email || user.email || 'Not provided'}
 Name: ${profile.full_name || profile.username || 'Not provided'}
+
+Device & Browser:
+-----------------
+${validatedData.metadata ? `Browser: ${validatedData.metadata.browser || 'Unknown'} ${validatedData.metadata.browserVersion || ''}
+Device: ${validatedData.metadata.deviceType || 'Unknown'}
+Screen: ${validatedData.metadata.screenWidth || '?'}x${validatedData.metadata.screenHeight || '?'}
+Language: ${validatedData.metadata.language || 'Unknown'}` : 'No metadata provided'}
 
 Feedback:
 ---------
