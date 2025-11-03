@@ -224,10 +224,22 @@ export async function POST(request: Request) {
         response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
       if (!data || !mimeType) {
         logger.error('Gemini voice generation failed - no data or mimeType', {
+          error: 'no_data_or_mime_type',
           hasData: !!data,
           mimeType,
+          response,
           model: modelUsed,
         });
+        console.dir(
+          {
+            error: 'no_data_or_mime_type',
+            hasData: !!data,
+            mimeType,
+            response,
+            model: modelUsed,
+          },
+          { depth: null },
+        );
         throw new Error('Voice generation failed, please retry', {
           cause: 'no_data_or_mime_type',
         });
