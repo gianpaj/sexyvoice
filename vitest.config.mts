@@ -11,6 +11,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    testTimeout: 30000, // 30 seconds default timeout for all tests
+    hookTimeout: 120000, // 2 minutes for hooks (beforeAll/afterAll) - needed for redis-memory-server binary download in CI
     onConsoleLog(log, type) {
       if (
         (log.startsWith('[STRIPE HOOK') && type === 'stdout') ||

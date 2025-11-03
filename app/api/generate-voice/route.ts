@@ -13,6 +13,7 @@ import {
   getCredits,
   getVoiceIdByName,
   isFreemiumUserOverLimit,
+  MAX_FREE_GENERATIONS,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
-      logger.warn('Insufficient credits', {
+      logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
       });
@@ -166,8 +167,7 @@ export async function POST(request: Request) {
       if (isOverLimit) {
         return NextResponse.json(
           {
-            error:
-              'You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+            error: `You have exceeded the limit of ${MAX_FREE_GENERATIONS} multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.`,
             errorCode: 'gproLimitExceeded',
           },
           { status: 403 },
@@ -224,10 +224,22 @@ export async function POST(request: Request) {
         response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
       if (!data || !mimeType) {
         logger.error('Gemini voice generation failed - no data or mimeType', {
+          error: 'no_data_or_mime_type',
           hasData: !!data,
           mimeType,
+          response,
           model: modelUsed,
         });
+        console.dir(
+          {
+            error: 'no_data_or_mime_type',
+            hasData: !!data,
+            mimeType,
+            response,
+            model: modelUsed,
+          },
+          { depth: null },
+        );
         throw new Error('Voice generation failed, please retry', {
           cause: 'no_data_or_mime_type',
         });

@@ -11,6 +11,7 @@ import {
   vi,
 } from 'vitest';
 
+import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
 import { POST } from '@/app/api/stripe/webhook/route';
 import { getCustomerData, setTestRedisClient } from '@/lib/redis/queries';
 import { stripe } from '@/lib/stripe/stripe-admin';
@@ -135,7 +136,7 @@ describe('Stripe Webhook Route', () => {
         userId: 'user_123',
         credits: '5000',
         dollarAmount: '5.00',
-        packageType: 'starter',
+        packageId: 'starter',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -150,7 +151,7 @@ describe('Stripe Webhook Route', () => {
         5000,
         5,
         'starter',
-        null,
+        undefined,
       );
     });
   });
@@ -166,7 +167,7 @@ describe('Stripe Webhook Route', () => {
         userId: 'user_123',
         credits: '5000',
         dollarAmount: '5.00',
-        packageType: 'starter',
+        packageId: 'starter',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -179,7 +180,7 @@ describe('Stripe Webhook Route', () => {
         5000,
         5.0,
         'starter',
-        null,
+        undefined,
       );
     });
 
@@ -192,7 +193,7 @@ describe('Stripe Webhook Route', () => {
         userId: 'user_456',
         credits: '15000',
         dollarAmount: '12.00',
-        packageType: 'standard',
+        packageId: 'standard',
         promo: PROMO_ID,
       });
 
@@ -213,7 +214,7 @@ describe('Stripe Webhook Route', () => {
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
         // Missing userId, credits, dollarAmount
-      });
+      } as CheckoutMetadata);
 
       const request = createMockRequest('checkout.session.completed', session);
       const response = await POST(request);
@@ -242,7 +243,7 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
 
-      const session = createMockCheckoutSession('subscription', {});
+      const session = createMockCheckoutSession('subscription');
       // Add payment_intent to session for initial subscription payment
       session.payment_intent = paymentIntentId;
 
@@ -289,7 +290,7 @@ describe('Stripe Webhook Route', () => {
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
 
-      const session = createMockCheckoutSession('subscription', {});
+      const session = createMockCheckoutSession('subscription');
       session.payment_intent = null; // No payment intent
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -758,32 +759,32 @@ describe('Stripe Webhook Route', () => {
     const testTopupPlans = [
       {
         name: 'Starter',
-        packageType: 'starter',
+        packageId: 'starter',
         credits: 12000,
         dollarAmount: 5.0,
       },
       {
         name: 'Standard',
-        packageType: 'standard',
+        packageId: 'standard',
         credits: 32500,
         dollarAmount: 10.0,
       },
       {
         name: 'Pro',
-        packageType: 'pro',
+        packageId: 'pro',
         credits: 405000,
         dollarAmount: 99.0,
       },
     ];
 
-    testTopupPlans.forEach(({ name, packageType, credits, dollarAmount }) => {
+    testTopupPlans.forEach(({ name, packageId, credits, dollarAmount }) => {
       it(`should process ${name.toLowerCase()} topup with promo bonus (${credits.toLocaleString()} credits)`, async () => {
         const session = createMockCheckoutSession('payment', {
           type: 'topup',
           userId: userId,
           credits: credits.toString(),
           dollarAmount: dollarAmount.toFixed(2),
-          packageType: packageType,
+          packageId: packageId as 'starter' | 'standard' | 'pro',
         });
 
         const request = createMockRequest(
@@ -799,8 +800,8 @@ describe('Stripe Webhook Route', () => {
           'pi_test123',
           credits,
           dollarAmount,
-          packageType,
-          null,
+          packageId,
+          undefined,
         );
       });
     });
@@ -811,7 +812,7 @@ describe('Stripe Webhook Route', () => {
         userId: 'user_promo_with_code',
         credits: '32500',
         dollarAmount: '10.00',
-        packageType: 'standard',
+        packageId: 'standard',
         promo: 'LAUNCH2024',
       });
 
@@ -1017,6 +1018,7 @@ describe('Stripe Webhook Route', () => {
         userId: 'user_123',
         credits: '1000',
         dollarAmount: '10',
+        packageId: 'starter',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
