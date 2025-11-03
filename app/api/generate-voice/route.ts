@@ -403,7 +403,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error: getErrorMessage(
-              'THIRD_P_QUOTA_EXCEEDED',
+              ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
               'voice-generation',
             ),
           },

@@ -1,4 +1,5 @@
 export const ERROR_CODES = {
+  THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   NO_DATA_OR_MIME_TYPE: 'NO_DATA_OR_MIME_TYPE',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
@@ -6,10 +7,13 @@ export const ERROR_CODES = {
 } as const;
 
 export const getErrorMessage = (
-  errorCode: string | unknown,
+  errorCode: keyof typeof ERROR_CODES | unknown,
   service: string,
 ) => {
-  const errorMessages: { [key: string]: { [key: string]: string } } = {
+  const errorMessages: Record<
+    keyof typeof ERROR_CODES,
+    { [key: string]: string }
+  > = {
     // INVALID_API_KEY: {
     //   default: 'The provided API key is invalid.',
     //   'voice-generation': 'The voice generation API key is invalid.',
@@ -41,10 +45,10 @@ export const getErrorMessage = (
     },
   };
 
-  const serviceMessages = errorMessages[String(errorCode)];
+  const serviceMessages = errorMessages[errorCode as keyof typeof ERROR_CODES];
   if (!serviceMessages) {
     return 'An unknown error occurred.';
   }
 
-  return serviceMessages[service] || serviceMessages['default'];
+  return serviceMessages[service] || serviceMessages.default;
 };
