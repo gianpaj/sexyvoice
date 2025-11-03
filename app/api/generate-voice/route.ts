@@ -18,6 +18,7 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
+import { ERROR_CODES, getErrorMessage } from '../utils';
 
 const { logger, captureException } = Sentry;
 
@@ -222,15 +223,45 @@ export async function POST(request: Request) {
         response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       const mimeType =
         response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
-      if (!data || !mimeType) {
-        logger.error('Gemini voice generation failed - no data or mimeType', {
-          hasData: !!data,
-          mimeType,
-          model: modelUsed,
-        });
-        throw new Error('Voice generation failed, please retry', {
-          cause: 'no_data_or_mime_type',
-        });
+      const finishReason = response?.candidates?.[0]?.finishReason;
+
+      if (finishReason === 'PROHIBITED_CONTENT' || !data || !mimeType) {
+        if (finishReason === 'PROHIBITED_CONTENT') {
+          logger.warn('Content generation prohibited by Gemini', {
+            user: { id: user.id },
+            model: modelUsed,
+            text,
+          });
+        } else {
+          logger.error('Gemini voice generation failed - no data or mimeType', {
+            error: 'NO_DATA_OR_MIME_TYPE',
+            hasData: !!data,
+            mimeType,
+            response,
+            model: modelUsed,
+          });
+          console.dir(
+            {
+              error: 'NO_DATA_OR_MIME_TYPE',
+              hasData: !!data,
+              mimeType,
+              response,
+              model: modelUsed,
+            },
+            { depth: null },
+          );
+        }
+        throw new Error(
+          finishReason === 'PROHIBITED_CONTENT'
+            ? 'Content generation was prohibited by our provider. Please modify your input and try again.'
+            : 'Voice generation failed, please retry',
+          {
+            cause:
+              finishReason === 'PROHIBITED_CONTENT'
+                ? 'PROHIBITED_CONTENT'
+                : 'NO_DATA_OR_MIME_TYPE',
+          },
+        );
       }
       logger.info('Gemini voice generation succeeded', {
         user: {
@@ -281,7 +312,7 @@ export async function POST(request: Request) {
           // @ts-ignore
           output.error || 'Voice generation failed, please try again',
           {
-            cause: 'replicate_error',
+            cause: 'REPLICATE_ERROR',
           },
         );
       }
@@ -364,19 +395,6 @@ export async function POST(request: Request) {
     console.error(errorObj);
     console.error('Voice generation error:', error);
 
-    // Gemini - You exceeded your current quota, please check your plan and billing details
-    if (
-      error &&
-      typeof error === 'object' &&
-      'status' in error &&
-      error.status === 429
-    ) {
-      logger.warn('Third-party API quota exceeded', { status: 429 });
-      return NextResponse.json(
-        { error: 'Third-party API Quota exceeded' },
-        { status: 429 },
-      );
-    }
     // if Gemini error
     if (error instanceof Error && error.message.includes('googleapis')) {
       const message = JSON.parse(error.message);
@@ -384,8 +402,10 @@ export async function POST(request: Request) {
       if (message.error.code === 429) {
         return NextResponse.json(
           {
-            error:
-              'We have exceeded our third-party API current quota, please try later or tomorrow',
+            error: getErrorMessage(
+              'THIRD_P_QUOTA_EXCEEDED',
+              'voice-generation',
+            ),
           },
           { status: 500 },
         );
@@ -394,10 +414,14 @@ export async function POST(request: Request) {
     }
     if (
       error instanceof Error &&
-      ['no_data_or_mime_type', 'replicate_error'].includes(String(error.cause))
+      Object.keys(ERROR_CODES).includes(String(error.cause))
     ) {
       return NextResponse.json(
-        { error: 'Voice generation failed, please retry' },
+        {
+          error:
+            getErrorMessage(error.cause, 'voice-generation') ||
+            'Voice generation failed, please retry',
+        },
         { status: 500 },
       );
     }
