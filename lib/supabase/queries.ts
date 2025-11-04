@@ -282,5 +282,5 @@ export const isFreemiumUserOverLimit = async (
     (file) => file.voices?.model === 'gpro',
   ).length;
 
-  return (gproAudioCount ?? 0) >= MAX_FREE_GENERATIONS;
+  return (gproAudioCount ?? 0) > MAX_FREE_GENERATIONS;
 };
