@@ -259,7 +259,7 @@
     "playAudio": "Escucha Audio",
     "cancel": "Cancelar",
     "ctaButton": "Generar audio",
-    "resetForm": "Reiniciar Formulario",
+    "resetPlayer": "Reiniciar Reproductor",
     "downloadAudio": "Descargar Audio",
     "abortedCloning": "Clonación de voz cancelada",
     "gproLimitExceeded": "Has excedido el límite de 4 generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",

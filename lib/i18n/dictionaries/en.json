@@ -256,7 +256,7 @@
     "playAudio": "Play Audio",
     "cancel": "Cancel generation",
     "ctaButton": "Generate Audio",
-    "resetForm": "Reset Form",
+    "resetPlayer": "Reset Player",
     "downloadAudio": "Download Audio",
     "abortedCloning": "Voice generation aborted.",
     "gproLimitExceeded": "You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",

@@ -259,7 +259,7 @@
     "playAudio": "Audio abspielen",
     "cancel": "Generierung abbrechen",
     "ctaButton": "Audio generieren",
-    "resetForm": "Formular zurücksetzen",
+    "resetPlayer": "Player zurücksetzen",
     "downloadAudio": "Audio herunterladen",
     "abortedCloning": "Sprachgenerierung abgebrochen.",
     "gproLimitExceeded": "Sie haben das Limit von 4 mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
