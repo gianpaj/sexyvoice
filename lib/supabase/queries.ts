@@ -253,7 +253,7 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
       .from('credit_transactions')
       .select('type')
       .eq('user_id', userId)
-      .neq('type', 'freemium');
+      .in('type', ['purchase', 'topup']);
 
   if (nonFreemiumError) {
     throw nonFreemiumError;
