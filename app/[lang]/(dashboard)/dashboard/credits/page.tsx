@@ -18,46 +18,6 @@ import { CreditHistory } from './credit-history';
 import { CreditTopup } from './credit-topup';
 import { TopupStatus } from './topup-status';
 
-// interface StripeProduct {
-//   id: string;
-//   name: string;
-//   description: string | null;
-//   features: string[];
-//   price: Stripe.Price;
-// }
-
-// async function getStripeProducts(): Promise<StripeProduct[]> {
-//   if (!process.env.STRIPE_SECRET_KEY) {
-//     throw new Error('STRIPE_SECRET_KEY is not set');
-//   }
-
-//   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-//     apiVersion: '2025-02-24.acacia',
-//   });
-
-//   const product = await stripe.products.retrieve('prod_RyjYjy3DObZ4pm', {
-//     expand: ['default_price'],
-//   });
-
-//   const products = { data: [product] };
-
-//   const productsData = products.data.filter(
-//     (product) => product.active === true,
-//   );
-
-//   // console.dir(productsData, { depth: null });
-
-//   return productsData.map((product) => ({
-//     id: product.id,
-//     name: product.name,
-//     description: product.description,
-//     features: product.marketing_features.map((feature) => feature.name || ''),
-//     // ? JSON.parse(product.metadata.features)
-//     // : [],
-//     price: product.default_price as Stripe.Price,
-//   }));
-// }
-
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
@@ -97,7 +57,7 @@ export default async function CreditsPage(props: {
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
-    .select('*')
+    .select('id, created_at, description, type, amount')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(100);
@@ -122,38 +82,6 @@ export default async function CreditsPage(props: {
 
       {/* Add Credit Top-up Section */}
       <CreditTopup dict={dict} lang={lang} />
-
-      {/* {products.map((product) => (
-        <Card key={product.id}>
-          <CardHeader>
-            <CardTitle>{product.name}</CardTitle>
-            <CardDescription>{product.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">
-              {product.price.unit_amount
-                ? `$${(product.price.unit_amount / 100).toFixed(2)}/${product.price.recurring?.interval}`
-                : 'Custom'}
-            </p>
-            <ul className="mt-4 space-y-2">
-              {product.features?.map((feature, index) => (
-                <li key={index} className="flex items-center">
-                  <Check className="mr-2 size-4 text-primary" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Link
-              className="text-sm font-medium hover:underline underline-offset-4 w-full"
-              href={`/signup?plan=${product.id}`}
-            >
-              <Button className="w-full">Get Started</Button>
-            </Link>
-          </CardFooter>
-        </Card>
-      ))} */}
 
       <div className="my-8">
         <h3 className="mb-4 text-lg font-semibold">{dict.history.title}</h3>

@@ -10,24 +10,17 @@ import {
 } from '@/components/ui/table';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
-// interface StripeTransaction {
-//   id: string;
-//   amount: number;
-//   type: string;
-//   description: string;
-//   created: number;
-//   status: string;
-//   current_period_end?: number;
-//   current_period_start?: number;
-//   invoice_id?: string;
-// }
-
 export function CreditHistory({
   dict,
   transactions,
 }: {
   dict: (typeof lang)['credits'];
-  transactions: CreditTransaction[] | null;
+  transactions:
+    | Pick<
+        CreditTransaction,
+        'id' | 'created_at' | 'description' | 'type' | 'amount'
+      >[]
+    | null;
 }) {
   if (!transactions || transactions.length === 0) {
     return (
@@ -55,37 +48,18 @@ export function CreditHistory({
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">
                 {format(new Date(transaction.created_at), 'MMM d, yyyy')}
-                {/* {transaction.type === 'purchase' &&
-                  transaction.current_period_end && (
-                    <div className="text-xs text-muted-foreground">
-                      Renews:{' '}
-                      {format(
-                        new Date(transaction.current_period_end * 1000),
-                        'MMM d, yyyy',
-                      )}
-                    </div>
-                  )} */}
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
-              <TableCell className="capitalize">
-                {transaction.type}
-                {/* {transaction.status && transaction.status !== 'active' && (
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    ({transaction.status})
-                  </span>
-                )} */}
-              </TableCell>
+              <TableCell className="capitalize">{transaction.type}</TableCell>
               <TableCell
                 className={`text-right ${
                   ['purchase', 'freemium', 'topup'].includes(transaction.type)
-                    ? // || transaction.type === 'subscription'
-                      'text-green-600'
+                    ? 'text-green-600'
                     : 'text-red-600'
                 }`}
               >
                 {['purchase', 'freemium', 'topup'].includes(transaction.type)
-                  ? // || transaction.type === 'subscription'
-                    '+'
+                  ? '+'
                   : '-'}
                 {transaction.amount}
               </TableCell>
