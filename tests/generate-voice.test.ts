@@ -2,8 +2,8 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import { getErrorMessage } from '@/app/api/utils';
 import * as queries from '@/lib/supabase/queries';
+import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
   mockBlobPut,

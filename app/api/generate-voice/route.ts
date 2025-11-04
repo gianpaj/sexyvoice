@@ -17,8 +17,12 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
-import { ERROR_CODES, getErrorMessage } from '../utils';
+import {
+  ERROR_CODES,
+  estimateCredits,
+  extractMetadata,
+  getErrorMessage,
+} from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
 
@@ -176,7 +180,8 @@ export async function POST(request: Request) {
       }
     }
 
-    let predictionResult: Prediction | undefined;
+    let replicateResponse: Prediction | undefined;
+    let genAIResponse: GenerateContentResponse | null;
     let modelUsed = voiceObj.model;
     let blobResult: any;
 
@@ -195,10 +200,9 @@ export async function POST(request: Request) {
           },
         },
       };
-      let response: GenerateContentResponse | null;
       try {
         modelUsed = 'gemini-2.5-pro-preview-tts';
-        response = await ai.models.generateContent({
+        genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text }] }],
           config: geminiTTSConfig,
@@ -213,17 +217,18 @@ export async function POST(request: Request) {
           },
         );
         modelUsed = 'gemini-2.5-flash-preview-tts';
-        response = await ai.models.generateContent({
+        genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text }] }],
           config: geminiTTSConfig,
         });
       }
       const data =
-        response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       const mimeType =
-        response?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
-      const finishReason = response?.candidates?.[0]?.finishReason;
+        genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData
+          ?.mimeType;
+      const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
 
       if (finishReason === 'PROHIBITED_CONTENT' || !data || !mimeType) {
         if (finishReason === 'PROHIBITED_CONTENT') {
@@ -237,19 +242,19 @@ export async function POST(request: Request) {
             error: 'NO_DATA_OR_MIME_TYPE',
             hasData: !!data,
             mimeType,
-            response,
+            response: genAIResponse,
             model: modelUsed,
           });
-          console.dir(
-            {
-              error: 'NO_DATA_OR_MIME_TYPE',
-              hasData: !!data,
-              mimeType,
-              response,
-              model: modelUsed,
-            },
-            { depth: null },
-          );
+          // console.dir(
+          //   {
+          //     error: 'NO_DATA_OR_MIME_TYPE',
+          //     hasData: !!data,
+          //     mimeType,
+          //     response,
+          //     model: modelUsed,
+          //   },
+          //   { depth: null },
+          // );
         }
         throw new Error(
           finishReason === 'PROHIBITED_CONTENT'
@@ -270,7 +275,7 @@ export async function POST(request: Request) {
         extra: {
           voice,
           model: modelUsed,
-          responseId: response.responseId,
+          responseId: genAIResponse.responseId,
           text,
         },
       });
@@ -284,14 +289,12 @@ export async function POST(request: Request) {
     } else {
       // uses REPLICATE_API_TOKEN
       const replicate = new Replicate();
-      const input = { text, voice };
       const onProgress = (prediction: Prediction) => {
-        predictionResult = prediction;
+        replicateResponse = prediction;
       };
       const output = (await replicate.run(
-        // @ts-ignore
-        voiceObj.model,
-        { input, signal: request.signal },
+        voiceObj.model as `${string}/${string}`,
+        { input: { text, voice }, signal: request.signal },
         onProgress,
       )) as ReadableStream;
 
@@ -336,17 +339,23 @@ export async function POST(request: Request) {
 
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
+      const usage = extractMetadata(
+        isGeminiVoice,
+        genAIResponse,
+        replicateResponse,
+      );
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
         text,
         url: blobResult.url,
         model: modelUsed,
-        predictionId: predictionResult?.id,
+        predictionId: replicateResponse?.id,
         isPublic: false,
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: estimate,
+        usage,
       });
 
       if (audioFileDBResult.error) {
@@ -365,7 +374,7 @@ export async function POST(request: Request) {
 
       await sendPosthogEvent({
         userId: user.id,
-        predictionId: predictionResult?.id,
+        predictionId: replicateResponse?.id,
         text,
         voiceId: voiceObj.id,
         creditUsed: estimate,
