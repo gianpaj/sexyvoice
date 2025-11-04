@@ -1,7 +1,6 @@
 import { createAdminClient } from './admin';
+import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
-
-export const MAX_FREE_GENERATIONS = 6;
 
 export async function getCredits(userId: string): Promise<number> {
   const supabase = await createClient();
