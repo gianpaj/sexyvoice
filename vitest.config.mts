@@ -15,7 +15,9 @@ export default defineConfig({
     hookTimeout: 120000, // 2 minutes for hooks (beforeAll/afterAll) - needed for redis-memory-server binary download in CI
     onConsoleLog(log, type) {
       if (
-        (log.startsWith('[STRIPE HOOK') && type === 'stdout') ||
+        ((log.startsWith('[STRIPE HOOK') ||
+          log.includes('NO_DATA_OR_MIME_TYPE')) &&
+          type === 'stdout') ||
         type === 'stderr'
       ) {
         return false;

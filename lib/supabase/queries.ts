@@ -65,6 +65,7 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  usage,
 }: {
   userId: string;
   filename: string;
@@ -76,6 +77,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  usage?: Record<string, string>;
 }) {
   const supabase = await createClient();
 
@@ -90,6 +92,7 @@ export async function saveAudioFile({
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    usage,
   });
 }
 
@@ -243,35 +246,35 @@ export const updateUserCredits = async (
   if (error) throw error;
 };
 
+export const hasUserPaid = async (userId: string): Promise<boolean> => {
+  const supabase = await createClient();
+  // First, check if the user has only non 'freemium' credit transaction
+  const { data: nonFreemiumTransactions, error: nonFreemiumError } =
+    await supabase
+      .from('credit_transactions')
+      .select('type')
+      .eq('user_id', userId)
+      .neq('type', 'freemium');
+
+  // Check if user has only non-freemium transactions (e.g. purchase transactions exist)
+  const hasPaidTransaction = (nonFreemiumTransactions?.length ?? 0) === 0;
+
+  if (nonFreemiumError) {
+    throw nonFreemiumError;
+  }
+
+  if (hasPaidTransaction) {
+    // If the user is not a freemium user, they are not over the limit.
+    return false;
+  }
+  return true;
+};
+
 export const isFreemiumUserOverLimit = async (
   userId: string,
 ): Promise<boolean> => {
   const supabase = await createClient();
-
-  // First, check if the user has only a 'freemium' credit transaction
-  const { data: allTransactions, error: freemiumError } = await supabase
-    .from('credit_transactions')
-    .select('type')
-    .eq('user_id', userId);
-
-  // Check if user has only freemium transactions
-  const hasOnlyFreemium =
-    (allTransactions?.length ?? 0) > 0 &&
-    allTransactions?.every((transaction) => transaction.type === 'freemium');
-
-  if (freemiumError) {
-    // For "No rows found", it's not an error, just not a freemium user.
-    if (freemiumError.code === 'PGRST116') {
-      return false;
-    }
-    throw freemiumError;
-  }
-
-  if (!hasOnlyFreemium) {
-    // If the user is not a freemium user, they are not over the limit.
-    return false;
-  }
-
+  // TODO: use redis instead
   // If the user is a freemium user, count their voice model 'gpro' audio files.
   const { data: audioFiles, error: audioFilesError } = await supabase
     .from('audio_files')

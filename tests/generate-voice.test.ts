@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
 import * as queries from '@/lib/supabase/queries';
+import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
   mockBlobPut,
@@ -496,7 +497,7 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toContain(
-        'We have exceeded our third-party API current quota',
+        getErrorMessage('THIRD_P_QUOTA_EXCEEDED', 'voice-generation'),
       );
     });
 
@@ -504,6 +505,7 @@ describe('Generate Voice API Route', () => {
       const queries = await import('@/lib/supabase/queries');
 
       // Mock isFreemiumUserOverLimit to return true
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(false);
       vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(true);
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -598,7 +600,9 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(json.error).toBe(
+        getErrorMessage('NO_DATA_OR_MIME_TYPE', 'voice-generation'),
+      );
     });
 
     it('should throw error when Gemini response has no mimeType', async () => {
@@ -626,7 +630,7 @@ describe('Generate Voice API Route', () => {
                 ],
               }),
             },
-          }) as any,
+          }) as unknown as any,
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -641,7 +645,48 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(json.error).toBe(
+        getErrorMessage('NO_DATA_OR_MIME_TYPE', 'voice-generation'),
+      );
+    });
+
+    it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
+      const { GoogleGenAI } = await import('@google/genai');
+
+      // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
+      vi.mocked(GoogleGenAI).mockImplementationOnce(
+        () =>
+          ({
+            models: {
+              generateContent: vi.fn().mockResolvedValue({
+                candidates: [
+                  {
+                    finishReason: 'PROHIBITED_CONTENT',
+                    content: {
+                      parts: [],
+                    },
+                  },
+                ],
+              }),
+            },
+          }) as unknown as any,
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe(
+        getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
+      );
     });
   });
 
@@ -734,7 +779,7 @@ describe('Generate Voice API Route', () => {
       expect(json.error).toBeDefined();
     });
 
-    it('should handle third-party API quota errors with specific message', async () => {
+    it('should handle getVoiceIdByName failure with error response', async () => {
       // Mock getVoiceIdByName to throw an error with status 429
       const queries = await import('@/lib/supabase/queries');
       const error = new Error('Quotas exceeded');

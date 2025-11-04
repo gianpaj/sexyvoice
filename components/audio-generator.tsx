@@ -17,13 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  // CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
@@ -52,7 +46,6 @@ export function AudioGenerator({
   selectedStyle,
   hasEnoughCredits,
   dict,
-  locale,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -150,9 +143,9 @@ export function AudioGenerator({
     abortController.current?.abort();
   };
 
-  // Keyboard shortcut handler
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: it's grand
   useEffect(() => {
+    // Keyboard shortcut handler
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
@@ -194,10 +187,6 @@ export function AudioGenerator({
     try {
       audio.pause();
       audio.currentTime = 0;
-
-      if (audio.src.startsWith('blob:')) {
-        URL.revokeObjectURL(audio.src);
-      }
     } catch (error) {
       console.error('Failed to reset audio', error);
     } finally {
@@ -262,7 +251,7 @@ export function AudioGenerator({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Generate Audio</CardTitle>
+        <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 sm:p-6 p-4">
         <div className="space-y-2">
@@ -337,14 +326,17 @@ export function AudioGenerator({
         </div>
 
         <div
-          className={`flex ${hasEnoughCredits ? 'items-center' : 'flex-col items-start'} grid grid-cols-1 sm:grid-cols-2 justify-start gap-2`}
+          className={cn(
+            'grid grid-cols-1 sm:grid-cols-2 justify-start gap-3',
+            hasEnoughCredits ? 'items-center' : 'flex flex-col items-start',
+          )}
         >
           {!hasEnoughCredits && (
             <Alert variant="destructive" className="w-fit">
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
-          <div>
+          <div className="flex flex-grow-0 gap-2">
             <Button
               onClick={handleGenerate}
               data-testid="generate-button"
@@ -356,6 +348,7 @@ export function AudioGenerator({
                 textIsOverLimit
               }
               size="lg"
+              className="h-10"
             >
               {isGenerating ? (
                 <span className="flex items-center">
@@ -374,20 +367,20 @@ export function AudioGenerator({
             {isGenerating && (
               <Button
                 variant="outline"
+                aria-label={dict.cancel}
                 title={dict.cancel}
                 size="icon"
                 onClick={handleCancel}
-                asChild
-                className="ml-2"
-              >
-                <CircleStop name="cancel" className="size-4" />
-              </Button>
+                iconPlacement="right"
+                icon={() => <CircleStop name="cancel" className="!size-8" />}
+                className="border-none cursor-pointer text-gray-300 hover:text-white hover:bg-transparent p-0"
+              />
             )}
           </div>
 
           <div>
             {audio && (
-              <div className="flex sm:w-full justify-center sm:justify-start gap-2">
+              <div className="flex sm:w-full justify-start gap-2">
                 <Button
                   variant="secondary"
                   title={dict.playAudio}
@@ -403,7 +396,7 @@ export function AudioGenerator({
                 <Button
                   variant="secondary"
                   size="icon"
-                  title={dict.resetForm}
+                  title={dict.resetPlayer}
                   onClick={resetPlayer}
                 >
                   <RotateCcw className="size-6" />

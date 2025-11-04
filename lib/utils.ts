@@ -1,6 +1,8 @@
+import type { GenerateContentResponse } from '@google/genai';
 import { type ClassValue, clsx } from 'clsx';
 import { customAlphabet } from 'nanoid';
 import { redirect } from 'next/navigation';
+import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -92,3 +94,100 @@ export function encodedRedirect(
 ): never {
   return redirect(`${path}?${type}=${encodeURIComponent(message)}`);
 }
+
+interface GeminiMetadata extends Record<string, string> {
+  readonly promptTokenCount: string;
+  readonly candidatesTokenCount: string;
+  readonly totalTokenCount: string;
+}
+
+interface ReplicateMetadata extends Record<string, string> {
+  readonly predict_time: string;
+  readonly total_time: string;
+}
+
+export function extractMetadata(
+  isGeminiVoice: boolean,
+  genAIResponse: GenerateContentResponse | null,
+  replicateResponse?: Prediction,
+): GeminiMetadata | ReplicateMetadata | undefined {
+  if (isGeminiVoice) {
+    const metadata = genAIResponse?.usageMetadata;
+    if (
+      !metadata ||
+      !metadata.promptTokenCount ||
+      !metadata.candidatesTokenCount ||
+      !metadata.totalTokenCount
+    ) {
+      return undefined;
+    }
+    return {
+      promptTokenCount: metadata.promptTokenCount.toString(),
+      candidatesTokenCount: metadata.candidatesTokenCount.toString(),
+      totalTokenCount: metadata.totalTokenCount.toString(),
+    } as const;
+  }
+  const metrics = replicateResponse?.metrics;
+  if (!metrics?.predict_time || !metrics?.total_time) {
+    return undefined;
+  }
+  return {
+    predict_time: metrics.predict_time.toString(),
+    total_time: metrics.total_time.toString(),
+  } as const;
+}
+
+export const ERROR_CODES = {
+  THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
+  PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
+  NO_DATA_OR_MIME_TYPE: 'NO_DATA_OR_MIME_TYPE',
+  REPLICATE_ERROR: 'REPLICATE_ERROR',
+  INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+} as const;
+
+export const getErrorMessage = (
+  errorCode: keyof typeof ERROR_CODES | unknown,
+  service: string,
+) => {
+  const errorMessages: Record<
+    keyof typeof ERROR_CODES,
+    { [key: string]: string }
+  > = {
+    // INVALID_API_KEY: {
+    //   default: 'The provided API key is invalid.',
+    //   'voice-generation': 'The voice generation API key is invalid.',
+    // },
+    THIRD_P_QUOTA_EXCEEDED: {
+      default:
+        'We have exceeded our third-party API current quota, please try later or tomorrow',
+    },
+    // UNAUTHORIZED: {
+    //   default: 'You are not authorized to perform this action.',
+    //   'voice-generation': 'You are not authorized to generate voice content.',
+    // },
+    // NOT_FOUND: {
+    //   default: 'The requested resource was not found.',
+    //   'voice-generation': 'The requested voice resource was not found.',
+    // },
+    PROHIBITED_CONTENT: {
+      default:
+        'Content generation prohibited. Please modify your text input and try again',
+    },
+    NO_DATA_OR_MIME_TYPE: {
+      default: 'Voice generation failed, please retry',
+    },
+    REPLICATE_ERROR: {
+      default: 'Voice generation failed, please retry',
+    },
+    INTERNAL_SERVER_ERROR: {
+      default: 'An internal server error occurred. Please try again later.',
+    },
+  };
+
+  const serviceMessages = errorMessages[errorCode as keyof typeof ERROR_CODES];
+  if (!serviceMessages) {
+    return 'An unknown error occurred.';
+  }
+
+  return serviceMessages[service] || serviceMessages.default;
+};
