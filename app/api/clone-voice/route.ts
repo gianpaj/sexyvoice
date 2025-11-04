@@ -1,10 +1,11 @@
 import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { del, head, put } from '@vercel/blob';
+import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
+import { inngest } from '@/lib/inngest/client';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
@@ -13,6 +14,8 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
+
+const { logger, captureException } = Sentry;
 
 // File validation constants
 const ALLOWED_TYPES = [
@@ -172,7 +175,7 @@ export async function POST(request: Request) {
     // ]);
 
     // if (error) {
-    //   Sentry.captureException({
+    //   captureException({
     //     error: 'Failed to save voice profile',
     //     errorData: error,
     //   });
@@ -204,7 +207,7 @@ export async function POST(request: Request) {
     const estimate = estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
-      Sentry.captureMessage('Insufficient credits', {
+      logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { text, estimate, currentCreditsAmount: currentAmount },
       });
@@ -329,7 +332,7 @@ export async function POST(request: Request) {
           model: 'chatterbox-tts',
           errorData: audioFileDBResult.error,
         };
-        Sentry.captureException({
+        captureException({
           error: 'Failed to insert audio file row',
           ...errorObj,
         });
@@ -347,7 +350,13 @@ export async function POST(request: Request) {
       });
 
       // delete the audio file uploaded
-      // await del(blobUrl);
+      await inngest.send({
+        name: 'clone-audio/cleanup.scheduled',
+        data: {
+          blobUrl: blobUrl,
+          userId: user.id,
+        },
+      });
     });
 
     return NextResponse.json(
@@ -365,7 +374,7 @@ export async function POST(request: Request) {
       audioPromptUrl,
       errorData: error,
     };
-    Sentry.captureException({
+    captureException({
       error: 'Voice cloning error',
       ...errorObj,
     });
