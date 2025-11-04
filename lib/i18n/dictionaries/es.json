@@ -262,7 +262,7 @@
     "resetPlayer": "Reiniciar Reproductor",
     "downloadAudio": "Descargar Audio",
     "abortedCloning": "Clonación de voz cancelada",
-    "gproLimitExceeded": "Has excedido el límite de 4 generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
+    "gproLimitExceeded": "Has excedido el límite de __COUNT__ generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
     "voiceSelector": {
       "title": "Seleccionar Voz",
       "description": "Elige entre las voces disponibles",

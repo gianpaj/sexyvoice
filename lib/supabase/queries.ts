@@ -1,7 +1,6 @@
 import { createAdminClient } from './admin';
+import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
-
-export const MAX_FREE_GENERATIONS = 6;
 
 export async function getCredits(userId: string): Promise<number> {
   const supabase = await createClient();
@@ -248,26 +247,20 @@ export const updateUserCredits = async (
 
 export const hasUserPaid = async (userId: string): Promise<boolean> => {
   const supabase = await createClient();
-  // First, check if the user has only non 'freemium' credit transaction
+  // Check if the user has any non-freemium credit transactions.
   const { data: nonFreemiumTransactions, error: nonFreemiumError } =
     await supabase
       .from('credit_transactions')
       .select('type')
       .eq('user_id', userId)
-      .neq('type', 'freemium');
-
-  // Check if user has only non-freemium transactions (e.g. purchase transactions exist)
-  const hasPaidTransaction = (nonFreemiumTransactions?.length ?? 0) === 0;
+      .in('type', ['purchase', 'topup']);
 
   if (nonFreemiumError) {
     throw nonFreemiumError;
   }
 
-  if (hasPaidTransaction) {
-    // If the user is not a freemium user, they are not over the limit.
-    return false;
-  }
-  return true;
+  // Return true if there is at least one non-freemium (i.e., purchase) transaction.
+  return (nonFreemiumTransactions?.length ?? 0) > 0;
 };
 
 export const isFreemiumUserOverLimit = async (

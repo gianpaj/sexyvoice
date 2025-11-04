@@ -23,6 +23,7 @@ import { getCharactersLimit } from '@/lib/ai';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
@@ -96,8 +97,11 @@ export function AudioGenerator({
 
         // Check if we have an error code for translation
         if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
+          const errorMessage = dict[
+            error.errorCode as keyof typeof dict
+          ] as string;
           throw new APIError(
-            dict[error.errorCode as keyof typeof dict] as string,
+            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
             response,
           );
         }
