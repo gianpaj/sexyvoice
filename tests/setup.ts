@@ -129,6 +129,7 @@ vi.mock('@/lib/supabase/queries', () => ({
   reduceCredits: vi.fn().mockResolvedValue(true),
   saveAudioFile: vi.fn().mockResolvedValue({ id: 'test-audio-file-id' }),
   isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
+  hasUserPaid: vi.fn().mockResolvedValue(false),
 }));
 
 // Mock Upstash Redis with reconfigurable functions
@@ -166,28 +167,33 @@ vi.mock('@vercel/blob', () => ({
 export { mockBlobPut };
 
 // Mock Google Generative AI module
-vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn().mockImplementation(() => ({
-    models: {
-      generateContent: vi.fn().mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  inlineData: {
-                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
-                    mimeType: 'audio/wav',
+vi.mock('@google/genai', async () => {
+  const genai = await import('@google/genai');
+  return {
+    HarmBlockThreshold: genai.HarmBlockThreshold,
+    HarmCategory: genai.HarmCategory,
+    GoogleGenAI: vi.fn().mockImplementation(() => ({
+      models: {
+        generateContent: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                      mimeType: 'audio/wav',
+                    },
                   },
-                },
-              ],
+                ],
+              },
             },
-          },
-        ],
-      }),
-    },
-  })),
-}));
+          ],
+        }),
+      },
+    })),
+  };
+});
 
 // Mock crypto.subtle for filename hash generation
 Object.defineProperty(global, 'crypto', {

@@ -505,6 +505,7 @@ describe('Generate Voice API Route', () => {
       const queries = await import('@/lib/supabase/queries');
 
       // Mock isFreemiumUserOverLimit to return true
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(false);
       vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(true);
 
       const request = new Request('http://localhost/api/generate-voice', {

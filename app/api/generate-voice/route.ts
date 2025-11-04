@@ -1,4 +1,10 @@
-import { type GenerateContentResponse, GoogleGenAI } from '@google/genai';
+import {
+  type GenerateContentConfig,
+  type GenerateContentResponse,
+  GoogleGenAI,
+  HarmBlockThreshold,
+  HarmCategory,
+} from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
@@ -12,6 +18,7 @@ import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
   getVoiceIdByName,
+  hasUserPaid,
   isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
@@ -166,9 +173,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
+    const userHasPaid = await hasUserPaid(user.id);
     if (isGeminiVoice) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
-      if (isOverLimit) {
+      if (!userHasPaid && isOverLimit) {
         return NextResponse.json(
           {
             error:
@@ -190,7 +198,8 @@ export async function POST(request: Request) {
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
 
-      const geminiTTSConfig = {
+      const geminiTTSConfig: GenerateContentConfig = {
+        abortSignal: abortController.signal,
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
@@ -199,6 +208,12 @@ export async function POST(request: Request) {
             },
           },
         },
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+        ],
       };
       try {
         modelUsed = 'gemini-2.5-pro-preview-tts';
