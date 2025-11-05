@@ -7,8 +7,22 @@ type CloneAudioCleanup = {
     userId: string;
   };
 };
+
+type PaymentNotification = {
+  data: {
+    userId: string;
+    userEmail: string;
+    amount: number;
+    planType: 'topup' | 'subscription';
+    priceId: string;
+    credits: number;
+    paymentIntentId: string;
+  };
+};
+
 type Events = {
   'clone-audio/cleanup.scheduled': CloneAudioCleanup;
+  'payment/pro-plan-purchased': PaymentNotification;
 };
 
 export const inngest = new Inngest({

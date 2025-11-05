@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
+import { inngest } from '@/lib/inngest/client';
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
 import { getTopupPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
@@ -201,6 +202,24 @@ async function handleCheckoutSessionCompleted(
       console.log(
         `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
       );
+
+      // Trigger notification for 99 USD Pro plan purchase
+      if (dollarAmountNum === 99) {
+        const customerEmail = session.customer_details?.email || 'unknown@email.com';
+        await inngest.send({
+          name: 'payment/pro-plan-purchased',
+          data: {
+            userId,
+            userEmail: customerEmail,
+            amount: dollarAmountNum,
+            planType: 'topup',
+            priceId: packageId,
+            credits: creditAmount,
+            paymentIntentId: session.payment_intent.toString(),
+          },
+        });
+        console.log(`[STRIPE HOOK] Sent Pro plan notification for user: ${userId}`);
+      }
     } else if (session.mode === 'subscription') {
       // Handle initial subscription checkout
       const customerId = session.customer as string | null;
@@ -294,6 +313,24 @@ async function handleCheckoutSessionCompleted(
       console.log(
         `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
       );
+
+      // Trigger notification for 99 USD Pro plan subscription
+      if (dollarAmount === 99) {
+        const customerEmail = session.customer_details?.email || 'unknown@email.com';
+        await inngest.send({
+          name: 'payment/pro-plan-purchased',
+          data: {
+            userId,
+            userEmail: customerEmail,
+            amount: dollarAmount,
+            planType: 'subscription',
+            priceId,
+            credits,
+            paymentIntentId,
+          },
+        });
+        console.log(`[STRIPE HOOK] Sent Pro plan subscription notification for user: ${userId}`);
+      }
     }
   } catch (error) {
     const extra = {
@@ -400,6 +437,27 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     console.log(
       `[STRIPE HOOK] Recurring subscription credits added: ${credits} to user: ${userId}`,
     );
+
+    // Trigger notification for 99 USD Pro plan recurring payment
+    if (dollarAmount === 99) {
+      // Get customer email from Stripe
+      const customer = await stripe.customers.retrieve(customerId);
+      const customerEmail = (customer as Stripe.Customer).email || 'unknown@email.com';
+
+      await inngest.send({
+        name: 'payment/pro-plan-purchased',
+        data: {
+          userId,
+          userEmail: customerEmail,
+          amount: dollarAmount,
+          planType: 'subscription',
+          priceId,
+          credits,
+          paymentIntentId,
+        },
+      });
+      console.log(`[STRIPE HOOK] Sent Pro plan recurring payment notification for user: ${userId}`);
+    }
 
     // Also update Redis cache with latest subscription status
     await syncStripeDataToKV(customerId);
