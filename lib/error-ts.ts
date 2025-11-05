@@ -25,7 +25,7 @@ export class APIError extends Error {
     if (body) {
       for (const field of Object.keys(body)) {
         if (field !== 'message') {
-          // @ts-ignore
+          // @ts-expect-error
           this[field] = body[field];
         }
       }

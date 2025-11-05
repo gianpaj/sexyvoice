@@ -325,7 +325,7 @@ export async function POST(request: Request) {
         });
         console.error(errorObj);
         throw new Error(
-          // @ts-ignore
+          // @ts-expect-error
           output.error || 'Voice generation failed, please try again',
           {
             cause: 'REPLICATE_ERROR',
