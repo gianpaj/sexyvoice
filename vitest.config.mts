@@ -16,7 +16,7 @@ export default defineConfig({
     onConsoleLog(log, type) {
       if (
         ((log.startsWith('[STRIPE HOOK') ||
-          log.includes('NO_DATA_OR_MIME_TYPE')) &&
+          log.includes('OTHER_GEMINI_BLOCK')) &&
           type === 'stdout') ||
         type === 'stderr'
       ) {

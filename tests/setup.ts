@@ -178,6 +178,7 @@ vi.mock('@google/genai', async () => {
   return {
     HarmBlockThreshold: genai.HarmBlockThreshold,
     HarmCategory: genai.HarmCategory,
+    FinishReason: genai.FinishReason,
     GoogleGenAI: vi.fn().mockImplementation(() => ({
       models: {
         generateContent: vi.fn().mockResolvedValue({
@@ -193,6 +194,7 @@ vi.mock('@google/genai', async () => {
                   },
                 ],
               },
+              finishReason: 'STOP',
             },
           ],
         }),

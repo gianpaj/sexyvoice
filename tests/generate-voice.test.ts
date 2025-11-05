@@ -379,7 +379,7 @@ describe('Generate Voice API Route', () => {
         () =>
           ({
             models: {
-              generateContent: vi.fn().mockImplementation(async ({ model }) => {
+              generateContent: vi.fn().mockImplementation(() => {
                 callCount++;
                 if (callCount === 1) {
                   // First call (pro model) should throw
@@ -402,6 +402,7 @@ describe('Generate Voice API Route', () => {
                           },
                         ],
                       },
+                      finishReason: 'STOP',
                     },
                   ],
                 };
@@ -453,13 +454,12 @@ describe('Generate Voice API Route', () => {
                   code: 429,
                   message:
                     'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
-                  // @ts-ignore - taken from logs
                   status: 'RESOURCE_EXHAUSTED',
                   details: [
                     {
                       '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
                       violations: [
-                        // @ts-ignore - taken from logs
+                        // @ts-expect-error - taken from logs
                         {
                           quotaMetric:
                             'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
@@ -598,7 +598,7 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBe(
-        getErrorMessage('NO_DATA_OR_MIME_TYPE', 'voice-generation'),
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
       );
     });
 
@@ -643,7 +643,7 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBe(
-        getErrorMessage('NO_DATA_OR_MIME_TYPE', 'voice-generation'),
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
       );
     });
 
