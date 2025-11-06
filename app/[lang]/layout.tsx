@@ -23,7 +23,8 @@ export async function generateMetadata(
 
   const { alternates, openGraph, title: parentTitle } = await parent;
 
-  const pathname = new URL(alternates?.canonical?.url!).pathname;
+  const canonicalUrl = alternates?.canonical?.url;
+  const pathname = canonicalUrl ? new URL(canonicalUrl).pathname : '/';
   const pagePath = pathname.replace(`/${lang}`, '') || '/';
 
   // Validate that the language is a supported locale
@@ -34,7 +35,7 @@ export async function generateMetadata(
   }
 
   const dict = await getDictionary(lang);
-  // @ts-ignore FIXME
+  // @ts-expect-error FIXME
   const pageTitle = dict.pages[pagePath];
   const defaultTitle = dict.pages.defaultTitle;
 
@@ -42,7 +43,7 @@ export async function generateMetadata(
 
   return {
     title: {
-      template: (parentTitle as any).template,
+      template: parentTitle?.template || '',
       default: title,
     },
     description: dict.pages.description,

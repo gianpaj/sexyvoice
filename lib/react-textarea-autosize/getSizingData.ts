@@ -1,6 +1,7 @@
 // import isBrowser from '#is-browser';
 export const noop = () => {};
 
+// biome-ignore lint/suspicious/noExplicitAny: it's grand
 export const pick = <Obj extends { [key: string]: any }, Key extends keyof Obj>(
   props: Key[],
   obj: Obj,

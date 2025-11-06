@@ -1,4 +1,5 @@
 import {
+  FinishReason,
   type GenerateContentConfig,
   type GenerateContentResponse,
   GoogleGenAI,
@@ -243,16 +244,17 @@ export async function POST(request: Request) {
           ?.mimeType;
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
 
-      if (finishReason === 'PROHIBITED_CONTENT' || !data || !mimeType) {
-        if (finishReason === 'PROHIBITED_CONTENT') {
+      if (finishReason !== FinishReason.STOP || !data || !mimeType) {
+        if (FinishReason.PROHIBITED_CONTENT === finishReason) {
           logger.warn('Content generation prohibited by Gemini', {
             user: { id: user.id },
             model: modelUsed,
             text,
           });
         } else {
-          logger.error('Gemini voice generation failed - no data or mimeType', {
-            error: 'NO_DATA_OR_MIME_TYPE',
+          logger.error('Gemini voice generation failed', {
+            error: finishReason,
+            finishReason,
             hasData: !!data,
             mimeType,
             response: genAIResponse,
@@ -260,24 +262,24 @@ export async function POST(request: Request) {
           });
           // console.dir(
           //   {
-          //     error: 'NO_DATA_OR_MIME_TYPE',
+          //     error: finishReason,
           //     hasData: !!data,
           //     mimeType,
-          //     response,
+          //     response: genAIResponse,
           //     model: modelUsed,
           //   },
           //   { depth: null },
           // );
         }
         throw new Error(
-          finishReason === 'PROHIBITED_CONTENT'
+          finishReason === FinishReason.PROHIBITED_CONTENT
             ? 'Content generation was prohibited by our provider. Please modify your input and try again.'
             : 'Voice generation failed, please retry',
           {
             cause:
-              finishReason === 'PROHIBITED_CONTENT'
+              finishReason === FinishReason.PROHIBITED_CONTENT
                 ? 'PROHIBITED_CONTENT'
-                : 'NO_DATA_OR_MIME_TYPE',
+                : 'OTHER_GEMINI_BLOCK',
           },
         );
       }
@@ -325,7 +327,7 @@ export async function POST(request: Request) {
         });
         console.error(errorObj);
         throw new Error(
-          // @ts-ignore
+          // @ts-expect-error
           output.error || 'Voice generation failed, please try again',
           {
             cause: 'REPLICATE_ERROR',

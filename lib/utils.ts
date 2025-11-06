@@ -140,7 +140,7 @@ export function extractMetadata(
 export const ERROR_CODES = {
   THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
-  NO_DATA_OR_MIME_TYPE: 'NO_DATA_OR_MIME_TYPE',
+  OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
@@ -173,7 +173,7 @@ export const getErrorMessage = (
       default:
         'Content generation prohibited. Please modify your text input and try again',
     },
-    NO_DATA_OR_MIME_TYPE: {
+    OTHER_GEMINI_BLOCK: {
       default: 'Voice generation failed, please retry',
     },
     REPLICATE_ERROR: {

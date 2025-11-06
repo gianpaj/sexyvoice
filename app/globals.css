@@ -105,6 +105,7 @@
 @-moz-document url-prefix() {
   .disable-bg-firefox {
     background: none;
+    /* biome-ignore lint/complexity/noImportantStyles: it's grand */
     background-image: none !important;
   }
 }
