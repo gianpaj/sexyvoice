@@ -81,7 +81,7 @@ export function PromoBanner({
           </p>
         </div>
 
-        <div className="flex items-center justify-center sm:mt-0 mt-3 relative gap-2">
+        <div className="flex items-center justify-center sm:mt-0 mt-3 relative gap-2 flex-[0.3]">
           <Button
             asChild
             size="sm"

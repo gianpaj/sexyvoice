@@ -9,6 +9,11 @@ const config: Config = {
     './posts/**/*.{md,mdx}',
   ],
   theme: {
+    container: {
+      screens: {
+        max: '1300px',
+      },
+    },
     extend: {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
