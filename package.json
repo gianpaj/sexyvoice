@@ -44,7 +44,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.0",
-    "@sentry/nextjs": "^10.13.0",
+    "@sentry/nextjs": "^10.23.0",
     "@stripe/stripe-js": "^7.3.1",
     "@supabase-cache-helpers/postgrest-react-query": "^1.13.4",
     "@supabase/ssr": "^0.5.2",
@@ -118,7 +118,7 @@
     "and_ff >0 and last 2.5 years",
     "ios >0 and last 2.5 years"
   ],
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.20.0",
   "pnpm": {
     "overrides": {
       "@babel/runtime@<7.26.10": ">=7.26.10",
