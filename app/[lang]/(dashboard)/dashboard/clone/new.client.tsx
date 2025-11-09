@@ -34,12 +34,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioPlayer } from '../history/audio-player';
+import type { SampleAudio } from './CloneSampleCard';
+import CloneSampleCard from './CloneSampleCard';
 
-type Status = 'idle' | 'generating' | 'complete' | 'error';
+export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const sampleAudios: ReadonlyArray<SampleAudio> = [
+  {
+    id: 1,
+    name: 'Marilyn Monroe 🇺🇸',
+    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
+    audioExampleOutputSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
+    audioSrc: 'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+  },
+  {
+    id: 2,
+    name: 'Morgan Freeman 🇺🇸',
+    prompt: 'The most important thing is the mission, not the money',
+    audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+    audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  },
+  {
+    id: 3,
+    name: 'Audrey Hepburn 🇬🇧',
+    prompt: 'Elegance is not about being noticed, it is about being remembered',
+    audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+    audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  },
+];
 
 export default function NewVoiceClient({
   dict,
@@ -64,6 +90,7 @@ export default function NewVoiceClient({
       removeFile,
       getInputProps,
       clearErrors,
+      addFiles,
     },
   ] = useFileUpload({
     maxSize: MAX_FILE_SIZE,
@@ -305,6 +332,27 @@ export default function NewVoiceClient({
                       >
                         <XIcon className="!size-6" aria-hidden="true" />
                       </Button>
+                    </div>
+                  )}
+
+                  {/* Sample audio demo buttons */}
+                  {!file && (
+                    <div className="grid w-full gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        Or try with a demo:
+                      </p>
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                        {sampleAudios.map((sample) => (
+                          <CloneSampleCard
+                            key={sample.id}
+                            sample={sample}
+                            addFiles={addFiles}
+                            setTextToConvert={setTextToConvert}
+                            setErrorMessage={setErrorMessage}
+                            setStatus={setStatus}
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

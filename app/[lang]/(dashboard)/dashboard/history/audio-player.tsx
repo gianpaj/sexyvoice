@@ -4,8 +4,15 @@ import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
-export function AudioPlayer({ url }: { url: string }) {
+export function AudioPlayer({
+  url,
+  className,
+}: {
+  url: string;
+  className?: string;
+}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
@@ -28,7 +35,7 @@ export function AudioPlayer({ url }: { url: string }) {
     <Button
       variant="secondary"
       size="icon"
-      className="min-w-10 min-h-10 rounded-full"
+      className={cn('min-w-10 min-h-10 rounded-full', className)}
       onClick={handlePlay}
     >
       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
