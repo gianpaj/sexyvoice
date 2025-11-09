@@ -12,6 +12,16 @@ export const handlers = [
       output: 'https://example.com/audio.mp3',
     });
   }),
+  // fal.ai audio file fetch mock
+  http.get('https://fal-cdn.com/test-audio.mp3', () => {
+    // Return a minimal valid audio buffer
+    const audioBuffer = new ArrayBuffer(1024);
+    return HttpResponse.arrayBuffer(audioBuffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+      },
+    });
+  }),
 ];
 
 // Setup MSW server
@@ -53,9 +63,9 @@ vi.mock('next/server', () => ({
       return response;
     },
   },
-  after: (fn: () => Promise<void>) => {
+  after: async (fn: () => Promise<void>) => {
     // In tests, execute immediately instead of after response
-    return fn();
+    await fn();
   },
 }));
 
@@ -164,13 +174,15 @@ export { mockRedisGet, mockRedisSet, mockRedisDel, mockRedisKeys };
 const mockBlobPut = vi.fn().mockResolvedValue({
   url: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
 });
+const mockBlobHead = vi.fn().mockRejectedValue(new Error('Not found'));
 
 vi.mock('@vercel/blob', () => ({
   put: mockBlobPut,
+  head: mockBlobHead,
 }));
 
 // Export mocks for test access
-export { mockBlobPut };
+export { mockBlobPut, mockBlobHead };
 
 // Mock Google Generative AI module
 vi.mock('@google/genai', async () => {
@@ -207,13 +219,20 @@ vi.mock('@google/genai', async () => {
 Object.defineProperty(global, 'crypto', {
   value: {
     subtle: {
-      digest: vi
-        .fn()
-        .mockResolvedValue(
-          new Uint8Array([
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-          ]),
-        ),
+      digest: vi.fn().mockImplementation(async (_algorithm, data) => {
+        // Generate a simple hash based on the input data
+        const view = new Uint8Array(data);
+        let hash = 0;
+        for (let i = 0; i < view.length; i++) {
+          hash = (hash * 31 + view[i]) & 0xffffffff;
+        }
+        // Create a Uint8Array with the hash value
+        const hashArray = new Uint8Array(16);
+        for (let i = 0; i < 16; i++) {
+          hashArray[i] = (hash >> (i * 2)) & 0xff;
+        }
+        return hashArray.buffer;
+      }),
     },
   },
 });
@@ -240,3 +259,61 @@ vi.mock('replicate', () => {
 });
 
 export { mockReplicateRun };
+
+// Mock fal.ai client
+const mockFalSubscribe = vi.fn().mockImplementation(async () => {
+  return {
+    data: {
+      audio: {
+        url: 'https://fal-cdn.com/test-audio.mp3',
+        content_type: 'audio/mpeg',
+        file_name: 'output.mp3',
+        file_size: 1024,
+      },
+    },
+    requestId: 'test-fal-request-id',
+  };
+});
+
+vi.mock('@fal-ai/client', () => ({
+  fal: {
+    subscribe: mockFalSubscribe,
+  },
+}));
+
+export { mockFalSubscribe };
+
+// Mock music-metadata for audio duration detection
+const mockParseBuffer = vi.fn().mockResolvedValue({
+  format: { duration: 30 }, // Default to 30 seconds (valid duration)
+});
+
+vi.mock('music-metadata', async () => {
+  return {
+    parseBuffer: mockParseBuffer,
+    default: {
+      parseBuffer: mockParseBuffer,
+    },
+  };
+});
+
+export { mockParseBuffer };
+
+// Mock PostHog
+vi.mock('@/lib/posthog', () => ({
+  default: vi.fn(() => ({
+    capture: vi.fn(),
+    shutdown: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
+// Mock Inngest client
+const mockInngestSend = vi.fn().mockResolvedValue({ ids: ['test-event-id'] });
+
+vi.mock('@/lib/inngest/client', () => ({
+  inngest: {
+    send: mockInngestSend,
+  },
+}));
+
+export { mockInngestSend };
