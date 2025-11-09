@@ -5,6 +5,12 @@
   - listened counter?
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
+- demo of audio clones
+  - John Wayne
+  - Marilyn Monroe
+  - Bruce Lee
+  - Sophia Loren
+- add multilingual voice cloning
 - Get stats of `audio_files`. language, style. If using LLM, use batch mode.
 - Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - Translate pages in Dashboard:
