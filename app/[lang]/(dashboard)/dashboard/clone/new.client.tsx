@@ -23,16 +23,16 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 // import { Progress } from '@/components/ui/progress';
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 import { AudioPlayer } from '../history/audio-player';
 import type { SampleAudio } from './CloneSampleCard';
 import CloneSampleCard from './CloneSampleCard';
@@ -67,10 +67,38 @@ const sampleAudios: ReadonlyArray<SampleAudio> = [
   },
 ];
 
+const SUPPORTED_LOCALE_CODES = [
+  'ar',
+  'da',
+  'de',
+  'el',
+  'en',
+  'es',
+  'fi',
+  'fr',
+  'he',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'nl',
+  'no',
+  'pl',
+  'pt',
+  'ru',
+  'sv',
+  'sw',
+  'tr',
+  'zh',
+];
+
 export default function NewVoiceClient({
   dict,
+  lang,
 }: {
-  dict: (typeof lang)['generate'];
+  dict: (typeof langDict)['generate'];
+  lang: string;
 }) {
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
@@ -78,6 +106,14 @@ export default function NewVoiceClient({
   const [textToConvert, setTextToConvert] = useState('');
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+  const [selectedLocale, setSelectedLocale] = useState('en');
+
+  // Get localized language names using Intl.DisplayNames
+  const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
+  const supportedLocales = SUPPORTED_LOCALE_CODES.map((code) => ({
+    code,
+    name: languageNames.of(code) || code,
+  }));
 
   const [
     { files, isDragging, errors },
@@ -140,6 +176,7 @@ export default function NewVoiceClient({
       const formData = new FormData();
       formData.append('file', file);
       formData.append('text', textToConvert);
+      formData.append('locale', selectedLocale);
 
       const voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -176,7 +213,7 @@ export default function NewVoiceClient({
       );
       setStatus('error');
     }
-  }, [dict, file, textToConvert, clearErrors]);
+  }, [dict, file, textToConvert, selectedLocale, clearErrors]);
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -355,6 +392,28 @@ export default function NewVoiceClient({
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div className="grid w-full gap-2">
+                  <Label htmlFor="language">{dict.languageLabel}</Label>
+                  <Select
+                    value={selectedLocale}
+                    onValueChange={setSelectedLocale}
+                    disabled={status === 'generating'}
+                  >
+                    <SelectTrigger id="language">
+                      <SelectValue
+                        placeholder={dict.languageSelectPlaceholder}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLocales.map((locale) => (
+                        <SelectItem key={locale.code} value={locale.code}>
+                          {locale.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid w-full gap-2">

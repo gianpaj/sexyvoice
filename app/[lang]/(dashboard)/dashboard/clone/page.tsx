@@ -8,5 +8,5 @@ export default async function NewVoicePage(props: {
   const { lang } = await props.params;
 
   const dict = await getDictionary(lang, 'generate');
-  return <NewVoiceClient dict={dict} />;
+  return <NewVoiceClient dict={dict} lang={lang} />;
 }

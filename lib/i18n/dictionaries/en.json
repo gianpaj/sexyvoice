@@ -252,6 +252,8 @@
     "error": "Failed to generate audio",
     "errorCloning": "Failed to clone voice",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
+    "languageLabel": "Language",
+    "languageSelectPlaceholder": "Select a language",
     "generating": "Generating",
     "playAudio": "Play Audio",
     "cancel": "Cancel generation",

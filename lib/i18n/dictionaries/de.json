@@ -255,6 +255,8 @@
     "error": "Audio konnte nicht generiert werden",
     "errorCloning": "Stimme konnte nicht geklont werden",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
+    "languageLabel": "Sprache",
+    "languageSelectPlaceholder": "Wählen Sie eine Sprache",
     "generating": "Wird generiert",
     "playAudio": "Audio abspielen",
     "cancel": "Generierung abbrechen",

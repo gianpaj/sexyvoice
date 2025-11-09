@@ -255,6 +255,8 @@
     "error": "Error al generar audio",
     "errorCloning": "Error al clonar la voz",
     "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
+    "languageLabel": "Idioma",
+    "languageSelectPlaceholder": "Selecciona un idioma",
     "generating": "Generando",
     "playAudio": "Escucha Audio",
     "cancel": "Cancelar",
