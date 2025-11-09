@@ -1,3 +1,4 @@
+import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
@@ -171,8 +172,10 @@ vi.mock('@upstash/redis', () => ({
 export { mockRedisGet, mockRedisSet, mockRedisDel, mockRedisKeys };
 
 // Mock Vercel Blob
-const mockBlobPut = vi.fn().mockResolvedValue({
-  url: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
+const mockBlobPut = vi.fn().mockImplementation((filename: string) => {
+  return Promise.resolve({
+    url: `https://blob.vercel-storage.com/${filename}`,
+  });
 });
 const mockBlobHead = vi.fn().mockRejectedValue(new Error('Not found'));
 
@@ -209,7 +212,12 @@ vi.mock('@google/genai', async () => {
               finishReason: 'STOP',
             },
           ],
-        }),
+          usageMetadata: {
+            promptTokenCount: 11,
+            candidatesTokenCount: 12,
+            totalTokenCount: 23,
+          },
+        } as GenerateContentResponse),
       },
     })),
   };
