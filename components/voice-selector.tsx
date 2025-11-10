@@ -63,7 +63,6 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  // const textIsOverLimit = text.length > charactersLimit;
   return (
     <Card>
       <CardHeader className="sm:p-6 p-4 pt-6 sm:pb-2">

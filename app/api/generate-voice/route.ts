@@ -13,7 +13,7 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { getCharactersLimit } from '@/lib/ai';
+import { countGeminiTokens, getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -189,7 +189,7 @@ export async function POST(request: Request) {
 
     let replicateResponse: Prediction | undefined;
     let genAIResponse: GenerateContentResponse | null;
-    let modelUsed = voiceObj.model;
+    let modelUsed = '';
     let blobResult: any;
 
     if (isGeminiVoice) {
@@ -215,7 +215,8 @@ export async function POST(request: Request) {
         ],
       };
       try {
-        modelUsed = 'gemini-2.5-pro-preview-tts';
+        modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text }] }],
@@ -230,7 +231,7 @@ export async function POST(request: Request) {
             originalModel: modelUsed,
           },
         );
-        modelUsed = 'gemini-2.5-flash-preview-tts';
+        modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text }] }],
@@ -352,6 +353,11 @@ export async function POST(request: Request) {
         return;
       }
 
+      const totalTokens = await countGeminiTokens({
+        model: modelUsed,
+        contents: text,
+      });
+
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
       const usage = extractMetadata(
@@ -371,7 +377,10 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: estimate,
-        usage,
+        usage: {
+          ...usage,
+          totalTokens,
+        },
       });
 
       if (audioFileDBResult.error) {

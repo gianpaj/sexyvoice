@@ -12,6 +12,8 @@
 - add audio clones demos on dashboard
 - add multilingual voice cloning
 - Get stats of `audio_files`. language, style. If using LLM, use batch mode.
+- Implement `fakefilter` or `mailchecker` npm packages to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
+  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
 - Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - Translate pages in Dashboard:
   - Generate
@@ -27,22 +29,7 @@
 - Add a Share page for individual generated audio files.
   - Allow user to toggle Sharing profile page in Settings.
   - Allow user to upload profile picture? – after `r2` branch is merged
-- Crist and Posthug: add `isPaidUser` from `r2` branch
-- Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
-  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
----
-- Deploy model
-  - FR: pierre, amelie, marie
-    chuckle, cough, gasp, groan, laugh, sigh, sniffle, whimper, yawn
-- Deploy model
-  - DE: jana, thomas, max
-    chuckle, cough, gasp, groan, laugh, sigh, sniffle, yawn
-- Korean: 유나, 준서
-- Mandarin: 长乐, 白芷
-
-Ciao, mi chiamo Pietro, <laugh> , e sono un modello di generazione vocale che può sembrare una persona.
-
-Ciao, mi chiamo Giulia, <gemito> , e sono un modello di generazione vocale che può sembrare una persona.
+- Crisp and Posthug: add `isPaidUser` from `r2` branch
 
 Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può sembrare una persona.
 
