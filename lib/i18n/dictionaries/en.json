@@ -250,7 +250,6 @@
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "success": "Audio generated successfully!",
     "error": "Failed to generate audio",
-    "errorCloning": "Failed to clone voice",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "languageLabel": "Language",
     "languageSelectPlaceholder": "Select a language",
@@ -268,6 +267,39 @@
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
+    }
+  },
+  "clone": {
+    "audioFileLabel": "Audio File",
+    "cancelButton": "Cancel",
+    "ctaButton": "Generate Audio",
+    "disclaimer": "Voice clones are created for demonstration purposes only.",
+    "downloadAudio": "Download Audio",
+    "dragDropText": "Drag & drop or click to browse",
+    "errorCloning": "Failed to clone voice",
+    "errorTitle": "Error",
+    "fileFormatsText": "MP3, WAV, M4A or OGG (max. __SIZE__)",
+    "generating": "Generating",
+    "languageLabel": "Language",
+    "languageSelectPlaceholder": "Select a language",
+    "notEnoughCredits": "You don't have enough credits to generate audio.",
+    "previewTitle": "Generated Voice Preview",
+    "subtitle": "Upload an audio file and enter text to create a voice clone and generate speech in one step",
+    "tabPreview": "Preview",
+    "tabUpload": "Upload",
+    "textAreaPlaceholder": "Enter the text you want to convert to speech...",
+    "textToConvertLabel": "Enter text to generate speech",
+    "title": "Clone a Voice",
+    "tryDemo": "Or try with a demo:",
+    "uploadAudioFile": "Upload audio file",
+    "errors": {
+      "noAudioFile": "Please select an audio file.",
+      "noText": "Please enter some text to convert to speech."
+    },
+    "sampleCard": {
+      "sourceAudio": "Source audio",
+      "exampleOutput": "Example",
+      "loadSource": "Load source"
     }
   },
   "profile": {

@@ -253,7 +253,6 @@
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "success": "Audio generado con éxito!",
     "error": "Error al generar audio",
-    "errorCloning": "Error al clonar la voz",
     "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
     "languageLabel": "Idioma",
     "languageSelectPlaceholder": "Selecciona un idioma",
@@ -271,6 +270,39 @@
       "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
       "geminiInfo": "Soporta 24 idiomas:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
+    }
+  },
+  "clone": {
+    "audioFileLabel": "Archivo de Audio",
+    "cancelButton": "Cancelar",
+    "ctaButton": "Generar audio",
+    "disclaimer": "Los clones de voz se crean solo con fines de demostración.",
+    "downloadAudio": "Descargar Audio",
+    "dragDropText": "Arrastra y suelta o haz clic para buscar",
+    "errorCloning": "Error al clonar la voz",
+    "errorTitle": "Error",
+    "fileFormatsText": "MP3, WAV, M4A u OGG (máx. __SIZE__)",
+    "generating": "Generating",
+    "languageLabel": "Idioma",
+    "languageSelectPlaceholder": "Selecciona un idioma",
+    "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
+    "previewTitle": "Vista Previa de Voz Generada",
+    "subtitle": "Sube un archivo de audio e ingresa texto para crear un clon de voz y generar voz en un solo paso",
+    "tabPreview": "Vista Previa",
+    "tabUpload": "Subir archivo",
+    "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
+    "textToConvertLabel": "Texto a Convertir",
+    "title": "Clonar una Voz",
+    "tryDemo": "O prueba con una demostración:",
+    "uploadAudioFile": "Subir archivo de audio",
+    "errors": {
+      "noAudioFile": "Por favor selecciona un archivo de audio.",
+      "noText": "Por favor ingresa algún texto para convertir en voz."
+    },
+    "sampleCard": {
+      "sourceAudio": "Fuente audio",
+      "exampleOutput": "Ejemplo",
+      "loadSource": "Carga fuente"
     }
   },
   "profile": {

@@ -253,7 +253,6 @@
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "success": "Audio erfolgreich generiert!",
     "error": "Audio konnte nicht generiert werden",
-    "errorCloning": "Stimme konnte nicht geklont werden",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",

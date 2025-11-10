@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PulsatingDots from '@/components/PulsatingDots';
+import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -65,6 +66,7 @@ const sampleAudios: ReadonlyArray<SampleAudio> = [
     audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
     audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
   },
+  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
 ];
 
 const SUPPORTED_LOCALE_CODES = [
@@ -96,9 +98,11 @@ const SUPPORTED_LOCALE_CODES = [
 export default function NewVoiceClient({
   dict,
   lang,
+  hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['generate'];
+  dict: (typeof langDict)['clone'];
   lang: string;
+  hasEnoughCredits: boolean;
 }) {
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
@@ -112,7 +116,9 @@ export default function NewVoiceClient({
   const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
   const supportedLocales = SUPPORTED_LOCALE_CODES.map((code) => ({
     code,
-    name: languageNames.of(code) || code,
+    name:
+      `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
+      code,
   }));
 
   const [
@@ -154,13 +160,13 @@ export default function NewVoiceClient({
   const abortController = useRef<AbortController | null>(null);
   const handleGenerate = useCallback(async () => {
     if (!file) {
-      setErrorMessage('Please select an audio file.');
+      setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
       return;
     }
 
     if (!textToConvert.trim()) {
-      setErrorMessage('Please enter some text to convert to speech.');
+      setErrorMessage(dict.errors.noText);
       setStatus('error');
       return;
     }
@@ -230,8 +236,8 @@ export default function NewVoiceClient({
         // Only trigger if form can be submitted
         if (
           status !== 'generating' &&
-          textToConvert.trim()
-          // && hasEnoughCredits
+          textToConvert.trim() &&
+          hasEnoughCredits
         ) {
           handleGenerate();
         }
@@ -245,7 +251,7 @@ export default function NewVoiceClient({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, textToConvert, handleGenerate]);
+  }, [status, textToConvert, handleGenerate, hasEnoughCredits]);
 
   const handleDownload = () => {
     const link = document.createElement('a');
@@ -259,33 +265,28 @@ export default function NewVoiceClient({
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Clone a Voice</CardTitle>
+          <CardTitle>{dict.title}</CardTitle>
           <CardDescription>
-            <p className="mb-4">
-              Upload an audio file and enter text to create a voice clone and
-              generate speech in one step
-            </p>
+            <p className="mb-4">{dict.subtitle}</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* TODO add examples */}
-          {/* https://maskgct.github.io/audios/celeb_samples/rick_0.wav */}
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload">Create Voice</TabsTrigger>
+              <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
               <TabsTrigger value="preview" disabled={status !== 'complete'}>
-                Preview
+                {dict.tabPreview}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="upload" className="space-y-6 py-4">
-              <div className="grid w-full gap-4">
+              <div className="grid w-full gap-6">
                 <div className="grid w-full gap-2">
-                  <Label htmlFor="audio-file">Audio File</Label>
+                  <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
 
                   {/* Drop area */}
                   {!file && (
@@ -315,14 +316,16 @@ export default function NewVoiceClient({
                           <UploadIcon className="size-4 opacity-60" />
                         </div>
                         <p className="mb-1.5 text-sm font-medium">
-                          Upload audio file
+                          {dict.uploadAudioFile}
                         </p>
                         <p className="text-muted-foreground text-xs">
-                          Drag & drop or click to browse
+                          {dict.dragDropText}
                         </p>
                         <p className="text-muted-foreground text-xs mt-1">
-                          MP3, WAV, M4A or OGG (max.{' '}
-                          {formatBytes(MAX_FILE_SIZE)})
+                          {dict.fileFormatsText.replace(
+                            '__SIZE__',
+                            formatBytes(MAX_FILE_SIZE),
+                          )}
                         </p>
                       </div>
                     </button>
@@ -376,12 +379,19 @@ export default function NewVoiceClient({
                   {!file && (
                     <div className="grid w-full gap-2">
                       <p className="text-xs text-muted-foreground">
-                        Or try with a demo:
+                        {dict.tryDemo}
                       </p>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+
+                      <Accordion
+                        type="single"
+                        collapsible
+                        defaultValue={sampleAudios[0].id.toString()}
+                        className="w-full"
+                      >
                         {sampleAudios.map((sample) => (
                           <CloneSampleCard
                             key={sample.id}
+                            dict={dict}
                             sample={sample}
                             addFiles={addFiles}
                             setTextToConvert={setTextToConvert}
@@ -389,7 +399,7 @@ export default function NewVoiceClient({
                             setStatus={setStatus}
                           />
                         ))}
-                      </div>
+                      </Accordion>
                     </div>
                   )}
                 </div>
@@ -417,7 +427,9 @@ export default function NewVoiceClient({
                 </div>
 
                 <div className="grid w-full gap-2">
-                  <Label htmlFor="text-to-convert">Text to Convert</Label>
+                  <Label htmlFor="text-to-convert">
+                    {dict.textToConvertLabel}
+                  </Label>
                   <textarea
                     id="text-to-convert"
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -432,16 +444,24 @@ export default function NewVoiceClient({
               {status === 'error' && errorMessage && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>{dict.errorTitle}</AlertTitle>
                   <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+
+              {!hasEnoughCredits && (
+                <Alert variant="destructive" className="w-fit mx-auto">
+                  <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
                 </Alert>
               )}
 
               <Button
                 onClick={handleGenerate}
                 disabled={
-                  !file || !textToConvert.trim() || status === 'generating'
-                  // || !hasEnoughCredits
+                  !file ||
+                  !textToConvert.trim() ||
+                  status === 'generating' ||
+                  !hasEnoughCredits
                 }
                 className="w-full"
               >
@@ -467,7 +487,8 @@ export default function NewVoiceClient({
                   onClick={handleCancel}
                   className="mx-auto"
                 >
-                  Cancel <CircleStop name="cancel" className="size-4" />
+                  {dict.cancelButton}{' '}
+                  <CircleStop name="cancel" className="size-4" />
                 </Button>
               )}
             </TabsContent>
@@ -475,7 +496,7 @@ export default function NewVoiceClient({
             <TabsContent value="preview" className="space-y-4 py-4">
               <div className="space-y-4">
                 <h3 className="text-xl font-medium text-center">
-                  Generated Voice Preview
+                  {dict.previewTitle}
                 </h3>
 
                 <div className="border rounded-lg p-4 bg-muted/30 w-fit mx-auto">
@@ -497,9 +518,7 @@ export default function NewVoiceClient({
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            Voice clones are created for demonstration purposes only.
-          </p>
+          <p className="text-sm text-muted-foreground">{dict.disclaimer}</p>
         </CardFooter>
       </Card>
     </div>
