@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     // Determine mode based on form data
     const textValue = formData.get('text');
     const file = formData.get('file');
-    locale = formData.get('locale');
+    locale = formData.get('locale') as string;
 
     text = typeof textValue === 'string' ? textValue : '';
     userAudioFile = file instanceof File ? file : null;

@@ -272,6 +272,39 @@
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
     }
   },
+  "clone": {
+    "audioFileLabel": "Audiodatei",
+    "cancelButton": "Abbrechen",
+    "ctaButton": "Audio generieren",
+    "disclaimer": "Stimmklone werden nur zu Demonstrationszwecken erstellt.",
+    "downloadAudio": "Audio herunterladen",
+    "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",
+    "errorCloning": "Stimme konnte nicht geklont werden",
+    "errorTitle": "Fehler",
+    "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",
+    "generating": "Generating",
+    "languageLabel": "Sprache",
+    "languageSelectPlaceholder": "Wählen Sie eine Sprache",
+    "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
+    "previewTitle": "Vorschau der generierten Stimme",
+    "subtitle": "Laden Sie eine Audiodatei hoch und geben Sie Text ein, um einen Stimmklon zu erstellen und Sprache in einem Schritt zu generieren",
+    "tabPreview": "Vorschau",
+    "tabUpload": "Stimme erstellen",
+    "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
+    "textToConvertLabel": "Text zum Umwandeln",
+    "title": "Eine Stimme klonen",
+    "tryDemo": "Oder versuchen Sie es mit einer Demo:",
+    "uploadAudioFile": "Audiodatei hochladen",
+    "errors": {
+      "noAudioFile": "Bitte wählen Sie eine Audiodatei aus.",
+      "noText": "Bitte geben Sie Text ein, der in Sprache umgewandelt werden soll."
+    },
+    "sampleCard": {
+      "sourceAudio": "Quellaudio",
+      "exampleOutput": "Beispiel",
+      "loadSource": "Quelle laden"
+    }
+  },
   "profile": {
     "title": "Profileinstellungen",
     "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Präferenzen",
