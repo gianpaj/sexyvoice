@@ -11,22 +11,10 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
 import { AudioPlayer } from './audio-player';
 import { DeleteButton } from './delete-button';
-
-type AudioFile = {
-  id: string;
-  storage_key: string;
-  created_at: string;
-  text_content: string;
-  url: string;
-  user_id: string;
-  voice_id: string;
-  voices: {
-    name: string;
-  };
-};
 
 const downloadFile = (url: string) => {
   const link = document.createElement('a');
@@ -39,7 +27,7 @@ const downloadFile = (url: string) => {
   // document.body.removeChild(link);
 };
 
-export const columns: ColumnDef<AudioFile>[] = [
+export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
   {
     id: 'file name',
     accessorKey: 'storage_key',
@@ -91,7 +79,7 @@ export const columns: ColumnDef<AudioFile>[] = [
       );
     },
     cell: ({ row }) =>
-      formatDate(new Date(row.original.created_at), { withTime: true }),
+      formatDate(new Date(row.original.created_at!), { withTime: true }),
   },
   {
     id: 'Preview',
