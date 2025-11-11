@@ -33,9 +33,6 @@ const publicRoutesWithoutAuth = [
 ];
 
 export async function middleware(req: NextRequest) {
-  return NextResponse.next();
-}
-export async function middlewareOnline(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const pathnameIsMissingLocale = i18n.locales.every(
