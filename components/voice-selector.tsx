@@ -26,7 +26,7 @@ import {
 import { getEmotionTags } from '@/lib/ai';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import {
@@ -152,10 +152,7 @@ export function VoiceSelector({
               onChange={(e) => setSelectedStyle(e.target.value)}
               value={selectedStyle}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
-              className={cn(
-                'textarea-1 transition-[height] duration-200 ease-in-out',
-                [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
-              )}
+              className="textarea-1 transition-[height] duration-200 ease-in-out pr-16"
               style={
                 {
                   '--ta1-height': isFullscreen ? '30vh' : '4rem',
