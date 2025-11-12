@@ -16,13 +16,9 @@ export async function setupRedis(): Promise<Redis> {
     },
     binary: {
       version: '7.2.4', // Use a specific stable version
+      // Don't set downloadDir - let PREFER_GLOBAL_PATH handle it
     },
   };
-
-  // Only set downloadDir if the environment variable is defined
-  if (process.env.REDIS_MEMORY_SERVER_CACHE_DIR) {
-    config.binary.downloadDir = process.env.REDIS_MEMORY_SERVER_CACHE_DIR;
-  }
 
   redisServer = new RedisMemoryServer(config);
 
