@@ -3,53 +3,46 @@
 import * as Sentry from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
+import { getTopupPackages, type PackageType } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-const TOPUP_PACKAGES = {
-  standard: {
-    priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
-    credits: 10000,
-    amount: 500, // $5.00
-  },
-  base: {
-    priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
-    credits: 25000,
-    amount: 1000, // $10.00
-  },
-  premium: {
-    priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
-    credits: 300000,
-    amount: 9900, // $99.00
-  },
-} as const;
-
-type PackageType = keyof typeof TOPUP_PACKAGES;
+export interface CheckoutMetadata {
+  userId: string;
+  packageId: PackageType;
+  credits: string;
+  dollarAmount: string;
+  type: 'topup';
+  promo?: string;
+}
 
 export async function createCheckoutSession(
   data: FormData,
-  packageType: PackageType,
+  packageId: PackageType,
 ): Promise<{ client_secret: string | null; url: string | null }> {
   try {
     const ui_mode = data.get(
       'uiMode',
     ) as Stripe.Checkout.SessionCreateParams.UiMode;
 
-    const package_ = TOPUP_PACKAGES[packageType as PackageType];
+    const package_ = getTopupPackages('en')[packageId];
 
     // Verify the price ID exists to avoid runtime errors
-    if (!package_.priceId) {
-      const error = new Error('Invalid package type');
-      console.error(`Missing price ID for package type: ${packageType}`);
+    if (!package_ || !package_.priceId) {
+      const error = new Error('Invalid package id');
+      console.error(
+        `Missing price ID for package id: ${packageId} - priceId: ${package_?.priceId}`,
+      );
       Sentry.captureException(error, {
         tags: {
           section: 'stripe_actions',
           event_type: 'missing_price_id',
         },
         extra: {
-          package_type: packageType,
-          available_packages: Object.keys(TOPUP_PACKAGES),
+          packageId,
+          priceId: package_?.priceId,
+          available_packages: Object.keys(getTopupPackages('en')),
         },
       });
       throw error;
@@ -72,11 +65,21 @@ export async function createCheckoutSession(
           user_id: user?.id,
           has_user_data: !!userData,
           has_stripe_id: !!userData?.stripe_id,
-          package_type: packageType,
+          packageId,
         },
       });
       throw error;
     }
+    const metadata: CheckoutMetadata = {
+      userId: user.id,
+      packageId,
+      credits: package_.credits.toString(),
+      dollarAmount: package_.dollarAmount.toString(),
+      type: 'topup',
+      ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
+        promo: process.env.NEXT_PUBLIC_PROMO_ID,
+      }),
+    };
 
     const lang = 'en';
     const checkoutSession: Stripe.Checkout.Session =
@@ -90,17 +93,11 @@ export async function createCheckoutSession(
           },
         ],
         ...(ui_mode === 'hosted' && {
-          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&amount=${package_.credits}`,
+          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,
-        metadata: {
-          userId: user.id,
-          packageType,
-          credits: package_.credits.toString(),
-          dollarAmount: (package_.amount / 100).toString(),
-          type: 'topup',
-        },
+        metadata: metadata as unknown as Stripe.MetadataParam,
       });
 
     return {
@@ -115,7 +112,7 @@ export async function createCheckoutSession(
         event_type: 'checkout_session_creation_error',
       },
       extra: {
-        package_type: packageType,
+        packageId,
         ui_mode: data.get('uiMode'),
         error_message: error instanceof Error ? error.message : 'Unknown error',
       },

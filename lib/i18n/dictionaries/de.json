@@ -12,7 +12,7 @@
     },
     "signup": {
       "title": "Konto erstellen",
-      "subtitle": "Beginnen Sie mit der Erstellung von Sprache",
+      "subtitle": "Beginnen Sie mit der Sprachgenerierung",
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "username": "Benutzername",
@@ -78,7 +78,7 @@
       "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
       "title": "Bereit, Ihre Stimme zu finden?",
       "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
-      "action": "Erstellen Sie Ihre erste Stimme"
+      "action": "Erstellen sie ihre erste stimme"
     },
     "generator": {
       "title": "Probieren Sie es jetzt aus",
@@ -158,20 +158,26 @@
     },
     "plans": {
       "popular": "Am beliebtesten",
+      "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
+      "x_credits": "__NUM_CREDITS__ Credits",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die das fortschrittlichste KI-Audio ausprobieren möchten.",
-        "credits": "10.000 Credits (~10 Min. Audio)",
+        "creditsWithAudio": "__NUM_CREDITS__ Credits (~4 Min. Audio)",
         "features": [
           "Sprache in einzigartigen Stimmen generieren",
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
         ]
       },
       "starter": {
-        "name": "Starter",
+        "name": "Starter"
+      },
+      "standard": {
+        "name": "Standard",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "credits": "25.000 Credits (~25 Min. Audio)",
+        "creditsWithAudio": "__NUM_CREDITS__ Credits (~11 Min. Audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [
           "Alles im kostenlosen Plan, plus",
           "API-Zugang (bald verfügbar)"
@@ -180,9 +186,10 @@
       "pro": {
         "name": "Pro",
         "description": "Für größere Kreative, die ihre Inhaltsproduktion steigern.",
-        "credits": "220.000 Credits (~200 Min. Audio)",
+        "creditsWithAudio": "__NUM_CREDITS__ Credits (~125 Min. Audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [
-          "Alles im Starter-Plan, plus",
+          "Alles im Standard-Plan, plus",
           "Weitere Funktionen folgen bald"
         ]
       }
@@ -194,17 +201,17 @@
       "onetimePurchase": "Einmaliger Kauf",
       "processing": "Wird verarbeitet...",
       "packages": {
-        "standard": {
-          "name": "10.000 Credits",
+        "starter": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Perfekt für den Einstieg"
         },
-        "base": {
-          "name": "25.000 Credits",
+        "standard": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Beliebteste Wahl",
           "value": "Bestes Preis-Leistungs-Verhältnis"
         },
-        "premium": {
-          "name": "300.000 Credits",
+        "pro": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Für Power-User",
           "value": "Pro-Paket"
         }
@@ -215,7 +222,7 @@
       "success": {
         "title": "Zahlung erfolgreich!",
         "description": "Ihre Credits wurden Ihrem Konto erfolgreich gutgeschrieben.",
-        "descriptionWithAmount": "Ihrem Konto wurden {amount} Credits gutgeschrieben.",
+        "descriptionWithAmount": "Ihrem Konto wurden {creditsAmount} Credits gutgeschrieben.",
         "dismiss": "Schließen"
       },
       "canceled": {
@@ -252,10 +259,10 @@
     "playAudio": "Audio abspielen",
     "cancel": "Generierung abbrechen",
     "ctaButton": "Audio generieren",
-    "resetForm": "Formular zurücksetzen",
+    "resetPlayer": "Player zurücksetzen",
     "downloadAudio": "Audio herunterladen",
     "abortedCloning": "Sprachgenerierung abgebrochen.",
-    "gproLimitExceeded": "Sie haben das Limit von 4 mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
+    "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "voiceSelector": {
       "title": "Stimme auswählen",
       "description": "Wählen Sie aus verfügbaren Stimmen",
@@ -305,5 +312,13 @@
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten."
+  },
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
+      "ctaLoggedIn": "Credits Erhalten",
+      "ctaLoggedOut": "Jetzt Registrieren",
+      "arialLabelDismiss": "Halloween-Banner schließen"
+    }
   }
 }

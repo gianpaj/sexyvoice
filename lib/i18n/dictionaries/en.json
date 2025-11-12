@@ -78,7 +78,7 @@
       "freeCredits": "Start with 10,000 free credits",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
-      "action": "Create Your First Voice"
+      "action": "Create your first voice"
     },
     "generator": {
       "title": "Try it now",
@@ -123,7 +123,7 @@
         },
         {
           "question": "How many credits do I need?",
-          "answer": "About 1,000 credits makes 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
+          "answer": "About 1,000 credits make 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
         },
         {
           "question": "What languages do you support?",
@@ -131,7 +131,7 @@
         },
         {
           "question": "Do you have an API for developers?",
-          "answer": "It's coming soon! Our API will let developers add voice generation to apps, websites, and games. You'll be able to create speech on-demand and manage voice models programmatically with simple API calls."
+          "answer": "It's coming soon! Our API will let developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically with simple API calls."
         },
         {
           "question": "Why choose SexyVoice.ai?",
@@ -158,27 +158,37 @@
     },
     "plans": {
       "popular": "Most Popular",
+      "startFree": "Start of Free",
       "buyCredits": "Buy credits",
+      "x_credits": "__NUM_CREDITS__ credits",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio.",
-        "credits": "10,000 credits (~10 min of audio)",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
         "features": [
           "Generate speech in unique voices",
           "Clone your voice with as little as 10 seconds of audio"
         ]
       },
       "starter": {
-        "name": "Starter",
-        "description": "For hobbyists creating projects with AI audio and create custom voices.",
-        "credits": "25,000 credits (~25 min of audio)",
-        "features": ["Everything in free, plus", "API access (coming soon)"]
+        "name": "Starter"
+      },
+      "standard": {
+        "name": "Standard",
+        "description": "For hobbyists creating projects with AI audio and creating custom voices.",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ credits",
+        "features": ["Everything in Free", "API access (coming soon)"]
       },
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-        "credits": "220,000 credits (~200 minutes of audio)",
-        "features": ["Everything in starter, plus", "More features coming soon"]
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ credits",
+        "features": [
+          "Everything in Standard",
+          "Quick style and voice preview of your short sentence (coming soon)"
+        ]
       }
     },
     "topup": {
@@ -188,17 +198,17 @@
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
       "packages": {
-        "standard": {
-          "name": "10,000 Credits",
+        "starter": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Perfect for getting started"
         },
-        "base": {
-          "name": "25,000 Credits",
+        "standard": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Most popular choice",
           "value": "Best Value"
         },
-        "premium": {
-          "name": "220,000 Credits",
+        "pro": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }
@@ -209,11 +219,11 @@
       "success": {
         "title": "Payment Successful!",
         "description": "Your credits have been successfully added to your account.",
-        "descriptionWithAmount": "Your account has been credited with {amount} credits.",
+        "descriptionWithAmount": "Your account has been credited with {creditsAmount} credits.",
         "dismiss": "Dismiss"
       },
       "canceled": {
-        "title": "Payment Canceled",
+        "title": "Payment Cancelled",
         "description": "Your payment was canceled. No charges were made to your account.",
         "dismiss": "Dismiss"
       },
@@ -246,10 +256,10 @@
     "playAudio": "Play Audio",
     "cancel": "Cancel generation",
     "ctaButton": "Generate Audio",
-    "resetForm": "Reset Form",
+    "resetPlayer": "Reset Player",
     "downloadAudio": "Download Audio",
     "abortedCloning": "Voice generation aborted.",
-    "gproLimitExceeded": "You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
+    "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
     "voiceSelector": {
       "title": "Select Voice",
       "description": "Choose from available voices",
@@ -299,5 +309,13 @@
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved."
+  },
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
+      "ctaLoggedIn": "Claim Offer",
+      "ctaLoggedOut": "Sign Up Now",
+      "arialLabelDismiss": "Dismiss Halloween banner"
+    }
   }
 }

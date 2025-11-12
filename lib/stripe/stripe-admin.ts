@@ -1,10 +1,7 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
-import { getUserById } from '../supabase/queries';
 import { createClient } from '../supabase/server';
-
-// import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
@@ -15,59 +12,86 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // https://github.com/Domogo/t3-supabase-drizzle-app-starter
-export async function createOrRetrieveCustomer({
-  uuid,
-  email,
-}: {
-  uuid: string;
-  email: string;
-}) {
+export async function createOrRetrieveCustomer(userId: string, email: string) {
+  const constomersResults = await stripe.customers.search({
+    query: `metadata['supabaseUUID']:'${userId}'`,
+  });
+
+  if (constomersResults.data.length > 1) {
+    console.error(
+      `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
+    );
+    Sentry.captureMessage(
+      `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
+      {
+        level: 'warning',
+        extra: {
+          customerCount: constomersResults.data.length,
+          email,
+          userId,
+        },
+      },
+    );
+  }
+
+  if (constomersResults.data.length && constomersResults.data[0]?.id) {
+    const stripe_id = constomersResults.data[0].id;
+    return updateStripeId(userId, stripe_id);
+  }
+
   const customers = await stripe.customers.list({ email });
 
-  if (customers.data.length && customers.data[0]?.id === uuid)
-    return customers.data[0].id;
+  if (customers.data.length > 1) {
+    console.error(
+      `Multiple customers found for email ${email}. Using the first one.`,
+    );
+    Sentry.captureMessage(
+      `Multiple customers found for email ${email}. Using the first one.`,
+      {
+        level: 'warning',
+        extra: { customerCount: customers.data.length, email, userId },
+      },
+    );
+  }
+
+  if (customers.data.length && customers.data[0]?.id) {
+    const stripe_id = customers.data[0].id;
+    return updateStripeId(userId, stripe_id);
+  }
 
   const customer = await stripe.customers.create({
     email,
-    metadata: { supabaseUUID: uuid },
+    metadata: { supabaseUUID: userId },
   });
 
-  return customer.id;
+  const stripe_id = updateStripeId(userId, customer.id);
+
+  console.info(
+    `Created new Stripe customer with id ${customer.id} (${userId}) for email ${email}`,
+  );
+  Sentry.logger.info('Created new Stripe customer', {
+    customerId: customer.id,
+    email,
+    userId,
+  });
+
+  return stripe_id;
 }
 
-// export async function getStripePlan() {
-//   const supabase = createClient()
-//   const {
-//     data: { user }
-//   } = await supabase.auth.getUser()
-//   if (!user) {
-//     throw new Error('User not found')
-//   }
-//   const subscription = await stripe.subscriptions.retrieve(user.plan)
-//   const productId = subscription.items.data[0].plan.product as string
-//   const product = await stripe.products.retrieve(productId)
-//   return product.name
-// }
-
-export async function getCustomerSession() {
+// Helper function to update stripe_id in database
+const updateStripeId = async (userId: string, stripeId: string) => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  await supabase
+    .from('profiles')
+    .update({ stripe_id: stripeId })
+    .eq('id', userId);
+  return stripeId;
+};
 
-  if (!user) {
-    return null;
-  }
-
-  const dbUser = await getUserById(user.id);
-
-  if (!dbUser || !dbUser.stripe_id) {
-    return null;
-  }
-
+export async function createCustomerSession(userId: string, stripe_id: string) {
   try {
     const customerSession = await stripe.customerSessions.create({
-      customer: dbUser.stripe_id,
+      customer: stripe_id,
       components: {
         pricing_table: {
           enabled: true,
@@ -77,13 +101,16 @@ export async function getCustomerSession() {
 
     return customerSession;
   } catch (error) {
+    console.error('Error creating Stripe customer session:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      return null;
+    }
     Sentry.captureException({
       message: 'Error creating Stripe customer session',
       error,
-      userId: user.id,
-      stripe_id: dbUser.stripe_id,
+      userId,
+      stripe_id,
     });
-    console.error('Error creating Stripe customer session:', error);
     throw error;
   }
 }

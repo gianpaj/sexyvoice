@@ -1,10 +1,11 @@
-import { fal } from '@fal-ai/client';
+ import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { del, head, put } from '@vercel/blob';
+import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
+import { inngest } from '@/lib/inngest/client';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
@@ -13,6 +14,8 @@ import {
 import { deductCredits } from '@/lib/supabase/credits';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
+
+const { logger, captureException } = Sentry;
 
 // File validation constants
 const ALLOWED_TYPES = [
@@ -45,7 +48,6 @@ async function getAudioDuration(
   mimeType: string,
 ): Promise<number | null> {
   try {
-    // @ts-ignore
     const mm = await import('music-metadata');
     const metadata = await mm.parseBuffer(fileBuffer, mimeType);
     return metadata.format.duration ?? null;
@@ -62,7 +64,7 @@ const redis = Redis.fromEnv();
 
 export async function POST(request: Request) {
   let text = '';
-  let audioFile: File | null = null;
+  let userAudioFile: File | null = null;
   let audioPromptUrl = '';
   try {
     const supabase = await createClient();
@@ -86,10 +88,10 @@ export async function POST(request: Request) {
     const file = formData.get('file');
 
     text = typeof textValue === 'string' ? textValue : '';
-    audioFile = file instanceof File ? file : null;
+    userAudioFile = file instanceof File ? file : null;
 
     // Text-to-speech generation mode
-    if (!text || !audioFile) {
+    if (!text || !userAudioFile) {
       return APIErrorResponse(
         'Missing required parameters: text and audio file',
         400,
@@ -109,8 +111,8 @@ export async function POST(request: Request) {
     }
 
     if (
-      !audioFile.type.startsWith('audio/') ||
-      !ALLOWED_TYPES.includes(audioFile.type)
+      !userAudioFile.type.startsWith('audio/') ||
+      !ALLOWED_TYPES.includes(userAudioFile.type)
     ) {
       return APIErrorResponse(
         'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
@@ -118,15 +120,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (audioFile.size > MAX_SIZE) {
+    if (userAudioFile.size > MAX_SIZE) {
       return APIErrorResponse('File too large. Max 10MB allowed.', 400);
     }
 
     // Read file buffer and validate duration
-    const arrayBuffer = await audioFile.arrayBuffer();
+    const arrayBuffer = await userAudioFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const duration = await getAudioDuration(buffer, audioFile.type);
+    const duration = await getAudioDuration(buffer, userAudioFile.type);
     if (duration === null) {
       return APIErrorResponse('Could not determine audio duration.', 400);
     }
@@ -172,7 +174,7 @@ export async function POST(request: Request) {
     // ]);
 
     // if (error) {
-    //   Sentry.captureException({
+    //   captureException({
     //     error: 'Failed to save voice profile',
     //     errorData: error,
     //   });
@@ -204,7 +206,7 @@ export async function POST(request: Request) {
     const estimate = estimateCredits(text, 'clone');
 
     if (currentAmount < estimate) {
-      Sentry.captureMessage('Insufficient credits', {
+      logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { text, estimate, currentCreditsAmount: currentAmount },
       });
@@ -215,9 +217,14 @@ export async function POST(request: Request) {
         { status: 402 },
       );
     }
-    const blobUrl = `clone-voice-input/${user.id}-${audioFile.name}`;
+
+    // clean filename
+    const userAudioFilename = sanitizeFilename(userAudioFile.name);
+
+    const blobUrl = `clone-voice-input/${user.id}-${userAudioFilename}`;
 
     try {
+      // TODO: hash also the audio based on the duration
       const existingAudio = await head(blobUrl);
 
       if (existingAudio) {
@@ -227,13 +234,13 @@ export async function POST(request: Request) {
       // Upload audio file to Vercel blob for TTS generation
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
-        contentType: audioFile.type,
+        contentType: userAudioFile.type,
       });
       audioPromptUrl = audioBlob.url;
     }
 
     // Generate hash for caching
-    const hash = await generateHash(text, audioFile.name);
+    const hash = await generateHash(text, userAudioFilename);
     const abortController = new AbortController();
     const path = `clone-voice/${hash}`;
     const filename = `${path}.wav`;
@@ -303,20 +310,20 @@ export async function POST(request: Request) {
     // Background tasks
     after(async () => {
       // Deduct credits using new event-sourced system
-      await deductCredits({
-        userId: user.id,
-        amount: estimate,
-        referenceId: filename, // Will be updated with audio file ID once created
-        referenceType: 'voice_cloning',
-        description: `Voice cloning: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`,
-        metadata: {
-          model: 'chatterbox-tts',
-          textLength: text.length,
-          predictionId: requestId,
-          audioFileName: audioFile?.name
-        },
-        idempotencyKey: `clone_${filename}`
-      });
+      // await deductCredits({
+      //   userId: user.id,
+      //   amount: estimate,
+      //   referenceId: filename, // Will be updated with audio file ID once created
+      //   referenceType: 'voice_cloning',
+      //   description: `Voice cloning: ${text.substring(0, 100)}${text.length > 100 ? '...' : ''}`,
+      //   metadata: {
+      //     model: 'chatterbox-tts',
+      //     textLength: text.length,
+      //     predictionId: requestId,
+      //     audioFileName: audioFile?.name
+      //   },
+      //   idempotencyKey: `clone_${filename}`
+      // });
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
@@ -340,7 +347,7 @@ export async function POST(request: Request) {
           model: 'chatterbox-tts',
           errorData: audioFileDBResult.error,
         };
-        Sentry.captureException({
+        captureException({
           error: 'Failed to insert audio file row',
           ...errorObj,
         });
@@ -358,7 +365,13 @@ export async function POST(request: Request) {
       });
 
       // delete the audio file uploaded
-      await del(blobUrl);
+      await inngest.send({
+        name: 'clone-audio/cleanup.scheduled',
+        data: {
+          blobUrl: blobUrl,
+          userId: user.id,
+        },
+      });
     });
 
     return NextResponse.json(
@@ -376,11 +389,19 @@ export async function POST(request: Request) {
       audioPromptUrl,
       errorData: error,
     };
-    Sentry.captureException({
+    captureException({
       error: 'Voice cloning error',
       ...errorObj,
     });
-    console.error(errorObj);
+    // Add this to see the actual validation errors
+    if (error && typeof error === 'object' && 'body' in error) {
+      console.error(
+        'Validation error details:',
+        JSON.stringify(error.body, null, 2),
+      );
+    } else {
+      console.error(errorObj);
+    }
     console.error('Voice cloning error:', error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -423,3 +444,9 @@ async function sendPosthogEvent({
   });
   await posthog.shutdown();
 }
+const sanitizeFilename = (filename: string) => {
+  return filename
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
+};

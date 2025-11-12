@@ -1,7 +1,7 @@
+import { createAdminClient } from './admin';
+import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
 import { getCurrentBalance } from './credits';
-
-const MAX_FREE_GENERATIONS = 6;
 
 export async function getCredits(userId: string): Promise<number> {
   // Use new event-sourced balance calculation
@@ -55,6 +55,7 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  usage,
   estimated_credits,
   status = 'completed',
 }: {
@@ -70,6 +71,7 @@ export async function saveAudioFile({
   credits_used: number;
   estimated_credits?: number;
   status?: 'pending' | 'processing' | 'completed' | 'failed';
+  usage?: Record<string, string>;
 }) {
   const supabase = await createClient();
 
@@ -86,6 +88,7 @@ export async function saveAudioFile({
     credits_used,
     estimated_credits: estimated_credits || credits_used,
     status,
+    usage,
   });
 }
 
@@ -113,89 +116,157 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
-export const insertCreditTransaction = async (
-  userId: string,
-  subscriptionId: string,
-  amount: number,
-  subAmount: number,
-) => {
-  // Use new addCredits function for proper event-sourced approach
-  const { addCredits } = await import('./credits');
-  
-  return await addCredits({
-    userId,
-    amount,
-    type: 'subscription_grant',
-    subscriptionId,
-    referenceId: subscriptionId,
-    referenceType: 'subscription',
-    description: `${subAmount} USD subscription`,
-    metadata: { dollarAmount: subAmount },
-    idempotencyKey: `sub_${subscriptionId}_${userId}`
-  });
-};
-
-export const insertTopupTransaction = async (
+export const insertSubscriptionCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
-  amount: number,
+  subscriptionId: string,
+  creditAmount: number,
   dollarAmount: number,
-  priceId: string,
 ) => {
-  // Use new addCredits function for proper event-sourced approach
-  const { addCredits } = await import('./credits');
-  
-  return await addCredits({
-    userId,
-    amount,
+  const supabase = createAdminClient();
+
+  try {
+    // Check if transaction already exists using reference_id (payment_intent)
+    // This prevents duplicate credits when multiple webhook events fire
+    const { data } = await supabase
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('reference_id', paymentIntentId)
+      .single();
+
+    if (data) {
+      console.log('Subscription transaction already exists', {
+        userId,
+        paymentIntentId,
+        subscriptionId,
+        data,
+      });
+      return;
+    }
+  } catch (_error) {
+    // Transaction doesn't exist, continue with insertion
+  }
+
+  // Insert the transaction with reference_id (payment_intent)
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    reference_id: paymentIntentId,
+    subscription_id: subscriptionId,
+    amount: creditAmount,
+    type: 'purchase',
+    description: `Subscription payment - $${dollarAmount}`,
+    metadata: {
+      dollarAmount,
+      // Figure out how to send promo metadata with a Stripe pricing table
+      // ...(promo && { promo }),
+    },
+  });
+
+  if (error) {
+    console.error('Error inserting subscription transaction:', {
+      userId,
+      subscriptionId,
+      paymentIntentId,
+      error: error.message,
+    });
+    throw error;
+  }
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, creditAmount);
+};
+
+export const insertTopupCreditTransaction = async (
+  userId: string,
+  paymentIntentId: string,
+  creditAmount: number,
+  dollarAmount: number,
+  packageId: string,
+  promo?: string | null,
+) => {
+  const supabase = createAdminClient();
+
+  try {
+    // Check if transaction already exists to prevent duplicates
+    const { data } = await supabase
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('reference_id', paymentIntentId)
+      .single();
+
+    if (data) {
+      console.log('Topup transaction already exists', {
+        userId,
+        paymentIntentId,
+        data,
+      });
+      return;
+    }
+  } catch (_error) {
+    // Transaction doesn't exist, continue with insertion
+  }
+
+  // Insert the transaction
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    amount: creditAmount,
     type: 'topup',
     referenceId: paymentIntentId,
     referenceType: 'stripe_payment',
     description: `Credit top-up - $${dollarAmount}`,
-    metadata: { priceId, dollarAmount },
-    idempotencyKey: `topup_${paymentIntentId}`
+    reference_id: paymentIntentId,
+    metadata: {
+      packageId,
+      dollarAmount,
+      ...(promo && { promo }),
+    },
   });
+
+  if (error) throw error;
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, creditAmount);
 };
 
-// DEPRECATED: Credits are now managed via transactions
-// Kept for backward compatibility during migration
 export const updateUserCredits = async (
   userId: string,
   creditAmount: number,
 ) => {
-  console.warn('updateUserCredits() is deprecated. Credits are now managed via event-sourced transactions.');
-  // In the new system, credits are automatically calculated from transactions
-  // No direct balance updates needed
+  const supabase = createAdminClient();
+
+  const { error } = await supabase.rpc('increment_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: creditAmount,
+  });
+
+  if (error) throw error;
+};
+
+export const hasUserPaid = async (userId: string): Promise<boolean> => {
+  const supabase = await createClient();
+  // Check if the user has any non-freemium credit transactions.
+  const { data: nonFreemiumTransactions, error: nonFreemiumError } =
+    await supabase
+      .from('credit_transactions')
+      .select('type')
+      .eq('user_id', userId)
+      .in('type', ['purchase', 'topup']);
+
+  if (nonFreemiumError) {
+    throw nonFreemiumError;
+  }
+
+  // Return true if there is at least one non-freemium (i.e., purchase) transaction.
+  return (nonFreemiumTransactions?.length ?? 0) > 0;
 };
 
 export const isFreemiumUserOverLimit = async (
   userId: string,
 ): Promise<boolean> => {
   const supabase = await createClient();
-
-  // First, check if the user has only a 'freemium' credit transaction
-  const { data: allTransactions, error: freemiumError } = await supabase
-    .from('credit_transactions')
-    .select('type')
-    .eq('user_id', userId);
-
-  // Check if user has only freemium transactions
-  const hasOnlyFreemium = (allTransactions?.length ?? 0) > 0 &&
-    allTransactions?.every(transaction => transaction.type === 'freemium');
-
-  if (freemiumError) {
-    // For "No rows found", it's not an error, just not a freemium user.
-    if (freemiumError.code === 'PGRST116') {
-      return false;
-    }
-    throw freemiumError;
-  }
-
-  if (!hasOnlyFreemium) {
-    // If the user is not a freemium user, they are not over the limit.
-    return false;
-  }
-
+  // TODO: use redis instead
   // If the user is a freemium user, count their voice model 'gpro' audio files.
   const { data: audioFiles, error: audioFilesError } = await supabase
     .from('audio_files')
@@ -210,5 +281,5 @@ export const isFreemiumUserOverLimit = async (
     (file) => file.voices?.model === 'gpro',
   ).length;
 
-  return (gproAudioCount ?? 0) >= MAX_FREE_GENERATIONS;
+  return (gproAudioCount ?? 0) > MAX_FREE_GENERATIONS;
 };

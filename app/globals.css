@@ -66,7 +66,7 @@
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 215 26.2% 70.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 350.18 100% 66.47%;
@@ -95,7 +95,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 
   .bg-grid-gradient {
@@ -105,6 +105,7 @@
 @-moz-document url-prefix() {
   .disable-bg-firefox {
     background: none;
+    /* biome-ignore lint/complexity/noImportantStyles: it's grand */
     background-image: none !important;
   }
 }
@@ -112,4 +113,13 @@
 .bg-radial {
   --tw-gradient-position: in oklab;
   background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+.textarea-1 {
+  height: var(--ta1-height, auto);
+  resize: none;
+}
+.textarea-2 {
+  height: var(--ta2-height, auto);
+  resize: none;
 }
