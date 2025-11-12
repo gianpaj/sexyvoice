@@ -257,7 +257,7 @@ export function AudioGenerator({
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 sm:p-6 p-4">
+      <CardContent className="space-y-6 sm:p-6 sm:pt-4 p-4">
         <div className="space-y-2">
           <div className="relative">
             <Textarea
