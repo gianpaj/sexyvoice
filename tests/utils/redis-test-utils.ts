@@ -9,6 +9,12 @@ let redisClient: Redis | null = null;
  * @returns Redis client instance connected to the test server
  */
 export async function setupRedis(): Promise<Redis> {
+  // Configure redis-memory-server with explicit DOWNLOAD_DIR for pnpm compatibility
+   // This is the recommended workaround for pnpm's nested node_modules structure
+   const downloadDir = process.env.REDISMS_DOWNLOAD_DIR ||
+                       process.env.HOME + '/.cache/redis-binaries';
+
+
   // Configure redis-memory-server with explicit settings for faster CI downloads
   const config: any = {
     instance: {
@@ -16,7 +22,7 @@ export async function setupRedis(): Promise<Redis> {
     },
     binary: {
       version: '7.2.4', // Use a specific stable version
-      // Don't set downloadDir - let PREFER_GLOBAL_PATH handle it
+      downloadDir, // Explicit path for pnpm compatibility
     },
   };
 
