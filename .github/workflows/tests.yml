@@ -61,3 +61,5 @@ jobs:
         env:
           REDISMS_DEBUG: 1
           REDISMS_DOWNLOAD_DIR: /home/runner/.cache/redis-binaries
+          REDISMS_VERSION: 7.2.4
+          REDISMS_DISABLE_POSTINSTALL: 1
