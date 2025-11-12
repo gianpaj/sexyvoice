@@ -59,9 +59,13 @@ jobs:
             ${{ runner.os }}-redis-binaries-7.2.4-
             ${{ runner.os }}-redis-binaries-
 
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.8.1
+        with:
+          redis-version: 7
+
       - name: Run tests
         run: pnpm test
         env:
           REDISMS_DEBUG: 1
-          REDISMS_DOWNLOAD_DIR: ~/.cache/redis-binaries
-          REDISMS_VERSION: 7.2.4
+          REDISMS_SYSTEM_BINARY: /usr/bin/redis-server
