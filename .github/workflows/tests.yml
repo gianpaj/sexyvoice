@@ -52,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/redis-binaries
-          key: ${{ runner.os }}-redis-binaries-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-redis-binaries-7.2.4
           restore-keys: |
             ${{ runner.os }}-redis-binaries-
 
@@ -61,4 +61,3 @@ jobs:
         env:
           REDISMS_DEBUG: 1
           REDISMS_PREFER_GLOBAL_PATH: 1
-          REDIS_MEMORY_SERVER_CACHE_DIR: ${{ runner.temp }}/redis-binaries
