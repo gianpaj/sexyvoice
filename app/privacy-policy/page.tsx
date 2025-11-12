@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
       id="main-content"
       className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
     >
-      <div className="container mx-auto px-4 my-8">
+      <div className="container mx-auto my-8 px-4">
         <h1>Privacy Policy</h1>
         <p>Updated at 2025-03-19</p>
 

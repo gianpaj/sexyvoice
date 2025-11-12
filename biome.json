@@ -10,6 +10,7 @@
     "includes": [
       "**",
       "!node_modules",
+      "!components/ui",
       "!.next",
       "!dist",
       "!build"
@@ -66,7 +67,8 @@
       "lineEnding": "lf",
       "lineWidth": 80,
       "attributePosition": "auto",
-      "quoteStyle": "single"
+      "quoteStyle": "single",
+      "trailingCommas": "all"
     }
   },
   "assist": {

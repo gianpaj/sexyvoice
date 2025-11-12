@@ -159,7 +159,7 @@ const PostLayout = async (props: {
       <Script id="article-schema" type="application/ld+json">
         {JSON.stringify({
           ...articleSchema,
-          wordCount: wordCount,
+          wordCount,
           timeRequired: `PT${readingTime}M`,
           about: [
             {
@@ -229,12 +229,12 @@ const PostLayout = async (props: {
 
       <main itemScope itemType="https://schema.org/WebPage">
         <article
-          className="py-8 px-4 md:px-0 md:mx-auto max-w-2xl prose dark:prose-invert"
+          className="prose dark:prose-invert max-w-2xl px-4 py-8 md:mx-auto md:px-0"
           itemScope
           itemType="https://schema.org/BlogPosting"
           itemProp="mainEntity"
         >
-          <header className="text-center my-8">
+          <header className="my-8 text-center">
             {/* <nav aria-label="Breadcrumb" className="mb-4">
               <ol className="inline-flex items-center space-x-1 sm:space-x-0 list-none">
                 <li className="inline-flex items-center">
@@ -267,7 +267,7 @@ const PostLayout = async (props: {
               </ol>
             </nav> */}
 
-            <div className="flex items-center justify-center space-x-4 mb-4 text-xs text-gray-600">
+            <div className="mb-4 flex items-center justify-center space-x-4 text-gray-600 text-xs">
               <time
                 dateTime={post.date}
                 itemProp="datePublished"
@@ -283,19 +283,19 @@ const PostLayout = async (props: {
               <span itemProp="wordCount">{wordCount} words</span>
             </div>
 
-            <h1 itemProp="headline" className="mb-4 mt-12">
+            <h1 itemProp="headline" className="mt-12 mb-4">
               {post.title}
             </h1>
 
             <div
               itemProp="description"
-              className="mt-8 text-lg text-gray-400 mb-6"
+              className="mt-8 mb-6 text-gray-400 text-lg"
             >
               {post.description}
             </div>
 
             {/* Enhanced author and publisher information */}
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm">
               <span>By</span>
               <div
                 itemProp="author"
@@ -355,7 +355,7 @@ const PostLayout = async (props: {
                 itemProp="image"
                 priority
               />
-              <figcaption className="text-center text-sm text-gray-500 mt-2">
+              <figcaption className="mt-2 text-center text-gray-500 text-sm">
                 {post.title}
               </figcaption>
             </figure>
@@ -366,23 +366,23 @@ const PostLayout = async (props: {
           </div>
 
           {/* Article metadata for AI understanding */}
-          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex flex-wrap gap-2 mb-4" itemProp="keywords">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="mt-12 border-gray-200 border-t pt-8 dark:border-gray-700">
+            <div className="mb-4 flex flex-wrap gap-2" itemProp="keywords">
+              <span className="font-medium text-gray-700 text-sm dark:text-gray-300">
                 Topics:
               </span>
-              <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
                 Voice AI
               </span>
-              <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
                 Machine Learning
               </span>
-              <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
                 Speech Synthesis
               </span>
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-gray-600 text-sm dark:text-gray-400">
               <p>
                 This article is part of our comprehensive guide to AI voice
                 technology.

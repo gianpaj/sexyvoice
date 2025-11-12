@@ -23,7 +23,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="container mx-auto pb-10">
-      <h2 className="text-2xl font-bold mb-4">Generation History</h2>
+      <h2 className="mb-4 font-bold text-2xl">Generation History</h2>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <DataTable userId={user.id} />
       </HydrationBoundary>

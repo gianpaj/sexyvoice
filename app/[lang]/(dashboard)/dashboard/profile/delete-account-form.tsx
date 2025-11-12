@@ -56,12 +56,12 @@ export function DeleteAccountForm({
           <AlertDialogContent>
             <AlertDialogHeader className="items-center">
               <AlertDialogTitle>
-                <div className="mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+                <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                   <OctagonAlert className="h-7 w-7 text-destructive" />
                 </div>
                 {dict.dangerZone.deleteAccount.confirmTitle}
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-[15px] text-center">
+              <AlertDialogDescription className="text-center text-[15px]">
                 {dict.dangerZone.deleteAccount.confirmDescription}
               </AlertDialogDescription>
             </AlertDialogHeader>

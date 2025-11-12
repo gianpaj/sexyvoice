@@ -97,7 +97,7 @@ export function LoginForm({
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Loading...' : dict.submit}
@@ -113,7 +113,7 @@ export function LoginForm({
         Login with Google
       </Button>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-gray-500 text-sm">
         {dict.noAccount}{' '}
         <Link
           href={`/${lang}/signup`}

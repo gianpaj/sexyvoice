@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     userAudioFile = file instanceof File ? file : null;
 
     // Text-to-speech generation mode
-    if (!text || !userAudioFile) {
+    if (!(text && userAudioFile)) {
       return APIErrorResponse(
         'Missing required parameters: text and audio file',
         400,
@@ -114,8 +114,10 @@ export async function POST(request: Request) {
     }
 
     if (
-      !userAudioFile.type.startsWith('audio/') ||
-      !ALLOWED_TYPES.includes(userAudioFile.type)
+      !(
+        userAudioFile.type.startsWith('audio/') &&
+        ALLOWED_TYPES.includes(userAudioFile.type)
+      )
     ) {
       return APIErrorResponse(
         'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
@@ -316,7 +318,7 @@ export async function POST(request: Request) {
       await inngest.send({
         name: 'clone-audio/cleanup.scheduled',
         data: {
-          blobUrl: blobUrl,
+          blobUrl,
           userId: user.id,
         },
       });
@@ -385,7 +387,7 @@ async function sendPosthogEvent({
     distinctId: userId,
     event,
     properties: {
-      predictionId: predictionId,
+      predictionId,
       model,
       text,
       locale,

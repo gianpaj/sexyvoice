@@ -32,7 +32,7 @@ export default async function CreditsPage(props: {
   const user = data?.user;
 
   const userData = user && (await getUserById(user.id));
-  if (!user || !userData) {
+  if (!(user && userData)) {
     throw new Error('User not found');
   }
 
@@ -67,7 +67,7 @@ export default async function CreditsPage(props: {
       <TopupStatus dict={dict} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
+          <h3 className="mb-4 font-semibold text-lg">{dict.topup.title}</h3>
           <p className="text-muted-foreground">{dict.topup.description}</p>
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
@@ -84,7 +84,7 @@ export default async function CreditsPage(props: {
       <CreditTopup dict={dict} lang={lang} />
 
       <div className="my-8">
-        <h3 className="mb-4 text-lg font-semibold">{dict.history.title}</h3>
+        <h3 className="mb-4 font-semibold text-lg">{dict.history.title}</h3>
         <CreditHistory dict={dict} transactions={existingTransactions} />
       </div>
 
@@ -104,7 +104,7 @@ const NextStripePricingTable = ({
   const pricingTableId = process.env.STRIPE_PRICING_ID;
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
 
-  if (!pricingTableId || !publishableKey || !clientSecret) return null;
+  if (!(pricingTableId && publishableKey && clientSecret)) return null;
 
   return (
     <>

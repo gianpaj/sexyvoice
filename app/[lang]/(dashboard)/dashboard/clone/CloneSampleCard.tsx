@@ -62,25 +62,25 @@ export default function CloneSampleCard({
     //   className="flex flex-col border-r border-input bg-background p-2"
     // >
     <AccordionItem
-      className="border-b border-gray-500"
+      className="border-gray-500 border-b"
       value={sample.id.toString()}
     >
-      <AccordionTrigger className="text-white text-left md:hover:text-blue-400 hover:no-underline py-5">
+      <AccordionTrigger className="py-5 text-left text-white hover:no-underline md:hover:text-blue-400">
         {sample.name}
       </AccordionTrigger>
       <AccordionContent>
-        <div className="flex my-2 justify-stretch w-full">
+        <div className="my-2 flex w-full justify-stretch">
           <div className="flex flex-1 flex-col text-center">
             <p>{dict.sampleCard.sourceAudio}:</p>
             <AudioPlayer
-              className="self-center my-2 bg-blue-950"
+              className="my-2 self-center bg-blue-950"
               url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
             />
           </div>
           <div className="flex flex-1 flex-col text-center">
             <p>{dict.sampleCard.exampleOutput}:</p>
             <AudioPlayer
-              className="self-center my-2 bg-purple-950"
+              className="my-2 self-center bg-purple-950"
               url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
             />
           </div>
@@ -90,12 +90,12 @@ export default function CloneSampleCard({
           type="button"
           variant="outline"
           onClick={() => handleLoadSampleAudio(sample)}
-          className="h-auto flex flex-col items-start gap-1 whitespace-normal px-3 py-2 w-fit mx-auto"
+          className="mx-auto flex h-auto w-fit flex-col items-start gap-1 whitespace-normal px-3 py-2"
         >
           <span className="font-medium text-sm">
             {dict.sampleCard.loadSource}: {sample.name}
           </span>
-          <span className="text-xs text-muted-foreground line-clamp-2">
+          <span className="line-clamp-2 text-muted-foreground text-xs">
             &quot;{sample.prompt}&quot;
           </span>
         </Button>

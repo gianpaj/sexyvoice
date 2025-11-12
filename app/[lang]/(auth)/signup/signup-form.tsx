@@ -69,7 +69,7 @@ export function SignUpForm({
       }
 
       toast.success(dict.signupSuccess, {
-        duration: 60000,
+        duration: 60_000,
         cancel: (
           <Button variant="outline" size="sm" onClick={() => toast.dismiss()}>
             Ok
@@ -125,7 +125,7 @@ export function SignUpForm({
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Loading...' : dict.submit}
@@ -141,7 +141,7 @@ export function SignUpForm({
         Sign up with Google
       </Button>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-gray-500 text-sm">
         {dict.hasAccount}{' '}
         <Link
           href={`/${lang}/login`}

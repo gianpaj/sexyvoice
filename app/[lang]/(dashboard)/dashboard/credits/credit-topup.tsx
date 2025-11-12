@@ -148,16 +148,16 @@ function CreditCard({
 
   return (
     <Card
-      className={`grid gap-2 grid-rows-auto p-6 ${plan.isPopular ? 'ring-orange-400 ring-2 border-none' : ''} relative overflow-hidden`}
+      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-orange-400' : ''} relative overflow-hidden`}
     >
       {isPromoEnabled && plan.price > 0 && (
-        <div className="absolute top-0 right-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-orange-500 to-orange-600 px-3 py-1 font-bold text-white text-xs">
           🎃 Halloween Special
         </div>
       )}
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-semibold">{plan.name}</h3>
+          <h3 className="font-semibold text-xl">{plan.name}</h3>
           {!isPromoEnabled && plan.isPopular ? (
             <Badge className="rounded-full bg-orange-600">
               {pPlans.popular}
@@ -174,35 +174,35 @@ function CreditCard({
           )}
         </div>
         <div className="flex items-baseline">
-          <span className="text-3xl font-bold">${plan.price}</span>
+          <span className="font-bold text-3xl">${plan.price}</span>
         </div>
         {!isPromoEnabled && plan.pricePer1kCredits ? (
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-muted-foreground text-xs">
             ${plan.pricePer1kCredits} per 1k credits{' '}
             {plan.saveFromPrevPlanPer1kCredits && (
-              <span className="text-green-600 dark:text-green-400 font-medium">
+              <span className="font-medium text-green-600 dark:text-green-400">
                 (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
               </span>
             )}
           </div>
         ) : (
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-muted-foreground text-xs">
             <br />
           </div>
         )}
       </div>
 
-      <div className="text-sm font-medium">
+      <div className="font-medium text-sm">
         {plan.creditsText}{' '}
         {isPromoEnabled && plan.promoBonus && (
-          <span className="text-orange-600 dark:text-orange-400 font-semibold">
+          <span className="font-semibold text-orange-600 dark:text-orange-400">
             (+{plan.promoBonus} bonus)
           </span>
         )}
       </div>
 
       {state.error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+        <div className="rounded-md border border-red-200 bg-red-50 p-3">
           <p className="text-red-600 text-xs">{state.error}</p>
         </div>
       )}
@@ -212,7 +212,7 @@ function CreditCard({
         <input type="hidden" name="uiMode" value="hosted" />
         <Button
           type="submit"
-          className="w-full my-4"
+          className="my-4 w-full"
           variant={plan.buttonVariant as 'outline' | 'default'}
           disabled={pending}
         >

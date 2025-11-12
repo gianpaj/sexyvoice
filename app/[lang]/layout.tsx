@@ -48,7 +48,7 @@ export async function generateMetadata(
     },
     description: dict.pages.description,
     openGraph: {
-      title: title,
+      title,
       description: dict.pages.description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),

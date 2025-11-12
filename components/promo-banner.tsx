@@ -58,20 +58,20 @@ export function PromoBanner({
 
   return (
     <div
-      className={cn('w-full ', {
-        'bg-red-900/30 backdrop-blur-sm fixed z-50': inDashboard,
+      className={cn('w-full', {
+        'fixed z-50 bg-red-900/30 backdrop-blur-sm': inDashboard,
       })}
     >
       <div
         className={cn(
-          'portrait:container lg:container text-white sm:py-6 py-4 relative mx-auto px-4 sm:flex flex-inline items-center justify-between pb-3 gap-4',
+          'relative mx-auto flex-inline items-center justify-between gap-4 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-6',
           isLongText ? 'sm:h-16' : 'sm:h-8',
         )}
       >
-        <div className="flex-1 sm:text-center text-left">
+        <div className="flex-1 text-left sm:text-center">
           <p
             className={cn(
-              'text-sm md:text-base font-medium truncate text-wrap sm:whitespace-normal whitespace-pre-line',
+              'truncate whitespace-pre-line text-wrap font-medium text-sm sm:whitespace-normal md:text-base',
               {
                 'sm:text-nowrap': !isLongText,
               },
@@ -81,12 +81,12 @@ export function PromoBanner({
           </p>
         </div>
 
-        <div className="flex items-center justify-center sm:mt-0 mt-3 relative gap-2 flex-[0.3]">
+        <div className="relative mt-3 flex flex-[0.3] items-center justify-center gap-2 sm:mt-0">
           <Button
             asChild
             size="sm"
             variant="outline"
-            className="text-orange-600 hover:bg-gray-900 bg-gray-800/70 font-semibold whitespace-nowrap"
+            className="whitespace-nowrap bg-gray-800/70 font-semibold text-orange-600 hover:bg-gray-900"
           >
             <Link href={ctaLink}>{ctaText} 🎃</Link>
           </Button>
@@ -94,7 +94,7 @@ export function PromoBanner({
           <Button
             size="sm"
             variant="ghost"
-            className="text-orange-700 absolute md:relative right-0"
+            className="absolute right-0 text-orange-700 md:relative"
             onClick={handleDismissBanner}
             aria-label={arialLabelDismiss}
           >

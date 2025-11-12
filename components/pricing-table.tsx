@@ -64,25 +64,25 @@ async function PricingTable({ lang }: { lang: Locale }) {
   ];
 
   return (
-    <div className="xl:px-28 py-16 flex flex-col gap-6">
-      <h2 className="text-2xl font-semibold mb-4 mx-auto">
+    <div className="flex flex-col gap-6 py-16 xl:px-28">
+      <h2 className="mx-auto mb-4 font-semibold text-2xl">
         {credits.pricingPlan}
       </h2>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'ring-orange-400 ring-2 border-none' : ''} relative overflow-hidden`}
+            className={`grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-orange-400' : ''} relative overflow-hidden`}
             // className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
             {isPromoEnabled && plan.price > 0 && (
-              <div className="absolute top-0 right-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+              <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-orange-500 to-orange-600 px-3 py-1 font-bold text-white text-xs">
                 🎃 Halloween Special
               </div>
             )}
             <div>
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                <h3 className="font-semibold text-xl">{plan.name}</h3>
                 {!isPromoEnabled && plan.isPopular ? (
                   <Badge className="rounded-full bg-orange-600">
                     {/*<Badge className="rounded-full bg-green-600">*/}
@@ -100,39 +100,39 @@ async function PricingTable({ lang }: { lang: Locale }) {
                 )}
               </div>
               <div className="flex items-baseline">
-                <span className="text-3xl font-bold">${plan.price}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="font-bold text-3xl">${plan.price}</span>
+                <span className="text-muted-foreground text-sm">
                   {plan.billing}
                 </span>
               </div>
               {!isPromoEnabled && plan.pricePer1kCredits ? (
-                <div className="mt-1 text-xs text-muted-foreground">
+                <div className="mt-1 text-muted-foreground text-xs">
                   ${plan.pricePer1kCredits} per 1k credits{' '}
                   {plan.saveFromPrevPlanPer1kCredits && (
-                    <span className="text-green-600 dark:text-green-400 font-medium">
+                    <span className="font-medium text-green-600 dark:text-green-400">
                       (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
                     </span>
                   )}
                 </div>
               ) : (
-                <div className="mt-1 text-xs text-muted-foreground">
+                <div className="mt-1 text-muted-foreground text-xs">
                   <br />
                 </div>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">{plan.description}</p>
+            <p className="text-muted-foreground text-sm">{plan.description}</p>
             <Button
-              className="w-full my-4"
+              className="my-4 w-full"
               asChild
               variant={plan.buttonVariant as 'outline' | 'default'}
             >
               <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
             </Button>
             <div className="space-y-2">
-              <div className="text-sm font-medium">
+              <div className="font-medium text-sm">
                 {plan.creditsText}{' '}
                 {isPromoEnabled && plan.promoBonus && (
-                  <span className="text-orange-600 dark:text-orange-400 font-semibold">
+                  <span className="font-semibold text-orange-600 dark:text-orange-400">
                     (+{plan.promoBonus} bonus)
                   </span>
                 )}

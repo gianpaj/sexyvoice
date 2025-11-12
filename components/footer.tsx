@@ -59,10 +59,10 @@ async function Footer({ lang }: { lang: Locale }) {
             </form>
           </div> */}
           <div className="text-center">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               © {currentYear} {dict.footer.copyright}
             </p>
-            <p className="text-sm text-muted-foreground mt-4">
+            <p className="mt-4 text-muted-foreground text-sm">
               <a
                 href="https://sexyvoice.checkly-dashboards.com/"
                 className="hover:text-primary hover:underline"

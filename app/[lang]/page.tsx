@@ -30,9 +30,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSampleAudiosByLang } from '../sample-audio';
 
-const get3PostsByLang = (lang: Locale) => {
-  return allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
-};
+const get3PostsByLang = (lang: Locale) =>
+  allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
 
 export const metadata: Metadata = {
   other: {
@@ -84,21 +83,21 @@ export default async function LandingPage(props: {
       />
       <HeaderStatic lang={lang} />
       <main id="main-content">
-        <div className="min-h-screen dark:bg-gradient-to-br disable-bg-firefox dark:from-gray-900 dark:to-gray-800">
+        <div className="disable-bg-firefox min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="text-center space-y-6 py-20 z-10 md:pb-32">
+            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <LandingHero />
-              <h1 className="text-5xl md:text-6xl font-bold text-white leading-10">
+              <h1 className="font-bold text-5xl text-white leading-10 md:text-6xl">
                 <span className="leading-[3.5rem]">{firstPart}</span>
                 {titleRestParts && (
                   <span className="text-orange-300">{titleRestParts}</span>
                 )}
               </h1>
-              <p className="text-xl text-gray-300 max-w-2xl py-12 mx-auto whitespace-break-spaces">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl">
                 {dict.hero.subtitle}
               </p>
-              <div className="flex w-fit mx-auto flex-col gap-2">
+              <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
                   size="lg"
@@ -115,14 +114,14 @@ export default async function LandingPage(props: {
             </div>
 
             {/* Audio Previews Grid */}
-            <div className="max-w-4xl mx-auto mb-16 md:pb-16">
-              <h2 className="text-2xl font-bold text-white mb-2">
+            <div className="mx-auto mb-16 max-w-4xl md:pb-16">
+              <h2 className="mb-2 font-bold text-2xl text-white">
                 {dict.popular.trySamplesTitle}
               </h2>
-              <p className="text-gray-200 mb-6">
+              <p className="mb-6 text-gray-200">
                 {dict.popular.trySamplesSubtitle}
               </p>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid gap-6 md:grid-cols-2">
                 {getSampleAudiosByLang(lang).map((audio) => (
                   <AudioPreviewCard
                     key={audio.id}
@@ -160,14 +159,14 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 py-16 xl:px-28">
+            <div className="grid gap-6 py-16 md:grid-cols-2 lg:grid-cols-3 xl:px-28">
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Mic2 className="size-6 text-blue-400" aria-hidden />
                   </CardDecorator>
 
-                  <h3 className="mt-6 font-medium text-center">
+                  <h3 className="mt-6 text-center font-medium">
                     {dict.features.voiceCloning.title}
                   </h3>
                 </CardHeader>
@@ -185,7 +184,7 @@ export default async function LandingPage(props: {
                     <Globe2 className="size-6 text-blue-400" aria-hidden />
                   </CardDecorator>
 
-                  <h3 className="mt-6 font-medium text-center">
+                  <h3 className="mt-6 text-center font-medium">
                     {dict.features.multiLanguage.title}
                   </h3>
                 </CardHeader>
@@ -202,7 +201,7 @@ export default async function LandingPage(props: {
                     <Shield className="size-6 text-blue-400" aria-hidden />
                   </CardDecorator>
 
-                  <h3 className="mt-6 font-medium text-center">
+                  <h3 className="mt-6 text-center font-medium">
                     {dict.features.security.title}
                   </h3>
                 </CardHeader>
@@ -218,9 +217,9 @@ export default async function LandingPage(props: {
             <PricingTable lang={lang} />
 
             {/* FAQ Section */}
-            <div className="max-w-3xl mx-auto py-16">
-              <div className="text-left md:text-center mb-12">
-                <h2 className="text-3xl font-bold text-white mb-2">
+            <div className="mx-auto max-w-3xl py-16">
+              <div className="mb-12 text-left md:text-center">
+                <h2 className="mb-2 font-bold text-3xl text-white">
                   {dict.faq.title}
                 </h2>
                 <p className="text-gray-200">{dict.faq.subtitle}</p>
@@ -231,12 +230,12 @@ export default async function LandingPage(props: {
                   <AccordionItem
                     key={`item-${index}`}
                     value={`item-${index}`}
-                    className="border-b border-white/10"
+                    className="border-white/10 border-b"
                   >
-                    <AccordionTrigger className="text-white text-left hover:text-blue-400 hover:no-underline py-5">
+                    <AccordionTrigger className="py-5 text-left text-white hover:text-blue-400 hover:no-underline">
                       {faq.question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-gray-200 whitespace-break-spaces">
+                    <AccordionContent className="whitespace-break-spaces text-gray-200">
                       {faq.answer}
                     </AccordionContent>
                   </AccordionItem>
@@ -245,11 +244,11 @@ export default async function LandingPage(props: {
             </div>
 
             {/* Blog posts Section */}
-            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mx-auto lg:max-w-[400px]">
-              <h2 className="text-2xl font-bold mb-4">{dict.latestPosts}</h2>
+            <div className="mx-auto grid grid-cols-1 gap-4 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
+              <h2 className="mb-4 font-bold text-2xl">{dict.latestPosts}</h2>
               {get3PostsByLang(lang).map((post, idx) => (
                 <Card
-                  className="lg:max-w-[400px] lg:min-w-[400px] mx-auto"
+                  className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
                   key={idx}
                 >
                   <Link href={`/${post.locale}${post.url}`} prefetch>
@@ -262,10 +261,10 @@ export default async function LandingPage(props: {
                           height={100}
                           priority={false}
                           loading="lazy"
-                          className="rounded-lg mx-auto"
+                          className="mx-auto rounded-lg"
                         />
                       )}
-                      <CardTitle className="text-gray-200 text-lg leading-8 text-center">
+                      <CardTitle className="text-center text-gray-200 text-lg leading-8">
                         {post.title}
                       </CardTitle>
                     </CardHeader>
@@ -274,20 +273,20 @@ export default async function LandingPage(props: {
               ))}
             </div>
             {/* CTA Section */}
-            <div className="text-center py-16 space-y-6">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 mb-4">
-                <Sparkles className="size-4 mr-2" />
+            <div className="space-y-6 py-16 text-center">
+              <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
+                <Sparkles className="mr-2 size-4" />
                 <span>{dict.cta.freeCredits}</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
+              <h2 className="font-bold text-3xl text-white md:text-4xl">
                 {dict.cta.title}
               </h2>
-              <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              <p className="mx-auto max-w-2xl text-gray-300 text-xl">
                 {dict.cta.subtitle}
               </p>
               <Button
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 mt-4"
+                className="mt-4 bg-blue-600 hover:bg-blue-700"
                 asChild
                 effect="ringHover"
               >
@@ -303,16 +302,16 @@ export default async function LandingPage(props: {
 }
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="relative mx-auto size-36 duration-200 [--color-border:color-mix(in_oklab,var(--color-zinc-950)10%,transparent)] group-hover:[--color-border:color-mix(in_oklab,var(--color-zinc-950)20%,transparent)] dark:[--color-border:color-mix(in_oklab,var(--color-white)15%,transparent)] dark:group-hover:bg-white/5 dark:group-hover:[--color-border:color-mix(in_oklab,var(--color-white)20%,transparent)]">
+  <div className="relative mx-auto size-36 duration-200 [--color-border:color-mix(in_oklab,var(--color-zinc-950)10%,transparent)] dark:group-hover:bg-white/5 group-hover:[--color-border:color-mix(in_oklab,var(--color-zinc-950)20%,transparent)] dark:[--color-border:color-mix(in_oklab,var(--color-white)15%,transparent)] dark:group-hover:[--color-border:color-mix(in_oklab,var(--color-white)20%,transparent)]">
     <div
       aria-hidden
-      className="absolute inset-0 bg-grid-gradient bg-[size:24px_24px]"
+      className="absolute inset-0 bg-[size:24px_24px] bg-grid-gradient"
     />
     <div
       aria-hidden
-      className="bg-radial to-card absolute inset-0 from-transparent to-75%"
+      className="absolute inset-0 bg-radial from-transparent to-75% to-card"
     />
-    <div className="bg-card absolute inset-0 m-auto flex size-12 items-center justify-center border-l border-t">
+    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center border-t border-l bg-card">
       {children}
     </div>
   </div>
