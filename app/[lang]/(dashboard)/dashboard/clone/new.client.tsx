@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PulsatingDots from '@/components/PulsatingDots';
+import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -183,13 +184,35 @@ export default function NewVoiceClient({
     };
   }, [status, textToConvert, handleGenerate]);
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = generatedAudioUrl;
-    link.target = '_blank';
-    link.download = 'generated_audio.mp3';
-    link.click();
-  };
+  const handleDownload = (() => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
+
+    return () => {
+      // Create a Blob from the audio source
+      fetch(generatedAudioUrl)
+        .then((response) => response.blob())
+        .then((audioBlob) => {
+          // Create a temporary object URL for the Blob
+          const objectUrl = window.URL.createObjectURL(audioBlob);
+
+          anchorElement.href = objectUrl;
+          anchorElement.download = `generated_audio_${Date.now()}.mp3`;
+
+          // Simulate the click to trigger the download prompt
+          anchorElement.click();
+
+          // Essential cleanup: release the temporary URL resource
+          window.URL.revokeObjectURL(objectUrl);
+        })
+        .catch((error) => {
+          console.error('Failed to download audio', error);
+          toast.error(dict.error);
+        });
+    };
+  })();
 
   return (
     <div className="mx-auto max-w-2xl">

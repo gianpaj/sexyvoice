@@ -199,15 +199,37 @@ export function AudioGenerator({
     }
   };
 
-  const downloadAudio = () => {
-    if (!audio) return;
+  const downloadAudio = (() => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
 
-    const link = document.createElement('a');
-    link.href = audio.src;
-    link.download = 'generated_audio.mp3';
-    link.target = '_blank';
-    link.click();
-  };
+    return () => {
+      if (!audio) return;
+
+      // Create a Blob from the audio source
+      fetch(audio.src)
+        .then((response) => response.blob())
+        .then((audioBlob) => {
+          // Create a temporary object URL for the Blob
+          const objectUrl = window.URL.createObjectURL(audioBlob);
+
+          anchorElement.href = objectUrl;
+          anchorElement.download = `generated_audio_${Date.now()}.mp3`;
+
+          // Simulate the click to trigger the download prompt
+          anchorElement.click();
+
+          // Essential cleanup: release the temporary URL resource
+          window.URL.revokeObjectURL(objectUrl);
+        })
+        .catch((error) => {
+          console.error('Failed to download audio', error);
+          toast.error(dict.error);
+        });
+    };
+  })();
 
   const { complete } = useCompletion({
     api: '/api/generate-text',
