@@ -59,7 +59,9 @@ export default function DashboardUI({
     const getData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
-      if (!user) throw new Error('User not found');
+      if (!user) {
+        throw new Error('User not found');
+      }
 
       // Get user's credits
       const { data: creditsData } = await supabase
@@ -67,17 +69,18 @@ export default function DashboardUI({
         .select('amount')
         .eq('user_id', user?.id)
         .single();
+
       setCredits(creditsData);
-      const { data: credit_transactions } = await supabase
+      const { data: credit_transactionsDB } = await supabase
         .from('credit_transactions')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-      setCreditTransactions(credit_transactions);
+      setCreditTransactions(credit_transactionsDB);
       return { user, creditsData };
     };
 
-    const sendUserAnalyticsData = async (
+    const sendUserAnalyticsData = (
       user: User,
       creditsData: Pick<Credit, 'amount'> | null | undefined,
     ) => {
@@ -90,7 +93,9 @@ export default function DashboardUI({
         Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
           locale: lang,
         });
-        user.email && Crisp.user.setEmail(user.email);
+        if (user.email) {
+          Crisp.user.setEmail(user.email);
+        }
         const nickname =
           user.user_metadata.full_name || user.user_metadata.username;
         if (nickname) {
@@ -149,15 +154,15 @@ export default function DashboardUI({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    size="lg"
                     className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                    size="lg"
                   >
                     <div className="aspect-square group-data-[collapsible=icon]:size-9">
                       <Image
-                        src={logoSmall}
                         alt="Logo"
-                        width={221 / 8}
                         height={292 / 8}
+                        src={logoSmall}
+                        width={221 / 8}
                       />
                     </div>
                     <span className="font-semibold text-xl">exyVoice.ai</span>
@@ -173,9 +178,9 @@ export default function DashboardUI({
                     {navigation.map((item) => (
                       <SidebarMenuItem key={item.name}>
                         <SidebarMenuButton
+                          asChild
                           isActive={item.current}
                           tooltip={item.name}
-                          asChild
                         >
                           <Link href={item.href}>
                             <item.icon className="mr-3 size-5" />
@@ -191,10 +196,10 @@ export default function DashboardUI({
 
             <SidebarFooter>
               <CreditsSection
-                lang={lang}
-                dict={dict}
-                credits={credits?.amount || 0}
                 credit_transactions={credit_transactions || []}
+                credits={credits?.amount || 0}
+                dict={dict}
+                lang={lang}
               />
 
               <SidebarMenuCustom lang={lang} />
@@ -202,12 +207,12 @@ export default function DashboardUI({
           </Sidebar>
 
           <PromoBanner
-            inDashboard
-            text={halloweenDict.text}
+            arialLabelDismiss={halloweenDict.arialLabelDismiss}
             ctaLink={`/${lang}/dashboard/credits`}
             ctaText={halloweenDict.ctaLoggedIn}
-            arialLabelDismiss={halloweenDict.arialLabelDismiss}
+            inDashboard
             isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+            text={halloweenDict.text}
           />
           <div className="flex w-full flex-1 flex-col">
             <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
@@ -215,27 +220,27 @@ export default function DashboardUI({
             </div>
 
             <main
-              id="main-content"
               className="flex-1 px-4 py-8 sm:px-6 lg:px-8"
+              id="main-content"
             >
               {children}
             </main>
             <footer className="border-t p-4 text-center">
               <p className="text-gray-500 text-xs">
                 <a
-                  href="https://sexyvoice.checkly-dashboards.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="hover:underline"
+                  href="https://sexyvoice.checkly-dashboards.com/"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   Status Page
                 </a>
                 <span> - </span>
                 <a
-                  href="https://sexyvoice.featurebase.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="hover:underline"
+                  href="https://sexyvoice.featurebase.app/"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   Roadmap
                 </a>
