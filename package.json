@@ -88,7 +88,7 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.3",
+    "@biomejs/biome": "^2.3.4",
     "@next/bundle-analyzer": "15.4.1",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^22.15.2",
@@ -105,7 +105,8 @@
     "postcss": "^8.4.33",
     "redis-memory-server": "^0.13.0",
     "tsx": "^4.19.3",
-    "typescript": "^5.7.3",
+    "typescript": "^5.9.2",
+    "ultracite": "6.3.2",
     "vitest": "^3.2.4"
   },
   "browserslist": [
@@ -132,5 +133,10 @@
   "overrides": {
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6"
+  },
+  "lint-staged": {
+    "*.{js,cjs,ts,tsx,json,jsonc,css,md,mdx}": [
+      "pnpm dlx ultracite fix"
+    ]
   }
 }
