@@ -298,11 +298,12 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Free Text to Speech & AI Voice Generator",
-    "description": "The best AI voice generator that allows you to convert text to speech online for free, create voiceovers, and generate natural-sounding speech in any language.",
+    "description": "AI voice generator that allows you to convert text to speech online for free (to try), clone voice, and generate natural-sounding and expressive speech in 24 languages.",
     "/": "",
     "/login": "Log in",
-    "/signup": "Signup",
-    "/dashboard/generate": "Generate"
+    "/signup": "Sign up with email or Google ",
+    "/dashboard/generate": "Generate",
+    "/privacy-policy": "Privacy Policy"
   },
   "footer": {
     "statusPage": "Status page",
