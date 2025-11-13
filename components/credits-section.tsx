@@ -44,10 +44,10 @@ function CreditsSection({
           </span>
         </div>
         <Button
-          variant="link"
-          size="sm"
           asChild
           className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text pr-0 text-transparent hover:no-underline"
+          size="sm"
+          variant="link"
         >
           <Link
             href={`/${lang}/dashboard/credits`}
@@ -78,8 +78,8 @@ function CreditsSection({
         </div>
         <div className="relative h-10 w-10">
           <ProgressCircle
-            value={Math.round((credits / 10_000) * 100)}
             className="size-10"
+            value={Math.round((credits / 10_000) * 100)}
           />
         </div>
       </div>

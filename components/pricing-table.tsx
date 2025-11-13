@@ -71,8 +71,8 @@ async function PricingTable({ lang }: { lang: Locale }) {
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card
-            key={plan.name}
             className={`grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-orange-400' : ''} relative overflow-hidden`}
+            key={plan.name}
             // className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
             {isPromoEnabled && plan.price > 0 && (
@@ -91,8 +91,8 @@ async function PricingTable({ lang }: { lang: Locale }) {
                 ) : (
                   plan.price > 10 && (
                     <Badge
-                      variant="secondary"
                       className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      variant="secondary"
                     >
                       20% cheaper
                     </Badge>
@@ -122,8 +122,8 @@ async function PricingTable({ lang }: { lang: Locale }) {
             </div>
             <p className="text-muted-foreground text-sm">{plan.description}</p>
             <Button
-              className="my-4 w-full"
               asChild
+              className="my-4 w-full"
               variant={plan.buttonVariant as 'outline' | 'default'}
             >
               <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
@@ -138,7 +138,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
                 )}
               </div>
               {plan.features.map((feature, i) => (
-                <div key={i} className="flex items-center text-sm">
+                <div className="flex items-center text-sm" key={i}>
                   <Check className="mr-2 size-4 min-w-fit" />
                   {feature}
                 </div>

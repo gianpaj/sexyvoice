@@ -32,7 +32,7 @@ export function DeleteAccountForm({
   return (
     <div className="space-y-6">
       <div className="grid gap-4">
-        <Alert variant="destructive" className="p-4">
+        <Alert className="p-4" variant="destructive">
           <AlertCircle className="size-4" />
           <AlertDescription>
             {dict.dangerZone.deleteAccount.alertTitle}

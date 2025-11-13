@@ -82,10 +82,10 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
       {plans.map((plan) => (
         <CreditCard
-          key={plan.id}
-          plan={plan}
           dict={dict}
           isPromoEnabled={isPromoEnabled}
+          key={plan.id}
+          plan={plan}
           pPlans={pPlans}
         />
       ))}
@@ -165,8 +165,8 @@ function CreditCard({
           ) : (
             plan.price > 10 && (
               <Badge
-                variant="secondary"
                 className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                variant="secondary"
               >
                 20% cheaper
               </Badge>
@@ -208,13 +208,13 @@ function CreditCard({
       )}
 
       <form action={formActionDispatch}>
-        <input type="hidden" name="packageId" value={plan.id} />
-        <input type="hidden" name="uiMode" value="hosted" />
+        <input name="packageId" type="hidden" value={plan.id} />
+        <input name="uiMode" type="hidden" value="hosted" />
         <Button
-          type="submit"
           className="my-4 w-full"
-          variant={plan.buttonVariant as 'outline' | 'default'}
           disabled={pending}
+          type="submit"
+          variant={plan.buttonVariant as 'outline' | 'default'}
         >
           {pending ? (
             <>

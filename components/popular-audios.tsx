@@ -119,7 +119,7 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
   return (
     <div className="grid gap-4">
       {audioFiles.map((audio) => (
-        <Card key={audio.id} className="border-white/20 bg-white/10">
+        <Card className="border-white/20 bg-white/10" key={audio.id}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -136,11 +136,11 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
                   <span className="text-sm">{audio.total_votes}</span>
                 </div> */}
                 <Button
-                  variant="outline"
-                  size="icon"
                   className="border-white/20 bg-white/10 text-white hover:bg-white/20"
                   onClick={() => handlePlayPause(audio)}
+                  size="icon"
                   title="Play audio"
+                  variant="outline"
                 >
                   {currentlyPlaying === audio.id ? (
                     <Pause className="size-4" />
@@ -149,11 +149,11 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
                   )}
                 </Button>
                 <Button
-                  variant="outline"
-                  size="icon"
                   className="border-white/20 bg-white/10 text-white hover:bg-white/20"
                   onClick={() => handleDownload(audio)}
+                  size="icon"
                   title="Download audio"
+                  variant="outline"
                 >
                   <Download className="size-4" />
                 </Button>

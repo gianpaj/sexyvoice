@@ -63,11 +63,11 @@ export default async function GeneratePage(props: {
 
       <div className="lg:hidden">
         <CreditsSection
-          lang={lang}
-          dict={dict.creditsSection}
-          credits={credits.amount || 0}
           credit_transactions={credit_transactions || []}
+          credits={credits.amount || 0}
+          dict={dict.creditsSection}
           doNotToggleSidebar
+          lang={lang}
         />
       </div>
 
@@ -75,8 +75,8 @@ export default async function GeneratePage(props: {
         <GenerateUI
           dict={dict.generate}
           hasEnoughCredits={credits.amount >= 10}
-          publicVoices={publicVoices}
           locale={lang}
+          publicVoices={publicVoices}
         />
       </div>
     </div>

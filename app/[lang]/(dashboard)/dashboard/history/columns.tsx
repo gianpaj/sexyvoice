@@ -41,7 +41,7 @@ export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
     header: 'Voice',
     cell: ({ row }) => (
       <div className="w-full lg:w-32">
-        <Badge variant="outline" className="px-1.5 text-muted-foreground">
+        <Badge className="px-1.5 text-muted-foreground" variant="outline">
           {row.original.voices?.name || 'Unknown'}
         </Badge>
       </div>
@@ -67,8 +67,8 @@ export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
     accessorKey: 'created_at',
     header: ({ column }) => (
       <Button
-        variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        variant="ghost"
       >
         Created At
         <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -91,11 +91,11 @@ export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
     header: 'Download',
     cell: ({ row }) => (
       <Button
-        variant="outline"
-        size="icon"
-        title="Download"
         className="ml-2"
         onClick={() => downloadFile(row.original.url)}
+        size="icon"
+        title="Download"
+        variant="outline"
       >
         <Download className="size-4" />
       </Button>
@@ -115,12 +115,12 @@ export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
 
       return (
         <div className="flex items-center gap-2">
-          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
                 className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
                 size="icon"
+                variant="ghost"
               >
                 <MoreVerticalIcon />
                 <span className="sr-only">Open menu</span>

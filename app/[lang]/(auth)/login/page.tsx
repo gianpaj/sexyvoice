@@ -19,8 +19,8 @@ export default async function LoginPage(props: {
     <>
       <Header lang={lang} />
       <main
-        id="main-content"
         className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+        id="main-content"
       >
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">

@@ -6,8 +6,8 @@ import '../privacy-policy/privacy-policy.css';
 export default function TermsAndCondition() {
   return (
     <main
-      id="main-content"
       className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+      id="main-content"
     >
       <div className="container mx-auto my-8 px-4">
         <h1>Terms & Conditions</h1>
@@ -498,9 +498,9 @@ export default function TermsAndCondition() {
           facts giving rise to the dispute, and the relief requested. You must
           send any Notice of Dispute via email to: 
           <a
-            href="/cdn-cgi/l/email-protection"
             className="__cf_email__"
             data-cfemail="9af3f4fcf5dae9ffe2e3ecf5f3f9ffb4fbf3"
+            href="/cdn-cgi/l/email-protection"
           >
             [email&#160;protected]
           </a>

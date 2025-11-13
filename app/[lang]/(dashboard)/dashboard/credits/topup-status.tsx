@@ -67,16 +67,16 @@ export function TopupStatus({ dict }: TopupStatusProps) {
         <Alert className="grid grid-cols-subgrid gap-2">
           <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
             <CircleCheckIcon
-              className="-mt-0.5 !text-emerald-500 me-3 inline-flex"
               aria-hidden="true"
+              className="-mt-0.5 !text-emerald-500 me-3 inline-flex"
             />
 
             <AlertTitle>{dict.status.success.title}</AlertTitle>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDismiss}
               className="border-green-300 hover:bg-green-900"
+              onClick={handleDismiss}
+              size="sm"
+              variant="outline"
             >
               {dict.status.success.dismiss}
             </Button>
@@ -104,10 +104,10 @@ export function TopupStatus({ dict }: TopupStatusProps) {
             {dict.status.canceled.description}
             <div className="mt-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
                 className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                onClick={handleDismiss}
+                size="sm"
+                variant="outline"
               >
                 {dict.status.canceled.dismiss}
               </Button>
@@ -126,10 +126,10 @@ export function TopupStatus({ dict }: TopupStatusProps) {
             {dict.status.error.description}
             <div className="mt-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
                 className="border-red-300 text-red-700 hover:bg-red-100"
+                onClick={handleDismiss}
+                size="sm"
+                variant="outline"
               >
                 {dict.status.error.dismiss}
               </Button>

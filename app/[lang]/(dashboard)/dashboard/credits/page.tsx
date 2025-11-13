@@ -110,14 +110,14 @@ const NextStripePricingTable = ({
     <>
       <Script
         async
-        strategy="lazyOnload"
         src="https://js.stripe.com/v3/pricing-table.js"
+        strategy="lazyOnload"
       />
       {/* @ts-ignore */}
       <stripe-pricing-table
+        customer-session-client-secret={clientSecret.client_secret}
         pricing-table-id={pricingTableId}
         publishable-key={publishableKey}
-        customer-session-client-secret={clientSecret.client_secret}
       />
     </>
   );

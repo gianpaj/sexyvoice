@@ -261,20 +261,20 @@ export function AudioGenerator({
         <div className="space-y-2">
           <div className="relative">
             <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={dict.textAreaPlaceholder}
-              maxLength={charactersLimit * 2}
               className={cn(
                 'textarea-2 transition-[height] duration-200 ease-in-out',
                 [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
               )}
+              maxLength={charactersLimit * 2}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={dict.textAreaPlaceholder}
+              ref={textareaRef}
               style={
                 {
                   '--ta2-height': isFullscreen ? '30vh' : '8rem',
                 } as React.CSSProperties
               }
-              ref={textareaRef}
+              value={text}
             />
             {!isGeminiVoice && (
               <>
@@ -289,12 +289,12 @@ export function AudioGenerator({
                   </Tooltip>
                 </TooltipProvider>
                 <Button
-                  size="icon"
-                  variant="ghost"
                   className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-                  onClick={handleEnhanceText}
                   disabled={!text.trim() || isEnhancingText || isGenerating}
+                  onClick={handleEnhanceText}
+                  size="icon"
                   title="Enhance text with AI emotion tags"
+                  variant="ghost"
                 >
                   {isEnhancingText ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -305,13 +305,13 @@ export function AudioGenerator({
               </>
             )}
             <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsFullscreen(!isFullscreen)}
               className={
                 'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
               }
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              size="icon"
               title="Fullscreen"
+              variant="ghost"
             >
               {isFullscreen ? (
                 <Minimize2 className="h-4 w-4" />
@@ -336,13 +336,13 @@ export function AudioGenerator({
           )}
         >
           {!hasEnoughCredits && (
-            <Alert variant="destructive" className="w-fit">
+            <Alert className="w-fit" variant="destructive">
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
           <div className="flex flex-grow-0 gap-2">
             <Button
-              onClick={handleGenerate}
+              className="h-10"
               data-testid="generate-button"
               disabled={
                 isGenerating ||
@@ -351,8 +351,8 @@ export function AudioGenerator({
                 !hasEnoughCredits ||
                 textIsOverLimit
               }
+              onClick={handleGenerate}
               size="lg"
-              className="h-10"
             >
               {isGenerating ? (
                 <span className="flex items-center">
@@ -370,14 +370,14 @@ export function AudioGenerator({
             </Button>
             {isGenerating && (
               <Button
-                variant="outline"
                 aria-label={dict.cancel}
-                title={dict.cancel}
-                size="icon"
-                onClick={handleCancel}
-                iconPlacement="right"
-                icon={() => <CircleStop name="cancel" className="!size-8" />}
                 className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
+                icon={() => <CircleStop className="!size-8" name="cancel" />}
+                iconPlacement="right"
+                onClick={handleCancel}
+                size="icon"
+                title={dict.cancel}
+                variant="outline"
               />
             )}
           </div>
@@ -386,10 +386,10 @@ export function AudioGenerator({
             {audio && (
               <div className="flex justify-start gap-2 sm:w-full">
                 <Button
-                  variant="secondary"
-                  title={dict.playAudio}
-                  size="icon"
                   onClick={togglePlayback}
+                  size="icon"
+                  title={dict.playAudio}
+                  variant="secondary"
                 >
                   {isPlaying ? (
                     <Pause className="size-6" />
@@ -398,18 +398,18 @@ export function AudioGenerator({
                   )}
                 </Button>
                 <Button
-                  variant="secondary"
+                  onClick={resetPlayer}
                   size="icon"
                   title={dict.resetPlayer}
-                  onClick={resetPlayer}
+                  variant="secondary"
                 >
                   <RotateCcw className="size-6" />
                 </Button>
                 <Button
-                  variant="secondary"
+                  onClick={downloadAudio}
                   size="icon"
                   title={dict.downloadAudio}
-                  onClick={downloadAudio}
+                  variant="secondary"
                 >
                   <Download className="size-6" />
                 </Button>

@@ -348,13 +348,13 @@ export default function NewVoiceClient({
                   {/* Selected file display */}
                   {file && (
                     <div
-                      key={files[0]?.id}
                       className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                      key={files[0]?.id}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         <PaperclipIcon
-                          className="size-4 shrink-0 opacity-60"
                           aria-hidden="true"
+                          className="size-4 shrink-0 opacity-60"
                         />
                         <div className="min-w-0">
                           <p className="truncate whitespace-normal break-all font-medium text-[13px]">
@@ -367,13 +367,13 @@ export default function NewVoiceClient({
                       </div>
 
                       <Button
-                        size="icon"
-                        variant="ghost"
+                        aria-label="Remove file"
                         className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
                         onClick={() => removeFile(files[0]?.id)}
-                        aria-label="Remove file"
+                        size="icon"
+                        variant="ghost"
                       >
-                        <XIcon className="!size-6" aria-hidden="true" />
+                        <XIcon aria-hidden="true" className="!size-6" />
                       </Button>
                     </div>
                   )}
@@ -386,22 +386,24 @@ export default function NewVoiceClient({
                       </p>
 
                       <Accordion
-                        type="single"
+                        className="w-full"
                         collapsible
                         defaultValue={sampleAudios[0].id.toString()}
-                        className="w-full"
+                        type="single"
                       >
-                        {sampleAudios.map((sample) => (
-                          <CloneSampleCard
-                            key={sample.id}
-                            dict={dict}
-                            sample={sample}
-                            addFiles={addFiles}
-                            setTextToConvert={setTextToConvert}
-                            setErrorMessage={setErrorMessage}
-                            setStatus={setStatus}
-                          />
-                        ))}
+                        <AudioProvider>
+                          {sampleAudios.map((sample) => (
+                            <CloneSampleCard
+                              addFiles={addFiles}
+                              dict={dict}
+                              key={sample.id}
+                              sample={sample}
+                              setErrorMessage={setErrorMessage}
+                              setStatus={setStatus}
+                              setTextToConvert={setTextToConvert}
+                            />
+                          ))}
+                        </AudioProvider>
                       </Accordion>
                     </div>
                   )}
@@ -410,9 +412,9 @@ export default function NewVoiceClient({
                 <div className="grid w-full gap-2">
                   <Label htmlFor="language">{dict.languageLabel}</Label>
                   <Select
-                    value={selectedLocale}
-                    onValueChange={setSelectedLocale}
                     disabled={status === 'generating'}
+                    onValueChange={setSelectedLocale}
+                    value={selectedLocale}
                   >
                     <SelectTrigger id="language">
                       <SelectValue
@@ -434,12 +436,12 @@ export default function NewVoiceClient({
                     {dict.textToConvertLabel}
                   </Label>
                   <textarea
-                    id="text-to-convert"
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={status === 'generating'}
+                    id="text-to-convert"
+                    onChange={(e) => setTextToConvert(e.target.value)}
                     placeholder={dict.textAreaPlaceholder}
                     value={textToConvert}
-                    onChange={(e) => setTextToConvert(e.target.value)}
-                    disabled={status === 'generating'}
                   />
                 </div>
               </div>
@@ -453,19 +455,19 @@ export default function NewVoiceClient({
               )}
 
               {!hasEnoughCredits && (
-                <Alert variant="destructive" className="mx-auto w-fit">
+                <Alert className="mx-auto w-fit" variant="destructive">
                   <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
                 </Alert>
               )}
 
               <Button
-                onClick={handleGenerate}
+                className="w-full"
                 disabled={
                   !(file && textToConvert.trim()) ||
                   status === 'generating' ||
                   !hasEnoughCredits
                 }
-                className="w-full"
+                onClick={handleGenerate}
               >
                 {status === 'generating' ? (
                   <span className="flex items-center">
@@ -485,17 +487,17 @@ export default function NewVoiceClient({
               </Button>
               {status === 'generating' && (
                 <Button
-                  variant="outline"
-                  onClick={handleCancel}
                   className="mx-auto"
+                  onClick={handleCancel}
+                  variant="outline"
                 >
                   {dict.cancelButton}{' '}
-                  <CircleStop name="cancel" className="size-4" />
+                  <CircleStop className="size-4" name="cancel" />
                 </Button>
               )}
             </TabsContent>
 
-            <TabsContent value="preview" className="space-y-4 py-4">
+            <TabsContent className="space-y-4 py-4" value="preview">
               <div className="space-y-4">
                 <h3 className="text-center font-medium text-xl">
                   {dict.previewTitle}
@@ -508,8 +510,8 @@ export default function NewVoiceClient({
 
                 <div className="flex justify-center gap-4">
                   <Button
-                    onClick={handleDownload}
                     className="flex items-center gap-2"
+                    onClick={handleDownload}
                   >
                     <Download className="h-4 w-4" />
                     {dict.downloadAudio}

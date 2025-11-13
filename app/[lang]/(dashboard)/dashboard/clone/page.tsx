@@ -32,8 +32,8 @@ export default async function NewVoicePage(props: {
   return (
     <NewVoiceClient
       dict={dict}
-      lang={lang}
       hasEnoughCredits={credits.amount >= 10}
+      lang={lang}
     />
   );
 }

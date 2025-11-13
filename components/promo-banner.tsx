@@ -84,19 +84,19 @@ export function PromoBanner({
         <div className="relative mt-3 flex flex-[0.3] items-center justify-center gap-2 sm:mt-0">
           <Button
             asChild
+            className="whitespace-nowrap bg-gray-800/70 font-semibold text-orange-600 hover:bg-gray-900"
             size="sm"
             variant="outline"
-            className="whitespace-nowrap bg-gray-800/70 font-semibold text-orange-600 hover:bg-gray-900"
           >
             <Link href={ctaLink}>{ctaText} 🎃</Link>
           </Button>
 
           <Button
-            size="sm"
-            variant="ghost"
+            aria-label={arialLabelDismiss}
             className="absolute right-0 text-orange-700 md:relative"
             onClick={handleDismissBanner}
-            aria-label={arialLabelDismiss}
+            size="sm"
+            variant="ghost"
           >
             <XIcon size={18} strokeWidth={3} />
           </Button>

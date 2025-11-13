@@ -12,13 +12,13 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href={`/${lang}`} className="z-10 flex items-end gap-0">
+        <Link className="z-10 flex items-end gap-0" href={`/${lang}`}>
           <div className="aspect-square">
             <Image
-              src={logoSmall}
               alt="Logo"
-              width={221 / 8}
               height={292 / 8}
+              src={logoSmall}
+              width={221 / 8}
             />
           </div>
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>
@@ -29,12 +29,12 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
           {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
 
           <div className="space-x-4">
-            <Button variant="secondary" asChild>
+            <Button asChild variant="secondary">
               <Link href={`/${lang}/login`} prefetch>
                 {dict['/login']}
               </Link>
             </Button>
-            <Button variant="default" asChild effect="ringHover">
+            <Button asChild effect="ringHover" variant="default">
               <Link href={`/${lang}/signup`} prefetch>
                 {dict['/signup']}
               </Link>
@@ -45,12 +45,12 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
         {/* Mobile Navigation */}
         <div className="z-10 flex gap-2 md:hidden">
           <Button asChild size="sm" variant="secondary">
-            <Link href={`/${lang}/login`} className="w-full" prefetch>
+            <Link className="w-full" href={`/${lang}/login`} prefetch>
               {dict['/login']}
             </Link>
           </Button>
           <Button asChild size="sm">
-            <Link href={`/${lang}/signup`} className="w-full" prefetch>
+            <Link className="w-full" href={`/${lang}/signup`} prefetch>
               {dict['/signup']}
             </Link>
           </Button>

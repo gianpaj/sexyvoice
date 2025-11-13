@@ -30,9 +30,9 @@ async function Footer({ lang }: { lang: Locale }) {
           <div className="mb-8 flex space-x-4">
             <Button
               asChild
-              variant="outline"
-              size="icon"
               className="rounded-full bg-gray-900"
+              size="icon"
+              variant="outline"
             >
               <Link href="https://x.com/SexyvoiceAi" target="_blank">
                 <span className="iconify logos--x" />
@@ -64,25 +64,25 @@ async function Footer({ lang }: { lang: Locale }) {
             </p>
             <p className="mt-4 text-muted-foreground text-sm">
               <a
-                href="https://sexyvoice.checkly-dashboards.com/"
                 className="hover:text-primary hover:underline"
-                target="_blank"
+                href="https://sexyvoice.checkly-dashboards.com/"
                 rel="noreferrer"
+                target="_blank"
               >
                 {dict.footer.statusPage}
               </a>
               {' - '}
               <a
-                href="/privacy-policy"
                 className="hover:text-primary hover:underline"
+                href="/privacy-policy"
                 rel="noreferrer"
               >
                 {dict.footer.privacyPolicy}
               </a>
               {' - '}
               <a
-                href="/terms"
                 className="hover:text-primary hover:underline"
+                href="/terms"
                 rel="noreferrer"
               >
                 {dict.footer.termsAndConditions}

@@ -74,8 +74,8 @@ export function VoiceSelector({
               <TooltipTrigger asChild>
                 <Button
                   className="h-auto w-auto self-end pb-[2px]"
-                  variant="link"
                   size="icon"
+                  variant="link"
                 >
                   <Info className="ml-2 h-4 w-4" />
                 </Button>
@@ -96,7 +96,7 @@ export function VoiceSelector({
         <CardDescription>{dict.voiceSelector.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
-        <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
+        <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
@@ -116,25 +116,25 @@ export function VoiceSelector({
         {isGeminiVoice && (
           <div className="relative">
             <Textarea
-              onChange={(e) => setSelectedStyle(e.target.value)}
-              value={selectedStyle}
-              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
               className="textarea-1 transition-[height] duration-200 ease-in-out"
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
+              ref={textareaRef}
               style={
                 {
                   '--ta1-height': isFullscreen ? '30vh' : '4rem',
                 } as React.CSSProperties
               }
-              ref={textareaRef}
+              value={selectedStyle}
             />
             <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsFullscreen(!isFullscreen)}
               className={
                 'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
               }
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              size="icon"
               title="Fullscreen"
+              variant="ghost"
             >
               {isFullscreen ? (
                 <Minimize2 className="h-4 w-4" />

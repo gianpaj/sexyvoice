@@ -6,8 +6,8 @@ import './privacy-policy.css';
 export default function PrivacyPolicy() {
   return (
     <main
-      id="main-content"
       className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+      id="main-content"
     >
       <div className="container mx-auto my-8 px-4">
         <h1>Privacy Policy</h1>

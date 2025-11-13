@@ -75,11 +75,11 @@ export default async function LandingPage(props: {
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <PromoBanner
-        text={halloweenDict.text}
-        ctaText={halloweenDict.ctaLoggedOut}
         arialLabelDismiss={halloweenDict.arialLabelDismiss}
         ctaLink={`/${lang}/signup`}
+        ctaText={halloweenDict.ctaLoggedOut}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+        text={halloweenDict.text}
       />
       <HeaderStatic lang={lang} />
       <main id="main-content">
@@ -100,10 +100,10 @@ export default async function LandingPage(props: {
               <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
-                  size="lg"
                   effect="expandIcon"
                   icon={ArrowRightIcon}
                   iconPlacement="right"
+                  size="lg"
                 >
                   <Link href={`/${lang}/signup`}>{dict.hero.buttonCTA}</Link>
                 </Button>
@@ -124,10 +124,10 @@ export default async function LandingPage(props: {
               <div className="grid gap-6 md:grid-cols-2">
                 {getSampleAudiosByLang(lang).map((audio) => (
                   <AudioPreviewCard
+                    audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
                     key={audio.id}
                     name={audio.name}
                     prompt={audio.prompt}
-                    audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
                   />
                 ))}
               </div>
@@ -163,7 +163,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Mic2 className="size-6 text-blue-400" aria-hidden />
+                    <Mic2 aria-hidden className="size-6 text-blue-400" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium">
@@ -181,7 +181,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Globe2 className="size-6 text-blue-400" aria-hidden />
+                    <Globe2 aria-hidden className="size-6 text-blue-400" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium">
@@ -198,7 +198,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Shield className="size-6 text-blue-400" aria-hidden />
+                    <Shield aria-hidden className="size-6 text-blue-400" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium">
@@ -225,12 +225,12 @@ export default async function LandingPage(props: {
                 <p className="text-gray-200">{dict.faq.subtitle}</p>
               </div>
 
-              <Accordion type="single" collapsible className="w-full">
+              <Accordion className="w-full" collapsible type="single">
                 {dict.faq.questions.map((faq, index) => (
                   <AccordionItem
+                    className="border-white/10 border-b"
                     key={`item-${index}`}
                     value={`item-${index}`}
-                    className="border-white/10 border-b"
                   >
                     <AccordionTrigger className="py-5 text-left text-white hover:text-blue-400 hover:no-underline">
                       {faq.question}
@@ -255,13 +255,13 @@ export default async function LandingPage(props: {
                     <CardHeader>
                       {post.image && (
                         <Image
-                          src={post.image}
                           alt={post.title}
-                          width={300}
-                          height={100}
-                          priority={false}
-                          loading="lazy"
                           className="mx-auto rounded-lg"
+                          height={100}
+                          loading="lazy"
+                          priority={false}
+                          src={post.image}
+                          width={300}
                         />
                       )}
                       <CardTitle className="text-center text-gray-200 text-lg leading-8">
@@ -285,10 +285,10 @@ export default async function LandingPage(props: {
                 {dict.cta.subtitle}
               </p>
               <Button
-                size="lg"
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
                 asChild
+                className="mt-4 bg-blue-600 hover:bg-blue-700"
                 effect="ringHover"
+                size="lg"
               >
                 <Link href={`/${lang}/signup`}>{dict.cta.action}</Link>
               </Button>

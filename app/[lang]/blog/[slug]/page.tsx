@@ -194,11 +194,11 @@ const PostLayout = async (props: {
       </Script>
 
       <PromoBanner
-        text={halloweenDict.text}
-        ctaText={halloweenDict.ctaLoggedOut}
-        ctaLink={`/${lang}/signup`}
         arialLabelDismiss={halloweenDict.arialLabelDismiss}
+        ctaLink={`/${lang}/signup`}
+        ctaText={halloweenDict.ctaLoggedOut}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+        text={halloweenDict.text}
       />
 
       <Suspense fallback={<div>Loading...</div>}>
@@ -220,19 +220,19 @@ const PostLayout = async (props: {
           intelligence in speech technology.
         </div>
         <meta
-          itemProp="audience"
           content="Developers, AI researchers, content creators"
+          itemProp="audience"
         />
-        <meta itemProp="educationalLevel" content="Intermediate to Advanced" />
-        <meta itemProp="learningResourceType" content="Tutorial" />
+        <meta content="Intermediate to Advanced" itemProp="educationalLevel" />
+        <meta content="Tutorial" itemProp="learningResourceType" />
       </div>
 
       <main itemScope itemType="https://schema.org/WebPage">
         <article
           className="prose dark:prose-invert max-w-2xl px-4 py-8 md:mx-auto md:px-0"
+          itemProp="mainEntity"
           itemScope
           itemType="https://schema.org/BlogPosting"
-          itemProp="mainEntity"
         >
           <header className="my-8 text-center">
             {/* <nav aria-label="Breadcrumb" className="mb-4">
@@ -269,27 +269,27 @@ const PostLayout = async (props: {
 
             <div className="mb-4 flex items-center justify-center space-x-4 text-gray-600 text-xs">
               <time
+                content={post.date}
                 dateTime={post.date}
                 itemProp="datePublished"
-                content={post.date}
               >
                 Published: {format(parseISO(post.date), 'LLLL d, yyyy')}
               </time>
               <span>•</span>
-              <span itemProp="timeRequired" content={`PT${readingTime}M`}>
+              <span content={`PT${readingTime}M`} itemProp="timeRequired">
                 {readingTime} min read
               </span>
               <span>•</span>
               <span itemProp="wordCount">{wordCount} words</span>
             </div>
 
-            <h1 itemProp="headline" className="mt-12 mb-4">
+            <h1 className="mt-12 mb-4" itemProp="headline">
               {post.title}
             </h1>
 
             <div
-              itemProp="description"
               className="mt-8 mb-6 text-gray-400 text-lg"
+              itemProp="description"
             >
               {post.description}
             </div>
@@ -303,57 +303,57 @@ const PostLayout = async (props: {
                 itemType="https://schema.org/Organization"
               >
                 <span itemProp="name">SexyVoice.ai</span>
-                <meta itemProp="url" content="https://sexyvoice.ai" />
+                <meta content="https://sexyvoice.ai" itemProp="url" />
                 <meta
-                  itemProp="logo"
                   content="https://sexyvoice.ai/sexyvoice.png"
+                  itemProp="logo"
                 />
               </div>
             </div>
 
             {/* Publisher information for LLM extraction */}
             <div
+              className="sr-only"
               itemProp="publisher"
               itemScope
               itemType="https://schema.org/Organization"
-              className="sr-only"
             >
-              <meta itemProp="name" content="SexyVoice.ai" />
-              <meta itemProp="url" content="https://sexyvoice.ai" />
+              <meta content="SexyVoice.ai" itemProp="name" />
+              <meta content="https://sexyvoice.ai" itemProp="url" />
               <div
                 itemProp="logo"
                 itemScope
                 itemType="https://schema.org/ImageObject"
               >
                 <meta
-                  itemProp="url"
                   content="https://sexyvoice.ai/sexyvoice.png"
+                  itemProp="url"
                 />
-                <meta itemProp="width" content="512" />
-                <meta itemProp="height" content="512" />
+                <meta content="512" itemProp="width" />
+                <meta content="512" itemProp="height" />
               </div>
             </div>
 
-            <meta itemProp="dateModified" content={post.date} />
-            <meta itemProp="inLanguage" content={post.locale} />
-            <meta itemProp="isAccessibleForFree" content="true" />
-            <meta itemProp="genre" content="Technology" />
+            <meta content={post.date} itemProp="dateModified" />
+            <meta content={post.locale} itemProp="inLanguage" />
+            <meta content="true" itemProp="isAccessibleForFree" />
+            <meta content="Technology" itemProp="genre" />
             <meta
-              itemProp="keywords"
               content="AI voice cloning, voice synthesis, machine learning, neural networks, speech technology"
+              itemProp="keywords"
             />
           </header>
 
           {post.image && (
             <figure className="mb-8">
               <Image
-                src={post.image}
                 alt={post.title}
                 className="mx-auto rounded-lg"
-                width={800}
                 height={450}
                 itemProp="image"
                 priority
+                src={post.image}
+                width={800}
               />
               <figcaption className="mt-2 text-center text-gray-500 text-sm">
                 {post.title}
@@ -361,7 +361,7 @@ const PostLayout = async (props: {
             </figure>
           )}
 
-          <div itemProp="articleBody" className="prose-headings:scroll-mt-20">
+          <div className="prose-headings:scroll-mt-20" itemProp="articleBody">
             <Mdx code={post.body.code} />
           </div>
 
