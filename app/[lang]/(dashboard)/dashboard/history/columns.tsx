@@ -4,6 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { AudioPlayer } from '@/components/audio-player';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
-import { AudioPlayer } from './audio-player';
 import { DeleteButton } from './delete-button';
 
 const downloadFile = (url: string) => {

@@ -52,6 +52,9 @@
       },
       "correctness": {
         "useUniqueElementIds": "off"
+      },
+      "nursery": {
+        "noShadow": "off"
       }
     },
     "domains": {

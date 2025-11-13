@@ -34,7 +34,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
-import { AudioPlayer } from '../history/audio-player';
+import { AudioPlayer } from '../../../../../components/audio-player';
+import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
 import CloneSampleCard from './CloneSampleCard';
 
@@ -44,28 +45,30 @@ const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-const sampleAudios: ReadonlyArray<SampleAudio> = [
+const sampleAudios: readonly SampleAudio[] = [
   {
     id: 1,
     name: 'Marilyn Monroe 🇺🇸',
     prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
-    audioExampleOutputSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
-    audioSrc: 'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
+    audioExampleOutputSrc:
+      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
   },
-  {
-    id: 2,
-    name: 'Morgan Freeman 🇺🇸',
-    prompt: 'The most important thing is the mission, not the money',
-    audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-    audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  },
-  {
-    id: 3,
-    name: 'Audrey Hepburn 🇬🇧',
-    prompt: 'Elegance is not about being noticed, it is about being remembered',
-    audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-    audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  },
+  // {
+  //   id: 2,
+  //   name: 'Morgan Freeman 🇺🇸',
+  //   prompt: 'The most important thing is the mission, not the money',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  // },
+  // {
+  //   id: 3,
+  //   name: 'Audrey Hepburn 🇬🇧',
+  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  // },
   // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
 ];
 
@@ -112,7 +115,7 @@ export default function NewVoiceClient({
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState('en');
 
-  // Get localized language names using Intl.DisplayNames
+  // TODO: benchmark this. Should this be a global variable or React.memo() OR React.compiler will automatically memoize this?
   const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
   const supportedLocales = SUPPORTED_LOCALE_CODES.map((code) => ({
     code,
@@ -272,18 +275,18 @@ export default function NewVoiceClient({
         </CardHeader>
         <CardContent>
           <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
             className="w-full"
+            onValueChange={setActiveTab}
+            value={activeTab}
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
-              <TabsTrigger value="preview" disabled={status !== 'complete'}>
+              <TabsTrigger disabled={status !== 'complete'} value="preview">
                 {dict.tabPreview}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="upload" className="space-y-6 py-4">
+            <TabsContent className="space-y-6 py-4" value="upload">
               <div className="grid w-full gap-6">
                 <div className="grid w-full gap-2">
                   <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
@@ -291,27 +294,27 @@ export default function NewVoiceClient({
                   {/* Drop area */}
                   {!file && (
                     <button
-                      type="button"
+                      className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-[input:focus]:border-ring has-disabled:opacity-50 has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+                      data-dragging={isDragging || undefined}
                       onClick={openFileDialog}
-                      onKeyUp={openFileDialog}
                       onDragEnter={handleDragEnter}
                       onDragLeave={handleDragLeave}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
-                      data-dragging={isDragging || undefined}
-                      className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-[input:focus]:border-ring has-disabled:opacity-50 has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+                      onKeyUp={openFileDialog}
+                      type="button"
                     >
                       <input
                         {...getInputProps()}
-                        className="sr-only"
                         aria-label="Upload audio file"
+                        className="sr-only"
                         disabled={Boolean(file)}
                       />
 
                       <div className="flex flex-col items-center justify-center text-center">
                         <div
-                          className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
                           aria-hidden="true"
+                          className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
                         >
                           <UploadIcon className="size-4 opacity-60" />
                         </div>

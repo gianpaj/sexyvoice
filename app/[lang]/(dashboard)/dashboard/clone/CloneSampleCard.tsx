@@ -1,5 +1,7 @@
+import Image from 'next/image';
 import { useCallback } from 'react';
 
+import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import {
   AccordionContent,
   AccordionItem,
@@ -7,16 +9,16 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
-import { AudioPlayer } from '../history/audio-player';
 import type { Status } from './new.client';
 
-export interface SampleAudio {
+export type SampleAudio = {
   id: number;
   name: string;
   prompt: string;
   audioSrc: string;
   audioExampleOutputSrc: string;
-}
+  image: string;
+};
 
 export default function CloneSampleCard({
   dict,
@@ -69,35 +71,45 @@ export default function CloneSampleCard({
         {sample.name}
       </AccordionTrigger>
       <AccordionContent>
-        <div className="my-2 flex w-full justify-stretch">
-          <div className="flex flex-1 flex-col text-center">
+        <div className="center my-2 flex items-baseline justify-center gap-32">
+          <div className="flex flex-col text-center">
             <p>{dict.sampleCard.sourceAudio}:</p>
-            <AudioPlayer
-              className="my-2 self-center bg-blue-950"
+            <AudioPlayerWithContext
+              className="my-4 self-center bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
               url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
             />
           </div>
-          <div className="flex flex-1 flex-col text-center">
+          <div className="my-4 flex flex-col justify-center text-center">
             <p>{dict.sampleCard.exampleOutput}:</p>
-            <AudioPlayer
-              className="my-2 self-center bg-purple-950"
-              url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
+            <AudioPlayerWithContext
+              className="my-4 self-center bg-purple-950 opacity-60 transition-opacity hover:bg-purple-950 hover:opacity-100"
+              url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}
             />
           </div>
         </div>
         <Button
+          className="mx-auto flex h-auto w-fit gap-1 whitespace-normal px-3 py-2"
           key={sample.id}
+          onClick={() => handleLoadSampleAudio(sample)}
           type="button"
           variant="outline"
-          onClick={() => handleLoadSampleAudio(sample)}
-          className="mx-auto flex h-auto w-fit flex-col items-start gap-1 whitespace-normal px-3 py-2"
         >
-          <span className="font-medium text-sm">
-            {dict.sampleCard.loadSource}: {sample.name}
-          </span>
-          <span className="line-clamp-2 text-muted-foreground text-xs">
-            &quot;{sample.prompt}&quot;
-          </span>
+          <Image
+            alt={sample.name}
+            className="-my-2 -ml-3 m mr-2 rounded-sm"
+            height={65}
+            src={sample.image}
+            width={65}
+          />
+
+          <div className="flex flex-col items-start self-start">
+            <span className="font-medium text-sm">
+              {dict.sampleCard.loadSource}: {sample.name}
+            </span>
+            <span className="line-clamp-2 text-muted-foreground text-xs">
+              &quot;{sample.prompt}&quot;
+            </span>
+          </div>
         </Button>
       </AccordionContent>
     </AccordionItem>
