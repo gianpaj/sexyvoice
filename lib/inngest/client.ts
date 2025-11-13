@@ -1,15 +1,15 @@
 // import { realtimeMiddleware } from '@inngest/realtime/middleware';
 import { EventSchemas, Inngest } from 'inngest';
 
-type CloneAudioCleanup = {
+interface CloneAudioCleanup {
   data: {
     blobUrl: string;
     userId: string;
   };
-};
-type Events = {
+}
+interface Events {
   'clone-audio/cleanup.scheduled': CloneAudioCleanup;
-};
+}
 
 export const inngest = new Inngest({
   id: 'sexyvoice',

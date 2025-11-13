@@ -178,7 +178,10 @@
         "description": "For hobbyists creating projects with AI audio and creating custom voices.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
-        "features": ["Everything in Free", "API access (coming soon)"]
+        "features": [
+          "Everything in Free",
+          "API access (coming soon)"
+        ]
       },
       "pro": {
         "name": "Pro",
@@ -276,6 +279,7 @@
     "disclaimer": "Voice clones are created for demonstration purposes only.",
     "downloadAudio": "Download Audio",
     "dragDropText": "Drag & drop or click to browse",
+    "success": "Audio generated successfully!",
     "errorCloning": "Failed to clone voice",
     "errorTitle": "Error",
     "fileFormatsText": "MP3, WAV, M4A or OGG (max. __SIZE__)",

@@ -5,12 +5,15 @@ import {
   CircleStop,
   Download,
   PaperclipIcon,
+  Pause,
+  Play,
   UploadIcon,
   XIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PulsatingDots from '@/components/PulsatingDots';
+import { toast } from '@/components/services/toast';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -34,7 +37,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
-import { AudioPlayer } from '../../../../../components/audio-player';
 import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
 import CloneSampleCard from './CloneSampleCard';
@@ -114,6 +116,8 @@ export default function NewVoiceClient({
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState('en');
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // TODO: benchmark this. Should this be a global variable or React.memo() OR React.compiler will automatically memoize this?
   const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
@@ -212,7 +216,19 @@ export default function NewVoiceClient({
         return;
       }
 
-      setGeneratedAudioUrl(voiceResult.url);
+      const newAudio = new Audio(url);
+
+      newAudio.addEventListener('ended', () => {
+        setIsPlaying(false);
+      });
+
+      setAudio(newAudio);
+
+      // Automatically play the audio
+      newAudio.play();
+      setIsPlaying(true);
+
+      toast.success(dict.success);
 
       setStatus('complete');
       setActiveTab('preview');
@@ -263,11 +279,24 @@ export default function NewVoiceClient({
   }, [status, textToConvert, handleGenerate, hasEnoughCredits]);
 
   const handleDownload = () => {
+    if (!audio) return;
+
     const link = document.createElement('a');
-    link.href = generatedAudioUrl;
+    link.href = audio.src;
     link.target = '_blank';
     link.download = 'generated_audio.mp3';
     link.click();
+  };
+
+  const togglePlayback = () => {
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -509,7 +538,19 @@ export default function NewVoiceClient({
 
                 <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
                   {/* <AudioWaveform audioUrl={generatedAudioUrl || ''} /> */}
-                  <AudioPlayer url={generatedAudioUrl} />
+                  {/*<AudioPlayer url={generatedAudioUrl} />*/}
+                  <Button
+                    className="rounded-full"
+                    onClick={togglePlayback}
+                    size="icon"
+                    variant="secondary"
+                  >
+                    {isPlaying ? (
+                      <Pause className="size-6" />
+                    ) : (
+                      <Play className="size-6" />
+                    )}
+                  </Button>
                 </div>
 
                 <div className="flex justify-center gap-4">

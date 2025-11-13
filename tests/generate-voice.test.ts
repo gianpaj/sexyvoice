@@ -107,9 +107,9 @@ describe('Generate Voice API Route', () => {
     it('should return 401 when user is not authenticated', async () => {
       // Mock unauthenticated user
       server.use(
-        http.get('https://*.supabase.co/auth/v1/user', () => {
-          return HttpResponse.json({ user: null });
-        }),
+        http.get('https://*.supabase.co/auth/v1/user', () =>
+          HttpResponse.json({ user: null }),
+        ),
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -246,9 +246,9 @@ describe('Generate Voice API Route', () => {
       mockRedisGet.mockResolvedValueOnce(null);
 
       server.use(
-        http.get('https://*.upstash.io/*', () => {
-          return HttpResponse.json({ result: null });
-        }),
+        http.get('https://*.upstash.io/*', () =>
+          HttpResponse.json({ result: null }),
+        ),
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -300,7 +300,7 @@ describe('Generate Voice API Route', () => {
       vi.doMock('replicate', () => {
         return {
           default: class Replicate {
-            async run(_model: string, _options: any, onProgress?: any) {
+            run(_model: string, _options: any, onProgress?: any) {
               // Simulate progress callback
               if (onProgress) {
                 onProgress({ id: 'test-prediction-id', status: 'succeeded' });
@@ -580,9 +580,9 @@ describe('Generate Voice API Route', () => {
 
       // Mock cache miss
       server.use(
-        http.get('https://*.upstash.io/*', () => {
-          return HttpResponse.json({ result: null });
-        }),
+        http.get('https://*.upstash.io/*', () =>
+          HttpResponse.json({ result: null }),
+        ),
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -737,9 +737,9 @@ describe('Generate Voice API Route', () => {
     it('should prepend style variant to text', async () => {
       // Mock cache miss
       server.use(
-        http.get('https://*.upstash.io/*', () => {
-          return HttpResponse.json({ result: null });
-        }),
+        http.get('https://*.upstash.io/*', () =>
+          HttpResponse.json({ result: null }),
+        ),
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -766,12 +766,9 @@ describe('Generate Voice API Route', () => {
     it('should handle aborted requests gracefully', async () => {
       // Mock Replicate API to return error
       server.use(
-        http.post('https://api.replicate.com/v1/predictions', () => {
-          return HttpResponse.json(
-            { detail: 'Model not found' },
-            { status: 404 },
-          );
-        }),
+        http.post('https://api.replicate.com/v1/predictions', () =>
+          HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
+        ),
       );
 
       const controller = new AbortController();
@@ -905,7 +902,7 @@ describe('Integration Tests', () => {
       tokensPerMinute: 0,
       requestsPerDay: 0,
       maxRequestsPerMinute: 15,
-      maxTokensPerMinute: 1000000,
+      maxTokensPerMinute: 1_000_000,
       maxRequestsPerDay: 1500,
       lastMinuteReset: Date.now(),
       lastDayReset: Date.now(),

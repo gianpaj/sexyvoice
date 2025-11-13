@@ -279,6 +279,7 @@
     "disclaimer": "Los clones de voz se crean solo con fines de demostración.",
     "downloadAudio": "Descargar Audio",
     "dragDropText": "Arrastra y suelta o haz clic para buscar",
+    "success": "Audio generado con éxito!",
     "errorCloning": "Error al clonar la voz",
     "errorTitle": "Error",
     "fileFormatsText": "MP3, WAV, M4A u OGG (máx. __SIZE__)",

@@ -240,9 +240,9 @@ describe('Clone Voice API Route', () => {
     it('should return 401 when user is not authenticated', async () => {
       // Mock unauthenticated user
       server.use(
-        http.get('https://*.supabase.co/auth/v1/user', () => {
-          return HttpResponse.json({ user: null });
-        }),
+        http.get('https://*.supabase.co/auth/v1/user', () =>
+          HttpResponse.json({ user: null }),
+        ),
       );
 
       const formData = createFormDataWithAudio('Hello world');

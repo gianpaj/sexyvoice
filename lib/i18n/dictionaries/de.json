@@ -279,6 +279,7 @@
     "disclaimer": "Stimmklone werden nur zu Demonstrationszwecken erstellt.",
     "downloadAudio": "Audio herunterladen",
     "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",
+    "success": "Audio erfolgreich generiert!",
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
     "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",

@@ -1,8 +1,8 @@
-import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
+import Replicate, { type Prediction } from 'replicate';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import { inngest } from '@/lib/inngest/client';
@@ -31,9 +31,8 @@ const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const MIN_DURATION = 5; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
 
-async function generateHash(text: string, audioFilename: string) {
+async function generateHash(combinedString: string) {
   const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${audioFilename}`;
   const data = textEncoder.encode(combinedString);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -66,8 +65,9 @@ export async function POST(request: Request) {
   let text = '';
   let userAudioFile: File | null = null;
   let audioPromptUrl = '';
-  const modelUsed = 'chatterbox-tts';
   let locale = '';
+  let replicateResponse: Prediction | undefined;
+  let modelUsed = '';
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
     }
 
     // Generate hash for caching
-    const hash = await generateHash(text, userAudioFilename);
+    const hash = await generateHash(`${locale}-${text}-${blobUrl}`);
     const abortController = new AbortController();
     const path = `clone-voice/${hash}`;
     const filename = `${path}.wav`;
@@ -213,52 +213,76 @@ export async function POST(request: Request) {
         locale,
         audioPromptUrl,
         creditUsed: 0,
-        model: modelUsed,
+        model: 'chatterbox-cached',
       });
       return NextResponse.json({ url: cachedResult }, { status: 200 });
     }
 
-    // Generate TTS with cloned voice using fal.ai
-    const input = {
-      text,
-      // TODO: accept these parameters
-      cfg_weight: 0.5,
-      temperature: 0.8,
-      exaggeration: 0.5,
-      audio_url: audioPromptUrl,
+    // Generate TTS with cloned voice using Replicate
+    const replicate = new Replicate();
+    const onProgress = (prediction: Prediction) => {
+      replicateResponse = prediction;
     };
 
-    // TODO: have the voices be store in Supabase
-    // const voiceObj = await getVoiceIdByName(voice);
+    let model: `${string}/${string}`;
+    let input: Record<string, unknown>;
 
-    let modelId = 'chatterbox';
-    if (locale !== 'en') {
-      modelId = 'chatterbox-multilingual';
+    if (locale === 'en') {
+      // Use chatterbox for English
+      model = 'resemble-ai/chatterbox';
+      input = {
+        seed: 0,
+        text,
+        cfg_weight: 0.5,
+        temperature: 0.8,
+        exaggeration: 0.5,
+        reference_audio: audioPromptUrl,
+      };
+    } else {
+      // Use chatterbox-multilingual for non-English
+      model =
+        'resemble-ai/chatterbox-multilingual:9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c';
+      input = {
+        seed: 0,
+        text,
+        language: locale,
+        cfg_weight: 0.5,
+        temperature: 0.8,
+        exaggeration: 0.5,
+        reference_audio: audioPromptUrl,
+      };
     }
 
-    const result = await fal.subscribe(`fal-ai/${modelId}/text-to-speech`, {
-      input,
-      logs: false,
-      // onQueueUpdate: (update) => {
-      //   if (update.status === 'IN_PROGRESS') {
-      //     update.logs?.map((log) => log.message).forEach(console.log);
-      //   }
-      // },
-      abortSignal: request.signal,
-    });
+    const output = (await replicate.run(model, { input }, onProgress)) as
+      | string
+      | { error?: string };
 
-    const falData = result.data as {
-      audio: {
-        url: string;
-        content_type: string;
-        file_name: string;
-        file_size: number;
+    if (typeof output === 'object' && 'error' in output) {
+      const errorObj = {
+        text,
+        locale,
+        audioPromptUrl,
+        model,
+        errorData: output.error,
       };
-    };
-    const requestId = result.requestId;
+      captureException({
+        error: 'Voice cloning failed',
+        ...errorObj,
+      });
+      console.error(errorObj);
+      throw new Error(
+        output.error || 'Voice cloning failed, please try again',
+        {
+          cause: 'REPLICATE_ERROR',
+        },
+      );
+    }
+
+    const requestId = replicateResponse?.id || 'unknown';
+    modelUsed = model.split(':')[0]; // Get model name without version hash
 
     // Fetch the audio file from the URL and upload to blob storage
-    const audioResponse = await fetch(falData.audio.url);
+    const audioResponse = await fetch(output as string);
     const audioBuffer = await audioResponse.arrayBuffer();
 
     const blobResult = await put(filename, audioBuffer, {
