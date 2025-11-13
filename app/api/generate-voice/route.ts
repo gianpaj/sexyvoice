@@ -304,6 +304,7 @@ export async function POST(request: Request) {
       });
     } else {
       // uses REPLICATE_API_TOKEN
+      modelUsed = voiceObj.model;
       const replicate = new Replicate();
       const onProgress = (prediction: Prediction) => {
         replicateResponse = prediction;
@@ -353,10 +354,12 @@ export async function POST(request: Request) {
         return;
       }
 
-      const totalTokens = await countGeminiTokens({
-        model: modelUsed,
-        contents: text,
-      });
+      const totalTokens =
+        isGeminiVoice &&
+        (await countGeminiTokens({
+          model: modelUsed,
+          contents: text,
+        }));
 
       await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
 
@@ -377,10 +380,12 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: estimate,
-        usage: {
-          ...usage,
-          totalTokens,
-        },
+        usage: totalTokens
+          ? {
+              ...usage,
+              ...(totalTokens > 0 ? { totalTokens } : {}),
+            }
+          : usage,
       });
 
       if (audioFileDBResult.error) {

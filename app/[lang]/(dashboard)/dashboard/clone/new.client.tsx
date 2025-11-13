@@ -113,7 +113,6 @@ export default function NewVoiceClient({
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
   const [textToConvert, setTextToConvert] = useState('');
-  const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState('en');
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
@@ -216,7 +215,7 @@ export default function NewVoiceClient({
         return;
       }
 
-      const newAudio = new Audio(url);
+      const newAudio = new Audio(voiceResult.url);
 
       newAudio.addEventListener('ended', () => {
         setIsPlaying(false);

@@ -6,10 +6,10 @@ import * as queries from '@/lib/supabase/queries';
 import {
   mockBlobHead,
   mockBlobPut,
-  mockFalSubscribe,
   mockInngestSend,
   mockRedisGet,
   mockRedisSet,
+  mockReplicateRun,
   server,
 } from './setup';
 
@@ -46,10 +46,12 @@ describe('Clone Voice API Route', () => {
   const createFormDataWithAudio = (
     text: string,
     audioFile: File = createMockAudioFile(),
+    locale = 'en',
   ) => {
     const formData = new FormData();
     formData.append('text', text);
     formData.append('file', audioFile);
+    formData.append('locale', locale);
     return formData;
   };
 
@@ -416,7 +418,7 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Voice Cloning Generation', () => {
-    it('should successfully clone voice using fal.ai', async () => {
+    it('should successfully clone voice using Replicate', async () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -433,20 +435,19 @@ describe('Clone Voice API Route', () => {
       expect(json.creditsRemaining).toBeDefined();
       expect(json.audioPromptUrl).toBeDefined();
 
-      // Verify fal.ai was called with correct parameters
-      expect(mockFalSubscribe).toHaveBeenCalledWith(
-        'fal-ai/chatterbox/text-to-speech',
+      // Verify Replicate was called with correct parameters
+      expect(mockReplicateRun).toHaveBeenCalledWith(
+        'resemble-ai/chatterbox',
         expect.objectContaining({
           input: expect.objectContaining({
             text: 'Hello world',
             cfg_weight: 0.5,
             temperature: 0.8,
             exaggeration: 0.5,
-            audio_url: expect.any(String),
+            reference_audio: expect.any(String),
           }),
-          logs: false,
-          abortSignal: expect.any(AbortSignal),
         }),
+        expect.any(Function),
       );
     });
 
@@ -466,18 +467,23 @@ describe('Clone Voice API Route', () => {
         filename: expect.stringContaining('clone-voice/'),
         text: 'Hello world',
         url: expect.stringContaining('blob.vercel-storage.com'),
-        model: 'chatterbox-tts',
+        model: 'resemble-ai/chatterbox',
         predictionId: expect.any(String),
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
-        duration: expect.any(String),
+        duration: '30.000',
         credits_used: expect.any(Number),
+        usage: {
+          locale: 'en',
+        },
       });
     });
 
-    it('should handle fal.ai API errors gracefully', async () => {
-      // Mock fal.subscribe to throw an error
-      mockFalSubscribe.mockRejectedValueOnce(new Error('API quota exceeded'));
+    it('should handle Replicate API errors gracefully', async () => {
+      // Mock Replicate to return an error
+      mockReplicateRun.mockResolvedValueOnce({
+        error: 'API quota exceeded',
+      });
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -490,8 +496,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBeDefined();
-      expect(json.error).toContain('API quota exceeded');
+      expect(json.error).toBe('API quota exceeded');
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -586,8 +591,10 @@ describe('Clone Voice API Route', () => {
     });
 
     it('should not schedule cleanup if generation fails', async () => {
-      // Mock fal.subscribe to throw an error
-      mockFalSubscribe.mockRejectedValueOnce(new Error('Generation failed'));
+      // Mock Replicate to return an error
+      mockReplicateRun.mockResolvedValueOnce({
+        error: 'Generation failed',
+      });
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -680,7 +687,9 @@ describe('Clone Voice API Route', () => {
       const { captureException } = await import('@sentry/nextjs');
 
       // Mock an error scenario
-      mockFalSubscribe.mockRejectedValueOnce(new Error('Test error'));
+      mockReplicateRun.mockResolvedValueOnce({
+        error: 'Test error',
+      });
 
       const formData = createFormDataWithAudio('Hello world');
 

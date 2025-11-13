@@ -6,11 +6,21 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 // Mock handlers for external services
 export const handlers = [
   // Replicate API Mock
-  http.post('https://api.replicate.com/v1/predictions', () => {
-    return HttpResponse.json({
+  http.post('https://api.replicate.com/v1/predictions', () =>
+    HttpResponse.json({
       id: 'test-prediction-id',
       status: 'succeeded',
       output: 'https://example.com/audio.mp3',
+    }),
+  ),
+  // Replicate audio file fetch mock
+  http.get('https://replicate.delivery/pbxt/test-audio-output.mp3', () => {
+    // Return a minimal valid audio buffer
+    const audioBuffer = new ArrayBuffer(1024);
+    return HttpResponse.arrayBuffer(audioBuffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg',
+      },
     });
   }),
   // fal.ai audio file fetch mock
@@ -172,11 +182,11 @@ vi.mock('@upstash/redis', () => ({
 export { mockRedisGet, mockRedisSet, mockRedisDel, mockRedisKeys };
 
 // Mock Vercel Blob
-const mockBlobPut = vi.fn().mockImplementation((filename: string) => {
-  return Promise.resolve({
+const mockBlobPut = vi.fn().mockImplementation((filename: string) =>
+  Promise.resolve({
     url: `https://blob.vercel-storage.com/${filename}`,
-  });
-});
+  }),
+);
 const mockBlobHead = vi.fn().mockRejectedValue(new Error('Not found'));
 
 vi.mock('@vercel/blob', () => ({
@@ -232,7 +242,7 @@ Object.defineProperty(global, 'crypto', {
         const view = new Uint8Array(data);
         let hash = 0;
         for (let i = 0; i < view.length; i++) {
-          hash = (hash * 31 + view[i]) & 0xffffffff;
+          hash = (hash * 31 + view[i]) & 0xff_ff_ff_ff;
         }
         // Create a Uint8Array with the hash value
         const hashArray = new Uint8Array(16);
@@ -245,8 +255,12 @@ Object.defineProperty(global, 'crypto', {
   },
 });
 
-const mockReplicateRun = vi.fn().mockImplementation(async () => {
-  // Return a ReadableStream mock for successful responses
+const mockReplicateRun = vi.fn().mockImplementation(async (model: string) => {
+  // For chatterbox models (voice cloning), return a URL string
+  if (model.includes('chatterbox')) {
+    return 'https://replicate.delivery/pbxt/test-audio-output.mp3';
+  }
+  // For other models (generate-voice), return a ReadableStream
   return new ReadableStream({
     start(controller) {
       controller.enqueue(new Uint8Array([1, 2, 3, 4]));
@@ -259,29 +273,25 @@ const mockReplicateConstructor = vi.fn().mockImplementation(() => ({
   run: mockReplicateRun,
 }));
 
-vi.mock('replicate', () => {
-  return {
-    default: mockReplicateConstructor,
-    Replicate: mockReplicateConstructor,
-  };
-});
+vi.mock('replicate', () => ({
+  default: mockReplicateConstructor,
+  Replicate: mockReplicateConstructor,
+}));
 
 export { mockReplicateRun };
 
 // Mock fal.ai client
-const mockFalSubscribe = vi.fn().mockImplementation(async () => {
-  return {
-    data: {
-      audio: {
-        url: 'https://fal-cdn.com/test-audio.mp3',
-        content_type: 'audio/mpeg',
-        file_name: 'output.mp3',
-        file_size: 1024,
-      },
+const mockFalSubscribe = vi.fn().mockImplementation(async () => ({
+  data: {
+    audio: {
+      url: 'https://fal-cdn.com/test-audio.mp3',
+      content_type: 'audio/mpeg',
+      file_name: 'output.mp3',
+      file_size: 1024,
     },
-    requestId: 'test-fal-request-id',
-  };
-});
+  },
+  requestId: 'test-fal-request-id',
+}));
 
 vi.mock('@fal-ai/client', () => ({
   fal: {
@@ -296,14 +306,12 @@ const mockParseBuffer = vi.fn().mockResolvedValue({
   format: { duration: 30 }, // Default to 30 seconds (valid duration)
 });
 
-vi.mock('music-metadata', async () => {
-  return {
+vi.mock('music-metadata', async () => ({
+  parseBuffer: mockParseBuffer,
+  default: {
     parseBuffer: mockParseBuffer,
-    default: {
-      parseBuffer: mockParseBuffer,
-    },
-  };
-});
+  },
+}));
 
 export { mockParseBuffer };
 

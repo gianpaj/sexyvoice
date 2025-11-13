@@ -7,9 +7,10 @@ interface CloneAudioCleanup {
     userId: string;
   };
 }
-interface Events {
+// biome-ignore lint/style/useConsistentTypeDefinitions: required by inngest
+type Events = {
   'clone-audio/cleanup.scheduled': CloneAudioCleanup;
-}
+};
 
 export const inngest = new Inngest({
   id: 'sexyvoice',
