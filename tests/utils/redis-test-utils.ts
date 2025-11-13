@@ -9,18 +9,20 @@ let redisClient: Redis | null = null;
  * @returns Redis client instance connected to the test server
  */
 export async function setupRedis(): Promise<Redis> {
-  // Configure redis-memory-server with flexible binary options
-  // Supports both system Redis (via REDISMS_SYSTEM_BINARY) and downloaded binaries
+  // Configure redis-memory-server with explicit settings for faster CI downloads
   const config: any = {
     instance: {
       port: undefined, // auto-assign available port
     },
     binary: {
       version: '7.2.4', // Use a specific stable version
-      downloadDir: process.env.REDISMS_DOWNLOAD_DIR, // Will use env var if set
-      systemBinary: process.env.REDISMS_SYSTEM_BINARY, // Allow system Redis if specified
     },
   };
+
+  // Only set downloadDir if the environment variable is defined
+  if (process.env.REDIS_MEMORY_SERVER_CACHE_DIR) {
+    config.binary.downloadDir = process.env.REDIS_MEMORY_SERVER_CACHE_DIR;
+  }
 
   redisServer = new RedisMemoryServer(config);
 
