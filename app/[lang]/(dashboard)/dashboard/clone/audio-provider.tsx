@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
-type AudioContextType = {
+interface AudioContextType {
   setSong: (url: string) => void;
   pauseSong: () => void;
   currentPlayingUrl: string | null;
-};
+}
 
 export const AudioContext = createContext<AudioContextType | undefined>(
   undefined,
@@ -18,9 +18,9 @@ export const useAudio = () => {
   return context;
 };
 
-type AudioProviderProps = {
+interface AudioProviderProps {
   children: React.ReactNode;
-};
+}
 
 export const AudioProvider = ({ children }: AudioProviderProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -29,8 +29,6 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
   );
 
   const setSong = (url: string) => {
-    console.log('setSong', url);
-
     // Properly cleanup previous audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -64,8 +62,6 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
   };
 
   const pauseSong = () => {
-    console.log('pauseSong');
-
     audioRef.current?.pause();
     setCurrentPlayingUrl(null);
   };

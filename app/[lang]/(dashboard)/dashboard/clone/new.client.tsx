@@ -124,6 +124,11 @@ export default function NewVoiceClient({
       code,
   }));
 
+  const onFilesAdded = () => {
+    setStatus('idle');
+    setErrorMessage('');
+  };
+
   const [
     { files, isDragging, errors },
     {
@@ -138,6 +143,7 @@ export default function NewVoiceClient({
       addFiles,
     },
   ] = useFileUpload({
+    onFilesAdded,
     maxSize: MAX_FILE_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
@@ -346,7 +352,7 @@ export default function NewVoiceClient({
                   )}
 
                   {/* Selected file display */}
-                  {file && (
+                  {file ? (
                     <div
                       className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
                       key={files[0]?.id}
@@ -376,10 +382,8 @@ export default function NewVoiceClient({
                         <XIcon aria-hidden="true" className="!size-6" />
                       </Button>
                     </div>
-                  )}
-
-                  {/* Sample audio demo buttons */}
-                  {!file && (
+                  ) : (
+                    // Sample audio demo buttons
                     <div className="grid w-full gap-2">
                       <p className="text-muted-foreground text-xs">
                         {dict.tryDemo}

@@ -37,21 +37,51 @@ export default function CloneSampleCard({
 }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: no need
   const handleLoadSampleAudio = useCallback(
-    (sampleAudio: SampleAudio) => {
-      const audioPath = `https://files.sexyvoice.ai/${sampleAudio.audioSrc}`;
-      fetch(audioPath)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const file = new File([blob], sampleAudio.audioSrc, {
-            type: 'audio/mpeg',
-          });
-          addFiles([file]);
-          setTextToConvert(sampleAudio.prompt);
-        })
-        .catch((err) => {
-          setErrorMessage(`Failed to load sample audio: ${err.message}`);
-          setStatus('error');
+    async (sampleAudio: SampleAudio) => {
+      try {
+        // we need a local file otherwise we have a CORS error with R2 on https://files.sexyvoice.ai
+        const localPath = sampleAudio.audioSrc.replace(
+          'clone-en-audio-samples/',
+          '',
+        );
+        const audioPath = `/sv-samples/${localPath}`;
+        const res = await fetch(audioPath);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch audio: ${res.statusText}`);
+        }
+
+        const blob = await res.blob();
+
+        // Use the blob's actual type if available, otherwise infer from filename
+        let mimeType = blob.type;
+        if (!mimeType || mimeType === 'application/octet-stream') {
+          const extension = sampleAudio.audioSrc
+            .split('.')
+            .pop()
+            ?.toLowerCase();
+          if (extension === 'mp3') {
+            mimeType = 'audio/mpeg';
+          } else if (extension === 'wav') {
+            mimeType = 'audio/wav';
+          } else if (extension === 'm4a') {
+            mimeType = 'audio/mp4';
+          } else {
+            mimeType = 'audio/mpeg'; // default
+          }
+        }
+
+        const file = new File([blob], sampleAudio.audioSrc, {
+          type: mimeType,
         });
+
+        addFiles([file]);
+        setTextToConvert(sampleAudio.prompt);
+      } catch (err) {
+        const error = err as Error;
+        setErrorMessage(`Failed to load sample audio: ${error.message}`);
+        setStatus('error');
+      }
     },
     [addFiles],
   );
@@ -88,7 +118,7 @@ export default function CloneSampleCard({
           </div>
         </div>
         <Button
-          className="mx-auto flex h-auto w-fit gap-1 whitespace-normal px-3 py-2"
+          className="m-0 mx-auto flex h-auto w-fit gap-0 whitespace-normal p-0 shadow-none"
           key={sample.id}
           onClick={() => handleLoadSampleAudio(sample)}
           type="button"
@@ -96,13 +126,13 @@ export default function CloneSampleCard({
         >
           <Image
             alt={sample.name}
-            className="-my-2 -ml-3 m mr-2 rounded-sm"
+            className="rounded-sm"
             height={65}
             src={sample.image}
             width={65}
           />
 
-          <div className="flex flex-col items-start self-start">
+          <div className="flex flex-col items-start self-center px-3 text-left">
             <span className="font-medium text-sm">
               {dict.sampleCard.loadSource}: {sample.name}
             </span>

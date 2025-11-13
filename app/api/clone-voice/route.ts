@@ -282,7 +282,7 @@ export async function POST(request: Request) {
         predictionId: requestId,
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
-        duration: duration.toString(),
+        duration: duration.toFixed(3),
         credits_used: estimate,
         usage: {
           locale,
