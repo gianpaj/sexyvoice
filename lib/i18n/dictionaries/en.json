@@ -302,8 +302,7 @@
     "/": "",
     "/login": "Log in",
     "/signup": "Sign up with email or Google ",
-    "/dashboard/generate": "Generate",
-    "/privacy-policy": "Privacy Policy"
+    "/dashboard/generate": "Generate"
   },
   "footer": {
     "statusPage": "Status page",

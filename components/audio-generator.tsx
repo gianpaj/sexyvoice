@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
+import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
@@ -199,37 +200,20 @@ export function AudioGenerator({
     }
   };
 
-  const downloadAudio = (() => {
+  const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
     const anchorElement = document.createElement('a');
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
 
-    return () => {
-      if (!audio) return;
+    if (!audio) return;
 
-      // Create a Blob from the audio source
-      fetch(audio.src)
-        .then((response) => response.blob())
-        .then((audioBlob) => {
-          // Create a temporary object URL for the Blob
-          const objectUrl = window.URL.createObjectURL(audioBlob);
-
-          anchorElement.href = objectUrl;
-          anchorElement.download = `generated_audio_${Date.now()}.mp3`;
-
-          // Simulate the click to trigger the download prompt
-          anchorElement.click();
-
-          // Essential cleanup: release the temporary URL resource
-          window.URL.revokeObjectURL(objectUrl);
-        })
-        .catch((error) => {
-          console.error('Failed to download audio', error);
-          toast.error(dict.error);
-        });
-    };
-  })();
+    try {
+      await downloadUrl(audio.src, anchorElement);
+    } catch {
+      toast.error(dict.error);
+    }
+  };
 
   const { complete } = useCompletion({
     api: '/api/generate-text',
@@ -279,7 +263,7 @@ export function AudioGenerator({
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 sm:p-6 sm:pt-4 p-4">
+      <CardContent className="space-y-4 sm:p-6 sm:pt-4 p-4">
         <div className="space-y-2">
           <div className="relative">
             <Textarea

@@ -33,6 +33,7 @@ import { Label } from '@/components/ui/label';
 // } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import { downloadUrl } from '@/lib/download';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioPlayer } from '../history/audio-player';
 
@@ -184,35 +185,20 @@ export default function NewVoiceClient({
     };
   }, [status, textToConvert, handleGenerate]);
 
-  const handleDownload = (() => {
+  const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
     const anchorElement = document.createElement('a');
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
 
-    return () => {
-      // Create a Blob from the audio source
-      fetch(generatedAudioUrl)
-        .then((response) => response.blob())
-        .then((audioBlob) => {
-          // Create a temporary object URL for the Blob
-          const objectUrl = window.URL.createObjectURL(audioBlob);
+    if (!generatedAudioUrl) return;
 
-          anchorElement.href = objectUrl;
-          anchorElement.download = `generated_audio_${Date.now()}.mp3`;
-
-          // Simulate the click to trigger the download prompt
-          anchorElement.click();
-
-          // Essential cleanup: release the temporary URL resource
-          window.URL.revokeObjectURL(objectUrl);
-        })
-        .catch((error) => {
-          console.error('Failed to download audio', error);
-          toast.error(dict.error);
-        });
-    };
-  })();
+    try {
+      await downloadUrl(generatedAudioUrl, anchorElement);
+    } catch {
+      toast.error(dict.error);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -401,7 +387,7 @@ export default function NewVoiceClient({
 
                 <div className="flex justify-center gap-4">
                   <Button
-                    onClick={handleDownload}
+                    onClick={downloadAudio}
                     className="flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
