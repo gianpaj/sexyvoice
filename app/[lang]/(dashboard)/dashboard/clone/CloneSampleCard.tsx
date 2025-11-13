@@ -11,14 +11,14 @@ import { Button } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Status } from './new.client';
 
-export type SampleAudio = {
+export interface SampleAudio {
   id: number;
   name: string;
   prompt: string;
   audioSrc: string;
   audioExampleOutputSrc: string;
   image: string;
-};
+}
 
 export default function CloneSampleCard({
   dict,

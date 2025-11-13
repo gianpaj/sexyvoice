@@ -49,11 +49,11 @@ type SizingProps = Extract<
 
 type SizingStyle = Pick<CSSStyleDeclaration, SizingProps>;
 
-export type SizingData = {
+export interface SizingData {
   sizingStyle: SizingStyle;
   paddingSize: number;
   borderSize: number;
-};
+}
 
 const isIE =
   typeof window !== 'undefined'

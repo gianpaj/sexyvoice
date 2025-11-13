@@ -29,6 +29,12 @@
         "useLiteralEnumMembers": "error",
         "useNodejsImportProtocol": "error",
         "useAsConstAssertion": "error",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": {
+            "style": "interface"
+          }
+        },
         "useEnumInitializers": "error",
         "useSelfClosingElements": "error",
         "useConst": "error",
