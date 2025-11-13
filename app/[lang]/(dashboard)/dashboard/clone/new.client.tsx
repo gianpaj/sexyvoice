@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PulsatingDots from '@/components/PulsatingDots';
+import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,7 @@ import { Label } from '@/components/ui/label';
 // } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import { downloadUrl } from '@/lib/download';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioPlayer } from '../history/audio-player';
 
@@ -183,12 +185,19 @@ export default function NewVoiceClient({
     };
   }, [status, textToConvert, handleGenerate]);
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = generatedAudioUrl;
-    link.target = '_blank';
-    link.download = 'generated_audio.mp3';
-    link.click();
+  const downloadAudio = async () => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
+
+    if (!generatedAudioUrl) return;
+
+    try {
+      await downloadUrl(generatedAudioUrl, anchorElement);
+    } catch {
+      toast.error(dict.error);
+    }
   };
 
   return (
@@ -378,7 +387,7 @@ export default function NewVoiceClient({
 
                 <div className="flex justify-center gap-4">
                   <Button
-                    onClick={handleDownload}
+                    onClick={downloadAudio}
                     className="flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />

@@ -1,15 +1,21 @@
+import type { Metadata } from 'next';
+
 import Footer from '@/components/footer';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 import '../privacy-policy/privacy-policy.css';
 
+export const metadata: Metadata = {
+  title: 'Terms & Conditions',
+};
+
 export default function TermsAndCondition() {
   return (
     <main
       id="main-content"
-      className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+      className="dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
     >
-      <div className="container mx-auto px-4 my-8">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <h1>Terms & Conditions</h1>
         <p>Updated at 2025-03-28</p>
 

@@ -113,37 +113,6 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
-        {isGeminiVoice && (
-          <div className="relative">
-            <Textarea
-              onChange={(e) => setSelectedStyle(e.target.value)}
-              value={selectedStyle}
-              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
-              className="textarea-1 transition-[height] duration-200 ease-in-out"
-              style={
-                {
-                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
-                } as React.CSSProperties
-              }
-              ref={textareaRef}
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className={
-                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }
-              title="Fullscreen"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        )}
         {selectedVoice?.sample_url && (
           <div className="flex gap-2 items-center justify-start py-2 lg:w-2/3">
             <AudioPlayer url={selectedVoice.sample_url} />
@@ -175,6 +144,37 @@ export function VoiceSelector({
                 </TooltipProvider>
               )}
             </div>
+          </div>
+        )}
+        {isGeminiVoice && (
+          <div className="relative">
+            <Textarea
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              value={selectedStyle}
+              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
+              className="textarea-1 transition-[height] duration-200 ease-in-out pr-16"
+              style={
+                {
+                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
+                } as React.CSSProperties
+              }
+              ref={textareaRef}
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className={
+                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }
+              title="Fullscreen"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         )}
       </CardContent>
