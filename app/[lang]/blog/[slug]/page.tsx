@@ -211,20 +211,30 @@ const PostLayout = async (props: {
         itemScope
         itemType="https://schema.org/TechArticle"
       >
-        <h1 itemProp="name">{post.title}</h1>
+        <p itemProp="name">{post.title}</p>
         <div itemProp="abstract">{post.description}</div>
-        <div itemProp="about">
-          This article covers advanced concepts in AI voice generation,
-          including neural networks, machine learning algorithms, voice
-          synthesis techniques, and practical applications of artificial
-          intelligence in speech technology.
-        </div>
-        <meta
-          itemProp="audience"
-          content="Developers, AI researchers, content creators"
-        />
-        <meta itemProp="educationalLevel" content="Intermediate to Advanced" />
-        <meta itemProp="learningResourceType" content="Tutorial" />
+        <p>
+          Target audience:
+          <span
+            itemProp="audience"
+            itemScope
+            itemType="https://schema.org/EducationalAudience"
+          >
+            <span itemProp="educationalRole">developers</span>,
+            <span itemProp="educationalRole">content creators</span>
+          </span>
+        </p>
+        <p
+          itemProp="educationalLevel"
+          itemScope
+          itemType="https://schema.org/DefinedTerm"
+        >
+          <span itemProp="name">Beginner to Intermediate</span>
+        </p>
+        <p>
+          Resource type:
+          <span itemProp="learningResourceType">tutorial</span>
+        </p>
       </div>
 
       <main itemScope itemType="https://schema.org/WebPage">
