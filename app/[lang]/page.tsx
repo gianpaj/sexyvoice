@@ -53,7 +53,7 @@ export default async function LandingPage(props: {
   }
 
   const dict = await getDictionary(lang, 'landing');
-  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
+  const blackFridayDict = (await getDictionary(lang, 'promos')).blackFridayBanner;
 
   const [firstPart, ...restParts] = dict.hero.title.split(',');
   const titleRestParts = restParts.join(',');
@@ -76,11 +76,20 @@ export default async function LandingPage(props: {
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <PromoBanner
-        text={halloweenDict.text}
-        ctaText={halloweenDict.ctaLoggedOut}
-        arialLabelDismiss={halloweenDict.arialLabelDismiss}
+        text={blackFridayDict.text}
+        ctaText={blackFridayDict.ctaLoggedOut}
+        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
         ctaLink={`/${lang}/signup`}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+        countdown={
+          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+            ? {
+                enabled: true,
+                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                labels: blackFridayDict.countdown,
+              }
+            : undefined
+        }
       />
       <HeaderStatic lang={lang} />
       <main id="main-content">

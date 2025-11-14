@@ -319,6 +319,19 @@
       "ctaLoggedIn": "Obtener Créditos",
       "ctaLoggedOut": "Regístrate Ahora",
       "arialLabelDismiss": "Descartar banner de Halloween"
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
+      "ctaLoggedIn": "Obtener Oferta",
+      "ctaLoggedOut": "Regístrate Ahora",
+      "arialLabelDismiss": "Descartar banner de Black Friday",
+      "countdown": {
+        "prefix": "La oferta termina en:",
+        "days": "Días",
+        "hours": "Horas",
+        "minutes": "Min",
+        "seconds": "Seg"
+      }
     }
   }
 }

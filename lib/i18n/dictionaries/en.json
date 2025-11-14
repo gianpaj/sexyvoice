@@ -316,6 +316,19 @@
       "ctaLoggedIn": "Claim Offer",
       "ctaLoggedOut": "Sign Up Now",
       "arialLabelDismiss": "Dismiss Halloween banner"
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Black Friday Sale – Get up to 50% extra credits with any purchase!\nLimited time offer 🔥",
+      "ctaLoggedIn": "Claim Offer",
+      "ctaLoggedOut": "Sign Up Now",
+      "arialLabelDismiss": "Dismiss Black Friday banner",
+      "countdown": {
+        "prefix": "Deal ends in:",
+        "days": "Days",
+        "hours": "Hours",
+        "minutes": "Min",
+        "seconds": "Sec"
+      }
     }
   }
 }
