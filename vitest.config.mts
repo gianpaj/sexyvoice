@@ -25,7 +25,7 @@ export default defineConfig({
       return true;
     },
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/generate-voice.test.ts', 'tests/stripe-webhook.test.ts'],
+    include: ['tests/*.test.ts'],
     // exclude: ['lib/utils.test.ts'],
     coverage: {
       provider: 'v8',
@@ -38,7 +38,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, '.'),
+      '@': resolve(__dirname, './'),
     },
   },
 });

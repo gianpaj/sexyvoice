@@ -18,7 +18,9 @@ export async function createOrRetrieveCustomer(
   email: string,
   existingStripeId?: string | null,
 ) {
-  const ensureCustomerMetadata = async (customer: Stripe.Customer | null) => {
+  const ensureCustomerMetadata = async (
+    customer: Stripe.Customer | null,
+  ): Promise<string | null> => {
     if (!customer) return null;
 
     const metadata = customer.metadata ?? {};
@@ -46,6 +48,17 @@ export async function createOrRetrieveCustomer(
         await stripe.customers.update(customer.id, {
           metadata: { ...metadata, supabaseUUID: userId },
         });
+        Sentry.captureMessage(
+          `Updated metadata for Stripe customer ${customer.id} to link to Supabase user ${userId}.`,
+          {
+            level: 'info',
+            extra: {
+              customerId: customer.id,
+              email,
+              userId,
+            },
+          },
+        );
       } catch (error) {
         console.error(
           `Failed to update metadata for Stripe customer ${customer.id}`,
@@ -63,22 +76,25 @@ export async function createOrRetrieveCustomer(
       }
     }
 
-    return updateStripeId(userId, customer.id);
+    await updateStripeId(userId, customer.id);
+    return customer.id;
   };
 
-  const retrieveCustomerById = async (customerId: string) => {
+  const retrieveCustomerById = async (
+    customerId: string,
+  ): Promise<Stripe.Customer | null> => {
     try {
       const customer = await stripe.customers.retrieve(customerId);
       if (customer && 'deleted' in customer && customer.deleted) {
-        const message = `Stripe customer ${customerId} is deleted.`;
-        console.error(message);
-        Sentry.captureMessage(message, {
+        const error = new Error(`Stripe customer ${customerId} is deleted.`);
+        console.error(error.message);
+        Sentry.captureMessage(error.message, {
           level: 'warning',
           extra: { customerId, userId, email },
         });
         return null;
       }
-      return customer as Stripe.Customer;
+      return customer;
     } catch (error) {
       console.error(
         `Failed to retrieve Stripe customer with id ${customerId}`,
@@ -100,29 +116,27 @@ export async function createOrRetrieveCustomer(
     }
   }
 
-  const constomersResults = await stripe.customers.search({
+  const customersResults = await stripe.customers.search({
     query: `metadata['supabaseUUID']:'${userId}'`,
   });
 
-  if (constomersResults.data.length > 1) {
-    console.error(
+  if (customersResults.data.length > 1) {
+    const error = new Error(
       `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
     );
-    Sentry.captureMessage(
-      `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
-      {
-        level: 'warning',
-        extra: {
-          customerCount: constomersResults.data.length,
-          email,
-          userId,
-        },
+    console.error(error.message);
+    Sentry.captureMessage(error.message, {
+      level: 'warning',
+      extra: {
+        customerCount: customersResults.data.length,
+        email,
+        userId,
       },
-    );
+    });
   }
 
-  if (constomersResults.data.length && constomersResults.data[0]?.id) {
-    const ensured = await ensureCustomerMetadata(constomersResults.data[0]);
+  if (customersResults.data.length && customersResults.data[0]?.id) {
+    const ensured = await ensureCustomerMetadata(customersResults.data[0]);
     if (ensured) {
       return ensured;
     }
@@ -131,16 +145,14 @@ export async function createOrRetrieveCustomer(
   const customers = await stripe.customers.list({ email });
 
   if (customers.data.length > 1) {
-    console.error(
+    const error = new Error(
       `Multiple customers found for email ${email}. Using the first one.`,
     );
-    Sentry.captureMessage(
-      `Multiple customers found for email ${email}. Using the first one.`,
-      {
-        level: 'warning',
-        extra: { customerCount: customers.data.length, email, userId },
-      },
-    );
+    console.error(error.message);
+    Sentry.captureMessage(error.message, {
+      level: 'warning',
+      extra: { customerCount: customers.data.length, email, userId },
+    });
   }
 
   if (customers.data.length && customers.data[0]?.id) {
@@ -155,18 +167,19 @@ export async function createOrRetrieveCustomer(
     metadata: { supabaseUUID: userId },
   });
 
-  const stripe_id = updateStripeId(userId, customer.id);
+  const stripeId = customer.id;
+  await updateStripeId(userId, stripeId);
 
   console.info(
-    `Created new Stripe customer with id ${customer.id} (${userId}) for email ${email}`,
+    `Created new Stripe customer with id ${stripeId} (${userId}) for email ${email}`,
   );
   Sentry.logger.info('Created new Stripe customer', {
-    customerId: customer.id,
+    customerId: stripeId,
     email,
     userId,
   });
 
-  return stripe_id;
+  return stripeId;
 }
 
 // Helper function to update stripe_id in database
@@ -176,13 +189,12 @@ const updateStripeId = async (userId: string, stripeId: string) => {
     .from('profiles')
     .update({ stripe_id: stripeId })
     .eq('id', userId);
-  return stripeId;
 };
 
-export async function createCustomerSession(userId: string, stripe_id: string) {
+export async function createCustomerSession(userId: string, stripeId: string) {
   try {
     const customerSession = await stripe.customerSessions.create({
-      customer: stripe_id,
+      customer: stripeId,
       components: {
         pricing_table: {
           enabled: true,
@@ -200,7 +212,7 @@ export async function createCustomerSession(userId: string, stripe_id: string) {
       message: 'Error creating Stripe customer session',
       error,
       userId,
-      stripe_id,
+      stripeId,
     });
     throw error;
   }
