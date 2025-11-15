@@ -27,6 +27,15 @@ export interface CustomerData {
     | 'paused'
     | 'trialing'
     | 'unpaid';
+  subscriptionId?: string;
+  priceId?: string;
+  currentPeriodEnd?: number;
+  currentPeriodStart?: number;
+  cancelAtPeriodEnd?: boolean | null;
+  paymentMethod?: {
+    brand: string | null;
+    last4: string | null;
+  } | null;
 }
 
 export function setCustomerData(customerId: string, data: CustomerData) {

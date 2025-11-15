@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -10,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { banList } from '@/lib/banlist';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 export function SignUpForm({
   dict,
