@@ -30,7 +30,7 @@ export async function createOrRetrieveCustomer(
       const error = new Error(
         `Stripe customer ${customer.id} already linked to Supabase user ${metadataUuid}.`,
       );
-      console.error(error.message);
+      console.error(`[STRIPE ADMIN] ${error.message}`);
       Sentry.captureException(error, {
         level: 'error',
         extra: {
@@ -61,7 +61,7 @@ export async function createOrRetrieveCustomer(
         );
       } catch (error) {
         console.error(
-          `Failed to update metadata for Stripe customer ${customer.id}`,
+          `[STRIPE ADMIN] Failed to update metadata for Stripe customer ${customer.id}`,
           error,
         );
         Sentry.captureException(error, {
@@ -87,7 +87,7 @@ export async function createOrRetrieveCustomer(
       const customer = await stripe.customers.retrieve(customerId);
       if (customer && 'deleted' in customer && customer.deleted) {
         const error = new Error(`Stripe customer ${customerId} is deleted.`);
-        console.error(error.message);
+        console.error(`[STRIPE ADMIN] ${error.message}`);
         Sentry.captureMessage(error.message, {
           level: 'warning',
           extra: { customerId, userId, email },
@@ -97,7 +97,7 @@ export async function createOrRetrieveCustomer(
       return customer;
     } catch (error) {
       console.error(
-        `Failed to retrieve Stripe customer with id ${customerId}`,
+        `[STRIPE ADMIN] Failed to retrieve Stripe customer with id ${customerId}`,
         error,
       );
       Sentry.captureException(error, {
@@ -124,7 +124,7 @@ export async function createOrRetrieveCustomer(
     const error = new Error(
       `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
     );
-    console.error(error.message);
+    console.error(`[STRIPE ADMIN] ${error.message}`);
     Sentry.captureMessage(error.message, {
       level: 'warning',
       extra: {
@@ -171,7 +171,7 @@ export async function createOrRetrieveCustomer(
   await updateStripeId(userId, stripeId);
 
   console.info(
-    `Created new Stripe customer with id ${stripeId} (${userId}) for email ${email}`,
+    `[STRIPE ADMIN] Created new Stripe customer with id ${stripeId} (${userId}) for email ${email}`,
   );
   Sentry.logger.info('Created new Stripe customer', {
     customerId: stripeId,
@@ -204,7 +204,10 @@ export async function createCustomerSession(userId: string, stripeId: string) {
 
     return customerSession;
   } catch (error) {
-    console.error('Error creating Stripe customer session:', error);
+    console.error(
+      '[STRIPE ADMIN] Error creating Stripe customer session:',
+      error,
+    );
     if (process.env.NODE_ENV !== 'production') {
       return null;
     }
@@ -257,7 +260,10 @@ export async function refreshCustomerSubscriptionData(
 
     return subData;
   } catch (error) {
-    console.error('Error refreshing Stripe customer subscription data:', error);
+    console.error(
+      '[STRIPE ADMIN] Error refreshing Stripe customer subscription data:',
+      error,
+    );
     Sentry.captureException(error, {
       level: 'error',
       extra: { customerId },

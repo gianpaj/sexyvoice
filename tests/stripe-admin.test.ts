@@ -4,22 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createOrRetrieveCustomer, stripe } from '@/lib/stripe/stripe-admin';
 import { createClient } from '@/lib/supabase/server';
 
-// Mock Sentry
-vi.mock('@sentry/nextjs', () => ({
-  captureException: vi.fn(),
-  captureMessage: vi.fn(),
-  logger: {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
-}));
-
-// Mock Supabase client
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(),
-}));
-
 // Mock Stripe customers API
 vi.mock('stripe', () => {
   const mockStripe = {
