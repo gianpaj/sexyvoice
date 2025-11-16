@@ -62,6 +62,7 @@ vi.mock('next/server', () => ({
 // Mock Sentry
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
+  captureMessage: vi.fn(),
   logger: {
     info: vi.fn(),
     warn: vi.fn(),

@@ -15,7 +15,9 @@ export default defineConfig({
     hookTimeout: 120_000, // 2 minutes for hooks (beforeAll/afterAll) - needed for redis-memory-server binary download in CI
     onConsoleLog(log, type) {
       if (
-        ((log.startsWith('[STRIPE HOOK') ||
+        ((['[STRIPE HOOK', '[STRIPE ADMIN'].some((str) =>
+          log.startsWith(str),
+        ) ||
           log.includes('OTHER_GEMINI_BLOCK')) &&
           type === 'stdout') ||
         type === 'stderr'
@@ -25,7 +27,7 @@ export default defineConfig({
       return true;
     },
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/generate-voice.test.ts', 'tests/stripe-webhook.test.ts'],
+    include: ['tests/*.test.ts'],
     // exclude: ['lib/utils.test.ts'],
     coverage: {
       provider: 'v8',
@@ -38,7 +40,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, '.'),
+      '@': resolve(__dirname, './'),
     },
   },
 });

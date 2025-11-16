@@ -59,7 +59,7 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // pricePer1kCredits: isPromoEnabled ? 0.3076 : 0.4, //
       get pricePer1kCredits() {
-        return ((this.dollarAmount / this.credits) * 1000).toFixed(3); // isPromoEnabled ? $0.308 : $0.4
+        return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.308 : $0.4
       },
       promoBonus: promoBonuses.standard.toLocaleString(lang),
       dollarAmount: 10, // $10.00
@@ -78,7 +78,7 @@ export const getTopupPackages = (lang: Locale) => {
       },
       // pricePer1kCredits: isPromoEnabled ? 0.2444 : 0.33, // -20.54% : -17.5% from previous plan
       get pricePer1kCredits() {
-        return ((this.dollarAmount / this.credits) * 1000).toFixed(3); // isPromoEnabled ? $0.244 : 0.33
+        return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.244 : 0.33
       },
       promoBonus: promoBonuses.pro.toLocaleString(lang),
       dollarAmount: 99, // $99.00
@@ -89,3 +89,7 @@ export const getTopupPackages = (lang: Locale) => {
 const TOPUP_PACKAGES = getTopupPackages('en');
 
 export type PackageType = keyof typeof TOPUP_PACKAGES;
+
+function trimTrailingZeros(num: number): string {
+  return num.toFixed(3).replace(/\.?0+$/, '');
+}
