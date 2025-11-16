@@ -304,7 +304,7 @@
     "description": "KI-Sprachgenerator, mit dem Sie Text kostenlos (zum Ausprobieren) online in Sprache umwandeln, Stimmen klonen und natürlich klingende und ausdrucksstarke Sprache in 24 Sprachen generieren können.",
     "/": "",
     "/login": "Anmelden",
-    "/signup": "Registrieren",
+    "/signup": "Mit E-Mail oder Google registrieren",
     "/dashboard/generate": "Generieren"
   },
   "header": {

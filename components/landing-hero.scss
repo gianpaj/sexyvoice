@@ -5,8 +5,8 @@
 	fill: url(#header-shape-gradient) #fff;
 }
 #header-shape-gradient {
-	--color-stop: #f12c06;
-	--color-bot: orange;
+	--color-stop: #ef58f9;
+	--color-bot: #ff1a66;
 }
 @for $i from 1 through 17 {
 	#Line_#{$i} {
