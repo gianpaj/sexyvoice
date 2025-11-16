@@ -11,6 +11,7 @@ import { getCustomerData } from '@/lib/redis/queries';
 import {
   createCustomerSession,
   createOrRetrieveCustomer,
+  refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -36,24 +37,43 @@ export default async function CreditsPage(props: {
     throw new Error('User not found');
   }
 
-  if (!userData.stripe_id) {
-    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-    if (!stripe_id) {
-      console.error('Failed to create or retrieve Stripe customer.');
-      Sentry.captureMessage('Failed to create or retrieve Stripe customer.', {
-        level: 'error',
-        extra: { userId: user.id, email: user.email },
-      });
-    }
-    userData.stripe_id = stripe_id;
-  }
-
-  const customerData = await getCustomerData(userData.stripe_id);
-
-  const clientSecret = await createCustomerSession(
-    userData.id,
+  const stripeId = await createOrRetrieveCustomer(
+    user.id,
+    user.email!,
     userData.stripe_id,
   );
+
+  if (!stripeId) {
+    const error = new Error('Failed to create or retrieve Stripe customer.');
+    console.error(error.message);
+    Sentry.captureException(error, {
+      level: 'error',
+      extra: { userId: user.id, email: user.email },
+    });
+    throw error;
+  }
+
+  userData.stripe_id = stripeId;
+
+  let customerData = await getCustomerData(stripeId);
+  let shouldShowPricingTable =
+    !customerData || customerData.status !== 'active';
+  let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
+
+  if (shouldShowPricingTable) {
+    try {
+      customerData = await refreshCustomerSubscriptionData(stripeId);
+      shouldShowPricingTable = customerData.status !== 'active';
+    } catch (error) {
+      console.error('Failed to refresh Stripe subscription data', error);
+      // refreshCustomerSubscriptionData already reports errors to Sentry
+      shouldShowPricingTable = false;
+    }
+  }
+
+  if (shouldShowPricingTable) {
+    clientSecret = await createCustomerSession(userData.id, stripeId);
+  }
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
@@ -88,7 +108,7 @@ export default async function CreditsPage(props: {
         <CreditHistory dict={dict} transactions={existingTransactions} />
       </div>
 
-      {(!customerData || customerData?.status !== 'active') && (
+      {shouldShowPricingTable && clientSecret && (
         <NextStripePricingTable clientSecret={clientSecret} />
       )}
     </div>

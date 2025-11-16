@@ -236,7 +236,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
