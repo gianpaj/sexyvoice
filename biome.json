@@ -10,6 +10,7 @@
     "includes": [
       "**",
       "!node_modules",
+      "!components/ui",
       "!.next",
       "!dist",
       "!build"
@@ -28,6 +29,12 @@
         "useLiteralEnumMembers": "error",
         "useNodejsImportProtocol": "error",
         "useAsConstAssertion": "error",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": {
+            "style": "interface"
+          }
+        },
         "useEnumInitializers": "error",
         "useSelfClosingElements": "error",
         "useConst": "error",
@@ -51,6 +58,9 @@
       },
       "correctness": {
         "useUniqueElementIds": "off"
+      },
+      "nursery": {
+        "noShadow": "off"
       }
     },
     "domains": {
@@ -66,7 +76,8 @@
       "lineEnding": "lf",
       "lineWidth": 80,
       "attributePosition": "auto",
-      "quoteStyle": "single"
+      "quoteStyle": "single",
+      "trailingCommas": "all"
     }
   },
   "assist": {
