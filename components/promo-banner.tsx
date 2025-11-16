@@ -44,7 +44,7 @@ function calculateTimeRemaining(endDate: string): TimeRemaining | null {
     return null;
   }
 
-  const now = new Date().getTime();
+  const now = Date.now();
   const end = parsedEnd.getTime();
   const distance = end - now;
 
@@ -93,7 +93,7 @@ export function PromoBanner({
 
   // Countdown timer effect
   useEffect(() => {
-    if (!countdown?.enabled || !countdown?.endDate) {
+    if (!(countdown?.enabled && countdown?.endDate)) {
       return;
     }
 
@@ -145,20 +145,20 @@ export function PromoBanner({
 
   return (
     <div
-      className={cn('w-full ', {
-        'bg-red-900/30 backdrop-blur-sm fixed z-50': inDashboard,
+      className={cn('w-full', {
+        'fixed z-50 bg-red-900/30 backdrop-blur-sm': inDashboard,
       })}
     >
       <div
         className={cn(
-          'portrait:container lg:container text-white sm:py-6 py-4 relative mx-auto px-4 sm:flex flex-inline items-center justify-between pb-3 gap-4',
+          'relative mx-auto flex-inline items-center justify-around gap-4 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-6',
           isLongText ? 'sm:h-16' : 'sm:h-8',
         )}
       >
-        <div className="flex-1 sm:text-center text-left">
+        <div className="flex flex-col items-center justify-center gap-3 text-left sm:flex-row sm:gap-8 sm:text-center">
           <p
             className={cn(
-              'text-sm md:text-base font-medium truncate text-wrap sm:whitespace-normal whitespace-pre-line',
+              'truncate whitespace-pre-line text-wrap font-medium text-sm sm:whitespace-normal md:text-base',
               {
                 'sm:text-nowrap': !isLongText,
               },
@@ -168,46 +168,28 @@ export function PromoBanner({
           </p>
 
           {countdown?.enabled && timeRemaining && !timeRemaining.expired && (
-            <div className="flex flex-col items-center sm:items-center gap-2 mt-3">
-              <p className="text-sm font-semibold text-white">
+            <div className="flex items-center gap-4">
+              <p className="font-semibold text-sm text-white">
                 {countdown.labels.prefix}
               </p>
-              <div className="flex justify-center sm:justify-center gap-3 text-xs sm:text-sm font-mono">
-                <div className="flex flex-col items-center">
-                  <span className="text-lg sm:text-xl font-bold text-orange-400">
-                    {String(timeRemaining.days).padStart(2, '0')}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    {countdown.labels.days}
-                  </span>
-                </div>
-                <span className="text-orange-400 text-lg sm:text-xl font-bold">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-lg sm:text-xl font-bold text-orange-400">
-                    {String(timeRemaining.hours).padStart(2, '0')}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    {countdown.labels.hours}
-                  </span>
-                </div>
-                <span className="text-orange-400 text-lg sm:text-xl font-bold">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-lg sm:text-xl font-bold text-orange-400">
-                    {String(timeRemaining.minutes).padStart(2, '0')}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    {countdown.labels.minutes}
-                  </span>
-                </div>
-                <span className="text-orange-400 text-lg sm:text-xl font-bold">:</span>
-                <div className="flex flex-col items-center">
-                  <span className="text-lg sm:text-xl font-bold text-orange-400">
-                    {String(timeRemaining.seconds).padStart(2, '0')}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    {countdown.labels.seconds}
-                  </span>
-                </div>
+              <div className="flex gap-0 font-mono text-xs sm:text-sm">
+                {[
+                  timeRemaining.days,
+                  timeRemaining.hours,
+                  timeRemaining.minutes,
+                  timeRemaining.seconds,
+                ].map((num, i) => (
+                  <>
+                    {i !== 0 && (
+                      <span className="font-bold text-lg sm:text-xl">:</span>
+                    )}
+                    <div className="flex flex-col items-center" key={i}>
+                      <span className="font-bold text-lg sm:text-xl">
+                        {String(num).padStart(2, '0')}
+                      </span>
+                    </div>
+                  </>
+                ))}
               </div>
             </div>
           )}
@@ -216,17 +198,17 @@ export function PromoBanner({
         <div className="flex items-center justify-center sm:mt-0 mt-3 relative gap-2 flex-[0.3]">
           <Button
             asChild
+            className="whitespace-nowrap bg-pink-600/70 font-semibold hover:bg-pink-900"
             size="sm"
             variant="outline"
-            className="text-orange-600 hover:bg-gray-900 bg-gray-800/70 font-semibold whitespace-nowrap"
           >
-            <Link href={ctaLink}>{ctaText} 🎃</Link>
+            <Link href={ctaLink}>{ctaText}</Link>
           </Button>
 
           <Button
+            className="absolute right-0 md:relative"
             size="sm"
             variant="ghost"
-            className="text-orange-700 absolute md:relative right-0"
             onClick={handleDismissBanner}
             aria-label={arialLabelDismiss}
           >

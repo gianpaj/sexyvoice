@@ -318,14 +318,14 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
-      "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Sign Up Now",
+      "ctaLoggedIn": "Claim Offer 🎃",
+      "ctaLoggedOut": "Sign Up Now 🎃",
       "arialLabelDismiss": "Dismiss Halloween banner"
     },
     "blackFridayBanner": {
-      "text": "🛍️ Black Friday Sale – Get up to 50% extra credits with any purchase!\nLimited time offer 🔥",
+      "text": "🛍️ Black Friday Sale – Get up to 35% extra credits!",
       "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Sign Up Now",
+      "ctaLoggedOut": "Claim Offer",
       "arialLabelDismiss": "Dismiss Black Friday banner",
       "countdown": {
         "prefix": "Deal ends in:",
