@@ -151,11 +151,11 @@ export function PromoBanner({
     >
       <div
         className={cn(
-          'relative mx-auto flex-inline items-center justify-around gap-4 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-6',
+          'relative mx-auto flex-inline items-center justify-center gap-32 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-6',
           isLongText ? 'sm:h-16' : 'sm:h-8',
         )}
       >
-        <div className="flex flex-col items-center justify-center gap-3 text-left sm:flex-row sm:gap-8 sm:text-center">
+        <div className="flex flex-col items-center justify-stretch gap-3 text-left sm:flex-row sm:gap-10 sm:text-center">
           <p
             className={cn(
               'truncate whitespace-pre-line text-wrap font-medium text-sm sm:whitespace-normal md:text-base',
