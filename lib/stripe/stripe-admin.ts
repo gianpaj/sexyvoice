@@ -148,7 +148,7 @@ export async function createOrRetrieveCustomer(
     const error = new Error(
       `Multiple customers found for email ${email}. Using the first one.`,
     );
-    console.error(error.message);
+    console.warn(error.message);
     Sentry.captureMessage(error.message, {
       level: 'warning',
       extra: { customerCount: customers.data.length, email, userId },
