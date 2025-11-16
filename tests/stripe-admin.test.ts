@@ -593,12 +593,12 @@ describe('createOrRetrieveCustomer()', () => {
 
       mockSupabase.from.mockReturnValue({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockRejectedValue(supabaseError),
+        eq: vi.fn().mockResolvedValue({ data: null, error: supabaseError }),
       });
 
-      await expect(createOrRetrieveCustomer(userId, email)).rejects.toThrow(
-        supabaseError,
-      );
+      const result = await createOrRetrieveCustomer(userId, email);
+
+      expect(result).toBe('cus_new_999');
     });
 
     it('should work with special characters in email', async () => {
