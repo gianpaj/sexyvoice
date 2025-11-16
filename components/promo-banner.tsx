@@ -195,7 +195,7 @@ export function PromoBanner({
           )}
         </div>
 
-        <div className="flex items-center justify-center sm:mt-0 mt-3 relative gap-2 flex-[0.3]">
+        <div className="relative mt-3 flex flex-[0.3] items-center justify-center gap-2 sm:mt-0">
           <Button
             asChild
             className="whitespace-nowrap bg-pink-600/70 font-semibold hover:bg-pink-900"
@@ -206,11 +206,11 @@ export function PromoBanner({
           </Button>
 
           <Button
+            aria-label={arialLabelDismiss}
             className="absolute right-0 md:relative"
+            onClick={handleDismissBanner}
             size="sm"
             variant="ghost"
-            onClick={handleDismissBanner}
-            aria-label={arialLabelDismiss}
           >
             <XIcon size={18} strokeWidth={3} />
           </Button>
