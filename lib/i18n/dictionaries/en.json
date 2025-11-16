@@ -301,8 +301,13 @@
     "description": "AI voice generator that allows you to convert text to speech online for free (to try), clone voice, and generate natural-sounding and expressive speech in 24 languages.",
     "/": "",
     "/login": "Log in",
-    "/signup": "Sign up with email or Google ",
+    "/signup": "Sign up with email or Google",
     "/dashboard/generate": "Generate"
+  },
+  "header": {
+    "generate": "Generate",
+    "login": "Log in",
+    "signup": "Sign up"
   },
   "footer": {
     "statusPage": "Status page",

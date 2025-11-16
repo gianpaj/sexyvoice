@@ -13,7 +13,7 @@ export async function Header({ lang }: { lang: Locale }) {
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
-  const dict = await getDictionary(lang, 'pages');
+  const dict = await getDictionary(lang, 'header');
 
   return (
     <header className="border-b border-gray-700 bg-gray-900">
@@ -38,19 +38,19 @@ export async function Header({ lang }: { lang: Locale }) {
           {user ? (
             <Button variant="default" asChild>
               <Link href={`/${lang}/dashboard/generate`} prefetch>
-                {dict['/dashboard/generate']}
+                {dict.generate}
               </Link>
             </Button>
           ) : (
             <div className="space-x-4">
               <Button variant="secondary" asChild>
                 <Link href={`/${lang}/login`} prefetch>
-                  {dict['/login']}
+                  {dict.login}
                 </Link>
               </Button>
               <Button variant="default" asChild effect="ringHover">
                 <Link href={`/${lang}/signup`} prefetch>
-                  {dict['/signup']}
+                  {dict.signup}
                 </Link>
               </Button>
             </div>
@@ -67,19 +67,19 @@ export async function Header({ lang }: { lang: Locale }) {
                 className="w-full"
                 prefetch
               >
-                {dict['/dashboard/generate']}
+                {dict.generate}
               </Link>
             </Button>
           ) : (
             <>
               <Button asChild size="sm" variant="secondary">
                 <Link href={`/${lang}/login`} className="w-full" prefetch>
-                  {dict['/login']}
+                  {dict.login}
                 </Link>
               </Button>
               <Button asChild size="sm">
                 <Link href={`/${lang}/signup`} className="w-full" prefetch>
-                  {dict['/signup']}
+                  {dict.signup}
                 </Link>
               </Button>
             </>
