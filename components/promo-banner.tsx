@@ -2,7 +2,7 @@
 
 import { XIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { dismissBannerAction } from '@/app/[lang]/actions/promos';
 import { Button } from '@/components/ui/button';
