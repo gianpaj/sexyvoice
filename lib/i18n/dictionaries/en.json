@@ -178,7 +178,10 @@
         "description": "For hobbyists creating projects with AI audio and creating custom voices.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
-        "features": ["Everything in Free", "API access (coming soon)"]
+        "features": [
+          "Everything in Free",
+          "API access (coming soon)"
+        ]
       },
       "pro": {
         "name": "Pro",
@@ -301,8 +304,13 @@
     "description": "AI voice generator that allows you to convert text to speech online for free (to try), clone voice, and generate natural-sounding and expressive speech in 24 languages.",
     "/": "",
     "/login": "Log in",
-    "/signup": "Sign up with email or Google ",
+    "/signup": "Sign up with email or Google",
     "/dashboard/generate": "Generate"
+  },
+  "header": {
+    "generate": "Generate",
+    "login": "Log in",
+    "signup": "Sign up"
   },
   "footer": {
     "statusPage": "Status page",
@@ -313,9 +321,22 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
-      "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Sign Up Now",
+      "ctaLoggedIn": "Claim Offer 🎃",
+      "ctaLoggedOut": "Sign Up Now 🎃",
       "arialLabelDismiss": "Dismiss Halloween banner"
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Black Friday Sale – Get up to 35% extra credits!",
+      "ctaLoggedIn": "Claim Offer",
+      "ctaLoggedOut": "Claim Offer",
+      "arialLabelDismiss": "Dismiss Black Friday banner",
+      "countdown": {
+        "prefix": "Deal ends in:",
+        "days": "Days",
+        "hours": "Hours",
+        "minutes": "Min",
+        "seconds": "Sec"
+      }
     }
   }
 }

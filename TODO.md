@@ -15,6 +15,7 @@
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
 - Translate website to French
+- Add option to clean audio using <https://replicate.com/gianpaj/audio_separator>
 - Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
 - Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>

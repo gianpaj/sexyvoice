@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis';
 import type { Redis as IORedis } from 'ioredis';
+import type Stripe from 'stripe';
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -17,22 +18,19 @@ function getRedisClient() {
 
 export interface CustomerData {
   // Stripe subscription
-  status:
-    | 'none' // extra
-    | 'active'
-    | 'canceled'
-    | 'incomplete'
-    | 'incomplete_expired'
-    | 'past_due'
-    | 'paused'
-    | 'trialing'
-    | 'unpaid';
+  status: Stripe.Subscription.Status | 'none'; // extra;
   subscriptionId?: string;
   priceId?: string;
   currentPeriodEnd?: number;
   currentPeriodStart?: number;
+  /**
+   * Whether this subscription will (if status=active) or did (if status=canceled) cancel at the end of the current billing period.
+   */
   cancelAtPeriodEnd?: boolean | null;
   paymentMethod?: {
+    /**
+     * Card brand. Can be amex, diners, discover, eftpos_au, jcb, link, mastercard, unionpay, visa, or unknown.
+     */
     brand: string | null;
     last4: string | null;
   } | null;

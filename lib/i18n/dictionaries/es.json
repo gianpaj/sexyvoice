@@ -304,8 +304,13 @@
     "description": "Generador de voz con IA que te permite convertir texto a voz en línea de forma gratuita (para probar), clonar voz y generar discurso natural y expresivo en 24 idiomas.",
     "/": "",
     "/login": "Iniciar sesión",
-    "/signup": "Registrarse",
+    "/signup": "Registrarse con email o Google",
     "/dashboard/generate": "Generar"
+  },
+  "header": {
+    "generate": "Generar",
+    "login": "Iniciar sesión",
+    "signup": "Registrarse"
   },
   "footer": {
     "statusPage": "Página de estado",
@@ -319,6 +324,19 @@
       "ctaLoggedIn": "Obtener Créditos",
       "ctaLoggedOut": "Regístrate Ahora",
       "arialLabelDismiss": "Descartar banner de Halloween"
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
+      "ctaLoggedIn": "Obtener Oferta",
+      "ctaLoggedOut": "Regístrate Ahora",
+      "arialLabelDismiss": "Descartar banner de Black Friday",
+      "countdown": {
+        "prefix": "La oferta termina en:",
+        "days": "Días",
+        "hours": "Horas",
+        "minutes": "Min",
+        "seconds": "Seg"
+      }
     }
   }
 }

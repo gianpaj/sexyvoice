@@ -82,10 +82,10 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
       {plans.map((plan) => (
         <CreditCard
-          key={plan.id}
-          plan={plan}
           dict={dict}
           isPromoEnabled={isPromoEnabled}
+          key={plan.id}
+          plan={plan}
           pPlans={pPlans}
         />
       ))}
@@ -148,25 +148,23 @@ function CreditCard({
 
   return (
     <Card
-      className={`grid gap-2 grid-rows-auto p-6 ${plan.isPopular ? 'ring-orange-400 ring-2 border-none' : ''} relative overflow-hidden`}
+      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-pink-400' : ''} relative overflow-hidden`}
     >
       {isPromoEnabled && plan.price > 0 && (
-        <div className="absolute top-0 right-0 bg-gradient-to-br from-orange-500 to-orange-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-          🎃 Halloween Special
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-pink-500 to-pink-600 px-3 py-1 font-bold text-white text-xs">
+          Black Friday Sale
         </div>
       )}
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-semibold">{plan.name}</h3>
+          <h3 className="font-semibold text-xl">{plan.name}</h3>
           {!isPromoEnabled && plan.isPopular ? (
-            <Badge className="rounded-full bg-orange-600">
-              {pPlans.popular}
-            </Badge>
+            <Badge className="rounded-full bg-pink-600">{pPlans.popular}</Badge>
           ) : (
             plan.price > 10 && (
               <Badge
-                variant="secondary"
                 className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                variant="secondary"
               >
                 20% cheaper
               </Badge>
@@ -174,47 +172,47 @@ function CreditCard({
           )}
         </div>
         <div className="flex items-baseline">
-          <span className="text-3xl font-bold">${plan.price}</span>
+          <span className="font-bold text-3xl">${plan.price}</span>
         </div>
         {!isPromoEnabled && plan.pricePer1kCredits ? (
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-muted-foreground text-xs">
             ${plan.pricePer1kCredits} per 1k credits{' '}
             {plan.saveFromPrevPlanPer1kCredits && (
-              <span className="text-green-600 dark:text-green-400 font-medium">
+              <span className="font-medium text-green-600 dark:text-green-400">
                 (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
               </span>
             )}
           </div>
         ) : (
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-muted-foreground text-xs">
             <br />
           </div>
         )}
       </div>
 
-      <div className="text-sm font-medium">
+      <div className="font-medium text-sm">
         {plan.creditsText}{' '}
         {isPromoEnabled && plan.promoBonus && (
-          <span className="text-orange-600 dark:text-orange-400 font-semibold">
+          <span className="font-semibold text-pink-600 dark:text-pink-400">
             (+{plan.promoBonus} bonus)
           </span>
         )}
       </div>
 
       {state.error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+        <div className="rounded-md border border-red-200 bg-red-50 p-3">
           <p className="text-red-600 text-xs">{state.error}</p>
         </div>
       )}
 
       <form action={formActionDispatch}>
-        <input type="hidden" name="packageId" value={plan.id} />
-        <input type="hidden" name="uiMode" value="hosted" />
+        <input name="packageId" type="hidden" value={plan.id} />
+        <input name="uiMode" type="hidden" value="hosted" />
         <Button
-          type="submit"
-          className="w-full my-4"
-          variant={plan.buttonVariant as 'outline' | 'default'}
+          className="my-4 w-full"
           disabled={pending}
+          type="submit"
+          variant={plan.buttonVariant as 'outline' | 'default'}
         >
           {pending ? (
             <>
