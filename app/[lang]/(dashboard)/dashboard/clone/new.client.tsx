@@ -109,6 +109,7 @@ export default function NewVoiceClient({
     clearErrors();
     setStatus('generating');
 
+    let voiceRes: Response | undefined;
     try {
       abortController.current = new AbortController();
       // First upload and process the voice
@@ -116,15 +117,14 @@ export default function NewVoiceClient({
       formData.append('file', file);
       formData.append('text', textToConvert);
 
-      const voiceRes = await fetch('/api/clone-voice', {
+      voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
         body: formData,
         signal: abortController.current.signal,
       });
 
-      const voiceResult = await voiceRes.json();
-
       if (!voiceRes.ok) {
+        const voiceResult = await voiceRes.json();
         setErrorMessage(
           voiceResult.message ||
             voiceResult.error ||
@@ -134,6 +134,7 @@ export default function NewVoiceClient({
         setStatus('error');
         return;
       }
+      const voiceResult = await voiceRes.json();
 
       setGeneratedAudioUrl(voiceResult.url);
 
@@ -146,9 +147,13 @@ export default function NewVoiceClient({
       ) {
         return;
       }
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Unexpected error occurred',
-      );
+      let errorMsg = 'Unexpected error occurred';
+      if (voiceRes && !voiceRes.ok) {
+        errorMsg = voiceRes.statusText;
+      } else if (err instanceof Error) {
+        errorMsg = err.message;
+      }
+      setErrorMessage(errorMsg);
       setStatus('error');
     }
   }, [dict, file, textToConvert, clearErrors]);

@@ -35,6 +35,7 @@
             "style": "interface"
           }
         },
+        "useBlockStatements": "off",
         "useEnumInitializers": "error",
         "useSelfClosingElements": "error",
         "useConst": "error",

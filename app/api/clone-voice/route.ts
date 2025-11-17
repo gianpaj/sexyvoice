@@ -27,7 +27,7 @@ const ALLOWED_TYPES = [
   'audio/m4a',
   'audio/x-m4a',
 ];
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 const MIN_DURATION = 5; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
 
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     }
 
     if (userAudioFile.size > MAX_SIZE) {
-      return APIErrorResponse('File too large. Max 10MB allowed.', 400);
+      return APIErrorResponse('File too large. Max 4.5MB allowed.', 400);
     }
 
     // Read file buffer and validate duration
