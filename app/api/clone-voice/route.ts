@@ -27,7 +27,7 @@ const ALLOWED_TYPES = [
   'audio/m4a',
   'audio/x-m4a',
 ];
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 4.5 * 1024 * 1024; // 10MB
 const MIN_DURATION = 5; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
 
