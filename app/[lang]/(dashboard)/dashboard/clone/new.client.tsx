@@ -148,7 +148,7 @@ export default function NewVoiceClient({
         return;
       }
       let errorMsg = 'Unexpected error occurred';
-      if (voiceRes?.type === 'basic') {
+      if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
       } else if (err instanceof Error) {
         errorMsg = err.message;
