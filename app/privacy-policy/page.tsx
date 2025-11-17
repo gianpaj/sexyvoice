@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
+
 import Footer from '@/components/footer';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 import './privacy-policy.css';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+};
 
 export default function PrivacyPolicy() {
   return (
@@ -9,7 +15,7 @@ export default function PrivacyPolicy() {
       className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
       id="main-content"
     >
-      <div className="container mx-auto my-8 px-4">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <h1>Privacy Policy</h1>
         <p>Updated at 2025-03-19</p>
 

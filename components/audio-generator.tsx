@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
+import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
@@ -199,14 +200,19 @@ export function AudioGenerator({
     }
   };
 
-  const downloadAudio = () => {
+  const downloadAudio = async () => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
+
     if (!audio) return;
 
-    const link = document.createElement('a');
-    link.href = audio.src;
-    link.download = 'generated_audio.mp3';
-    link.target = '_blank';
-    link.click();
+    try {
+      await downloadUrl(audio.src, anchorElement);
+    } catch {
+      toast.error(dict.error);
+    }
   };
 
   const { complete } = useCompletion({
@@ -257,7 +263,7 @@ export function AudioGenerator({
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 p-4 sm:p-6">
+      <CardContent className="space-y-4 sm:p-6 sm:pt-4 p-4">
         <div className="space-y-2">
           <div className="relative">
             <Textarea

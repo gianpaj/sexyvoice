@@ -8,7 +8,7 @@ import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 export async function HeaderStatic({ lang }: { lang: Locale }) {
-  const dict = await getDictionary(lang, 'pages');
+  const dict = await getDictionary(lang, 'header');
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -31,12 +31,12 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
           <div className="space-x-4">
             <Button asChild variant="secondary">
               <Link href={`/${lang}/login`} prefetch>
-                {dict['/login']}
+                {dict.login}
               </Link>
             </Button>
             <Button asChild effect="ringHover" variant="default">
               <Link href={`/${lang}/signup`} prefetch>
-                {dict['/signup']}
+                {dict.signup}
               </Link>
             </Button>
           </div>
@@ -45,13 +45,13 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
         {/* Mobile Navigation */}
         <div className="z-10 flex gap-2 md:hidden">
           <Button asChild size="sm" variant="secondary">
-            <Link className="w-full" href={`/${lang}/login`} prefetch>
-              {dict['/login']}
+            <Link href={`/${lang}/login`} className="w-full" prefetch>
+              {dict.login}
             </Link>
           </Button>
           <Button asChild size="sm">
-            <Link className="w-full" href={`/${lang}/signup`} prefetch>
-              {dict['/signup']}
+            <Link href={`/${lang}/signup`} className="w-full" prefetch>
+              {dict.signup}
             </Link>
           </Button>
         </div>

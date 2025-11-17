@@ -124,7 +124,7 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
-  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
+  const blackFridayDict = (await getDictionary(lang, 'promos')).blackFridayBanner;
 
   if (post === undefined) {
     return <div>Post not found ({params.slug})</div>;
@@ -194,11 +194,20 @@ const PostLayout = async (props: {
       </Script>
 
       <PromoBanner
-        arialLabelDismiss={halloweenDict.arialLabelDismiss}
+        text={blackFridayDict.text}
+        ctaText={blackFridayDict.ctaLoggedOut}
         ctaLink={`/${lang}/signup`}
-        ctaText={halloweenDict.ctaLoggedOut}
+        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={halloweenDict.text}
+        countdown={
+          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+            ? {
+                enabled: true,
+                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                labels: blackFridayDict.countdown,
+              }
+            : undefined
+        }
       />
 
       <Suspense fallback={<div>Loading...</div>}>
@@ -211,20 +220,30 @@ const PostLayout = async (props: {
         itemScope
         itemType="https://schema.org/TechArticle"
       >
-        <h1 itemProp="name">{post.title}</h1>
+        <p itemProp="name">{post.title}</p>
         <div itemProp="abstract">{post.description}</div>
-        <div itemProp="about">
-          This article covers advanced concepts in AI voice generation,
-          including neural networks, machine learning algorithms, voice
-          synthesis techniques, and practical applications of artificial
-          intelligence in speech technology.
-        </div>
-        <meta
-          content="Developers, AI researchers, content creators"
-          itemProp="audience"
-        />
-        <meta content="Intermediate to Advanced" itemProp="educationalLevel" />
-        <meta content="Tutorial" itemProp="learningResourceType" />
+        <p>
+          Target audience:
+          <span
+            itemProp="audience"
+            itemScope
+            itemType="https://schema.org/EducationalAudience"
+          >
+            <span itemProp="educationalRole">developers</span>,
+            <span itemProp="educationalRole">content creators</span>
+          </span>
+        </p>
+        <p
+          itemProp="educationalLevel"
+          itemScope
+          itemType="https://schema.org/DefinedTerm"
+        >
+          <span itemProp="name">Beginner to Intermediate</span>
+        </p>
+        <p>
+          Resource type:
+          <span itemProp="learningResourceType">tutorial</span>
+        </p>
       </div>
 
       <main itemScope itemType="https://schema.org/WebPage">

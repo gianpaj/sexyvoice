@@ -261,16 +261,18 @@ export async function POST(request: Request) {
             response: genAIResponse,
             model: modelUsed,
           });
-          // console.dir(
-          //   {
-          //     error: finishReason,
-          //     hasData: !!data,
-          //     mimeType,
-          //     response: genAIResponse,
-          //     model: modelUsed,
-          //   },
-          //   { depth: null },
-          // );
+          if (process.env.NODE_ENV === 'development') {
+            console.dir(
+              {
+                error: finishReason,
+                hasData: !!data,
+                mimeType,
+                response: genAIResponse,
+                model: modelUsed,
+              },
+              { depth: null },
+            );
+          }
         }
         throw new Error(
           finishReason === FinishReason.PROHIBITED_CONTENT

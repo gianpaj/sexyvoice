@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { createClient } from '@/lib/supabase/client';
 
@@ -18,6 +20,8 @@ export function LoginForm({
   lang: string;
 }) {
   const searchParams = useSearchParams();
+  const [lastUsedAuth, setLastUsedAuth] = useLocalStorage('lastUsedAuth', '');
+  const lastUsedAuthFixed = useRef(lastUsedAuth);
 
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
@@ -41,6 +45,7 @@ export function LoginForm({
       setIsLoading(false);
       return;
     }
+    setLastUsedAuth('email');
 
     router.push(`/${lang}/dashboard/generate`);
     router.refresh();
@@ -62,6 +67,7 @@ export function LoginForm({
       setIsLoading(false);
       return;
     }
+    setLastUsedAuth('google');
   };
 
   return (
@@ -99,19 +105,25 @@ export function LoginForm({
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <Button className="w-full" disabled={isLoading} type="submit">
-        {isLoading ? 'Loading...' : dict.submit}
-      </Button>
+      <div className="relative">
+        {lastUsedAuthFixed.current === 'email' && <LastUsedBanner />}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? 'Loading...' : dict.submit}
+        </Button>
+      </div>
 
-      <Button
-        className="w-full"
-        disabled={isLoading}
-        onClick={loginWithGoogle}
-        variant="secondary"
-      >
-        <LogosGoogleIcon />
-        Login with Google
-      </Button>
+      <div className="relative">
+        {lastUsedAuthFixed.current === 'google' && <LastUsedBanner />}
+        <Button
+          onClick={loginWithGoogle}
+          variant="secondary"
+          className="w-full"
+          disabled={isLoading}
+        >
+          <LogosGoogleIcon />
+          Login with Google
+        </Button>
+      </div>
 
       <p className="text-center text-gray-500 text-sm">
         {dict.noAccount}{' '}
@@ -123,5 +135,16 @@ export function LoginForm({
         </Link>
       </p>
     </form>
+  );
+}
+
+function LastUsedBanner() {
+  return (
+    <Badge
+      variant="outline"
+      className="bg-[#6c2243] absolute border-none -top-2 -right-2 z-10 pointer-events-none px-[0.4rem]"
+    >
+      <span className="text-[11px] text-pink-200 font-normal">Last used</span>
+    </Badge>
   );
 }

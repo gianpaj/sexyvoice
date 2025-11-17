@@ -35,14 +35,14 @@ interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
-  halloweenDict: (typeof langDict)['promos']['halloweenBanner'];
+  blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
 }
 
 export default function DashboardUI({
   children,
   lang,
   dict,
-  halloweenDict,
+  blackFridayDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
   const supabase = createClient();
@@ -207,12 +207,21 @@ export default function DashboardUI({
           </Sidebar>
 
           <PromoBanner
-            arialLabelDismiss={halloweenDict.arialLabelDismiss}
-            ctaLink={`/${lang}/dashboard/credits`}
-            ctaText={halloweenDict.ctaLoggedIn}
             inDashboard
+            text={blackFridayDict.text}
+            ctaLink={`/${lang}/dashboard/credits`}
+            ctaText={blackFridayDict.ctaLoggedIn}
+            arialLabelDismiss={blackFridayDict.arialLabelDismiss}
             isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-            text={halloweenDict.text}
+            countdown={
+              process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+                ? {
+                    enabled: true,
+                    endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                    labels: blackFridayDict.countdown,
+                  }
+                : undefined
+            }
           />
           <div className="flex w-full flex-1 flex-col">
             <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">

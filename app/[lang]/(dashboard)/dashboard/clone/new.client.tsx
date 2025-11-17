@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
@@ -277,14 +278,19 @@ export default function NewVoiceClient({
     };
   }, [status, textToConvert, handleGenerate, hasEnoughCredits]);
 
-  const handleDownload = () => {
-    if (!audio) return;
+  const downloadAudio = async () => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
 
-    const link = document.createElement('a');
-    link.href = audio.src;
-    link.target = '_blank';
-    link.download = 'generated_audio.mp3';
-    link.click();
+    if (!audio?.src) return;
+
+    try {
+      await downloadUrl(audio.src, anchorElement);
+    } catch {
+      toast.error(dict.errorCloning);
+    }
   };
 
   const togglePlayback = () => {
@@ -555,7 +561,7 @@ export default function NewVoiceClient({
                 <div className="flex justify-center gap-4">
                   <Button
                     className="flex items-center gap-2"
-                    onClick={handleDownload}
+                    onClick={downloadAudio}
                   >
                     <Download className="h-4 w-4" />
                     {dict.downloadAudio}

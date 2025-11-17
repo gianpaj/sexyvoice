@@ -148,20 +148,18 @@ function CreditCard({
 
   return (
     <Card
-      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-orange-400' : ''} relative overflow-hidden`}
+      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-pink-400' : ''} relative overflow-hidden`}
     >
       {isPromoEnabled && plan.price > 0 && (
-        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-orange-500 to-orange-600 px-3 py-1 font-bold text-white text-xs">
-          🎃 Halloween Special
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-pink-500 to-pink-600 px-3 py-1 font-bold text-white text-xs">
+          Black Friday Sale
         </div>
       )}
       <div>
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-xl">{plan.name}</h3>
           {!isPromoEnabled && plan.isPopular ? (
-            <Badge className="rounded-full bg-orange-600">
-              {pPlans.popular}
-            </Badge>
+            <Badge className="rounded-full bg-pink-600">{pPlans.popular}</Badge>
           ) : (
             plan.price > 10 && (
               <Badge
@@ -195,7 +193,7 @@ function CreditCard({
       <div className="font-medium text-sm">
         {plan.creditsText}{' '}
         {isPromoEnabled && plan.promoBonus && (
-          <span className="font-semibold text-orange-600 dark:text-orange-400">
+          <span className="font-semibold text-pink-600 dark:text-pink-400">
             (+{plan.promoBonus} bonus)
           </span>
         )}

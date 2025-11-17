@@ -64,13 +64,13 @@ describe('Stripe Webhook Route', () => {
   beforeAll(async () => {
     const redisClient = await setupRedis();
     setTestRedisClient(redisClient);
-  }, 60000); // 60 seconds timeout for Redis binary download
+  }, 180000); // 3 minutes timeout for Redis binary download
 
   // Teardown Redis after all tests
   afterAll(async () => {
     setTestRedisClient(null);
     await teardownRedis();
-  }, 30000); // 30 seconds timeout for cleanup
+  }, 60000); // 60 seconds timeout for cleanup
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -236,7 +236,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);

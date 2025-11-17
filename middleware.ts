@@ -35,6 +35,10 @@ const publicRoutesWithoutAuth = [
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  if (publicRoutesWithoutAuth.includes(pathname)) {
+    return NextResponse.next();
+  }
+
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) =>
       !(
@@ -64,10 +68,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if (publicRoutesWithoutAuth.includes(pathname)) {
-    return NextResponse.next();
-  }
-
   const locale = getLocaleFromPathname(req);
 
   return await updateSession(req, locale);
@@ -80,6 +80,7 @@ export const config = {
      * - _next/image (image optimization files)
      * - ingest (Posthug rewrites)
      * - favicon.ico (favicon file)
+     * - robots.txt (robots file)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
      * - sitemap - xml
@@ -88,7 +89,7 @@ export const config = {
      * - /terms
      * - /manifest.json
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|privacy-policy|terms|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|privacy-policy|terms|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },

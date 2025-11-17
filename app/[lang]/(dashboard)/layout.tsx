@@ -10,17 +10,15 @@ export default async function DashboardLayout(props: {
   const { lang } = await props.params;
 
   const dict = await getDictionary(lang);
-  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
+  const blackFridayDict = (await getDictionary(lang, 'promos')).blackFridayBanner;
 
   return (
-    <ReactQueryClientProvider>
-      <DashboardUI
-        dict={dict.creditsSection}
-        halloweenDict={halloweenDict}
-        lang={lang}
-      >
-        {props.children}
-      </DashboardUI>
-    </ReactQueryClientProvider>
+    <DashboardUI
+      lang={lang}
+      dict={dict.creditsSection}
+      blackFridayDict={blackFridayDict}
+    >
+      {props.children}
+    </DashboardUI>
   );
 }

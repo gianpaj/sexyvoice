@@ -52,7 +52,8 @@ export default async function LandingPage(props: {
   }
 
   const dict = await getDictionary(lang, 'landing');
-  const halloweenDict = (await getDictionary(lang, 'promos')).halloweenBanner;
+  const blackFridayDict = (await getDictionary(lang, 'promos'))
+    .blackFridayBanner;
 
   const [firstPart, ...restParts] = dict.hero.title.split(',');
   const titleRestParts = restParts.join(',');
@@ -75,11 +76,20 @@ export default async function LandingPage(props: {
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <PromoBanner
-        arialLabelDismiss={halloweenDict.arialLabelDismiss}
+        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
+        countdown={
+          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+            ? {
+                enabled: true,
+                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                labels: blackFridayDict.countdown,
+              }
+            : undefined
+        }
         ctaLink={`/${lang}/signup`}
-        ctaText={halloweenDict.ctaLoggedOut}
+        ctaText={blackFridayDict.ctaLoggedOut}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={halloweenDict.text}
+        text={blackFridayDict.text}
       />
       <HeaderStatic lang={lang} />
       <main id="main-content">
@@ -91,7 +101,7 @@ export default async function LandingPage(props: {
               <h1 className="font-bold text-5xl text-white leading-10 md:text-6xl">
                 <span className="leading-[3.5rem]">{firstPart}</span>
                 {titleRestParts && (
-                  <span className="text-orange-300">{titleRestParts}</span>
+                  <span className="text-purple-400">{titleRestParts}</span>
                 )}
               </h1>
               <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl">
