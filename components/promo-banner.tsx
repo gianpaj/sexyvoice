@@ -130,7 +130,7 @@ export function PromoBanner({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [countdown]);
+  }, [countdown?.enabled, countdown?.endDate]);
 
   const handleDismissBanner = async () => {
     await dismissBannerAction();
@@ -179,16 +179,16 @@ export function PromoBanner({
                   timeRemaining.minutes,
                   timeRemaining.seconds,
                 ].map((num, i) => (
-                  <>
+                  <React.Fragment key={i}>
                     {i !== 0 && (
                       <span className="font-bold text-lg sm:text-xl">:</span>
                     )}
-                    <div className="flex flex-col items-center" key={i}>
+                    <div className="flex flex-col items-center">
                       <span className="font-bold text-lg sm:text-xl">
                         {String(num).padStart(2, '0')}
                       </span>
                     </div>
-                  </>
+                  </React.Fragment>
                 ))}
               </div>
             </div>
