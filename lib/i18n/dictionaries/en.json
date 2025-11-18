@@ -71,7 +71,7 @@
       },
       "security": {
         "title": "Secure & Private",
-        "description": "Your voice data is protected with enterprise-grade security. Full control over privacy, profile and history."
+        "description": "Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history."
       }
     },
     "cta": {
@@ -158,7 +158,7 @@
     },
     "plans": {
       "popular": "Most Popular",
-      "startFree": "Start of Free",
+      "startFree": "Start for Free",
       "buyCredits": "Buy credits",
       "x_credits": "__NUM_CREDITS__ credits",
       "free": {
@@ -175,7 +175,7 @@
       },
       "standard": {
         "name": "Standard",
-        "description": "For hobbyists creating projects with AI audio and creating custom voices.",
+        "description": "For hobbyists creating projects with AI audio and custom voices.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
