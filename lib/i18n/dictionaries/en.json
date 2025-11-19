@@ -178,10 +178,7 @@
         "description": "For hobbyists creating projects with AI audio and custom voices.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
-        "features": [
-          "Everything in Free",
-          "API access (coming soon)"
-        ]
+        "features": ["Everything in Free", "API access (coming soon)"]
       },
       "pro": {
         "name": "Pro",

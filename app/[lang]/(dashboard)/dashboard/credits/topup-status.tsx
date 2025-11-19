@@ -40,7 +40,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     if (success || canceled || error) {
       const timer = setTimeout(() => {
         setIsVisible(false);
-      }, 10000);
+      }, 10_000);
 
       return () => clearTimeout(timer);
     }
@@ -57,7 +57,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     window.history.replaceState({}, '', url.toString());
   };
 
-  if (!isVisible || !status) {
+  if (!(isVisible && status)) {
     return null;
   }
 
@@ -65,9 +65,9 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     <div className="mb-6 w-full lg:w-1/2">
       {status === 'success' && (
         <Alert className="grid grid-cols-subgrid gap-2">
-          <div className="grid grid-cols-[auto,1fr,auto] gap-2 items-center">
+          <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
             <CircleCheckIcon
-              className="me-3 -mt-0.5 inline-flex !text-emerald-500"
+              className="-mt-0.5 !text-emerald-500 me-3 inline-flex"
               aria-hidden="true"
             />
 

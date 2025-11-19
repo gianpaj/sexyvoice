@@ -42,13 +42,13 @@ export function ResetPasswordForm({
       </div>
 
       {'error' in message && (
-        <div className="text-destructive-foreground border-l-2 border-destructive px-4 text-sm">
+        <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
           {/* @ts-ignore */}
           {dict.errors[message.error as keyof typeof dict.errors]}
         </div>
       )}
       {'success' in message && (
-        <div className="text-foreground border-l-2 border-foreground px-4 text-sm">
+        <div className="border-foreground border-l-2 px-4 text-foreground text-sm">
           {dict.success}
         </div>
       )}

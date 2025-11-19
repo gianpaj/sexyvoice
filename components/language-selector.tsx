@@ -31,7 +31,7 @@ export function LanguageSelector({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-36 justify-start p-2 text-small font-normal"
+              className="w-36 justify-start p-2 font-normal text-small"
             >
               Language <div>&nbsp;</div> <Languages className="size-4" />
             </Button>
@@ -59,7 +59,7 @@ export function LanguageSelector({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="bg-secondary/70 justify-start p-2 font-normal"
+              className="justify-start bg-secondary/70 p-2 font-normal"
             >
               Language <div>&nbsp;</div> <Languages className="size-4" />
             </Button>

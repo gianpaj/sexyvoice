@@ -84,8 +84,8 @@ export async function saveAudioFile({
     user_id: userId,
     storage_key: filename,
     text_content: text,
-    url: url,
-    model: model,
+    url,
+    model,
     prediction_id: predictionId,
     is_public: isPublic,
     voice_id: voiceId,
@@ -267,20 +267,18 @@ export const isFreemiumUserOverLimit = async (
   userId: string,
 ): Promise<boolean> => {
   const supabase = await createClient();
-  // TODO: use redis instead
-  // If the user is a freemium user, count their voice model 'gpro' audio files.
-  const { data: audioFiles, error: audioFilesError } = await supabase
+  // Count Gemini audio files directly in the database for better performance
+  // Filter by model column containing 'gemini' instead of fetching all records
+  // This avoids the N+1 query and JavaScript filtering of the original implementation
+  const { count, error: audioFilesError } = await supabase
     .from('audio_files')
-    .select('id, voices(model)')
-    .eq('user_id', userId);
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .like('model', '%gemini%');
 
   if (audioFilesError) {
     throw audioFilesError;
   }
 
-  const gproAudioCount = audioFiles.filter(
-    (file) => file.voices?.model === 'gpro',
-  ).length;
-
-  return (gproAudioCount ?? 0) > MAX_FREE_GENERATIONS;
+  return (count ?? 0) > MAX_FREE_GENERATIONS;
 };
