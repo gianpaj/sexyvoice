@@ -161,7 +161,7 @@ async function handleCheckoutSessionCompleted(
       const { userId, packageId, credits, dollarAmount, promo } =
         session.metadata as unknown as CheckoutMetadata;
 
-      if (!(((userId && credits ) && dollarAmount ) && session.payment_intent)) {
+      if (!(userId && credits && dollarAmount && session.payment_intent)) {
         const error = new Error('Missing metadata for topup transaction');
         const extra = {
           session_id: session.id,

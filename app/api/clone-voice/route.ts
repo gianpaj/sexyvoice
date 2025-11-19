@@ -99,7 +99,10 @@ export async function POST(request: Request) {
     }
 
     if (
-      !(userAudioFile.type.startsWith('audio/') &&ALLOWED_TYPES.includes(userAudioFile.type))
+      !(
+        userAudioFile.type.startsWith('audio/') &&
+        ALLOWED_TYPES.includes(userAudioFile.type)
+      )
     ) {
       return APIErrorResponse(
         'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',

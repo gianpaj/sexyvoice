@@ -241,7 +241,8 @@ export const useFileUpload = (
 
         setState((prev) => {
           const newFiles = multiple
-            ? [...prev.files, ...validFiles] : validFiles;
+            ? [...prev.files, ...validFiles]
+            : validFiles;
           onFilesChange?.(newFiles);
           return {
             ...prev,
@@ -370,13 +371,13 @@ export const useFileUpload = (
 
   const getInputProps = useCallback(
     (props: InputHTMLAttributes<HTMLInputElement> = {}) => ({
-        ...props,
-        type: 'file' as const,
-        onChange: handleFileChange,
-        accept: props.accept || accept,
-        multiple: props.multiple !== undefined ? props.multiple : multiple,
-        ref: inputRef,
-      }),
+      ...props,
+      type: 'file' as const,
+      onChange: handleFileChange,
+      accept: props.accept || accept,
+      multiple: props.multiple !== undefined ? props.multiple : multiple,
+      ref: inputRef,
+    }),
     [accept, multiple, handleFileChange],
   );
 

@@ -41,8 +41,15 @@ export async function middleware(req: NextRequest) {
 
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) =>
-      !((((((pathname.startsWith(`/${locale}/`) ||pathname.startsWith('/auth') ) ||pathname.startsWith('/privacy-policy') ) ||pathname.startsWith('/terms') ) ||pathname.startsWith('/api') ) ||pathname.startsWith('/sitemap') ) ||pathname.startsWith('/webhook') ) &&
-      pathname !== `/${locale}`,
+      !(
+        pathname.startsWith(`/${locale}/`) ||
+        pathname.startsWith('/auth') ||
+        pathname.startsWith('/privacy-policy') ||
+        pathname.startsWith('/terms') ||
+        pathname.startsWith('/api') ||
+        pathname.startsWith('/sitemap') ||
+        pathname.startsWith('/webhook')
+      ) && pathname !== `/${locale}`,
   );
 
   // console.log({ pathnameIsMissingLocale, pathname });

@@ -347,7 +347,7 @@ export default function NewVoiceClient({
               <Button
                 onClick={handleGenerate}
                 disabled={
-                  !(file && textToConvert.trim() ) || status === 'generating'
+                  !(file && textToConvert.trim()) || status === 'generating'
                   // || !hasEnoughCredits
                 }
                 className="w-full"

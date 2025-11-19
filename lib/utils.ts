@@ -131,9 +131,14 @@ export function extractMetadata(
   if (isGeminiVoice) {
     const metadata = genAIResponse?.usageMetadata;
     if (
-      !(((metadata &&metadata.promptTokenCount ) &&metadata.candidatesTokenCount ) &&metadata.totalTokenCount)
+      !(
+        metadata &&
+        metadata.promptTokenCount &&
+        metadata.candidatesTokenCount &&
+        metadata.totalTokenCount
+      )
     ) {
-      return ;
+      return;
     }
     return {
       promptTokenCount: metadata.promptTokenCount.toString(),
@@ -143,7 +148,7 @@ export function extractMetadata(
   }
   const metrics = replicateResponse?.metrics;
   if (!(metrics?.predict_time && metrics?.total_time)) {
-    return ;
+    return;
   }
   return {
     predict_time: metrics.predict_time.toString(),
