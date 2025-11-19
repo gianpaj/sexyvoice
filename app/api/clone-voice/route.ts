@@ -13,7 +13,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
+import { estimateCredits, generateCacheHash } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
 
@@ -30,18 +30,6 @@ const ALLOWED_TYPES = [
 const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 const MIN_DURATION = 5; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
-
-async function generateHash(text: string, audioFilename: string) {
-  const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${audioFilename}`;
-  const data = textEncoder.encode(combinedString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 8);
-}
 
 async function getAudioDuration(
   fileBuffer: Buffer,
@@ -91,7 +79,7 @@ export async function POST(request: Request) {
     userAudioFile = file instanceof File ? file : null;
 
     // Text-to-speech generation mode
-    if (!text || !userAudioFile) {
+    if (!(text && userAudioFile)) {
       return APIErrorResponse(
         'Missing required parameters: text and audio file',
         400,
@@ -111,8 +99,7 @@ export async function POST(request: Request) {
     }
 
     if (
-      !userAudioFile.type.startsWith('audio/') ||
-      !ALLOWED_TYPES.includes(userAudioFile.type)
+      !(userAudioFile.type.startsWith('audio/') &&ALLOWED_TYPES.includes(userAudioFile.type))
     ) {
       return APIErrorResponse(
         'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
@@ -240,7 +227,7 @@ export async function POST(request: Request) {
     }
 
     // Generate hash for caching
-    const hash = await generateHash(text, userAudioFilename);
+    const hash = await generateCacheHash(`${text}-${userAudioFilename}`);
     const abortController = new AbortController();
     const path = `clone-voice/${hash}`;
     const filename = `${path}.wav`;
@@ -352,7 +339,7 @@ export async function POST(request: Request) {
       await inngest.send({
         name: 'clone-audio/cleanup.scheduled',
         data: {
-          blobUrl: blobUrl,
+          blobUrl,
           userId: user.id,
         },
       });
@@ -419,7 +406,7 @@ async function sendPosthogEvent({
     distinctId: userId,
     event,
     properties: {
-      predictionId: predictionId,
+      predictionId,
       model,
       text,
       audioPromptUrl,

@@ -9,7 +9,8 @@ export default async function DashboardLayout(props: {
   const { lang } = await props.params;
 
   const dict = await getDictionary(lang);
-  const blackFridayDict = (await getDictionary(lang, 'promos')).blackFridayBanner;
+  const blackFridayDict = (await getDictionary(lang, 'promos'))
+    .blackFridayBanner;
 
   return (
     <DashboardUI

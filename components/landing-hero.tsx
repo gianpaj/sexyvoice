@@ -2,7 +2,7 @@ import './landing-hero.scss';
 
 function LandingHero() {
   return (
-    <div className="sm:pb-8 pb-6 flex justify-center">
+    <div className="flex justify-center pb-6 sm:pb-8">
       <svg
         id="wave"
         data-name="Layer 1"

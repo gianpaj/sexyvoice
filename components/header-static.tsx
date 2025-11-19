@@ -10,9 +10,9 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 export async function HeaderStatic({ lang }: { lang: Locale }) {
   const dict = await getDictionary(lang, 'header');
   return (
-    <header className="border-b border-gray-700 bg-gray-900">
-      <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href={`/${lang}`} className="z-10 gap-0 items-end flex">
+    <header className="border-gray-700 border-b bg-gray-900">
+      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+        <Link href={`/${lang}`} className="z-10 flex items-end gap-0">
           <div className="aspect-square">
             <Image
               src={logoSmall}
@@ -21,11 +21,11 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
               height={292 / 8}
             />
           </div>
-          <span className="text-xl text-white font-semibold">exyVoice.ai</span>
+          <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-4 justify-center z-10">
+        <div className="z-10 hidden items-center justify-center gap-4 md:flex">
           {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
 
           <div className="space-x-4">
@@ -43,7 +43,7 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
         </div>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden z-10 flex gap-2">
+        <div className="z-10 flex gap-2 md:hidden">
           <Button asChild size="sm" variant="secondary">
             <Link href={`/${lang}/login`} className="w-full" prefetch>
               {dict.login}

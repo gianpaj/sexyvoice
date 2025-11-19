@@ -248,7 +248,7 @@ export default function NewVoiceClient({
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
                       data-dragging={isDragging || undefined}
-                      className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
+                      className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-[input:focus]:border-ring has-disabled:opacity-50 has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
                     >
                       <input
                         {...getInputProps()}
@@ -259,18 +259,18 @@ export default function NewVoiceClient({
 
                       <div className="flex flex-col items-center justify-center text-center">
                         <div
-                          className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
+                          className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
                           aria-hidden="true"
                         >
                           <UploadIcon className="size-4 opacity-60" />
                         </div>
-                        <p className="mb-1.5 text-sm font-medium">
+                        <p className="mb-1.5 font-medium text-sm">
                           Upload audio file
                         </p>
                         <p className="text-muted-foreground text-xs">
                           Drag & drop or click to browse
                         </p>
-                        <p className="text-muted-foreground text-xs mt-1">
+                        <p className="mt-1 text-muted-foreground text-xs">
                           MP3, WAV, M4A or OGG (max.{' '}
                           {formatBytes(MAX_FILE_SIZE)})
                         </p>
@@ -281,7 +281,7 @@ export default function NewVoiceClient({
                   {/* File upload errors */}
                   {errors.length > 0 && (
                     <div
-                      className="text-destructive flex items-center gap-1 text-xs"
+                      className="flex items-center gap-1 text-destructive text-xs"
                       role="alert"
                     >
                       <AlertCircle className="size-3 shrink-0" />
@@ -301,10 +301,10 @@ export default function NewVoiceClient({
                           aria-hidden="true"
                         />
                         <div className="min-w-0">
-                          <p className="truncate break-all whitespace-normal text-[13px] font-medium">
+                          <p className="truncate whitespace-normal break-all font-medium text-[13px]">
                             {file.name}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             {formatBytes(file.size)}
                           </p>
                         </div>
@@ -313,7 +313,7 @@ export default function NewVoiceClient({
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="text-muted-foreground/80 hover:text-foreground -me-2 size-12 hover:bg-transparent"
+                        className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
                         onClick={() => removeFile(files[0]?.id)}
                         aria-label="Remove file"
                       >
@@ -347,7 +347,7 @@ export default function NewVoiceClient({
               <Button
                 onClick={handleGenerate}
                 disabled={
-                  !file || !textToConvert.trim() || status === 'generating'
+                  !(file && textToConvert.trim() ) || status === 'generating'
                   // || !hasEnoughCredits
                 }
                 className="w-full"
@@ -355,14 +355,14 @@ export default function NewVoiceClient({
                 {status === 'generating' ? (
                   <span className="flex items-center">
                     {dict.generating}
-                    <span className="inline-flex ml-1">
+                    <span className="ml-1 inline-flex">
                       <PulsatingDots />
                     </span>
                   </span>
                 ) : (
                   <>
                     <span>{dict.ctaButton}</span>
-                    <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                    <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                       {shortcutKey}
                     </span>
                   </>
@@ -381,11 +381,11 @@ export default function NewVoiceClient({
 
             <TabsContent value="preview" className="space-y-4 py-4">
               <div className="space-y-4">
-                <h3 className="text-xl font-medium text-center">
+                <h3 className="text-center font-medium text-xl">
                   Generated Voice Preview
                 </h3>
 
-                <div className="border rounded-lg p-4 bg-muted/30 w-fit mx-auto">
+                <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
                   {/* <AudioWaveform audioUrl={generatedAudioUrl || ''} /> */}
                   <AudioPlayer url={generatedAudioUrl} />
                 </div>
@@ -395,7 +395,7 @@ export default function NewVoiceClient({
                     onClick={downloadAudio}
                     className="flex items-center gap-2"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="h-4 w-4" />
                     {dict.downloadAudio}
                   </Button>
                 </div>
@@ -404,7 +404,7 @@ export default function NewVoiceClient({
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Voice clones are created for demonstration purposes only.
           </p>
         </CardFooter>

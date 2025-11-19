@@ -103,7 +103,7 @@ export function LoginForm({
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="relative">
         {lastUsedAuthFixed.current === 'email' && <LastUsedBanner />}
@@ -125,7 +125,7 @@ export function LoginForm({
         </Button>
       </div>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-gray-500 text-sm">
         {dict.noAccount}{' '}
         <Link
           href={`/${lang}/signup`}
@@ -142,9 +142,9 @@ function LastUsedBanner() {
   return (
     <Badge
       variant="outline"
-      className="bg-[#6c2243] absolute border-none -top-2 -right-2 z-10 pointer-events-none px-[0.4rem]"
+      className="-top-2 -right-2 pointer-events-none absolute z-10 border-none bg-[#6c2243] px-[0.4rem]"
     >
-      <span className="text-[11px] text-pink-200 font-normal">Last used</span>
+      <span className="font-normal text-[11px] text-pink-200">Last used</span>
     </Badge>
   );
 }

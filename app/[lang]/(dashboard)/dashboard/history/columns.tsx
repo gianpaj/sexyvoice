@@ -63,24 +63,21 @@ export const columns: ColumnDef<AudioFile>[] = [
     id: 'text',
     accessorKey: 'text_content',
     header: 'Text',
-    cell: ({ row }) => {
-      return (
-        <div className="flex items-center gap-2 max-w-[300px]">
+    cell: ({ row }) => (
+        <div className="flex max-w-[300px] items-center gap-2">
           <span
-            className="text-sm text-muted-foreground truncate"
+            className="truncate text-muted-foreground text-sm"
             title={row.original.text_content}
           >
             {row.original.text_content}
           </span>
         </div>
-      );
-    },
+      ),
   },
   {
     id: 'created at',
     accessorKey: 'created_at',
-    header: ({ column }) => {
-      return (
+    header: ({ column }) => (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -88,8 +85,7 @@ export const columns: ColumnDef<AudioFile>[] = [
           Created At
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      );
-    },
+      ),
     cell: ({ row }) =>
       formatDate(new Date(row.original.created_at), { withTime: true }),
   },

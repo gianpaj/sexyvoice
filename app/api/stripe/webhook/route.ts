@@ -161,7 +161,7 @@ async function handleCheckoutSessionCompleted(
       const { userId, packageId, credits, dollarAmount, promo } =
         session.metadata as unknown as CheckoutMetadata;
 
-      if (!userId || !credits || !dollarAmount || !session.payment_intent) {
+      if (!(((userId && credits ) && dollarAmount ) && session.payment_intent)) {
         const error = new Error('Missing metadata for topup transaction');
         const extra = {
           session_id: session.id,
@@ -206,7 +206,7 @@ async function handleCheckoutSessionCompleted(
       const customerId = session.customer as string | null;
       const subscriptionId = session.subscription as string | null;
 
-      if (!customerId || !subscriptionId) {
+      if (!(customerId && subscriptionId)) {
         const error = new Error('Missing customer or subscription ID');
         console.error(
           '[STRIPE HOOK] Missing customer or subscription ID in subscription checkout',

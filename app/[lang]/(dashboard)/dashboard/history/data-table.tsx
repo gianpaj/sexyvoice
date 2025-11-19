@@ -70,8 +70,8 @@ export function DataTable<AudioFile, TValue>({
 
   return (
     <>
-      <div className="flex items-center py-4 justify-between">
-        <div className="flex items-center flex-1 gap-2">
+      <div className="flex items-center justify-between py-4">
+        <div className="flex flex-1 items-center gap-2">
           <Input
             placeholder="Filter text..."
             value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
@@ -81,7 +81,7 @@ export function DataTable<AudioFile, TValue>({
             className="max-w-sm"
             autoComplete="off"
           />
-          <p className="text-sm text-muted-foreground text-left">
+          <p className="text-left text-muted-foreground text-sm">
             {table.getFilteredRowModel().rows.length} audio files
           </p>
         </div>

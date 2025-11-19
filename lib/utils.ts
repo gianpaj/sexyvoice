@@ -14,6 +14,23 @@ export const nanoid = customAlphabet(
   7,
 ); // 7-character random string
 
+/**
+ * Generate a short hash for caching purposes
+ * Uses SHA-256 but only returns first 8 characters for efficiency
+ * @param input - String to hash (can be a combination of multiple values)
+ * @returns 8-character hex hash
+ */
+export async function generateCacheHash(input: string): Promise<string> {
+  const textEncoder = new TextEncoder();
+  const data = textEncoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 8);
+}
+
 export function formatDate(
   input: string | number | Date,
   { withTime = false }: { withTime?: boolean } = {},
@@ -114,12 +131,9 @@ export function extractMetadata(
   if (isGeminiVoice) {
     const metadata = genAIResponse?.usageMetadata;
     if (
-      !metadata ||
-      !metadata.promptTokenCount ||
-      !metadata.candidatesTokenCount ||
-      !metadata.totalTokenCount
+      !(((metadata &&metadata.promptTokenCount ) &&metadata.candidatesTokenCount ) &&metadata.totalTokenCount)
     ) {
-      return undefined;
+      return ;
     }
     return {
       promptTokenCount: metadata.promptTokenCount.toString(),
@@ -128,8 +142,8 @@ export function extractMetadata(
     } as const;
   }
   const metrics = replicateResponse?.metrics;
-  if (!metrics?.predict_time || !metrics?.total_time) {
-    return undefined;
+  if (!(metrics?.predict_time && metrics?.total_time)) {
+    return ;
   }
   return {
     predict_time: metrics.predict_time.toString(),

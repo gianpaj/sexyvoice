@@ -51,7 +51,7 @@ export function UpdatePasswordForm({
       </div>
 
       {'error' in message && (
-        <div className="text-destructive-foreground border-l-2 border-destructive px-4 text-sm">
+        <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
           {/* @ts-ignore */}
           {dict.errors[message.error as keyof typeof dict.errors]}
         </div>

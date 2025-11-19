@@ -66,7 +66,7 @@ export function VoiceSelector({
   // const textIsOverLimit = text.length > charactersLimit;
   return (
     <Card>
-      <CardHeader className="sm:p-6 p-4 pt-6 sm:pb-2">
+      <CardHeader className="p-4 pt-6 sm:p-6 sm:pb-2">
         <CardTitle className="flex flex-row">
           {dict.voiceSelector.title}
           <TooltipProvider>
@@ -77,7 +77,7 @@ export function VoiceSelector({
                   variant="link"
                   size="icon"
                 >
-                  <Info className="w-4 h-4 ml-2" />
+                  <Info className="ml-2 h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
@@ -95,7 +95,7 @@ export function VoiceSelector({
         </CardTitle>
         <CardDescription>{dict.voiceSelector.description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6 sm:p-6 p-4">
+      <CardContent className="space-y-6 p-4 sm:p-6">
         <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
@@ -104,7 +104,7 @@ export function VoiceSelector({
             {publicVoices.length > 0 &&
               publicVoices.map((voice) => (
                 <SelectItem
-                  className="py-3 cursor-pointer"
+                  className="cursor-pointer py-3"
                   key={voice.id}
                   value={voice.name}
                 >
@@ -114,10 +114,10 @@ export function VoiceSelector({
           </SelectContent>
         </Select>
         {selectedVoice?.sample_url && (
-          <div className="flex gap-2 items-center justify-start py-2 lg:w-2/3">
+          <div className="flex items-center justify-start gap-2 py-2 lg:w-2/3">
             <AudioPlayer url={selectedVoice.sample_url} />
             <div className="flex items-center gap-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
                 prompt: <i>{selectedVoice.sample_prompt}</i>
               </p>
@@ -130,7 +130,7 @@ export function VoiceSelector({
                         variant="ghost"
                         size="icon"
                       >
-                        <Info className="w-4 h-4" />
+                        <Info className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -152,7 +152,7 @@ export function VoiceSelector({
               onChange={(e) => setSelectedStyle(e.target.value)}
               value={selectedStyle}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
-              className="textarea-1 transition-[height] duration-200 ease-in-out pr-16"
+              className="textarea-1 pr-16 transition-[height] duration-200 ease-in-out"
               style={
                 {
                   '--ta1-height': isFullscreen ? '30vh' : '4rem',
@@ -165,7 +165,7 @@ export function VoiceSelector({
               variant="ghost"
               onClick={() => setIsFullscreen(!isFullscreen)}
               className={
-                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
               }
               title="Fullscreen"
             >

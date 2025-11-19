@@ -29,27 +29,11 @@ import {
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
+  generateCacheHash,
   getErrorMessage,
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
-
-async function generateHash(
-  text: string,
-  voice: string,
-  // accent: string,
-  // speed: string,
-) {
-  const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${voice}`;
-  const data = textEncoder.encode(combinedString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 8);
-}
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 320; // seconds - fluid compute is enabled
@@ -75,7 +59,7 @@ export async function POST(request: Request) {
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
 
-    if (!text || !voice) {
+    if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
         body,
         headers: Object.fromEntries(request.headers.entries()),
@@ -142,8 +126,8 @@ export async function POST(request: Request) {
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice, and accent
-    const hash = await generateHash(text, voice);
+    // Generate hash for the combination of text and voice
+    const hash = await generateCacheHash(`${text}-${voice}`);
 
     const abortController = new AbortController();
 
@@ -480,7 +464,7 @@ async function sendPosthogEvent({
     event: 'generate-voice',
     properties: {
       // duration,
-      predictionId: predictionId,
+      predictionId,
       model,
       text,
       voiceId,

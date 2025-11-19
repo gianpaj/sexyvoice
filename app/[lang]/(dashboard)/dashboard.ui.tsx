@@ -142,7 +142,7 @@ export default function DashboardUI({
 
   return (
     <PostHogProvider>
-      <div className="bg-background min-h-screen">
+      <div className="min-h-screen bg-background">
         <SidebarProvider defaultOpen>
           <Sidebar collapsible="icon">
             <SidebarHeader>
@@ -150,7 +150,7 @@ export default function DashboardUI({
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0 items-end"
+                    className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
                   >
                     <div className="aspect-square group-data-[collapsible=icon]:size-9">
                       <Image
@@ -160,7 +160,7 @@ export default function DashboardUI({
                         height={292 / 8}
                       />
                     </div>
-                    <span className="text-xl font-semibold">exyVoice.ai</span>
+                    <span className="font-semibold text-xl">exyVoice.ai</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -218,19 +218,19 @@ export default function DashboardUI({
                 : undefined
             }
           />
-          <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
+          <div className="flex w-full flex-1 flex-col">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
               <SidebarTrigger className="lg:hidden" />
             </div>
 
             <main
               id="main-content"
-              className="px-4 py-8 sm:px-6 lg:px-8 flex-1"
+              className="flex-1 px-4 py-8 sm:px-6 lg:px-8"
             >
               {children}
             </main>
-            <footer className="p-4 border-t text-center">
-              <p className="text-xs text-gray-500">
+            <footer className="border-t p-4 text-center">
+              <p className="text-gray-500 text-xs">
                 <a
                   href="https://sexyvoice.checkly-dashboards.com/"
                   target="_blank"

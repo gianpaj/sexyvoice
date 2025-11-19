@@ -40,8 +40,7 @@ export class APIError extends Error {
   }
 }
 
-export const APIErrorResponse = (errorMsg: string, statusCode: number) => {
-  return NextResponse.json(
+export const APIErrorResponse = (errorMsg: string, statusCode: number) => NextResponse.json(
     new APIError(
       errorMsg,
       new Response(errorMsg, {
@@ -50,7 +49,6 @@ export const APIErrorResponse = (errorMsg: string, statusCode: number) => {
     ),
     { status: statusCode },
   );
-};
 
 // export function isAPIError(v: unknown): v is APIError {
 //   return isError(v) && 'status' in v;
