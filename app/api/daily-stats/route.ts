@@ -154,7 +154,6 @@ export async function GET(request: NextRequest) {
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
   const audioYesterdayCount = audioYesterdayData.length;
-  const audioPrevCount = audioPreviousDayResult.count ?? 0;
   const audioWeekCount = audioWeekResult.count ?? 0;
   const audioTotalCount = audioTotalCountResult.count ?? 0;
 
@@ -192,11 +191,6 @@ export async function GET(request: NextRequest) {
     today,
   );
   const profilesTodayCount = profilesYesterdayData.length;
-  const profilesPrevCount = filterByDateRange(
-    profilesRecentData,
-    twoDaysAgo,
-    previousDay,
-  ).length;
   const profilesWeekCount = profilesRecentData.length;
 
   // Early exit if no audio files yesterday
@@ -242,7 +236,7 @@ export async function GET(request: NextRequest) {
           .join(', ');
 
   // Filter credit transactions by date ranges (purchases/topups only)
-  const creditsPrevDayData = filterByDateRange(
+  const purchasePrevDayData = filterByDateRange(
     purchaseTransactions,
     previousDay,
     today,
@@ -281,7 +275,7 @@ export async function GET(request: NextRequest) {
   let hasInvalidMetadata = false;
   const customerSpending = new Map<string, number>();
 
-  for (const transaction of creditsPrevDayData) {
+  for (const transaction of purchasePrevDayData) {
     if (!transaction.metadata || typeof transaction.metadata !== 'object') {
       console.log('Invalid metadata in transaction:', transaction);
       hasInvalidMetadata = true;
@@ -305,7 +299,7 @@ export async function GET(request: NextRequest) {
       : topCustomerIds
           .map((userId) => {
             // Find the transaction for this user to get their profile data
-            const transaction = creditsPrevDayData.find(
+            const transaction = purchasePrevDayData.find(
               (t) => t.user_id === userId,
             );
             const username =
@@ -317,12 +311,27 @@ export async function GET(request: NextRequest) {
 
   const topCustomerProfilesCount = topCustomerIds.length || '';
 
-  // Revenue calculations (purchases/topups only)
   const totalUniquePaidUsers = new Set(
     purchaseTransactions.map((t) => t.user_id),
   ).size;
+  // Revenue calculations (incl. refund)
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
+
+  const creditsPrevDayData = filterByDateRange(
+    creditTransactions,
+    previousDay,
+    today,
+  );
   const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
+
+  // 7-day revenue calculations
+  const credits7dData = filterByDateRange(
+    creditTransactions,
+    sevenDaysAgo,
+    today,
+  );
+  const total7dRevenue = credits7dData.reduce(reduceAmountUsd, 0);
+  const avg7dRevenue = total7dRevenue / 7;
 
   // Refund amount calculations
   const totalRefundAmountUsd = refundTransactions.reduce(reduceAmountUsd, 0);
@@ -346,7 +355,7 @@ export async function GET(request: NextRequest) {
   );
   const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const creditsTodayCount = creditsPrevDayData.length;
+  const creditsTodayCount = purchasePrevDayData.length;
   const refundsTodayCount = refundsPrevDayData.length;
 
   const message = [
@@ -371,7 +380,7 @@ export async function GET(request: NextRequest) {
     `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
     '',
     '💰 Revenue',
-    `  - All-time: $${totalAmountUsd.toFixed(2)}`,
+    `  - All-time: $${totalAmountUsd.toFixed(2)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
     `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
     `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,
