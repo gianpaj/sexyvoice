@@ -16,10 +16,10 @@ export function startOfMonth(date: Date): Date {
 export function startOfPreviousMonth(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
 }
-
 export function formatChange(today: number, yesterday: number): string {
   const diff = today - yesterday;
-  return diff >= 0 ? `+${diff.toFixed(1)}` : `${diff.toFixed(1)}`;
+  const formatted = diff % 1 === 0 ? diff.toString() : diff.toFixed(1);
+  return diff >= 0 ? `+${formatted}` : `${formatted}`;
 }
 
 export function formatCurrencyChange(
