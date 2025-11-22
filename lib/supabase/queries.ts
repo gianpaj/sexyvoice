@@ -76,7 +76,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
-  usage?: Record<string, string>;
+  usage?: Record<string, string | number>;
 }) {
   const supabase = await createClient();
 
@@ -84,8 +84,8 @@ export async function saveAudioFile({
     user_id: userId,
     storage_key: filename,
     text_content: text,
-    url: url,
-    model: model,
+    url,
+    model,
     prediction_id: predictionId,
     is_public: isPublic,
     voice_id: voiceId,

@@ -55,7 +55,7 @@ export const updatePasswordAction = async (formData: FormData) => {
   const confirmPassword = formData.get('confirmPassword') as string;
   const lang = formData.get('lang')?.toString();
 
-  if (!password || !confirmPassword) {
+  if (!(password && confirmPassword)) {
     encodedRedirect(
       'error',
       `/${lang}/protected/update-password`,

@@ -45,15 +45,15 @@ export function SidebarMenu({ lang }: { lang: Locale }) {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            side="top"
             className="w-[--radix-popper-anchor-width]"
+            side="top"
           >
             <DropdownMenuItem asChild>
               <Link
+                href={`/${lang}/dashboard/profile`}
                 onClick={() => {
                   isMobile && toggleSidebar?.();
                 }}
-                href={`/${lang}/dashboard/profile`}
               >
                 Profile
               </Link>

@@ -5,6 +5,8 @@ import {
   CircleStop,
   Download,
   PaperclipIcon,
+  Pause,
+  Play,
   UploadIcon,
   XIcon,
 } from 'lucide-react';
@@ -12,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
+import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,36 +27,111 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 // import { Progress } from '@/components/ui/progress';
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import { downloadUrl } from '@/lib/download';
-import type lang from '@/lib/i18n/dictionaries/en.json';
-import { AudioPlayer } from '../history/audio-player';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import { AudioProvider } from './audio-provider';
+import type { SampleAudio } from './CloneSampleCard';
+import CloneSampleCard from './CloneSampleCard';
 
-type Status = 'idle' | 'generating' | 'complete' | 'error';
+export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+const sampleAudios: readonly SampleAudio[] = [
+  {
+    id: 1,
+    name: 'Marilyn Monroe 🇺🇸',
+    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
+    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
+    audioExampleOutputSrc:
+      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
+  },
+  // {
+  //   id: 2,
+  //   name: 'Morgan Freeman 🇺🇸',
+  //   prompt: 'The most important thing is the mission, not the money',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  // },
+  // {
+  //   id: 3,
+  //   name: 'Audrey Hepburn 🇬🇧',
+  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  // },
+  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
+];
+
+const SUPPORTED_LOCALE_CODES = [
+  'ar',
+  'da',
+  'de',
+  'el',
+  'en',
+  'es',
+  'fi',
+  'fr',
+  'he',
+  'hi',
+  'it',
+  'ja',
+  'ko',
+  'ms',
+  'nl',
+  'no',
+  'pl',
+  'pt',
+  'ru',
+  'sv',
+  'sw',
+  'tr',
+  'zh',
+];
+
 export default function NewVoiceClient({
   dict,
+  lang,
+  hasEnoughCredits,
 }: {
-  dict: (typeof lang)['generate'];
+  dict: (typeof langDict)['clone'];
+  lang: string;
+  hasEnoughCredits: boolean;
 }) {
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
   const [textToConvert, setTextToConvert] = useState('');
-  const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+  const [selectedLocale, setSelectedLocale] = useState('en');
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // TODO: benchmark this. Should this be a global variable or React.memo() OR React.compiler will automatically memoize this?
+  const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
+  const supportedLocales = SUPPORTED_LOCALE_CODES.map((code) => ({
+    code,
+    name:
+      `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
+      code,
+  }));
+
+  const onFilesAdded = () => {
+    setStatus('idle');
+    setErrorMessage('');
+  };
 
   const [
     { files, isDragging, errors },
@@ -66,8 +144,10 @@ export default function NewVoiceClient({
       removeFile,
       getInputProps,
       clearErrors,
+      addFiles,
     },
   ] = useFileUpload({
+    onFilesAdded,
     maxSize: MAX_FILE_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
@@ -93,13 +173,13 @@ export default function NewVoiceClient({
   const abortController = useRef<AbortController | null>(null);
   const handleGenerate = useCallback(async () => {
     if (!file) {
-      setErrorMessage('Please select an audio file.');
+      setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
       return;
     }
 
     if (!textToConvert.trim()) {
-      setErrorMessage('Please enter some text to convert to speech.');
+      setErrorMessage(dict.errors.noText);
       setStatus('error');
       return;
     }
@@ -116,6 +196,7 @@ export default function NewVoiceClient({
       const formData = new FormData();
       formData.append('file', file);
       formData.append('text', textToConvert);
+      formData.append('locale', selectedLocale);
 
       voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -136,7 +217,19 @@ export default function NewVoiceClient({
       }
       const voiceResult = await voiceRes.json();
 
-      setGeneratedAudioUrl(voiceResult.url);
+      const newAudio = new Audio(voiceResult.url);
+
+      newAudio.addEventListener('ended', () => {
+        setIsPlaying(false);
+      });
+
+      setAudio(newAudio);
+
+      // Automatically play the audio
+      newAudio.play();
+      setIsPlaying(true);
+
+      toast.success(dict.success);
 
       setStatus('complete');
       setActiveTab('preview');
@@ -156,7 +249,7 @@ export default function NewVoiceClient({
       setErrorMessage(errorMsg);
       setStatus('error');
     }
-  }, [dict, file, textToConvert, clearErrors]);
+  }, [dict, file, textToConvert, selectedLocale, clearErrors]);
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -173,8 +266,8 @@ export default function NewVoiceClient({
         // Only trigger if form can be submitted
         if (
           status !== 'generating' &&
-          textToConvert.trim()
-          // && hasEnoughCredits
+          textToConvert.trim() &&
+          hasEnoughCredits
         ) {
           handleGenerate();
         }
@@ -188,7 +281,7 @@ export default function NewVoiceClient({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, textToConvert, handleGenerate]);
+  }, [status, textToConvert, handleGenerate, hasEnoughCredits]);
 
   const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
@@ -196,83 +289,91 @@ export default function NewVoiceClient({
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
 
-    if (!generatedAudioUrl) return;
+    if (!audio?.src) return;
 
     try {
-      await downloadUrl(generatedAudioUrl, anchorElement);
+      await downloadUrl(audio.src, anchorElement);
     } catch {
-      toast.error(dict.error);
+      toast.error(dict.errorCloning);
     }
+  };
+
+  const togglePlayback = () => {
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+    setIsPlaying(!isPlaying);
   };
 
   return (
     <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle>Clone a Voice</CardTitle>
+          <CardTitle>{dict.title}</CardTitle>
           <CardDescription>
-            <p className="mb-4">
-              Upload an audio file and enter text to create a voice clone and
-              generate speech in one step
-            </p>
+            <p className="mb-4">{dict.subtitle}</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* TODO add examples */}
-          {/* https://maskgct.github.io/audios/celeb_samples/rick_0.wav */}
           <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
             className="w-full"
+            onValueChange={setActiveTab}
+            value={activeTab}
           >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload">Create Voice</TabsTrigger>
-              <TabsTrigger value="preview" disabled={status !== 'complete'}>
-                Preview
+              <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
+              <TabsTrigger disabled={status !== 'complete'} value="preview">
+                {dict.tabPreview}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="upload" className="space-y-6 py-4">
-              <div className="grid w-full gap-4">
+            <TabsContent className="space-y-6 py-4" value="upload">
+              <div className="grid w-full gap-6">
                 <div className="grid w-full gap-2">
-                  <Label htmlFor="audio-file">Audio File</Label>
+                  <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
 
                   {/* Drop area */}
                   {!file && (
                     <button
-                      type="button"
+                      className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-[input:focus]:border-ring has-disabled:opacity-50 has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+                      data-dragging={isDragging || undefined}
                       onClick={openFileDialog}
-                      onKeyUp={openFileDialog}
                       onDragEnter={handleDragEnter}
                       onDragLeave={handleDragLeave}
                       onDragOver={handleDragOver}
                       onDrop={handleDrop}
-                      data-dragging={isDragging || undefined}
-                      className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
+                      onKeyUp={openFileDialog}
+                      type="button"
                     >
                       <input
                         {...getInputProps()}
-                        className="sr-only"
                         aria-label="Upload audio file"
+                        className="sr-only"
                         disabled={Boolean(file)}
                       />
 
                       <div className="flex flex-col items-center justify-center text-center">
                         <div
-                          className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
                           aria-hidden="true"
+                          className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
                         >
                           <UploadIcon className="size-4 opacity-60" />
                         </div>
-                        <p className="mb-1.5 text-sm font-medium">
-                          Upload audio file
+                        <p className="mb-1.5 font-medium text-sm">
+                          {dict.uploadAudioFile}
                         </p>
                         <p className="text-muted-foreground text-xs">
-                          Drag & drop or click to browse
+                          {dict.dragDropText}
                         </p>
-                        <p className="text-muted-foreground text-xs mt-1">
-                          MP3, WAV, M4A or OGG (max.{' '}
-                          {formatBytes(MAX_FILE_SIZE)})
+                        <p className="mt-1 text-muted-foreground text-xs">
+                          {dict.fileFormatsText.replace(
+                            '__SIZE__',
+                            formatBytes(MAX_FILE_SIZE),
+                          )}
                         </p>
                       </div>
                     </button>
@@ -281,7 +382,7 @@ export default function NewVoiceClient({
                   {/* File upload errors */}
                   {errors.length > 0 && (
                     <div
-                      className="text-destructive flex items-center gap-1 text-xs"
+                      className="flex items-center gap-1 text-destructive text-xs"
                       role="alert"
                     >
                       <AlertCircle className="size-3 shrink-0" />
@@ -290,48 +391,100 @@ export default function NewVoiceClient({
                   )}
 
                   {/* Selected file display */}
-                  {file && (
+                  {file ? (
                     <div
-                      key={files[0]?.id}
                       className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                      key={files[0]?.id}
                     >
                       <div className="flex items-center gap-3 overflow-hidden">
                         <PaperclipIcon
-                          className="size-4 shrink-0 opacity-60"
                           aria-hidden="true"
+                          className="size-4 shrink-0 opacity-60"
                         />
                         <div className="min-w-0">
-                          <p className="truncate break-all whitespace-normal text-[13px] font-medium">
+                          <p className="truncate whitespace-normal break-all font-medium text-[13px]">
                             {file.name}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             {formatBytes(file.size)}
                           </p>
                         </div>
                       </div>
 
                       <Button
+                        aria-label="Remove file"
+                        className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
+                        onClick={() => removeFile(files[0]?.id)}
                         size="icon"
                         variant="ghost"
-                        className="text-muted-foreground/80 hover:text-foreground -me-2 size-12 hover:bg-transparent"
-                        onClick={() => removeFile(files[0]?.id)}
-                        aria-label="Remove file"
                       >
-                        <XIcon className="!size-6" aria-hidden="true" />
+                        <XIcon aria-hidden="true" className="!size-6" />
                       </Button>
+                    </div>
+                  ) : (
+                    // Sample audio demo buttons
+                    <div className="grid w-full gap-2">
+                      <p className="text-muted-foreground text-xs">
+                        {dict.tryDemo}
+                      </p>
+
+                      <Accordion
+                        className="w-full"
+                        collapsible
+                        defaultValue={sampleAudios[0].id.toString()}
+                        type="single"
+                      >
+                        <AudioProvider>
+                          {sampleAudios.map((sample) => (
+                            <CloneSampleCard
+                              addFiles={addFiles}
+                              dict={dict}
+                              key={sample.id}
+                              sample={sample}
+                              setErrorMessage={setErrorMessage}
+                              setStatus={setStatus}
+                              setTextToConvert={setTextToConvert}
+                            />
+                          ))}
+                        </AudioProvider>
+                      </Accordion>
                     </div>
                   )}
                 </div>
 
                 <div className="grid w-full gap-2">
-                  <Label htmlFor="text-to-convert">Text to Convert</Label>
+                  <Label htmlFor="language">{dict.languageLabel}</Label>
+                  <Select
+                    disabled={status === 'generating'}
+                    onValueChange={setSelectedLocale}
+                    value={selectedLocale}
+                  >
+                    <SelectTrigger id="language">
+                      <SelectValue
+                        placeholder={dict.languageSelectPlaceholder}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLocales.map((locale) => (
+                        <SelectItem key={locale.code} value={locale.code}>
+                          {locale.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid w-full gap-2">
+                  <Label htmlFor="text-to-convert">
+                    {dict.textToConvertLabel}
+                  </Label>
                   <textarea
-                    id="text-to-convert"
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={status === 'generating'}
+                    id="text-to-convert"
+                    onChange={(e) => setTextToConvert(e.target.value)}
                     placeholder={dict.textAreaPlaceholder}
                     value={textToConvert}
-                    onChange={(e) => setTextToConvert(e.target.value)}
-                    disabled={status === 'generating'}
                   />
                 </div>
               </div>
@@ -339,30 +492,37 @@ export default function NewVoiceClient({
               {status === 'error' && errorMessage && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>{dict.errorTitle}</AlertTitle>
                   <AlertDescription>{errorMessage}</AlertDescription>
                 </Alert>
               )}
 
+              {!hasEnoughCredits && (
+                <Alert className="mx-auto w-fit" variant="destructive">
+                  <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+                </Alert>
+              )}
+
               <Button
-                onClick={handleGenerate}
-                disabled={
-                  !file || !textToConvert.trim() || status === 'generating'
-                  // || !hasEnoughCredits
-                }
                 className="w-full"
+                disabled={
+                  !(file && textToConvert.trim()) ||
+                  status === 'generating' ||
+                  !hasEnoughCredits
+                }
+                onClick={handleGenerate}
               >
                 {status === 'generating' ? (
                   <span className="flex items-center">
                     {dict.generating}
-                    <span className="inline-flex ml-1">
+                    <span className="ml-1 inline-flex">
                       <PulsatingDots />
                     </span>
                   </span>
                 ) : (
                   <>
                     <span>{dict.ctaButton}</span>
-                    <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                    <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                       {shortcutKey}
                     </span>
                   </>
@@ -370,32 +530,45 @@ export default function NewVoiceClient({
               </Button>
               {status === 'generating' && (
                 <Button
-                  variant="outline"
-                  onClick={handleCancel}
                   className="mx-auto"
+                  onClick={handleCancel}
+                  variant="outline"
                 >
-                  Cancel <CircleStop name="cancel" className="size-4" />
+                  {dict.cancelButton}{' '}
+                  <CircleStop className="size-4" name="cancel" />
                 </Button>
               )}
             </TabsContent>
 
-            <TabsContent value="preview" className="space-y-4 py-4">
+            <TabsContent className="space-y-4 py-4" value="preview">
               <div className="space-y-4">
-                <h3 className="text-xl font-medium text-center">
-                  Generated Voice Preview
+                <h3 className="text-center font-medium text-xl">
+                  {dict.previewTitle}
                 </h3>
 
-                <div className="border rounded-lg p-4 bg-muted/30 w-fit mx-auto">
+                <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
                   {/* <AudioWaveform audioUrl={generatedAudioUrl || ''} /> */}
-                  <AudioPlayer url={generatedAudioUrl} />
+                  {/*<AudioPlayer url={generatedAudioUrl} />*/}
+                  <Button
+                    className="rounded-full"
+                    onClick={togglePlayback}
+                    size="icon"
+                    variant="secondary"
+                  >
+                    {isPlaying ? (
+                      <Pause className="size-6" />
+                    ) : (
+                      <Play className="size-6" />
+                    )}
+                  </Button>
                 </div>
 
                 <div className="flex justify-center gap-4">
                   <Button
-                    onClick={downloadAudio}
                     className="flex items-center gap-2"
+                    onClick={downloadAudio}
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="h-4 w-4" />
                     {dict.downloadAudio}
                   </Button>
                 </div>
@@ -404,9 +577,7 @@ export default function NewVoiceClient({
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            Voice clones are created for demonstration purposes only.
-          </p>
+          <p className="text-muted-foreground text-sm">{dict.disclaimer}</p>
         </CardFooter>
       </Card>
     </div>

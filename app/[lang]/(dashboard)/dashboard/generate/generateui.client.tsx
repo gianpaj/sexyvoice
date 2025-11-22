@@ -6,12 +6,12 @@ import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 
-interface GenerateUIProps {
+type GenerateUIProps = {
   publicVoices: Voice[];
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
-}
+};
 
 const STYLE_PROMPT_VARIANT_MOAN =
   process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN;
@@ -30,19 +30,19 @@ export function GenerateUI({
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
-        setSelectedVoice={setSelectedVoice}
-        selectedVoice={selectedVoiceSample}
-        selectedStyle={selectedStyle}
-        setSelectedStyle={setSelectedStyle}
-        publicVoices={publicVoices}
         dict={dict}
+        publicVoices={publicVoices}
+        selectedStyle={selectedStyle}
+        selectedVoice={selectedVoiceSample}
+        setSelectedStyle={setSelectedStyle}
+        setSelectedVoice={setSelectedVoice}
       />
       <AudioGenerator
-        selectedVoice={selectedVoiceSample}
-        selectedStyle={selectedStyle}
-        hasEnoughCredits={hasEnoughCredits}
         dict={dict}
+        hasEnoughCredits={hasEnoughCredits}
         locale={locale}
+        selectedStyle={selectedStyle}
+        selectedVoice={selectedVoiceSample}
       />
     </div>
   );

@@ -25,14 +25,14 @@ export function CreditHistory({
   if (!transactions || transactions.length === 0) {
     return (
       <div className="rounded-lg py-8 text-center">
-        <h4 className="mb-2 text-sm font-semibold">No transactions yet</h4>
-        <p className="text-sm text-muted-foreground">{dict.historyEmpty}</p>
+        <h4 className="mb-2 font-semibold text-sm">No transactions yet</h4>
+        <p className="text-muted-foreground text-sm">{dict.historyEmpty}</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border mb-8">
+    <div className="mb-8 rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow isHead>

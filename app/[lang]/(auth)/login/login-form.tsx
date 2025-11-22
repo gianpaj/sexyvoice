@@ -71,39 +71,39 @@ export function LoginForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-2">
         <Label htmlFor="email">{dict.email}</Label>
         <Input
+          autoComplete="email"
           id="email"
-          type="email"
-          value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          autoComplete="email"
+          type="email"
+          value={email}
         />
       </div>
       <div className="grid gap-2">
         <div className="flex items-center">
           <Label htmlFor="password">{dict.password}</Label>
           <Link
-            href={`/${lang}/reset-password`}
             className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+            href={`/${lang}/reset-password`}
           >
             {dict.forgotPassword || 'Forgot your password?'}
           </Link>
         </div>
         <Input
+          autoComplete="current-password"
           id="password"
-          type="password"
-          value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          autoComplete="current-password"
+          type="password"
+          value={password}
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="relative">
         {lastUsedAuthFixed.current === 'email' && <LastUsedBanner />}
@@ -125,11 +125,11 @@ export function LoginForm({
         </Button>
       </div>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-gray-500 text-sm">
         {dict.noAccount}{' '}
         <Link
-          href={`/${lang}/signup`}
           className="text-blue-600 hover:text-blue-500"
+          href={`/${lang}/signup`}
         >
           {dict.signUp}
         </Link>

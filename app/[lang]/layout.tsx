@@ -48,7 +48,7 @@ export async function generateMetadata(
     },
     description: dict.pages.description,
     openGraph: {
-      title: title,
+      title,
       description: dict.pages.description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
@@ -67,7 +67,7 @@ export default async function LangLayout({
   return (
     <html lang={(await params).lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
-        <a href="#main-content" className="sr-only focus:not-sr-only">
+        <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
         </a>
         <Providers>{children}</Providers>

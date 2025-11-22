@@ -3,13 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { i18n } from '@/lib/i18n/i18n-config';
 import { createClient } from './server';
 
-const routesPerLocale = (routes: string[]): string[] => {
-  return i18n.locales.flatMap((locale) =>
+const routesPerLocale = (routes: string[]): string[] =>
+  i18n.locales.flatMap((locale) =>
     routes.flatMap((route) =>
       route === '/' ? [`/${locale}`, `/${locale}/`] : `/${locale}${route}`,
     ),
   );
-};
 
 const publicRoutes = [
   '/api/health',
@@ -39,7 +38,7 @@ export const updateSession = async (request: NextRequest, locale: string) => {
       return NextResponse.redirect(url);
     }
 
-    if (!user && !isPublicRoute) {
+    if (!(user || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
       return NextResponse.redirect(new URL('/', request.url));
     }

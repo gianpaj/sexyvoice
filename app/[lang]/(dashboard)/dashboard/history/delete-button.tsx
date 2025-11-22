@@ -48,7 +48,7 @@ export function DeleteButton({
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
       <AlertDialogTrigger asChild>
         <DropdownMenuItem
           onSelect={(e) => {
@@ -72,9 +72,9 @@ export function DeleteButton({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction asChild>
             <Button
-              variant="destructive"
-              onClick={handleDelete}
               disabled={isDeleting}
+              onClick={handleDelete}
+              variant="destructive"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>

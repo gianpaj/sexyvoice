@@ -11,7 +11,7 @@ export const createArticleSchema = (
   '@context': 'https://schema.org',
   '@type': 'TechArticle',
   headline: title,
-  description: description,
+  description,
   author: {
     '@type': 'Organization',
     name: 'SexyVoice.ai',
@@ -25,7 +25,7 @@ export const createArticleSchema = (
       url: 'https://sexyvoice.ai/sexyvoice.png',
     },
   },
-  datePublished: datePublished,
+  datePublished,
   dateModified: datePublished,
   url: `https://sexyvoice.ai/${locale}/blog/${slug}`,
   inLanguage: locale,

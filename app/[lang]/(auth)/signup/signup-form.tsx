@@ -69,9 +69,9 @@ export function SignUpForm({
       }
 
       toast.success(dict.signupSuccess, {
-        duration: 60000,
+        duration: 60_000,
         cancel: (
-          <Button variant="outline" size="sm" onClick={() => toast.dismiss()}>
+          <Button onClick={() => toast.dismiss()} size="sm" variant="outline">
             Ok
           </Button>
         ),
@@ -101,51 +101,51 @@ export function SignUpForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-2">
         <Label htmlFor="email">{dict.email}</Label>
         <Input
+          autoComplete="email"
           id="email"
-          type="email"
-          value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          autoComplete="email"
+          type="email"
+          value={email}
         />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="password">{dict.password}</Label>
         <Input
+          autoComplete="new-password"
           id="password"
-          type="password"
-          value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          autoComplete="new-password"
+          type="password"
+          value={password}
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button className="w-full" disabled={isLoading} type="submit">
         {isLoading ? 'Loading...' : dict.submit}
       </Button>
 
       <Button
-        onClick={loginWithGoogle}
-        variant="secondary"
         className="w-full"
         disabled={isLoading}
+        onClick={loginWithGoogle}
+        variant="secondary"
       >
         <LogosGoogleIcon />
         Sign up with Google
       </Button>
 
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-gray-500 text-sm">
         {dict.hasAccount}{' '}
         <Link
-          href={`/${lang}/login`}
           className="text-blue-600 hover:text-blue-500"
+          href={`/${lang}/login`}
         >
           {dict.signIn}
         </Link>

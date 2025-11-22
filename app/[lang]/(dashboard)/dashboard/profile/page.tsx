@@ -20,13 +20,13 @@ export default async function ProfilePage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'profile');
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   if (!user) {
-    return <div>{dict.profile.notLoggedIn}</div>;
+    return <div>{dict.notLoggedIn}</div>;
   }
 
   return (
@@ -61,8 +61,8 @@ export default async function ProfilePage(props: {
       {/* <TabsContent value="security"> */}
       <Card>
         <CardHeader>
-          <CardTitle>{dict.profile.security.title}</CardTitle>
-          <CardDescription>{dict.profile.security.description}</CardDescription>
+          <CardTitle>{dict.security.title}</CardTitle>
+          <CardDescription>{dict.security.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <SecurityForm email={user.email} />
@@ -70,10 +70,10 @@ export default async function ProfilePage(props: {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{dict.profile.dangerZone.title}</CardTitle>
+          <CardTitle>{dict.dangerZone.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <DeleteAccountForm lang={lang} dict={dict} />
+          <DeleteAccountForm dict={dict} lang={lang} />
         </CardContent>
       </Card>
       {/* </TabsContent> */}

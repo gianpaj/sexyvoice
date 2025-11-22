@@ -1,3 +1,4 @@
+import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import DashboardUI from './dashboard.ui';

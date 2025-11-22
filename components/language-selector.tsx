@@ -30,23 +30,23 @@ export function LanguageSelector({
         <>
           <DropdownMenuTrigger asChild>
             <Button
+              className="w-36 justify-start p-2 font-normal text-small"
               variant="ghost"
-              className="w-36 justify-start p-2 text-small font-normal"
             >
               Language <div>&nbsp;</div> <Languages className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            side="right"
             align="start"
             alignOffset={-5}
             className=""
+            side="right"
           >
             {languages.map((lang) => (
-              <DropdownMenuItem key={lang.code} asChild>
+              <DropdownMenuItem asChild key={lang.code}>
                 <Link
-                  href={`/${lang.code}`}
                   className={`w-full cursor-pointer ${currentLang === lang.code ? 'font-bold' : ''}`}
+                  href={`/${lang.code}`}
                 >
                   {lang.label}
                 </Link>
@@ -58,18 +58,18 @@ export function LanguageSelector({
         <>
           <DropdownMenuTrigger asChild>
             <Button
+              className="justify-start bg-secondary/70 p-2 font-normal"
               variant="ghost"
-              className="bg-secondary/70 justify-start p-2 font-normal"
             >
               Language <div>&nbsp;</div> <Languages className="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {languages.map((lang) => (
-              <DropdownMenuItem key={lang.code} asChild>
+              <DropdownMenuItem asChild key={lang.code}>
                 <Link
-                  href={`/${lang.code}`}
                   className={`w-full cursor-pointer ${currentLang === lang.code ? 'font-bold' : ''}`}
+                  href={`/${lang.code}`}
                 >
                   {lang.label}
                 </Link>
