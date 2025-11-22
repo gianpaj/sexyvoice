@@ -257,7 +257,12 @@ declare type Database = {
       };
     };
     Enums: {
-      credit_transaction_type: 'purchase' | 'usage' | 'freemium' | 'topup';
+      credit_transaction_type:
+        | 'purchase'
+        | 'usage'
+        | 'freemium'
+        | 'topup'
+        | 'refund';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -388,7 +393,13 @@ declare type CompositeTypes<
 declare const Constants = {
   public: {
     Enums: {
-      credit_transaction_type: ['purchase', 'usage', 'freemium', 'topup'],
+      credit_transaction_type: [
+        'purchase',
+        'usage',
+        'freemium',
+        'topup',
+        'refund',
+      ],
     },
   },
 } as const;
