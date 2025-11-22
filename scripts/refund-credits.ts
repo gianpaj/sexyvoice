@@ -179,8 +179,14 @@ function calculateRefund(
   // Calculate credit rate (USD per credit)
   const creditRate = totalSpentUSD / totalPurchased;
 
-  // Max refund is based on unused credits minus already refunded credits
-  const unusedCredits = totalPurchased - totalCreditsUsed - totalRefunded;
+  const totalPurchaseCreditsUsed = Math.max(
+    0,
+    totalCreditsUsed - totalFreemium,
+  );
+
+  // Max refund is based on purchase unused credits minus already refunded credits
+  const unusedCredits =
+    totalPurchased - totalPurchaseCreditsUsed - totalRefunded;
   const maxRefundCredits = Math.max(0, unusedCredits);
   const maxRefundUSD = maxRefundCredits * creditRate;
 
