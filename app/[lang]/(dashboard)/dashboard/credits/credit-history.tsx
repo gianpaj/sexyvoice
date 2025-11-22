@@ -60,7 +60,7 @@ export function CreditHistory({
               >
                 {['purchase', 'freemium', 'topup'].includes(transaction.type)
                   ? '+'
-                  : '-'}
+                  : ''}
                 {transaction.amount}
               </TableCell>
             </TableRow>
