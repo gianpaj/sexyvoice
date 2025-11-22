@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
       .select(
         'id, user_id, created_at, type, description, metadata, profiles(username)',
       )
-      .in('type', ['purchase', 'topup'])
+      .in('type', ['purchase', 'topup', 'refund'])
       .not('description', 'ilike', '%manual%')
       .lt('created_at', today.toISOString()),
 
@@ -168,6 +168,14 @@ export async function GET(request: NextRequest) {
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
   const creditTransactions = allCreditTransactionsResult.data ?? [];
+
+  // Separate refunds from purchases/topups
+  const refundTransactions = creditTransactions.filter(
+    (t) => t.type === 'refund',
+  );
+  const purchaseTransactions = creditTransactions.filter(
+    (t) => t.type !== 'refund',
+  );
 
   // Filter clones by date ranges
   const clonePrevCount = filterByDateRange(
@@ -233,28 +241,41 @@ export async function GET(request: NextRequest) {
           .map(([voiceName, count]) => `${voiceName} (${count})`)
           .join(', ');
 
-  // Filter credit transactions by date ranges
+  // Filter credit transactions by date ranges (purchases/topups only)
   const creditsPrevDayData = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     previousDay,
     today,
   );
   const creditsPrevCount = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     twoDaysAgo,
     previousDay,
   ).length;
   const creditsWeekCount = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     sevenDaysAgo,
     today,
   ).length;
   const creditsMonthCount = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     thirtyDaysAgo,
     today,
   ).length;
-  const creditsTotalCount = creditTransactions.length;
+  const creditsTotalCount = purchaseTransactions.length;
+
+  // Filter refund transactions by date ranges
+  const refundsPrevDayData = filterByDateRange(
+    refundTransactions,
+    previousDay,
+    today,
+  );
+  const refundsPrevCount = filterByDateRange(
+    refundTransactions,
+    twoDaysAgo,
+    previousDay,
+  ).length;
+  const refundsTotalCount = refundTransactions.length;
 
   // Top customers calculation
   let hasInvalidMetadata = false;
@@ -296,13 +317,21 @@ export async function GET(request: NextRequest) {
 
   const topCustomerProfilesCount = topCustomerIds.length || '';
 
-  // Revenue calculations
-  const totalUniquePaidUsers = new Set(creditTransactions.map((t) => t.user_id))
-    .size;
+  // Revenue calculations (purchases/topups only)
+  const totalUniquePaidUsers = new Set(
+    purchaseTransactions.map((t) => t.user_id),
+  ).size;
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
   const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
 
-  // MTD revenue calculations
+  // Refund amount calculations
+  const totalRefundAmountUsd = refundTransactions.reduce(reduceAmountUsd, 0);
+  const totalRefundAmountUsdToday = refundsPrevDayData.reduce(
+    reduceAmountUsd,
+    0,
+  );
+
+  // MTD revenue calculations (purchases/topups only)
   const mtdRevenueData = filterByDateRange(
     creditTransactions,
     monthStart,
@@ -318,6 +347,7 @@ export async function GET(request: NextRequest) {
   const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
   const creditsTodayCount = creditsPrevDayData.length;
+  const refundsTodayCount = refundsPrevDayData.length;
 
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
@@ -336,6 +366,9 @@ export async function GET(request: NextRequest) {
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
+    '',
+    `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) ${refundsTodayCount > 0 ? '😢' : ''}`,
+    `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
     '',
     '💰 Revenue',
     `  - All-time: $${totalAmountUsd.toFixed(2)}`,
