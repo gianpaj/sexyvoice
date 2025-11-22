@@ -220,7 +220,7 @@ export function AudioGenerator({
   });
 
   const handleEnhanceText = async () => {
-    if (!text.trim() || !selectedVoice) return;
+    if (!(text.trim() && selectedVoice)) return;
 
     setIsEnhancingText(true);
     setPreviousText(text);
@@ -263,31 +263,31 @@ export function AudioGenerator({
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 sm:p-6 sm:pt-4 p-4">
+      <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
         <div className="space-y-2">
           <div className="relative">
             <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder={dict.textAreaPlaceholder}
-              maxLength={charactersLimit * 2}
               className={cn(
                 'textarea-2 transition-[height] duration-200 ease-in-out',
                 [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
               )}
+              maxLength={charactersLimit * 2}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={dict.textAreaPlaceholder}
+              ref={textareaRef}
               style={
                 {
                   '--ta2-height': isFullscreen ? '30vh' : '8rem',
                 } as React.CSSProperties
               }
-              ref={textareaRef}
+              value={text}
             />
             {!isGeminiVoice && (
               <>
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>
                     <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 ml-2 absolute top-4 right-24" />
+                      <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>This model supports emotion tags</p>
@@ -295,12 +295,12 @@ export function AudioGenerator({
                   </Tooltip>
                 </TooltipProvider>
                 <Button
-                  size="icon"
-                  variant="ghost"
                   className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-                  onClick={handleEnhanceText}
                   disabled={!text.trim() || isEnhancingText || isGenerating}
+                  onClick={handleEnhanceText}
+                  size="icon"
                   title="Enhance text with AI emotion tags"
+                  variant="ghost"
                 >
                   {isEnhancingText ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -311,13 +311,13 @@ export function AudioGenerator({
               </>
             )}
             <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsFullscreen(!isFullscreen)}
               className={
-                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
               }
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              size="icon"
               title="Fullscreen"
+              variant="ghost"
             >
               {isFullscreen ? (
                 <Minimize2 className="h-4 w-4" />
@@ -327,8 +327,8 @@ export function AudioGenerator({
             </Button>
           </div>
           <div
-            className={cn('text-sm text-muted-foreground text-right', [
-              textIsOverLimit ? 'text-red-500 font-bold' : '',
+            className={cn('text-right text-muted-foreground text-sm', [
+              textIsOverLimit ? 'font-bold text-red-500' : '',
             ])}
           >
             {text.length} / {charactersLimit}
@@ -337,18 +337,18 @@ export function AudioGenerator({
 
         <div
           className={cn(
-            'grid grid-cols-1 sm:grid-cols-2 justify-start gap-3',
+            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-2',
             hasEnoughCredits ? 'items-center' : 'flex flex-col items-start',
           )}
         >
           {!hasEnoughCredits && (
-            <Alert variant="destructive" className="w-fit">
+            <Alert className="w-fit" variant="destructive">
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
           <div className="flex flex-grow-0 gap-2">
             <Button
-              onClick={handleGenerate}
+              className="h-10"
               data-testid="generate-button"
               disabled={
                 isGenerating ||
@@ -357,8 +357,8 @@ export function AudioGenerator({
                 !hasEnoughCredits ||
                 textIsOverLimit
               }
+              onClick={handleGenerate}
               size="lg"
-              className="h-10"
             >
               {isGenerating ? (
                 <span className="flex items-center">
@@ -368,7 +368,7 @@ export function AudioGenerator({
               ) : (
                 <span className="flex items-center gap-2">
                   {dict.ctaButton}
-                  <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </span>
@@ -376,26 +376,26 @@ export function AudioGenerator({
             </Button>
             {isGenerating && (
               <Button
-                variant="outline"
                 aria-label={dict.cancel}
-                title={dict.cancel}
-                size="icon"
-                onClick={handleCancel}
+                className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
+                icon={() => <CircleStop className="!size-8" name="cancel" />}
                 iconPlacement="right"
-                icon={() => <CircleStop name="cancel" className="!size-8" />}
-                className="border-none cursor-pointer text-gray-300 hover:text-white hover:bg-transparent p-0"
+                onClick={handleCancel}
+                size="icon"
+                title={dict.cancel}
+                variant="outline"
               />
             )}
           </div>
 
           <div>
             {audio && (
-              <div className="flex sm:w-full justify-start gap-2">
+              <div className="flex justify-start gap-2 sm:w-full">
                 <Button
-                  variant="secondary"
-                  title={dict.playAudio}
-                  size="icon"
                   onClick={togglePlayback}
+                  size="icon"
+                  title={dict.playAudio}
+                  variant="secondary"
                 >
                   {isPlaying ? (
                     <Pause className="size-6" />
@@ -404,18 +404,18 @@ export function AudioGenerator({
                   )}
                 </Button>
                 <Button
-                  variant="secondary"
+                  onClick={resetPlayer}
                   size="icon"
                   title={dict.resetPlayer}
-                  onClick={resetPlayer}
+                  variant="secondary"
                 >
                   <RotateCcw className="size-6" />
                 </Button>
                 <Button
-                  variant="secondary"
+                  onClick={downloadAudio}
                   size="icon"
                   title={dict.downloadAudio}
-                  onClick={downloadAudio}
+                  variant="secondary"
                 >
                   <Download className="size-6" />
                 </Button>

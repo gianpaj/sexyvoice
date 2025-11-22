@@ -73,7 +73,7 @@ export default async function ProfilePage(props: {
           <CardTitle>{dict.profile.dangerZone.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <DeleteAccountForm lang={lang} dict={dict} />
+          <DeleteAccountForm dict={dict} lang={lang} />
         </CardContent>
       </Card>
       {/* </TabsContent> */}

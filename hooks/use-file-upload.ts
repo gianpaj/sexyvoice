@@ -240,9 +240,9 @@ export const useFileUpload = (
         onFilesAdded?.(validFiles);
 
         setState((prev) => {
-          const newFiles = !multiple
-            ? validFiles
-            : [...prev.files, ...validFiles];
+          const newFiles = multiple
+            ? [...prev.files, ...validFiles]
+            : validFiles;
           onFilesChange?.(newFiles);
           return {
             ...prev,
@@ -343,11 +343,11 @@ export const useFileUpload = (
 
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         // In single file mode, only use the first file
-        if (!multiple) {
+        if (multiple) {
+          addFiles(e.dataTransfer.files);
+        } else {
           const file = e.dataTransfer.files[0];
           addFiles([file]);
-        } else {
-          addFiles(e.dataTransfer.files);
         }
       }
     },
@@ -370,16 +370,14 @@ export const useFileUpload = (
   }, []);
 
   const getInputProps = useCallback(
-    (props: InputHTMLAttributes<HTMLInputElement> = {}) => {
-      return {
-        ...props,
-        type: 'file' as const,
-        onChange: handleFileChange,
-        accept: props.accept || accept,
-        multiple: props.multiple !== undefined ? props.multiple : multiple,
-        ref: inputRef,
-      };
-    },
+    (props: InputHTMLAttributes<HTMLInputElement> = {}) => ({
+      ...props,
+      type: 'file' as const,
+      onChange: handleFileChange,
+      accept: props.accept || accept,
+      multiple: props.multiple !== undefined ? props.multiple : multiple,
+      ref: inputRef,
+    }),
     [accept, multiple, handleFileChange],
   );
 

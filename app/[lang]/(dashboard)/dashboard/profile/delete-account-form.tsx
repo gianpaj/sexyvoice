@@ -32,7 +32,7 @@ export function DeleteAccountForm({
   return (
     <div className="space-y-6">
       <div className="grid gap-4">
-        <Alert variant="destructive" className="p-4">
+        <Alert className="p-4" variant="destructive">
           <AlertCircle className="size-4" />
           <AlertDescription>
             {dict.profile.dangerZone.deleteAccount.alertTitle}
@@ -56,12 +56,12 @@ export function DeleteAccountForm({
           <AlertDialogContent>
             <AlertDialogHeader className="items-center">
               <AlertDialogTitle>
-                <div className="mb-2 mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+                <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                   <OctagonAlert className="h-7 w-7 text-destructive" />
                 </div>
                 {dict.profile.dangerZone.deleteAccount.confirmTitle}
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-[15px] text-center">
+              <AlertDialogDescription className="text-center text-[15px]">
                 {dict.profile.dangerZone.deleteAccount.confirmDescription}
               </AlertDialogDescription>
             </AlertDialogHeader>

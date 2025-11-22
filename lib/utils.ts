@@ -36,6 +36,7 @@ export function estimateCredits(
   model?: string,
 ): number {
   // Remove extra whitespace and split into words
+  // biome-ignore lint/performance/useTopLevelRegex: ok
   const words = text.trim().split(/\s+/).length;
 
   if (!text.trim()) {
@@ -114,12 +115,13 @@ export function extractMetadata(
   if (isGeminiVoice) {
     const metadata = genAIResponse?.usageMetadata;
     if (
-      !metadata ||
-      !metadata.promptTokenCount ||
-      !metadata.candidatesTokenCount ||
-      !metadata.totalTokenCount
+      !(
+        metadata?.promptTokenCount &&
+        metadata.candidatesTokenCount &&
+        metadata.totalTokenCount
+      )
     ) {
-      return undefined;
+      return;
     }
     return {
       promptTokenCount: metadata.promptTokenCount.toString(),
@@ -128,8 +130,8 @@ export function extractMetadata(
     } as const;
   }
   const metrics = replicateResponse?.metrics;
-  if (!metrics?.predict_time || !metrics?.total_time) {
-    return undefined;
+  if (!(metrics?.predict_time && metrics?.total_time)) {
+    return;
   }
   return {
     predict_time: metrics.predict_time.toString(),

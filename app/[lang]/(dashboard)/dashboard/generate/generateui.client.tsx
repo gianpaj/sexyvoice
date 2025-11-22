@@ -30,19 +30,19 @@ export function GenerateUI({
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
-        setSelectedVoice={setSelectedVoice}
-        selectedVoice={selectedVoiceSample}
-        selectedStyle={selectedStyle}
-        setSelectedStyle={setSelectedStyle}
-        publicVoices={publicVoices}
         dict={dict}
+        publicVoices={publicVoices}
+        selectedStyle={selectedStyle}
+        selectedVoice={selectedVoiceSample}
+        setSelectedStyle={setSelectedStyle}
+        setSelectedVoice={setSelectedVoice}
       />
       <AudioGenerator
-        selectedVoice={selectedVoiceSample}
-        selectedStyle={selectedStyle}
-        hasEnoughCredits={hasEnoughCredits}
         dict={dict}
+        hasEnoughCredits={hasEnoughCredits}
         locale={locale}
+        selectedStyle={selectedStyle}
+        selectedVoice={selectedVoiceSample}
       />
     </div>
   );

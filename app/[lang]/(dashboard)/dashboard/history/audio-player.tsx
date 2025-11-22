@@ -10,7 +10,10 @@ export function AudioPlayer({ url }: { url: string }) {
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const handlePlay = () => {
-    if (!isPlaying) {
+    if (isPlaying) {
+      audio?.pause();
+      setIsPlaying(false);
+    } else {
       const newAudio = new Audio(url);
       newAudio.addEventListener('ended', () => {
         setIsPlaying(false);
@@ -18,18 +21,15 @@ export function AudioPlayer({ url }: { url: string }) {
       newAudio.play();
       setAudio(newAudio);
       setIsPlaying(true);
-    } else {
-      audio?.pause();
-      setIsPlaying(false);
     }
   };
 
   return (
     <Button
-      variant="secondary"
-      size="icon"
-      className="min-w-10 min-h-10 rounded-full"
+      className="min-h-10 min-w-10 rounded-full"
       onClick={handlePlay}
+      size="icon"
+      variant="secondary"
     >
       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
     </Button>

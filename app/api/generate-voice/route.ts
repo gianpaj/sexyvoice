@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
 
-    if (!text || !voice) {
+    if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
         body,
         headers: Object.fromEntries(request.headers.entries()),
@@ -480,7 +480,7 @@ async function sendPosthogEvent({
     event: 'generate-voice',
     properties: {
       // duration,
-      predictionId: predictionId,
+      predictionId,
       model,
       text,
       voiceId,
