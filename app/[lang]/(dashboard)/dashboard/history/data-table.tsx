@@ -70,25 +70,25 @@ export function DataTable<AudioFile, TValue>({
 
   return (
     <>
-      <div className="flex items-center py-4 justify-between">
-        <div className="flex items-center flex-1 gap-2">
+      <div className="flex items-center justify-between py-4">
+        <div className="flex flex-1 items-center gap-2">
           <Input
-            placeholder="Filter text..."
-            value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
+            autoComplete="off"
+            className="max-w-sm"
             onChange={(event) =>
               table.getColumn('text')?.setFilterValue(event.target.value)
             }
-            className="max-w-sm"
-            autoComplete="off"
+            placeholder="Filter text..."
+            value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
           />
-          <p className="text-sm text-muted-foreground text-left">
+          <p className="text-left text-muted-foreground text-sm">
             {table.getFilteredRowModel().rows.length} audio files
           </p>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button size="sm" variant="outline">
                 <ColumnsIcon />
                 <span className="hidden lg:inline">Customize Columns</span>
                 <span className="lg:hidden">Columns</span>
@@ -105,9 +105,9 @@ export function DataTable<AudioFile, TValue>({
                 )
                 .map((column) => (
                   <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
                     checked={column.getIsVisible()}
+                    className="capitalize"
+                    key={column.id}
                     onCheckedChange={(value) =>
                       column.toggleVisibility(!!value)
                     }
@@ -141,8 +141,8 @@ export function DataTable<AudioFile, TValue>({
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
+                  key={row.id}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -157,8 +157,8 @@ export function DataTable<AudioFile, TValue>({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
                   className="h-24 text-center"
+                  colSpan={columns.length}
                 >
                   No results.
                 </TableCell>
@@ -169,18 +169,18 @@ export function DataTable<AudioFile, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
+          onClick={() => table.previousPage()}
+          size="sm"
+          variant="outline"
         >
           Previous
         </Button>
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
+          onClick={() => table.nextPage()}
+          size="sm"
+          variant="outline"
         >
           Next
         </Button>

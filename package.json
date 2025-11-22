@@ -10,6 +10,7 @@
     "test:coverage": "vitest --coverage",
     "test:legacy": "tsx --test lib/utils.test.ts",
     "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && pnpm run format:write",
+    "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
     "build:content": "contentlayer2 build",
     "dev:content": "contentlayer2 dev",
     "fixall": "pnpm run lint:write && pnpm run format:write && pnpm run check:fix",
