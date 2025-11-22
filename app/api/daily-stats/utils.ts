@@ -19,7 +19,7 @@ export function startOfPreviousMonth(date: Date): Date {
 
 export function formatChange(today: number, yesterday: number): string {
   const diff = today - yesterday;
-  return diff >= 0 ? `+${diff}` : `${diff}`;
+  return diff >= 0 ? `+${diff.toFixed(1)}` : `${diff.toFixed(1)}`;
 }
 
 export function formatCurrencyChange(
