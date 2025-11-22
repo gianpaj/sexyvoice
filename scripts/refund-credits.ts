@@ -174,8 +174,6 @@ function calculateRefund(
   // Calculate available credits: total added (purchase + topup + freemium) minus used and refunded
   const totalCreditsAdded = totalPurchased + totalFreemium;
 
-  console.log({ totalCreditsAdded, totalCreditsUsed });
-
   const availableCredits = totalCreditsAdded - totalCreditsUsed - totalRefunded;
 
   // Calculate credit rate (USD per credit)
@@ -233,7 +231,7 @@ async function insertRefundTransaction(options: {
     user_id: userId,
     amount: -Math.abs(refundCredits),
     type: 'refund',
-    description: `Refund for transaction of ${originalTransaction.created_at.substring(0, 10)} - $${refundUSD.toFixed(2)}`,
+    description: `Refund for transaction of ${new Date(originalTransaction.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`,
     reference_id: originalTransaction.reference_id,
     metadata,
   });
