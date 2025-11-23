@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
 import type lang from '@/lib/i18n/dictionaries/en.json';
+import { AudioProvider } from '../clone/audio-provider';
 
 type GenerateUIProps = {
   publicVoices: Voice[];
@@ -37,13 +38,15 @@ export function GenerateUI({
         setSelectedStyle={setSelectedStyle}
         setSelectedVoice={setSelectedVoice}
       />
-      <AudioGenerator
-        dict={dict}
-        hasEnoughCredits={hasEnoughCredits}
-        locale={locale}
-        selectedStyle={selectedStyle}
-        selectedVoice={selectedVoiceSample}
-      />
+      <AudioProvider>
+        <AudioGenerator
+          dict={dict}
+          hasEnoughCredits={hasEnoughCredits}
+          locale={locale}
+          selectedStyle={selectedStyle}
+          selectedVoice={selectedVoiceSample}
+        />
+      </AudioProvider>
     </div>
   );
 }

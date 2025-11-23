@@ -275,6 +275,7 @@
   "clone": {
     "audioFileLabel": "Audio File",
     "cancelButton": "Cancel",
+    "playAudio": "Play Audio",
     "ctaButton": "Generate Audio",
     "disclaimer": "Voice clones are created for demonstration purposes only.",
     "downloadAudio": "Download Audio",

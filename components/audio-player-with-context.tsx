@@ -9,22 +9,28 @@ import { cn } from '@/lib/utils';
 export function AudioPlayerWithContext({
   url,
   className,
+  playAudioTitle,
 }: {
   url: string;
   className?: string;
+  playAudioTitle: string;
 }) {
   const audio = useAudio();
-  const isPlaying = audio?.currentPlayingUrl === url;
+  const isPlaying = audio?.isPlaying && audio?.url === url;
 
   const handlePlay = () => {
     if (!audio) {
       return;
     }
+    if (audio.url !== url) {
+      audio.setUrlAndPlay(url);
+      return;
+    }
 
-    if (isPlaying) {
-      audio.pauseSong();
+    if (audio?.isPlaying) {
+      audio.pause();
     } else {
-      audio.setSong(url);
+      audio.play();
     }
   };
 
@@ -34,6 +40,7 @@ export function AudioPlayerWithContext({
       disabled={!audio}
       onClick={handlePlay}
       size="icon"
+      title={playAudioTitle}
       variant="secondary"
     >
       {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}

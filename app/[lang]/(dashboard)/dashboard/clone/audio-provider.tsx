@@ -1,9 +1,12 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 interface AudioContextType {
-  setSong: (url: string) => void;
-  pauseSong: () => void;
-  currentPlayingUrl: string | null;
+  setUrlAndPlay: (url: string) => void;
+  play: () => void;
+  pause: () => void;
+  reset: () => void;
+  url: string | null;
+  isPlaying: boolean;
 }
 
 export const AudioContext = createContext<AudioContextType | undefined>(
@@ -24,11 +27,10 @@ interface AudioProviderProps {
 
 export const AudioProvider = ({ children }: AudioProviderProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentPlayingUrl, setCurrentPlayingUrl] = useState<string | null>(
-    null,
-  );
+  const [url, setUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  const setSong = (url: string) => {
+  const setUrlAndPlay = (url: string) => {
     // Properly cleanup previous audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -38,15 +40,16 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
     const newAudio = new Audio(url);
     audioRef.current = newAudio;
-    setCurrentPlayingUrl(url);
+    setUrl(url);
 
     // Update state when audio ends
     newAudio.addEventListener('ended', () => {
-      setCurrentPlayingUrl(null);
+      setIsPlaying(false);
     });
 
     // Handle play promise to catch AbortError
     const playPromise = newAudio.play();
+    setIsPlaying(true);
     if (playPromise !== undefined) {
       playPromise
         .then(() => {
@@ -61,9 +64,23 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
     }
   };
 
-  const pauseSong = () => {
+  const pause = () => {
     audioRef.current?.pause();
-    setCurrentPlayingUrl(null);
+    setIsPlaying(false);
+  };
+
+  const play = () => {
+    if (url) {
+      audioRef.current?.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const reset = () => {
+    pause();
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
   };
 
   useEffect(() => {
@@ -78,7 +95,9 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
   }, []);
 
   return (
-    <AudioContext.Provider value={{ setSong, pauseSong, currentPlayingUrl }}>
+    <AudioContext.Provider
+      value={{ setUrlAndPlay, pause, play, reset, url, isPlaying }}
+    >
       {children}
     </AudioContext.Provider>
   );

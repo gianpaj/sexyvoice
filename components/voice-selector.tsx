@@ -116,7 +116,10 @@ export function VoiceSelector({
         <AudioProvider>
           {selectedVoice?.sample_url && (
             <div className="flex items-center justify-start gap-2 py-2 lg:w-2/3">
-              <AudioPlayerWithContext url={selectedVoice.sample_url} />
+              <AudioPlayerWithContext
+                playAudioTitle={dict.playAudio}
+                url={selectedVoice.sample_url}
+              />
               <div className="flex items-center gap-3">
                 <p className="text-muted-foreground text-sm">
                   <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample

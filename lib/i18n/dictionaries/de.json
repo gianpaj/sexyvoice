@@ -275,6 +275,7 @@
   "clone": {
     "audioFileLabel": "Audiodatei",
     "cancelButton": "Abbrechen",
+    "playAudio": "Audio abspielen",
     "ctaButton": "Audio generieren",
     "disclaimer": "Stimmklone werden nur zu Demonstrationszwecken erstellt.",
     "downloadAudio": "Audio herunterladen",
