@@ -150,7 +150,16 @@ export async function POST(request: Request) {
     const path = `audio/${voice}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
-      logger.warn('Request aborted by client', { hash });
+      logger.info('Request aborted by client', {
+        user: {
+          id: user?.id,
+        },
+        extra: {
+          hash,
+          voice,
+          text,
+        },
+      });
       abortController.abort();
     });
 
@@ -224,6 +233,13 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.warn(error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.info('Gemini voice generation aborted');
+          return NextResponse.json(
+            { error: 'Request aborted' },
+            { status: 499 },
+          );
+        }
         logger.warn(
           `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
           {
@@ -423,6 +439,10 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.info('Gemini voice generation aborted');
+      return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
+    }
     const errorObj = {
       text,
       voice,

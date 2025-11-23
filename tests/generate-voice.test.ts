@@ -494,7 +494,7 @@ describe('Generate Voice API Route', () => {
         () =>
           ({
             models: {
-              generateContent: vi.fn().mockImplementation(async () => {
+              generateContent: vi.fn().mockImplementation(() => {
                 // Both pro and flash models will throw the same quota error
                 const apiError: GoogleApiError = {
                   code: 429,
