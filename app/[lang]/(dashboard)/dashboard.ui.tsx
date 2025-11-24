@@ -207,12 +207,7 @@ export default function DashboardUI({
           </Sidebar>
 
           <PromoBanner
-            inDashboard
-            text={blackFridayDict.text}
-            ctaLink={`/${lang}/dashboard/credits`}
-            ctaText={blackFridayDict.ctaLoggedIn}
             arialLabelDismiss={blackFridayDict.arialLabelDismiss}
-            isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
             countdown={
               process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
                 ? {
@@ -222,6 +217,11 @@ export default function DashboardUI({
                   }
                 : undefined
             }
+            ctaLink={`/${lang}/dashboard/credits`}
+            ctaText={blackFridayDict.ctaLoggedIn}
+            inDashboard
+            isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+            text={blackFridayDict.text}
           />
           <div className="flex w-full flex-1 flex-col">
             <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">

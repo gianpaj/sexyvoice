@@ -45,12 +45,12 @@ export async function HeaderStatic({ lang }: { lang: Locale }) {
         {/* Mobile Navigation */}
         <div className="z-10 flex gap-2 md:hidden">
           <Button asChild size="sm" variant="secondary">
-            <Link href={`/${lang}/login`} className="w-full" prefetch>
+            <Link className="w-full" href={`/${lang}/login`} prefetch>
               {dict.login}
             </Link>
           </Button>
           <Button asChild size="sm">
-            <Link href={`/${lang}/signup`} className="w-full" prefetch>
+            <Link className="w-full" href={`/${lang}/signup`} prefetch>
               {dict.signup}
             </Link>
           </Button>

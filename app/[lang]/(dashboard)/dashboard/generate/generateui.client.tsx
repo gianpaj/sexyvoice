@@ -7,12 +7,12 @@ import { VoiceSelector } from '@/components/voice-selector';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
-type GenerateUIProps = {
+interface GenerateUIProps {
   publicVoices: Voice[];
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
-};
+}
 
 const STYLE_PROMPT_VARIANT_MOAN =
   process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN;

@@ -36,6 +36,7 @@ export function estimateCredits(
   model?: string,
 ): number {
   // Remove extra whitespace and split into words
+  // biome-ignore lint/performance/useTopLevelRegex: ok
   const words = text.trim().split(/\s+/).length;
 
   if (!text.trim()) {
@@ -115,8 +116,7 @@ export function extractMetadata(
     const metadata = genAIResponse?.usageMetadata;
     if (
       !(
-        metadata &&
-        metadata.promptTokenCount &&
+        metadata?.promptTokenCount &&
         metadata.candidatesTokenCount &&
         metadata.totalTokenCount
       )

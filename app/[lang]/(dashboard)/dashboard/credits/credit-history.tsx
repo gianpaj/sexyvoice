@@ -58,10 +58,8 @@ export function CreditHistory({
                     : 'text-red-600'
                 }`}
               >
-                {['purchase', 'freemium', 'topup'].includes(transaction.type)
-                  ? '+'
-                  : '-'}
-                {transaction.amount}
+                {Number(transaction.amount) > 0 ? '+' : '-'}
+                {Math.abs(Number(transaction.amount))}
               </TableCell>
             </TableRow>
           ))}

@@ -124,7 +124,8 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
-  const blackFridayDict = (await getDictionary(lang, 'promos')).blackFridayBanner;
+  const blackFridayDict = (await getDictionary(lang, 'promos'))
+    .blackFridayBanner;
 
   if (post === undefined) {
     return <div>Post not found ({params.slug})</div>;
@@ -194,11 +195,7 @@ const PostLayout = async (props: {
       </Script>
 
       <PromoBanner
-        text={blackFridayDict.text}
-        ctaText={blackFridayDict.ctaLoggedOut}
-        ctaLink={`/${lang}/signup`}
         arialLabelDismiss={blackFridayDict.arialLabelDismiss}
-        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
         countdown={
           process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
             ? {
@@ -208,6 +205,10 @@ const PostLayout = async (props: {
               }
             : undefined
         }
+        ctaLink={`/${lang}/signup`}
+        ctaText={blackFridayDict.ctaLoggedOut}
+        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+        text={blackFridayDict.text}
       />
 
       <Suspense fallback={<div>Loading...</div>}>

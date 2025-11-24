@@ -107,7 +107,7 @@ export function LoginForm({
 
       <div className="relative">
         {lastUsedAuthFixed.current === 'email' && <LastUsedBanner />}
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button className="w-full" disabled={isLoading} type="submit">
           {isLoading ? 'Loading...' : dict.submit}
         </Button>
       </div>
@@ -115,10 +115,10 @@ export function LoginForm({
       <div className="relative">
         {lastUsedAuthFixed.current === 'google' && <LastUsedBanner />}
         <Button
-          onClick={loginWithGoogle}
-          variant="secondary"
           className="w-full"
           disabled={isLoading}
+          onClick={loginWithGoogle}
+          variant="secondary"
         >
           <LogosGoogleIcon />
           Login with Google
@@ -141,10 +141,10 @@ export function LoginForm({
 function LastUsedBanner() {
   return (
     <Badge
+      className="-top-2 -right-2 pointer-events-none absolute z-10 border-none bg-[#6c2243] px-[0.4rem]"
       variant="outline"
-      className="bg-[#6c2243] absolute border-none -top-2 -right-2 z-10 pointer-events-none px-[0.4rem]"
     >
-      <span className="text-[11px] text-pink-200 font-normal">Last used</span>
+      <span className="font-normal text-[11px] text-pink-200">Last used</span>
     </Badge>
   );
 }

@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
       .select(
         'id, user_id, created_at, type, description, metadata, profiles(username)',
       )
-      .in('type', ['purchase', 'topup'])
+      .in('type', ['purchase', 'topup', 'refund'])
       .not('description', 'ilike', '%manual%')
       .lt('created_at', today.toISOString()),
 
@@ -154,7 +154,6 @@ export async function GET(request: NextRequest) {
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
   const audioYesterdayCount = audioYesterdayData.length;
-  const audioPrevCount = audioPreviousDayResult.count ?? 0;
   const audioWeekCount = audioWeekResult.count ?? 0;
   const audioTotalCount = audioTotalCountResult.count ?? 0;
 
@@ -168,6 +167,14 @@ export async function GET(request: NextRequest) {
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
   const creditTransactions = allCreditTransactionsResult.data ?? [];
+
+  // Separate refunds from purchases/topups
+  const refundTransactions = creditTransactions.filter(
+    (t) => t.type === 'refund',
+  );
+  const purchaseTransactions = creditTransactions.filter(
+    (t) => t.type !== 'refund',
+  );
 
   // Filter clones by date ranges
   const clonePrevCount = filterByDateRange(
@@ -184,11 +191,6 @@ export async function GET(request: NextRequest) {
     today,
   );
   const profilesTodayCount = profilesYesterdayData.length;
-  const profilesPrevCount = filterByDateRange(
-    profilesRecentData,
-    twoDaysAgo,
-    previousDay,
-  ).length;
   const profilesWeekCount = profilesRecentData.length;
 
   // Early exit if no audio files yesterday
@@ -233,34 +235,47 @@ export async function GET(request: NextRequest) {
           .map(([voiceName, count]) => `${voiceName} (${count})`)
           .join(', ');
 
-  // Filter credit transactions by date ranges
-  const creditsPrevDayData = filterByDateRange(
-    creditTransactions,
+  // Filter credit transactions by date ranges (purchases/topups only)
+  const purchasePrevDayData = filterByDateRange(
+    purchaseTransactions,
     previousDay,
     today,
   );
   const creditsPrevCount = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     twoDaysAgo,
     previousDay,
   ).length;
   const creditsWeekCount = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     sevenDaysAgo,
     today,
   ).length;
   const creditsMonthCount = filterByDateRange(
-    creditTransactions,
+    purchaseTransactions,
     thirtyDaysAgo,
     today,
   ).length;
-  const creditsTotalCount = creditTransactions.length;
+  const creditsTotalCount = purchaseTransactions.length;
+
+  // Filter refund transactions by date ranges
+  const refundsPrevDayData = filterByDateRange(
+    refundTransactions,
+    previousDay,
+    today,
+  );
+  const refundsPrevCount = filterByDateRange(
+    refundTransactions,
+    twoDaysAgo,
+    previousDay,
+  ).length;
+  const refundsTotalCount = refundTransactions.length;
 
   // Top customers calculation
   let hasInvalidMetadata = false;
   const customerSpending = new Map<string, number>();
 
-  for (const transaction of creditsPrevDayData) {
+  for (const transaction of purchasePrevDayData) {
     if (!transaction.metadata || typeof transaction.metadata !== 'object') {
       console.log('Invalid metadata in transaction:', transaction);
       hasInvalidMetadata = true;
@@ -284,7 +299,7 @@ export async function GET(request: NextRequest) {
       : topCustomerIds
           .map((userId) => {
             // Find the transaction for this user to get their profile data
-            const transaction = creditsPrevDayData.find(
+            const transaction = purchasePrevDayData.find(
               (t) => t.user_id === userId,
             );
             const username =
@@ -296,13 +311,36 @@ export async function GET(request: NextRequest) {
 
   const topCustomerProfilesCount = topCustomerIds.length || '';
 
-  // Revenue calculations
-  const totalUniquePaidUsers = new Set(creditTransactions.map((t) => t.user_id))
-    .size;
+  const totalUniquePaidUsers = new Set(
+    purchaseTransactions.map((t) => t.user_id),
+  ).size;
+  // Revenue calculations (incl. refund)
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
+
+  const creditsPrevDayData = filterByDateRange(
+    creditTransactions,
+    previousDay,
+    today,
+  );
   const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
 
-  // MTD revenue calculations
+  // 7-day revenue calculations
+  const credits7dData = filterByDateRange(
+    creditTransactions,
+    sevenDaysAgo,
+    today,
+  );
+  const total7dRevenue = credits7dData.reduce(reduceAmountUsd, 0);
+  const avg7dRevenue = total7dRevenue / 7;
+
+  // Refund amount calculations
+  const totalRefundAmountUsd = refundTransactions.reduce(reduceAmountUsd, 0);
+  const totalRefundAmountUsdToday = refundsPrevDayData.reduce(
+    reduceAmountUsd,
+    0,
+  );
+
+  // MTD revenue calculations (purchases/topups only)
   const mtdRevenueData = filterByDateRange(
     creditTransactions,
     monthStart,
@@ -317,18 +355,19 @@ export async function GET(request: NextRequest) {
   );
   const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const creditsTodayCount = creditsPrevDayData.length;
+  const creditsTodayCount = purchasePrevDayData.length;
+  const refundsTodayCount = refundsPrevDayData.length;
 
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
     '',
-    `🎧 Audio Files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioPrevCount)})`,
+    `🎧 Audio Files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioWeekCount / 7)})`,
     `  - Cloned: ${clonePrevCount} | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
     `  - 7d Total: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
     `  - Top voices: ${topVoiceList}`,
     '',
-    `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesPrevCount)})`,
+    `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
     '',
@@ -337,8 +376,11 @@ export async function GET(request: NextRequest) {
     `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
     '',
+    `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) ${refundsTodayCount > 0 ? '😢' : ''}`,
+    `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
+    '',
     '💰 Revenue',
-    `  - All-time: $${totalAmountUsd.toFixed(2)}`,
+    `  - All-time: $${totalAmountUsd.toFixed(2)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
     `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
     `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active`,

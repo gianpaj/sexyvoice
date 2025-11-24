@@ -73,12 +73,12 @@ export async function Header({ lang }: { lang: Locale }) {
           ) : (
             <>
               <Button asChild size="sm" variant="secondary">
-                <Link href={`/${lang}/login`} className="w-full" prefetch>
+                <Link className="w-full" href={`/${lang}/login`} prefetch>
                   {dict.login}
                 </Link>
               </Button>
               <Button asChild size="sm">
-                <Link href={`/${lang}/signup`} className="w-full" prefetch>
+                <Link className="w-full" href={`/${lang}/signup`} prefetch>
                   {dict.signup}
                 </Link>
               </Button>
