@@ -1,18 +1,11 @@
 import { createAdminClient } from './admin';
 import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
+import { getCurrentBalance } from './credits';
 
 export async function getCredits(userId: string): Promise<number> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) throw error;
-
-  return data.amount;
+  // Use new event-sourced balance calculation
+  return await getCurrentBalance(userId);
 }
 
 export async function getVoiceIdByName(
@@ -32,6 +25,8 @@ export async function getVoiceIdByName(
   return data;
 }
 
+// DEPRECATED: Use deductCredits from './credits' instead
+// Kept for backward compatibility during migration
 export async function reduceCredits({
   userId,
   currentAmount,
@@ -41,16 +36,12 @@ export async function reduceCredits({
   currentAmount: number;
   amount: number;
 }) {
-  const supabase = await createClient();
-
-  const newAmount = (currentAmount || 0) - amount;
-
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: newAmount })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
+  // This function is deprecated - credits are now managed via transactions
+  // The actual deduction should be done via deductCredits() in the new system
+  console.warn('reduceCredits() is deprecated. Use deductCredits() from ./credits instead.');
+  
+  // For now, we'll skip the direct balance update since transactions handle it
+  // This prevents double-deduction during the migration period
 }
 
 export async function saveAudioFile({
@@ -65,6 +56,8 @@ export async function saveAudioFile({
   duration,
   credits_used,
   usage,
+  estimated_credits,
+  status = 'completed',
 }: {
   userId: string;
   filename: string;
@@ -76,6 +69,8 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  estimated_credits?: number;
+  status?: 'pending' | 'processing' | 'completed' | 'failed';
   usage?: Record<string, string>;
 }) {
   const supabase = await createClient();
@@ -91,6 +86,8 @@ export async function saveAudioFile({
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    estimated_credits: estimated_credits || credits_used,
+    status,
     usage,
   });
 }
@@ -216,6 +213,8 @@ export const insertTopupCreditTransaction = async (
     user_id: userId,
     amount: creditAmount,
     type: 'topup',
+    referenceId: paymentIntentId,
+    referenceType: 'stripe_payment',
     description: `Credit top-up - $${dollarAmount}`,
     reference_id: paymentIntentId,
     metadata: {
