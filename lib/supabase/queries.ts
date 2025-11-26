@@ -34,23 +34,20 @@ export async function getVoiceIdByName(
 
 export async function reduceCredits({
   userId,
-  currentAmount,
   amount,
 }: {
   userId: string;
-  currentAmount: number;
   amount: number;
 }) {
   const supabase = await createClient();
 
-  const newAmount = (currentAmount || 0) - amount;
+  // Decrement user credits by the specified amount using an RPC call
+  const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
 
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: newAmount })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
+  if (creditsError) throw creditsError;
 }
 
 export async function saveAudioFile({
