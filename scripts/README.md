@@ -1,3 +1,55 @@
+## Reset Freeloader Credits Script
+
+Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.
+
+### Quick Start
+```bash
+# Show help
+pnpm tsx scripts/reset-freeloader-credits.ts --help
+
+# Test with dry-run flag (no changes made)
+pnpm tsx scripts/reset-freeloader-credits.ts --dryrun freeloaders.csv
+
+# Test with limited records
+pnpm tsx scripts/reset-freeloader-credits.ts --dryrun --limit 10 freeloaders.csv
+
+# Run for real (will prompt for confirmation)
+pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
+```
+
+### CLI Options
+- `--dryrun` - Run in dry-run mode (no database changes)
+- `-l, --limit <number>` - Limit number of records to process
+- `-h, --help` - Show help message
+
+### CSV Format
+```csv
+id,username,created_at,total_credits_received,total_credits_used,current_credits,usage_percentage
+26fb4371-...,user@email.com,2025-11-26 16:11:36.930227+00,10000,11856,2464,118.56
+```
+
+### Features
+- **Batch processing**: Fetches credit balances in batches of 10 (10x faster!)
+- **CLI options**: `--dryrun`, `--limit`, `--help` flags
+- Dry-run mode for safe testing
+- UUID validation
+- Environment detection (local vs production)
+- Individual error handling per user
+- Optional audit trail transaction logging
+- Detailed progress reporting
+
+### Performance
+- 50 users: ~5 seconds (vs ~50 seconds sequential)
+- 100 users: ~10 seconds (vs ~100 seconds sequential)
+- Processes 10 users per database query
+
+### Documentation
+- [RESET_CREDITS_GUIDE.md](./RESET_CREDITS_GUIDE.md) - Complete guide with examples
+- [QUICKREF.md](./QUICKREF.md) - Quick reference card
+- [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
+
+---
+
 ## Refund Credits Script
 
 Interactive Node.js/TypeScript script to process credit refunds for users.
