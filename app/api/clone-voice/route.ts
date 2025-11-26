@@ -311,7 +311,7 @@ export async function POST(request: Request) {
 
     // Background tasks
     after(async () => {
-      await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+      await reduceCredits({ userId: user.id, amount: estimate });
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,

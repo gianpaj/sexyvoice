@@ -354,7 +354,7 @@ export async function POST(request: Request) {
         return;
       }
 
-      await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+      await reduceCredits({ userId: user.id, amount: estimate });
 
       const usage = extractMetadata(
         isGeminiVoice,
