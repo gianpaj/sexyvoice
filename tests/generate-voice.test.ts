@@ -305,7 +305,7 @@ describe('Generate Voice API Route', () => {
       vi.doMock('replicate', () => {
         return {
           default: class Replicate {
-            run(model: string, options: any, onProgress?: any) {
+            async run(model: string, options: any, onProgress?: any) {
               // Simulate progress callback
               if (onProgress) {
                 onProgress({ id: 'test-prediction-id', status: 'succeeded' });
@@ -451,7 +451,7 @@ describe('Generate Voice API Route', () => {
         () =>
           ({
             models: {
-              generateContent: vi.fn().mockImplementation(() => {
+              generateContent: vi.fn().mockImplementation(async () => {
                 // Both pro and flash models will throw the same quota error
                 const apiError: GoogleApiError = {
                   code: 429,

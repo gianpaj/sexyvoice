@@ -41,7 +41,7 @@ export async function reduceCredits({
 }) {
   const supabase = await createClient();
 
-  // Update credits table by decrementing the refunded amount
+  // Decrement user credits by the specified amount using an RPC call
   const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
     user_id_var: userId,
     credit_amount_var: Math.abs(amount),
