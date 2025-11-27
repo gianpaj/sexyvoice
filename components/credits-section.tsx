@@ -34,7 +34,7 @@ function CreditsSection({
       0,
     ) || 0;
 
-  if (credits === undefined || credits === null)
+  if (credits == null)
     return <Skeleton className="h-[150px] w-full rounded-lg" />;
 
   return (
