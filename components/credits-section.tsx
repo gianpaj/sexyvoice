@@ -19,7 +19,7 @@ function CreditsSection({
 }: {
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
-  credits: number;
+  credits?: number | null;
   credit_transactions: CreditTransaction[];
   doNotToggleSidebar?: boolean;
 }) {
@@ -27,13 +27,15 @@ function CreditsSection({
   const sidebarContext = useContext(SidebarContext);
   const isMobile = sidebarContext?.isMobile;
   const toggleSidebar = sidebarContext?.toggleSidebar || (() => {});
+  const remainingCredits = credits ?? 0;
   const total_credits =
     credit_transactions?.reduce(
       (acc, transaction) => acc + transaction.amount,
       0,
     ) || 0;
 
-  if (!credits) return <Skeleton className="h-[150px] w-full rounded-lg" />;
+  if (credits === undefined || credits === null)
+    return <Skeleton className="h-[150px] w-full rounded-lg" />;
 
   return (
     <div className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0">
@@ -72,14 +74,16 @@ function CreditsSection({
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-200">{dict.remainingCredits}</span>
-              <span className="font-medium">{credits.toLocaleString()}</span>
+              <span className="font-medium">
+                {remainingCredits.toLocaleString()}
+              </span>
             </div>
           </div>
         </div>
         <div className="relative h-10 w-10">
           <ProgressCircle
             className="size-10"
-            value={Math.round((credits / 10_000) * 100)}
+            value={Math.round((remainingCredits / 10_000) * 100)}
           />
         </div>
       </div>
