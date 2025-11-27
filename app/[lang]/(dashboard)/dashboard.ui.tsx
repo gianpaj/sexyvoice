@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePostHog } from 'posthog-js/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
@@ -29,10 +29,14 @@ import {
 } from '@/components/ui/sidebar';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/client';
+import useSupabaseBrowser from '@/lib/supabase/client';
+
+// import { getCredits } from '@/lib/supabase/queries.client';
 
 interface DashboardUIProps {
   children: React.ReactNode;
+  creditTransactions: Pick<CreditTransaction, 'amount'>[];
+  userId: string;
   lang: Locale;
   dict: (typeof langDict)['creditsSection'];
   blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
@@ -40,17 +44,16 @@ interface DashboardUIProps {
 
 export default function DashboardUI({
   children,
+  creditTransactions,
+  userId,
   lang,
   dict,
   blackFridayDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
-  const supabase = createClient();
+  const supabase = useSupabaseBrowser();
 
-  const [credit_transactions, setCreditTransactions] = useState<
-    CreditTransaction[] | null
-  >([]);
-  const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
+  // const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
 
   const posthog = usePostHog();
 
@@ -63,21 +66,7 @@ export default function DashboardUI({
         throw new Error('User not found');
       }
 
-      // Get user's credits
-      const { data: creditsData } = await supabase
-        .from('credits')
-        .select('amount')
-        .eq('user_id', user?.id)
-        .single();
-
-      setCredits(creditsData);
-      const { data: credit_transactionsDB } = await supabase
-        .from('credit_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      setCreditTransactions(credit_transactionsDB);
-      return { user, creditsData };
+      return { user };
     };
 
     const sendUserAnalyticsData = (
@@ -110,8 +99,9 @@ export default function DashboardUI({
     };
 
     getData()
-      .then(({ user, creditsData }) => {
-        sendUserAnalyticsData(user, creditsData);
+      .then(({ user }) => {
+        // console.log({ creditsData });
+        // sendUserAnalyticsData(user, creditsData);
       })
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
@@ -196,10 +186,10 @@ export default function DashboardUI({
 
             <SidebarFooter>
               <CreditsSection
-                credit_transactions={credit_transactions || []}
-                credits={credits?.amount || 0}
+                creditTransactions={creditTransactions}
                 dict={dict}
                 lang={lang}
+                userId={userId}
               />
 
               <SidebarMenuCustom lang={lang} />

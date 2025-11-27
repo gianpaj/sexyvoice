@@ -179,6 +179,7 @@ export async function POST(request: Request) {
         creditUsed: 0,
         model: voiceObj.model,
       });
+      await reduceCredits({ userId: user.id, amount: 1 });
       // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
     }
@@ -379,7 +380,7 @@ export async function POST(request: Request) {
           contents: text,
         }));
 
-      await reduceCredits({ userId: user.id, currentAmount, amount: estimate });
+      await reduceCredits({ userId: user.id, amount: estimate });
 
       const usage = extractMetadata(
         isGeminiVoice,

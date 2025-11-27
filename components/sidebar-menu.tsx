@@ -18,7 +18,7 @@ import {
   SidebarMenu as SidebarMenuUI,
 } from '@/components/ui/sidebar';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export function SidebarMenu({ lang }: { lang: Locale }) {
   // Safely access the sidebar context without throwing an error
@@ -26,7 +26,7 @@ export function SidebarMenu({ lang }: { lang: Locale }) {
   const isMobile = sidebarContext?.isMobile;
   const toggleSidebar = sidebarContext?.toggleSidebar;
 
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
   const router = useRouter();
 
   const handleSignOut = async () => {
