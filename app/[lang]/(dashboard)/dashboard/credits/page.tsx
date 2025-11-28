@@ -27,7 +27,7 @@ export default async function CreditsPage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang, 'credits');
+  const dict = await getDictionary(lang);
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -84,11 +84,15 @@ export default async function CreditsPage(props: {
 
   return (
     <div className="space-y-8">
-      <TopupStatus dict={dict} />
+      <TopupStatus dict={dict.credits} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 font-semibold text-lg">{dict.topup.title}</h3>
-          <p className="text-muted-foreground">{dict.topup.description}</p>
+          <h3 className="mb-4 font-semibold text-lg">
+            {dict.credits.topup.title}
+          </h3>
+          <p className="text-muted-foreground">
+            {dict.credits.topup.description}
+          </p>
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
@@ -104,8 +108,13 @@ export default async function CreditsPage(props: {
       <CreditTopup dict={dict} lang={lang} />
 
       <div className="my-8">
-        <h3 className="mb-4 font-semibold text-lg">{dict.history.title}</h3>
-        <CreditHistory dict={dict} transactions={existingTransactions} />
+        <h3 className="mb-4 font-semibold text-lg">
+          {dict.credits.history.title}
+        </h3>
+        <CreditHistory
+          dict={dict.credits}
+          transactions={existingTransactions}
+        />
       </div>
 
       {shouldShowPricingTable && clientSecret && (

@@ -12,14 +12,14 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { getTopupPackages } from '@/lib/stripe/pricing';
 
 interface CreditTopupProps {
-  dict: (typeof lang)['credits'];
+  dict: typeof lang;
   lang: Locale;
 }
 
-type ActionState = {
+interface ActionState {
   error: string | null;
   success: boolean;
-};
+}
 
 const initialState: ActionState = {
   error: null,
@@ -27,9 +27,13 @@ const initialState: ActionState = {
 };
 
 export function CreditTopup({ dict, lang }: CreditTopupProps) {
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || '';
 
-  const { plans: pPlans } = dict;
+  const bannerTranslations = dict.promos[translations as 'blackFridayBanner'];
+
+  const { plans: pPlans } = dict.credits;
 
   const TOPUP_PACKAGES = getTopupPackages(lang);
 
@@ -79,25 +83,28 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
   ];
 
   return (
-    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+    <div
+      className="grid gap-6 md:grid-cols-1 lg:grid-cols-3"
+      data-promo-theme={promoTheme}
+    >
       {plans.map((plan) => (
-        <CreditCard
-          dict={dict}
+        <PlanCard
+          bannerTranslations={bannerTranslations}
+          dict={dict.credits}
           isPromoEnabled={isPromoEnabled}
           key={plan.id}
           plan={plan}
-          pPlans={pPlans}
         />
       ))}
     </div>
   );
 }
 
-function CreditCard({
+function PlanCard({
   plan,
   dict,
+  bannerTranslations,
   isPromoEnabled,
-  pPlans,
 }: {
   plan: {
     id: string;
@@ -111,9 +118,9 @@ function CreditCard({
     creditsText: string;
     promoBonus?: string;
   };
-  dict: (typeof lang)['credits'];
   isPromoEnabled: boolean;
-  pPlans: (typeof lang)['credits']['plans'];
+  dict: (typeof lang)['credits'];
+  bannerTranslations: (typeof lang)['promos']['blackFridayBanner'];
 }) {
   const formAction = async (
     _prevState: ActionState,
@@ -148,18 +155,20 @@ function CreditCard({
 
   return (
     <Card
-      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-pink-400' : ''} relative overflow-hidden`}
+      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} relative overflow-hidden`}
     >
       {isPromoEnabled && plan.price > 0 && (
-        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-pink-500 to-pink-600 px-3 py-1 font-bold text-white text-xs">
-          Black Friday Sale
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
+          {bannerTranslations.pricing.bannerText}
         </div>
       )}
       <div>
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-xl">{plan.name}</h3>
           {!isPromoEnabled && plan.isPopular ? (
-            <Badge className="rounded-full bg-pink-600">{pPlans.popular}</Badge>
+            <Badge className="rounded-full bg-promo-text">
+              {dict.plans.popular}
+            </Badge>
           ) : (
             plan.price > 10 && (
               <Badge
@@ -193,7 +202,7 @@ function CreditCard({
       <div className="font-medium text-sm">
         {plan.creditsText}{' '}
         {isPromoEnabled && plan.promoBonus && (
-          <span className="font-semibold text-pink-600 dark:text-pink-400">
+          <span className="font-semibold text-promo-text-dark">
             (+{plan.promoBonus} bonus)
           </span>
         )}

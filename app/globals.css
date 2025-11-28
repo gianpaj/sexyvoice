@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noUnknownFunction: <explanation> */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,6 +21,29 @@
   :root {
     --radius: 0.5rem;
     --white: #fff;
+
+    /* Promo theme colors - default to pink */
+    --promo-primary: theme('colors.pink.500');
+    --promo-primary-dark: theme('colors.pink.600');
+    --promo-accent: theme('colors.pink.400');
+    --promo-text: theme('colors.pink.600');
+    --promo-text-dark: theme('colors.pink.400');
+  }
+
+  [data-promo-theme="orange"] {
+    --promo-primary: theme('colors.orange.500');
+    --promo-primary-dark: theme('colors.orange.600');
+    --promo-accent: theme('colors.orange.400');
+    --promo-text: theme('colors.orange.600');
+    --promo-text-dark: theme('colors.orange.400');
+  }
+
+  [data-promo-theme="pink"] {
+    --promo-primary: theme('colors.pink.500');
+    --promo-primary-dark: theme('colors.pink.600');
+    --promo-accent: theme('colors.pink.400');
+    --promo-text: theme('colors.pink.600');
+    --promo-text-dark: theme('colors.pink.400');
   }
 
   .dark {
@@ -62,6 +86,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
   }
@@ -70,10 +95,10 @@
     @apply bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)];
   }
 }
+
 @-moz-document url-prefix() {
   .disable-bg-firefox {
     background: none;
-    /* biome-ignore lint/complexity/noImportantStyles: it's grand */
     background-image: none !important;
   }
 }
@@ -87,6 +112,7 @@
   height: var(--ta1-height, auto);
   resize: none;
 }
+
 .textarea-2 {
   height: var(--ta2-height, auto);
   resize: none;
