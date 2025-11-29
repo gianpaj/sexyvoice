@@ -12,7 +12,6 @@ vitest.config.mts
 .tool-versions
 .lintstagedrc.js
 prettier.config.cjs
-pyrightconfig.json
 
 # Documentation
 AGENTS.md
@@ -30,6 +29,7 @@ prompts.md
 # Git
 .gitignore
 
+# Scripts (if they're only for local development)
 scripts
 !scripts/check-translations.js
 
@@ -37,9 +37,6 @@ scripts
 supabase/config.toml
 supabase/.temp
 supabase/seed.sql
-
-# Scripts (if they're only for local development)
-scripts
 
 # Screenshots and media for documentation
 screenshot*.jpg
@@ -53,6 +50,5 @@ deno.lock
 
 # Other config files
 renovate.json
-
 biome.json
 components.json
