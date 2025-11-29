@@ -30,8 +30,10 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
   const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
   const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || '';
-
-  const bannerTranslations = dict.promos[translations as 'blackFridayBanner'];
+  const bannerTranslations =
+    translations in dict.promos
+      ? dict.promos[translations as keyof typeof dict.promos]
+      : undefined;
 
   const { plans: pPlans } = dict.credits;
 
@@ -120,7 +122,7 @@ function PlanCard({
   };
   isPromoEnabled: boolean;
   dict: (typeof lang)['credits'];
-  bannerTranslations: (typeof lang)['promos']['blackFridayBanner'];
+  bannerTranslations?: (typeof lang)['promos'][keyof (typeof lang)['promos']];
 }) {
   const formAction = async (
     _prevState: ActionState,
@@ -159,7 +161,7 @@ function PlanCard({
     >
       {isPromoEnabled && plan.price > 0 && (
         <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
-          {bannerTranslations.pricing.bannerText}
+          {bannerTranslations?.pricing.bannerText}
         </div>
       )}
       <div>

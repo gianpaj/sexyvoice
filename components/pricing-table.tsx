@@ -10,10 +10,12 @@ import { getTopupPackages } from '@/lib/stripe/pricing';
 
 async function PricingTable({ lang }: { lang: Locale }) {
   const credits = await getDictionary(lang, 'credits');
-  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || '';
-  const bannerTranslations = (await getDictionary(lang, 'promos'))[
-    translations as 'blackFridayBanner'
-  ];
+  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS;
+  const promos = await getDictionary(lang, 'promos');
+  const bannerTranslations =
+    translations && translations in promos
+      ? promos[translations as keyof typeof promos]
+      : undefined;
   const { plans: pPlans, billing } = credits;
 
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
@@ -86,7 +88,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
           >
             {isPromoEnabled && plan.price > 0 && (
               <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
-                {bannerTranslations.pricing.bannerText}
+                {bannerTranslations?.pricing.bannerText}
               </div>
             )}
             <div>

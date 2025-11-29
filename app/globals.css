@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/correctness/noUnknownFunction: <explanation> */
+/** biome-ignore-all lint/correctness/noUnknownFunction: Tailwind CSS directives like theme() are not standard CSS functions */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
