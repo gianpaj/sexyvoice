@@ -30,7 +30,7 @@ prompts.md
 .gitignore
 
 # Scripts (if they're only for local development)
-scripts
+scripts/*
 !scripts/check-translations.js
 
 # Supabase (local development only)
