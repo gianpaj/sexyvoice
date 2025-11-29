@@ -323,7 +323,10 @@
       "text": "🎃 Especial Halloween – Consigue hasta un 35% de créditos extra con tu compra 👻\nOferta por tiempo limitado 🦇",
       "ctaLoggedIn": "Obtener Créditos",
       "ctaLoggedOut": "Regístrate Ahora",
-      "arialLabelDismiss": "Descartar banner de Halloween"
+      "arialLabelDismiss": "Descartar banner de Halloween",
+      "pricing": {
+        "bannerText": "🎃 Especial Halloween"
+      }
     },
     "blackFridayBanner": {
       "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
@@ -336,6 +339,9 @@
         "hours": "Horas",
         "minutes": "Min",
         "seconds": "Seg"
+      },
+      "pricing": {
+        "bannerText": "Oferta Black Friday"
       }
     }
   }

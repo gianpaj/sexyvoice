@@ -10,6 +10,12 @@ import { getTopupPackages } from '@/lib/stripe/pricing';
 
 async function PricingTable({ lang }: { lang: Locale }) {
   const credits = await getDictionary(lang, 'credits');
+  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS;
+  const promos = await getDictionary(lang, 'promos');
+  const bannerTranslations =
+    translations && Object.hasOwn(promos, translations)
+      ? promos[translations as keyof typeof promos]
+      : undefined;
   const { plans: pPlans, billing } = credits;
 
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
@@ -63,28 +69,33 @@ async function PricingTable({ lang }: { lang: Locale }) {
     },
   ];
 
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
+
   return (
-    <div className="flex flex-col gap-6 py-16 xl:px-28">
+    <div
+      className="flex flex-col gap-6 py-16 xl:px-28"
+      data-promo-theme={promoTheme}
+    >
       <h2 className="mx-auto mb-4 font-semibold text-2xl">
         {credits.pricingPlan}
       </h2>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card
-            className={`grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-orange-400' : ''} relative overflow-hidden`}
+            className={`grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} relative overflow-hidden`}
             key={plan.name}
             // className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
             {isPromoEnabled && plan.price > 0 && (
-              <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-orange-500 to-orange-600 px-3 py-1 font-bold text-white text-xs">
-                🎃 Halloween Special
+              <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
+                {bannerTranslations?.pricing.bannerText}
               </div>
             )}
             <div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-xl">{plan.name}</h3>
                 {!isPromoEnabled && plan.isPopular ? (
-                  <Badge className="rounded-full bg-orange-600">
+                  <Badge className="rounded-full bg-promo-text">
                     {/*<Badge className="rounded-full bg-green-600">*/}
                     {pPlans.popular}
                   </Badge>
@@ -132,7 +143,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
               <div className="font-medium text-sm">
                 {plan.creditsText}{' '}
                 {isPromoEnabled && plan.promoBonus && (
-                  <span className="font-semibold text-orange-600 dark:text-orange-400">
+                  <span className="font-semibold text-promo-text-dark">
                     (+{plan.promoBonus} bonus)
                   </span>
                 )}
