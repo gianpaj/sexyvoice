@@ -110,6 +110,9 @@ if (process.env.NODE_ENV === 'production') {
     silent: !process.env.CI,
 
     telemetry: process.env.VERCEL_ENV === 'production',
+    sourcemaps: {
+      disable: process.env.VERCEL_ENV !== 'production',
+    },
 
     // For all available options, see:
     // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/

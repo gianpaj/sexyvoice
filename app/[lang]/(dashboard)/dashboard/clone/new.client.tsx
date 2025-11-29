@@ -140,9 +140,9 @@ export default function NewVoiceClient({
 
       setStatus('complete');
       setActiveTab('preview');
-    } catch (err: unknown) {
+    } catch (err) {
       if (
-        err instanceof Error &&
+        Error.isError(err) &&
         err.message === 'signal is aborted without reason'
       ) {
         return;
@@ -150,7 +150,7 @@ export default function NewVoiceClient({
       let errorMsg = 'Unexpected error occurred';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
-      } else if (err instanceof Error) {
+      } else if (Error.isError(err)) {
         errorMsg = err.message;
       }
       setErrorMessage(errorMsg);
