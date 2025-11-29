@@ -13,7 +13,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
   const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS;
   const promos = await getDictionary(lang, 'promos');
   const bannerTranslations =
-    translations && translations in promos
+    translations && Object.hasOwn(promos, translations)
       ? promos[translations as keyof typeof promos]
       : undefined;
   const { plans: pPlans, billing } = credits;

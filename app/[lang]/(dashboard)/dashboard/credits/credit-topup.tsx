@@ -31,7 +31,7 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
   const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || '';
   const bannerTranslations =
-    translations in dict.promos
+    Object.hasOwn(dict.promos, translations)
       ? dict.promos[translations as keyof typeof dict.promos]
       : undefined;
 
