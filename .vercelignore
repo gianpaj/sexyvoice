@@ -26,17 +26,12 @@ prompts.md
 # Environment files
 .env.*
 
-# Git
-.gitignore
-
-# Scripts (if they're only for local development)
+# Scripts
 scripts/*
 !scripts/check-translations.js
 
-# Supabase (local development only)
-supabase/config.toml
-supabase/.temp
-supabase/seed.sql
+# Supabase (local development only and Telegram bot (Deno Cloud))
+supabase/
 
 # Screenshots and media for documentation
 screenshot*.jpg
