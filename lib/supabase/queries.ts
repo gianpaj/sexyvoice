@@ -23,7 +23,7 @@ export async function getVoiceIdByName(
   name: string;
   language: string;
   model: string;
-  provider: 'google-ai' | 'replicate' | 'deepinfra';
+  provider: 'google-ai' | 'replicate' | 'deepinfra' | 'fal.ai';
 }> {
   const supabase = await createClient();
   const { data, error } = await supabase

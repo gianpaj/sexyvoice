@@ -9,7 +9,7 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
-import { put, type PutBlobResult } from '@vercel/blob';
+import { type PutBlobResult, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -116,8 +116,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
-    const provider =
-      voiceObj.provider || (voiceObj.model === 'gpro' ? 'google-ai' : 'replicate');
+    const provider = voiceObj.provider;
     const isGeminiVoice = provider === 'google-ai';
     const shouldStream = provider === 'deepinfra' && stream;
 
@@ -367,8 +366,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const deepInfraModel =
-        voiceObj.model || 'canopylabs/orpheus-3b-0.1-ft';
+      const deepInfraModel = voiceObj.model || 'canopylabs/orpheus-3b-0.1-ft';
       modelUsed = deepInfraModel;
 
       const deepInfraResponse = await fetch(
@@ -652,5 +650,8 @@ async function streamToBuffer(stream: ReadableStream<Uint8Array>) {
     }
   }
 
-  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), totalLength);
+  return Buffer.concat(
+    chunks.map((chunk) => Buffer.from(chunk)),
+    totalLength,
+  );
 }

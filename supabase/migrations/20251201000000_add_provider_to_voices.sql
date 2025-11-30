@@ -15,3 +15,11 @@ WHERE model = 'gpro';
 UPDATE voices
 SET provider = 'deepinfra'
 WHERE model LIKE 'canopylabs/%';
+
+UPDATE voices
+SET provider = 'fal.ai'
+WHERE model LIKE 'fal-ai/%';
+
+UPDATE voices
+SET provider = 'replicate'
+WHERE model LIKE 'gianpaj/cog-orpheus-3b-0.1-ft/%';

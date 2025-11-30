@@ -2,8 +2,8 @@ import type { GenerateContentResponse } from '@google/genai';
 import { type ClassValue, clsx } from 'clsx';
 import { customAlphabet } from 'nanoid';
 import { redirect } from 'next/navigation';
-import { twMerge } from 'tailwind-merge';
 import type { Prediction } from 'replicate';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -116,7 +116,7 @@ type InferenceStatus = {
 };
 
 export function extractMetadata(
-  provider: 'google-ai' | 'replicate' | 'deepinfra',
+  provider: 'google-ai' | 'replicate' | 'deepinfra' | 'fal.ai',
   genAIResponse: GenerateContentResponse | null,
   replicateResponse?: Prediction,
   inferenceStatus?: InferenceStatus,
