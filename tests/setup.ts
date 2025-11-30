@@ -4,14 +4,35 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
 // Mock handlers for external services
 export const handlers = [
-  // Replicate API Mock
-  http.post('https://api.replicate.com/v1/predictions', () => {
-    return HttpResponse.json({
-      id: 'test-prediction-id',
-      status: 'succeeded',
-      output: 'https://example.com/audio.mp3',
-    });
-  }),
+  // DeepInfra API Mock
+  http.post(
+    'https://api.deepinfra.com/v1/inference/canopylabs/orpheus-3b-0.1-ft',
+    async ({ request }) => {
+      const body = (await request.json()) as Record<string, any>;
+
+      if (body?.stream) {
+        const audioBuffer = Buffer.from([1, 2, 3, 4]);
+        return new HttpResponse(audioBuffer, {
+          headers: {
+            'content-type': 'audio/wav',
+          },
+        });
+      }
+
+      return HttpResponse.json({
+        audio: Buffer.from([1, 2, 3, 4]).toString('base64'),
+        output_format: body?.response_format ?? 'wav',
+        request_id: 'test-request-id',
+        inference_status: {
+          cost: 0.0001,
+          runtime_ms: 1200,
+          tokens_generated: 48,
+          tokens_input: 12,
+          status: 'succeeded',
+        },
+      });
+    },
+  ),
 ];
 
 // Setup MSW server
@@ -34,7 +55,7 @@ process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
-process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
+process.env.DEEPINFRA_TOKEN = 'test-deepinfra-token';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
@@ -117,8 +138,8 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model:
-            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          model: 'canopylabs/orpheus-3b-0.1-ft',
+          provider: 'deepinfra',
         });
       }
       if (voiceName === 'poe') {
@@ -127,6 +148,16 @@ vi.mock('@/lib/supabase/queries', async () => {
           name: 'poe',
           language: 'en',
           model: 'gpro',
+          provider: 'google-ai',
+        });
+      }
+      if (voiceName === 'replica') {
+        return Promise.resolve({
+          id: 'voice-replica-id',
+          name: 'replica',
+          language: 'en',
+          model: 'lucataco/xtts-v2:replicate',
+          provider: 'replicate',
         });
       }
       return Promise.resolve(null);
@@ -172,6 +203,37 @@ vi.mock('@vercel/blob', () => ({
 
 // Export mocks for test access
 export { mockBlobPut };
+
+// Mock Replicate client
+const mockReplicateRun = vi.fn(
+  async (
+    _model: string,
+    _options: { input: { text: string; voice: string } },
+    onProgress?: (prediction: Record<string, any>) => void,
+  ) => {
+    const prediction = {
+      id: 'replicate-prediction-id',
+      metrics: { predict_time: 1.23, total_time: 2.34 },
+      status: 'succeeded',
+    };
+    if (onProgress) {
+      onProgress(prediction);
+    }
+    return Buffer.from([9, 8, 7, 6]);
+  },
+);
+
+class MockReplicate {
+  run = mockReplicateRun;
+}
+
+vi.mock('replicate', () => ({
+  __esModule: true,
+  default: MockReplicate,
+  Prediction: class {},
+}));
+
+export { mockReplicateRun };
 
 // Mock Google Generative AI module
 vi.mock('@google/genai', async () => {
@@ -219,25 +281,3 @@ Object.defineProperty(global, 'crypto', {
   },
 });
 
-const mockReplicateRun = vi.fn().mockImplementation(async () => {
-  // Return a ReadableStream mock for successful responses
-  return new ReadableStream({
-    start(controller) {
-      controller.enqueue(new Uint8Array([1, 2, 3, 4]));
-      controller.close();
-    },
-  });
-});
-
-const mockReplicateConstructor = vi.fn().mockImplementation(() => ({
-  run: mockReplicateRun,
-}));
-
-vi.mock('replicate', () => {
-  return {
-    default: mockReplicateConstructor,
-    Replicate: mockReplicateConstructor,
-  };
-});
-
-export { mockReplicateRun };
