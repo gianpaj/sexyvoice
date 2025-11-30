@@ -66,6 +66,3 @@ jobs:
 
       - name: Run tests
         run: pnpm test
-        env:
-          REDISMS_DEBUG: 1
-          REDISMS_SYSTEM_BINARY: /usr/bin/redis-server
