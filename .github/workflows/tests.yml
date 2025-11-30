@@ -50,15 +50,6 @@ jobs:
         env:
           REDISMS_DISABLE_POSTINSTALL: 1
 
-      - name: Cache Redis binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/redis-binaries
-          key: ${{ runner.os }}-redis-binaries-7.2.4
-          restore-keys: |
-            ${{ runner.os }}-redis-binaries-7.2.4-
-            ${{ runner.os }}-redis-binaries-
-
       - name: Start Redis
         uses: supercharge/redis-github-action@1.8.1
         with:
