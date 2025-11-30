@@ -6,13 +6,13 @@ export const getTopupPackages = (lang: Locale) => {
   // Get promo bonuses
   const promoBonuses = {
     stater: isPromoEnabled
-      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER || '0')
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER || '0', 10)
       : 0,
     standard: isPromoEnabled
-      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0')
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0', 10)
       : 0,
     pro: isPromoEnabled
-      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0')
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0', 10)
       : 0,
   };
 

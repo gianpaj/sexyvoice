@@ -77,6 +77,13 @@ const config: Config = {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        promo: {
+          primary: 'var(--promo-primary)',
+          'primary-dark': 'var(--promo-primary-dark)',
+          accent: 'var(--promo-accent)',
+          text: 'var(--promo-text)',
+          'text-dark': 'var(--promo-text-dark)',
+        },
       },
       keyframes: {
         'accordion-down': {

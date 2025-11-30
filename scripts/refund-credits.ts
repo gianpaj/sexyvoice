@@ -535,7 +535,7 @@ async function main() {
   } catch (error) {
     console.error(
       '\n❌ Error:',
-      error instanceof Error ? error.message : error,
+      Error.isError(error) ? error.message : error,
       '\n',
     );
     process.exit(1);

@@ -90,7 +90,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Prerequisites
 
-- **Node.js 22+**
+- **Node.js 24+**
 - **pnpm**
 - **Supabase account** - <https://supabase.com>
 

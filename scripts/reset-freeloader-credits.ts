@@ -112,7 +112,7 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
     return records;
   } catch (error) {
     throw new Error(
-      `Failed to parse CSV file: ${error instanceof Error ? error.message : error}`,
+      `Failed to parse CSV file: ${Error.isError(error) ? error.message : error}`,
     );
   }
 }
@@ -301,7 +301,7 @@ async function processUser(
       username: record.username,
       previousCredits: 0,
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: Error.isError(error) ? error.message : String(error),
     };
   }
 }
@@ -662,7 +662,7 @@ async function main() {
   } catch (error) {
     console.error(
       '\n❌ Error:',
-      error instanceof Error ? error.message : error,
+      Error.isError(error) ? error.message : error,
       '\n',
     );
     process.exit(1);
