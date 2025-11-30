@@ -5,13 +5,13 @@ import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 // Mock handlers for external services
 export const handlers = [
   // Replicate API Mock
-  http.post('https://api.replicate.com/v1/predictions', () => {
-    return HttpResponse.json({
+  http.post('https://api.replicate.com/v1/predictions', () =>
+    HttpResponse.json({
       id: 'test-prediction-id',
       status: 'succeeded',
       output: 'https://example.com/audio.mp3',
-    });
-  }),
+    }),
+  ),
 ];
 
 // Setup MSW server
@@ -233,11 +233,9 @@ const mockReplicateConstructor = vi.fn().mockImplementation(() => ({
   run: mockReplicateRun,
 }));
 
-vi.mock('replicate', () => {
-  return {
-    default: mockReplicateConstructor,
-    Replicate: mockReplicateConstructor,
-  };
-});
+vi.mock('replicate', () => ({
+  default: mockReplicateConstructor,
+  Replicate: mockReplicateConstructor,
+}));
 
 export { mockReplicateRun };
