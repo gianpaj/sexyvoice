@@ -155,11 +155,11 @@ export function getSampleAudiosByLanguage(locale?: string): SampleAudio[] {
       const aIndex = a.lang.indexOf(locale);
       const bIndex = b.lang.indexOf(locale);
 
-      // Items with the geo locale come first
+      // Items with the preferred locale come first
       if (aIndex !== -1 && bIndex === -1) return -1;
       if (aIndex === -1 && bIndex !== -1) return 1;
 
-      // If both have the geo locale, prioritize by position in array
+      // If both have the preferred locale, prioritize by position in array
       if (aIndex !== -1 && bIndex !== -1) {
         return aIndex - bIndex;
       }
