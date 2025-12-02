@@ -8,7 +8,7 @@ interface SampleAudio {
   showOnSiteLangs: string[];
 }
 
-const sampleAudios: readonly SampleAudio[] = [
+const sampleAudios: SampleAudio[] = [
   // {
   //   id: 1,
   //   name: 'Tara',
@@ -143,11 +143,11 @@ async function getPreferredLocale(): Promise<string | null> {
       }
     }
   } catch (error) {
-    console.warn('error');
+    console.warn('Error detecting user locale from Accept-Language header');
     console.warn(error);
 
-    // Geolocation not available (e.g., during build time or local development)
-    // This is expected and not a critical error
+    // `headers()` is not available during build time or in non-request contexts.
+    // This is an expected behavior and not a critical error.
   }
 
   return null;
@@ -161,16 +161,9 @@ export async function getSampleAudiosByLanguage(): Promise<SampleAudio[]> {
   // biome-ignore lint/suspicious/noExplicitAny: it's fine
   const locale: any = await getPreferredLocale();
 
-  // Filter audios that match the requested language
-  const validLangs = ['en', 'es', 'de'] as const;
-  const filtered =
-    locale && validLangs.includes(locale)
-      ? sampleAudios.filter((audio) => audio.showOnSiteLangs.includes(locale))
-      : [...sampleAudios];
-
-  // Sort by geolocation relevance if available
+  // Sort by locale relevance if available
   if (locale) {
-    filtered.sort((a, b) => {
+    sampleAudios.sort((a, b) => {
       const aIndex = a.showOnSiteLangs.indexOf(locale);
       const bIndex = b.showOnSiteLangs.indexOf(locale);
 
@@ -189,5 +182,5 @@ export async function getSampleAudiosByLanguage(): Promise<SampleAudio[]> {
   }
 
   // Limit to 6 samples
-  return filtered.slice(0, 6);
+  return sampleAudios.slice(0, 6);
 }
