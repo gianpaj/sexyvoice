@@ -1,5 +1,3 @@
-import { headers } from 'next/headers';
-
 interface SampleAudio {
   id: number;
   name: string;
@@ -8,7 +6,7 @@ interface SampleAudio {
   showOnSiteLangs: string[];
 }
 
-const sampleAudios: SampleAudio[] = [
+const sampleAudios: readonly SampleAudio[] = [
   // {
   //   id: 1,
   //   name: 'Tara',
@@ -127,43 +125,17 @@ const sampleAudios: SampleAudio[] = [
 ];
 
 /**
- * Get the user's preferred locale based on the Accept-Language header
- * parsing the accept-language HTTP header
- */
-async function getPreferredLocale(): Promise<string | null> {
-  try {
-    const headersList = await headers();
-
-    const accept = headersList.get('accept-language');
-
-    if (accept) {
-      const locale = accept.split(',')[0].split('-')[0];
-      if (locale) {
-        return locale;
-      }
-    }
-  } catch (error) {
-    console.warn('Error detecting user locale from Accept-Language header');
-    console.warn(error);
-
-    // `headers()` is not available during build time or in non-request contexts.
-    // This is an expected behavior and not a critical error.
-  }
-
-  return null;
-}
-
-/**
  * Get sample audios filtered by language and sorted by preferred language
  * Limits results to 6 samples
+ * @param locale - Optional locale to sort by (e.g., 'en', 'es', 'de')
  */
-export async function getSampleAudiosByLanguage(): Promise<SampleAudio[]> {
-  // biome-ignore lint/suspicious/noExplicitAny: it's fine
-  const locale: any = await getPreferredLocale();
+export function getSampleAudiosByLanguage(locale?: string): SampleAudio[] {
+  // Create a copy to avoid mutating the original array
+  const sortedAudios = [...sampleAudios];
 
   // Sort by locale relevance if available
   if (locale) {
-    sampleAudios.sort((a, b) => {
+    sortedAudios.sort((a, b) => {
       const aIndex = a.showOnSiteLangs.indexOf(locale);
       const bIndex = b.showOnSiteLangs.indexOf(locale);
 
@@ -182,5 +154,20 @@ export async function getSampleAudiosByLanguage(): Promise<SampleAudio[]> {
   }
 
   // Limit to 6 samples
-  return sampleAudios.slice(0, 6);
+  return sortedAudios.slice(0, 6);
+}
+
+/**
+ * Get the browser's preferred locale on the client side
+ */
+export function getClientLocale(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const browserLang =
+    navigator.language || (navigator as { userLanguage?: string }).userLanguage;
+  if (browserLang) {
+    return browserLang.split('-')[0];
+  }
+
+  return null;
 }
