@@ -5,7 +5,6 @@ import { useState } from 'react';
 
 import { Button } from './ui/button';
 
-// AudioPreviewCard component
 export function AudioPreviewCard({
   name,
   prompt,
@@ -62,7 +61,10 @@ export function AudioPreviewCard({
           )}
         </Button>
       </div>
-      <div className="grow whitespace-break-spaces rounded bg-gray-800/60 p-3 text-gray-200 text-sm">
+      <div
+        className="line-clamp-5 grow whitespace-break-spaces rounded border-[#1b2432] border-[12px] bg-[#1b2432] text-gray-200 text-sm"
+        title={prompt}
+      >
         {prompt}
       </div>
     </div>

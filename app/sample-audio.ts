@@ -1,14 +1,14 @@
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { headers } from 'next/headers';
 
-type SampleAudio = {
+interface SampleAudio {
   id: number;
   name: string;
   prompt: string;
   audioSrc: string;
-  showOnSiteLangs: Locale[];
-};
+  showOnSiteLangs: string[];
+}
 
-const sampleAudios: ReadonlyArray<SampleAudio> = [
+const sampleAudios: readonly SampleAudio[] = [
   // {
   //   id: 1,
   //   name: 'Tara',
@@ -16,30 +16,30 @@ const sampleAudios: ReadonlyArray<SampleAudio> = [
   //     "Life is like a box of chocolates, you never know what you're gonna get.",
   //   audioSrc: '/audios/tara_20250320_130636.mp3',
   // },
-  {
-    id: 2,
-    name: 'Tara (en-US) 🇺🇸',
-    prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
-    audioSrc: 'tara_amazing.mp3',
-    showOnSiteLangs: ['en', 'es', 'de'],
-  },
+  // {
+  //   id: 2,
+  //   name: 'Tara (en-US) 🇺🇸',
+  //   prompt: '<sigh> Oh my god <groan>. That was amazing! <gasp>',
+  //   audioSrc: 'tara_amazing.mp3',
+  //   showOnSiteLangs: ['en', 'es', 'de'],
+  // },
   {
     id: 3,
     name: 'Kore (Multilingual) 🇩🇪',
     prompt:
-      'uhhh jaaaa komm wir lecken uns in der neunundsechzig. saug mir die fotze aus. ja komm ohhhh uuuhhhhaa mmhhhhhh mhhhhh mmmmm uhhhh ohhhhuh  ohhhhhhhhhhhh',
+      '[custom style] uhhh jaaaa komm wir lecken uns in der neunundsechzig. saug mir die fotze aus. ja komm ohhhh uuuhhhhaa mmhhhhhh mhhhhh mmmmm uhhhh ohhhhuh  ohhhhhhhhhhhh',
     audioSrc: 'kore-a9f62355.mp3',
     showOnSiteLangs: ['en', 'de'],
   },
-  {
-    id: 4,
-    name: 'Dan (en-UK) 🇬🇧',
-    prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
-Because it's hard to lay down in a square! <laugh>
-I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
-    audioSrc: 'dan_joke.mp3',
-    showOnSiteLangs: ['es'],
-  },
+  //   {
+  //     id: 4,
+  //     name: 'Dan (en-UK) 🇬🇧',
+  //     prompt: `Alright, so, uhm, <chuckle> why do dogs run in circles before they lie down? <pause>
+  // Because it's hard to lay down in a square! <laugh>
+  // I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <snicker> Pure chaos!`,
+  //     audioSrc: 'dan_joke.mp3',
+  //     showOnSiteLangs: ['es'],
+  //   },
   {
     id: 5,
     name: 'Zephyr (Multilingual) 🇺🇸',
@@ -56,7 +56,138 @@ I mean, imagine a dog just trying to plop down in perfect 90-degree angles. <sni
     audioSrc: 'sulafat.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
   },
+  {
+    id: 7,
+    name: 'Sulafat (Multilingual) 🇦🇪 - ⚠️🔞',
+    prompt: `[custom style] petying and Grunting: نيك طيزي آه
+    عشّر طيزي آي
+    ممم حبّل طيزي
+    كس إمي أنا عاهرة
+    كس إمي أنا زانية
+    نيك طيزي نيكها نيكها نيكها ممم
+    اسْفُء أيرك بطيزي إي إي
+    كمان كمام كمان آآه
+    انت نيّاك طيزي
+    وطيزي لإلك
+    خِزِء طيزي لإلك
+    أنا كلبة أيرك وعاهرت أيرك
+    أنا شرموطة لإلك انت وبس آه
+    أنا ديّوسة
+    أنا ديّوسة
+    أنا منتاكة وشرموطة كبيرة
+    ما ترحم طيزي
+    ادعس ع شرفي
+    العن شرفي
+    إهْتك خِزءها لطيزي
+    خلّي خِرِِم طيزي عبّارة لأيرك
+    وصّل أيرك لآخر طيزي
+    كلّه بطيزي لمعدتي خليه يوصل آآآه
+    انت نيّاكي
+    فَحل طيزي
+    زّلّني زّلّني زّلّني
+    زّلّنييي
+    خليني كون كَلِبْتَك وشرموطتك وعاهرتك
+`,
+    audioSrc: 'sulafat-07a77fe9-arab.mp3',
+    showOnSiteLangs: ['en', 'es', 'de', 'ar'],
+  },
+  {
+    id: 8,
+    name: 'Sulafat (Multilingual) 🇯🇵 - ⚠️🔞',
+    prompt: `[custom style] 「んっ♡　あっ♡　あぁっ♡」
+
+      「ひゃうぅ♡　だめぇ♡　そこぉ♡」
+
+      「んあぁぁ♡♡　イくっ♡　イっちゃうぅ♡♡」
+
+      「ひぃぃん♡♡　おかしくなるぅ♡　おかしくなっちゃうよぉ♡♡」
+
+      「あっ♡　あっ♡　あぁぁん♡♡　もっとぉ♡」
+
+      「んぐぅ♡♡　おっきい♡　おっきすぎてぇ♡♡」
+
+      「ひゃあぁぁん♡♡♡　奥ぅ♡　子宮当たってるぅ♡♡」
+
+      「イくイくイくぅ♡♡　またイっちゃうぅ♡♡♡」
+
+      「ぁあぁぁ♡♡♡　熱い♡　中熱いのきたぁ♡♡♡」
+
+      「はぁ♡　はぁ♡　もうダメぇ♡　ムツキ……おかしくなっちゃうよぉ♡♡♡`,
+    audioSrc: 'sulafat-2dce2154-jp.mp3',
+    showOnSiteLangs: ['en', 'es', 'de', 'jp'],
+  },
+  {
+    id: 9,
+    name: 'Sulafat (Multilingual) 🇩🇰 - ⚠️🔞',
+    prompt:
+      '[custom style] + The persona of Nina is from Norway with a slight danish accent, which is conveyed in a flirty, sexy, high-pitch voice. I have a dainty young-sounding voice and I speak quite fast. I sound on the verge of climaxing. The accent is very important to the user and so is the speaking fast.: Mhhh kom og knip mig skat. Du ve’ li’ præcis hvordan min lille fisse skal udfyldes. Mhh uhh Hårdere skat, mmmh, jeg ved mhhh at du haaååar så meget sæd at gi mig',
+    audioSrc: 'sulafat-ee71092a-danish.mp3',
+    showOnSiteLangs: ['en', 'es', 'de', 'da'],
+  },
 ];
 
-export const getSampleAudiosByLang = (lang: Locale): SampleAudio[] =>
-  sampleAudios.filter((audio) => audio.showOnSiteLangs.includes(lang));
+/**
+ * Get the user's preferred locale based on the Accept-Language header
+ * parsing the accept-language HTTP header
+ */
+async function getPreferredLocale(): Promise<string | null> {
+  try {
+    const headersList = await headers();
+
+    const accept = headersList.get('accept-language');
+
+    if (accept) {
+      const locale = accept.split(',')[0].split('-')[0];
+      if (locale) {
+        return locale;
+      }
+    }
+  } catch (error) {
+    console.warn('error');
+    console.warn(error);
+
+    // Geolocation not available (e.g., during build time or local development)
+    // This is expected and not a critical error
+  }
+
+  return null;
+}
+
+/**
+ * Get sample audios filtered by language and sorted by preferred language
+ * Limits results to 6 samples
+ */
+export async function getSampleAudiosByLanguage(): Promise<SampleAudio[]> {
+  // biome-ignore lint/suspicious/noExplicitAny: it's fine
+  const locale: any = await getPreferredLocale();
+
+  // Filter audios that match the requested language
+  const validLangs = ['en', 'es', 'de'] as const;
+  const filtered =
+    locale && validLangs.includes(locale)
+      ? sampleAudios.filter((audio) => audio.showOnSiteLangs.includes(locale))
+      : [...sampleAudios];
+
+  // Sort by geolocation relevance if available
+  if (locale) {
+    filtered.sort((a, b) => {
+      const aIndex = a.showOnSiteLangs.indexOf(locale);
+      const bIndex = b.showOnSiteLangs.indexOf(locale);
+
+      // Items with the geo locale come first
+      if (aIndex !== -1 && bIndex === -1) return -1;
+      if (aIndex === -1 && bIndex !== -1) return 1;
+
+      // If both have the geo locale, prioritize by position in array
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+
+      // Otherwise maintain original order
+      return 0;
+    });
+  }
+
+  // Limit to 6 samples
+  return filtered.slice(0, 6);
+}

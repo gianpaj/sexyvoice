@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSampleAudiosByLang } from '../sample-audio';
+import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
   allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
@@ -132,7 +132,7 @@ export default async function LandingPage(props: {
                 {dict.popular.trySamplesSubtitle}
               </p>
               <div className="grid gap-6 md:grid-cols-2">
-                {getSampleAudiosByLang(lang).map((audio) => (
+                {(await getSampleAudiosByLanguage()).map((audio) => (
                   <AudioPreviewCard
                     audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
                     key={audio.id}

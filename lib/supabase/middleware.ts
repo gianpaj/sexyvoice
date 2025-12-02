@@ -16,12 +16,19 @@ const publicRoutes = [
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
+const landingPageRoutes = routesPerLocale(['/']);
+
 export const updateSession = async (request: NextRequest, locale: string) => {
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = NextResponse.next({
       request,
     });
+
+    if (landingPageRoutes.includes(pathname)) {
+      return NextResponse.next({
+      });
+    }
 
     const supabase = await createClient();
 
