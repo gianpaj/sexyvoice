@@ -9,10 +9,14 @@ export function AudioPreviewCard({
   name,
   prompt,
   audioSrc,
+  lang,
+  dir,
 }: {
   name: string;
   prompt: string;
   audioSrc: string;
+  lang: string;
+  dir: 'ltr' | 'rtl';
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
@@ -63,6 +67,8 @@ export function AudioPreviewCard({
       </div>
       <div
         className="line-clamp-5 grow whitespace-break-spaces rounded border-[#1b2432] border-[12px] bg-[#1b2432] text-gray-200 text-sm"
+        dir={dir}
+        lang={lang}
         title={prompt}
       >
         {prompt}

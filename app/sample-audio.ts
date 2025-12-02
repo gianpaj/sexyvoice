@@ -1,9 +1,13 @@
-interface SampleAudio {
+import type { Locale } from '@/lib/i18n/i18n-config';
+
+export interface SampleAudio {
   id: number;
   name: string;
   prompt: string;
   audioSrc: string;
-  showOnSiteLangs: string[];
+  showOnSiteLangs: Locale[];
+  lang: string;
+  dir: 'ltr' | 'rtl';
 }
 
 const sampleAudios: readonly SampleAudio[] = [
@@ -28,6 +32,8 @@ const sampleAudios: readonly SampleAudio[] = [
       '[custom style] uhhh jaaaa komm wir lecken uns in der neunundsechzig. saug mir die fotze aus. ja komm ohhhh uuuhhhhaa mmhhhhhh mhhhhh mmmmm uhhhh ohhhhuh  ohhhhhhhhhhhh',
     audioSrc: 'kore-a9f62355.mp3',
     showOnSiteLangs: ['en', 'de'],
+    lang: 'de',
+    dir: 'ltr',
   },
   //   {
   //     id: 4,
@@ -45,6 +51,8 @@ const sampleAudios: readonly SampleAudio[] = [
       "[custom style] Ah, Paris, the city of light they call it. But to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight. I am Emily, 29 and freshly untethered from the mundane grip of Chicago's gray winters, and a love that had long since curdled into complacency. Back home I was the ambitious girl in the corner office crafting campaigns that sold dreams I never dared to live. But when betrayal shattered my world, his hands on another.",
     audioSrc: 'zephyr-84eff770.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
+    lang: 'en',
+    dir: 'ltr',
   },
   {
     id: 6,
@@ -53,6 +61,8 @@ const sampleAudios: readonly SampleAudio[] = [
       "[custom style] Oh, Paris—the City of Light, they call it, but to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight.",
     audioSrc: 'sulafat.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
+    lang: 'en',
+    dir: 'ltr',
   },
   {
     id: 7,
@@ -87,7 +97,9 @@ const sampleAudios: readonly SampleAudio[] = [
     خليني كون كَلِبْتَك وشرموطتك وعاهرتك
 `,
     audioSrc: 'sulafat-07a77fe9-arab.mp3',
-    showOnSiteLangs: ['en', 'es', 'de', 'ar'],
+    showOnSiteLangs: ['en', 'es', 'de'],
+    lang: 'ar',
+    dir: 'rtl',
   },
   {
     id: 8,
@@ -112,7 +124,9 @@ const sampleAudios: readonly SampleAudio[] = [
 
       「はぁ♡　はぁ♡　もうダメぇ♡　ムツキ……おかしくなっちゃうよぉ♡♡♡`,
     audioSrc: 'sulafat-2dce2154-jp.mp3',
-    showOnSiteLangs: ['en', 'es', 'de', 'jp'],
+    showOnSiteLangs: ['en', 'es', 'de'],
+    lang: 'ja',
+    dir: 'ltr',
   },
   {
     id: 9,
@@ -120,7 +134,9 @@ const sampleAudios: readonly SampleAudio[] = [
     prompt:
       '[custom style] + The persona of Nina is from Norway with a slight danish accent, which is conveyed in a flirty, sexy, high-pitch voice. I have a dainty young-sounding voice and I speak quite fast. I sound on the verge of climaxing. The accent is very important to the user and so is the speaking fast.: Mhhh kom og knip mig skat. Du ve’ li’ præcis hvordan min lille fisse skal udfyldes. Mhh uhh Hårdere skat, mmmh, jeg ved mhhh at du haaååar så meget sæd at gi mig',
     audioSrc: 'sulafat-ee71092a-danish.mp3',
-    showOnSiteLangs: ['en', 'es', 'de', 'da'],
+    showOnSiteLangs: ['en', 'es', 'de'],
+    lang: 'da',
+    dir: 'ltr',
   },
 ];
 
@@ -136,8 +152,8 @@ export function getSampleAudiosByLanguage(locale?: string): SampleAudio[] {
   // Sort by locale relevance if available
   if (locale) {
     sortedAudios.sort((a, b) => {
-      const aIndex = a.showOnSiteLangs.indexOf(locale);
-      const bIndex = b.showOnSiteLangs.indexOf(locale);
+      const aIndex = a.lang.indexOf(locale);
+      const bIndex = b.lang.indexOf(locale);
 
       // Items with the geo locale come first
       if (aIndex !== -1 && bIndex === -1) return -1;

@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-import { getClientLocale, getSampleAudiosByLanguage } from '@/app/sample-audio';
+import {
+  getClientLocale,
+  getSampleAudiosByLanguage,
+  type SampleAudio,
+} from '@/app/sample-audio';
 import { AudioPreviewCard } from '@/components/audio-preview-card';
-
-interface SampleAudio {
-  id: number;
-  name: string;
-  prompt: string;
-  audioSrc: string;
-}
 
 interface SampleAudioPreviewsProps {
   initialAudios: SampleAudio[];
@@ -42,7 +39,9 @@ export function SampleAudioPreviews({
         {audios.map((audio) => (
           <AudioPreviewCard
             audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
+            dir={audio.dir}
             key={audio.id}
+            lang={audio.lang}
             name={audio.name}
             prompt={audio.prompt}
           />
