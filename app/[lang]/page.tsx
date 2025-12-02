@@ -14,12 +14,12 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import { AudioPreviewCard } from '@/components/audio-preview-card';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { PromoBanner } from '@/components/promo-banner';
+import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import {
   Accordion,
   AccordionContent,
@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSampleAudiosByLang } from '../sample-audio';
+import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
   allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
@@ -124,24 +124,11 @@ export default async function LandingPage(props: {
             </div>
 
             {/* Audio Previews Grid */}
-            <div className="mx-auto mb-16 max-w-4xl md:pb-16">
-              <h2 className="mb-2 font-bold text-2xl text-white">
-                {dict.popular.trySamplesTitle}
-              </h2>
-              <p className="mb-6 text-gray-200">
-                {dict.popular.trySamplesSubtitle}
-              </p>
-              <div className="grid gap-6 md:grid-cols-2">
-                {getSampleAudiosByLang(lang).map((audio) => (
-                  <AudioPreviewCard
-                    audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
-                    key={audio.id}
-                    name={audio.name}
-                    prompt={audio.prompt}
-                  />
-                ))}
-              </div>
-            </div>
+            <SampleAudioPreviews
+              initialAudios={getSampleAudiosByLanguage()}
+              trySamplesSubtitle={dict.popular.trySamplesSubtitle}
+              trySamplesTitle={dict.popular.trySamplesTitle}
+            />
 
             {/* Voice Generator Section */}
             {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
