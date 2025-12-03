@@ -304,7 +304,9 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Free Text to Speech & AI Voice Generator",
-    "description": "AI voice generator that allows you to convert text to speech online for free (to try), clone voice, and generate natural-sounding and expressive speech in 24 languages.",
+    "description": "Create natural AI voices with emotions in 24 languages. Free text-to-speech generator with voice cloning. Start with 10,000 free credits - no card required.",
+    "descriptionLogin": "Sign in to SexyVoice.ai to access your AI voice projects, manage credits, and generate expressive speech in multiple languages with advanced voice cloning.",
+    "descriptionSignup": "Join SexyVoice.ai free - Get 10,000 credits to create realistic AI voices with emotions. Advanced text-to-speech and voice cloning in 24 languages.",
     "/": "",
     "/login": "Log in",
     "/signup": "Sign up with email or Google",

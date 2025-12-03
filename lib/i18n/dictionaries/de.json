@@ -304,7 +304,9 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Kostenloser Text-zu-Sprache & KI-Stimmengenerator",
-    "description": "KI-Sprachgenerator, mit dem Sie Text kostenlos (zum Ausprobieren) online in Sprache umwandeln, Stimmen klonen und natürlich klingende und ausdrucksstarke Sprache in 24 Sprachen generieren können.",
+    "description": "Erstellen Sie natürliche KI-Stimmen mit Emotionen in 24 Sprachen. Kostenloser Text-zu-Sprache-Generator mit Stimmenklonung. 10.000 Credits gratis.",
+    "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
+    "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
