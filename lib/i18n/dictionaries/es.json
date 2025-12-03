@@ -301,7 +301,9 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Generador de Voz con IA y Texto a Voz Gratis",
-    "description": "Generador de voz con IA que te permite convertir texto a voz en línea de forma gratuita (para probar), clonar voz y generar discurso natural y expresivo en 24 idiomas.",
+    "description": "Crea voces de IA naturales con emociones en 24 idiomas. Generador de texto a voz gratis con clonación de voz. Comienza con 10,000 créditos gratis.",
+    "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
+    "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",

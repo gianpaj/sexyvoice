@@ -11,9 +11,9 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
-type Props = {
+interface Props {
   params: Promise<{ lang: Locale }>;
-};
+}
 
 export async function generateMetadata(
   { params }: Props,
@@ -41,15 +41,23 @@ export async function generateMetadata(
 
   const title = pageTitle || defaultTitle;
 
+  // Get page-specific description based on route
+  let description = dict.pages.description;
+  if (pagePath === '/login') {
+    description = dict.pages.descriptionLogin || dict.pages.description;
+  } else if (pagePath === '/signup') {
+    description = dict.pages.descriptionSignup || dict.pages.description;
+  }
+
   return {
     title: {
       template: parentTitle?.template || '',
       default: title,
     },
-    description: dict.pages.description,
+    description,
     openGraph: {
       title,
-      description: dict.pages.description,
+      description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
       ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
