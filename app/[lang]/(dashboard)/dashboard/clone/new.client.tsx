@@ -4,6 +4,7 @@ import {
   AlertCircle,
   CircleStop,
   Download,
+  InfoIcon,
   PaperclipIcon,
   UploadIcon,
   XIcon,
@@ -32,6 +33,12 @@ import { Label } from '@/components/ui/label';
 //   SelectValue,
 // } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import { downloadUrl } from '@/lib/download';
 import type lang from '@/lib/i18n/dictionaries/en.json';
@@ -403,10 +410,27 @@ export default function NewVoiceClient({
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-muted-foreground text-sm">
-            Voice clones are created for demonstration purposes only.
-          </p>
+        <CardFooter className="flex items-center justify-between gap-3 border-t pt-6">
+          <p className="text-muted-foreground text-sm">{dict.cloneNotice}</p>
+          <TooltipProvider>
+            <Tooltip supportMobileTap>
+              <TooltipTrigger aria-label={dict.cloneNoticeTooltipLabel} asChild>
+                <button
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  type="button"
+                >
+                  <InfoIcon aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                align="end"
+                className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
+                side="left"
+              >
+                {dict.cloneNoticeTooltip}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardFooter>
       </Card>
     </div>
