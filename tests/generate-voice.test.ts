@@ -65,7 +65,7 @@ describe('Generate Voice API Route', () => {
       expect(json.error).toBe('Missing required parameters');
     });
 
-    it('should return 400 when text exceeds maximum length for Replicate voices', async () => {
+    it('should return 400 when text exceeds maximum length for DeepInfra voices', async () => {
       const longText = 'a'.repeat(501); // Exceeds 500 char limit
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -152,7 +152,7 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Credit System', () => {
-    it('should return 402 when user has insufficient credits for Replicate voice', async () => {
+    it('should return 402 when user has insufficient credits for DeepInfra voice', async () => {
       // Override the getCredits mock for this specific test
       vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
 
@@ -176,7 +176,7 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Caching', () => {
-    it('should return cached result for Replicate voice without consuming credits', async () => {
+    it('should return cached result for DeepInfra voice without consuming credits', async () => {
       const queries = await import('@/lib/supabase/queries');
       const cachedUrl = 'https://example.com/cached-audio.wav';
 
@@ -279,8 +279,8 @@ describe('Generate Voice API Route', () => {
     });
   });
 
-  describe('Voice Generation - Replicate', () => {
-    it('should successfully generate voice using Replicate', async () => {
+  describe('Voice Generation - DeepInfra', () => {
+    it('should successfully generate voice using DeepInfra', async () => {
       mockBlobPut.mockResolvedValueOnce({
         url: 'https://blob.vercel-storage.com',
       });
@@ -293,27 +293,29 @@ describe('Generate Voice API Route', () => {
         body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
       });
 
-      // Mock Replicate.run to return a ReadableStream
-      const mockStream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(new Uint8Array([1, 2, 3, 4]));
-          controller.close();
-        },
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(mockBlobPut).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Buffer),
+        expect.objectContaining({ contentType: 'audio/wav' }),
+      );
+    });
+
+    it('should successfully generate voice using Replicate provider', async () => {
+      mockBlobPut.mockResolvedValueOnce({
+        url: 'https://blob.vercel-storage.com/replicate',
       });
 
-      // We need to mock the replicate module
-      vi.doMock('replicate', () => {
-        return {
-          default: class Replicate {
-            async run(model: string, options: any, onProgress?: any) {
-              // Simulate progress callback
-              if (onProgress) {
-                onProgress({ id: 'test-prediction-id', status: 'succeeded' });
-              }
-              return mockStream;
-            }
-          },
-        };
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'replica' }),
       });
 
       const response = await POST(request);
@@ -321,14 +323,22 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.url).toContain('blob.vercel-storage.com');
-      expect(json.creditsUsed).toBeGreaterThan(0);
-      expect(json.creditsRemaining).toBeDefined();
+      expect(mockReplicateRun).toHaveBeenCalledWith(
+        'lucataco/xtts-v2:replicate',
+        expect.objectContaining({
+          input: { text: 'Hello world', voice: 'replica' },
+        }),
+        expect.any(Function),
+      );
     });
 
-    it('should throw error when Replicate output contains error property', async () => {
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Model execution failed due to timeout',
-      });
+    it('should surface DeepInfra errors', async () => {
+      server.use(
+        http.post(
+          'https://api.deepinfra.com/v1/inference/canopylabs/orpheus-3b-0.1-ft',
+          () => HttpResponse.json({ error: 'fail' }, { status: 500 }),
+        ),
+      );
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -342,8 +352,27 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBe('Voice generation failed, please retry');
-      expect(mockReplicateRun).toHaveBeenCalled();
+      expect(json.error).toBe('Failed to generate voice');
+    });
+
+    it('should stream audio when requested', async () => {
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara', stream: true }),
+      });
+
+      const response = await POST(request);
+      const reader = response.body?.getReader();
+      const { done, value } = await reader!.read();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toBe('audio/wav');
+      expect(done).toBe(false);
+      expect(value).toBeDefined();
+      reader?.releaseLock();
     });
   });
 
@@ -721,10 +750,11 @@ describe('Generate Voice API Route', () => {
 
   describe('Request Abortion', () => {
     it('should handle aborted requests gracefully', async () => {
-      // Mock Replicate API to return error
+      // Mock DeepInfra API to return error
       server.use(
-        http.post('https://api.replicate.com/v1/predictions', () =>
-          HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
+        http.post(
+          'https://api.deepinfra.com/v1/inference/canopylabs/orpheus-3b-0.1-ft',
+          () => HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
         ),
       );
 
@@ -832,7 +862,7 @@ describe('Generate Voice API Route', () => {
 });
 
 describe('Integration Tests', () => {
-  it('should complete full voice generation flow for Replicate', async () => {
+  it('should complete full voice generation flow for DeepInfra', async () => {
     const request = new Request('http://localhost/api/generate-voice', {
       method: 'POST',
       headers: {

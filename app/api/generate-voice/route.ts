@@ -9,7 +9,7 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
-import { put } from '@vercel/blob';
+import { type PutBlobResult, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -33,6 +33,14 @@ import {
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
+
+type DeepInfraInferenceStatus = {
+  cost?: number;
+  runtime_ms?: number;
+  status?: string;
+  tokens_generated?: number;
+  tokens_input?: number;
+};
 
 async function generateHash(
   text: string,
@@ -61,6 +69,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let stream = false;
   let user: User | null = null;
   try {
     if (request.body === null) {
@@ -74,6 +83,7 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
+    stream = Boolean(body.stream);
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -106,7 +116,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
-    const isGeminiVoice = voiceObj.model === 'gpro';
+    const provider = voiceObj.provider;
+    const isGeminiVoice = provider === 'google-ai';
+    const shouldStream = provider === 'deepinfra' && stream;
 
     const maxLength = getCharactersLimit(voiceObj.model);
     if (text.length > maxLength) {
@@ -187,10 +199,14 @@ export async function POST(request: Request) {
       }
     }
 
-    let replicateResponse: Prediction | undefined;
+    let inferenceRequestId: string | undefined;
     let genAIResponse: GenerateContentResponse | null;
     let modelUsed = voiceObj.model;
-    let blobResult: any;
+    let blobResult: PutBlobResult | null = null;
+    let blobResultPromise: Promise<PutBlobResult> | null = null;
+    let streamingResponse: Response | null = null;
+    let inferenceStatus: DeepInfraInferenceStatus | undefined;
+    let replicateResponse: Prediction | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -303,8 +319,7 @@ export async function POST(request: Request) {
         contentType: 'audio/wav',
         allowOverwrite: true,
       });
-    } else {
-      // uses REPLICATE_API_TOKEN
+    } else if (provider === 'replicate') {
       const replicate = new Replicate();
       const onProgress = (prediction: Prediction) => {
         replicateResponse = prediction;
@@ -313,14 +328,14 @@ export async function POST(request: Request) {
         voiceObj.model as `${string}/${string}`,
         { input: { text, voice }, signal: request.signal },
         onProgress,
-      )) as ReadableStream;
+      )) as ReadableStream | Buffer;
 
-      if ('error' in output) {
+      if ('error' in (output as any)) {
         const errorObj = {
           text,
           voice,
           model: voiceObj.model,
-          errorData: output.error,
+          errorData: (output as any).error,
         };
         captureException({
           error: 'Voice generation failed',
@@ -329,8 +344,7 @@ export async function POST(request: Request) {
         });
         console.error(errorObj);
         throw new Error(
-          // @ts-expect-error
-          output.error || 'Voice generation failed, please try again',
+          (output as any).error || 'Voice generation failed, please try again',
           {
             cause: 'REPLICATE_ERROR',
           },
@@ -342,9 +356,121 @@ export async function POST(request: Request) {
         contentType: 'audio/mpeg',
         allowOverwrite: true,
       });
+      inferenceRequestId = replicateResponse?.id;
+    } else {
+      const deepInfraToken = process.env.DEEPINFRA_TOKEN;
+
+      if (!deepInfraToken) {
+        throw new Error('DEEPINFRA_TOKEN is not configured', {
+          cause: 'DEEPINFRA_TOKEN_MISSING',
+        });
+      }
+
+      const deepInfraModel = voiceObj.model || 'canopylabs/orpheus-3b-0.1-ft';
+      modelUsed = deepInfraModel;
+
+      const deepInfraResponse = await fetch(
+        `https://api.deepinfra.com/v1/inference/${deepInfraModel}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `bearer ${deepInfraToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: text,
+            voice,
+            response_format: 'wav',
+            stream: shouldStream,
+          }),
+          signal: abortController.signal,
+        },
+      );
+
+      if (!deepInfraResponse.ok) {
+        const errorText = await deepInfraResponse.text();
+        logger.error('DeepInfra voice generation failed', {
+          status: deepInfraResponse.status,
+          statusText: deepInfraResponse.statusText,
+          errorText,
+        });
+        throw new Error('Voice generation failed, please try again', {
+          cause: 'DEEPINFRA_ERROR',
+        });
+      }
+
+      if (shouldStream) {
+        const bodyStream = deepInfraResponse.body;
+
+        if (!bodyStream) {
+          throw new Error('Missing streaming body from DeepInfra', {
+            cause: 'DEEPINFRA_STREAM_MISSING',
+          });
+        }
+
+        const [clientStream, uploadStream] = bodyStream.tee();
+
+        blobResultPromise = streamToBuffer(uploadStream).then((audioBuffer) =>
+          put(filename, audioBuffer, {
+            access: 'public',
+            contentType:
+              deepInfraResponse.headers.get('content-type') || 'audio/wav',
+            allowOverwrite: true,
+          }),
+        );
+
+        const responseHeaders = new Headers({
+          'Content-Type':
+            deepInfraResponse.headers.get('content-type') || 'audio/wav',
+          'Cache-Control': 'no-store',
+        });
+        responseHeaders.set('X-Generated-Filename', filename);
+
+        streamingResponse = new Response(clientStream, {
+          status: 200,
+          headers: responseHeaders,
+        });
+      }
+
+      if (!shouldStream) {
+        const deepInfraResult = await deepInfraResponse.json();
+        const outputFormat = deepInfraResult.output_format || 'wav';
+        inferenceRequestId = deepInfraResult.request_id;
+        inferenceStatus = deepInfraResult.inference_status;
+        const audioData: string | Uint8Array | undefined =
+          deepInfraResult.audio || deepInfraResult.output?.audio;
+
+        if (!audioData) {
+          logger.error('DeepInfra response missing audio data', {
+            deepInfraResult,
+          });
+          throw new Error('Voice generation failed, please try again', {
+            cause: 'DEEPINFRA_AUDIO_MISSING',
+          });
+        }
+
+        const audioBuffer =
+          typeof audioData === 'string'
+            ? Buffer.from(audioData, 'base64')
+            : Buffer.from(audioData);
+
+        blobResult = await put(filename, audioBuffer, {
+          access: 'public',
+          contentType: `audio/${outputFormat}`,
+          allowOverwrite: true,
+        });
+      }
     }
 
-    await redis.set(filename, blobResult.url);
+    const resolveBlobResult = async () => {
+      if (blobResult) return blobResult;
+      blobResult = (await blobResultPromise) ?? null;
+      return blobResult;
+    };
+
+    if (!shouldStream && blobResult?.url) {
+      await redis.set(filename, blobResult.url);
+    }
 
     after(async () => {
       if (!user) {
@@ -354,20 +480,35 @@ export async function POST(request: Request) {
         return;
       }
 
+      const resolvedBlob = await resolveBlobResult();
+
+      if (!resolvedBlob) {
+        captureException({
+          error: 'Blob upload failed',
+          filename,
+        });
+        return;
+      }
+
+      if (shouldStream) {
+        await redis.set(filename, resolvedBlob.url);
+      }
+
       await reduceCredits({ userId: user.id, amount: estimate });
 
       const usage = extractMetadata(
-        isGeminiVoice,
+        provider,
         genAIResponse,
         replicateResponse,
+        inferenceStatus,
       );
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
         text,
-        url: blobResult.url,
+        url: resolvedBlob.url,
         model: modelUsed,
-        predictionId: replicateResponse?.id,
+        predictionId: inferenceRequestId,
         isPublic: false,
         voiceId: voiceObj.id,
         duration: '-1',
@@ -391,7 +532,7 @@ export async function POST(request: Request) {
 
       await sendPosthogEvent({
         userId: user.id,
-        predictionId: replicateResponse?.id,
+        predictionId: inferenceRequestId,
         text,
         voiceId: voiceObj.id,
         creditUsed: estimate,
@@ -399,9 +540,13 @@ export async function POST(request: Request) {
       });
     });
 
+    if (shouldStream && streamingResponse) {
+      return streamingResponse;
+    }
+
     return NextResponse.json(
       {
-        url: blobResult.url,
+        url: blobResult?.url,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
       },
@@ -489,4 +634,24 @@ async function sendPosthogEvent({
     },
   });
   await posthog.shutdown();
+}
+
+async function streamToBuffer(stream: ReadableStream<Uint8Array>) {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalLength = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      chunks.push(value);
+      totalLength += value.length;
+    }
+  }
+
+  return Buffer.concat(
+    chunks.map((chunk) => Buffer.from(chunk)),
+    totalLength,
+  );
 }

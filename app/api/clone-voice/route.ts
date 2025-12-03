@@ -1,7 +1,7 @@
 import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { head, put } from '@vercel/blob';
+import { head, type PutBlobResult, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
@@ -9,6 +9,7 @@ import { inngest } from '@/lib/inngest/client';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
+  getVoiceIdByName,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -62,10 +63,22 @@ export const maxDuration = 320; // seconds - fluid compute is enabled
 // Initialize Redis
 const redis = Redis.fromEnv();
 
+interface DeepInfraInferenceStatus {
+  cost?: number;
+  runtime_ms?: number;
+  status?: string;
+  tokens_generated?: number;
+  tokens_input?: number;
+}
+
 export async function POST(request: Request) {
   let text = '';
   let userAudioFile: File | null = null;
   let audioPromptUrl = '';
+  let stream = false;
+  let voice = '';
+  let model = '';
+
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
@@ -83,17 +96,18 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
 
-    // Determine mode based on form data
     const textValue = formData.get('text');
     const file = formData.get('file');
+    const voiceValue = formData.get('voice');
+    stream = Boolean(formData.get('stream') === 'true');
 
     text = typeof textValue === 'string' ? textValue : '';
+    voice = typeof voiceValue === 'string' ? voiceValue : '';
     userAudioFile = file instanceof File ? file : null;
 
-    // Text-to-speech generation mode
-    if (!(text && userAudioFile)) {
+    if (!(text && userAudioFile && voice)) {
       return APIErrorResponse(
-        'Missing required parameters: text and audio file',
+        'Missing required parameters: text, voice, or audio file',
         400,
       );
     }
@@ -109,6 +123,18 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    const voiceObj = await getVoiceIdByName(voice);
+
+    if (!voiceObj) {
+      captureException({ error: 'Voice not found', voice, text });
+      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+    }
+
+    model = voiceObj.model;
+
+    const provider = voiceObj.provider;
+    const shouldStream = provider === 'deepinfra' && stream;
 
     if (
       !(
@@ -222,7 +248,7 @@ export async function POST(request: Request) {
 
     // clean filename
     const userAudioFilename = sanitizeFilename(userAudioFile.name);
-
+    // TODO: add voice
     const blobUrl = `clone-voice-input/${user.id}-${userAudioFilename}`;
 
     try {
@@ -233,6 +259,7 @@ export async function POST(request: Request) {
         audioPromptUrl = existingAudio.url;
       }
     } catch (_e) {
+      // TODO: upload to R2 temp bucket
       // Upload audio file to Vercel blob for TTS generation
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
@@ -241,8 +268,11 @@ export async function POST(request: Request) {
       audioPromptUrl = audioBlob.url;
     }
 
+    let inferenceRequestId: string | undefined;
+    let blobResult: PutBlobResult | null = null;
+
     // Generate hash for caching
-    const hash = await generateHash(text, userAudioFilename);
+    const hash = await generateHash(text, blobUrl);
     const abortController = new AbortController();
     const path = `clone-voice/${hash}`;
     const filename = `${path}.wav`;
@@ -276,38 +306,116 @@ export async function POST(request: Request) {
       audio_url: audioPromptUrl,
     };
 
-    const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
-      input,
-      logs: false,
-      // onQueueUpdate: (update) => {
-      //   if (update.status === 'IN_PROGRESS') {
-      //     update.logs?.map((log) => log.message).forEach(console.log);
-      //   }
-      // },
-      abortSignal: request.signal,
-    });
+    if (!['fal.ai', 'deepinfra'].includes(provider)) {
+      return NextResponse.json(
+        {
+          error: 'Invalid provider for selected voice',
+          provider,
+        },
+        { status: 400 },
+      );
+    }
 
-    const falData = result.data as {
-      audio: {
-        url: string;
-        content_type: string;
-        file_name: string;
-        file_size: number;
+    if (provider === 'fal.ai') {
+      const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
+        input,
+        logs: false,
+        // onQueueUpdate: (update) => {
+        //   if (update.status === 'IN_PROGRESS') {
+        //     update.logs?.map((log) => log.message).forEach(console.log);
+        //   }
+        // },
+        abortSignal: request.signal,
+      });
+
+      const falData = result.data as {
+        audio: {
+          url: string;
+          content_type: string;
+          file_name: string;
+          file_size: number;
+        };
       };
-    };
-    const requestId = result.requestId;
+      inferenceRequestId = result.requestId;
 
-    // Fetch the audio file from the URL and upload to blob storage
-    const audioResponse = await fetch(falData.audio.url);
-    const audioBuffer = await audioResponse.arrayBuffer();
+      // Fetch the audio file from the URL and upload to blob storage
+      const audioResponse = await fetch(falData.audio.url);
+      const audioBuffer = await audioResponse.arrayBuffer();
 
-    const blobResult = await put(filename, audioBuffer, {
-      access: 'public',
-      contentType: 'audio/mpeg',
-      allowOverwrite: true,
-    });
+      blobResult = await put(filename, audioBuffer, {
+        access: 'public',
+        contentType: 'audio/mpeg',
+        allowOverwrite: true,
+      });
+    } else if (provider === 'deepinfra') {
+      const deepInfraToken = process.env.DEEPINFRA_TOKEN;
 
-    await redis.set(filename, blobResult.url);
+      if (!deepInfraToken) {
+        throw new Error('DEEPINFRA_TOKEN is not configured', {
+          cause: 'DEEPINFRA_TOKEN_MISSING',
+        });
+      }
+
+      const deepInfraResponse = await fetch(
+        `https://api.deepinfra.com/v1/inference/${voiceObj.model}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `bearer ${deepInfraToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: text,
+            voice,
+            response_format: 'wav',
+          }),
+          signal: abortController.signal,
+        },
+      );
+
+      if (!deepInfraResponse.ok) {
+        const errorText = await deepInfraResponse.text();
+        logger.error('DeepInfra voice generation failed', {
+          status: deepInfraResponse.status,
+          statusText: deepInfraResponse.statusText,
+          errorText,
+        });
+        throw new Error('Voice generation failed, please try again', {
+          cause: 'DEEPINFRA_ERROR',
+        });
+      }
+
+      const deepInfraResult = await deepInfraResponse.json();
+      const outputFormat = deepInfraResult.output_format || 'wav';
+      inferenceRequestId = deepInfraResult.request_id;
+      // inferenceStatus = deepInfraResult.inference_status;
+      const audioData: string | Uint8Array | undefined =
+        deepInfraResult.audio || deepInfraResult.output?.audio;
+
+      if (!audioData) {
+        logger.error('DeepInfra response missing audio data', {
+          deepInfraResult,
+        });
+        throw new Error('Voice generation failed, please try again', {
+          cause: 'DEEPINFRA_AUDIO_MISSING',
+        });
+      }
+
+      const audioBuffer =
+        typeof audioData === 'string'
+          ? Buffer.from(audioData, 'base64')
+          : Buffer.from(audioData);
+
+      blobResult = await put(filename, audioBuffer, {
+        access: 'public',
+        contentType: `audio/${outputFormat}`,
+        allowOverwrite: true,
+      });
+    }
+
+    if (!shouldStream && blobResult?.url) {
+      await redis.set(filename, blobResult.url);
+    }
 
     // Background tasks
     after(async () => {
@@ -317,11 +425,11 @@ export async function POST(request: Request) {
         userId: user.id,
         filename,
         text,
-        url: blobResult.url,
-        model: 'chatterbox-tts',
-        predictionId: requestId,
+        url: blobResult?.url!,
+        model,
+        predictionId: inferenceRequestId,
         isPublic: false,
-        voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
+        voiceId: voiceObj.id,
         duration: duration.toString(),
         credits_used: estimate,
       });
@@ -330,7 +438,7 @@ export async function POST(request: Request) {
         const errorObj = {
           text,
           audioPromptUrl,
-          model: 'chatterbox-tts',
+          model,
           errorData: audioFileDBResult.error,
         };
         captureException({
@@ -343,11 +451,11 @@ export async function POST(request: Request) {
       await sendPosthogEvent({
         userId: user.id,
         event: 'clone-voice',
-        predictionId: requestId,
+        predictionId: inferenceRequestId,
         text,
         audioPromptUrl,
         creditUsed: estimate,
-        model: 'chatterbox-tts',
+        model,
       });
 
       // delete the audio file uploaded
@@ -362,7 +470,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        url: blobResult.url,
+        url: blobResult?.url,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
         audioPromptUrl,

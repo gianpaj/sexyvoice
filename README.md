@@ -122,7 +122,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - `KV_REST_API_URL` - Your Redis (Upstash) KV REST API URL
    - `KV_REST_API_TOKEN` - Your Redis (Upstash) KV REST API token
    - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-   - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+   - `DEEPINFRA_TOKEN` - Your DeepInfra API token for AI voice generation
    - `FAL_KEY` - Your fal.ai API key for voice cloning
    - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
    - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
