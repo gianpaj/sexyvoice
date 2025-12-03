@@ -178,7 +178,10 @@
         "description": "For hobbyists creating projects with AI audio and custom voices.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
-        "features": ["Everything in Free", "API access (coming soon)"]
+        "features": [
+          "Everything in Free",
+          "API access (coming soon)"
+        ]
       },
       "pro": {
         "name": "Pro",
@@ -261,7 +264,7 @@
     "abortedCloning": "Voice generation aborted.",
     "cloneNotice": "Voice clones are created for demonstration purposes only.",
     "cloneNoticeTooltipLabel": "Open voice clone safety notice",
-    "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.",
+    "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.\nYou have exclusive access to your cloned voices and audio files – no one else can access them.",
     "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
     "voiceSelector": {
       "title": "Select Voice",

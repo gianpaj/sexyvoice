@@ -264,7 +264,7 @@
     "abortedCloning": "Sprachgenerierung abgebrochen.",
     "cloneNotice": "Stimmklone werden nur zu Demonstrationszwecken erstellt.",
     "cloneNoticeTooltipLabel": "Sicherheitshinweis zur Stimmklonung öffnen",
-    "cloneNoticeTooltip": "Lade nur Aufnahmen hoch, die du nutzen darfst, und hole das Einverständnis ein, bevor du die Stimme einer anderen Person klonst oder teilst.",
+    "cloneNoticeTooltip": "Laden Sie nur Aufnahmen hoch, deren Verwendung Sie berechtigt sind, und holen Sie die Zustimmung ein, bevor Sie die Stimme einer anderen Person klonen oder weitergeben.\nSie haben exklusiven Zugriff auf Ihre geklonten Stimmen und Audiodateien – niemand sonst kann darauf zugreifen.",
     "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "voiceSelector": {
       "title": "Stimme auswählen",

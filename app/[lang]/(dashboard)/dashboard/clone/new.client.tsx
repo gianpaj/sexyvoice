@@ -422,7 +422,11 @@ export default function NewVoiceClient({
                   <InfoIcon aria-hidden="true" className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent align="end" side="left">
+              <TooltipContent
+                align="end"
+                className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
+                side="left"
+              >
                 {dict.cloneNoticeTooltip}
               </TooltipContent>
             </Tooltip>

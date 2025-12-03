@@ -264,7 +264,7 @@
     "abortedCloning": "Clonación de voz cancelada",
     "cloneNotice": "Las clonaciones de voz se crean solo con fines de demostración.",
     "cloneNoticeTooltipLabel": "Abrir aviso de seguridad de clonación de voz",
-    "cloneNoticeTooltip": "Sube solo grabaciones que tengas permiso de usar y obtén consentimiento antes de clonar o compartir la voz de otra persona.",
+    "cloneNoticeTooltip": "Solo sube grabaciones que tengas permiso para usar y obtén consentimiento antes de clonar o compartir la voz de otra persona.\nTienes acceso exclusivo a tus voces clonadas y archivos de audio – nadie más puede acceder a ellos.",
     "gproLimitExceeded": "Has excedido el límite de __COUNT__ generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
     "voiceSelector": {
       "title": "Seleccionar Voz",
