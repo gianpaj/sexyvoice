@@ -248,22 +248,22 @@
     "remainingCredits": "Verbleibend"
   },
   "generate": {
-    "title": "Audio generieren",
-    "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
-    "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
-    "success": "Audio erfolgreich generiert!",
-    "error": "Audio konnte nicht generiert werden",
-    "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
-    "languageLabel": "Sprache",
-    "languageSelectPlaceholder": "Wählen Sie eine Sprache",
-    "generating": "Wird generiert",
-    "playAudio": "Audio abspielen",
+    "abortedCloning": "Sprachgenerierung abgebrochen.",
     "cancel": "Generierung abbrechen",
     "ctaButton": "Audio generieren",
-    "resetPlayer": "Player zurücksetzen",
     "downloadAudio": "Audio herunterladen",
-    "abortedCloning": "Sprachgenerierung abgebrochen.",
+    "error": "Audio konnte nicht generiert werden",
+    "generating": "Wird generiert",
     "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
+    "languageLabel": "Sprache",
+    "languageSelectPlaceholder": "Wählen Sie eine Sprache",
+    "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
+    "playAudio": "Audio abspielen",
+    "resetPlayer": "Player zurücksetzen",
+    "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
+    "success": "Audio erfolgreich generiert!",
+    "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
+    "title": "Audio generieren",
     "voiceSelector": {
       "title": "Stimme auswählen",
       "description": "Wählen Sie aus verfügbaren Stimmen",
@@ -275,12 +275,13 @@
   "clone": {
     "audioFileLabel": "Audiodatei",
     "cancelButton": "Abbrechen",
-    "playAudio": "Audio abspielen",
+    "cloneNotice": "Stimmklone werden nur zu Demonstrationszwecken erstellt.",
+    "cloneNoticeTooltip": "Laden Sie nur Aufnahmen hoch, zu deren Verwendung Sie berechtigt sind, und holen Sie die Zustimmung ein, bevor Sie die Stimme einer anderen Person klonen oder weitergeben.\nSie haben exklusiven Zugriff auf Ihre geklonten Stimmen und Audiodateien – niemand sonst kann darauf zugreifen.",
+    "cloneNoticeTooltipLabel": "Sicherheitshinweis zur Stimmklonung öffnen",
     "ctaButton": "Audio generieren",
     "disclaimer": "Stimmklone werden nur zu Demonstrationszwecken erstellt.",
     "downloadAudio": "Audio herunterladen",
     "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",
-    "success": "Audio erfolgreich generiert!",
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
     "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",
@@ -288,8 +289,10 @@
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
+    "playAudio": "Audio abspielen",
     "previewTitle": "Vorschau der generierten Stimme",
     "subtitle": "Laden Sie eine Audiodatei hoch und geben Sie Text ein, um einen Stimmklon zu erstellen und Sprache in einem Schritt zu generieren",
+    "success": "Audio erfolgreich generiert!",
     "tabPreview": "Vorschau",
     "tabUpload": "Stimme erstellen",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
@@ -337,7 +340,9 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Kostenloser Text-zu-Sprache & KI-Stimmengenerator",
-    "description": "KI-Sprachgenerator, mit dem Sie Text kostenlos (zum Ausprobieren) online in Sprache umwandeln, Stimmen klonen und natürlich klingende und ausdrucksstarke Sprache in 24 Sprachen generieren können.",
+    "description": "Erstellen Sie natürliche KI-Stimmen mit Emotionen in 24 Sprachen. Kostenloser Text-zu-Sprache-Generator mit Stimmenklonung. 10.000 Credits gratis.",
+    "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
+    "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
@@ -359,7 +364,10 @@
       "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
       "ctaLoggedIn": "Credits Erhalten",
       "ctaLoggedOut": "Jetzt Registrieren",
-      "arialLabelDismiss": "Halloween-Banner schließen"
+      "arialLabelDismiss": "Halloween-Banner schließen",
+      "pricing": {
+        "bannerText": "🎃 Halloween-Special"
+      }
     },
     "blackFridayBanner": {
       "text": "🛍️ Black Friday Sale – Erhalten Sie bis zu 50% Extra-Credits bei jedem Kauf!\nZeitlich begrenztes Angebot 🔥",
@@ -372,6 +380,9 @@
         "hours": "Stunden",
         "minutes": "Min",
         "seconds": "Sek"
+      },
+      "pricing": {
+        "bannerText": "Black Friday Verkauf"
       }
     }
   }

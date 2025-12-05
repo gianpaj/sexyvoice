@@ -266,7 +266,10 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
 
       // Verify audio was generated and saved
-      expect(queries.reduceCredits).toHaveBeenCalled();
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        amount: 48,
+        userId: 'test-user-id',
+      });
       expect(queries.saveAudioFile).toHaveBeenCalled();
 
       // Verify new URL was cached

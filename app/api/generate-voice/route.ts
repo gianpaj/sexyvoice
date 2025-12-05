@@ -13,7 +13,7 @@ import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { countGeminiTokens, getCharactersLimit } from '@/lib/ai';
+import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import {
@@ -244,7 +244,7 @@ export async function POST(request: Request) {
         logger.warn(
           `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
           {
-            error: error instanceof Error ? error.message : String(error),
+            error: Error.isError(error) ? error.message : String(error),
             originalModel: modelUsed,
           },
         );
@@ -373,13 +373,6 @@ export async function POST(request: Request) {
         return;
       }
 
-      const totalTokens =
-        isGeminiVoice &&
-        (await countGeminiTokens({
-          model: modelUsed,
-          contents: text,
-        }));
-
       await reduceCredits({ userId: user.id, amount: estimate });
 
       const usage = extractMetadata(
@@ -399,12 +392,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: estimate,
-        usage: totalTokens
-          ? {
-              ...usage,
-              ...(totalTokens > 0 ? { totalTokens } : {}),
-            }
-          : usage,
+        usage,
       });
 
       if (audioFileDBResult.error) {
@@ -458,7 +446,7 @@ export async function POST(request: Request) {
     console.error('Voice generation error:', error);
 
     // if Gemini error
-    if (error instanceof Error && error.message.includes('googleapis')) {
+    if (Error.isError(error) && error.message.includes('googleapis')) {
       const message = JSON.parse(error.message);
       // You exceeded your current quota
       if (message.error.code === 429) {
@@ -475,7 +463,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     if (
-      error instanceof Error &&
+      Error.isError(error) &&
       Object.keys(ERROR_CODES).includes(String(error.cause))
     ) {
       return NextResponse.json(

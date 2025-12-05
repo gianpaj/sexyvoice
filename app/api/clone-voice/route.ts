@@ -377,7 +377,7 @@ export async function POST(request: Request) {
       console.error(errorObj);
     }
     console.error('Voice cloning error:', error);
-    if (error instanceof Error) {
+    if (Error.isError(error)) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json(

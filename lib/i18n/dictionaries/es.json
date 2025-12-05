@@ -248,22 +248,22 @@
     "remainingCredits": "Restantes"
   },
   "generate": {
-    "title": "Generar Audio",
-    "subtitle": "Selecciona una voz y genera audio desde texto",
-    "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
-    "success": "Audio generado con éxito!",
-    "error": "Error al generar audio",
-    "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
-    "languageLabel": "Idioma",
-    "languageSelectPlaceholder": "Selecciona un idioma",
-    "generating": "Generando",
-    "playAudio": "Escucha Audio",
+    "abortedCloning": "Clonación de voz cancelada",
     "cancel": "Cancelar",
     "ctaButton": "Generar audio",
-    "resetPlayer": "Reiniciar Reproductor",
     "downloadAudio": "Descargar Audio",
-    "abortedCloning": "Clonación de voz cancelada",
+    "error": "Error al generar audio",
+    "generating": "Generando",
     "gproLimitExceeded": "Has excedido el límite de __COUNT__ generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
+    "languageLabel": "Idioma",
+    "languageSelectPlaceholder": "Selecciona un idioma",
+    "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
+    "playAudio": "Escucha Audio",
+    "resetPlayer": "Reiniciar Reproductor",
+    "subtitle": "Selecciona una voz y genera audio desde texto",
+    "success": "Audio generado con éxito!",
+    "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
+    "title": "Generar Audio",
     "voiceSelector": {
       "title": "Seleccionar Voz",
       "description": "Elige entre las voces disponibles",
@@ -275,12 +275,13 @@
   "clone": {
     "audioFileLabel": "Archivo de Audio",
     "cancelButton": "Cancelar",
-    "playAudio": "Escucha Audio",
+    "cloneNotice": "Las clonaciones de voz se crean solo con fines de demostración.",
+    "cloneNoticeTooltip": "Solo sube grabaciones que tengas permiso para usar y obten consentimiento antes de clonar o compartir la voz de otra persona.\nTienes acceso exclusivo a tus voces clonadas y archivos de audio – nadie más puede acceder a ellos.",
+    "cloneNoticeTooltipLabel": "Abrir aviso de seguridad de clonación de voz",
     "ctaButton": "Generar audio",
     "disclaimer": "Los clones de voz se crean solo con fines de demostración.",
     "downloadAudio": "Descargar Audio",
     "dragDropText": "Arrastra y suelta o haz clic para buscar",
-    "success": "Audio generado con éxito!",
     "errorCloning": "Error al clonar la voz",
     "errorTitle": "Error",
     "fileFormatsText": "MP3, WAV, M4A u OGG (máx. __SIZE__)",
@@ -288,8 +289,10 @@
     "languageLabel": "Idioma",
     "languageSelectPlaceholder": "Selecciona un idioma",
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
+    "playAudio": "Escucha Audio",
     "previewTitle": "Vista Previa de Voz Generada",
     "subtitle": "Sube un archivo de audio e ingresa texto para crear un clon de voz y generar voz en un solo paso",
+    "success": "Audio generado con éxito!",
     "tabPreview": "Vista Previa",
     "tabUpload": "Subir archivo",
     "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
@@ -337,7 +340,9 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Generador de Voz con IA y Texto a Voz Gratis",
-    "description": "Generador de voz con IA que te permite convertir texto a voz en línea de forma gratuita (para probar), clonar voz y generar discurso natural y expresivo en 24 idiomas.",
+    "description": "Crea voces de IA naturales con emociones en 24 idiomas. Generador de texto a voz gratis con clonación de voz. Comienza con 10,000 créditos gratis.",
+    "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
+    "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
@@ -359,7 +364,10 @@
       "text": "🎃 Especial Halloween – Consigue hasta un 35% de créditos extra con tu compra 👻\nOferta por tiempo limitado 🦇",
       "ctaLoggedIn": "Obtener Créditos",
       "ctaLoggedOut": "Regístrate Ahora",
-      "arialLabelDismiss": "Descartar banner de Halloween"
+      "arialLabelDismiss": "Descartar banner de Halloween",
+      "pricing": {
+        "bannerText": "🎃 Especial Halloween"
+      }
     },
     "blackFridayBanner": {
       "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
@@ -372,6 +380,9 @@
         "hours": "Horas",
         "minutes": "Min",
         "seconds": "Seg"
+      },
+      "pricing": {
+        "bannerText": "Oferta Black Friday"
       }
     }
   }

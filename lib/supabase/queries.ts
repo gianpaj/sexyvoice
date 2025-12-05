@@ -116,6 +116,17 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
+export const getUserByStripeCustomerId = async (customerId: string) => {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('stripe_id', customerId)
+    .single();
+  return data;
+};
+
 export const insertSubscriptionCreditTransaction = async (
   userId: string,
   paymentIntentId: string,

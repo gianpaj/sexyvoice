@@ -4,6 +4,7 @@ import {
   AlertCircle,
   CircleStop,
   Download,
+  InfoIcon,
   PaperclipIcon,
   Pause,
   Play,
@@ -35,6 +36,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
@@ -233,9 +240,9 @@ export default function NewVoiceClient({
 
       setStatus('complete');
       setActiveTab('preview');
-    } catch (err: unknown) {
+    } catch (err) {
       if (
-        err instanceof Error &&
+        Error.isError(err) &&
         err.message === 'signal is aborted without reason'
       ) {
         return;
@@ -243,7 +250,7 @@ export default function NewVoiceClient({
       let errorMsg = 'Unexpected error occurred';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
-      } else if (err instanceof Error) {
+      } else if (Error.isError(err)) {
         errorMsg = err.message;
       }
       setErrorMessage(errorMsg);
@@ -576,8 +583,27 @@ export default function NewVoiceClient({
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-muted-foreground text-sm">{dict.disclaimer}</p>
+        <CardFooter className="flex items-center justify-between gap-3 border-t pt-6">
+          <p className="text-muted-foreground text-sm">{dict.cloneNotice}</p>
+          <TooltipProvider>
+            <Tooltip supportMobileTap>
+              <TooltipTrigger aria-label={dict.cloneNoticeTooltipLabel} asChild>
+                <button
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  type="button"
+                >
+                  <InfoIcon aria-hidden="true" className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                align="end"
+                className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
+                side="left"
+              >
+                {dict.cloneNoticeTooltip}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardFooter>
       </Card>
     </div>

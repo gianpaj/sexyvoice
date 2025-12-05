@@ -2,8 +2,12 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { countActiveCustomerSubscriptions } from '@/lib/redis/queries';
+import {
+  countActiveCustomerSubscriptions,
+  findNextSubscriptionDueForPayment,
+} from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserByStripeCustomerId } from '@/lib/supabase/queries';
 import {
   filterByDateRange,
   formatChange,
@@ -66,48 +70,38 @@ export async function GET(request: NextRequest) {
 
   // Fetch data in parallel - combine related queries and filter in memory
   const [
-    // Audio files - fetch for lastpecific ranges
+    // Audio files - fetch for last specific ranges
     audioYesterdayResult,
-    audioPreviousDayResult,
     audioWeekResult,
     audioTotalCountResult,
     clonesResult,
-    // Profiles - fetch for specific ranges
     profilesRecentResult,
     profilesTotalCountResult,
-    // Credit transactions - fetch all (small dataset)
     allCreditTransactionsResult,
-    // Active subscribers
     activeSubscribersCount,
+    nextSubscriptionDueForPayment,
   ] = await Promise.all([
-    // Audio files yesterday with voice information
+    // (audioYesterdayResult) Audio files yesterday with voice information
     supabase
       .from('audio_files')
       .select('id, created_at, model, voice_id, voices(name)')
       .gte('created_at', previousDay.toISOString())
       .lt('created_at', today.toISOString()),
 
-    // Audio files previous day (for comparison)
-    supabase
-      .from('audio_files')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', twoDaysAgo.toISOString())
-      .lt('created_at', previousDay.toISOString()),
-
-    // Audio files last 7 days
+    // (audioWeekResult) Audio files last 7 days
     supabase
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .gte('created_at', sevenDaysAgo.toISOString())
       .lt('created_at', today.toISOString()),
 
-    // Total audio files count
+    // (audioTotalCountResult) Total audio files count
     supabase
       .from('audio_files')
       .select('id', { count: 'exact', head: true })
       .lt('created_at', today.toISOString()),
 
-    // Cloned audio files last 7 days (includes yesterday)
+    // (clonesResult) Cloned audio files last 7 days (includes yesterday)
     supabase
       .from('audio_files')
       .select('id, created_at')
@@ -115,20 +109,20 @@ export async function GET(request: NextRequest) {
       .gte('created_at', sevenDaysAgo.toISOString())
       .lt('created_at', today.toISOString()),
 
-    // Profiles last 7 days (includes yesterday and previous day)
+    // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
     supabase
       .from('profiles')
       .select('id, created_at, username')
       .gte('created_at', sevenDaysAgo.toISOString())
       .lt('created_at', today.toISOString()),
 
-    // Total profiles count
+    // (profilesTotalCountResult) Total profiles count
     supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .lt('created_at', today.toISOString()),
 
-    // Fetch all credit transactions (small dataset, excluding manual ones) with username join
+    // (allCreditTransactionsResult) Fetch all credit transactions (small dataset, excluding manual ones) with username join
     supabase
       .from('credit_transactions')
       .select(
@@ -140,10 +134,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch active subscribers count
     countActiveCustomerSubscriptions(),
+    findNextSubscriptionDueForPayment(),
   ]);
 
   if (audioYesterdayResult.error) throw audioYesterdayResult.error;
-  if (audioPreviousDayResult.error) throw audioPreviousDayResult.error;
   if (audioWeekResult.error) throw audioWeekResult.error;
   if (audioTotalCountResult.error) throw audioTotalCountResult.error;
   if (clonesResult.error) throw clonesResult.error;
@@ -215,10 +209,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  const nextSubscriptionCustomer =
+    nextSubscriptionDueForPayment &&
+    (await getUserByStripeCustomerId(
+      nextSubscriptionDueForPayment?.customerId,
+    ));
+
   // Top voices calculation
   const voiceCounts = new Map<string, number>();
   for (const audio of audioYesterdayData) {
-    if (audio.voices?.name) {
+    if (audio.voices?.name && audio.voices.name !== 'Cloned voice') {
       voiceCounts.set(
         audio.voices.name,
         (voiceCounts.get(audio.voices.name) ?? 0) + 1,
@@ -241,11 +241,6 @@ export async function GET(request: NextRequest) {
     previousDay,
     today,
   );
-  const creditsPrevCount = filterByDateRange(
-    purchaseTransactions,
-    twoDaysAgo,
-    previousDay,
-  ).length;
   const creditsWeekCount = filterByDateRange(
     purchaseTransactions,
     sevenDaysAgo,
@@ -362,8 +357,8 @@ export async function GET(request: NextRequest) {
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
     '',
     `🎧 Audio Files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioWeekCount / 7)})`,
-    `  - Cloned: ${clonePrevCount} | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
-    `  - 7d Total: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
+    `  - 7d: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
+    `  - Cloned: ${clonePrevCount} (${formatChange(clonePrevCount, cloneWeekCount / 7)}) | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
     `  - Top voices: ${topVoiceList}`,
     '',
@@ -371,19 +366,19 @@ export async function GET(request: NextRequest) {
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
     '',
-    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsPrevCount)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
+    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
-    `  - Total: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
+    `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
     '',
     `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) ${refundsTodayCount > 0 ? '😢' : ''}`,
     `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
     '',
     '💰 Revenue',
+    `  - Today: $${totalAmountUsdToday.toFixed(2)} ($${formatChange(totalAmountUsdToday, avg7dRevenue)})`,
     `  - All-time: $${totalAmountUsd.toFixed(2)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
-    `  - Today: $${totalAmountUsdToday.toFixed(2)}`,
     `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active`,
+    `  - Subscribers: ${activeSubscribersCount} active - ${nextSubscriptionCustomer?.username} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
       ? [
