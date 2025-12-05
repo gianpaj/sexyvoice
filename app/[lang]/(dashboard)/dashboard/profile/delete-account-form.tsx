@@ -16,14 +16,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
-import type dictType from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 
 export function DeleteAccountForm({
   lang,
   dict,
 }: {
   lang: string;
-  dict: typeof dictType;
+  dict: (typeof langDict)['profile'];
 }) {
   const handleDeleteAccount = async () => {
     await handleDeleteAccountAction({ lang });
@@ -35,7 +35,7 @@ export function DeleteAccountForm({
         <Alert className="p-4" variant="destructive">
           <AlertCircle className="size-4" />
           <AlertDescription>
-            {dict.profile.dangerZone.deleteAccount.alertTitle}
+            {dict.dangerZone.deleteAccount.alertTitle}
           </AlertDescription>
         </Alert>
       </div>
@@ -49,7 +49,7 @@ export function DeleteAccountForm({
           <AlertDialogTrigger asChild>
             <div className="flex justify-end">
               <Button variant="destructive">
-                {dict.profile.dangerZone.deleteAccount.button}
+                {dict.dangerZone.deleteAccount.button}
               </Button>
             </div>
           </AlertDialogTrigger>
@@ -59,21 +59,21 @@ export function DeleteAccountForm({
                 <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                   <OctagonAlert className="h-7 w-7 text-destructive" />
                 </div>
-                {dict.profile.dangerZone.deleteAccount.confirmTitle}
+                {dict.dangerZone.deleteAccount.confirmTitle}
               </AlertDialogTitle>
               <AlertDialogDescription className="text-center text-[15px]">
-                {dict.profile.dangerZone.deleteAccount.confirmDescription}
+                {dict.dangerZone.deleteAccount.confirmDescription}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="mt-2 sm:justify-center">
               <AlertDialogCancel>
-                {dict.profile.dangerZone.deleteAccount.cancel}
+                {dict.dangerZone.deleteAccount.cancel}
               </AlertDialogCancel>
               <AlertDialogAction
                 className={buttonVariants({ variant: 'destructive' })}
                 onClick={handleDeleteAccount}
               >
-                {dict.profile.dangerZone.deleteAccount.continue}
+                {dict.dangerZone.deleteAccount.continue}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

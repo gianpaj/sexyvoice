@@ -1,3 +1,4 @@
+import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -281,10 +282,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
-      mockBlobPut.mockResolvedValueOnce({
-        url: 'https://blob.vercel-storage.com',
-      });
-
+      const { saveAudioFile } = await import('@/lib/supabase/queries');
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -305,7 +303,7 @@ describe('Generate Voice API Route', () => {
       vi.doMock('replicate', () => {
         return {
           default: class Replicate {
-            async run(model: string, options: any, onProgress?: any) {
+            run(_model: string, _options: any, onProgress?: any) {
               // Simulate progress callback
               if (onProgress) {
                 onProgress({ id: 'test-prediction-id', status: 'succeeded' });
@@ -323,6 +321,23 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 48,
+        duration: '-1',
+        filename: 'audio/tara-e5b92e4b.wav',
+        isPublic: false,
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+        usage: undefined,
+        predictionId: undefined,
+        text: 'Hello world',
+        url: 'https://blob.vercel-storage.com/audio/tara-e5b92e4b.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-tara-id',
+      });
+
+      expect(json.url).toContain('blob.vercel-storage.com');
     });
 
     it('should throw error when Replicate output contains error property', async () => {
@@ -349,6 +364,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Google Gemini', () => {
     it('should successfully generate voice using Google Gemini', async () => {
+      const { saveAudioFile } = await import('@/lib/supabase/queries');
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -369,6 +385,26 @@ describe('Generate Voice API Route', () => {
       expect(queries.reduceCredits).toHaveBeenCalledOnce();
       expect(queries.saveAudioFile).toHaveBeenCalledOnce();
       expect(mockBlobPut).toHaveBeenCalledOnce();
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 48,
+        duration: '-1',
+        filename: 'audio/poe-9de7f9fe.wav',
+        isPublic: false,
+        model: 'gemini-2.5-pro-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+        },
+        predictionId: undefined,
+        text: 'Hello world',
+        url: 'https://blob.vercel-storage.com/audio/poe-9de7f9fe.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-poe-id',
+      });
+
+      expect(json.url).toContain('blob.vercel-storage.com');
     });
 
     it('should fallback to flash model when pro model fails', async () => {
@@ -408,7 +444,12 @@ describe('Generate Voice API Route', () => {
                       finishReason: 'STOP',
                     },
                   ],
-                };
+                  usageMetadata: {
+                    promptTokenCount: 11,
+                    candidatesTokenCount: 12,
+                    totalTokenCount: 23,
+                  },
+                } as GenerateContentResponse;
               }),
             },
           }) as any,
@@ -430,12 +471,17 @@ describe('Generate Voice API Route', () => {
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 48,
         duration: '-1',
-        filename: 'audio/poe-01020304.wav',
+        filename: 'audio/poe-9de7f9fe.wav',
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+        },
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
+        url: 'https://blob.vercel-storage.com/audio/poe-9de7f9fe.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -451,7 +497,7 @@ describe('Generate Voice API Route', () => {
         () =>
           ({
             models: {
-              generateContent: vi.fn().mockImplementation(async () => {
+              generateContent: vi.fn().mockImplementation(() => {
                 // Both pro and flash models will throw the same quota error
                 const apiError: GoogleApiError = {
                   code: 429,

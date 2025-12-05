@@ -1,3 +1,7 @@
+// taken from https://github.com/cosscom/coss/blob/d91604e325ec1dfd7325f49348de5b8e5306ec1b/apps/origin/registry/default/hooks/use-file-upload.ts
+/** biome-ignore-all lint/style/useConsistentTypeDefinitions: source */
+/** biome-ignore-all lint/style/useBlockStatements: source */
+/** biome-ignore-all lint/complexity/noForEach: source */
 'use client';
 
 import type React from 'react';
@@ -18,7 +22,7 @@ type FileMetadata = {
   id: string;
 };
 
-type FileWithPreview = {
+export type FileWithPreview = {
   file: File | FileMetadata;
   id: string;
   preview?: string;
@@ -36,7 +40,7 @@ type FileUploadOptions = {
   accept?: string;
   /**
    * Defaults to false
-   **/
+   */
   multiple?: boolean;
   initialFiles?: FileMetadata[];
   onFilesChange?: (files: FileWithPreview[]) => void;

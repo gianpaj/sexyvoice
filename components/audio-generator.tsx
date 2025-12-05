@@ -1,6 +1,7 @@
 'use client';
 
 import { useCompletion } from '@ai-sdk/react';
+import { QueryClient } from '@tanstack/react-query';
 import {
   CircleStop,
   Download,
@@ -8,13 +9,12 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
-  Pause,
-  Play,
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { toast } from '@/components/services/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,7 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import { AudioPlayerWithContext } from './audio-player-with-context';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -41,6 +42,7 @@ interface AudioGeneratorProps {
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
+  userId: string;
 }
 
 export function AudioGenerator({
@@ -48,20 +50,22 @@ export function AudioGenerator({
   selectedStyle,
   hasEnoughCredits,
   dict,
+  userId,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [audioURL, setAudioURL] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
 
+  const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || ''),
     [selectedVoice],
   );
+  const queryClient = new QueryClient();
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -113,20 +117,18 @@ export function AudioGenerator({
 
       const { url } = await response.json();
 
-      // creditsUsed is undefined if the audio was previously generated
-      // creditsUsed && setCreditsUsed(creditsUsed);
-
-      const newAudio = new Audio(url);
-
-      newAudio.addEventListener('ended', () => {
-        setIsPlaying(false);
+      // setTimeout(() => {
+      // refetch credits after generating audio
+      await queryClient.refetchQueries({
+        queryKey: ['credits', userId],
+        type: 'all',
+        stale: true,
       });
+      console.log('Credits refetched');
+      // }, 1000);
 
-      setAudio(newAudio);
-
-      // Automatically play the audio
-      newAudio.play();
-      setIsPlaying(true);
+      setAudioURL(url);
+      audio?.setUrlAndPlay(url);
 
       toast.success(dict.success);
     } catch (error) {
@@ -172,32 +174,12 @@ export function AudioGenerator({
     };
   }, [isGenerating, text, selectedVoice, hasEnoughCredits]);
 
-  const togglePlayback = () => {
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
   const resetPlayer = () => {
     if (!audio) {
-      setIsPlaying(false);
       return;
     }
 
-    try {
-      audio.pause();
-      audio.currentTime = 0;
-    } catch (error) {
-      console.error('Failed to reset audio', error);
-    } finally {
-      setAudio(null);
-      setIsPlaying(false);
-    }
+    audio?.reset();
   };
 
   const downloadAudio = async () => {
@@ -206,10 +188,10 @@ export function AudioGenerator({
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
 
-    if (!audio) return;
+    if (!audio?.url) return;
 
     try {
-      await downloadUrl(audio.src, anchorElement);
+      await downloadUrl(audioURL, anchorElement);
     } catch {
       toast.error(dict.error);
     }
@@ -389,20 +371,13 @@ export function AudioGenerator({
           </div>
 
           <div>
-            {audio && (
+            {audioURL && (
               <div className="flex justify-start gap-2 sm:w-full">
-                <Button
-                  onClick={togglePlayback}
-                  size="icon"
-                  title={dict.playAudio}
-                  variant="secondary"
-                >
-                  {isPlaying ? (
-                    <Pause className="size-6" />
-                  ) : (
-                    <Play className="size-6" />
-                  )}
-                </Button>
+                <AudioPlayerWithContext
+                  className="rounded-md"
+                  playAudioTitle={dict.playAudio}
+                  url={audio!.url!}
+                />
                 <Button
                   onClick={resetPlayer}
                   size="icon"

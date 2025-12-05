@@ -80,15 +80,15 @@ export function PromoBanner({
     if (!isEnabled) {
       return;
     }
+    const getCookie = async () => {
+      const promoBannerCookie = await cookieStore.get(PROMO_BANNER_COOKIE);
 
-    // Check if banner was previously dismissed
-    const isDismissed = document.cookie
-      .split(';')
-      .some((cookie) => cookie.trim().startsWith(`${PROMO_BANNER_COOKIE}=`));
+      if (!promoBannerCookie) {
+        setIsVisible(true);
+      }
+    };
 
-    if (!isDismissed) {
-      setIsVisible(true);
-    }
+    getCookie();
   }, []);
 
   // Countdown timer effect

@@ -8,14 +8,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export function SecurityForm({ email }: { email?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
