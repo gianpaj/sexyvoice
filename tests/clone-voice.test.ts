@@ -151,7 +151,7 @@ describe('Clone Voice API Route', () => {
       const largeFile = createMockAudioFile(
         'large.mp3',
         'audio/mpeg',
-        11 * 1024 * 1024, // 11MB - exceeds 10MB limit
+        11 * 1024 * 1024, // 11MB - exceeds 4.5MB limit
       );
       const formData = createFormDataWithAudio('Hello world', largeFile);
 
@@ -164,7 +164,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe('File too large. Max 10MB allowed.');
+      expect(json.serverMessage).toBe('File too large. Max 4.5MB allowed.');
     });
 
     it('should return 400 when audio duration is too short', async () => {

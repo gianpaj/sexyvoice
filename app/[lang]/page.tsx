@@ -160,16 +160,16 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Mic2 aria-hidden className="size-6 text-blue-400" />
+                    <Mic2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium">
+                  <h3 className="mt-6 text-center font-medium text-purple-300">
                     {dict.features.voiceCloning.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-sm">
+                  <p className="text-justify text-sm">
                     {dict.features.voiceCloning.description}
                   </p>
                 </CardContent>
@@ -178,16 +178,16 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Globe2 aria-hidden className="size-6 text-blue-400" />
+                    <Globe2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium">
+                  <h3 className="mt-6 text-center font-medium text-purple-300">
                     {dict.features.multiLanguage.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-sm">
+                  <p className="text-justify text-sm">
                     {dict.features.multiLanguage.description}
                   </p>
                 </CardContent>
@@ -195,16 +195,16 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Shield aria-hidden className="size-6 text-blue-400" />
+                    <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium">
+                  <h3 className="mt-6 text-center font-medium text-purple-300">
                     {dict.features.security.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-sm">
+                  <p className="text-justify text-sm">
                     {dict.features.security.description}
                   </p>
                 </CardContent>
@@ -232,7 +232,7 @@ export default async function LandingPage(props: {
                     <AccordionTrigger className="py-5 text-left text-white hover:text-blue-400 hover:no-underline">
                       {faq.question}
                     </AccordionTrigger>
-                    <AccordionContent className="whitespace-break-spaces text-gray-200">
+                    <AccordionContent className="whitespace-break-spaces text-justify text-gray-200">
                       {faq.answer}
                     </AccordionContent>
                   </AccordionItem>
@@ -269,8 +269,9 @@ export default async function LandingPage(props: {
                 </Card>
               ))}
             </div>
+
             {/* CTA Section */}
-            <div className="space-y-6 py-16 text-center">
+            <div className="space-y-8 py-16 text-center">
               <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
                 <Sparkles className="mr-2 size-4" />
                 <span>{dict.cta.freeCredits}</span>
@@ -308,7 +309,7 @@ const CardDecorator = ({ children }: { children: ReactNode }) => (
       aria-hidden
       className="absolute inset-0 bg-radial from-transparent to-75% to-card"
     />
-    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center border-t border-l bg-card">
+    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center border-t border-l bg-purple-900">
       {children}
     </div>
   </div>

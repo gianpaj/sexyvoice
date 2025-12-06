@@ -44,7 +44,7 @@ export default async function DashboardLayout(props: {
 
   return (
     <ReactQueryClientProvider>
-      {/*HydrationBoundary is a Client Component, so hydration will happen there.*/}
+      {/* HydrationBoundary is a Client Component, so hydration will happen there */}
       <HydrationBoundary state={dehydrate(queryClient)}>
         <DashboardUI
           blackFridayDict={blackFridayDict}
