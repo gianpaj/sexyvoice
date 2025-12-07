@@ -2,7 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useContext } from 'react';
+import { Crisp } from 'crisp-sdk-web';
+import { useContext, useEffect } from 'react';
 
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -12,6 +13,8 @@ import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { SidebarContext } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
+import { usePostHog } from 'posthog-js/react';
+import { User } from '@supabase/supabase-js';
 
 function CreditsSection({
   lang,
@@ -26,6 +29,7 @@ function CreditsSection({
   creditTransactions: Pick<CreditTransaction, 'amount'>[];
   doNotToggleSidebar?: boolean;
 }) {
+  const posthog = usePostHog();
   const supabase = useSupabaseBrowser();
   // Safely access the sidebar context without throwing an error
   const sidebarContext = useContext(SidebarContext);
@@ -43,6 +47,58 @@ function CreditsSection({
     // staleTime: 1 * 1000,
     queryFn: () => getCredits(supabase, userId),
   });
+
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: credits state dependency
+  useEffect(() => {
+    const getData = async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      return { user };
+    };
+
+    const sendUserAnalyticsData = (
+      user: User,
+      creditsData: Pick<Credit, 'amount'> | null | undefined,
+    ) => {
+      posthog.identify(user.id, {
+        email: user.email,
+        name: user.user_metadata.full_name || user.user_metadata.username,
+        creditsLeft: creditsData?.amount || 0,
+      });
+      if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
+        Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
+          locale: lang,
+        });
+        if (user.email) {
+          Crisp.user.setEmail(user.email);
+        }
+        const nickname =
+          user.user_metadata.full_name || user.user_metadata.username;
+        if (nickname) {
+          Crisp.user.setNickname(nickname);
+        }
+        Crisp.session.setData({
+          user_id: user.id,
+          creditsLeft: creditsData?.amount || 0,
+          // plan
+        });
+      }
+    };
+
+    getData()
+      .then(({ user }) => {
+        // console.log({ creditsData });
+        sendUserAnalyticsData(user, creditsData);
+      })
+      .catch((error) => {
+        console.error('Failed to initialize dashboard layout:', error);
+      });
+  }, []);
 
   if (!creditsData) return <Skeleton className="h-[150px] w-full rounded-lg" />;
 

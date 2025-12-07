@@ -1,13 +1,9 @@
 'use client';
 
-import type { User } from '@supabase/supabase-js';
-import { Crisp } from 'crisp-sdk-web';
 import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usePostHog } from 'posthog-js/react';
-import { useEffect } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
@@ -51,62 +47,6 @@ export default function DashboardUI({
   blackFridayDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
-  const supabase = useSupabaseBrowser();
-
-  // const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
-
-  const posthog = usePostHog();
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: credits state dependency
-  useEffect(() => {
-    const getData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      return { user };
-    };
-
-    const sendUserAnalyticsData = (
-      user: User,
-      creditsData: Pick<Credit, 'amount'> | null | undefined,
-    ) => {
-      posthog.identify(user.id, {
-        email: user.email,
-        name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft: creditsData?.amount || 0,
-      });
-      if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-        Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-          locale: lang,
-        });
-        if (user.email) {
-          Crisp.user.setEmail(user.email);
-        }
-        const nickname =
-          user.user_metadata.full_name || user.user_metadata.username;
-        if (nickname) {
-          Crisp.user.setNickname(nickname);
-        }
-        Crisp.session.setData({
-          user_id: user.id,
-          creditsLeft: creditsData?.amount || 0,
-          // plan
-        });
-      }
-    };
-
-    getData()
-      .then(({ user }) => {
-        // console.log({ creditsData });
-        // sendUserAnalyticsData(user, creditsData);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize dashboard layout:', error);
-      });
-  }, []);
 
   const navigation = [
     {
