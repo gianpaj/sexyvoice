@@ -151,7 +151,7 @@ describe('Clone Voice API Route', () => {
       const largeFile = createMockAudioFile(
         'large.mp3',
         'audio/mpeg',
-        11 * 1024 * 1024, // 11MB - exceeds 4.5MB limit
+        4.5 * 1024 * 1024 + 1, // Just over 4.5MB
       );
       const formData = createFormDataWithAudio('Hello world', largeFile);
 
@@ -418,8 +418,12 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Voice Cloning Generation', () => {
-    it('should successfully clone voice using Replicate', async () => {
-      const formData = createFormDataWithAudio('Hello world');
+    it('should successfully clone voice using Replicate English model', async () => {
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1'),
+        'en',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -438,15 +442,57 @@ describe('Clone Voice API Route', () => {
       // Verify Replicate was called with correct parameters
       expect(mockReplicateRun).toHaveBeenCalledWith(
         'resemble-ai/chatterbox',
-        expect.objectContaining({
-          input: expect.objectContaining({
+        {
+          input: {
+            prompt: 'Hello world',
+            cfg_weight: 0.5,
+            temperature: 0.8,
+            exaggeration: 0.5,
+            seed: 0,
+            reference_audio:
+              'https://blob.vercel-storage.com/clone-voice-input/test-user-id-audio1',
+          },
+        },
+        expect.any(Function),
+      );
+    });
+
+    it('should successfully clone voice using Replicate Multilingual model', async () => {
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1'),
+        'fr',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json.creditsRemaining).toBeDefined();
+      expect(json.audioPromptUrl).toBeDefined();
+
+      // Verify Replicate was called with correct parameters
+      expect(mockReplicateRun).toHaveBeenCalledWith(
+        'resemble-ai/chatterbox-multilingual:9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c',
+        {
+          input: {
             text: 'Hello world',
             cfg_weight: 0.5,
             temperature: 0.8,
             exaggeration: 0.5,
-            reference_audio: expect.any(String),
-          }),
-        }),
+            language: 'fr',
+            seed: 0,
+            reference_audio:
+              'https://blob.vercel-storage.com/clone-voice-input/test-user-id-audio1',
+          },
+        },
         expect.any(Function),
       );
     });

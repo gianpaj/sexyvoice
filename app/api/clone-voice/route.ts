@@ -28,7 +28,7 @@ const ALLOWED_TYPES = [
   'audio/x-m4a',
 ];
 const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
-const MIN_DURATION = 5; // seconds
+const MIN_DURATION = 10; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
 
 async function generateHash(combinedString: string) {
@@ -288,6 +288,28 @@ export async function POST(request: Request) {
 
     // Fetch the audio file from the URL and upload to blob storage
     const audioResponse = await fetch(output as string);
+
+    if (!audioResponse.ok) {
+      const errorObj = {
+        text,
+        locale,
+        audioPromptUrl,
+        model,
+        errorData: `Failed to fetch audio from URL: ${audioResponse.status} ${audioResponse.statusText}`,
+      };
+      captureException({
+        error: 'Failed to fetch generated audio',
+        ...errorObj,
+      });
+      console.error(errorObj);
+      throw new Error(
+        `Failed to fetch generated audio: ${audioResponse.status} ${audioResponse.statusText}`,
+        {
+          cause: 'AUDIO_FETCH_ERROR',
+        },
+      );
+    }
+
     const audioBuffer = await audioResponse.arrayBuffer();
 
     const blobResult = await put(filename, audioBuffer, {
