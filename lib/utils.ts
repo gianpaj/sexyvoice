@@ -107,12 +107,21 @@ interface ReplicateMetadata extends Record<string, string> {
   readonly total_time: string;
 }
 
+type InferenceStatus = {
+  cost?: number;
+  runtime_ms?: number;
+  status?: string;
+  tokens_generated?: number;
+  tokens_input?: number;
+};
+
 export function extractMetadata(
-  isGeminiVoice: boolean,
+  provider: 'google-ai' | 'replicate' | 'deepinfra' | 'fal.ai',
   genAIResponse: GenerateContentResponse | null,
   replicateResponse?: Prediction,
-): GeminiMetadata | ReplicateMetadata | undefined {
-  if (isGeminiVoice) {
+  inferenceStatus?: InferenceStatus,
+): GeminiMetadata | ReplicateMetadata | Record<string, string> | undefined {
+  if (provider === 'google-ai') {
     const metadata = genAIResponse?.usageMetadata;
     if (
       !(
@@ -129,14 +138,31 @@ export function extractMetadata(
       totalTokenCount: metadata.totalTokenCount.toString(),
     } as const;
   }
-  const metrics = replicateResponse?.metrics;
-  if (!(metrics?.predict_time && metrics?.total_time)) {
-    return;
+  if (provider === 'replicate') {
+    const metrics = replicateResponse?.metrics;
+    if (!(metrics?.predict_time && metrics?.total_time)) {
+      return;
+    }
+    return {
+      predict_time: metrics.predict_time.toString(),
+      total_time: metrics.total_time.toString(),
+    } as const;
   }
-  return {
-    predict_time: metrics.predict_time.toString(),
-    total_time: metrics.total_time.toString(),
-  } as const;
+  if (provider === 'deepinfra' && inferenceStatus) {
+    const stringified = Object.entries(inferenceStatus).reduce(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value.toString();
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    if (Object.keys(stringified).length) {
+      return stringified;
+    }
+  }
 }
 
 export const ERROR_CODES = {

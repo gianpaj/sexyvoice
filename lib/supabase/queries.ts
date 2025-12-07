@@ -18,18 +18,34 @@ export async function getCredits(userId: string): Promise<number> {
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<{
+  id: string;
+  name: string;
+  language: string;
+  model: string;
+  provider: 'google-ai' | 'replicate' | 'deepinfra' | 'fal.ai';
+}> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('voices')
-    .select('id, name, language, model')
+    .select('id, name, language, model, provider')
     .eq('name', voiceName)
     .eq('is_public', isPublic)
     .single();
 
   if (error) throw error;
 
-  return data;
+  if (!data) {
+    throw new Error('Voice not found');
+  }
+
+  return data as unknown as {
+    id: string;
+    name: string;
+    language: string;
+    model: string;
+    provider: 'google-ai' | 'replicate' | 'deepinfra';
+  };
 }
 
 export async function reduceCredits({
