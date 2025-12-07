@@ -6,13 +6,12 @@ import {
   Download,
   InfoIcon,
   PaperclipIcon,
-  Pause,
-  Play,
   UploadIcon,
   XIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
 import { Accordion } from '@/components/ui/accordion';
@@ -46,7 +45,7 @@ import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { AudioProvider } from './audio-provider';
+import { AudioProvider, useAudio } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
 import CloneSampleCard from './CloneSampleCard';
 
@@ -118,14 +117,36 @@ export default function NewVoiceClient({
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
+  return (
+    <AudioProvider>
+      <NewVoiceClientInner
+        dict={dict}
+        hasEnoughCredits={hasEnoughCredits}
+        lang={lang}
+      />
+    </AudioProvider>
+  );
+}
+
+function NewVoiceClientInner({
+  dict,
+  lang,
+  hasEnoughCredits,
+}: {
+  dict: (typeof langDict)['clone'];
+  lang: Locale;
+  hasEnoughCredits: boolean;
+}) {
+  const audio = useAudio();
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
   const [textToConvert, setTextToConvert] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState('en');
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
+    null,
+  );
 
   const supportedLocales = useMemo(() => {
     const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
@@ -226,17 +247,10 @@ export default function NewVoiceClient({
       }
       const voiceResult = await voiceRes.json();
 
-      const newAudio = new Audio(voiceResult.url);
+      setGeneratedAudioUrl(voiceResult.url);
 
-      newAudio.addEventListener('ended', () => {
-        setIsPlaying(false);
-      });
-
-      setAudio(newAudio);
-
-      // Automatically play the audio
-      newAudio.play();
-      setIsPlaying(true);
+      // Automatically play the audio using the context
+      audio?.setUrlAndPlay(voiceResult.url);
 
       toast.success(dict.success);
 
@@ -258,7 +272,7 @@ export default function NewVoiceClient({
       setErrorMessage(errorMsg);
       setStatus('error');
     }
-  }, [dict, file, textToConvert, selectedLocale, clearErrors]);
+  }, [audio, dict, file, textToConvert, selectedLocale, clearErrors]);
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -298,24 +312,13 @@ export default function NewVoiceClient({
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
 
-    if (!audio?.src) return;
+    if (!generatedAudioUrl) return;
 
     try {
-      await downloadUrl(audio.src, anchorElement);
+      await downloadUrl(generatedAudioUrl, anchorElement);
     } catch {
       toast.error(dict.errorCloning);
     }
-  };
-
-  const togglePlayback = () => {
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
-    setIsPlaying(!isPlaying);
   };
 
   return (
@@ -438,19 +441,17 @@ export default function NewVoiceClient({
                       defaultValue={sampleAudios[0].id.toString()}
                       type="single"
                     >
-                      <AudioProvider>
-                        {sampleAudios.map((sample) => (
-                          <CloneSampleCard
-                            addFiles={addFiles}
-                            dict={dict}
-                            key={sample.id}
-                            sample={sample}
-                            setErrorMessage={setErrorMessage}
-                            setStatus={setStatus}
-                            setTextToConvert={setTextToConvert}
-                          />
-                        ))}
-                      </AudioProvider>
+                      {sampleAudios.map((sample) => (
+                        <CloneSampleCard
+                          addFiles={addFiles}
+                          dict={dict}
+                          key={sample.id}
+                          sample={sample}
+                          setErrorMessage={setErrorMessage}
+                          setStatus={setStatus}
+                          setTextToConvert={setTextToConvert}
+                        />
+                      ))}
                     </Accordion>
                   </div>
                 )}
@@ -549,20 +550,13 @@ export default function NewVoiceClient({
               </h3>
 
               <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
-                {/* <AudioWaveform audioUrl={generatedAudioUrl || ''} /> */}
-                {/*<AudioPlayer url={generatedAudioUrl} />*/}
-                <Button
-                  className="rounded-full"
-                  onClick={togglePlayback}
-                  size="icon"
-                  variant="secondary"
-                >
-                  {isPlaying ? (
-                    <Pause className="size-6" />
-                  ) : (
-                    <Play className="size-6" />
-                  )}
-                </Button>
+                {generatedAudioUrl && (
+                  <AudioPlayerWithContext
+                    className="rounded-full"
+                    playAudioTitle={dict.playAudio}
+                    url={generatedAudioUrl}
+                  />
+                )}
               </div>
 
               <div className="flex justify-center gap-4">

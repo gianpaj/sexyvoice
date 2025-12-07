@@ -371,7 +371,7 @@ export function AudioGenerator({
                 <AudioPlayerWithContext
                   className="rounded-md"
                   playAudioTitle={dict.playAudio}
-                  url={audio!.url!}
+                  url={audioURL}
                 />
                 <Button
                   onClick={resetPlayer}
