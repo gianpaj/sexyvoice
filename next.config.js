@@ -31,6 +31,12 @@ let nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'images.sexyvoice.ai',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
         hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
         port: '',
       },

@@ -1,8 +1,7 @@
 'use client';
 
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
-  type ColumnDef,
   type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
@@ -33,26 +32,30 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import useSupabaseBrowser from '@/lib/supabase/client';
-import { getMyAudioFiles } from '@/lib/supabase/queries.client';
+import {
+  type AudioFileAndVoicesRes,
+  getMyAudioFiles,
+} from '@/lib/supabase/queries.client';
+import { columns } from './columns';
 
-interface DataTableProps<AudioFile, TValue> {
-  columns: ColumnDef<AudioFile, TValue>[];
+interface DataTableProps {
   userId: string;
 }
 
-export function DataTable<AudioFile, TValue>({
-  columns,
-  userId,
-}: DataTableProps<AudioFile, TValue>) {
+export function DataTable({ userId }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const supabase = useSupabaseBrowser();
-  const { data } = useQuery(getMyAudioFiles(supabase, userId));
+  const { data } = useQuery({
+    queryKey: ['audio_files', userId],
+    queryFn: () => getMyAudioFiles(supabase, userId),
+    enabled: !!userId,
+  });
 
-  const table = useReactTable<AudioFile>({
-    data: data as AudioFile[],
+  const table = useReactTable<AudioFileAndVoicesRes>({
+    data: (data as AudioFileAndVoicesRes[]) ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

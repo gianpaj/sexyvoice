@@ -71,6 +71,8 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --brand-purple: 137 102 255;
+    --brand-red: 255 51 102;
     --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217.2 91.2% 59.8%;
@@ -80,9 +82,7 @@
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 224.3 76.3% 48%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -93,13 +93,6 @@
 
   .bg-grid-gradient {
     @apply bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)];
-  }
-}
-
-@-moz-document url-prefix() {
-  .disable-bg-firefox {
-    background: none;
-    background-image: none !important;
   }
 }
 

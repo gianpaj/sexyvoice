@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { banList } from '@/lib/banlist';
 import { LogosGoogleIcon } from '@/lib/icons';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export function SignUpForm({
   dict,
@@ -23,7 +23,7 @@ export function SignUpForm({
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {

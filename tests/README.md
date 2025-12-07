@@ -15,6 +15,7 @@ pnpm add -D vitest @vitest/ui msw @types/supertest supertest @vitest/coverage-v8
 ### Files:
 - `setup.ts` - Test environment setup with MSW mocking
 - `generate-voice.test.ts` - Comprehensive tests for the generate voice API route
+- `clone-voice.test.ts` - Comprehensive tests for the voice cloning API route
 - `stripe-webhook.test.ts` - Comprehensive tests for Stripe webhook handling
 - `test-stripe-plan.md` - Detailed technical specification for Stripe webhook testing
 - `README.md` - This documentation
@@ -35,6 +36,7 @@ The test setup includes comprehensive mocks for all external services:
 #### AI Services
 - **Replicate API**: Voice generation with prediction handling
 - **Google Generative AI**: TTS with pro/flash model fallback
+- **fal.ai**: Voice cloning with chatterbox-tts model
 
 #### Storage
 - **Vercel Blob**: Audio file upload and storage
@@ -42,6 +44,9 @@ The test setup includes comprehensive mocks for all external services:
 #### Analytics & Monitoring
 - **PostHog**: Event tracking
 - **Sentry**: Error logging and monitoring
+
+#### Background Jobs
+- **Inngest**: Scheduled cleanup tasks for uploaded audio files
 
 #### Stripe (for webhook tests)
 - **Webhook signature verification**: Using `stripe.webhooks.generateTestHeaderString()`
@@ -113,6 +118,75 @@ The voice generation tests cover:
 ### Analytics Integration
 - PostHog event tracking
 - Sentry error reporting
+
+---
+
+### Clone Voice API (`clone-voice.test.ts`)
+
+The voice cloning tests cover:
+
+### Input Validation
+- Content-Type verification (multipart/form-data required)
+- Missing required parameters (text, audio file)
+- Text length limits (500 characters max)
+- File type validation (MP3, WAV, OGG, M4A only)
+- File size limits (10MB max)
+- Audio duration validation (5 seconds minimum, 5 minutes maximum)
+- Audio duration detection failures
+
+### Authentication & Authorization
+- Unauthenticated users
+- User session validation
+
+### Credit System
+- Insufficient credits scenarios
+- Credit estimation for voice cloning (higher cost than regular generation)
+- Credit deduction after successful cloning
+- Credit transaction logging
+
+### Voice Cloning
+- fal.ai API integration (chatterbox-tts model)
+- Audio file upload and processing
+- Generated audio storage
+- Request parameter handling (cfg_weight, temperature, exaggeration)
+- Error handling for AI service failures
+
+### Caching
+- Redis cache hits/misses for generated audio
+- Hash generation based on text + audio filename
+- Cache invalidation
+- Reuse of existing uploaded audio files (via blob.head check)
+
+### Audio File Management
+- Audio file upload to Vercel Blob storage
+- Input audio file caching and reuse
+- Output audio file generation and storage
+- Filename sanitization (special characters, unicode)
+
+### Background Tasks
+- Inngest cleanup scheduling
+- Audio file deletion after 1 hour
+- Event payload validation
+
+### Error Handling
+- Network failures
+- API errors from fal.ai
+- Blob storage failures
+- General server errors (500s)
+- Request abortion handling
+
+### Analytics Integration
+- PostHog event tracking
+- Sentry error reporting
+- Event tracking for cached results (0 credits)
+
+### Audio Format Support
+- MP3 file handling
+- WAV file handling
+- OGG file handling
+- M4A file handling
+
+---
 
 ### Stripe Webhooks (`stripe-webhook.test.ts`)
 
