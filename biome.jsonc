@@ -61,7 +61,8 @@
         "useUniqueElementIds": "off"
       },
       "nursery": {
-        "noShadow": "off"
+        "noShadow": "off",
+        "noLeakedRender": "off"
       }
     },
     "domains": {
@@ -88,6 +89,9 @@
           "level": "on",
           "options": {
             "groups": [
+              // Modules imported with the `npm:` protocol
+              "npm:*",
+              "npm:*/**",
               ":NODE:",
               ":PACKAGE:",
               ":BLANK_LINE:",
