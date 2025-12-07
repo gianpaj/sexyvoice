@@ -117,14 +117,13 @@ export function AudioGenerator({
 
       const { url } = await response.json();
 
-      // setTimeout(() => {
+      // FIXME: this doesn't work
       // refetch credits after generating audio
-      await queryClient.refetchQueries({
-        queryKey: ['credits', userId],
-        type: 'all',
-        stale: true,
-      });
-      console.log('Credits refetched');
+      // setTimeout(() => {
+      // await queryClient.refetchQueries({
+      //   queryKey: ['credits'],
+      // });
+      // console.log('Credits refetched');
       // }, 1000);
 
       setAudioURL(url);

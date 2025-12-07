@@ -17,14 +17,12 @@ function CreditsSection({
   lang,
   dict,
   userId,
-  // credits,
   creditTransactions,
   doNotToggleSidebar,
 }: {
   lang: Locale;
   userId: string;
   dict: (typeof langDict)['creditsSection'];
-  // credits: number;
   creditTransactions: Pick<CreditTransaction, 'amount'>[];
   doNotToggleSidebar?: boolean;
 }) {

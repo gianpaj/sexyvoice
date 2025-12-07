@@ -3,6 +3,7 @@ import {
   HydrationBoundary,
   QueryClient,
 } from '@tanstack/react-query';
+import { prefetchQuery } from "@supabase-cache-helpers/postgrest-react-query";
 
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -31,16 +32,22 @@ export default async function DashboardLayout(props: {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Fetch credits data directly on the server
-  const { data: creditsData } = await getCreditsQuery(supabase, user.id);
-
   const { data: creditTransactions } = await getCreditTransactions(
     supabase,
     user.id,
   );
 
   // set the initial data
-  queryClient.setQueryData(['credits', user.id], creditsData);
+  await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
+
+  // await queryClient.prefetchQuery({
+  //   queryKey: ['credits'],
+  //   staleTime: 1000,
+  //   queryFn: async () => {
+  //     const { data } = await getCreditsQuery(supabase, user.id);
+  //     return data;
+  //   },
+  // });
 
   return (
     <ReactQueryClientProvider>

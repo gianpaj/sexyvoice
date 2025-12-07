@@ -179,7 +179,7 @@ export async function POST(request: Request) {
         creditUsed: 0,
         model: voiceObj.model,
       });
-      await reduceCredits({ userId: user.id, amount: 1 });
+
       // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
     }
