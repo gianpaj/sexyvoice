@@ -47,7 +47,6 @@ export function GenerateUI({
           locale={locale}
           selectedStyle={selectedStyle}
           selectedVoice={selectedVoiceSample}
-          userId={userId}
         />
       </AudioProvider>
     </div>

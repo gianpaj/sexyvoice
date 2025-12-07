@@ -1,7 +1,6 @@
 'use client';
 
 import { useCompletion } from '@ai-sdk/react';
-import { QueryClient } from '@tanstack/react-query';
 import {
   CircleStop,
   Download,
@@ -42,7 +41,6 @@ interface AudioGeneratorProps {
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
-  userId: string;
 }
 
 export function AudioGenerator({
@@ -50,7 +48,6 @@ export function AudioGenerator({
   selectedStyle,
   hasEnoughCredits,
   dict,
-  userId,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -65,7 +62,6 @@ export function AudioGenerator({
     () => getCharactersLimit(selectedVoice?.model || ''),
     [selectedVoice],
   );
-  const queryClient = new QueryClient();
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display

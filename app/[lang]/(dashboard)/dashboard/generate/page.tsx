@@ -62,13 +62,13 @@ export default async function GeneratePage(props: {
       </div>
 
       <div className="lg:hidden">
-        {/*<CreditsSection
-          credit_transactions={credit_transactions || []}
-          credits={credits.amount || 0}
+        <CreditsSection
+          creditTransactions={credit_transactions || []}
           dict={dict.creditsSection}
           doNotToggleSidebar
           lang={lang}
-        />*/}
+          userId={user.id}
+        />
       </div>
 
       <div className="grid gap-6 pb-16">

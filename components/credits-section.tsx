@@ -26,7 +26,7 @@ function CreditsSection({
   lang: Locale;
   userId: string;
   dict: (typeof langDict)['creditsSection'];
-  creditTransactions: Pick<CreditTransaction, 'amount'>[];
+  creditTransactions: Pick<CreditTransaction, 'amount'>[] | null;
   doNotToggleSidebar?: boolean;
 }) {
   const posthog = usePostHog();
