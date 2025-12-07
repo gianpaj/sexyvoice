@@ -66,7 +66,7 @@ export function AudioPreviewCard({
         </Button>
       </div>
       <div
-        className="line-clamp-5 whitespace-break-spaces rounded border-[12px] border-transparent bg-[#172648] text-justify text-gray-200 text-sm"
+        className="line-clamp-5 whitespace-break-spaces rounded border-[12px] border-transparent bg-brand-purple/10 text-justify text-gray-200 text-sm"
         dir={dir}
         lang={lang}
         title={prompt}
