@@ -1,8 +1,10 @@
 'use client';
 
+import type { User } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import { Crisp } from 'crisp-sdk-web';
+import Link from 'next/link';
+import { usePostHog } from 'posthog-js/react';
 import { useContext, useEffect } from 'react';
 
 import type langDict from '@/lib/i18n/dictionaries/en.json';
@@ -13,8 +15,6 @@ import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { SidebarContext } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
-import { usePostHog } from 'posthog-js/react';
-import { User } from '@supabase/supabase-js';
 
 function CreditsSection({
   lang,
@@ -34,7 +34,6 @@ function CreditsSection({
   // Safely access the sidebar context without throwing an error
   const sidebarContext = useContext(SidebarContext);
   const isMobile = sidebarContext?.isMobile;
-  const toggleSidebar = sidebarContext?.toggleSidebar || (() => {});
   const total_credits =
     creditTransactions?.reduce(
       (acc, transaction) => acc + transaction.amount,
@@ -47,7 +46,6 @@ function CreditsSection({
     // staleTime: 1 * 1000,
     queryFn: () => getCredits(supabase, userId),
   });
-
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: credits state dependency
   useEffect(() => {
@@ -120,7 +118,7 @@ function CreditsSection({
             href={`/${lang}/dashboard/credits`}
             onClick={() => {
               if (isMobile && !doNotToggleSidebar) {
-                toggleSidebar();
+                sidebarContext.toggleSidebar?.();
               }
             }}
           >

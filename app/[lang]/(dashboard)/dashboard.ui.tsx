@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/sidebar';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import useSupabaseBrowser from '@/lib/supabase/client';
 
 // import { getCredits } from '@/lib/supabase/queries.client';
 
