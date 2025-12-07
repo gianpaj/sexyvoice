@@ -133,7 +133,7 @@ export default function NewVoiceClient({
     name:
       `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
       code,
-  }));
+  })).sort((a, b) => a.name.localeCompare(b.name));
 
   const onFilesAdded = () => {
     setStatus('idle');

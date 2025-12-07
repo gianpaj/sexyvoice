@@ -232,7 +232,7 @@ export async function POST(request: Request) {
       model = 'resemble-ai/chatterbox';
       input = {
         seed: 0,
-        text,
+        prompt: text,
         cfg_weight: 0.5,
         temperature: 0.8,
         exaggeration: 0.5,
@@ -253,9 +253,14 @@ export async function POST(request: Request) {
       };
     }
 
-    const output = (await replicate.run(model, { input }, onProgress)) as
-      | string
-      | { error?: string };
+    const output = (await replicate.run(
+      model,
+      {
+        input,
+        // signal
+      },
+      onProgress,
+    )) as string | { error?: string };
 
     if (typeof output === 'object' && 'error' in output) {
       const errorObj = {
