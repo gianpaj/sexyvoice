@@ -87,8 +87,8 @@ describe('formatDate', () => {
 
   test('formats date with time', () => {
     const result = formatDate('2024-01-01T15:30:00Z', { withTime: true });
-    expect(result).toContain('January 1, 2024');
-    expect(/04:30\s?PM/.test(result)).toBe(true);
+    // UTC timezone: 15:30 = 3:30 PM
+    expect(result).toBe('January 1, 2024 at 03:30 PM');
   });
 });
 

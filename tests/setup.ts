@@ -3,6 +3,9 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
+// Set timezone to UTC for consistent test results across CI and local machines
+process.env.TZ = 'UTC';
+
 // Mock handlers for external services
 export const handlers = [
   // Replicate API Mock
