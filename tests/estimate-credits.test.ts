@@ -114,4 +114,65 @@ describe('Estimate Credits API Route', () => {
       contents: [{ parts: [{ text: 'warm: Hello world' }], role: 'user' }],
     });
   });
+
+  it('returns 400 when text exceeds character limit', async () => {
+    // Create text that exceeds the limit (gpro max is 1000 chars)
+    const excessiveText = 'a'.repeat(1001);
+
+    const request = new Request('http://localhost/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ text: excessiveText, voice: 'poe' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toContain('Text exceeds the maximum length');
+    expect(json.error).toContain('1000 characters');
+  });
+
+  it('returns 400 when text exceeds character limit with styleVariant', async () => {
+    // Create text that exceeds the limit when combined with styleVariant
+    // "warm: " (6 chars) + 995 chars = 1001 chars (exceeds 1000 limit)
+    const textToPush = 'a'.repeat(995);
+    const styleVariant = 'warm';
+
+    const request = new Request('http://localhost/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: textToPush,
+        voice: 'poe',
+        styleVariant: styleVariant,
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toContain('Text exceeds the maximum length');
+  });
+
+  it('returns 400 when request body has malformed JSON', async () => {
+    const request = new Request('http://localhost/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: 'not valid json {]',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toBe('Invalid JSON in request body');
+  });
 });

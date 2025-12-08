@@ -84,6 +84,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ tokens: totalTokens, credits });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 },
+      );
+    }
     console.error('Estimate credits error:', error);
     return NextResponse.json(
       { error: 'Failed to estimate credits' },
