@@ -12,7 +12,6 @@ interface GenerateUIProps {
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
-  userId: string;
 }
 
 const STYLE_PROMPT_VARIANT_MOAN =
@@ -23,7 +22,6 @@ export function GenerateUI({
   hasEnoughCredits,
   dict,
   locale,
-  userId,
 }: GenerateUIProps) {
   const [selectedVoice, setSelectedVoice] = useState('zephyr');
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);

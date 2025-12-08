@@ -285,7 +285,7 @@
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
     "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",
-    "generating": "Generating",
+    "generating": "Wird generiert",
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
@@ -346,7 +346,14 @@
     "/": "",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
-    "/dashboard/generate": "Generieren"
+    "/dashboard/generate": "Generieren",
+    "/dashboard/clone": "Klonen",
+    "/dashboard/history": "Verlauf",
+    "/dashboard/credits": "Credits"
+  },
+  "sidebar": {
+    "profile": "Profil",
+    "signOut": "Abmelden"
   },
   "header": {
     "generate": "Generieren",

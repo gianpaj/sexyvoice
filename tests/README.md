@@ -131,7 +131,7 @@ The voice cloning tests cover:
 - Text length limits (500 characters max)
 - File type validation (MP3, WAV, OGG, M4A only)
 - File size limits (10MB max)
-- Audio duration validation (5 seconds minimum, 5 minutes maximum)
+- Audio duration validation (10 seconds minimum, 5 minutes maximum)
 - Audio duration detection failures
 
 ### Authentication & Authorization

@@ -105,7 +105,7 @@ export default function CloneSampleCard({
           <div className="flex flex-col text-center">
             <p>{dict.sampleCard.sourceAudio}:</p>
             <AudioPlayerWithContext
-              className="my-4 self-center bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
+              className="!bg-blue-950 my-4 self-center opacity-60 transition-opacity hover:opacity-100"
               playAudioTitle={dict.playAudio}
               url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
             />
@@ -113,7 +113,7 @@ export default function CloneSampleCard({
           <div className="my-4 flex flex-col justify-center text-center">
             <p>{dict.sampleCard.exampleOutput}:</p>
             <AudioPlayerWithContext
-              className="my-4 self-center bg-purple-950 opacity-60 transition-opacity hover:bg-purple-950 hover:opacity-100"
+              className="!bg-purple-950 my-4 self-center opacity-60 transition-opacity hover:opacity-100"
               playAudioTitle={dict.playAudio}
               url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}
             />

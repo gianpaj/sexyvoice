@@ -346,7 +346,14 @@
     "/": "",
     "/login": "Log in",
     "/signup": "Sign up with email or Google",
-    "/dashboard/generate": "Generate"
+    "/dashboard/generate": "Generate",
+    "/dashboard/clone": "Clone",
+    "/dashboard/history": "History",
+    "/dashboard/credits": "Credits"
+  },
+  "sidebar": {
+    "profile": "Profile",
+    "signOut": "Sign Out"
   },
   "header": {
     "generate": "Generate",

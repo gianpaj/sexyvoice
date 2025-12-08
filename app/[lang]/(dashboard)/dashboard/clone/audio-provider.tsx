@@ -16,7 +16,7 @@ export const AudioContext = createContext<AudioContextType | undefined>(
 export const useAudio = () => {
   const context = useContext(AudioContext);
   if (!context && typeof window !== 'undefined') {
-    throw new Error('useAudio must be used within a AudioContext');
+    throw new Error('useAudio must be used within an AudioContext');
   }
   return context;
 };

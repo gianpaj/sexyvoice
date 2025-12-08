@@ -238,11 +238,12 @@ vi.mock('@google/genai', async () => {
 Object.defineProperty(global, 'crypto', {
   value: {
     subtle: {
-      digest: vi.fn().mockImplementation(async (_algorithm, data) => {
+      digest: vi.fn().mockImplementation((_algorithm, data) => {
         // Generate a simple hash based on the input data
         const view = new Uint8Array(data);
         let hash = 0;
         for (let i = 0; i < view.length; i++) {
+          // 31 is a common prime number used in hash functions for good distribution
           hash = (hash * 31 + view[i]) & 0xff_ff_ff_ff;
         }
         // Create a Uint8Array with the hash value
@@ -256,7 +257,7 @@ Object.defineProperty(global, 'crypto', {
   },
 });
 
-const mockReplicateRun = vi.fn().mockImplementation(async (model: string) => {
+const mockReplicateRun = vi.fn().mockImplementation((model: string) => {
   // For chatterbox models (voice cloning), return a URL string
   if (model.includes('chatterbox')) {
     return 'https://replicate.delivery/pbxt/test-audio-output.mp3';

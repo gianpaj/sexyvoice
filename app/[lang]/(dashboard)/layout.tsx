@@ -1,9 +1,9 @@
+import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from '@tanstack/react-query';
-import { prefetchQuery } from "@supabase-cache-helpers/postgrest-react-query";
 
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -56,7 +56,7 @@ export default async function DashboardLayout(props: {
         <DashboardUI
           blackFridayDict={blackFridayDict}
           creditTransactions={creditTransactions}
-          dict={dict.creditsSection}
+          dict={dict}
           lang={lang}
           userId={user.id}
         >

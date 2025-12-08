@@ -171,7 +171,7 @@ describe('Clone Voice API Route', () => {
       // Mock music-metadata to return short duration
       vi.doMock('music-metadata', () => ({
         parseBuffer: vi.fn().mockResolvedValue({
-          format: { duration: 3 }, // Less than 5 seconds
+          format: { duration: 3 }, // Less than 10 seconds
         }),
       }));
 

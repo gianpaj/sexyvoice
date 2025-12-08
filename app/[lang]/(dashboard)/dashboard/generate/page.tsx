@@ -77,7 +77,6 @@ export default async function GeneratePage(props: {
           hasEnoughCredits={credits.amount >= 10}
           locale={lang}
           publicVoices={publicVoices}
-          userId={user.id}
         />
       </div>
     </div>

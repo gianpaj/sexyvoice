@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/performance/useTopLevelRegex: <explanation> */
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
@@ -15,7 +16,7 @@ import {
 //
 // e.g. 26sec run for 22 audio ()
 
-describe('estimateCredits', async () => {
+describe('estimateCredits', () => {
   test('should correctly estimate credits for Spanish short text', () => {
     const text = 'Hello world';
     const credits = estimateCredits(text, 'javi');

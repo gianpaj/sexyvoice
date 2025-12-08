@@ -39,7 +39,7 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 - Detailed progress reporting
 
 ### Performance
-- 50 users: ~5 seconds (vs ~50 seconds sequential)
+- 50 users: ~10 seconds (vs ~50 seconds sequential)
 - 100 users: ~10 seconds (vs ~100 seconds sequential)
 - Processes 10 users per database query
 

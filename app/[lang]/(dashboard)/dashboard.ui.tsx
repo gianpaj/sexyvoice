@@ -26,14 +26,12 @@ import {
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
-// import { getCredits } from '@/lib/supabase/queries.client';
-
 interface DashboardUIProps {
   children: React.ReactNode;
   creditTransactions: Pick<CreditTransaction, 'amount'>[];
   userId: string;
   lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
+  dict: typeof langDict;
   blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
 }
 
@@ -49,25 +47,25 @@ export default function DashboardUI({
 
   const navigation = [
     {
-      name: 'Generate',
+      name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
     {
-      name: 'Clone',
+      name: dict.pages['/dashboard/clone'],
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
       current: pathname === `/${lang}/dashboard/clone`,
     },
     {
-      name: 'History',
+      name: dict.pages['/dashboard/history'],
       href: `/${lang}/dashboard/history`,
       icon: FileClock,
       current: pathname === `/${lang}/dashboard/history`,
     },
     {
-      name: 'Credits',
+      name: dict.pages['/dashboard/credits'],
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
@@ -126,12 +124,12 @@ export default function DashboardUI({
             <SidebarFooter>
               <CreditsSection
                 creditTransactions={creditTransactions}
-                dict={dict}
+                dict={dict.creditsSection}
                 lang={lang}
                 userId={userId}
               />
 
-              <SidebarMenuCustom lang={lang} />
+              <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
             </SidebarFooter>
           </Sidebar>
 
