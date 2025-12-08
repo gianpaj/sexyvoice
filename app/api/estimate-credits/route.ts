@@ -48,10 +48,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     const maxLength = getCharactersLimit(voiceObj.model);
 
-    if (finalText.length > maxLength) {
+    if (text.length > maxLength) {
       return NextResponse.json(
         {
           error: `Text exceeds the maximum length of ${maxLength} characters`,
@@ -59,6 +58,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
 
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
@@ -71,18 +71,18 @@ export async function POST(request: Request) {
 
     const ai = new GoogleGenAI({ apiKey });
     const tokenResponse = await ai.models.countTokens({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-pro-preview-tts',
       contents: [{ parts: [{ text: finalText }], role: 'user' }],
     });
 
     const totalTokens = tokenResponse.totalTokens ?? 0;
-    const credits = estimateCreditsFromTokens(
-      totalTokens,
-      voice,
-      voiceObj.model,
-    );
 
-    return NextResponse.json({ tokens: totalTokens, credits });
+    const credits = estimateCreditsFromTokens(totalTokens);
+
+    return NextResponse.json({
+      tokens: totalTokens,
+      estimatedCredits: credits,
+    });
   } catch (error) {
     if (error instanceof SyntaxError) {
       return NextResponse.json(

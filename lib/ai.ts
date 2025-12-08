@@ -1,5 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
-
 // Emotion tags for each voice based on language
 export const getEmotionTags = (language: string) => {
   if (language.startsWith('it-')) {
@@ -21,23 +19,4 @@ export const getCharactersLimit = (model: string) => {
     return GEMINI_LIMIT;
   }
   return DEFAULT_LIMIT;
-};
-
-export const countGeminiTokens = async ({
-  model,
-  contents,
-}: {
-  model: string;
-  contents: string;
-}): Promise<number> => {
-  try {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    });
-    const tokensReponse = await ai.models.countTokens({ model, contents });
-
-    return tokensReponse.totalTokens ?? -1;
-  } catch (_error) {
-    return -1;
-  }
 };

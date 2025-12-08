@@ -50,7 +50,7 @@ function getCreditMultiplier(voice: string, model?: string): number {
   }
 
   if (model === 'gpro') {
-    multiplier = 4;
+    multiplier = 2;
   }
 
   return multiplier;
@@ -92,13 +92,19 @@ export function estimateCredits(
   return calculateCredits(words, voice, model);
 }
 
+// Credit calculation constants for gpro voices
+const CREDITS_PER_TOKEN = 1;
+
 export function estimateCreditsFromTokens(
   tokenCount: number,
-  voice: string,
-  model?: string,
+  // voice?: string,
+  // model?: string,
 ): number {
   const normalizedTokens = Math.max(0, tokenCount);
-  return calculateCredits(normalizedTokens, voice, model);
+
+  // Calculate estimated credits based on tokens
+  // Using a ratio that approximates the actual credit consumption
+  return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN);
 }
 
 export function capitalizeFirstLetter(str: string) {

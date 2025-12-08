@@ -28,6 +28,7 @@ import { createClient } from '@/lib/supabase/server';
 import {
   ERROR_CODES,
   estimateCredits,
+  estimateCreditsFromTokens,
   extractMetadata,
   getErrorMessage,
 } from '@/lib/utils';
@@ -373,13 +374,21 @@ export async function POST(request: Request) {
         return;
       }
 
-      await reduceCredits({ userId: user.id, amount: estimate });
+      let creditsUsed = estimate;
 
       const usage = extractMetadata(
         isGeminiVoice,
         genAIResponse,
         replicateResponse,
       );
+
+      if (isGeminiVoice && usage) {
+        creditsUsed = estimateCreditsFromTokens(
+          Number.parseInt(usage.totalTokenCount, 10),
+        );
+      }
+
+      await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
@@ -391,7 +400,7 @@ export async function POST(request: Request) {
         isPublic: false,
         voiceId: voiceObj.id,
         duration: '-1',
-        credits_used: estimate,
+        credits_used: creditsUsed,
         usage,
       });
 

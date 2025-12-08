@@ -242,7 +242,7 @@ export function AudioGenerator({
   const textIsOverLimit = text.length > charactersLimit;
 
   const handleEstimateCredits = async () => {
-    if (!selectedVoice || !isGeminiVoice || !text.trim()) return;
+    if (!(selectedVoice && isGeminiVoice && text.trim())) return;
 
     setIsEstimating(true);
     try {
@@ -264,11 +264,14 @@ export function AudioGenerator({
         throw new APIError(data.error || dict.error, response);
       }
 
-      const credits = Number(data.credits);
-      if (Number.isFinite(credits)) {
-        setEstimatedCredits(credits);
+      const estimatedCredits = Number(data.estimatedCredits);
+      if (Number.isFinite(estimatedCredits)) {
+        setEstimatedCredits(estimatedCredits);
         toast.success(
-          dict.estimateCreditsResult.replace('__COUNT__', credits.toString()),
+          dict.estimateCreditsResult.replace(
+            '__COUNT__',
+            estimatedCredits.toString(),
+          ),
         );
       }
     } catch (error) {
@@ -333,7 +336,7 @@ export function AudioGenerator({
                   )}
                 </Button>
               </>
-              )}
+            )}
             <Button
               className={
                 'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
@@ -354,8 +357,7 @@ export function AudioGenerator({
             <Button
               className="h-8"
               disabled={
-                !isGeminiVoice ||
-                !text.trim() ||
+                !(isGeminiVoice && text.trim()) ||
                 isEstimating ||
                 isGenerating ||
                 textIsOverLimit

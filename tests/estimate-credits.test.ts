@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/estimate-credits/route';
-import { createClient } from '@/lib/supabase/server';
 import * as queries from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
 import { mockCountTokens } from './setup';
 
 describe('Estimate Credits API Route', () => {
@@ -38,7 +38,9 @@ describe('Estimate Credits API Route', () => {
   it('returns 401 when user is not authenticated', async () => {
     vi.mocked(createClient).mockReturnValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+        getUser: vi
+          .fn()
+          .mockResolvedValue({ data: { user: null }, error: null }),
       },
     } as never);
 
@@ -89,28 +91,34 @@ describe('Estimate Credits API Route', () => {
     const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(json.error).toBe('Credit estimation currently supports only gpro voices');
+    expect(json.error).toBe(
+      'Credit estimation currently supports only gpro voices',
+    );
   });
 
   it('returns tokens and credits for gpro voices', async () => {
-    mockCountTokens.mockResolvedValueOnce({ totalTokens: 456 });
+    mockCountTokens.mockResolvedValueOnce({ totalTokens: 1710 });
 
     const request = new Request('http://localhost/api/estimate-credits', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'poe', styleVariant: 'warm' }),
+      body: JSON.stringify({
+        text: 'Hello world',
+        voice: 'poe',
+        styleVariant: 'warm',
+      }),
     });
 
     const response = await POST(request);
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.tokens).toBe(456);
-    expect(json.credits).toBeGreaterThan(0);
+    expect(json.tokens).toBe(1710);
+    expect(json.estimatedCredits).toBe(1710); // 1 to 1 ratio
     expect(mockCountTokens).toHaveBeenCalledWith({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-pro-preview-tts',
       contents: [{ parts: [{ text: 'warm: Hello world' }], role: 'user' }],
     });
   });
@@ -133,31 +141,6 @@ describe('Estimate Credits API Route', () => {
     expect(response.status).toBe(400);
     expect(json.error).toContain('Text exceeds the maximum length');
     expect(json.error).toContain('1000 characters');
-  });
-
-  it('returns 400 when text exceeds character limit with styleVariant', async () => {
-    // Create text that exceeds the limit when combined with styleVariant
-    // "warm: " (6 chars) + 995 chars = 1001 chars (exceeds 1000 limit)
-    const textToPush = 'a'.repeat(995);
-    const styleVariant = 'warm';
-
-    const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: textToPush,
-        voice: 'poe',
-        styleVariant: styleVariant,
-      }),
-    });
-
-    const response = await POST(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(json.error).toContain('Text exceeds the maximum length');
   });
 
   it('returns 400 when request body has malformed JSON', async () => {
