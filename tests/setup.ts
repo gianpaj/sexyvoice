@@ -174,6 +174,8 @@ vi.mock('@vercel/blob', () => ({
 export { mockBlobPut };
 
 // Mock Google Generative AI module
+const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
+
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');
   return {
@@ -182,6 +184,7 @@ vi.mock('@google/genai', async () => {
     FinishReason: genai.FinishReason,
     GoogleGenAI: vi.fn().mockImplementation(() => ({
       models: {
+        countTokens: mockCountTokens,
         generateContent: vi.fn().mockResolvedValue({
           candidates: [
             {
@@ -238,4 +241,4 @@ vi.mock('replicate', () => ({
   Replicate: mockReplicateConstructor,
 }));
 
-export { mockReplicateRun };
+export { mockCountTokens, mockReplicateRun };

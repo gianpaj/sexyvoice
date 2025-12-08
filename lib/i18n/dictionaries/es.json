@@ -261,6 +261,8 @@
     "ctaButton": "Generar audio",
     "resetPlayer": "Reiniciar Reproductor",
     "downloadAudio": "Descargar Audio",
+    "estimateCreditsButton": "Estimar créditos",
+    "estimateCreditsResult": "Créditos estimados: __COUNT__",
     "abortedCloning": "Clonación de voz cancelada",
     "cloneNotice": "Las clonaciones de voz se crean solo con fines de demostración.",
     "cloneNoticeTooltipLabel": "Abrir aviso de seguridad de clonación de voz",

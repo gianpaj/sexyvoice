@@ -261,6 +261,8 @@
     "ctaButton": "Generate Audio",
     "resetPlayer": "Reset Player",
     "downloadAudio": "Download Audio",
+    "estimateCreditsButton": "Estimate credits",
+    "estimateCreditsResult": "Estimated credits: __COUNT__",
     "abortedCloning": "Voice generation aborted.",
     "cloneNotice": "Voice clones are created for demonstration purposes only.",
     "cloneNoticeTooltipLabel": "Open voice clone safety notice",

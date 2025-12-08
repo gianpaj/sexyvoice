@@ -30,28 +30,8 @@ export function formatDate(
   });
 }
 
-export function estimateCredits(
-  text: string,
-  voice: string,
-  model?: string,
-): number {
-  // Remove extra whitespace and split into words
-  // biome-ignore lint/performance/useTopLevelRegex: ok
-  const words = text.trim().split(/\s+/).length;
-
-  if (!text.trim()) {
-    return 0;
-  }
-
-  if (!voice) {
-    throw new Error('Voice is required');
-  }
-
-  // Using average speaking rate of 100 words per minute (middle of 120-150 range)
-  const wordsPerSecond = 100 / 60; // 2.25 words per second
-
+function getCreditMultiplier(voice: string, model?: string): number {
   let multiplier: number;
-  // Calculate multiplier based on voice
   switch (voice) {
     case 'pietro':
     case 'giulia':
@@ -73,8 +53,52 @@ export function estimateCredits(
     multiplier = 4;
   }
 
-  // Calculate estimated seconds (credits) by 10
+  return multiplier;
+}
+
+function calculateCredits(
+  words: number,
+  voice: string,
+  model?: string,
+): number {
+  if (!voice) {
+    throw new Error('Voice is required');
+  }
+
+  if (words <= 0) {
+    return 0;
+  }
+
+  // Using average speaking rate of 100 words per minute (middle of 120-150 range)
+  const wordsPerSecond = 100 / 60; // 2.25 words per second
+  const multiplier = getCreditMultiplier(voice, model);
+
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
+}
+
+export function estimateCredits(
+  text: string,
+  voice: string,
+  model?: string,
+): number {
+  // Remove extra whitespace and split into words
+  // biome-ignore lint/performance/useTopLevelRegex: ok
+  const words = text.trim().split(/\s+/).length;
+
+  if (!text.trim()) {
+    return 0;
+  }
+
+  return calculateCredits(words, voice, model);
+}
+
+export function estimateCreditsFromTokens(
+  tokenCount: number,
+  voice: string,
+  model?: string,
+): number {
+  const normalizedTokens = Math.max(0, tokenCount);
+  return calculateCredits(normalizedTokens, voice, model);
 }
 
 export function capitalizeFirstLetter(str: string) {

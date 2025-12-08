@@ -56,6 +56,8 @@ export function AudioGenerator({
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
 
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
@@ -248,6 +250,10 @@ export function AudioGenerator({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  useEffect(() => {
+    setEstimatedCredits(null);
+  }, [selectedVoice, text]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
   useEffect(() => {
     // Auto-resize textarea when content changes
@@ -257,6 +263,47 @@ export function AudioGenerator({
   }, [text, isFullscreen]);
 
   const textIsOverLimit = text.length > charactersLimit;
+
+  const handleEstimateCredits = async () => {
+    if (!selectedVoice || !isGeminiVoice || !text.trim()) return;
+
+    setIsEstimating(true);
+    try {
+      const response = await fetch('/api/estimate-credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voice: selectedVoice.name,
+          styleVariant: selectedStyle,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new APIError(data.error || dict.error, response);
+      }
+
+      const credits = Number(data.credits);
+      if (Number.isFinite(credits)) {
+        setEstimatedCredits(credits);
+        toast.success(
+          dict.estimateCreditsResult.replace('__COUNT__', credits.toString()),
+        );
+      }
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message || dict.error);
+      } else {
+        toast.error(dict.error);
+      }
+    } finally {
+      setIsEstimating(false);
+    }
+  };
 
   return (
     <Card>
@@ -309,7 +356,7 @@ export function AudioGenerator({
                   )}
                 </Button>
               </>
-            )}
+              )}
             <Button
               className={
                 'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
@@ -326,13 +373,42 @@ export function AudioGenerator({
               )}
             </Button>
           </div>
-          <div
-            className={cn('text-right text-muted-foreground text-sm', [
-              textIsOverLimit ? 'font-bold text-red-500' : '',
-            ])}
-          >
-            {text.length} / {charactersLimit}
+          <div className="flex items-center justify-between">
+            <Button
+              className="h-8"
+              disabled={
+                !isGeminiVoice ||
+                !text.trim() ||
+                isEstimating ||
+                isGenerating ||
+                textIsOverLimit
+              }
+              onClick={handleEstimateCredits}
+              size="sm"
+              variant="outline"
+            >
+              {isEstimating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                dict.estimateCreditsButton
+              )}
+            </Button>
+            <div
+              className={cn('text-right text-muted-foreground text-sm', [
+                textIsOverLimit ? 'font-bold text-red-500' : '',
+              ])}
+            >
+              {text.length} / {charactersLimit}
+            </div>
           </div>
+          {estimatedCredits !== null && (
+            <div className="text-right text-muted-foreground text-sm">
+              {dict.estimateCreditsResult.replace(
+                '__COUNT__',
+                estimatedCredits.toString(),
+              )}
+            </div>
+          )}
         </div>
 
         <div
