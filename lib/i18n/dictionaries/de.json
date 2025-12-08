@@ -131,7 +131,7 @@
         },
         {
           "question": "Welche Sprachen unterstützt das Stimmklonen?",
-          "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\nArabisch,\nDänisch,\nDeutsch,\nGriechisch,\nEnglisch,\nSpanisch,\nFinnisch,\nFranzösisch,\nHebräisch,\nHindi,\nItalienisch,\nJapanisch,\nKoreanisch,\nMalaiisch,\nNiederländisch,\nNorwegisch,\nPolnisch,\nPortugiesisch,\nRussisch,\nSchwedisch,\nSuaheli,\nTürkisch\nund Mandarin-Chinesisch."
+          "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\nArabisch,\nDänisch,\nDeutsch,\nGriechisch,\nEnglisch,\nSpanisch,\nFinnisch,\nFranzösisch,\nHebräisch,\nHindi,\nItalienisch,\nJapanisch,\nKoreanisch,\nMalaiisch,\nNiederländisch,\nNorwegisch,\nPolnisch,\nPortugiesisch,\nRussisch,\nSchwedisch,\nSuaheli,\nTürkisch,\nund Mandarin-Chinesisch."
         },
         {
           "question": "Haben Sie eine API für Entwickler?",

@@ -115,7 +115,7 @@
         },
         {
           "question": "Is my voice data secure?",
-          "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete them uploaded voice sample and no one else can use it. You have full control over the generate audio files and can delete then whenever you want. We never share voice data without your consent."
+          "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete them uploaded voice sample and no one else can use it. You have full control over the generated audio files and can delete them whenever you want. We never share voice data without your consent."
         },
         {
           "question": "What can I use the generated voices for?",
