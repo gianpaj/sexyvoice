@@ -107,43 +107,47 @@
       "questions": [
         {
           "question": "How does voice cloning work?",
-          "answer": "Our AI analyzes your voice samples to learn its unique patterns and characteristics. With just seconds of audio, we can create a digital voice that sounds just like you. The system uses advanced AI to match your tone, accent, and speaking style."
+          "answer": "Our AI analyzes your voice sample (10 seconds to 5 mins) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
         },
         {
           "question": "Can I clone my own voice?",
-          "answer": "Yes! For ethical reasons, you need permission before cloning someone else's voice. We take voice rights seriously."
+          "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
         },
         {
           "question": "Is my voice data secure?",
-          "answer": "Yes. We encrypt all voice data and store it securely. You control your audio generations completely and can delete them anytime. We never share your voice data with others without your permission. Your privacy is our priority."
+          "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generate audio files and can delete then whenever you want. We never share voice data without your consent."
         },
         {
           "question": "What can I use the generated voices for?",
-          "answer": "You can use generated voices for podcasts, videos, social media content, e-learning, audiobooks, games, and more. Many creators use our voices to save time recording or to maintain consistent audio quality. Just remember our terms prohibit deception or impersonation."
+          "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
         },
         {
           "question": "How many credits do I need?",
-          "answer": "About 1,000 credits make 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
+          "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
         },
         {
-          "question": "What languages do you support?",
-          "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including Arabic (Egyptian), English (US), French (France), German (Germany), Spanish (US), Hindi (India), Indonesian (Indonesia), Italian (Italy), Japanese (Japan), Korean (Korea), Portuguese (Brazil), Russian (Russia), Dutch (Netherlands), Polish (Poland), Thai (Thailand), Turkish (Turkey), Vietnamese (Vietnam), Romanian (Romania), Ukrainian (Ukraine), Bengali (Bangladesh), English/Hindi (India), Marathi (India), Tamil (India), and Telugu (India).\n\nOther voices are language-specific: Dan (English UK 🇬🇧), Pietro (Italian 🇮🇹), Emma (English US 🇺🇸), Javi (Spanish 🇪🇸), Josh (English US 🇺🇸), and tara (English US 🇺🇸).\nChoose your voice based on your target language for the best results."
+          "question": "What languages do your AI voices support?",
+          "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including:\nArabic (Egyptian),\nEnglish (US),\nFrench (France),\nGerman (Germany),\nSpanish (US),\nHindi (India),\nIndonesian (Indonesia),\nItalian (Italy),\nJapanese (Japan),\nKorean (Korea),\nPortuguese (Brazil),\nRussian (Russia),\nDutch (Netherlands),\nPolish (Poland),\nThai (Thailand),\nTurkish (Turkey),\nVietnamese (Vietnam),\nRomanian (Romania),\nUkrainian (Ukraine),\nBengali (Bangladesh),\nEnglish/Hindi (India),\nMarathi (India),\nTamil (India),\nand Telugu (India).\n\nOther voices are language-specific:\nDan (English UK 🇬🇧),\nPietro (Italian 🇮🇹),\nEmma (English US 🇺🇸),\nJavi (Spanish 🇪🇸),\nJosh (English US 🇺🇸),\nand Tara (English US 🇺🇸).\n\nChoose your voice based on your target language for the most natural results."
+        },
+        {
+          "question": "What languages does voice cloning support?",
+          "answer": "Voice cloning supports the following 23 languages: Arabic,\nDanish,\nGerman,\nGreek,\nEnglish,\nSpanish,\nFinnish,\nFrench,\nHebrew,\nHindi,\nItalian,\nJapanese,\nKorean,\nMalay,\nDutch,\nNorwegian,\nPolish,\nPortuguese,\nRussian,\nSwedish,\nSwahili,\nTurkish,\nand Mandarin Chinese."
         },
         {
           "question": "Do you have an API for developers?",
-          "answer": "It's coming soon! Our API will let developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically with simple API calls."
+          "answer": "It's coming soon! Our API will let developers add voice generation and cloning to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically."
         },
         {
           "question": "Why choose SexyVoice.ai?",
-          "answer": "We offer the best combination of voice quality, ease of use, and affordable pricing. Unlike competitors, we provide professional-grade voices for creators of all sizes. With generous free credits and no contracts, you can start creating amazing voice content right away."
+          "answer": "We combine premium voice quality with simple tools and fair pricing. We combine premium voice quality with simple tools and fair pricing."
         },
         {
           "question": "Is erotica or adult content generation allowed?",
           "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
         },
         {
-          "question": "Can I make a voice speak with a specific accent or style, like British or pirate?",
-          "answer": "Yes! Choose a multilingual voice (for example, Zephyr) and add your instruction in the style box, like: 'Speak with a British accent' or 'Speak like a pirate.' The voice will instantly adapt. You can use this for accents, character voices, or unique speaking styles—experiment with different prompts until you find the perfect fit."
+          "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
+          "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
         }
       ]
     }

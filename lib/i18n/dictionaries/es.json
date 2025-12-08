@@ -107,43 +107,47 @@
       "questions": [
         {
           "question": "¿Cómo funciona la clonación de voz?",
-          "answer": "Nuestra IA analiza tus muestras de voz para aprender sus patrones y características únicas. Con solo segundos de audio, podemos crear una voz digital que suena exactamente como tú. El sistema utiliza IA avanzada para coincidir con tu tono, acento y estilo de habla."
+          "answer": "Nuestra IA analiza tu muestra de voz (10 segundos a 5 minutos) para aprender sus patrones y características únicas. Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
         },
         {
           "question": "¿Puedo clonar mi propia voz?",
-          "answer": "¡Sí! Por razones éticas, necesitas permiso antes de clonar la voz de otra persona. Nos tomamos en serio los derechos de voz."
+          "answer": "¡Sí! Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
         },
         {
           "question": "¿Están seguros mis datos de voz?",
-          "answer": "Sí. Ciframos todos los datos de voz y los almacenamos de forma segura. Tienes control total sobre tus generaciones de audio y puedes eliminarlas en cualquier momento. Nunca compartimos tus datos de voz con terceros sin tu permiso. Tu privacidad es nuestra prioridad."
+          "answer": "Absolutamente. Todas las grabaciones de voz y archivos generados están cifrados y almacenados de forma segura. Cuando clonas una voz, eliminamos la muestra de voz cargada y nadie más puede usarla. Tienes control total sobre los archivos de audio generados y puedes eliminarlos cuando quieras. Nunca compartimos datos de voz sin tu consentimiento."
         },
         {
           "question": "¿Para qué puedo utilizar las voces generadas?",
-          "answer": "Puedes utilizar las voces generadas para podcasts, vídeos, contenido en redes sociales, e-learning, audiolibros, juegos y mucho más. Muchos creadores utilizan nuestras voces para ahorrar tiempo de grabación o para mantener una calidad de audio consistente. Recuerda que nuestros términos prohíben el engaño o la suplantación de identidad."
+          "answer": "Los creadores utilizan nuestras voces para vídeos, podcasts, audiolibros, contenido en redes sociales, juegos, e-learning y más. Es una forma fácil de mantener una calidad de audio consistente. Solo recuerda que nuestros términos prohíben el engaño o la suplantación de identidad."
         },
         {
           "question": "¿Cuántos créditos necesito?",
-          "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 10.000 créditos gratuitos (unos 10 minutos de voz). Nuestro plan Starter incluye 30.000 créditos mensuales, mientras que el Pro ofrece 500.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
+          "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 10.000 créditos gratuitos (alrededor de 10 minutos de voz). Nuestro plan Starter incluye 25.000 créditos mensuales, mientras que Pro ofrece 300.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
         },
         {
-          "question": "¿Qué idiomas soportas?",
-          "answer": "El soporte de idiomas depende de la voz seleccionada al generar el discurso.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat) soportan 24 idiomas incluyendo árabe (egipcio), inglés (EE.UU.), francés (Francia), alemán (Alemania), español (EE.UU.), hindi (India), indonesio (Indonesia), italiano (Italia), japonés (Japón), coreano (Corea), portugués (Brasil), ruso (Rusia), holandés (Países Bajos), polaco (Polonia), tailandés (Tailandia), turco (Turquía), vietnamita (Vietnam), rumano (Rumania), ucraniano (Ucrania), bengalí (Bangladesh), inglés/hindi (India), marathi (India), tamil (India), y telugu (India).\n\nOtras voces son específicas del idioma: Dan (inglés Reino Unido 🇬🇧), Pietro (italiano 🇮🇹), Emma (inglés EE.UU. 🇺🇸), Javi (español 🇪🇸), Josh (inglés EE.UU. 🇺🇸), y Tara (inglés EE.UU. 🇺🇸).\nElige tu voz basándote en tu idioma objetivo para obtener los mejores resultados."
+          "question": "¿Qué idiomas soportan tus voces de IA?",
+          "answer": "El soporte de idiomas depende de la voz seleccionada al generar voz.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat) soportan 24 idiomas incluyendo:\nÁrabe (Egipcio),\nInglés (EE.UU.),\nFrancés (Francia),\nAlemán (Alemania),\nEspañol (EE.UU.),\nHindi (India),\nIndonesio (Indonesia),\nItaliano (Italia),\nJaponés (Japón),\nCoreano (Corea),\nPortugués (Brasil),\nRuso (Rusia),\nHolandés (Países Bajos),\nPolaco (Polonia),\nTailandés (Tailandia),\nTurco (Turquía),\nVietnamita (Vietnam),\nRumano (Rumania),\nUcraniano (Ucrania),\nBengalí (Bangladesh),\nInglés/Hindi (India),\nMarathi (India),\nTamil (India),\ny Telugu (India).\n\nOtras voces son específicas del idioma:\nDan (Inglés Reino Unido 🇬🇧),\nPietro (Italiano 🇮🇹),\nEmma (Inglés EE.UU. 🇺🇸),\nJavi (Español 🇪🇸),\nJosh (Inglés EE.UU. 🇺🇸),\ny Tara (Inglés EE.UU. 🇺🇸).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
+        },
+        {
+          "question": "¿Qué idiomas soporta la clonación de voz?",
+          "answer": "La clonación de voz soporta los siguientes 23 idiomas:\nÁrabe,\nDinamarca,\nAlemán,\nGriego,\nInglés,\nEspañol,\nFinlandés,\nFrancés,\nHebreo,\nHindi,\nItaliano,\nJaponés,\nCoreano,\nMalayo,\nHolandés,\nNoruego,\nPolaco,\nPortugués,\nRuso,\nSueco,\nSuajili,\nTurco,\ny Chino Mandarín."
         },
         {
           "question": "¿Tenéis una API para desarrolladores?",
-          "answer": "¡Está en camino! Nuestra API permitirá a los desarrolladores añadir generación de voz a aplicaciones, sitios web y juegos. Podrás crear voz bajo demanda y gestionar modelos de voz de forma programática con simples llamadas a la API."
+          "answer": "¡Pronto estará disponible! Nuestra API permitirá a los desarrolladores añadir generación y clonación de voz a apps, sitios web y juegos. Podrás crear voz bajo demanda y gestionar modelos de voz de forma programática."
         },
         {
           "question": "¿Por qué elegir SexyVoice.ai?",
-          "answer": "Ofrecemos la mejor combinación de calidad de voz, facilidad de uso y precios asequibles. A diferencia de la competencia, proporcionamos voces de calidad profesional para creadores de todos los niveles. Con generosos créditos gratuitos y sin contratos, puedes empezar a crear contenido de voz increíble de inmediato."
+          "answer": "Combinamos calidad de voz premium con herramientas simples y precios justos. Combinamos calidad de voz premium con herramientas simples y precios justos."
         },
         {
           "question": "¿Está permitida la generación de contenido erótico o para adultos?",
-          "answer": "Sí, permitimos la generación de contenido para adultos y erótico en nuestra plataforma. Creemos en la libertad creativa manteniendo un uso responsable. Sin embargo, todo el contenido debe cumplir con nuestros términos de servicio y las leyes aplicables. Prohibimos el contenido que involucre menores, escenarios no consensuales o actividades ilegales."
+          "answer": "Sí, permitimos la generación de contenido para adultos y erótico en nuestra plataforma. Creemos en la libertad creativa manteniendo un uso responsable. Sin embargo, todo el contenido debe cumplir con nuestros términos de servicio y las leyes aplicables. Prohibimos contenido que involucre menores, escenarios no consensuales o actividades ilegales."
         },
         {
-          "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o de pirata?",
-          "answer": "¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) y añade tu instrucción en el cuadro de estilo, por ejemplo: 'Habla con acento británico' o 'Habla como un pirata'. La voz se adaptará al instante. Puedes usar esto para acentos, voces de personajes o estilos de habla únicos—experimenta con distintas indicaciones hasta que encuentres el ajuste perfecto."
+          "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
+          "answer": "¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) e ingresa el estilo que deseas—\"acento británico\", \"voz de pirata\", \"tono seductor\", etc. El modelo se adapta al instante, y puedes refinarlo con más instrucciones."
         }
       ]
     }
