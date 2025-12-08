@@ -1,8 +1,8 @@
+import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import * as queries from '@/lib/supabase/queries';
 import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
@@ -11,12 +11,18 @@ import {
   mockRedisKeys,
   mockRedisSet,
   mockReplicateRun,
+  resetMockGoogleGenAIFactory,
   server,
+  setMockGoogleGenAIFactory,
 } from './setup';
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    resetMockGoogleGenAIFactory();
   });
 
   describe('Input Validation', () => {
@@ -153,6 +159,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Credit System', () => {
     it('should return 402 when user has insufficient credits for Replicate voice', async () => {
+      const queries = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
 
@@ -281,10 +288,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
-      mockBlobPut.mockResolvedValueOnce({
-        url: 'https://blob.vercel-storage.com',
-      });
-
+      const { saveAudioFile } = await import('@/lib/supabase/queries');
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -305,7 +309,7 @@ describe('Generate Voice API Route', () => {
       vi.doMock('replicate', () => {
         return {
           default: class Replicate {
-            async run(model: string, options: any, onProgress?: any) {
+            run(_model: string, _options: any, onProgress?: any) {
               // Simulate progress callback
               if (onProgress) {
                 onProgress({ id: 'test-prediction-id', status: 'succeeded' });
@@ -323,6 +327,23 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 48,
+        duration: '-1',
+        filename: 'audio/tara-e5b92e4b.wav',
+        isPublic: false,
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+        usage: undefined,
+        predictionId: undefined,
+        text: 'Hello world',
+        url: 'https://blob.vercel-storage.com/audio/tara-e5b92e4b.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-tara-id',
+      });
+
+      expect(json.url).toContain('blob.vercel-storage.com');
     });
 
     it('should throw error when Replicate output contains error property', async () => {
@@ -349,6 +370,9 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Google Gemini', () => {
     it('should successfully generate voice using Google Gemini', async () => {
+      const { reduceCredits, saveAudioFile } = await import(
+        '@/lib/supabase/queries'
+      );
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -366,53 +390,74 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsRemaining).toBeDefined();
 
       // Verify credits were consumed
-      expect(queries.reduceCredits).toHaveBeenCalledOnce();
-      expect(queries.saveAudioFile).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(saveAudioFile).toHaveBeenCalledOnce();
       expect(mockBlobPut).toHaveBeenCalledOnce();
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 48,
+        duration: '-1',
+        filename: 'audio/poe-9de7f9fe.wav',
+        isPublic: false,
+        model: 'gemini-2.5-pro-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+        },
+        predictionId: undefined,
+        text: 'Hello world',
+        url: 'https://blob.vercel-storage.com/audio/poe-9de7f9fe.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-poe-id',
+      });
+
+      expect(json.url).toContain('blob.vercel-storage.com');
     });
 
     it('should fallback to flash model when pro model fails', async () => {
       const { saveAudioFile } = await import('@/lib/supabase/queries');
-      // We need to mock the GoogleGenAI SDK directly to throw an error on first call
-      const { GoogleGenAI } = await import('@google/genai');
 
       let callCount = 0;
 
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockImplementation(() => {
-                callCount++;
-                if (callCount === 1) {
-                  // First call (pro model) should throw
-                  const error = new Error('Pro model failed');
-                  throw error;
-                }
-                // Second call (flash model) succeeds
-                const mockAudioData =
-                  'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-                return {
-                  candidates: [
-                    {
-                      content: {
-                        parts: [
-                          {
-                            inlineData: {
-                              data: mockAudioData,
-                              mimeType: 'audio/wav',
-                            },
-                          },
-                        ],
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
+            callCount++;
+            if (callCount === 1) {
+              // First call (pro model) should throw
+              const error = new Error('Pro model failed');
+              throw error;
+            }
+            // Second call (flash model) succeeds
+            const mockAudioData =
+              'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+            return {
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          data: mockAudioData,
+                          mimeType: 'audio/wav',
+                        },
                       },
-                      finishReason: 'STOP',
-                    },
-                  ],
-                };
-              }),
-            },
-          }) as any,
-      );
+                    ],
+                  },
+                  finishReason: 'STOP',
+                },
+              ],
+              usageMetadata: {
+                promptTokenCount: 11,
+                candidatesTokenCount: 12,
+                totalTokenCount: 23,
+              },
+            } as GenerateContentResponse;
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -430,12 +475,17 @@ describe('Generate Voice API Route', () => {
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 48,
         duration: '-1',
-        filename: 'audio/poe-01020304.wav',
+        filename: 'audio/poe-9de7f9fe.wav',
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+        },
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://blob.vercel-storage.com/test-audio-xyz.wav',
+        url: 'https://blob.vercel-storage.com/audio/poe-9de7f9fe.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -444,48 +494,43 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should handle Google API quota exceeded error', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Google API quota error - should fail on both pro and flash models
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockImplementation(async () => {
-                // Both pro and flash models will throw the same quota error
-                const apiError: GoogleApiError = {
-                  code: 429,
-                  message:
-                    'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
-                  status: 'RESOURCE_EXHAUSTED',
-                  details: [
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            // Both pro and flash models will throw the same quota error
+            const apiError: GoogleApiError = {
+              code: 429,
+              message:
+                'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
+              status: 'RESOURCE_EXHAUSTED',
+              details: [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
+                  violations: [
+                    // @ts-expect-error - taken from logs
                     {
-                      '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
-                      violations: [
-                        // @ts-expect-error - taken from logs
-                        {
-                          quotaMetric:
-                            'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
-                          quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
-                        },
-                      ],
-                    },
-                    {
-                      '@type': 'type.googleapis.com/google.rpc.Help',
-                      links: [
-                        {
-                          description: 'Learn more about Gemini API quotas',
-                          url: 'https://ai.google.dev/gemini-api/docs/rate-limits',
-                        },
-                      ],
+                      quotaMetric:
+                        'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
+                      quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
                     },
                   ],
-                };
-                throw new Error(JSON.stringify({ error: apiError }));
-              }),
-            },
-          }) as any,
-      );
+                },
+                {
+                  '@type': 'type.googleapis.com/google.rpc.Help',
+                  links: [
+                    {
+                      description: 'Learn more about Gemini API quotas',
+                      url: 'https://ai.google.dev/gemini-api/docs/rate-limits',
+                    },
+                  ],
+                },
+              ],
+            };
+            throw new Error(JSON.stringify({ error: apiError }));
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -561,32 +606,27 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should throw error when Gemini response has no data', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Gemini to return response without data (both pro and flash will fail)
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockResolvedValue({
-                candidates: [
-                  {
-                    content: {
-                      parts: [
-                        {
-                          inlineData: {
-                            // Missing data field
-                            mimeType: 'audio/wav',
-                          },
-                        },
-                      ],
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        // Missing data field
+                        mimeType: 'audio/wav',
+                      },
                     },
-                  },
-                ],
-              }),
-            },
-          }) as any,
-      );
+                  ],
+                },
+              },
+            ],
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -606,32 +646,27 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should throw error when Gemini response has no mimeType', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Gemini to return response without mimeType (both pro and flash will fail)
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockResolvedValue({
-                candidates: [
-                  {
-                    content: {
-                      parts: [
-                        {
-                          inlineData: {
-                            data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
-                            // Missing mimeType field
-                          },
-                        },
-                      ],
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                        // Missing mimeType field
+                      },
                     },
-                  },
-                ],
-              }),
-            },
-          }) as unknown as any,
-      );
+                  ],
+                },
+              },
+            ],
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -651,26 +686,21 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockResolvedValue({
-                candidates: [
-                  {
-                    finishReason: 'PROHIBITED_CONTENT',
-                    content: {
-                      parts: [],
-                    },
-                  },
-                ],
-              }),
-            },
-          }) as unknown as any,
-      );
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                finishReason: 'PROHIBITED_CONTENT',
+                content: {
+                  parts: [],
+                },
+              },
+            ],
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',

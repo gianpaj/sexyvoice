@@ -17,16 +17,23 @@ import {
   SidebarMenuItem,
   SidebarMenu as SidebarMenuUI,
 } from '@/components/ui/sidebar';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export function SidebarMenu({ lang }: { lang: Locale }) {
+export function SidebarMenu({
+  lang,
+  dict,
+}: {
+  lang: Locale;
+  dict: (typeof langDict)['sidebar'];
+}) {
   // Safely access the sidebar context without throwing an error
   const sidebarContext = useContext(SidebarContext);
   const isMobile = sidebarContext?.isMobile;
   const toggleSidebar = sidebarContext?.toggleSidebar;
 
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -40,7 +47,7 @@ export function SidebarMenu({ lang }: { lang: Locale }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton>
-              <User2 /> Profile
+              <User2 /> {dict.profile}
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -52,14 +59,16 @@ export function SidebarMenu({ lang }: { lang: Locale }) {
               <Link
                 href={`/${lang}/dashboard/profile`}
                 onClick={() => {
-                  isMobile && toggleSidebar?.();
+                  if (isMobile) {
+                    toggleSidebar?.();
+                  }
                 }}
               >
-                Profile
+                {dict.profile}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>
-              <span>Sign out</span>
+              <span>{dict.signOut}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

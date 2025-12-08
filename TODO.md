@@ -5,11 +5,19 @@
   - listened counter?
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
+- add audio clones demos on dashboard
+- add audio clones demos on landing page
+  - Bruce Lee
+  - Marilyn Monroe
+  - Sophia Loren
+- add multilingual voice cloning
 - Get stats of `audio_files`. language, style. If using LLM, use batch mode.
+- Implement `fakefilter` or `mailchecker` npm packages to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
+  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
 - Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
+- RESEARCH: AudioWaveform React component. can it compute the wave form in the browser in a small package and computing resources?
 - Translate pages in Dashboard:
   - Generate
-  - Clone
   - History
   - Credits (table headers)
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
@@ -22,22 +30,7 @@
 - Add a Share page for individual generated audio files.
   - Allow user to toggle Sharing profile page in Settings.
   - Allow user to upload profile picture? – after `r2` branch is merged
-- Crist and Posthug: add `isPaidUser` from `r2` branch
-- Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
-  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
----
-- Deploy model
-  - FR: pierre, amelie, marie
-    chuckle, cough, gasp, groan, laugh, sigh, sniffle, whimper, yawn
-- Deploy model
-  - DE: jana, thomas, max
-    chuckle, cough, gasp, groan, laugh, sigh, sniffle, yawn
-- Korean: 유나, 준서
-- Mandarin: 长乐, 白芷
-
-Ciao, mi chiamo Pietro, <laugh> , e sono un modello di generazione vocale che può sembrare una persona.
-
-Ciao, mi chiamo Giulia, <gemito> , e sono un modello di generazione vocale che può sembrare una persona.
+- Crisp and Posthug: add `isPaidUser` from `r2` branch
 
 Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può sembrare una persona.
 
@@ -56,25 +49,21 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ## Features
 
-- Demo pre-cloned voices
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>
 <https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
-- History page. Add button to regenerate audio -> navigate to /generate page with text_content prefilled
 
 ## Tests
 
 - Setup Playwright for end-to-end testing.
 - Uses a test DB (in memory)
-- Setup Github actions
 
 ## AI server
 
-- Monitor Replicate API calls. Which user is making more calls.
+- Monitor third-party API calls. Which users are making more calls.
 
 ## Security
 
 - Implement rate limiting to prevent abuse.
-- Block temporary email addresses.
 - Add Cloudflare Captcha protection.
 - Add hCaptcha to Login and Registration forms <https://docs.hcaptcha.com>
 
@@ -83,10 +72,6 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 - add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
 - Sentry monitoring with Posthog error linking <https://posthog.com/docs/libraries/node#sentry-integration>
 
-##  Job scheduler
-
-- upstash QStash - https://upstash.com/docs/qstash/quickstarts/vercel-nextjs
-
 ## Documentation / Knowledge base site
 
-- https://nextra.site
+- <https://nextra.site>

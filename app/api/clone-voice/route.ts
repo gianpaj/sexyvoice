@@ -1,8 +1,8 @@
-import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { head, put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
+import Replicate, { type Prediction } from 'replicate';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import { inngest } from '@/lib/inngest/client';
@@ -28,12 +28,11 @@ const ALLOWED_TYPES = [
   'audio/x-m4a',
 ];
 const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
-const MIN_DURATION = 5; // seconds
+const MIN_DURATION = 10; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
 
-async function generateHash(text: string, audioFilename: string) {
+async function generateHash(combinedString: string) {
   const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${audioFilename}`;
   const data = textEncoder.encode(combinedString);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -66,6 +65,9 @@ export async function POST(request: Request) {
   let text = '';
   let userAudioFile: File | null = null;
   let audioPromptUrl = '';
+  let locale = '';
+  let replicateResponse: Prediction | undefined;
+  let modelUsed = '';
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
     // Determine mode based on form data
     const textValue = formData.get('text');
     const file = formData.get('file');
+    locale = formData.get('locale') as string;
 
     text = typeof textValue === 'string' ? textValue : '';
     userAudioFile = file instanceof File ? file : null;
@@ -149,58 +152,6 @@ export async function POST(request: Request) {
     //   allowOverwrite: false,
     // });
 
-    // const MODEL = 'speech-02-turbo';
-    // const input = {
-    //   model: MODEL,
-    //   accuracy: 0.7,
-    //   voice_file: blobResult.url,
-    //   need_noise_reduction: false,
-    //   need_volume_normalization: false,
-    // };
-
-    // $3.00 per output
-    // const output = await replicate.run('minimax/voice-cloning', { input });
-
-    // Store voice profile in database
-    // const { error } = await supabase.from('voices').insert([
-    //   {
-    //     name: voiceName,
-    //     language,
-    //     is_public: false,
-    //     is_nsfw: false,
-    //     type: 'cloned',
-    //     model: `minimax/voice-cloning_${MODEL}`,
-    //     user_id: user.id,
-    //     voice_url: blobResult.url,
-    //   },
-    // ]);
-
-    // if (error) {
-    //   captureException({
-    //     error: 'Failed to save voice profile',
-    //     errorData: error,
-    //   });
-    //   return APIErrorResponse('Failed to save voice profile', 500);
-    // }
-
-    // await sendPosthogEvent({
-    //   userId: user.id,
-    //   event: 'voice-cloned',
-    //   text: '',
-    //   audioPromptUrl: blobResult.url,
-    //   creditUsed: 0, // Voice cloning doesn't use credits, it's a one-time setup
-    //   model: `minimax/voice-cloning_${MODEL}`,
-    // });
-
-    // return NextResponse.json(
-    //   {
-    //     message: 'Voice cloned successfully',
-    //     voiceUrl: blobResult.url,
-    //     replicateOutput: output,
-    //   },
-    //   { status: 200 },
-    // );
-
     // Handle text-to-speech generation mode
     const currentAmount = await getCredits(user.id);
 
@@ -242,7 +193,7 @@ export async function POST(request: Request) {
     }
 
     // Generate hash for caching
-    const hash = await generateHash(text, userAudioFilename);
+    const hash = await generateHash(`${locale}-${text}-${blobUrl}`);
     const abortController = new AbortController();
     const path = `clone-voice/${hash}`;
     const filename = `${path}.wav`;
@@ -259,46 +210,106 @@ export async function POST(request: Request) {
         userId: user.id,
         event: 'clone-voice',
         text,
+        locale,
         audioPromptUrl,
         creditUsed: 0,
-        model: 'chatterbox-tts',
+        model: 'chatterbox-cached',
       });
       return NextResponse.json({ url: cachedResult }, { status: 200 });
     }
 
-    // Generate TTS with cloned voice using fal.ai
-    const input = {
-      text,
-      // TODO: accept these parameters
-      cfg_weight: 0.5,
-      temperature: 0.8,
-      exaggeration: 0.5,
-      audio_url: audioPromptUrl,
+    // Generate TTS with cloned voice using Replicate
+    const replicate = new Replicate();
+    const onProgress = (prediction: Prediction) => {
+      replicateResponse = prediction;
     };
 
-    const result = await fal.subscribe('fal-ai/chatterbox/text-to-speech', {
-      input,
-      logs: false,
-      // onQueueUpdate: (update) => {
-      //   if (update.status === 'IN_PROGRESS') {
-      //     update.logs?.map((log) => log.message).forEach(console.log);
-      //   }
-      // },
-      abortSignal: request.signal,
-    });
+    let model: `${string}/${string}`;
+    let input: Record<string, unknown>;
 
-    const falData = result.data as {
-      audio: {
-        url: string;
-        content_type: string;
-        file_name: string;
-        file_size: number;
+    if (locale === 'en') {
+      // Use chatterbox for English
+      model = 'resemble-ai/chatterbox';
+      input = {
+        seed: 0,
+        prompt: text,
+        cfg_weight: 0.5,
+        temperature: 0.8,
+        exaggeration: 0.5,
+        reference_audio: audioPromptUrl,
       };
-    };
-    const requestId = result.requestId;
+    } else {
+      // Use chatterbox-multilingual for non-English
+      model =
+        'resemble-ai/chatterbox-multilingual:9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c';
+      input = {
+        seed: 0,
+        text,
+        language: locale,
+        cfg_weight: 0.5,
+        temperature: 0.8,
+        exaggeration: 0.5,
+        reference_audio: audioPromptUrl,
+      };
+    }
+
+    const output = (await replicate.run(
+      model,
+      {
+        input,
+        // signal
+      },
+      onProgress,
+    )) as string | { error?: string };
+
+    if (typeof output === 'object' && 'error' in output) {
+      const errorObj = {
+        text,
+        locale,
+        audioPromptUrl,
+        model,
+        errorData: output.error,
+      };
+      captureException({
+        error: 'Voice cloning failed',
+        ...errorObj,
+      });
+      console.error(errorObj);
+      throw new Error(
+        output.error || 'Voice cloning failed, please try again',
+        {
+          cause: 'REPLICATE_ERROR',
+        },
+      );
+    }
+
+    const requestId = replicateResponse?.id || 'unknown';
+    modelUsed = model.split(':')[0]; // Get model name without version hash
 
     // Fetch the audio file from the URL and upload to blob storage
-    const audioResponse = await fetch(falData.audio.url);
+    const audioResponse = await fetch(output as string);
+
+    if (!audioResponse.ok) {
+      const errorObj = {
+        text,
+        locale,
+        audioPromptUrl,
+        model,
+        errorData: `Failed to fetch audio from URL: ${audioResponse.status} ${audioResponse.statusText}`,
+      };
+      captureException({
+        error: 'Failed to fetch generated audio',
+        ...errorObj,
+      });
+      console.error(errorObj);
+      throw new Error(
+        `Failed to fetch generated audio: ${audioResponse.status} ${audioResponse.statusText}`,
+        {
+          cause: 'AUDIO_FETCH_ERROR',
+        },
+      );
+    }
+
     const audioBuffer = await audioResponse.arrayBuffer();
 
     const blobResult = await put(filename, audioBuffer, {
@@ -318,12 +329,15 @@ export async function POST(request: Request) {
         filename,
         text,
         url: blobResult.url,
-        model: 'chatterbox-tts',
+        model: modelUsed,
         predictionId: requestId,
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
-        duration: duration.toString(),
+        duration: duration.toFixed(3),
         credits_used: estimate,
+        usage: {
+          locale,
+        },
       });
 
       if (audioFileDBResult.error) {
@@ -345,9 +359,10 @@ export async function POST(request: Request) {
         event: 'clone-voice',
         predictionId: requestId,
         text,
+        locale,
         audioPromptUrl,
         creditUsed: estimate,
-        model: 'chatterbox-tts',
+        model: modelUsed,
       });
 
       // delete the audio file uploaded
@@ -403,6 +418,7 @@ async function sendPosthogEvent({
   userId,
   event,
   text,
+  locale,
   audioPromptUrl,
   predictionId,
   creditUsed,
@@ -411,6 +427,7 @@ async function sendPosthogEvent({
   userId: string;
   event: string;
   text: string;
+  locale: string;
   audioPromptUrl: string;
   predictionId?: string;
   creditUsed: number;
@@ -424,12 +441,14 @@ async function sendPosthogEvent({
       predictionId,
       model,
       text,
+      locale,
       audioPromptUrl,
       credits_used: creditUsed,
     },
   });
   await posthog.shutdown();
 }
+
 const sanitizeFilename = (filename: string) => {
   return filename
     .normalize('NFD')

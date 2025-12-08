@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -20,7 +18,7 @@ export default async function GeneratePage(props: {
     error,
   } = await supabase.auth.getUser();
   if (!user || error) {
-    redirect(`/${lang}/login`);
+    return <div>Not logged in</div>;
   }
 
   // Get user's credits
@@ -65,18 +63,18 @@ export default async function GeneratePage(props: {
 
       <div className="lg:hidden">
         <CreditsSection
-          credit_transactions={credit_transactions || []}
-          credits={credits.amount || 0}
+          creditTransactions={credit_transactions || []}
           dict={dict.creditsSection}
           doNotToggleSidebar
           lang={lang}
+          userId={user.id}
         />
       </div>
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
           dict={dict.generate}
-          hasEnoughCredits={credits.amount >= 1}
+          hasEnoughCredits={credits.amount >= 10}
           locale={lang}
           publicVoices={publicVoices}
         />

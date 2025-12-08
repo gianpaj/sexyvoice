@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
+import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import {
   Card,
   CardContent,
@@ -27,6 +27,7 @@ import { getEmotionTags } from '@/lib/ai';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter } from '@/lib/utils';
+import { AudioPlayerWithContext } from './audio-player-with-context';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import {
@@ -63,7 +64,6 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  // const textIsOverLimit = text.length > charactersLimit;
   return (
     <Card>
       <CardHeader className="p-4 pt-6 sm:p-6 sm:pb-2">
@@ -113,39 +113,46 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
-        {selectedVoice?.sample_url && (
-          <div className="flex items-center justify-start gap-2 py-2 lg:w-2/3">
-            <AudioPlayer url={selectedVoice.sample_url} />
-            <div className="flex items-center gap-3">
-              <p className="text-muted-foreground text-sm">
-                <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
-                prompt: <i>{selectedVoice.sample_prompt}</i>
-              </p>
-              {getEmotionTags(selectedVoice.language) && (
-                <TooltipProvider>
-                  <Tooltip delayDuration={100} supportMobileTap>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-auto w-auto p-1"
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <Info className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        <strong>{dict.voiceSelector.toolTipEmotionTags}</strong>
-                        <br />
-                        {getEmotionTags(selectedVoice.language)}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+        <AudioProvider>
+          {selectedVoice?.sample_url && (
+            <div className="flex items-center justify-start gap-2 py-2 lg:w-2/3">
+              <AudioPlayerWithContext
+                playAudioTitle={dict.playAudio}
+                url={selectedVoice.sample_url}
+              />
+              <div className="flex items-center gap-3">
+                <p className="text-muted-foreground text-sm">
+                  <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
+                  prompt: <i>{selectedVoice.sample_prompt}</i>
+                </p>
+                {getEmotionTags(selectedVoice.language) && (
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100} supportMobileTap>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="h-auto w-auto p-1"
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          <strong>
+                            {dict.voiceSelector.toolTipEmotionTags}
+                          </strong>
+                          <br />
+                          {getEmotionTags(selectedVoice.language)}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </AudioProvider>
         {isGeminiVoice && (
           <div className="relative">
             <Textarea

@@ -50,7 +50,7 @@ async function getPostFromParams(params: PostProps['params']) {
   const post = allPosts.find((post) => post._raw.flattenedPath === slug);
 
   if (!post) {
-    null;
+    return null;
   }
 
   return post;
@@ -127,7 +127,7 @@ const PostLayout = async (props: {
   const blackFridayDict = (await getDictionary(lang, 'promos'))
     .blackFridayBanner;
 
-  if (post === undefined) {
+  if (!post) {
     return <div>Post not found ({params.slug})</div>;
   }
 

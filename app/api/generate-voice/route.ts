@@ -150,7 +150,16 @@ export async function POST(request: Request) {
     const path = `audio/${voice}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
-      logger.warn('Request aborted by client', { hash });
+      logger.info('Request aborted by client', {
+        user: {
+          id: user?.id,
+        },
+        extra: {
+          hash,
+          voice,
+          text,
+        },
+      });
       abortController.abort();
     });
 
@@ -170,6 +179,7 @@ export async function POST(request: Request) {
         creditUsed: 0,
         model: voiceObj.model,
       });
+
       // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
     }
@@ -189,7 +199,7 @@ export async function POST(request: Request) {
 
     let replicateResponse: Prediction | undefined;
     let genAIResponse: GenerateContentResponse | null;
-    let modelUsed = voiceObj.model;
+    let modelUsed = '';
     let blobResult: any;
 
     if (isGeminiVoice) {
@@ -215,7 +225,8 @@ export async function POST(request: Request) {
         ],
       };
       try {
-        modelUsed = 'gemini-2.5-pro-preview-tts';
+        modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text }] }],
@@ -223,6 +234,13 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.warn(error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.info('Gemini voice generation aborted');
+          return NextResponse.json(
+            { error: 'Request aborted' },
+            { status: 499 },
+          );
+        }
         logger.warn(
           `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
           {
@@ -230,7 +248,7 @@ export async function POST(request: Request) {
             originalModel: modelUsed,
           },
         );
-        modelUsed = 'gemini-2.5-flash-preview-tts';
+        modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text }] }],
@@ -305,6 +323,7 @@ export async function POST(request: Request) {
       });
     } else {
       // uses REPLICATE_API_TOKEN
+      modelUsed = voiceObj.model;
       const replicate = new Replicate();
       const onProgress = (prediction: Prediction) => {
         replicateResponse = prediction;
@@ -361,6 +380,7 @@ export async function POST(request: Request) {
         genAIResponse,
         replicateResponse,
       );
+
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
@@ -408,6 +428,10 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.info('Gemini voice generation aborted');
+      return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
+    }
     const errorObj = {
       text,
       voice,

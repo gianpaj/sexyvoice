@@ -1,13 +1,9 @@
 'use client';
 
-import type { User } from '@supabase/supabase-js';
-import { Crisp } from 'crisp-sdk-web';
 import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usePostHog } from 'posthog-js/react';
-import { useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
@@ -29,111 +25,47 @@ import {
 } from '@/components/ui/sidebar';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/client';
 
 interface DashboardUIProps {
   children: React.ReactNode;
+  creditTransactions: Pick<CreditTransaction, 'amount'>[];
+  userId: string;
   lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
+  dict: typeof langDict;
   blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
 }
 
 export default function DashboardUI({
   children,
+  creditTransactions,
+  userId,
   lang,
   dict,
   blackFridayDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
-  const supabase = createClient();
-
-  const [credit_transactions, setCreditTransactions] = useState<
-    CreditTransaction[] | null
-  >([]);
-  const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
-
-  const posthog = usePostHog();
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: credits state dependency
-  useEffect(() => {
-    const getData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) throw new Error('User not found');
-
-      // Get user's credits
-      const { data: creditsData } = await supabase
-        .from('credits')
-        .select('amount')
-        .eq('user_id', user?.id)
-        .single();
-      setCredits(creditsData);
-      const { data: credit_transactions } = await supabase
-        .from('credit_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      setCreditTransactions(credit_transactions);
-      return { user, creditsData };
-    };
-
-    const sendUserAnalyticsData = async (
-      user: User,
-      creditsData: Pick<Credit, 'amount'> | null | undefined,
-    ) => {
-      posthog.identify(user.id, {
-        email: user.email,
-        name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft: creditsData?.amount || 0,
-      });
-      if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-        Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-          locale: lang,
-        });
-        user.email && Crisp.user.setEmail(user.email);
-        const nickname =
-          user.user_metadata.full_name || user.user_metadata.username;
-        if (nickname) {
-          Crisp.user.setNickname(nickname);
-        }
-        Crisp.session.setData({
-          user_id: user.id,
-          creditsLeft: creditsData?.amount || 0,
-          // plan
-        });
-      }
-    };
-
-    getData()
-      .then(({ user, creditsData }) => {
-        sendUserAnalyticsData(user, creditsData);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize dashboard layout:', error);
-      });
-  }, []);
 
   const navigation = [
     {
-      name: 'Generate',
+      name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
     {
-      name: 'Clone',
+      name: dict.pages['/dashboard/clone'],
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
       current: pathname === `/${lang}/dashboard/clone`,
     },
     {
-      name: 'History',
+      name: dict.pages['/dashboard/history'],
       href: `/${lang}/dashboard/history`,
       icon: FileClock,
       current: pathname === `/${lang}/dashboard/history`,
     },
     {
-      name: 'Credits',
+      name: dict.pages['/dashboard/credits'],
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
@@ -191,13 +123,13 @@ export default function DashboardUI({
 
             <SidebarFooter>
               <CreditsSection
-                credit_transactions={credit_transactions || []}
-                credits={credits?.amount || 0}
-                dict={dict}
+                creditTransactions={creditTransactions}
+                dict={dict.creditsSection}
                 lang={lang}
+                userId={userId}
               />
 
-              <SidebarMenuCustom lang={lang} />
+              <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
             </SidebarFooter>
           </Sidebar>
 

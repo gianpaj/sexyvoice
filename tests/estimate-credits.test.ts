@@ -58,6 +58,7 @@ describe('Estimate Credits API Route', () => {
   });
 
   it('returns 404 when voice is not found', async () => {
+    // @ts-expect-error
     vi.mocked(queries.getVoiceIdByName).mockResolvedValueOnce(null);
 
     const request = new Request('http://localhost/api/estimate-credits', {

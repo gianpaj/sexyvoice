@@ -9,7 +9,10 @@ import { estimateCreditsFromTokens } from '@/lib/utils';
 export async function POST(request: Request) {
   try {
     if (request.body === null) {
-      return NextResponse.json({ error: 'Request body is empty' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Request body is empty' },
+        { status: 400 },
+      );
     }
 
     const body = await request.json();
@@ -73,7 +76,11 @@ export async function POST(request: Request) {
     });
 
     const totalTokens = tokenResponse.totalTokens ?? 0;
-    const credits = estimateCreditsFromTokens(totalTokens, voice, voiceObj.model);
+    const credits = estimateCreditsFromTokens(
+      totalTokens,
+      voice,
+      voiceObj.model,
+    );
 
     return NextResponse.json({ tokens: totalTokens, credits });
   } catch (error) {
