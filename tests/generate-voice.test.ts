@@ -3,7 +3,6 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import * as queries from '@/lib/supabase/queries';
 import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
@@ -160,6 +159,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Credit System', () => {
     it('should return 402 when user has insufficient credits for Replicate voice', async () => {
+      const queries = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
 
@@ -370,7 +370,9 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Google Gemini', () => {
     it('should successfully generate voice using Google Gemini', async () => {
-      const { saveAudioFile } = await import('@/lib/supabase/queries');
+      const { reduceCredits, saveAudioFile } = await import(
+        '@/lib/supabase/queries'
+      );
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -388,8 +390,8 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsRemaining).toBeDefined();
 
       // Verify credits were consumed
-      expect(queries.reduceCredits).toHaveBeenCalledOnce();
-      expect(queries.saveAudioFile).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(saveAudioFile).toHaveBeenCalledOnce();
       expect(mockBlobPut).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
@@ -421,6 +423,7 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({
         models: {
           generateContent: vi.fn().mockImplementation(() => {
+            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
             callCount++;
             if (callCount === 1) {
               // First call (pro model) should throw

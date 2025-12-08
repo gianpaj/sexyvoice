@@ -87,10 +87,3 @@ export async function clearRedis(): Promise<void> {
     await redisClient.flushall();
   }
 }
-
-/**
- * Gets the current test Redis client instance
- */
-export function getTestRedisClient(): Redis | null {
-  return redisClient;
-}
