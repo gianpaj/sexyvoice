@@ -175,7 +175,6 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:ui` - Run tests with UI interface
 - `pnpm test:coverage` - Generate test coverage report
-- `pnpm test:legacy` - Run legacy tests with tsx (lib/utils.test.ts)
 
 ### Content & Data
 - `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)

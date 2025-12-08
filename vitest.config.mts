@@ -28,11 +28,11 @@ export default defineConfig({
     },
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/*.test.ts'],
-    // exclude: ['lib/utils.test.ts'],
     coverage: {
       provider: 'v8',
       include: [
-        // app/api/clone-voice/route.ts
+        'lib/utils.ts',
+        'app/api/clone-voice/*.ts',
         'app/api/generate-voice/*.ts',
         'app/api/stripe/webhook/route.ts',
       ],

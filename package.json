@@ -8,7 +8,6 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:legacy": "tsx --test lib/utils.test.ts",
     "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && pnpm run format:write",
     "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
     "build:content": "contentlayer2 build",
@@ -96,7 +95,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
-    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/coverage-v8": "4.0.15",
     "autoprefixer": "^10.4.17",
     "dotenv": "^16.5.0",
     "husky": "^9.1.7",
@@ -109,7 +108,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
     "ultracite": "6.3.9",
-    "vitest": "^3.2.4"
+    "vitest": "4.0.15"
   },
   "browserslist": [
     "chrome >0 and last 2.5 years",

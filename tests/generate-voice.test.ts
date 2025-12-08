@@ -1,6 +1,6 @@
 import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
 import * as queries from '@/lib/supabase/queries';
@@ -12,12 +12,18 @@ import {
   mockRedisKeys,
   mockRedisSet,
   mockReplicateRun,
+  resetMockGoogleGenAIFactory,
   server,
+  setMockGoogleGenAIFactory,
 } from './setup';
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    resetMockGoogleGenAIFactory();
   });
 
   describe('Input Validation', () => {
@@ -409,51 +415,46 @@ describe('Generate Voice API Route', () => {
 
     it('should fallback to flash model when pro model fails', async () => {
       const { saveAudioFile } = await import('@/lib/supabase/queries');
-      // We need to mock the GoogleGenAI SDK directly to throw an error on first call
-      const { GoogleGenAI } = await import('@google/genai');
 
       let callCount = 0;
 
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockImplementation(() => {
-                callCount++;
-                if (callCount === 1) {
-                  // First call (pro model) should throw
-                  const error = new Error('Pro model failed');
-                  throw error;
-                }
-                // Second call (flash model) succeeds
-                const mockAudioData =
-                  'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-                return {
-                  candidates: [
-                    {
-                      content: {
-                        parts: [
-                          {
-                            inlineData: {
-                              data: mockAudioData,
-                              mimeType: 'audio/wav',
-                            },
-                          },
-                        ],
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            callCount++;
+            if (callCount === 1) {
+              // First call (pro model) should throw
+              const error = new Error('Pro model failed');
+              throw error;
+            }
+            // Second call (flash model) succeeds
+            const mockAudioData =
+              'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+            return {
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          data: mockAudioData,
+                          mimeType: 'audio/wav',
+                        },
                       },
-                      finishReason: 'STOP',
-                    },
-                  ],
-                  usageMetadata: {
-                    promptTokenCount: 11,
-                    candidatesTokenCount: 12,
-                    totalTokenCount: 23,
+                    ],
                   },
-                } as GenerateContentResponse;
-              }),
-            },
-          }) as any,
-      );
+                  finishReason: 'STOP',
+                },
+              ],
+              usageMetadata: {
+                promptTokenCount: 11,
+                candidatesTokenCount: 12,
+                totalTokenCount: 23,
+              },
+            } as GenerateContentResponse;
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -490,48 +491,43 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should handle Google API quota exceeded error', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Google API quota error - should fail on both pro and flash models
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockImplementation(() => {
-                // Both pro and flash models will throw the same quota error
-                const apiError: GoogleApiError = {
-                  code: 429,
-                  message:
-                    'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
-                  status: 'RESOURCE_EXHAUSTED',
-                  details: [
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            // Both pro and flash models will throw the same quota error
+            const apiError: GoogleApiError = {
+              code: 429,
+              message:
+                'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
+              status: 'RESOURCE_EXHAUSTED',
+              details: [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
+                  violations: [
+                    // @ts-expect-error - taken from logs
                     {
-                      '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
-                      violations: [
-                        // @ts-expect-error - taken from logs
-                        {
-                          quotaMetric:
-                            'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
-                          quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
-                        },
-                      ],
-                    },
-                    {
-                      '@type': 'type.googleapis.com/google.rpc.Help',
-                      links: [
-                        {
-                          description: 'Learn more about Gemini API quotas',
-                          url: 'https://ai.google.dev/gemini-api/docs/rate-limits',
-                        },
-                      ],
+                      quotaMetric:
+                        'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
+                      quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
                     },
                   ],
-                };
-                throw new Error(JSON.stringify({ error: apiError }));
-              }),
-            },
-          }) as any,
-      );
+                },
+                {
+                  '@type': 'type.googleapis.com/google.rpc.Help',
+                  links: [
+                    {
+                      description: 'Learn more about Gemini API quotas',
+                      url: 'https://ai.google.dev/gemini-api/docs/rate-limits',
+                    },
+                  ],
+                },
+              ],
+            };
+            throw new Error(JSON.stringify({ error: apiError }));
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -607,32 +603,27 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should throw error when Gemini response has no data', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Gemini to return response without data (both pro and flash will fail)
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockResolvedValue({
-                candidates: [
-                  {
-                    content: {
-                      parts: [
-                        {
-                          inlineData: {
-                            // Missing data field
-                            mimeType: 'audio/wav',
-                          },
-                        },
-                      ],
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        // Missing data field
+                        mimeType: 'audio/wav',
+                      },
                     },
-                  },
-                ],
-              }),
-            },
-          }) as any,
-      );
+                  ],
+                },
+              },
+            ],
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -652,32 +643,27 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should throw error when Gemini response has no mimeType', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Gemini to return response without mimeType (both pro and flash will fail)
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockResolvedValue({
-                candidates: [
-                  {
-                    content: {
-                      parts: [
-                        {
-                          inlineData: {
-                            data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
-                            // Missing mimeType field
-                          },
-                        },
-                      ],
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                        // Missing mimeType field
+                      },
                     },
-                  },
-                ],
-              }),
-            },
-          }) as unknown as any,
-      );
+                  ],
+                },
+              },
+            ],
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -697,26 +683,21 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
-      const { GoogleGenAI } = await import('@google/genai');
-
       // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
-      vi.mocked(GoogleGenAI).mockImplementationOnce(
-        () =>
-          ({
-            models: {
-              generateContent: vi.fn().mockResolvedValue({
-                candidates: [
-                  {
-                    finishReason: 'PROHIBITED_CONTENT',
-                    content: {
-                      parts: [],
-                    },
-                  },
-                ],
-              }),
-            },
-          }) as unknown as any,
-      );
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                finishReason: 'PROHIBITED_CONTENT',
+                content: {
+                  parts: [],
+                },
+              },
+            ],
+          }),
+        },
+      }));
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
