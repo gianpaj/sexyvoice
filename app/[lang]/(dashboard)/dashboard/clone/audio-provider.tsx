@@ -9,9 +9,7 @@ interface AudioContextType {
   isPlaying: boolean;
 }
 
-export const AudioContext = createContext<AudioContextType | undefined>(
-  undefined,
-);
+const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const useAudio = () => {
   const context = useContext(AudioContext);

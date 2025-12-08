@@ -16,7 +16,12 @@ vi.mock('stripe', () => {
     },
   };
   return {
-    default: vi.fn(() => mockStripe),
+    default: class MockStripe {
+      constructor() {
+        // biome-ignore lint/correctness/noConstructorReturn: vitest 4
+        return mockStripe;
+      }
+    },
   };
 });
 

@@ -107,43 +107,47 @@
       "questions": [
         {
           "question": "Wie funktioniert das Klonen von Stimmen?",
-          "answer": "Unsere KI analysiert Ihre Sprachproben, um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden Audio können wir eine digitale Stimme erstellen, die genau wie Sie klingt. Das System verwendet fortschrittliche KI, um Ihren Ton, Akzent und Sprechstil anzupassen."
+          "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
         },
         {
           "question": "Kann ich meine eigene Stimme klonen?",
-          "answer": "Ja! Aus ethischen Gründen benötigen Sie die Erlaubnis, bevor Sie die Stimme einer anderen Person klonen. Wir nehmen Stimmrechte ernst."
+          "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
         },
         {
           "question": "Sind meine Stimm-Daten sicher?",
-          "answer": "Ja. Wir verschlüsseln alle Stimm-Daten und speichern sie sicher. Sie kontrollieren Ihre Audio-Generationen vollständig und können sie jederzeit löschen. Wir geben Ihre Stimm-Daten niemals ohne Ihre Erlaubnis an Dritte weiter. Ihre Privatsphäre ist unsere Priorität."
+          "answer": "Absolut. Alle Sprachaufnahmen und generierten Dateien sind verschlüsselt und sicher gespeichert. Wenn Sie eine Stimme klonen, löschen wir die hochgeladene Sprachprobe und niemand sonst kann sie verwenden. Sie haben vollständige Kontrolle über die generierten Audiodateien und können diese jederzeit löschen. Wir geben Ihre Stimmendaten niemals ohne Ihre Zustimmung weiter."
         },
         {
           "question": "Wofür kann ich die generierten Stimmen verwenden?",
-          "answer": "Sie können generierte Stimmen für Podcasts, Videos, Social-Media-Inhalte, E-Learning, Hörbücher, Spiele und mehr verwenden. Viele Ersteller verwenden unsere Stimmen, um Zeit bei der Aufnahme zu sparen oder eine konsistente Audioqualität aufrechtzuerhalten. Denken Sie nur daran, dass unsere Nutzungsbedingungen Täuschung oder Identitätsdiebstahl verbieten."
+          "answer": "Kreative verwenden unsere Stimmen für Videos, Podcasts, Hörbücher, Social-Media-Inhalte, Spiele, E-Learning und vieles mehr. Es ist eine einfache Möglichkeit, eine konsistente Audioqualität zu gewährleisten. Denken Sie nur daran, dass unsere Nutzungsbedingungen Täuschung oder Identitätsdiebstahl verbieten."
         },
         {
           "question": "Wie viele Credits benötige ich?",
-          "answer": "Ungefähr 1.000 Credits ergeben 1 Minute Audio. Neue Benutzer erhalten 10.000 kostenlose Credits (ca. 10 Minuten Sprache). Unser Starter-Plan enthält 30.000 monatliche Credits, während Pro 500.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
+          "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 10 Minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
         },
         {
-          "question": "Welche Sprachen unterstützen Sie?",
-          "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter Arabisch (Ägyptisch), Englisch (US), Französisch (Frankreich), Deutsch (Deutschland), Spanisch (US), Hindi (Indien), Indonesisch (Indonesien), Italienisch (Italien), Japanisch (Japan), Koreanisch (Korea), Portugiesisch (Brasilien), Russisch (Russland), Niederländisch (Niederlande), Polnisch (Polen), Thailändisch (Thailand), Türkisch (Türkei), Vietnamesisch (Vietnam), Rumänisch (Rumänien), Ukrainisch (Ukraine), Bengali (Bangladesch), Englisch/Hindi (Indien), Marathi (Indien), Tamil (Indien) und Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch: Dan (Englisch UK 🇬🇧), Pietro (Italienisch 🇮🇹), Emma (Englisch US 🇺🇸), Javi (Spanisch 🇪🇸), Josh (Englisch US 🇺🇸) und tara (Englisch US 🇺🇸).\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die besten Ergebnisse."
+          "question": "Welche Sprachen unterstützen Ihre KI-Stimmen?",
+          "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter:\nArabisch (Ägyptisch),\nEnglisch (US),\nFranzösisch (Frankreich),\nDeutsch (Deutschland),\nSpanisch (US),\nHindi (Indien),\nIndonesisch (Indonesien),\nItalienisch (Italien),\nJapanisch (Japan),\nKoreanisch (Korea),\nPortugiesisch (Brasilien),\nRussisch (Russland),\nNiederländisch (Niederlande),\nPolnisch (Polen),\nThailändisch (Thailand),\nTürkisch (Türkei),\nVietnamesisch (Vietnam),\nRumänisch (Rumänien),\nUkrainisch (Ukraine),\nBengali (Bangladesch),\nEnglisch/Hindi (Indien),\nMarathi (Indien),\nTamil (Indien),\nund Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch:\nDan (Englisch UK 🇬🇧),\nPietro (Italienisch 🇮🇹),\nEmma (Englisch US 🇺🇸),\nJavi (Spanisch 🇪🇸),\nJosh (Englisch US 🇺🇸),\nund Tara (Englisch US 🇺🇸).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+        },
+        {
+          "question": "Welche Sprachen unterstützt das Stimmklonen?",
+          "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\nArabisch,\nDänisch,\nDeutsch,\nGriechisch,\nEnglisch,\nSpanisch,\nFinnisch,\nFranzösisch,\nHebräisch,\nHindi,\nItalienisch,\nJapanisch,\nKoreanisch,\nMalaiisch,\nNiederländisch,\nNorwegisch,\nPolnisch,\nPortugiesisch,\nRussisch,\nSchwedisch,\nSuaheli,\nTürkisch,\nund Mandarin-Chinesisch."
         },
         {
           "question": "Haben Sie eine API für Entwickler?",
-          "answer": "Sie kommt bald! Mit unserer API können Entwickler die Sprachgenerierung zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert mit einfachen API-Aufrufen verwalten."
+          "answer": "Sie kommt bald! Mit unserer API können Entwickler Sprachgenerierung und Stimmklonen zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert verwalten."
         },
         {
           "question": "Warum SexyVoice.ai wählen?",
-          "answer": "Wir bieten die beste Kombination aus Sprachqualität, Benutzerfreundlichkeit und erschwinglichen Preisen. Im Gegensatz zu Wettbewerbern bieten wir professionelle Stimmen für Entwickler jeder Größe. Mit großzügigen kostenlosen Credits und ohne Verträge können Sie sofort mit der Erstellung erstaunlicher Sprachinhalte beginnen."
+          "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie ein Kreative oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
         },
         {
-          "question": "Ist die Erstellung von erotischen oder nicht jugendfreien Inhalten erlaubt?",
-          "answer": "Ja, wir erlauben die Erstellung von nicht jugendfreien und erotischen Inhalten auf unserer Plattform. Wir glauben an kreative Freiheit bei gleichzeitig verantwortungsvoller Nutzung. Alle Inhalte müssen jedoch unseren Nutzungsbedingungen und den geltenden Gesetzen entsprechen. Wir verbieten Inhalte, die Minderjährige, nicht einvernehmliche Szenarien oder illegale Aktivitäten beinhalten."
+          "question": "Ist die Erstellung von erotischen oder erwachsenenorientierten Inhalten erlaubt?",
+          "answer": "Ja, wir erlauben die Erstellung von erwachsenenorientierten und erotischen Inhalten auf unserer Plattform. Wir glauben an kreative Freiheit bei gleichzeitig verantwortungsvoller Nutzung. Alle Inhalte müssen jedoch unseren Nutzungsbedingungen und den geltenden Gesetzen entsprechen. Wir verbieten Inhalte, die Minderjährige, nicht einvernehmliche Szenarien oder illegale Aktivitäten beinhalten."
         },
         {
-          "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, z. B. britisch oder wie ein Pirat?",
-          "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (zum Beispiel Zephyr) und fügen Sie Ihre Anweisung im Stil-Eingabefeld hinzu, z. B.: 'Sprich mit einem britischen Akzent' oder 'Sprich wie ein Pirat.' Die Stimme passt sich sofort an. Sie können dies für Akzente, Charakterstimmen oder einzigartige Sprechstile verwenden – experimentieren Sie mit verschiedenen Prompts, bis Sie die perfekte Variante gefunden haben."
+          "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
+          "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\", etc. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
         }
       ]
     }

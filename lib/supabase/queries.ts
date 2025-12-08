@@ -239,10 +239,7 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
-export const updateUserCredits = async (
-  userId: string,
-  creditAmount: number,
-) => {
+const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {

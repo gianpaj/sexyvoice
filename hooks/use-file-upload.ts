@@ -22,7 +22,7 @@ type FileMetadata = {
   id: string;
 };
 
-export type FileWithPreview = {
+type FileWithPreview = {
   file: File | FileMetadata;
   id: string;
   preview?: string;

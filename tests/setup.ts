@@ -3,6 +3,9 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
+// Set timezone to UTC for consistent test results across CI and local machines
+process.env.TZ = 'UTC';
+
 // Mock handlers for external services
 export const handlers = [
   // Replicate API Mock
@@ -199,38 +202,59 @@ vi.mock('@vercel/blob', () => ({
 export { mockBlobPut, mockBlobHead };
 
 // Mock Google Generative AI module
+// Create a configurable mock instance that tests can modify
+const createDefaultGoogleGenAIInstance = () => ({
+  models: {
+    generateContent: vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+        totalTokenCount: 23,
+      },
+    } as GenerateContentResponse),
+  },
+});
+
+// This function can be overridden by tests to provide custom behavior
+let mockGoogleGenAIFactory = createDefaultGoogleGenAIInstance;
+
+// Export functions to control the GoogleGenAI mock
+export const setMockGoogleGenAIFactory = (factory: () => any) => {
+  mockGoogleGenAIFactory = factory;
+};
+
+export const resetMockGoogleGenAIFactory = () => {
+  mockGoogleGenAIFactory = createDefaultGoogleGenAIInstance;
+};
+
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');
   return {
     HarmBlockThreshold: genai.HarmBlockThreshold,
     HarmCategory: genai.HarmCategory,
     FinishReason: genai.FinishReason,
-    GoogleGenAI: vi.fn().mockImplementation(() => ({
-      models: {
-        generateContent: vi.fn().mockResolvedValue({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    inlineData: {
-                      data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
-                      mimeType: 'audio/wav',
-                    },
-                  },
-                ],
-              },
-              finishReason: 'STOP',
-            },
-          ],
-          usageMetadata: {
-            promptTokenCount: 11,
-            candidatesTokenCount: 12,
-            totalTokenCount: 23,
-          },
-        } as GenerateContentResponse),
-      },
-    })),
+    GoogleGenAI: class MockGoogleGenAI {
+      models: any;
+      constructor() {
+        const instance = mockGoogleGenAIFactory();
+        this.models = instance.models;
+      }
+    },
   };
 });
 
@@ -271,13 +295,14 @@ const mockReplicateRun = vi.fn().mockImplementation((model: string) => {
   });
 });
 
-const mockReplicateConstructor = vi.fn().mockImplementation(() => ({
-  run: mockReplicateRun,
-}));
+// Use class syntax for Vitest 4 compatibility with constructor mocking
+class MockReplicate {
+  run = mockReplicateRun;
+}
 
 vi.mock('replicate', () => ({
-  default: mockReplicateConstructor,
-  Replicate: mockReplicateConstructor,
+  default: MockReplicate,
+  Replicate: MockReplicate,
 }));
 
 export { mockReplicateRun };
