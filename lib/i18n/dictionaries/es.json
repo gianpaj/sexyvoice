@@ -403,8 +403,7 @@
     "subtitle": "Convierte archivos de audio a MP3, WAV, MP4 y más formatos sin conexión en tu navegador",
     "dropZone": {
       "title": "Suelta tu archivo de audio aquí",
-      "description": "o haz clic para explorar",
-      "supportedFormats": "Soporta: MP3, WAV, M4A, OGG, AAC, FLAC, MP4"
+      "description": "o haz clic para explorar"
     },
     "fileInfo": {
       "remove": "Eliminar archivo"
@@ -428,6 +427,12 @@
       "loadingFailed": "Error al cargar FFmpeg. Por favor recarga la página.",
       "conversionFailed": "La conversión falló. Por favor intenta de nuevo.",
       "unsupportedFormat": "Formato de archivo no soportado"
+    },
+    "footer": {
+      "poweredBy": "Desarrollado con",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Sin cargas, 100% en el navegador",
+      "madeWith": "Hecho con <3 desde SexyVoice.ai - Generador de audio IA gratuito para probar"
     }
   }
 }

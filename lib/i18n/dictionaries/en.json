@@ -403,8 +403,7 @@
     "subtitle": "Convert audio files to MP3, WAV, MP4 and more formats offline in your browser",
     "dropZone": {
       "title": "Drop your audio file here",
-      "description": "or click to browse",
-      "supportedFormats": "Supports: MP3, WAV, M4A, OGG, AAC, FLAC, MP4"
+      "description": "or click to browse"
     },
     "fileInfo": {
       "remove": "Remove file"
@@ -428,6 +427,12 @@
       "loadingFailed": "Failed to load FFmpeg. Please refresh the page.",
       "conversionFailed": "Conversion failed. Please try again.",
       "unsupportedFormat": "Unsupported file format"
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "No uploads, 100% in-browser",
+      "madeWith": "Made with <3 from SexyVoice.ai - Free to try AI audio generator"
     }
   }
 }

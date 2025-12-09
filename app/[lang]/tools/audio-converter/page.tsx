@@ -10,5 +10,5 @@ export default async function AudioConverterPage({ params }: Props) {
   const { lang } = await params;
   const dict = await getDictionary(lang, 'audioConverter');
 
-  return <AudioConverterClient dict={dict} />;
+  return <AudioConverterClient dict={dict} lang={lang} />;
 }

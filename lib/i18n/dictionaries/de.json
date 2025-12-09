@@ -403,8 +403,7 @@
     "subtitle": "Konvertieren Sie Audiodateien offline in Ihrem Browser zu MP3, WAV, MP4 und mehr",
     "dropZone": {
       "title": "Legen Sie Ihre Audiodatei hier ab",
-      "description": "oder klicken Sie zum Durchsuchen",
-      "supportedFormats": "Unterstützt: MP3, WAV, M4A, OGG, AAC, FLAC, MP4"
+      "description": "oder klicken Sie zum Durchsuchen"
     },
     "fileInfo": {
       "remove": "Datei entfernen"
@@ -428,6 +427,12 @@
       "loadingFailed": "FFmpeg konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
       "conversionFailed": "Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "unsupportedFormat": "Nicht unterstütztes Dateiformat"
+    },
+    "footer": {
+      "poweredBy": "Bereitgestellt von",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Keine Uploads, 100% im Browser",
+      "madeWith": "Mit <3 von SexyVoice.ai - Kostenloser KI-Audio-Generator zum Ausprobieren"
     }
   }
 }
