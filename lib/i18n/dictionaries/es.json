@@ -402,6 +402,7 @@
   "audioConverter": {
     "title": "Conversor de Audio Gratuito",
     "subtitle": "Convierte archivos de audio a MP3, WAV, MP4 y más formatos sin conexión en tu navegador",
+    "tagline": ". Gratuito y fácil",
     "dropZone": {
       "title": "Suelta tu archivo de audio aquí",
       "description": "o haz clic para explorar"

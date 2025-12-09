@@ -402,6 +402,7 @@
   "audioConverter": {
     "title": "Free Audio Converter",
     "subtitle": "Convert audio files to MP3, WAV, MP4 and more formats offline in your browser",
+    "tagline": "– free & easy",
     "dropZone": {
       "title": "Drop your audio file here",
       "description": "or click to browse"

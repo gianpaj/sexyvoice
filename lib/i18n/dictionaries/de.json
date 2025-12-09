@@ -402,6 +402,7 @@
   "audioConverter": {
     "title": "Kostenloser Audio-Konverter",
     "subtitle": "Konvertieren Sie Audiodateien offline in Ihrem Browser zu MP3, WAV, MP4 und mehr",
+    "tagline": ". Kostenlos und einfach",
     "dropZone": {
       "title": "Legen Sie Ihre Audiodatei hier ab",
       "description": "oder klicken Sie zum Durchsuchen"
