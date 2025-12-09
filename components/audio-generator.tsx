@@ -227,6 +227,7 @@ export function AudioGenerator({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: needed
   useEffect(() => {
     setEstimatedCredits(null);
   }, [selectedVoice, text]);
@@ -353,9 +354,17 @@ export function AudioGenerator({
               )}
             </Button>
           </div>
-          <div className="flex items-center justify-between">
+
+          <div
+            className={cn('text-right text-muted-foreground text-sm', [
+              textIsOverLimit ? 'font-bold text-red-500' : '',
+            ])}
+          >
+            {text.length} / {charactersLimit}
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-[#1e3a5f] bg-[#0a1628] p-3 sm:p-2">
             <Button
-              className="h-8"
+              className="h-8 text-xs"
               disabled={
                 !(isGeminiVoice && text.trim()) ||
                 isEstimating ||
@@ -372,22 +381,15 @@ export function AudioGenerator({
                 dict.estimateCreditsButton
               )}
             </Button>
-            <div
-              className={cn('text-right text-muted-foreground text-sm', [
-                textIsOverLimit ? 'font-bold text-red-500' : '',
-              ])}
-            >
-              {text.length} / {charactersLimit}
-            </div>
+            {estimatedCredits !== null && (
+              <div className="text-muted-foreground text-xs">
+                {dict.estimateCreditsResult.replace(
+                  '__COUNT__',
+                  estimatedCredits.toString(),
+                )}
+              </div>
+            )}
           </div>
-          {estimatedCredits !== null && (
-            <div className="text-right text-muted-foreground text-sm">
-              {dict.estimateCreditsResult.replace(
-                '__COUNT__',
-                estimatedCredits.toString(),
-              )}
-            </div>
-          )}
         </div>
 
         <div
@@ -403,7 +405,7 @@ export function AudioGenerator({
           )}
           <div className="flex flex-grow-0 gap-2">
             <Button
-              className="h-10"
+              className="h-10 w-full sm:w-fit"
               data-testid="generate-button"
               disabled={
                 isGenerating ||
