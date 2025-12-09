@@ -28,7 +28,7 @@ export function DownloadSection({
   const newFileName = `${baseName}.${format}`;
 
   return (
-    <div className="space-y-6 text-center">
+    <div className="animate-scale-in space-y-6 text-center">
       <div className="flex justify-center">
         <CheckCircle2 className="h-16 w-16 text-green-500" />
       </div>
@@ -38,22 +38,24 @@ export function DownloadSection({
         <p className="text-muted-foreground">{dict.description}</p>
       </div>
 
-      <div className="rounded-lg bg-muted p-4">
-        <p className="font-medium">{newFileName}</p>
+      <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-4">
+        <p className="font-semibold">{newFileName}</p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button className="flex-1" onClick={onDownload} size="lg">
-          <Download className="mr-2 h-4 w-4" />
+        <Button
+          className="gradient-bg h-14 flex-1 font-semibold transition-opacity hover:opacity-90"
+          onClick={onDownload}
+        >
+          <Download className="h-4 w-4" />
           {dict.download}
         </Button>
         <Button
-          className="flex-1"
+          className="h-14 flex-1 font-semibold transition-colors hover:bg-muted"
           onClick={onConvertAnother}
-          size="lg"
           variant="outline"
         >
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <RefreshCw className="h-4 w-4" />
           {dict.convertAnother}
         </Button>
       </div>

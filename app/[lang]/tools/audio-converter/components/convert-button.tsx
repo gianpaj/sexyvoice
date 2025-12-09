@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface Props {
   onClick: () => void;
@@ -26,18 +27,29 @@ export function ConvertButton({
   return (
     <div className="space-y-2">
       <Button
-        className="w-full"
-        disabled={disabled}
+        className={cn(
+          'relative h-14 w-full overflow-hidden rounded-xl font-semibold text-lg transition-all duration-300',
+          'gradient-bg hover:opacity-90 hover:shadow-glow',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          isConverting && 'cursor-wait',
+        )}
+        disabled={disabled || isConverting}
         onClick={onClick}
-        size="lg"
       >
+        {/* Progress bar background */}
+        {!isConverting && (
+          <div
+            className="absolute inset-0 bg-primary-foreground/20 transition-all duration-300 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        )}
         {isConverting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {dict.converting}
-          </>
+          <span className="relative flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {dict.converting} {progress > 0 && `${Math.round(progress)}%`}
+          </span>
         ) : (
-          dict.convert
+          <span>{dict.convert}</span>
         )}
       </Button>
       {isConverting && (

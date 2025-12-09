@@ -1,15 +1,9 @@
 .gradient-bg {
-  background: linear-gradient(135deg,
-      hsl(var(--gradient-start)) 0%,
-      hsl(var(--gradient-mid)) 50%,
-      hsl(var(--gradient-end)) 100%);
+  background: var(--gradient-background);
 }
 
 .gradient-text {
-  background: linear-gradient(135deg,
-      hsl(var(--gradient-start)) 0%,
-      hsl(var(--gradient-mid)) 50%,
-      hsl(var(--gradient-end)) 100%);
+  background: var(--gradient-background);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

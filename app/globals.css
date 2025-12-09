@@ -87,10 +87,11 @@
     --gradient-start: 262 83% 58%;
     --gradient-mid: 199 89% 48%;
     --gradient-end: 330 85% 60%;
-
-    /* Success state */
-    --success: 152 76% 45%;
-    --success-foreground: 0 0% 100%;
+    
+    --gradient-background: linear-gradient(135deg,
+        hsl(var(--gradient-start)) 0%,
+        hsl(var(--gradient-mid)) 50%,
+        hsl(var(--gradient-end)) 100%);
   }
 
   * {
