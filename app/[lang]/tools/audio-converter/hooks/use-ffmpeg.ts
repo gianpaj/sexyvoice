@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { useEffect, useRef, useState } from 'react';
 
 type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
+
+const FFMPEG_CORE_VERSION = '0.12.6';
 
 export function useFFmpeg() {
   const ffmpegRef = useRef<FFmpeg | null>(null);
@@ -21,10 +23,16 @@ export function useFFmpeg() {
           console.log('[FFmpeg]', message);
         });
 
-        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        const baseURL = `https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/umd`;
         await ffmpeg.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+          coreURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.js`,
+            'text/javascript',
+          ),
+          wasmURL: await toBlobURL(
+            `${baseURL}/ffmpeg-core.wasm`,
+            'application/wasm',
+          ),
         });
 
         setIsLoading(false);
@@ -41,7 +49,7 @@ export function useFFmpeg() {
   const convert = async (
     file: File,
     outputFormat: AudioFormat,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ): Promise<Blob> => {
     if (!ffmpegRef.current) {
       throw new Error('FFmpeg not loaded');
@@ -83,9 +91,10 @@ export function useFFmpeg() {
     await ffmpeg.deleteFile(inputName);
     await ffmpeg.deleteFile(outputName);
 
-    const arrayBuffer = typeof data === 'string'
-      ? new TextEncoder().encode(data).buffer as ArrayBuffer
-      : data.buffer as ArrayBuffer;
+    const arrayBuffer =
+      typeof data === 'string'
+        ? new TextEncoder().encode(data).buffer
+        : (data.buffer as ArrayBuffer);
     return new Blob([arrayBuffer], { type: mimeTypes[outputFormat] });
   };
 

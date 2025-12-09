@@ -2,7 +2,7 @@
 
 import { ArrowDown, Music } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import type langDict from '@/lib/i18n/dictionaries/en.json';
@@ -32,21 +32,16 @@ export default function AudioConverterClient({ dict, lang }: Props) {
   const [convertedUrl, setConvertedUrl] = useState<string | null>(null);
   const { convert, isLoading: ffmpegLoading, error: ffmpegError } = useFFmpeg();
 
-  const handleFileSelect = useCallback(
-    (file: File) => {
-      setSelectedFile(file);
-      setConversionState('idle');
-      setProgress(0);
-      if (convertedUrl) {
-        URL.revokeObjectURL(convertedUrl);
-        setConvertedUrl(null);
-      }
-    },
-    [convertedUrl],
-  );
+  // Show toast notification when FFmpeg fails to load
+  useEffect(() => {
+    if (ffmpegError) {
+      toast.error(dict.errors.converterLoadFailed);
+    }
+  }, [ffmpegError, dict.errors]);
 
-  const handleRemoveFile = useCallback(() => {
-    setSelectedFile(null);
+  const isDisabled = ffmpegLoading || !!ffmpegError;
+
+  const resetConversionState = useCallback(() => {
     setConversionState('idle');
     setProgress(0);
     if (convertedUrl) {
@@ -54,6 +49,19 @@ export default function AudioConverterClient({ dict, lang }: Props) {
       setConvertedUrl(null);
     }
   }, [convertedUrl]);
+
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      setSelectedFile(file);
+      resetConversionState();
+    },
+    [resetConversionState],
+  );
+
+  const handleRemoveFile = useCallback(() => {
+    setSelectedFile(null);
+    resetConversionState();
+  }, [resetConversionState]);
 
   const handleConvert = useCallback(async () => {
     if (!selectedFile) return;
@@ -77,10 +85,9 @@ export default function AudioConverterClient({ dict, lang }: Props) {
         toast.error('An unknown error occurred during conversion.');
       }
       console.error('Conversion error:', error);
-      setConversionState('idle');
-      setProgress(0);
+      resetConversionState();
     }
-  }, [selectedFile, outputFormat, convert]);
+  }, [selectedFile, outputFormat, convert, resetConversionState]);
 
   const handleDownload = useCallback(() => {
     if (!(convertedUrl && selectedFile)) return;
@@ -96,13 +103,8 @@ export default function AudioConverterClient({ dict, lang }: Props) {
 
   const handleConvertAnother = useCallback(() => {
     setSelectedFile(null);
-    setConversionState('idle');
-    setProgress(0);
-    if (convertedUrl) {
-      URL.revokeObjectURL(convertedUrl);
-      setConvertedUrl(null);
-    }
-  }, [convertedUrl]);
+    resetConversionState();
+  }, [resetConversionState]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,11 +169,17 @@ export default function AudioConverterClient({ dict, lang }: Props) {
 
                   <ConvertButton
                     dict={dict.convertButton}
-                    disabled={!selectedFile || ffmpegLoading}
+                    disabled={isDisabled}
                     isConverting={conversionState === 'converting'}
                     onClick={handleConvert}
                     progress={Math.min(progress, 100)}
                   />
+
+                  {ffmpegError && (
+                    <p className="text-center text-destructive text-sm">
+                      {dict.errors.converterFailedToLoad}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

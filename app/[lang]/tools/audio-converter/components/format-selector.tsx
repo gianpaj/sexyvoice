@@ -21,13 +21,14 @@ interface Props {
   };
 }
 
-const formats: { value: AudioFormat; label: string; description: string }[] = [
-  { value: 'mp3', label: 'MP3', description: 'Most compatible' },
-  { value: 'wav', label: 'WAV', description: 'Lossless quality' },
-  { value: 'aac', label: 'AAC', description: 'Better than MP3' },
-  { value: 'ogg', label: 'OGG', description: 'Open format' },
-  { value: 'flac', label: 'FLAC', description: 'Lossless compressed' },
-  { value: 'm4a', label: 'M4A', description: 'Apple standard' },
+const formats: { value: AudioFormat; label: string }[] = [
+  { value: 'mp3', label: 'MP3' },
+  { value: 'wav', label: 'WAV' },
+  { value: 'aac', label: 'AAC' },
+  { value: 'ogg', label: 'OGG' },
+  { value: 'flac', label: 'FLAC' },
+  { value: 'm4a', label: 'M4A' },
+  { value: 'mp4', label: 'MP4' },
 ];
 
 export function FormatSelector({ value, onChange, disabled, dict }: Props) {

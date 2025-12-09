@@ -1,6 +1,6 @@
 'use client';
 
-import { type File, FileAudio, X } from 'lucide-react';
+import { FileAudio, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 

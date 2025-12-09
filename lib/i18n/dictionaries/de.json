@@ -427,13 +427,15 @@
     "errors": {
       "loadingFailed": "FFmpeg konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
       "conversionFailed": "Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
-      "unsupportedFormat": "Nicht unterstütztes Dateiformat"
+      "unsupportedFormat": "Nicht unterstütztes Dateiformat",
+      "converterFailedToLoad": "Der Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
+      "converterLoadFailed": "Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu oder versuchen Sie einen anderen Browser."
     },
     "footer": {
       "poweredBy": "Bereitgestellt von",
       "ffmpeg": "FFmpeg",
       "noUploads": "Keine Uploads, 100% im Browser",
-      "madeWith": "Mit <3 von SexyVoice.ai - Kostenloser KI-Audio-Generator zum Ausprobieren"
+      "madeWith": "Mit ♡ von SexyVoice.ai - Kostenloser KI-Audio-Generator zum Ausprobieren"
     }
   }
 }

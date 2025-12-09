@@ -87,7 +87,7 @@
     --gradient-start: 262 83% 58%;
     --gradient-mid: 199 89% 48%;
     --gradient-end: 330 85% 60%;
-    
+
     --gradient-background: linear-gradient(135deg,
         hsl(var(--gradient-start)) 0%,
         hsl(var(--gradient-mid)) 50%,
@@ -122,16 +122,9 @@
   resize: none;
 }
 
-@layer components {
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-float-delayed {
-    animation: float 6s ease-in-out infinite 2s;
-  }
-
-  .animate-pulse-slow {
-    animation: pulse-slow 3s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
   }
 }

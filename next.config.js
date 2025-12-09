@@ -7,7 +7,7 @@ const { withContentlayer } = require('next-contentlayer2');
  * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
  */
 const cspHeader = `
-    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://api.unisvg.com https://api.iconify.design;
+    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://unpkg.com https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com;
     script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
     img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
