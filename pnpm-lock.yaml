@@ -25,7 +25,7 @@ importers:
         version: 1.2.12(react@19.2.1)(zod@3.25.76)
       '@fal-ai/client':
         specifier: ^1.5.0
-        version: 1.5.0
+        version: 1.7.2
       '@ffmpeg/ffmpeg':
         specifier: ^0.12.15
         version: 0.12.15
@@ -828,8 +828,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fal-ai/client@1.5.0':
-    resolution: {integrity: sha512-e0WtcbSjbwKFCOwAex3lRDba1iMY42QAwLZuae7oc5xNav2+HdprE9QWYdsDS3nyr0GOttEpUgsBa/c/AKAguA==}
+  '@fal-ai/client@1.7.2':
+    resolution: {integrity: sha512-RZ1Qz2Kza4ExKPy2D+2UUWthNApe+oZe8D1Wcxqleyn4F344MOm8ibgqG2JSVmybEcJAD4q44078WYfb6Q9c6w==}
     engines: {node: '>=18.0.0'}
 
   '@fal-works/esbuild-plugin-global-externals@2.1.2':
@@ -6559,7 +6559,7 @@ snapshots:
   '@esbuild/win32-x64@0.27.1':
     optional: true
 
-  '@fal-ai/client@1.5.0':
+  '@fal-ai/client@1.7.2':
     dependencies:
       '@msgpack/msgpack': 3.1.2
       eventsource-parser: 1.1.2
