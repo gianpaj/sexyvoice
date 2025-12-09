@@ -353,7 +353,8 @@
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
-    "/dashboard/credits": "Credits"
+    "/dashboard/credits": "Credits",
+    "/tools/audio-converter": "Free Audio Converter"
   },
   "sidebar": {
     "profile": "Profile",
@@ -395,6 +396,38 @@
       "pricing": {
         "bannerText": "Black Friday Sale"
       }
+    }
+  },
+  "audioConverter": {
+    "title": "Free Audio Converter",
+    "subtitle": "Convert audio files to MP3, WAV, MP4 and more formats offline in your browser",
+    "dropZone": {
+      "title": "Drop your audio file here",
+      "description": "or click to browse",
+      "supportedFormats": "Supports: MP3, WAV, M4A, OGG, AAC, FLAC, MP4"
+    },
+    "fileInfo": {
+      "remove": "Remove file"
+    },
+    "formatSelector": {
+      "label": "Convert to",
+      "placeholder": "Select output format"
+    },
+    "convertButton": {
+      "convert": "Convert Audio",
+      "converting": "Converting",
+      "progress": "Progress"
+    },
+    "downloadSection": {
+      "title": "Conversion Complete",
+      "description": "Your file has been converted successfully",
+      "download": "Download",
+      "convertAnother": "Convert Another File"
+    },
+    "errors": {
+      "loadingFailed": "Failed to load FFmpeg. Please refresh the page.",
+      "conversionFailed": "Conversion failed. Please try again.",
+      "unsupportedFormat": "Unsupported file format"
     }
   }
 }

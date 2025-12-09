@@ -353,7 +353,8 @@
     "/dashboard/generate": "Generieren",
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",
-    "/dashboard/credits": "Credits"
+    "/dashboard/credits": "Credits",
+    "/tools/audio-converter": "Kostenloser Audio-Konverter"
   },
   "sidebar": {
     "profile": "Profil",
@@ -395,6 +396,38 @@
       "pricing": {
         "bannerText": "Black Friday Verkauf"
       }
+    }
+  },
+  "audioConverter": {
+    "title": "Kostenloser Audio-Konverter",
+    "subtitle": "Konvertieren Sie Audiodateien offline in Ihrem Browser zu MP3, WAV, MP4 und mehr",
+    "dropZone": {
+      "title": "Legen Sie Ihre Audiodatei hier ab",
+      "description": "oder klicken Sie zum Durchsuchen",
+      "supportedFormats": "Unterstützt: MP3, WAV, M4A, OGG, AAC, FLAC, MP4"
+    },
+    "fileInfo": {
+      "remove": "Datei entfernen"
+    },
+    "formatSelector": {
+      "label": "Konvertieren zu",
+      "placeholder": "Ausgabeformat auswählen"
+    },
+    "convertButton": {
+      "convert": "Audio Konvertieren",
+      "converting": "Konvertierung läuft",
+      "progress": "Fortschritt"
+    },
+    "downloadSection": {
+      "title": "Konvertierung Abgeschlossen",
+      "description": "Ihre Datei wurde erfolgreich konvertiert",
+      "download": "Herunterladen",
+      "convertAnother": "Weitere Datei Konvertieren"
+    },
+    "errors": {
+      "loadingFailed": "FFmpeg konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
+      "conversionFailed": "Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "unsupportedFormat": "Nicht unterstütztes Dateiformat"
     }
   }
 }
