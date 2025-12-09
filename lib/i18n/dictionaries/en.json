@@ -353,7 +353,8 @@
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
-    "/dashboard/credits": "Credits"
+    "/dashboard/credits": "Credits",
+    "/tools/audio-converter": "Free Audio Converter"
   },
   "sidebar": {
     "profile": "Profile",
@@ -368,7 +369,8 @@
     "statusPage": "Status page",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
-    "copyright": "SexyVoice.ai. All rights reserved."
+    "copyright": "SexyVoice.ai. All rights reserved.",
+    "audioConverter": "Free Audio Converter"
   },
   "promos": {
     "halloweenBanner": {
@@ -395,6 +397,45 @@
       "pricing": {
         "bannerText": "Black Friday Sale"
       }
+    }
+  },
+  "audioConverter": {
+    "title": "Free Audio Converter",
+    "subtitle": "Convert audio files to MP3, WAV, MP4 and more formats offline in your browser",
+    "dropZone": {
+      "title": "Drop your audio file here",
+      "description": "or click to browse"
+    },
+    "fileInfo": {
+      "remove": "Remove file"
+    },
+    "formatSelector": {
+      "label": "Convert to",
+      "placeholder": "Select output format"
+    },
+    "convertButton": {
+      "convert": "Convert Audio",
+      "converting": "Converting",
+      "progress": "Progress"
+    },
+    "downloadSection": {
+      "title": "Conversion Complete",
+      "description": "Your file has been converted successfully",
+      "download": "Download",
+      "convertAnother": "Convert Another File"
+    },
+    "errors": {
+      "loadingFailed": "Failed to load FFmpeg. Please refresh the page.",
+      "conversionFailed": "Conversion failed. Please try again.",
+      "unsupportedFormat": "Unsupported file format",
+      "converterFailedToLoad": "Audio converter failed to load. Please refresh the page.",
+      "converterLoadFailed": "Failed to load audio converter. Please refresh the page or try a different browser."
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "No uploads, 100% in-browser",
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
     }
   }
 }

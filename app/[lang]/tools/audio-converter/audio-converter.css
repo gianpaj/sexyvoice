@@ -1,0 +1,18 @@
+.gradient-bg {
+  background: var(--gradient-background);
+}
+
+.gradient-text {
+  background: var(--gradient-background);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-2xl;
+}
+
+.drop-zone-active {
+  @apply border-primary bg-primary/10 scale-[1.02];
+}

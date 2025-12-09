@@ -63,6 +63,13 @@ async function Footer({ lang }: { lang: Locale }) {
               © {currentYear} {dict.footer.copyright}
             </p>
             <p className="mt-4 text-muted-foreground text-sm">
+              <Link
+                className="hover:text-primary hover:underline"
+                href={`/${lang}/tools/audio-converter`}
+              >
+                {dict.footer.audioConverter}
+              </Link>
+              {' - '}
               <a
                 className="hover:text-primary hover:underline"
                 href="https://sexyvoice.checkly-dashboards.com/"

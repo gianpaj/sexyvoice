@@ -353,7 +353,8 @@
     "/dashboard/generate": "Generieren",
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",
-    "/dashboard/credits": "Credits"
+    "/dashboard/credits": "Credits",
+    "/tools/audio-converter": "Kostenloser Audio-Konverter"
   },
   "sidebar": {
     "profile": "Profil",
@@ -368,7 +369,8 @@
     "statusPage": "Statusseite",
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
-    "copyright": "SexyVoice.ai. Alle Rechte vorbehalten."
+    "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
+    "audioConverter": "Kostenloser Audio-Konverter"
   },
   "promos": {
     "halloweenBanner": {
@@ -395,6 +397,45 @@
       "pricing": {
         "bannerText": "Black Friday Verkauf"
       }
+    }
+  },
+  "audioConverter": {
+    "title": "Kostenloser Audio-Konverter",
+    "subtitle": "Konvertieren Sie Audiodateien offline in Ihrem Browser zu MP3, WAV, MP4 und mehr",
+    "dropZone": {
+      "title": "Legen Sie Ihre Audiodatei hier ab",
+      "description": "oder klicken Sie zum Durchsuchen"
+    },
+    "fileInfo": {
+      "remove": "Datei entfernen"
+    },
+    "formatSelector": {
+      "label": "Konvertieren zu",
+      "placeholder": "Ausgabeformat auswählen"
+    },
+    "convertButton": {
+      "convert": "Audio Konvertieren",
+      "converting": "Konvertierung läuft",
+      "progress": "Fortschritt"
+    },
+    "downloadSection": {
+      "title": "Konvertierung Abgeschlossen",
+      "description": "Ihre Datei wurde erfolgreich konvertiert",
+      "download": "Herunterladen",
+      "convertAnother": "Weitere Datei Konvertieren"
+    },
+    "errors": {
+      "loadingFailed": "FFmpeg konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
+      "conversionFailed": "Konvertierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "unsupportedFormat": "Nicht unterstütztes Dateiformat",
+      "converterFailedToLoad": "Der Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu.",
+      "converterLoadFailed": "Audio-Konverter konnte nicht geladen werden. Bitte laden Sie die Seite neu oder versuchen Sie einen anderen Browser."
+    },
+    "footer": {
+      "poweredBy": "Bereitgestellt von",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Keine Uploads, 100% im Browser",
+      "madeWith": "Mit ♡ von SexyVoice.ai - Kostenloser KI-Audio-Generator zum Ausprobieren"
     }
   }
 }

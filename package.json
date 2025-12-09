@@ -29,6 +29,8 @@
     "@ai-sdk/google": "^1.2.19",
     "@ai-sdk/react": "^1.2.12",
     "@fal-ai/client": "^1.5.0",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@formatjs/intl-localematcher": "^0.5.10",
     "@google/genai": "1.19.0",
     "@iconify-json/logos": "^1.2.4",
