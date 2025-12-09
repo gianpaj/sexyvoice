@@ -101,6 +101,10 @@ const config: Config = {
             height: '0',
           },
         },
+        'bounce-subtle': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
+        },
         'scale-in': {
           from: { opacity: '0', transform: 'scale(0.95)' },
           to: { opacity: '1', transform: 'scale(1)' },
@@ -109,6 +113,7 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'bounce-subtle': 'bounce-subtle 2s ease-in-out infinite',
         'scale-in': 'scale-in 0.3s ease-out forwards',
       },
     },

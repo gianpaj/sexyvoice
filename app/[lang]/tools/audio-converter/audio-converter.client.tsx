@@ -155,7 +155,7 @@ export default function AudioConverterClient({ dict, lang }: Props) {
               {selectedFile && (
                 <div className="animate-fade-in space-y-4">
                   <div className="flex justify-center">
-                    <ArrowDown className="h-6 w-6 text-muted-foreground" />
+                    <ArrowDown className="h-6 w-6 animate-bounce-subtle text-muted-foreground" />
                   </div>
 
                   <FormatSelector

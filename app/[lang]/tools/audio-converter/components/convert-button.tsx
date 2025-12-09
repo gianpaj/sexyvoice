@@ -28,7 +28,7 @@ export function ConvertButton({
     <div className="space-y-2">
       <Button
         className={cn(
-          'relative h-14 w-full overflow-hidden rounded-xl font-semibold text-lg transition-all duration-300',
+          'relative h-14 w-full overflow-hidden font-semibold text-md transition-all duration-300',
           'gradient-bg hover:opacity-90 hover:shadow-glow',
           'disabled:cursor-not-allowed disabled:opacity-50',
           isConverting && 'cursor-wait',
