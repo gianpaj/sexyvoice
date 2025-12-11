@@ -146,6 +146,7 @@ function NewVoiceClientInner({
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState('en');
   const [micBlob, setMicBlob] = useState<Blob | null>(null);
+  const [micRecording, setMicRecording] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
     null,
   );
@@ -323,16 +324,17 @@ function NewVoiceClientInner({
     }
   };
 
-  const onMicDataAvailable = (blob: Blob) => {
-    console.log('Mic data available', blob);
+  const onMicStop = (blob: Blob) => {
     setMicBlob(blob);
+    setMicRecording(false);
   };
   const onMicStart = () => {
+    setMicRecording(true);
     setMicBlob(null);
   };
   const onMicReset = () => {
     setMicBlob(null);
-    console.log('onMicReset');
+    setMicRecording(false);
   };
 
   return (
@@ -358,11 +360,11 @@ function NewVoiceClientInner({
                 <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
 
                 {/* Drop area */}
-                {!(file || micBlob) && (
+                {!(file || micRecording) && (
                   <button
                     className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
                     data-dragging={isDragging || undefined}
-                    disabled={Boolean(micBlob)}
+                    disabled={Boolean(micRecording)}
                     onClick={openFileDialog}
                     onDragEnter={handleDragEnter}
                     onDragLeave={handleDragLeave}
@@ -408,9 +410,9 @@ function NewVoiceClientInner({
                       or use your microphone
                     </p>
                     <MicrophoneMain
-                      onDataAvailable={onMicDataAvailable}
                       onMicReset={onMicReset}
                       onMicStart={onMicStart}
+                      onStop={onMicStop}
                     />
                   </div>
                 )}

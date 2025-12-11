@@ -16,7 +16,7 @@ import { Button } from '../ui/button';
 import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
 
 interface Props {
-  onDataAvailable: (blob: Blob) => void;
+  onStop: (blob: Blob) => void;
   onMicStart: () => void;
   onMicReset: () => void;
 }
@@ -75,7 +75,7 @@ export function MicrophoneMain(props: Props) {
     mediaStreamConstraints: { audio: true },
     onStop: (blob) => {
       // onStop receives the complete blob (all chunks combined)
-      props.onDataAvailable(blob);
+      props.onStop(blob);
     },
     onError: (err) => {
       console.error(err);
