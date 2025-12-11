@@ -402,8 +402,9 @@ describe('Stripe Webhook Route', () => {
         '', // No payment intent
         priceId,
         'subscription_cycle',
-      ) as Stripe.Invoice & { payment_intent?: string | null };
-      invoice.payment_intent = null;
+      ) as Stripe.Invoice;
+      // @ts-expect-error
+      invoice.payments.data[0].payment.payment_intent = null;
 
       const request = createMockRequest('invoice.payment_succeeded', invoice);
       const response = await POST(request);
