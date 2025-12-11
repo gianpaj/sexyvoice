@@ -2,7 +2,7 @@ import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
 
 const getLocale = (path: string) => {
   const pathArray = path.split('.');
-  return pathArray.length > 2 ? (pathArray.at(-2) ?? 'en') : 'en';
+  return pathArray.length > 2 ? pathArray[pathArray.length - 2] : 'en';
 };
 
 const getSlug = (path: string) => {

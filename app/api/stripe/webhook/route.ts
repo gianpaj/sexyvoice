@@ -341,8 +341,9 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
           ? subscriptionDetails.subscription
           : subscriptionDetails.subscription.id;
     }
-    if (invoice.payments?.data[0].payment.payment_intent) {
-      const paymentIntent = invoice.payments?.data[0].payment.payment_intent;
+    const paymentData = invoice.payments?.data?.[0];
+    if (paymentData?.payment?.payment_intent) {
+      const paymentIntent = paymentData.payment.payment_intent;
       paymentIntentId =
         typeof paymentIntent === 'string' ? paymentIntent : paymentIntent.id;
     }
