@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { MicrophoneMain } from '@/components/audio/microphone-main';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
@@ -144,6 +145,7 @@ function NewVoiceClientInner({
   const [textToConvert, setTextToConvert] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState('en');
+  const [micBlob, setMicBlob] = useState<Blob | null>(null);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
     null,
   );
@@ -321,6 +323,19 @@ function NewVoiceClientInner({
     }
   };
 
+  const onMicDataAvailable = (blob: Blob) => {
+    console.log('Mic data available', blob);
+    setMicBlob(blob);
+  };
+  const onMicStart = () => {
+    setMicBlob(null);
+    console.log('onMicStart');
+  };
+  const onMicReset = () => {
+    setMicBlob(null);
+    console.log('onMicReset');
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -344,10 +359,11 @@ function NewVoiceClientInner({
                 <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
 
                 {/* Drop area */}
-                {!file && (
+                {!(file || micBlob) && (
                   <button
-                    className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-[input:focus]:border-ring has-disabled:opacity-50 has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+                    className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
                     data-dragging={isDragging || undefined}
+                    disabled={Boolean(micBlob)}
                     onClick={openFileDialog}
                     onDragEnter={handleDragEnter}
                     onDragLeave={handleDragLeave}
@@ -360,7 +376,7 @@ function NewVoiceClientInner({
                       {...getInputProps()}
                       aria-label="Upload audio file"
                       className="sr-only"
-                      disabled={Boolean(file)}
+                      disabled={Boolean(file) || Boolean(micBlob)}
                     />
 
                     <div className="flex flex-col items-center justify-center text-center">
@@ -384,6 +400,20 @@ function NewVoiceClientInner({
                       </p>
                     </div>
                   </button>
+                )}
+
+                {!file && (
+                  <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
+                    {/*TODO: translate*/}
+                    <p className="text-center text-xs">
+                      or use your microphone
+                    </p>
+                    <MicrophoneMain
+                      onDataAvailable={onMicDataAvailable}
+                      onMicReset={onMicReset}
+                      onMicStart={onMicStart}
+                    />
+                  </div>
                 )}
 
                 {/* File upload errors */}
@@ -435,12 +465,7 @@ function NewVoiceClientInner({
                       {dict.tryDemo}
                     </p>
 
-                    <Accordion
-                      className="w-full"
-                      collapsible
-                      defaultValue={sampleAudios[0].id.toString()}
-                      type="single"
-                    >
+                    <Accordion className="w-full" collapsible type="single">
                       {sampleAudios.map((sample) => (
                         <CloneSampleCard
                           addFiles={addFiles}
