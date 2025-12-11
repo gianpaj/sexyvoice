@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import type Stripe from 'stripe';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -82,17 +83,15 @@ export default async function CreditsPage(props: {
     .order('created_at', { ascending: false })
     .limit(100);
 
+  const { credits } = dict;
+
   return (
     <div className="space-y-8">
-      <TopupStatus dict={dict.credits} />
+      <TopupStatus dict={credits} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 font-semibold text-lg">
-            {dict.credits.topup.title}
-          </h3>
-          <p className="text-muted-foreground">
-            {dict.credits.topup.description}
-          </p>
+          <h3 className="mb-4 font-semibold text-lg">{credits.topup.title}</h3>
+          <p className="text-muted-foreground">{credits.topup.description}</p>
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
@@ -108,18 +107,20 @@ export default async function CreditsPage(props: {
       <CreditTopup dict={dict} lang={lang} />
 
       <div className="my-8">
-        <h3 className="mb-4 font-semibold text-lg">
-          {dict.credits.history.title}
-        </h3>
-        <CreditHistory
-          dict={dict.credits}
-          transactions={existingTransactions}
-        />
+        <h3 className="mb-4 font-semibold text-lg">{credits.history.title}</h3>
+        <CreditHistory dict={credits} transactions={existingTransactions} />
       </div>
 
       {shouldShowPricingTable && clientSecret && (
         <NextStripePricingTable clientSecret={clientSecret} />
       )}
+
+      <Alert className="pt-4">
+        {credits.refundInfo}:{' '}
+        <Link className="underline" href={`/${lang}/refund-policy`}>
+          {credits.refundInfoLinkText}
+        </Link>
+      </Alert>
     </div>
   );
 }

@@ -243,7 +243,9 @@
     },
     "history": {
       "title": "Historial de Créditos"
-    }
+    },
+    "refundInfo": "Ten la seguridad de que ofrecemos reembolsos sin complicaciones en un plazo de 90 días desde la compra. Consulta nuestra política de reembolso completa en",
+    "refundInfoLinkText": "Política de Reembolso"
   },
   "creditsSection": {
     "title": "Créditos",

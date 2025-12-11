@@ -94,7 +94,7 @@ export function AudioGenerator({
       });
 
       if (!response.ok) {
-        const error: any = await response.json();
+        const error = await response.json();
 
         // Check if we have an error code for translation
         if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {

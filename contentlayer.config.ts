@@ -2,13 +2,42 @@ import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
 
 const getLocale = (path: string) => {
   const pathArray = path.split('.');
-  return pathArray.length > 2 ? pathArray.slice(-2)[0] : 'en';
+  return pathArray.length > 2 ? pathArray[pathArray.length - 2] : 'en';
 };
 
 const getSlug = (path: string) => {
   const pathArray = path.split('.');
   return pathArray[0];
 };
+
+// Policy document type must be defined first to match *-policy.* files
+const Policy = defineDocumentType(() => ({
+  name: 'Policy',
+  filePathPattern: '*-policy*.mdx',
+  contentType: 'mdx',
+  fields: {
+    title: {
+      type: 'string',
+      description: 'The title of the policy',
+      required: true,
+    },
+    description: {
+      type: 'string',
+      description: 'The description of the policy',
+      required: true,
+    },
+  },
+  computedFields: {
+    locale: {
+      type: 'string',
+      resolve: (doc) => getLocale(doc._raw.sourceFilePath),
+    },
+    slug: {
+      type: 'string',
+      resolve: (doc) => getSlug(doc._raw.sourceFilePath),
+    },
+  },
+}));
 
 const Post = defineDocumentType(() => ({
   name: 'Post',
@@ -44,21 +73,15 @@ const Post = defineDocumentType(() => ({
   computedFields: {
     locale: {
       type: 'string',
-      resolve: (doc) => {
-        return getLocale(doc._raw.sourceFilePath);
-      },
+      resolve: (doc) => getLocale(doc._raw.sourceFilePath),
     },
     slug: {
       type: 'string',
-      resolve: (doc) => {
-        return getSlug(doc._raw.sourceFilePath);
-      },
+      resolve: (doc) => getSlug(doc._raw.sourceFilePath),
     },
     url: {
       type: 'string',
-      resolve: (doc) => {
-        return `/blog/${doc._raw.flattenedPath}`;
-      },
+      resolve: (doc) => `/blog/${doc._raw.flattenedPath}`,
     },
     slugAsParams: {
       type: 'string',
@@ -69,5 +92,5 @@ const Post = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: 'posts',
-  documentTypes: [Post],
+  documentTypes: [Policy, Post],
 });

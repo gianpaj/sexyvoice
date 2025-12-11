@@ -9,7 +9,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2025-11-17.clover',
 });
 
 // https://github.com/Domogo/t3-supabase-drizzle-app-starter
@@ -237,14 +237,14 @@ export async function refreshCustomerSubscriptionData(
       await setCustomerData(customerId, subData);
       return subData;
     }
-
     const subscription = subscriptions.data[0];
+    const firstSubscriptionItem = subscription.items.data[0];
     const subData: CustomerData = {
       subscriptionId: subscription.id,
       status: subscription.status,
-      priceId: subscription.items.data[0].price.id,
-      currentPeriodEnd: subscription.current_period_end,
-      currentPeriodStart: subscription.current_period_start,
+      priceId: firstSubscriptionItem?.price?.id ?? null,
+      currentPeriodEnd: firstSubscriptionItem?.current_period_end ?? null,
+      currentPeriodStart: firstSubscriptionItem?.current_period_start ?? null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&

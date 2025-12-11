@@ -489,7 +489,7 @@ Instead of manually mocking webhook signatures, we use Stripe's built-in testing
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2025-11-17.clover',
 });
 
 // Generate valid test signature
