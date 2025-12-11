@@ -80,7 +80,7 @@ interface MediaRecorderHookOptions {
     | 'stopped'
     | 'failed';
   mediaBlob: Blob | null;
-  mediaStream?: MediaStream;
+  mediaStream: MediaStream | null;
   isAudioMuted: boolean;
   stopRecording: () => void;
   getMediaStream: () => Promise<MediaStream | undefined>;
@@ -91,7 +91,7 @@ interface MediaRecorderHookOptions {
   resumeRecording: () => void;
   muteAudio: () => void;
   unMuteAudio: () => void;
-  liveStream?: MediaStream | null;
+  liveStream: MediaStream | null;
 }
 
 export default function useMediaRecorder({

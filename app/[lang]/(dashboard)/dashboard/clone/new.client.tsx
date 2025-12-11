@@ -329,7 +329,6 @@ function NewVoiceClientInner({
   };
   const onMicStart = () => {
     setMicBlob(null);
-    console.log('onMicStart');
   };
   const onMicReset = () => {
     setMicBlob(null);

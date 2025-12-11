@@ -20,7 +20,7 @@ const normalizeFrequencies = (frequencies: Float32Array) => {
 };
 
 export const useMultibandTrackVolume = (
-  mediaStream?: MediaStream,
+  mediaStream: MediaStream | null,
   bands = 5,
   loPass = 100,
   hiPass = 600,
