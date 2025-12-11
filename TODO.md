@@ -16,6 +16,7 @@
   - `curl -X GET https://api.usercheck.com/domain/fursee.com`
 - Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - RESEARCH: AudioWaveform React component. can it compute the wave form in the browser in a small package and computing resources?
+- Refactor terms and privacy-policy pages to use content layer and markdown pages
 - Translate pages in Dashboard:
   - Generate
   - History
