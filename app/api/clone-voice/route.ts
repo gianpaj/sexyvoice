@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { head, put } from '@vercel/blob';
+import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -30,6 +30,15 @@ const ALLOWED_TYPES = [
 const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 const MIN_DURATION = 10; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
+
+interface ReplicateOutput {
+  url: () => string;
+  blob: () => Promise<Blob>;
+}
+interface ReplicateError {
+  error?: string;
+}
+type ReplicateResponse = ReplicateOutput | ReplicateError;
 
 async function generateHash(combinedString: string) {
   const textEncoder = new TextEncoder();
@@ -64,7 +73,7 @@ const redis = Redis.fromEnv();
 export async function POST(request: Request) {
   let text = '';
   let userAudioFile: File | null = null;
-  let audioPromptUrl = '';
+  let audioReferenceUrl: string | null = '';
   let locale = '';
   let replicateResponse: Prediction | undefined;
   let modelUsed = '';
@@ -176,24 +185,24 @@ export async function POST(request: Request) {
 
     const blobUrl = `clone-voice-input/${user.id}-${userAudioFilename}`;
 
-    try {
-      // TODO: hash also the audio based on the duration
-      const existingAudio = await head(blobUrl);
+    const existingAudio = await redis.get<string>(blobUrl);
 
-      if (existingAudio) {
-        audioPromptUrl = existingAudio.url;
-      }
-    } catch (_e) {
-      // Upload audio file to Vercel blob for TTS generation
+    if (existingAudio) {
+      audioReferenceUrl = existingAudio;
+    } else {
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
-        contentType: userAudioFile.type,
+        contentType: userAudioFile.type, // it should converted to Wav by the client
+        allowOverwrite: true,
       });
-      audioPromptUrl = audioBlob.url;
+      audioReferenceUrl = audioBlob.url;
+      await redis.set(blobUrl, audioReferenceUrl);
     }
 
     // Generate hash for caching
-    const hash = await generateHash(`${locale}-${text}-${blobUrl}`);
+    const hash = await generateHash(
+      `${locale}-${text}-${blobUrl}-${Date.now()}`,
+    );
     const abortController = new AbortController();
     const path = `clone-voice/${hash}`;
     const filename = `${path}.wav`;
@@ -203,22 +212,6 @@ export async function POST(request: Request) {
       abortController.abort();
     });
 
-    // Check cache
-    const cachedResult = await redis.get(filename);
-    if (cachedResult) {
-      await sendPosthogEvent({
-        userId: user.id,
-        event: 'clone-voice',
-        text,
-        locale,
-        audioPromptUrl,
-        creditUsed: 0,
-        model: 'chatterbox-cached',
-      });
-      return NextResponse.json({ url: cachedResult }, { status: 200 });
-    }
-
-    // Generate TTS with cloned voice using Replicate
     const replicate = new Replicate();
     const onProgress = (prediction: Prediction) => {
       replicateResponse = prediction;
@@ -236,7 +229,7 @@ export async function POST(request: Request) {
         cfg_weight: 0.5,
         temperature: 0.8,
         exaggeration: 0.5,
-        reference_audio: audioPromptUrl,
+        audio_prompt: audioReferenceUrl,
       };
     } else {
       // Use chatterbox-multilingual for non-English
@@ -249,7 +242,7 @@ export async function POST(request: Request) {
         cfg_weight: 0.5,
         temperature: 0.8,
         exaggeration: 0.5,
-        reference_audio: audioPromptUrl,
+        reference_audio: audioReferenceUrl,
       };
     }
 
@@ -260,13 +253,13 @@ export async function POST(request: Request) {
         // signal
       },
       onProgress,
-    )) as string | { error?: string };
+    )) as ReplicateResponse;
 
     if (typeof output === 'object' && 'error' in output) {
       const errorObj = {
         text,
         locale,
-        audioPromptUrl,
+        audioReferenceUrl,
         model,
         errorData: output.error,
       };
@@ -286,39 +279,12 @@ export async function POST(request: Request) {
     const requestId = replicateResponse?.id || 'unknown';
     modelUsed = model.split(':')[0]; // Get model name without version hash
 
-    // Fetch the audio file from the URL and upload to blob storage
-    const audioResponse = await fetch(output as string);
-
-    if (!audioResponse.ok) {
-      const errorObj = {
-        text,
-        locale,
-        audioPromptUrl,
-        model,
-        errorData: `Failed to fetch audio from URL: ${audioResponse.status} ${audioResponse.statusText}`,
-      };
-      captureException({
-        error: 'Failed to fetch generated audio',
-        ...errorObj,
-      });
-      console.error(errorObj);
-      throw new Error(
-        `Failed to fetch generated audio: ${audioResponse.status} ${audioResponse.statusText}`,
-        {
-          cause: 'AUDIO_FETCH_ERROR',
-        },
-      );
-    }
-
-    const audioBuffer = await audioResponse.arrayBuffer();
+    const audioBuffer = await (output as ReplicateOutput).blob();
 
     const blobResult = await put(filename, audioBuffer, {
       access: 'public',
-      contentType: 'audio/mpeg',
-      allowOverwrite: true,
+      contentType: 'audio/wav',
     });
-
-    await redis.set(filename, blobResult.url);
 
     // Background tasks
     after(async () => {
@@ -343,7 +309,7 @@ export async function POST(request: Request) {
       if (audioFileDBResult.error) {
         const errorObj = {
           text,
-          audioPromptUrl,
+          audioReferenceUrl,
           model: 'chatterbox-tts',
           errorData: audioFileDBResult.error,
         };
@@ -354,17 +320,6 @@ export async function POST(request: Request) {
         console.error(errorObj);
       }
 
-      await sendPosthogEvent({
-        userId: user.id,
-        event: 'clone-voice',
-        predictionId: requestId,
-        text,
-        locale,
-        audioPromptUrl,
-        creditUsed: estimate,
-        model: modelUsed,
-      });
-
       // delete the audio file uploaded
       await inngest.send({
         name: 'clone-audio/cleanup.scheduled',
@@ -373,6 +328,17 @@ export async function POST(request: Request) {
           userId: user.id,
         },
       });
+
+      await sendPosthogEvent({
+        userId: user.id,
+        event: 'clone-voice',
+        predictionId: requestId,
+        text,
+        locale,
+        audioReferenceUrl: audioReferenceUrl || '',
+        creditUsed: estimate,
+        model: modelUsed,
+      });
     });
 
     return NextResponse.json(
@@ -380,14 +346,13 @@ export async function POST(request: Request) {
         url: blobResult.url,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
-        audioPromptUrl,
       },
       { status: 200 },
     );
   } catch (error) {
     const errorObj = {
       text,
-      audioPromptUrl,
+      audioReferenceUrl,
       errorData: error,
     };
     captureException({
@@ -419,7 +384,7 @@ async function sendPosthogEvent({
   event,
   text,
   locale,
-  audioPromptUrl,
+  audioReferenceUrl,
   predictionId,
   creditUsed,
   model,
@@ -428,7 +393,7 @@ async function sendPosthogEvent({
   event: string;
   text: string;
   locale: string;
-  audioPromptUrl: string;
+  audioReferenceUrl: string;
   predictionId?: string;
   creditUsed: number;
   model: string;
@@ -442,7 +407,7 @@ async function sendPosthogEvent({
       model,
       text,
       locale,
-      audioPromptUrl,
+      audioReferenceUrl,
       credits_used: creditUsed,
     },
   });

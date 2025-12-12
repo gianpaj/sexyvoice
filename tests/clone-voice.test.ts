@@ -36,7 +36,7 @@ describe('Clone Voice API Route', () => {
       0xfb,
       0x90,
       0x00, // MP3 frame sync and header
-      ...Array(size - 4).fill(0),
+      ...new Array(size - 4).fill(0),
     ]);
     const blob = new Blob([mp3Header], { type });
     return new File([blob], name, { type });
@@ -437,7 +437,6 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
-      expect(json.audioPromptUrl).toBeDefined();
 
       // Verify Replicate was called with correct parameters
       expect(mockReplicateRun).toHaveBeenCalledWith(
@@ -476,7 +475,6 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
-      expect(json.audioPromptUrl).toBeDefined();
 
       // Verify Replicate was called with correct parameters
       expect(mockReplicateRun).toHaveBeenCalledWith(
@@ -589,6 +587,7 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(200);
       // Verify that sanitized filename is used
       expect(mockBlobPut).toHaveBeenCalledWith(
+        // biome-ignore lint/performance/useTopLevelRegex: x
         expect.stringMatching(/test-audio_____.mp3/),
         expect.any(Buffer),
         expect.any(Object),
@@ -868,7 +867,7 @@ describe('Integration Tests', () => {
       0xfb,
       0x90,
       0x00,
-      ...Array(1024 * 1024 - 4).fill(0),
+      ...new Array(1024 * 1024 - 4).fill(0),
     ]);
     const audioBlob = new Blob([mp3Header], { type: 'audio/mpeg' });
     const audioFile = new File([audioBlob], 'test-audio.mp3', {
@@ -888,6 +887,5 @@ describe('Integration Tests', () => {
     expect(json.url).toBeTruthy();
     expect(json.creditsUsed).toBeGreaterThan(0);
     expect(json.creditsRemaining).toBeDefined();
-    expect(json.audioPromptUrl).toBeTruthy();
   });
 });
