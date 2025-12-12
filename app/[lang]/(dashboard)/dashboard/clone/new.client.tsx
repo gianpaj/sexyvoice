@@ -55,7 +55,7 @@ export type Status = 'idle' | 'generating' | 'complete' | 'error';
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const FILE_EXTENSION_REGEX = /.[^/]+$/;
+const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
 const sampleAudios: readonly SampleAudio[] = [
   {
@@ -221,7 +221,7 @@ function NewVoiceClientInner({
         const wavBlob = await convert(inputFile, 'wav');
         return new File(
           [wavBlob],
-          inputFile.name.replace(FILE_EXTENSION_REGEX, '.wav'),
+          `${inputFile.name.replace(FILE_EXTENSION_REGEX, '')}.wav`,
           {
             type: 'audio/wav',
           },

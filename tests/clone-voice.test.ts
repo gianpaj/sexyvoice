@@ -12,6 +12,89 @@ import {
   server,
 } from './setup';
 
+// Helper function to create a minimal valid WAV header
+const createWavHeader = (): Uint8Array => {
+  return new Uint8Array([
+    // "RIFF" chunk descriptor
+    0x52,
+    0x49,
+    0x46,
+    0x46, // "RIFF"
+    0x24,
+    0x00,
+    0x00,
+    0x00, // File size - 8 (36 bytes for minimal WAV)
+    // "WAVE" format
+    0x57,
+    0x41,
+    0x56,
+    0x45, // "WAVE"
+    // "fmt " subchunk
+    0x66,
+    0x6d,
+    0x74,
+    0x20, // "fmt "
+    0x10,
+    0x00,
+    0x00,
+    0x00, // Subchunk1Size (16 for PCM)
+    0x01,
+    0x00, // AudioFormat (1 for PCM)
+    0x01,
+    0x00, // NumChannels (1)
+    0x44,
+    0xac,
+    0x00,
+    0x00, // SampleRate (44100)
+    0x88,
+    0x58,
+    0x01,
+    0x00, // ByteRate
+    0x02,
+    0x00, // BlockAlign
+    0x10,
+    0x00, // BitsPerSample (16)
+  ]);
+};
+
+// Helper function to create a mock audio file
+const createMockAudioFile = (
+  name = 'test-audio.wav',
+  type = 'audio/wav',
+  size = 1024 * 1024, // 1MB
+) => {
+  // Create a minimal valid WAV buffer
+  // WAV files must start with "RIFF" and have "WAVE" at byte 8
+  const headerSize = 40;
+  const dataSize = Math.max(0, size - headerSize);
+
+  // Create header
+  const wavHeader = createWavHeader();
+
+  // Create padding data
+  const padding = new Uint8Array(dataSize);
+
+  // Combine header and padding
+  const wavBuffer = new Uint8Array(headerSize + dataSize);
+  wavBuffer.set(wavHeader, 0);
+  wavBuffer.set(padding, headerSize);
+
+  return new File([wavBuffer], name, { type });
+};
+
+// Helper function to create FormData with audio file
+const createFormDataWithAudio = (
+  text: string,
+  audioFile: File = createMockAudioFile(),
+  locale = 'en',
+) => {
+  const formData = new FormData();
+  formData.append('text', text);
+  formData.append('file', audioFile);
+  formData.append('locale', locale);
+  return formData;
+};
+
 describe('Clone Voice API Route', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -22,37 +105,6 @@ describe('Clone Voice API Route', () => {
       format: { duration: 30 }, // Default valid duration
     } as any);
   });
-
-  // Helper function to create a mock audio file
-  const createMockAudioFile = (
-    name = 'test-audio.mp3',
-    type = 'audio/mpeg',
-    size = 1024 * 1024, // 1MB
-  ) => {
-    // Create a minimal valid MP3 buffer
-    const mp3Header = new Uint8Array([
-      0xff,
-      0xfb,
-      0x90,
-      0x00, // MP3 frame sync and header
-      ...new Array(size - 4).fill(0),
-    ]);
-    const blob = new Blob([mp3Header], { type });
-    return new File([blob], name, { type });
-  };
-
-  // Helper function to create FormData with audio file
-  const createFormDataWithAudio = (
-    text: string,
-    audioFile: File = createMockAudioFile(),
-    locale = 'en',
-  ) => {
-    const formData = new FormData();
-    formData.append('text', text);
-    formData.append('file', audioFile);
-    formData.append('locale', locale);
-    return formData;
-  };
 
   describe('Input Validation', () => {
     it('should return 400 when content-type is not multipart/form-data', async () => {
@@ -808,48 +860,9 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Supported Audio Formats', () => {
-    it('should accept MP3 files', async () => {
-      const mp3File = createMockAudioFile('test.mp3', 'audio/mpeg');
-      const formData = createFormDataWithAudio('Hello world', mp3File);
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(200);
-    });
-
     it('should accept WAV files', async () => {
       const wavFile = createMockAudioFile('test.wav', 'audio/wav');
       const formData = createFormDataWithAudio('Hello world', wavFile);
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(200);
-    });
-
-    it('should accept OGG files', async () => {
-      const oggFile = createMockAudioFile('test.ogg', 'audio/ogg');
-      const formData = createFormDataWithAudio('Hello world', oggFile);
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(200);
-    });
-
-    it('should accept M4A files', async () => {
-      const m4aFile = createMockAudioFile('test.m4a', 'audio/m4a');
-      const formData = createFormDataWithAudio('Hello world', m4aFile);
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -867,18 +880,7 @@ describe('Integration Tests', () => {
     const formData = new FormData();
     formData.append('text', 'Hello world');
 
-    // Create a minimal valid MP3 buffer
-    const mp3Header = new Uint8Array([
-      0xff,
-      0xfb,
-      0x90,
-      0x00,
-      ...new Array(1024 * 1024 - 4).fill(0),
-    ]);
-    const audioBlob = new Blob([mp3Header], { type: 'audio/mpeg' });
-    const audioFile = new File([audioBlob], 'test-audio.mp3', {
-      type: 'audio/mpeg',
-    });
+    const audioFile = createMockAudioFile();
     formData.append('file', audioFile);
 
     const request = new Request('http://localhost/api/clone-voice', {

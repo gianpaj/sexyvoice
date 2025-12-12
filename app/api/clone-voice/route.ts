@@ -13,7 +13,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
+import { estimateCredits, isWavFormat } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
 
@@ -153,14 +153,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Upload to Vercel Blob
-    // const filename = `voice-clone/${user.id}-${Date.now()}-${audioFile.name}`;
-    // const blobResult = await put(filename, buffer, {
-    //   access: 'public',
-    //   contentType: audioFile.type,
-    //   allowOverwrite: false,
-    // });
-
     // Handle text-to-speech generation mode
     const currentAmount = await getCredits(user.id);
 
@@ -190,16 +182,24 @@ export async function POST(request: Request) {
     if (existingAudio) {
       audioReferenceUrl = existingAudio;
     } else {
+      // Validate that the audioBuffer is in WAV format
+      if (!isWavFormat(buffer)) {
+        return NextResponse.json(
+          {
+            error: 'Uploaded audio is not in WAV format.',
+          },
+          { status: 400 },
+        );
+      }
       const audioBlob = await put(blobUrl, buffer, {
         access: 'public',
-        contentType: userAudioFile.type, // it should converted to Wav by the client
+        contentType: userAudioFile.type, // it should be converted to Wav by the client
         allowOverwrite: true,
       });
       audioReferenceUrl = audioBlob.url;
       await redis.set(blobUrl, audioReferenceUrl);
     }
 
-    // Generate hash for caching
     const hash = await generateHash(
       `${locale}-${text}-${blobUrl}-${Date.now()}`,
     );

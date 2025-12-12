@@ -193,3 +193,12 @@ export const getErrorMessage = (
 
   return serviceMessages[service] || serviceMessages.default;
 };
+
+export function isWavFormat(buffer: Buffer): boolean {
+  // WAV files start with "RIFF" and have "WAVE" at byte 8
+  return (
+    buffer.length > 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WAVE'
+  );
+}
