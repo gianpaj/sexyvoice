@@ -282,9 +282,16 @@ Object.defineProperty(global, 'crypto', {
 });
 
 const mockReplicateRun = vi.fn().mockImplementation((model: string) => {
-  // For chatterbox models (voice cloning), return a URL string
+  // For chatterbox models (voice cloning), return an object with blob() method
   if (model.includes('chatterbox')) {
-    return 'https://replicate.delivery/pbxt/test-audio-output.mp3';
+    return {
+      url: () => 'https://replicate.delivery/pbxt/test-audio-output.mp3',
+      blob: async () => {
+        // Return a minimal audio blob
+        const audioBuffer = new ArrayBuffer(1024);
+        return new Blob([audioBuffer], { type: 'audio/wav' });
+      },
+    };
   }
   // For other models (generate-voice), return a ReadableStream
   return new ReadableStream({
