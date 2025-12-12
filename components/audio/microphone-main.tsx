@@ -49,7 +49,6 @@ function AudioPlayer({ blob }: { blob: Blob }) {
 
   return (
     <div className="w-full">
-      {/*<p className="mb-2 text-gray-300 text-sm">Recording ready:</p>*/}
       {/* biome-ignore lint/a11y/useMediaCaption: audio recording playback */}
       <audio
         className="h-10 w-full"
