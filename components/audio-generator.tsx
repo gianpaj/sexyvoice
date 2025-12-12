@@ -268,18 +268,12 @@ export function AudioGenerator({
       const estimatedCredits = Number(data.estimatedCredits);
       if (Number.isFinite(estimatedCredits)) {
         setEstimatedCredits(estimatedCredits);
-        toast.success(
-          dict.estimateCreditsResult.replace(
-            '__COUNT__',
-            estimatedCredits.toString(),
-          ),
-        );
       }
     } catch (error) {
       if (error instanceof APIError) {
         toast.error(error.message || dict.error);
       } else {
-        toast.error(dict.error);
+        toast.error(dict.errorEstimating);
       }
     } finally {
       setIsEstimating(false);
@@ -362,34 +356,33 @@ export function AudioGenerator({
           >
             {text.length} / {charactersLimit}
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-[#1e3a5f] bg-[#0a1628] p-3 sm:p-2">
-            <Button
-              className="h-8 text-xs"
-              disabled={
-                !(isGeminiVoice && text.trim()) ||
-                isEstimating ||
-                isGenerating ||
-                textIsOverLimit
-              }
-              onClick={handleEstimateCredits}
-              size="sm"
-              variant="outline"
-            >
-              {isEstimating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                dict.estimateCreditsButton
-              )}
-            </Button>
-            {estimatedCredits !== null && (
-              <div className="text-muted-foreground text-xs">
-                {dict.estimateCreditsResult.replace(
-                  '__COUNT__',
-                  estimatedCredits.toString(),
+          {isGeminiVoice && (
+            <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
+              <Button
+                className="h-8 bg-secondary text-xs"
+                disabled={
+                  !text.trim() ||
+                  isEstimating ||
+                  isGenerating ||
+                  textIsOverLimit
+                }
+                onClick={handleEstimateCredits}
+                size="sm"
+                variant="outline"
+              >
+                {isEstimating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  dict.estimateCreditsButton
                 )}
-              </div>
-            )}
-          </div>
+              </Button>
+              {estimatedCredits !== null && (
+                <div className="text-muted-foreground text-xs">
+                  ~{estimatedCredits.toString()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div
