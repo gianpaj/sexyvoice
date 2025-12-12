@@ -202,9 +202,12 @@ vi.mock('@vercel/blob', () => ({
 export { mockBlobPut, mockBlobHead };
 
 // Mock Google Generative AI module
+export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
+
 // Create a configurable mock instance that tests can modify
 const createDefaultGoogleGenAIInstance = () => ({
   models: {
+    countTokens: mockCountTokens,
     generateContent: vi.fn().mockResolvedValue({
       candidates: [
         {

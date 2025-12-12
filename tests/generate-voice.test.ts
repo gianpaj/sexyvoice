@@ -395,7 +395,7 @@ describe('Generate Voice API Route', () => {
       expect(mockBlobPut).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 48,
+        credits_used: 23,
         duration: '-1',
         filename: 'audio/poe-9de7f9fe.wav',
         isPublic: false,
@@ -473,7 +473,7 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(callCount).toBe(2); // Should have been called twice
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 48,
+        credits_used: 23,
         duration: '-1',
         filename: 'audio/poe-9de7f9fe.wav',
         isPublic: false,

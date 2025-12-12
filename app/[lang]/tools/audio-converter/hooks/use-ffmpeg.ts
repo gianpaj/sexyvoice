@@ -47,7 +47,7 @@ export function useFFmpeg() {
   }, []);
 
   const convert = async (
-    file: File,
+    file: File | Blob,
     outputFormat: AudioFormat,
     onProgress?: (progress: number) => void,
   ): Promise<Blob> => {

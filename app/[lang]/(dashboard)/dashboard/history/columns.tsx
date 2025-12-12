@@ -15,16 +15,22 @@ import {
 import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
 import { DeleteButton } from './delete-button';
+import { downloadUrl } from '@/lib/download';
+import { toast } from '@/components/services/toast';
 
-const downloadFile = (url: string) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'generated_audio.mp3';
-  // link.setAttribute('download', 'generated_audio.mp3');
-  link.target = '_blank';
-  // document.body.appendChild(link);
-  link.click();
-  // document.body.removeChild(link);
+const downloadFile = async (url: string) => {
+  const anchorElement = document.createElement('a');
+  anchorElement.href = url;
+  const filename = url.split('/').pop()?.split('?')[0];
+  anchorElement.download = filename || 'generated_audio.mp3';
+  anchorElement.target = '_blank';
+  if (!url) return;
+
+  try {
+    await downloadUrl(url, anchorElement);
+  } catch {
+    toast.error('errorCloning'); // TODO: translate - passing
+  }
 };
 
 export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [

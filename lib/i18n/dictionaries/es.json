@@ -256,6 +256,11 @@
     "cancel": "Cancelar",
     "ctaButton": "Generar audio",
     "downloadAudio": "Descargar Audio",
+    "estimateCreditsButton": "Estimar créditos",
+    "estimateCreditsResult": "Créditos estimados: __COUNT__",
+    "cloneNotice": "Las clonaciones de voz se crean solo con fines de demostración.",
+    "cloneNoticeTooltipLabel": "Abrir aviso de seguridad de clonación de voz",
+    "cloneNoticeTooltip": "Solo sube grabaciones que tengas permiso para usar y obten consentimiento antes de clonar o compartir la voz de otra persona.\nTienes acceso exclusivo a tus voces clonadas y archivos de audio – nadie más puede acceder a ellos.",
     "error": "Error al generar audio",
     "generating": "Generando",
     "gproLimitExceeded": "Has excedido el límite de __COUNT__ generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
@@ -304,6 +309,7 @@
     "title": "Clonar una Voz",
     "tryDemo": "O prueba con una demostración:",
     "uploadAudioFile": "Subir archivo de audio",
+    "orUseMicrophone": "o usa tu micrófono",
     "errors": {
       "noAudioFile": "Por favor selecciona un archivo de audio.",
       "noText": "Por favor ingresa algún texto para convertir en voz."

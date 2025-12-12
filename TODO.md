@@ -1,20 +1,22 @@
 # TODO
 
+- fix: landing page audios not stopping if another audio is played
+- add audio clones demos on landing page
+  - Bruce Lee
+  - Sophia Loren
+  - a famous Arab female actor like Nesreen Tafesh
+  - a famous Arab male actor like Ahmed Helmy
+  - a famous Indian female actor like Aishwarya Rai
+  - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - merge `r2` branch
   - share link & page after an audio has been generated
   - listened counter?
-- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- Add presets for GPro voices. Adding a DB table for it.
+- Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
-- add audio clones demos on dashboard
-- add audio clones demos on landing page
-  - Bruce Lee
-  - Marilyn Monroe
-  - Sophia Loren
-- add multilingual voice cloning
 - Get stats of `audio_files`. language, style. If using LLM, use batch mode.
 - Implement `fakefilter` or `mailchecker` npm packages to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
   - `curl -X GET https://api.usercheck.com/domain/fursee.com`
-- Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
 - RESEARCH: AudioWaveform React component. can it compute the wave form in the browser in a small package and computing resources?
 - Translate pages in Dashboard:
   - Generate
@@ -23,10 +25,10 @@
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
 - Translate website to French
+- Translate website to Arabic
+- Translate website to Indian
 - Add option to clean audio using <https://replicate.com/gianpaj/audio_separator>
-- Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
-- Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add a Share page for individual generated audio files.
   - Allow user to toggle Sharing profile page in Settings.
   - Allow user to upload profile picture? – after `r2` branch is merged
@@ -75,3 +77,17 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Documentation / Knowledge base site
 
 - <https://nextra.site>
+
+## Later
+
+- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+
+## Other Voice cloning demos
+
+- <https://archive.org/details/historysgreatest0000unse>
+- Theodore Roosevelt
+  - Fellow citizens, we stand at the dawn of a new century, and it is ours to shape with courage and resolve. Remember, the only man who never makes mistakes is the man who never does anything.
+- Queen Victoria
+  - It is my steadfast wish that we move forward with dignity and compassion. May our empire continue to flourish through unity and understanding.
+- Winston Churchill
+  - We shall go forward together with resolute hearts. Let us face our challenges with the firmness and courage that have always defined our people.
