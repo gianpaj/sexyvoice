@@ -61,6 +61,7 @@ const sampleAudios: readonly SampleAudio[] = [
   {
     id: 1,
     name: 'Marilyn Monroe 🇺🇸',
+    language: 'en',
     prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
     audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
     audioExampleOutputSrc:
@@ -374,6 +375,11 @@ function NewVoiceClientInner({
     }
   };
 
+  const onSelectSample = (sample: SampleAudio) => {
+    setSelectedLocale(sample.language);
+    setTextToConvert(sample.prompt);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -499,10 +505,10 @@ function NewVoiceClientInner({
                           addFiles={addFiles}
                           dict={dict}
                           key={sample.id}
+                          onSelectSample={onSelectSample}
                           sample={sample}
                           setErrorMessage={setErrorMessage}
                           setStatus={setStatus}
-                          setTextToConvert={setTextToConvert}
                         />
                       ))}
                     </Accordion>

@@ -14,6 +14,7 @@ import type { Status } from './new.client';
 export interface SampleAudio {
   id: number;
   name: string;
+  language: string;
   prompt: string;
   audioSrc: string;
   audioExampleOutputSrc: string;
@@ -24,14 +25,14 @@ export default function CloneSampleCard({
   dict,
   sample,
   addFiles,
-  setTextToConvert,
+  onSelectSample,
   setErrorMessage,
   setStatus,
 }: {
   dict: (typeof langDict)['clone'];
   sample: SampleAudio;
   addFiles: (files: File[]) => void;
-  setTextToConvert: (text: string) => void;
+  onSelectSample: (sample: SampleAudio) => void;
   setErrorMessage: (message: string) => void;
   setStatus: (status: Status) => void;
 }) {
@@ -76,7 +77,7 @@ export default function CloneSampleCard({
         });
 
         addFiles([file]);
-        setTextToConvert(sampleAudio.prompt);
+        onSelectSample(sampleAudio);
       } catch (err) {
         const error = err as Error;
         setErrorMessage(`Failed to load sample audio: ${error.message}`);
