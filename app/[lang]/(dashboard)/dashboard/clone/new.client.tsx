@@ -405,9 +405,8 @@ function NewVoiceClientInner({
 
                 {!file && (
                   <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
-                    {/*TODO: translate*/}
                     <p className="text-center text-xs">
-                      or use your microphone
+                      {dict.orUseMicrophone}
                     </p>
                     <MicrophoneMain
                       onMicReset={onMicReset}

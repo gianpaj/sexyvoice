@@ -309,6 +309,7 @@
     "title": "Clone a Voice",
     "tryDemo": "Or try with a demo:",
     "uploadAudioFile": "Upload audio file",
+    "orUseMicrophone": "or use your microphone",
     "errors": {
       "noAudioFile": "Please select an audio file.",
       "noText": "Please enter some text to convert to speech."

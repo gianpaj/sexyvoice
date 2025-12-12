@@ -309,6 +309,7 @@
     "title": "Clonar una Voz",
     "tryDemo": "O prueba con una demostración:",
     "uploadAudioFile": "Subir archivo de audio",
+    "orUseMicrophone": "o usa tu micrófono",
     "errors": {
       "noAudioFile": "Por favor selecciona un archivo de audio.",
       "noText": "Por favor ingresa algún texto para convertir en voz."

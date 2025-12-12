@@ -213,10 +213,9 @@ export default function useMediaRecorder({
 
   function handleStop(): void {
     let blob = new Blob();
-    let sampleChunk = new Blob();
 
     if (mediaChunks.current.length) {
-      [sampleChunk] = mediaChunks.current;
+      const [sampleChunk] = mediaChunks.current;
 
       const blobPropertyBag = { type: sampleChunk.type, ...blobOptions };
 
