@@ -205,7 +205,9 @@ export async function POST(request: Request) {
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+        apiKey: userHasPaid
+          ? process.env.GOOGLE_GENERATIVE_AI_API_KEY
+          : process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY,
       });
 
       const geminiTTSConfig: GenerateContentConfig = {
