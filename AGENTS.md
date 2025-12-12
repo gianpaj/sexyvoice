@@ -21,7 +21,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Code Quality**: Biome for linting and formatting
 - **Testing**: Vitest for unit/integration tests, MSW for API mocking
 - **Package Manager**: pnpm 9
-- **Internationalization**: English, Spanish, and German support
+- **Internationalization**: Website support for English, Spanish, and German; voice generation and cloning in 20+ languages
 
 ## Architecture Overview
 
@@ -216,7 +216,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Use Google Generative AI for text-to-speech and text enhancement (emotion tags)
 - Implement credit tracking for API usage
 - Handle voice cloning with proper permissions
-- Support multiple languages (EN/ES/DE with more planned)
+- Support voice generation and cloning in 20+ languages (including Arabic, Bengali, Dutch, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Marathi, Polish, Portuguese, Romanian, Russian, Spanish, Tamil, Telugu, Thai, Turkish, Ukrainian, Vietnamese, and more)
 - Implement audio preview functionality
 
 ### Content Moderation

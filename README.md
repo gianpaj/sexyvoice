@@ -22,7 +22,7 @@
 
 ## 🌟 About
 
-- Generate AI voices in multiple languages (English & Spanish)
+- Generate AI voices in 20+ languages with voice cloning support
 - Voice selection system with customizable options
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
@@ -38,7 +38,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices in English, Spanish, and Italian (more languages coming soon)
+- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, French, German, Japanese, Korean, and more
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience

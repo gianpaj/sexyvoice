@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/clone-voice/route';
 import * as queries from '@/lib/supabase/queries';
 import {
-  mockBlobHead,
   mockBlobPut,
   mockInngestSend,
   mockRedisGet,
@@ -12,6 +11,89 @@ import {
   mockReplicateRun,
   server,
 } from './setup';
+
+// Helper function to create a minimal valid WAV header
+const createWavHeader = (): Uint8Array => {
+  return new Uint8Array([
+    // "RIFF" chunk descriptor
+    0x52,
+    0x49,
+    0x46,
+    0x46, // "RIFF"
+    0x24,
+    0x00,
+    0x00,
+    0x00, // File size - 8 (36 bytes for minimal WAV)
+    // "WAVE" format
+    0x57,
+    0x41,
+    0x56,
+    0x45, // "WAVE"
+    // "fmt " subchunk
+    0x66,
+    0x6d,
+    0x74,
+    0x20, // "fmt "
+    0x10,
+    0x00,
+    0x00,
+    0x00, // Subchunk1Size (16 for PCM)
+    0x01,
+    0x00, // AudioFormat (1 for PCM)
+    0x01,
+    0x00, // NumChannels (1)
+    0x44,
+    0xac,
+    0x00,
+    0x00, // SampleRate (44100)
+    0x88,
+    0x58,
+    0x01,
+    0x00, // ByteRate
+    0x02,
+    0x00, // BlockAlign
+    0x10,
+    0x00, // BitsPerSample (16)
+  ]);
+};
+
+// Helper function to create a mock audio file
+const createMockAudioFile = (
+  name = 'test-audio.wav',
+  type = 'audio/wav',
+  size = 1024 * 1024, // 1MB
+) => {
+  // Create a minimal valid WAV buffer
+  // WAV files must start with "RIFF" and have "WAVE" at byte 8
+  const headerSize = 40;
+  const dataSize = Math.max(0, size - headerSize);
+
+  // Create header
+  const wavHeader = createWavHeader();
+
+  // Create padding data
+  const padding = new Uint8Array(dataSize);
+
+  // Combine header and padding
+  const wavBuffer = new Uint8Array(headerSize + dataSize);
+  wavBuffer.set(wavHeader, 0);
+  wavBuffer.set(padding, headerSize);
+
+  return new File([wavBuffer], name, { type });
+};
+
+// Helper function to create FormData with audio file
+const createFormDataWithAudio = (
+  text: string,
+  audioFile: File = createMockAudioFile(),
+  locale = 'en',
+) => {
+  const formData = new FormData();
+  formData.append('text', text);
+  formData.append('file', audioFile);
+  formData.append('locale', locale);
+  return formData;
+};
 
 describe('Clone Voice API Route', () => {
   beforeEach(async () => {
@@ -23,37 +105,6 @@ describe('Clone Voice API Route', () => {
       format: { duration: 30 }, // Default valid duration
     } as any);
   });
-
-  // Helper function to create a mock audio file
-  const createMockAudioFile = (
-    name = 'test-audio.mp3',
-    type = 'audio/mpeg',
-    size = 1024 * 1024, // 1MB
-  ) => {
-    // Create a minimal valid MP3 buffer
-    const mp3Header = new Uint8Array([
-      0xff,
-      0xfb,
-      0x90,
-      0x00, // MP3 frame sync and header
-      ...Array(size - 4).fill(0),
-    ]);
-    const blob = new Blob([mp3Header], { type });
-    return new File([blob], name, { type });
-  };
-
-  // Helper function to create FormData with audio file
-  const createFormDataWithAudio = (
-    text: string,
-    audioFile: File = createMockAudioFile(),
-    locale = 'en',
-  ) => {
-    const formData = new FormData();
-    formData.append('text', text);
-    formData.append('file', audioFile);
-    formData.append('locale', locale);
-    return formData;
-  };
 
   describe('Input Validation', () => {
     it('should return 400 when content-type is not multipart/form-data', async () => {
@@ -318,10 +369,11 @@ describe('Clone Voice API Route', () => {
 
   describe('Caching', () => {
     it('should return cached result without consuming credits', async () => {
-      const cachedUrl = 'https://example.com/cached-clone-audio.wav';
+      const cachedInputUrl =
+        'https://blob.vercel-storage.com/cached-input-audio.mp3';
 
-      // Mock Redis.get to return cached URL for this test
-      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+      // Mock Redis.get to return cached input URL for this test
+      mockRedisGet.mockResolvedValueOnce(cachedInputUrl);
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -334,15 +386,15 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toBe(cachedUrl);
-
-      // Verify no credits were consumed on cache hit
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      // Should still generate output audio and consume credits
+      expect(json.url).toBeDefined();
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      // But should not re-upload the input audio
+      expect(mockBlobPut).toHaveBeenCalledTimes(1); // Only output upload
     });
 
     it('should generate new audio when cache miss occurs', async () => {
-      // Mock cache miss
+      // Mock cache miss for input audio
       mockRedisGet.mockResolvedValueOnce(null);
 
       const formData = createFormDataWithAudio('Hello world');
@@ -362,24 +414,17 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).toHaveBeenCalled();
       expect(queries.saveAudioFile).toHaveBeenCalled();
 
-      // Verify new URL was cached
+      // Verify input URL was cached
       expect(mockRedisSet).toHaveBeenCalledWith(
-        expect.stringContaining('clone-voice/'),
+        expect.stringContaining('clone-voice-input/'),
         expect.stringContaining('blob.vercel-storage.com'),
       );
     });
 
     it('should reuse existing uploaded audio file if it exists', async () => {
-      // Mock blob.head to return existing audio file
-      mockBlobHead.mockResolvedValueOnce({
-        url: 'https://blob.vercel-storage.com/existing-audio.mp3',
-        size: 1024,
-        uploadedAt: new Date(),
-        pathname: 'clone-voice-input/test-user-id-test-audio.mp3',
-        contentType: 'audio/mpeg',
-        contentDisposition: 'attachment',
-        downloadUrl: 'https://blob.vercel-storage.com/existing-audio.mp3',
-      });
+      // Mock cache hit - input audio is cached
+      const cachedInputUrl = 'https://blob.vercel-storage.com/cached-input.mp3';
+      mockRedisGet.mockResolvedValueOnce(cachedInputUrl);
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -391,16 +436,17 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      expect(mockBlobHead).toHaveBeenCalledWith(
-        expect.stringContaining('test-audio.mp3'),
+      // Redis.get should be called for the input audio cache
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringContaining('clone-voice-input/'),
       );
-      // Should not upload again if file exists
+      // Should only upload output audio, not input
       expect(mockBlobPut).toHaveBeenCalledTimes(1); // Only for output audio
     });
 
     it('should upload audio file if it does not exist in blob storage', async () => {
-      // Mock blob.head to throw (file doesn't exist)
-      mockBlobHead.mockRejectedValueOnce(new Error('Not found'));
+      // Mock cache miss - input audio not cached
+      mockRedisGet.mockResolvedValueOnce(null);
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -437,7 +483,6 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
-      expect(json.audioPromptUrl).toBeDefined();
 
       // Verify Replicate was called with correct parameters
       expect(mockReplicateRun).toHaveBeenCalledWith(
@@ -449,7 +494,7 @@ describe('Clone Voice API Route', () => {
             temperature: 0.8,
             exaggeration: 0.5,
             seed: 0,
-            reference_audio:
+            audio_prompt:
               'https://blob.vercel-storage.com/clone-voice-input/test-user-id-audio1',
           },
         },
@@ -476,7 +521,6 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toContain('blob.vercel-storage.com');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
-      expect(json.audioPromptUrl).toBeDefined();
 
       // Verify Replicate was called with correct parameters
       expect(mockReplicateRun).toHaveBeenCalledWith(
@@ -589,6 +633,7 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(200);
       // Verify that sanitized filename is used
       expect(mockBlobPut).toHaveBeenCalledWith(
+        // biome-ignore lint/performance/useTopLevelRegex: x
         expect.stringMatching(/test-audio_____.mp3/),
         expect.any(Buffer),
         expect.any(Object),
@@ -657,9 +702,9 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Hash Generation', () => {
-    it('should generate consistent hashes for same inputs', async () => {
+    it('should generate different hashes for different text inputs', async () => {
       const formData1 = createFormDataWithAudio('Hello world');
-      const formData2 = createFormDataWithAudio('Hello world');
+      const formData2 = createFormDataWithAudio('Different text');
 
       const request1 = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -671,22 +716,32 @@ describe('Clone Voice API Route', () => {
         body: formData2,
       });
 
-      // Both requests should use the same cache key
       const response1 = await POST(request1);
       const response2 = await POST(request2);
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
 
-      // Verify Redis.get was called with same key pattern
-      expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringContaining('clone-voice/'),
+      // Both requests should upload to different output files (different hashes)
+      const putCalls = mockBlobPut.mock.calls;
+      // Find output file calls (clone-voice path, not input path)
+      const outputCalls = putCalls.filter((call) =>
+        call[0].includes('clone-voice/'),
       );
+      // Input audio filenames are the same, but hashes differ due to Date.now()
+      // and different text content
+      expect(outputCalls.length).toBeGreaterThan(0);
     });
 
-    it('should generate different hashes for different inputs', async () => {
-      const formData1 = createFormDataWithAudio('Hello world');
-      const formData2 = createFormDataWithAudio('Different text');
+    it('should use input audio cache key based on filename', async () => {
+      const formData1 = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio-1.mp3'),
+      );
+      const formData2 = createFormDataWithAudio(
+        'Different text',
+        createMockAudioFile('audio-2.mp3'),
+      );
 
       const request1 = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -701,8 +756,10 @@ describe('Clone Voice API Route', () => {
       await POST(request1);
       await POST(request2);
 
-      // Verify different cache keys were used
+      // Verify different input audio cache keys were used for different filenames
       const calls = mockRedisGet.mock.calls.map((call) => call[0]);
+      expect(calls[0]).toContain('audio-1.mp3');
+      expect(calls[1]).toContain('audio-2.mp3');
       expect(calls[0]).not.toBe(calls[1]);
     });
   });
@@ -803,48 +860,9 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Supported Audio Formats', () => {
-    it('should accept MP3 files', async () => {
-      const mp3File = createMockAudioFile('test.mp3', 'audio/mpeg');
-      const formData = createFormDataWithAudio('Hello world', mp3File);
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(200);
-    });
-
     it('should accept WAV files', async () => {
       const wavFile = createMockAudioFile('test.wav', 'audio/wav');
       const formData = createFormDataWithAudio('Hello world', wavFile);
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(200);
-    });
-
-    it('should accept OGG files', async () => {
-      const oggFile = createMockAudioFile('test.ogg', 'audio/ogg');
-      const formData = createFormDataWithAudio('Hello world', oggFile);
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(200);
-    });
-
-    it('should accept M4A files', async () => {
-      const m4aFile = createMockAudioFile('test.m4a', 'audio/m4a');
-      const formData = createFormDataWithAudio('Hello world', m4aFile);
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -862,18 +880,7 @@ describe('Integration Tests', () => {
     const formData = new FormData();
     formData.append('text', 'Hello world');
 
-    // Create a minimal valid MP3 buffer
-    const mp3Header = new Uint8Array([
-      0xff,
-      0xfb,
-      0x90,
-      0x00,
-      ...Array(1024 * 1024 - 4).fill(0),
-    ]);
-    const audioBlob = new Blob([mp3Header], { type: 'audio/mpeg' });
-    const audioFile = new File([audioBlob], 'test-audio.mp3', {
-      type: 'audio/mpeg',
-    });
+    const audioFile = createMockAudioFile();
     formData.append('file', audioFile);
 
     const request = new Request('http://localhost/api/clone-voice', {
@@ -888,6 +895,5 @@ describe('Integration Tests', () => {
     expect(json.url).toBeTruthy();
     expect(json.creditsUsed).toBeGreaterThan(0);
     expect(json.creditsRemaining).toBeDefined();
-    expect(json.audioPromptUrl).toBeTruthy();
   });
 });

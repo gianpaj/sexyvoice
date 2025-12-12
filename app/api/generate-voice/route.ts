@@ -165,7 +165,7 @@ export async function POST(request: Request) {
     });
 
     const filename = `${path}.wav`;
-    const result = await redis.get(filename);
+    const result = await redis.get<string>(filename);
 
     if (result) {
       logger.info('Cache hit - returning existing audio', {

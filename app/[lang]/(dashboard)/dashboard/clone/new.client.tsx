@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneMain } from '@/components/audio/microphone-main';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import PulsatingDots from '@/components/PulsatingDots';
@@ -55,11 +56,13 @@ export type Status = 'idle' | 'generating' | 'complete' | 'error';
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
 const sampleAudios: readonly SampleAudio[] = [
   {
     id: 1,
     name: 'Marilyn Monroe 🇺🇸',
+    language: 'en',
     prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
     audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
     audioExampleOutputSrc:
@@ -151,6 +154,9 @@ function NewVoiceClientInner({
     null,
   );
 
+  // FFmpeg for audio conversion
+  const { convert } = useFFmpeg();
+
   const supportedLocales = useMemo(() => {
     const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
     return SUPPORTED_LOCALE_CODES.map((code) => ({
@@ -204,6 +210,39 @@ function NewVoiceClientInner({
   }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
+
+  const prepareAudioFile = useCallback(
+    async (inputFile: File): Promise<File | null> => {
+      // Check if file needs conversion (not already WAV)
+      const isWav =
+        inputFile.type === 'audio/wav' || inputFile.type === 'audio/x-wav';
+      if (isWav) {
+        return inputFile;
+      }
+
+      try {
+        const wavBlob = await convert(inputFile, 'wav');
+        return new File(
+          [wavBlob],
+          `${inputFile.name.replace(FILE_EXTENSION_REGEX, '')}.wav`,
+          {
+            type: 'audio/wav',
+          },
+        );
+      } catch (convertError) {
+        console.error('Audio conversion error:', convertError);
+        setErrorMessage(
+          Error.isError(convertError)
+            ? `Audio conversion failed: ${convertError.message}`
+            : 'Audio conversion failed. Please try a different audio format.',
+        );
+        setStatus('error');
+        return null;
+      }
+    },
+    [convert],
+  );
+
   const handleGenerate = useCallback(async () => {
     if (!file) {
       setErrorMessage(dict.errors.noAudioFile);
@@ -225,9 +264,16 @@ function NewVoiceClientInner({
     let voiceRes: Response | undefined;
     try {
       abortController.current = new AbortController();
+
+      // Convert audio to WAV format (24kHz, mono) if needed
+      const audioFile = await prepareAudioFile(file);
+      if (!audioFile) {
+        return;
+      }
+
       // First upload and process the voice
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', audioFile);
       formData.append('text', textToConvert);
       formData.append('locale', selectedLocale);
 
@@ -275,7 +321,15 @@ function NewVoiceClientInner({
       setErrorMessage(errorMsg);
       setStatus('error');
     }
-  }, [audio, dict, file, textToConvert, selectedLocale, clearErrors]);
+  }, [
+    audio,
+    dict,
+    file,
+    textToConvert,
+    selectedLocale,
+    clearErrors,
+    prepareAudioFile,
+  ]);
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -322,6 +376,11 @@ function NewVoiceClientInner({
     } catch {
       toast.error(dict.errorCloning);
     }
+  };
+
+  const onSelectSample = (sample: SampleAudio) => {
+    setSelectedLocale(sample.language);
+    setTextToConvert(sample.prompt);
   };
 
   const onMicStop = (blob: Blob) => {
@@ -471,10 +530,10 @@ function NewVoiceClientInner({
                           addFiles={addFiles}
                           dict={dict}
                           key={sample.id}
+                          onSelectSample={onSelectSample}
                           sample={sample}
                           setErrorMessage={setErrorMessage}
                           setStatus={setStatus}
-                          setTextToConvert={setTextToConvert}
                         />
                       ))}
                     </Accordion>

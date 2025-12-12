@@ -359,7 +359,8 @@
     "/dashboard/generate": "Generar",
     "/dashboard/clone": "Clonar",
     "/dashboard/history": "Historial",
-    "/dashboard/credits": "Créditos"
+    "/dashboard/credits": "Créditos",
+    "/tools/audio-converter": "Conversor de Audio Gratuito"
   },
   "sidebar": {
     "profile": "Perfil",
@@ -374,7 +375,8 @@
     "statusPage": "Página de estado",
     "privacyPolicy": "Política de privacidad",
     "termsAndConditions": "Términos y condiciones",
-    "copyright": "SexyVoice.ai. Todos los derechos reservados."
+    "copyright": "SexyVoice.ai. Todos los derechos reservados.",
+    "audioConverter": "Conversor de Audio Gratuito"
   },
   "promos": {
     "halloweenBanner": {
@@ -401,6 +403,46 @@
       "pricing": {
         "bannerText": "Oferta Black Friday"
       }
+    }
+  },
+  "audioConverter": {
+    "title": "Conversor de Audio Gratuito",
+    "subtitle": "Convierte archivos de audio a MP3, WAV, MP4 y más formatos sin conexión en tu navegador",
+    "tagline": ". Gratuito y fácil",
+    "dropZone": {
+      "title": "Suelta tu archivo de audio aquí",
+      "description": "o haz clic para explorar"
+    },
+    "fileInfo": {
+      "remove": "Eliminar archivo"
+    },
+    "formatSelector": {
+      "label": "Convertir a",
+      "placeholder": "Seleccionar formato de salida"
+    },
+    "convertButton": {
+      "convert": "Convertir Audio",
+      "converting": "Convirtiendo",
+      "progress": "Progreso"
+    },
+    "downloadSection": {
+      "title": "Conversión Completa",
+      "description": "Tu archivo se ha convertido exitosamente",
+      "download": "Descargar",
+      "convertAnother": "Convertir Otro Archivo"
+    },
+    "errors": {
+      "loadingFailed": "Error al cargar FFmpeg. Por favor recarga la página.",
+      "conversionFailed": "La conversión falló. Por favor intenta de nuevo.",
+      "unsupportedFormat": "Formato de archivo no soportado",
+      "converterFailedToLoad": "El conversor de audio no se pudo cargar. Por favor recarga la página.",
+      "converterLoadFailed": "Error al cargar el conversor de audio. Por favor recarga la página o intenta con un navegador diferente."
+    },
+    "footer": {
+      "poweredBy": "Desarrollado con",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Sin cargas, 100% en el navegador",
+      "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar"
     }
   }
 }
