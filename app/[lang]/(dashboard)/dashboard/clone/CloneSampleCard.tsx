@@ -87,15 +87,9 @@ export default function CloneSampleCard({
     [addFiles],
   );
 
-  // <div
-  //   className="flex flex-col border-r border-input bg-background p-2"
-  // >
   return (
-    // <div
-    //   className="flex flex-col border-r border-input bg-background p-2"
-    // >
     <AccordionItem
-      className="border-gray-500 border-b"
+      className="border-input border-b"
       value={sample.id.toString()}
     >
       <AccordionTrigger className="py-5 text-left text-white hover:no-underline md:hover:text-blue-400">
@@ -121,7 +115,7 @@ export default function CloneSampleCard({
           </div>
         </div>
         <Button
-          className="m-0 mx-auto flex h-auto w-fit gap-0 whitespace-normal p-0 shadow-none"
+          className="mx-auto flex h-fit gap-0 whitespace-normal p-0"
           key={sample.id}
           onClick={() => handleLoadSampleAudio(sample)}
           type="button"
@@ -135,9 +129,12 @@ export default function CloneSampleCard({
             width={65}
           />
 
-          <div className="flex flex-col items-start self-center px-3 text-left">
+          <div className="flex flex-col px-3 text-left">
             <span className="font-medium text-sm">
-              {dict.sampleCard.loadSource}: {sample.name}
+              {sample.name}
+              {/*<span className="text-gray-500">
+                {dict.sampleCard.loadSource}
+              </span>*/}
             </span>
             <span className="line-clamp-2 text-muted-foreground text-xs">
               &quot;{sample.prompt}&quot;

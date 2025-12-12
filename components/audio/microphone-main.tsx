@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { useMultibandTrackVolume } from '@/hooks/use-multiband-track-volume';
+import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
 
@@ -61,8 +62,63 @@ function AudioPlayer({ blob }: { blob: Blob }) {
   );
 }
 
-export function MicrophoneMain(props: Props) {
+function DeviceSelectDropdown() {
   const deviceSelect = useMediaDeviceSelect({ kind: 'audioinput' });
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          className="rounded-l-none border-gray-700 border-l-[1px] px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
+          variant="secondary"
+        >
+          <ChevronDown className="h-4 w-4 text-secondary-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        alignOffset={-5}
+        className="w-[320px]"
+        forceMount
+      >
+        <DropdownMenuLabel className="text-xs uppercase tracking-widest">
+          Available inputs
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {deviceSelect.devices.map((device, index) => (
+          <DropdownMenuCheckboxItem
+            checked={device.deviceId === deviceSelect.activeDeviceId}
+            className="text-xs"
+            key={`device-${index}`}
+            onCheckedChange={() =>
+              deviceSelect.setActiveMediaDevice(device.deviceId)
+            }
+          >
+            {device.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+        <DropdownMenuSeparator />
+        {/*<DropdownMenuLabel className="text-xs uppercase tracking-widest">
+          Audio Settings
+        </DropdownMenuLabel>*/}
+        {/*<DropdownMenuCheckboxItem
+          className="text-xs"
+          checked={isNoiseFilterEnabled}
+          onCheckedChange={async (checked) => {
+            setNoiseFilterEnabled(checked);
+          }}
+          disabled={isNoiseFilterPending}
+        >
+          Enhanced Noise Filter
+        </DropdownMenuCheckboxItem>*/}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function MicrophoneMain(props: Props) {
+  const [hasPermission, setHasPermission] = useState(false);
+
   const {
     status,
     startRecording,
@@ -71,6 +127,7 @@ export function MicrophoneMain(props: Props) {
     clearMediaBlob,
     mediaStream,
     mediaBlob,
+    getMediaStream,
   } = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
     onStop: (blob) => {
@@ -93,9 +150,28 @@ export function MicrophoneMain(props: Props) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: from existing code
   useEffect(() => clearMediaStream, []);
 
-  const onToggleMicrophone = () => {
+  useEffect(() => {
+    const checkPermission = async () => {
+      try {
+        const permission = await navigator.permissions.query({
+          name: 'microphone' as PermissionName,
+        });
+        setHasPermission(permission.state === 'granted');
+      } catch {
+        setHasPermission(false);
+      }
+    };
+    checkPermission();
+  }, []);
+
+  const onToggleMicrophone = async () => {
     if (status === 'idle' || status === 'stopped') {
       clearMediaStream();
+      // Request microphone access on first toggle
+      const stream = await getMediaStream();
+      if (stream && !hasPermission) {
+        setHasPermission(true);
+      }
       startRecording();
     } else if (status === 'recording') {
       stopRecording();
@@ -105,12 +181,16 @@ export function MicrophoneMain(props: Props) {
   return (
     <div className="mx-auto flex w-4/5 flex-col items-center rounded-md text-secondary-foreground sm:w-72">
       <div className="flex w-full">
-        <div className="flex w-full gap-1 rounded-l-xl bg-gray-800 pr-4">
+        <div
+          className={cn(
+            'flex w-full gap-1 bg-gray-800 pr-4',
+            hasPermission ? 'rounded-l-md' : 'rounded-r-md rounded-l-md',
+          )}
+        >
           <Button
             aria-label="Toggle Microphone"
-            className={`inline-flex items-center justify-center whitespace-nowrap rounded-l-md bg-neutral-100 px-3 py-2 font-medium text-neutral-900 text-sm transition-colors hover:bg-neutral-200/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-neutral-800 dark:text-neutral-50 dark:focus-visible:ring-neutral-300 dark:hover:bg-neutral-800/80 shadow-none${
-              status !== 'ready' ? 'opacity-50' : ''
-            }`}
+            className="neutral-50 inline-flex items-center justify-center whitespace-nowrap rounded-r-none rounded-l-md bg-neutral-800 px-3 py-2 font-medium text-sm shadow-none transition-colors hover:bg-neutral-700 focus-visible:ring-1 focus-visible:ring-neutral-300 disabled:pointer-events-none disabled:opacity-50"
+            disabled={status === 'acquiring_media'}
             onClick={onToggleMicrophone}
           >
             {[
@@ -139,53 +219,7 @@ export function MicrophoneMain(props: Props) {
             />
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              className="rounded-l-none border-gray-700 border-l-[1px] px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-200/80"
-              variant="secondary"
-            >
-              <ChevronDown className="h-4 w-4 text-secondary-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            alignOffset={-5}
-            className="w-[320px]"
-            forceMount
-          >
-            <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-              Available inputs
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {deviceSelect.devices.map((device, index) => (
-              <DropdownMenuCheckboxItem
-                checked={device.deviceId === deviceSelect.activeDeviceId}
-                className="text-xs"
-                key={`device-${index}`}
-                onCheckedChange={() =>
-                  deviceSelect.setActiveMediaDevice(device.deviceId)
-                }
-              >
-                {device.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-              Audio Settings
-            </DropdownMenuLabel>
-            {/*<DropdownMenuCheckboxItem
-            className="text-xs"
-            checked={isNoiseFilterEnabled}
-            onCheckedChange={async (checked) => {
-              setNoiseFilterEnabled(checked);
-            }}
-            disabled={isNoiseFilterPending}
-          >
-            Enhanced Noise Filter
-          </DropdownMenuCheckboxItem>*/}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {hasPermission && <DeviceSelectDropdown />}
       </div>
       {status === 'stopped' && mediaBlob && (
         <div className="mt-6 flex w-full justify-center self-center">

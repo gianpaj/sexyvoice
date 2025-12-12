@@ -54,7 +54,7 @@ import CloneSampleCard from './CloneSampleCard';
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
+  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
@@ -153,6 +153,7 @@ function NewVoiceClientInner({
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
     null,
   );
+  const [convertingMicAudio, setConvertingMicAudio] = useState(false);
 
   // FFmpeg for audio conversion
   const { convert } = useFFmpeg();
@@ -244,7 +245,7 @@ function NewVoiceClientInner({
   );
 
   const handleGenerate = useCallback(async () => {
-    if (!file) {
+    if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
       return;
@@ -265,15 +266,32 @@ function NewVoiceClientInner({
     try {
       abortController.current = new AbortController();
 
-      // Convert audio to WAV format (24kHz, mono) if needed
-      const audioFile = await prepareAudioFile(file);
-      if (!audioFile) {
+      // Use micBlob if available, otherwise use file
+      let audioToProcess = file;
+      if (micBlob && !file) {
+        // Convert micBlob to File
+        const wavBlob = await convert(micBlob, 'wav');
+        audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
+          type: 'audio/wav',
+        });
+      } else if (audioToProcess) {
+        // Convert audio to WAV format (24kHz, mono) if needed
+        const preparedFile = await prepareAudioFile(audioToProcess);
+        if (!preparedFile) {
+          return;
+        }
+        audioToProcess = preparedFile;
+      }
+
+      if (!audioToProcess) {
+        setErrorMessage(dict.errors.noAudioFile);
+        setStatus('error');
         return;
       }
 
       // First upload and process the voice
       const formData = new FormData();
-      formData.append('file', audioFile);
+      formData.append('file', audioToProcess);
       formData.append('text', textToConvert);
       formData.append('locale', selectedLocale);
 
@@ -325,10 +343,12 @@ function NewVoiceClientInner({
     audio,
     dict,
     file,
+    micBlob,
     textToConvert,
     selectedLocale,
     clearErrors,
     prepareAudioFile,
+    convert,
   ]);
 
   const handleCancel = () => {
@@ -383,9 +403,25 @@ function NewVoiceClientInner({
     setTextToConvert(sample.prompt);
   };
 
-  const onMicStop = (blob: Blob) => {
-    setMicBlob(blob);
-    setMicRecording(false);
+  const onMicStop = async (blob: Blob) => {
+    setConvertingMicAudio(true);
+
+    try {
+      // Convert the recorded audio to WAV format
+      const wavBlob = await convert(blob, 'wav');
+      setMicBlob(wavBlob);
+    } catch (convertError) {
+      console.error('Microphone audio conversion error:', convertError);
+      setErrorMessage(
+        Error.isError(convertError)
+          ? `Audio conversion failed: ${convertError.message}`
+          : 'Audio conversion failed. Please try recording again.',
+      );
+      setStatus('error');
+      setMicBlob(null);
+    } finally {
+      setConvertingMicAudio(false);
+    }
   };
   const onMicStart = () => {
     setMicRecording(true);
@@ -593,9 +629,10 @@ function NewVoiceClientInner({
             <Button
               className="w-full"
               disabled={
-                !(file && textToConvert.trim()) ||
+                !((file || micBlob) && textToConvert.trim()) ||
                 status === 'generating' ||
-                !hasEnoughCredits
+                !hasEnoughCredits ||
+                convertingMicAudio
               }
               onClick={handleGenerate}
             >
