@@ -16,6 +16,7 @@ export function useFFmpeg() {
   useEffect(() => {
     const loadFFmpeg = async () => {
       try {
+        setIsLoading(true);
         const ffmpeg = new FFmpeg();
         ffmpegRef.current = ffmpeg;
 
@@ -35,10 +36,11 @@ export function useFFmpeg() {
           ),
         });
 
-        setIsLoading(false);
+        console.info('FFmpeg loaded successfully');
       } catch (err) {
         console.error('Failed to load FFmpeg:', err);
         setError('Failed to load FFmpeg');
+      } finally {
         setIsLoading(false);
       }
     };
