@@ -7,10 +7,12 @@ import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
   mockBlobPut,
+  mockCheckUserPaidStatus,
   mockRedisGet,
   mockRedisKeys,
   mockRedisSet,
   mockReplicateRun,
+  mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
   server,
   setMockGoogleGenAIFactory,
@@ -210,7 +212,7 @@ describe('Generate Voice API Route', () => {
 
       // Verify Redis.get was called with correct filename
       expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringContaining('audio/tara-'),
+        expect.stringContaining('generated-audio-free/tara-'),
       );
     });
 
@@ -241,7 +243,7 @@ describe('Generate Voice API Route', () => {
 
       // Verify Redis.get was called with correct filename
       expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringContaining('audio/poe-'),
+        expect.stringContaining('generated-audio-free/poe-'),
       );
     });
 
@@ -269,7 +271,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
 
       // Verify audio was generated and saved
       expect(queries.reduceCredits).toHaveBeenCalledWith({
@@ -280,8 +282,8 @@ describe('Generate Voice API Route', () => {
 
       // Verify new URL was cached
       expect(mockRedisSet).toHaveBeenCalledWith(
-        expect.stringContaining('audio/tara-'),
-        expect.stringContaining('blob.vercel-storage.com'),
+        expect.stringContaining('generated-audio-free/tara-'),
+        expect.stringContaining('files.sexyvoice.ai'),
       );
     });
   });
@@ -324,26 +326,26 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 48,
         duration: '-1',
-        filename: 'audio/tara-e5b92e4b.wav',
+        filename: 'generated-audio-free/tara-e5b92e4b.wav',
         isPublic: false,
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
         usage: undefined,
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://blob.vercel-storage.com/audio/tara-e5b92e4b.wav',
+        url: 'https://files.sexyvoice.ai/generated-audio-free/tara-e5b92e4b.wav',
         userId: 'test-user-id',
         voiceId: 'voice-tara-id',
       });
 
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
     });
 
     it('should throw error when Replicate output contains error property', async () => {
@@ -385,19 +387,19 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
 
       // Verify credits were consumed
       expect(reduceCredits).toHaveBeenCalledOnce();
       expect(saveAudioFile).toHaveBeenCalledOnce();
-      expect(mockBlobPut).toHaveBeenCalledOnce();
+      expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 23,
         duration: '-1',
-        filename: 'audio/poe-9de7f9fe.wav',
+        filename: 'generated-audio-free/poe-9de7f9fe.wav',
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
@@ -407,12 +409,12 @@ describe('Generate Voice API Route', () => {
         },
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://blob.vercel-storage.com/audio/poe-9de7f9fe.wav',
+        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-9de7f9fe.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
 
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
     });
 
     it('should fallback to flash model when pro model fails', async () => {
@@ -475,7 +477,7 @@ describe('Generate Voice API Route', () => {
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 23,
         duration: '-1',
-        filename: 'audio/poe-9de7f9fe.wav',
+        filename: 'generated-audio-free/poe-9de7f9fe.wav',
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
         usage: {
@@ -485,12 +487,12 @@ describe('Generate Voice API Route', () => {
         },
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://blob.vercel-storage.com/audio/poe-9de7f9fe.wav',
+        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-9de7f9fe.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
 
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
     });
 
     it('should handle Google API quota exceeded error', async () => {
@@ -599,7 +601,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
       expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
         'test-user-id',
       );

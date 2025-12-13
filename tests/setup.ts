@@ -62,6 +62,12 @@ process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
+// R2 environment variables
+process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
+process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
+process.env.R2_SECRET_ACCESS_KEY = 'test-r2-secret-key';
+process.env.R2_BUCKET_NAME = 'test-bucket';
+process.env.R2_ACCOUNT_ID = 'test-account-id';
 
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/server', () => ({
@@ -200,6 +206,28 @@ vi.mock('@vercel/blob', () => ({
 
 // Export mocks for test access
 export { mockBlobPut, mockBlobHead };
+
+// Mock R2 Storage
+const mockUploadFileToR2 = vi.fn().mockImplementation((filename: string) =>
+  Promise.resolve(`https://files.sexyvoice.ai/${filename}`),
+);
+
+vi.mock('@/lib/storage/upload', () => ({
+  uploadFileToR2: mockUploadFileToR2,
+}));
+
+// Export mock for test access
+export { mockUploadFileToR2 };
+
+// Mock Stripe client
+const mockCheckUserPaidStatus = vi.fn().mockResolvedValue({ isPaidUser: false });
+
+vi.mock('@/lib/stripe/stripe-client', () => ({
+  checkUserPaidStatus: mockCheckUserPaidStatus,
+}));
+
+// Export mock for test access
+export { mockCheckUserPaidStatus };
 
 // Mock Google Generative AI module
 export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
