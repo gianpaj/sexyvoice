@@ -306,7 +306,7 @@ export async function POST(request: Request) {
         credits_used: estimate,
         usage: {
           locale,
-          userHasPaid: userHasPaid.toString(),
+          userHasPaid,
         },
       });
 

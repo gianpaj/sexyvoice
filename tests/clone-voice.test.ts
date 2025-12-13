@@ -567,7 +567,7 @@ describe('Clone Voice API Route', () => {
         credits_used: expect.any(Number),
         usage: {
           locale: 'en',
-          userHasPaid: 'false',
+          userHasPaid: false,
         },
       });
     });

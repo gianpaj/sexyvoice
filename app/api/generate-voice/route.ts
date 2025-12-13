@@ -405,7 +405,7 @@ export async function POST(request: Request) {
         credits_used: creditsUsed,
         usage: {
           ...usage,
-          userHasPaid: userHasPaid.toString(),
+          userHasPaid,
         },
       });
 

@@ -83,10 +83,10 @@ vi.mock('next/server', () => ({
       return response;
     },
   },
-  after: (fn: () => Promise<void>) => {
+  after: async (fn: () => Promise<void>) => {
     // In tests, execute immediately and return a promise
     // This ensures the callback runs before test assertions
-    return fn();
+    await fn();
   },
 }));
 
