@@ -1,12 +1,11 @@
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
-import { inngest } from '@/lib/inngest/client';
 import PostHogClient from '@/lib/posthog';
+import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCredits,
   hasUserPaid,
@@ -192,12 +191,11 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      const audioBlob = await put(blobUrl, buffer, {
-        access: 'public',
-        contentType: userAudioFile.type, // it should be converted to Wav by the client
-        allowOverwrite: true,
-      });
-      audioReferenceUrl = audioBlob.url;
+      audioReferenceUrl = await uploadFileToR2(
+        blobUrl,
+        buffer,
+        userAudioFile.type, // it should be converted to Wav by the client
+      );
       await redis.set(blobUrl, audioReferenceUrl);
     }
 
@@ -205,7 +203,11 @@ export async function POST(request: Request) {
       `${locale}-${text}-${blobUrl}-${Date.now()}`,
     );
     const abortController = new AbortController();
-    const path = `clone-voice/${hash}`;
+
+    // Determine path based on user's paid status
+    const userHasPaid = await hasUserPaid(user.id);
+    const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
+    const path = `${basePath}/${hash}`;
     const filename = `${path}.wav`;
 
     request.signal.addEventListener('abort', () => {
@@ -282,10 +284,7 @@ export async function POST(request: Request) {
 
     const audioBuffer = await (output as ReplicateOutput).blob();
 
-    const blobResult = await put(filename, audioBuffer, {
-      access: 'public',
-      contentType: 'audio/wav',
-    });
+    const url = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
 
     // Background tasks
     after(async () => {
@@ -297,7 +296,7 @@ export async function POST(request: Request) {
         userId: user.id,
         filename,
         text,
-        url: blobResult.url,
+        url,
         model: modelUsed,
         predictionId: requestId,
         isPublic: false,
@@ -324,15 +323,6 @@ export async function POST(request: Request) {
         console.error(errorObj);
       }
 
-      // delete the audio file uploaded
-      await inngest.send({
-        name: 'clone-audio/cleanup.scheduled',
-        data: {
-          blobUrl,
-          userId: user.id,
-        },
-      });
-
       await sendPosthogEvent({
         userId: user.id,
         event: 'clone-voice',
@@ -347,7 +337,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        url: blobResult.url,
+        url,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
       },

@@ -14,7 +14,6 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav, generateHash } from '@/lib/audio';
-import { APIError } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { checkUserPaidStatus } from '@/lib/stripe/stripe-client';
