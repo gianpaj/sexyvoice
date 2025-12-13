@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -10,7 +9,7 @@ export default async function GeneratePage(props: {
 }) {
   const params = await props.params;
   const { lang } = params;
-  const dict = await getDictionary(lang, 'generate');
+  const dict = await getDictionary(lang);
 
   const supabase = await createClient();
 
@@ -19,14 +18,14 @@ export default async function GeneratePage(props: {
     error,
   } = await supabase.auth.getUser();
   if (!user || error) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return <div>Not logged in</div>;
   }
 
   // Get user's credits
   const { data: creditsData } = (await supabase
     .from('credits')
     .select('amount')
-    .eq('user_id', user?.id)
+    .eq('user_id', user.id)
     .single()) || { amount: 0 };
 
   const credits = creditsData || { amount: 0 };
@@ -56,24 +55,27 @@ export default async function GeneratePage(props: {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Generate Audio</h2>
-        <p className="text-muted-foreground">
-          Select a voice and generate audio from text
-        </p>
+        <h2 className="font-bold text-3xl tracking-tight">
+          {dict.generate.title}
+        </h2>
+        <p className="text-muted-foreground">{dict.generate.subtitle}</p>
       </div>
 
       <div className="lg:hidden">
         <CreditsSection
+          creditTransactions={credit_transactions || []}
+          dict={dict.creditsSection}
+          doNotToggleSidebar
           lang={lang}
-          credits={credits.amount || 0}
-          credit_transactions={credit_transactions || []}
+          userId={user.id}
         />
       </div>
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
-          dict={dict}
-          hasEnoughCredits={credits.amount >= 1}
+          dict={dict.generate}
+          hasEnoughCredits={credits.amount >= 10}
+          locale={lang}
           publicVoices={publicVoices}
         />
       </div>

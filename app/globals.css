@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noUnknownFunction: Tailwind CSS directives like theme() are not standard CSS functions */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,41 +20,32 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 98% 0;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
     --white: #fff;
+
+    /* Promo theme colors - default to pink */
+    --promo-primary: theme('colors.pink.500');
+    --promo-primary-dark: theme('colors.pink.600');
+    --promo-accent: theme('colors.pink.400');
+    --promo-text: theme('colors.pink.600');
+    --promo-text-dark: theme('colors.pink.400');
   }
+
+  [data-promo-theme="orange"] {
+    --promo-primary: theme('colors.orange.500');
+    --promo-primary-dark: theme('colors.orange.600');
+    --promo-accent: theme('colors.orange.400');
+    --promo-text: theme('colors.orange.600');
+    --promo-text-dark: theme('colors.orange.400');
+  }
+
+  [data-promo-theme="pink"] {
+    --promo-primary: theme('colors.pink.500');
+    --promo-primary-dark: theme('colors.pink.600');
+    --promo-accent: theme('colors.pink.400');
+    --promo-text: theme('colors.pink.600');
+    --promo-text-dark: theme('colors.pink.400');
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -66,7 +58,7 @@
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 215 26.2% 70.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 350.18 100% 66.47%;
@@ -79,6 +71,8 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --brand-purple: 137 102 255;
+    --brand-red: 255 51 102;
     --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217.2 91.2% 59.8%;
@@ -87,29 +81,50 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 224.3 76.3% 48%;
-  }
-}
 
-@layer base {
+    /* FOR the tools/audio-converter page */
+    /* Custom gradient colors */
+    --gradient-start: 262 83% 58%;
+    --gradient-mid: 199 89% 48%;
+    --gradient-end: 330 85% 60%;
+
+    --gradient-background: linear-gradient(135deg,
+        hsl(var(--gradient-start)) 0%,
+        hsl(var(--gradient-mid)) 50%,
+        hsl(var(--gradient-end)) 100%);
+  }
+
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 
   .bg-grid-gradient {
     @apply bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)];
   }
 }
-@-moz-document url-prefix() {
-  .disable-bg-firefox {
-    background: none;
-    background-image: none !important;
-  }
-}
 
 .bg-radial {
   --tw-gradient-position: in oklab;
   background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+.textarea-1 {
+  height: var(--ta1-height, auto);
+  resize: none;
+}
+
+.textarea-2 {
+  height: var(--ta2-height, auto);
+  resize: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

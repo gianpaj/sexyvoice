@@ -7,9 +7,9 @@ export default async function DashboardPage(props: {
   params: Promise<{ lang: Locale }>;
   searchParams: Promise<Message>;
 }) {
-  const { params } = props;
+  const params = await props.params;
 
-  redirect(`/${(await params).lang}/dashboard/generate`);
+  redirect(`/${params.lang}/dashboard/generate`);
 }
 
 // {'success' in searchParams && (

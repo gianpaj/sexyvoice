@@ -76,6 +76,8 @@ Rules:
       maxTokens: 500,
       experimental_telemetry: {
         isEnabled: true,
+        recordInputs: true,
+        recordOutputs: true,
       },
     });
 
@@ -89,7 +91,7 @@ Rules:
       prompt,
     });
 
-    if (error instanceof Error) {
+    if (Error.isError(error)) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

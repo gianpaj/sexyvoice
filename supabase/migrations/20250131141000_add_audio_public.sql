@@ -12,4 +12,4 @@
 
 -- Add is_public column
 ALTER TABLE audio_files 
-ADD COLUMN is_public BOOLEAN NOT NULL DEFAULT false; 
+ADD COLUMN is_public BOOLEAN NOT NULL DEFAULT false;

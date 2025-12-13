@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { CircleCheckIcon, XCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import type lang from '@/lib/i18n/dictionaries/en.json';
@@ -17,17 +18,15 @@ export function TopupStatus({ dict }: TopupStatusProps) {
   const [status, setStatus] = useState<'success' | 'error' | 'canceled' | null>(
     null,
   );
-  const [amount, setAmount] = useState<string | null>(null);
+  const creditsAmount = searchParams.get('creditsAmount');
 
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
     const error = searchParams.get('error');
-    const creditAmount = searchParams.get('amount');
 
     if (success === 'true') {
       setStatus('success');
-      setAmount(creditAmount);
       setIsVisible(true);
     } else if (canceled === 'true') {
       setStatus('canceled');
@@ -41,7 +40,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     if (success || canceled || error) {
       const timer = setTimeout(() => {
         setIsVisible(false);
-      }, 10000);
+      }, 10_000);
 
       return () => clearTimeout(timer);
     }
@@ -58,7 +57,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     window.history.replaceState({}, '', url.toString());
   };
 
-  if (!isVisible || !status) {
+  if (!(isVisible && status)) {
     return null;
   }
 
@@ -66,28 +65,28 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     <div className="mb-6 w-full lg:w-1/2">
       {status === 'success' && (
         <Alert className="grid grid-cols-subgrid gap-2">
-          <div className="grid grid-cols-[auto,1fr,auto] gap-2 items-center">
+          <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
             <CircleCheckIcon
-              className="me-3 -mt-0.5 inline-flex !text-emerald-500"
               aria-hidden="true"
+              className="-mt-0.5 !text-emerald-500 me-3 inline-flex"
             />
 
             <AlertTitle>{dict.status.success.title}</AlertTitle>
             <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDismiss}
               className="border-green-300 hover:bg-green-900"
+              onClick={handleDismiss}
+              size="sm"
+              variant="outline"
             >
               {dict.status.success.dismiss}
             </Button>
           </div>
           <div className="grid grid-cols-[2fr,1fr,auto]">
             <AlertDescription className="text-muted-foreground">
-              {amount
+              {creditsAmount
                 ? dict.status.success.descriptionWithAmount.replace(
-                    '{amount}',
-                    Number(amount).toLocaleString(),
+                    '{creditsAmount}',
+                    Number(creditsAmount).toLocaleString(),
                   )
                 : dict.status.success.description}
             </AlertDescription>
@@ -105,10 +104,10 @@ export function TopupStatus({ dict }: TopupStatusProps) {
             {dict.status.canceled.description}
             <div className="mt-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
                 className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                onClick={handleDismiss}
+                size="sm"
+                variant="outline"
               >
                 {dict.status.canceled.dismiss}
               </Button>
@@ -127,10 +126,10 @@ export function TopupStatus({ dict }: TopupStatusProps) {
             {dict.status.error.description}
             <div className="mt-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDismiss}
                 className="border-red-300 text-red-700 hover:bg-red-100"
+                onClick={handleDismiss}
+                size="sm"
+                variant="outline"
               >
                 {dict.status.error.dismiss}
               </Button>

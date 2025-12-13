@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,14 +42,13 @@ export function DeleteButton({
     } catch (error) {
       console.error('Failed to delete audio file:', error);
       toast.error('Failed to delete audio file. Please try again later.');
-      // You might want to show a toast notification here
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
       <AlertDialogTrigger asChild>
         <DropdownMenuItem
           onSelect={(e) => {
@@ -72,9 +72,9 @@ export function DeleteButton({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction asChild>
             <Button
-              variant="destructive"
-              onClick={handleDelete}
               disabled={isDeleting}
+              onClick={handleDelete}
+              variant="destructive"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>

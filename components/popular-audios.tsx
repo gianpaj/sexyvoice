@@ -2,6 +2,7 @@
 
 import { Download, Pause, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -101,7 +102,7 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
 
   if (isLoading) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <p className="text-gray-400">{dict.loading}</p>
       </div>
     );
@@ -109,7 +110,7 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
 
   if (audioFiles.length === 0) {
     return (
-      <div className="text-center py-8 bg-white/5 rounded-lg">
+      <div className="rounded-lg bg-white/5 py-8 text-center">
         <p className="text-gray-400">No audio files found</p>
       </div>
     );
@@ -118,14 +119,14 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
   return (
     <div className="grid gap-4">
       {audioFiles.map((audio) => (
-        <Card key={audio.id} className="bg-white/10 border-white/20">
+        <Card className="border-white/20 bg-white/10" key={audio.id}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-white line-clamp-1">
+                <p className="line-clamp-1 text-white">
                   Voice name: {audio.voices.name}
                 </p>
-                <p className="text-sm text-gray-400">
+                <p className="text-gray-400 text-sm">
                   {trim(audio.text_content)}
                 </p>
               </div>
@@ -135,11 +136,11 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
                   <span className="text-sm">{audio.total_votes}</span>
                 </div> */}
                 <Button
-                  variant="outline"
-                  size="icon"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="border-white/20 bg-white/10 text-white hover:bg-white/20"
                   onClick={() => handlePlayPause(audio)}
+                  size="icon"
                   title="Play audio"
+                  variant="outline"
                 >
                   {currentlyPlaying === audio.id ? (
                     <Pause className="size-4" />
@@ -148,11 +149,11 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
                   )}
                 </Button>
                 <Button
-                  variant="outline"
-                  size="icon"
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="border-white/20 bg-white/10 text-white hover:bg-white/20"
                   onClick={() => handleDownload(audio)}
+                  size="icon"
                   title="Download audio"
+                  variant="outline"
                 >
                   <Download className="size-4" />
                 </Button>

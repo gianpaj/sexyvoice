@@ -1,5 +1,7 @@
 'use server';
 
+import { createAdminClient } from './admin';
+import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
 
 export async function getCredits(userId: string): Promise<number> {
@@ -34,23 +36,20 @@ export async function getVoiceIdByName(
 
 export async function reduceCredits({
   userId,
-  currentAmount,
   amount,
 }: {
   userId: string;
-  currentAmount: number;
   amount: number;
 }) {
   const supabase = await createClient();
 
-  const newAmount = (currentAmount || 0) - amount;
+  // Decrement user credits by the specified amount using an RPC call
+  const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
 
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: newAmount })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
+  if (creditsError) throw creditsError;
 }
 
 export async function saveAudioFile({
@@ -64,6 +63,7 @@ export async function saveAudioFile({
   voiceId,
   duration,
   credits_used,
+  usage,
 }: {
   userId: string;
   filename: string;
@@ -75,6 +75,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
+  usage?: Record<string, string | number>;
 }) {
   const supabase = await createClient();
 
@@ -82,13 +83,14 @@ export async function saveAudioFile({
     user_id: userId,
     storage_key: filename,
     text_content: text,
-    url: url,
-    model: model,
+    url,
+    model,
     prediction_id: predictionId,
     is_public: isPublic,
     voice_id: voiceId,
     duration: Number.parseFloat(duration),
     credits_used,
+    usage,
   });
 }
 
@@ -116,58 +118,87 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
   return data?.id;
 };
 
-export const insertCreditTransaction = async (
-  userId: string,
-  subscriptionId: string,
-  amount: number,
-  subAmount: number,
-) => {
+export const getUserByStripeCustomerId = async (customerId: string) => {
   const supabase = await createClient();
 
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('stripe_id', customerId)
+    .single();
+  return data;
+};
+
+export const insertSubscriptionCreditTransaction = async (
+  userId: string,
+  paymentIntentId: string,
+  subscriptionId: string,
+  creditAmount: number,
+  dollarAmount: number,
+) => {
+  const supabase = createAdminClient();
+
   try {
+    // Check if transaction already exists using reference_id (payment_intent)
+    // This prevents duplicate credits when multiple webhook events fire
     const { data } = await supabase
       .from('credit_transactions')
       .select('id')
       .eq('user_id', userId)
-      .eq('subscription_id', subscriptionId)
+      .eq('reference_id', paymentIntentId)
       .single();
 
     if (data) {
-      console.log('Transaction already exists', {
+      console.log('Subscription transaction already exists', {
         userId,
+        paymentIntentId,
         subscriptionId,
         data,
       });
-    } else {
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        subscription_id: subscriptionId,
-        amount,
-        type: 'purchase',
-        description: `${subAmount} USD subscription`,
-      });
-      await updateUserCredits(userId, amount);
+      return;
     }
   } catch (_error) {
-    await supabase.from('credit_transactions').insert({
-      user_id: userId,
-      subscription_id: subscriptionId,
-      amount,
-      type: 'purchase',
-      description: `${subAmount} USD subscription`,
-    });
-    await updateUserCredits(userId, amount);
+    // Transaction doesn't exist, continue with insertion
   }
+
+  // Insert the transaction with reference_id (payment_intent)
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    reference_id: paymentIntentId,
+    subscription_id: subscriptionId,
+    amount: creditAmount,
+    type: 'purchase',
+    description: `Subscription payment - $${dollarAmount}`,
+    metadata: {
+      dollarAmount,
+      // Figure out how to send promo metadata with a Stripe pricing table
+      // ...(promo && { promo }),
+    },
+  });
+
+  if (error) {
+    console.error('Error inserting subscription transaction:', {
+      userId,
+      subscriptionId,
+      paymentIntentId,
+      error: error.message,
+    });
+    throw error;
+  }
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, creditAmount);
 };
 
-export const insertTopupTransaction = async (
+export const insertTopupCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
-  amount: number,
+  creditAmount: number,
   dollarAmount: number,
-  priceId: string,
+  packageId: string,
+  promo?: string | null,
 ) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   try {
     // Check if transaction already exists to prevent duplicates
@@ -193,28 +224,29 @@ export const insertTopupTransaction = async (
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
-    amount: amount,
+    amount: creditAmount,
     type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
     reference_id: paymentIntentId,
-    metadata: { priceId, dollarAmount },
+    metadata: {
+      packageId,
+      dollarAmount,
+      ...(promo && { promo }),
+    },
   });
 
   if (error) throw error;
 
   // Update user's credit balance using the database function
-  await updateUserCredits(userId, amount);
+  await updateUserCredits(userId, creditAmount);
 };
 
-export const updateUserCredits = async (
-  userId: string,
-  creditAmount: number,
-) => {
-  const supabase = await createClient();
+const updateUserCredits = async (userId: string, creditAmount: number) => {
+  const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
-    user_id: userId,
-    credit_amount: creditAmount,
+    user_id_var: userId,
+    credit_amount_var: creditAmount,
   });
 
   if (error) throw error;
@@ -232,4 +264,44 @@ export const getPaidTransactions = async (userId: string) => {
   if (error) throw error;
 
   return data;
+};
+
+export const hasUserPaid = async (userId: string): Promise<boolean> => {
+  const supabase = await createClient();
+  // Check if the user has any non-freemium credit transactions.
+  const { data: nonFreemiumTransactions, error: nonFreemiumError } =
+    await supabase
+      .from('credit_transactions')
+      .select('type')
+      .eq('user_id', userId)
+      .in('type', ['purchase', 'topup']);
+
+  if (nonFreemiumError) {
+    throw nonFreemiumError;
+  }
+
+  // Return true if there is at least one non-freemium (i.e., purchase) transaction.
+  return (nonFreemiumTransactions?.length ?? 0) > 0;
+};
+
+export const isFreemiumUserOverLimit = async (
+  userId: string,
+): Promise<boolean> => {
+  const supabase = await createClient();
+  // TODO: use redis instead
+  // If the user is a freemium user, count their voice model 'gpro' audio files.
+  const { data: audioFiles, error: audioFilesError } = await supabase
+    .from('audio_files')
+    .select('id, voices(model)')
+    .eq('user_id', userId);
+
+  if (audioFilesError) {
+    throw audioFilesError;
+  }
+
+  const gproAudioCount = audioFiles.filter(
+    (file) => file.voices?.model === 'gpro',
+  ).length;
+
+  return (gproAudioCount ?? 0) > MAX_FREE_GENERATIONS;
 };

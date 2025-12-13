@@ -12,7 +12,6 @@
 -- Make user_id column nullable
 ALTER TABLE audio_files 
 ALTER COLUMN user_id DROP NOT NULL;
-
 -- Drop existing RLS policies for audio_files
 DROP POLICY IF EXISTS "Users can view own audio files" ON audio_files;
 DROP POLICY IF EXISTS "Users can insert own audio files" ON audio_files;

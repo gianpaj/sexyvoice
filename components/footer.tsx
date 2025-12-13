@@ -3,8 +3,12 @@
 import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
-function Footer() {
+async function Footer({ lang }: { lang: Locale }) {
+  const dict = await getDictionary(lang);
+  const currentYear = new Date().getFullYear();
   return (
     <footer className="bg-gray-900 py-12">
       <div className="container mx-auto px-4 md:px-6">
@@ -26,9 +30,9 @@ function Footer() {
           <div className="mb-8 flex space-x-4">
             <Button
               asChild
-              variant="outline"
-              size="icon"
               className="rounded-full bg-gray-900"
+              size="icon"
+              variant="outline"
             >
               <Link href="https://x.com/SexyvoiceAi" target="_blank">
                 <span className="iconify logos--x" />
@@ -55,33 +59,40 @@ function Footer() {
             </form>
           </div> */}
           <div className="text-center">
-            <p className="text-xs text-muted-foreground">
-              © 2025 SexyVoice.ai. All rights reserved.
+            <p className="text-muted-foreground text-xs">
+              © {currentYear} {dict.footer.copyright}
             </p>
-            <p className="text-sm text-muted-foreground mt-4">
+            <p className="mt-4 text-muted-foreground text-sm">
+              <Link
+                className="hover:text-primary hover:underline"
+                href={`/${lang}/tools/audio-converter`}
+              >
+                {dict.footer.audioConverter}
+              </Link>
+              {' - '}
               <a
+                className="hover:text-primary hover:underline"
                 href="https://sexyvoice.checkly-dashboards.com/"
-                className="hover:text-primary hover:underline"
+                rel="noreferrer"
                 target="_blank"
-                rel="noreferrer"
               >
-                Status page
+                {dict.footer.statusPage}
               </a>
               {' - '}
               <a
+                className="hover:text-primary hover:underline"
                 href="/privacy-policy"
-                className="hover:text-primary hover:underline"
                 rel="noreferrer"
               >
-                Privacy Policy
+                {dict.footer.privacyPolicy}
               </a>
               {' - '}
               <a
-                href="/terms"
                 className="hover:text-primary hover:underline"
+                href="/terms"
                 rel="noreferrer"
               >
-                Terms and Conditions
+                {dict.footer.termsAndConditions}
               </a>
             </p>
           </div>

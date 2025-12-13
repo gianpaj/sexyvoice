@@ -1,14 +1,21 @@
+import type { Metadata } from 'next';
+
 import Footer from '@/components/footer';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 import '../privacy-policy/privacy-policy.css';
+
+export const metadata: Metadata = {
+  title: 'Terms & Conditions',
+};
 
 export default function TermsAndCondition() {
   return (
     <main
+      className="dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
       id="main-content"
-      className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
     >
-      <div className="container mx-auto px-4 my-8">
+      <div className="mx-auto max-w-2xl px-4 py-8">
         <h1>Terms & Conditions</h1>
         <p>Updated at 2025-03-28</p>
 
@@ -497,9 +504,9 @@ export default function TermsAndCondition() {
           facts giving rise to the dispute, and the relief requested. You must
           send any Notice of Dispute via email to: 
           <a
-            href="/cdn-cgi/l/email-protection"
             className="__cf_email__"
             data-cfemail="9af3f4fcf5dae9ffe2e3ecf5f3f9ffb4fbf3"
+            href="/cdn-cgi/l/email-protection"
           >
             [email&#160;protected]
           </a>
@@ -655,7 +662,7 @@ export default function TermsAndCondition() {
         </ul>
       </div>
 
-      <Footer />
+      <Footer lang={'en' as Locale} />
     </main>
   );
 }
