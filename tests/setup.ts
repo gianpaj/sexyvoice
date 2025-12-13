@@ -3,6 +3,12 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, vi } from 'vitest';
 
+// Helper to flush pending microtasks and macrotasks in tests
+export const flushPromises = () =>
+  new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+
 // Set timezone to UTC for consistent test results across CI and local machines
 process.env.TZ = 'UTC';
 
@@ -77,9 +83,10 @@ vi.mock('next/server', () => ({
       return response;
     },
   },
-  after: async (fn: () => Promise<void>) => {
-    // In tests, execute immediately instead of after response
-    await fn();
+  after: (fn: () => Promise<void>) => {
+    // In tests, execute immediately and return a promise
+    // This ensures the callback runs before test assertions
+    return fn();
   },
 }));
 

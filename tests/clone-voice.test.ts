@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/clone-voice/route';
 import * as queries from '@/lib/supabase/queries';
 import {
+  flushPromises,
   mockBlobPut,
   mockInngestSend,
   mockRedisGet,
@@ -550,6 +551,7 @@ describe('Clone Voice API Route', () => {
       });
 
       const response = await POST(request);
+      await flushPromises();
 
       expect(response.status).toBe(200);
       expect(queries.saveAudioFile).toHaveBeenCalledWith({
@@ -565,6 +567,7 @@ describe('Clone Voice API Route', () => {
         credits_used: expect.any(Number),
         usage: {
           locale: 'en',
+          userHasPaid: 'false',
         },
       });
     });
