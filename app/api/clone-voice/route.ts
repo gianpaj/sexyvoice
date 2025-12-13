@@ -9,6 +9,7 @@ import { inngest } from '@/lib/inngest/client';
 import PostHogClient from '@/lib/posthog';
 import {
   getCredits,
+  hasUserPaid,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -290,6 +291,8 @@ export async function POST(request: Request) {
     after(async () => {
       await reduceCredits({ userId: user.id, amount: estimate });
 
+      const userHasPaid = await hasUserPaid(user.id);
+
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
@@ -303,6 +306,7 @@ export async function POST(request: Request) {
         credits_used: estimate,
         usage: {
           locale,
+          userHasPaid,
         },
       });
 
