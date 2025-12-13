@@ -387,7 +387,10 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: creditsUsed,
-        usage,
+        usage: {
+          ...usage,
+          userHasPaid,
+        },
       });
 
       if (audioFileDBResult.error) {
