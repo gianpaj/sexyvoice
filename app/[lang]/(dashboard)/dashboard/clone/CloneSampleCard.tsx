@@ -123,7 +123,7 @@ export default function CloneSampleCard({
         >
           <Image
             alt={sample.name}
-            className="rounded-sm"
+            className="h-16 w-16 rounded-sm"
             height={65}
             src={sample.image}
             width={65}
