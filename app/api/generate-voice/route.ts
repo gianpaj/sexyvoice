@@ -16,7 +16,6 @@ import { getCharactersLimit } from '@/lib/ai';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
-import { checkUserPaidStatus } from '@/lib/stripe/stripe-client';
 import {
   getCredits,
   getVoiceIdByName,
@@ -133,11 +132,11 @@ export async function POST(request: Request) {
 
     const abortController = new AbortController();
 
-    const { isPaidUser } = await checkUserPaidStatus(user.id);
+    const userHasPaid = await hasUserPaid(user.id);
 
     let path = `${FOLDER}-free/${voice}-${hash}`;
 
-    if (isPaidUser) {
+    if (userHasPaid) {
       path = `${FOLDER}/${voice}-${hash}`;
     }
 
@@ -176,7 +175,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
-    const userHasPaid = await hasUserPaid(user.id);
     if (isGeminiVoice) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
       if (!userHasPaid && isOverLimit) {

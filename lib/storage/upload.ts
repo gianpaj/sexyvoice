@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   PutObjectCommand,
   type PutObjectCommandInput,
   S3Client,
@@ -10,12 +11,21 @@ export const config = {
   },
 };
 
+const { R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME } =
+  process.env;
+
+if (
+  !(R2_ENDPOINT && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME)
+) {
+  throw new Error('R2 environment variables are not fully configured.');
+}
+
 const s3Client = new S3Client({
   region: 'auto',
-  endpoint: process.env.R2_ENDPOINT,
+  endpoint: R2_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    accessKeyId: R2_ACCESS_KEY_ID,
+    secretAccessKey: R2_SECRET_ACCESS_KEY,
   },
 });
 
@@ -25,7 +35,7 @@ export const uploadFileToR2 = async (
   contentType: string,
 ) => {
   const params: PutObjectCommandInput = {
-    Bucket: process.env.R2_BUCKET_NAME,
+    Bucket: R2_BUCKET_NAME,
     Key: filename,
     Body: buffer,
     ACL: 'public-read',
@@ -34,4 +44,13 @@ export const uploadFileToR2 = async (
 
   await s3Client.send(new PutObjectCommand(params));
   return `https://files.sexyvoice.ai/${filename}`;
+};
+
+export const deleteFileFromR2 = async (filename: string) => {
+  const params = {
+    Bucket: R2_BUCKET_NAME,
+    Key: filename,
+  };
+
+  await s3Client.send(new DeleteObjectCommand(params));
 };

@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { generateHash } from '@/lib/audio';
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -39,17 +40,6 @@ interface ReplicateError {
   error?: string;
 }
 type ReplicateResponse = ReplicateOutput | ReplicateError;
-
-async function generateHash(combinedString: string) {
-  const textEncoder = new TextEncoder();
-  const data = textEncoder.encode(combinedString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 8);
-}
 
 async function getAudioDuration(
   fileBuffer: Buffer,

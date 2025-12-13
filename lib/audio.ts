@@ -10,7 +10,7 @@ function parseMimeType(mimeType: string): WavConversionOptions {
 
   const options: WavConversionOptions = {
     numChannels: 1,
-    sampleRate: 24000,
+    sampleRate: 24_000,
     bitsPerSample: 16,
   };
 
@@ -62,9 +62,7 @@ function createWavHeader(
 export function convertToWav(rawData: string, mimeType: string): Buffer {
   const options = parseMimeType(mimeType);
   const buffer = Buffer.from(rawData, 'base64');
-  const wavHeader = createWavHeader(rawData.length, options);
-
-  // const wavHeader = createWavHeader(buffer.length, options); // ✅ Use buffer length
+  const wavHeader = createWavHeader(buffer.length, options);
 
   return Buffer.concat([wavHeader, buffer]);
 }

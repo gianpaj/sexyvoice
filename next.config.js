@@ -37,11 +37,6 @@ let nextConfig = {
         port: '',
         pathname: '**',
       },
-      {
-        protocol: 'https',
-        hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
-        port: '',
-      },
     ],
   },
   eslint: {
