@@ -92,6 +92,7 @@ const SUPPORTED_LOCALE_CODES = [
   'de',
   'el',
   'en',
+  'en-multi',
   'es',
   'fi',
   'fr',
@@ -596,6 +597,25 @@ function NewVoiceClientInner({
                   </SelectContent>
                 </Select>
               </div>
+
+              {selectedLocale !== 'en' && (
+                <Card className="border-blue-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <InfoIcon className="size-5 text-blue-600" />
+                      {dict.crossLanguageInfo.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-200 text-sm">
+                      {dict.crossLanguageInfo.description}
+                    </p>
+                    <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
+                      {dict.crossLanguageInfo.example}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="grid w-full gap-2">
                 <Label htmlFor="text-to-convert">

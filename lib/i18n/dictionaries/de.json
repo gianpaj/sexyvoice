@@ -312,12 +312,18 @@
     "orUseMicrophone": "oder nutzen Sie Ihr Mikrofon",
     "errors": {
       "noAudioFile": "Bitte wählen Sie eine Audiodatei aus.",
-      "noText": "Bitte geben Sie Text ein, der in Sprache umgewandelt werden soll."
+      "noText": "Bitte geben Sie Text ein, der in Sprache umgewandelt werden soll.",
+      "ffmpegLoading": "Der Audio-Konverter wird noch geladen. Bitte versuchen Sie es in einem Moment erneut"
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
       "exampleOutput": "Beispiel",
       "loadSource": "Quelle laden"
+    },
+    "crossLanguageInfo": {
+      "title": "Stimmübertragung zwischen Sprachen",
+      "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
+      "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
     }
   },
   "profile": {

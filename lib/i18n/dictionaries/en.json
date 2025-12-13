@@ -312,12 +312,18 @@
     "orUseMicrophone": "or use your microphone",
     "errors": {
       "noAudioFile": "Please select an audio file.",
-      "noText": "Please enter some text to convert to speech."
+      "noText": "Please enter some text to convert to speech.",
+      "ffmpegLoading": "The audio converter is still loading. Please try again in a moment"
     },
     "sampleCard": {
       "sourceAudio": "Source audio",
       "exampleOutput": "Example",
       "loadSource": "Load source"
+    },
+    "crossLanguageInfo": {
+      "title": "Cross-Language Voice Transfer",
+      "description": "Clone a voice in one language and have it speak fluently in any of the other 23 supported languages while preserving the speaker's unique characteristics.",
+      "example": "Example: Upload an English speaker's voice sample → Generate French speech in their voice"
     }
   },
   "profile": {

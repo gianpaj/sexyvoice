@@ -312,12 +312,18 @@
     "orUseMicrophone": "o usa tu micrófono",
     "errors": {
       "noAudioFile": "Por favor selecciona un archivo de audio.",
-      "noText": "Por favor ingresa algún texto para convertir en voz."
+      "noText": "Por favor ingresa algún texto para convertir en voz.",
+      "ffmpegLoading": "El conversor de audio aún se está cargando. Por favor, intenta de nuevo en un momento"
     },
     "sampleCard": {
       "sourceAudio": "Fuente audio",
       "exampleOutput": "Ejemplo",
       "loadSource": "Carga fuente"
+    },
+    "crossLanguageInfo": {
+      "title": "Transferencia de Voz Entre Idiomas",
+      "description": "Clona una voz en un idioma y hazla hablar con fluidez en cualquiera de los otros 23 idiomas soportados mientras se preservan las características únicas del hablante.",
+      "example": "Ejemplo: Sube una muestra de voz de un hablante en inglés → Genera un discurso en francés con su voz"
     }
   },
   "profile": {
