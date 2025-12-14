@@ -254,9 +254,6 @@
   "generate": {
     "abortedCloning": "Voice generation aborted.",
     "cancel": "Cancel generation",
-    "cloneNotice": "Voice clones are created for demonstration purposes only.",
-    "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.\nYou have exclusive access to your cloned voices and audio files – no one else can access them.",
-    "cloneNoticeTooltipLabel": "Open voice clone safety notice",
     "ctaButton": "Generate Audio",
     "downloadAudio": "Download Audio",
     "error": "Failed to generate audio",
@@ -284,11 +281,10 @@
   "clone": {
     "audioFileLabel": "Audio File",
     "cancelButton": "Cancel",
-    "cloneNotice": "Voice clones are created for demonstration purposes only.",
+    "cloneNotice": "Please only clone voices with permission – respect others and follow the law.",
     "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.\nYou have exclusive access to your cloned voices and audio files – no one else can access them.",
     "cloneNoticeTooltipLabel": "Open voice clone safety notice",
     "ctaButton": "Generate Audio",
-    "disclaimer": "Voice clones are created for demonstration purposes only.",
     "downloadAudio": "Download Audio",
     "dragDropText": "Drag & drop or click to browse",
     "errorCloning": "Failed to clone voice",

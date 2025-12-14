@@ -1,3 +1,4 @@
+import { fal } from '@fal-ai/client';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
@@ -14,7 +15,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits, isWavFormat } from '@/lib/utils';
+import { estimateCredits } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
 
@@ -28,6 +29,7 @@ const ALLOWED_TYPES = [
   'audio/m4a',
   'audio/x-m4a',
 ];
+const MAX_LENGTH = 500;
 const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 const MIN_DURATION = 10; // seconds
 const MAX_DURATION = 5 * 60; // 5 minutes
@@ -100,7 +102,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (text.length > 500) {
+    if (text.length > MAX_LENGTH) {
       return NextResponse.json(
         new APIError(
           'Text exceeds the maximum length of 500 characters',
@@ -172,15 +174,6 @@ export async function POST(request: Request) {
     if (existingAudio) {
       audioReferenceUrl = existingAudio;
     } else {
-      // Validate that the audioBuffer is in WAV format
-      if (!isWavFormat(buffer)) {
-        return NextResponse.json(
-          {
-            error: 'Uploaded audio is not in WAV format.',
-          },
-          { status: 400 },
-        );
-      }
       audioReferenceUrl = await uploadFileToR2(
         blobUrl,
         buffer,
@@ -205,76 +198,110 @@ export async function POST(request: Request) {
       abortController.abort();
     });
 
-    const replicate = new Replicate();
-    const onProgress = (prediction: Prediction) => {
-      replicateResponse = prediction;
-    };
-
     let model: `${string}/${string}`;
     let input: Record<string, unknown>;
+    let url: string;
+    let requestId: string;
 
     if (locale === 'en') {
       // Use chatterbox for English
-      model = 'resemble-ai/chatterbox';
+      model = 'fal-ai/chatterbox/text-to-speech';
       input = {
         seed: 0,
-        prompt: text,
+        text,
         cfg_weight: 0.5,
         temperature: 0.8,
         exaggeration: 0.5,
         audio_prompt: audioReferenceUrl,
       };
+
+      const result = await fal.subscribe(model, {
+        input,
+        logs: false,
+        // onQueueUpdate: (update) => {
+        //   if (update.status === 'IN_PROGRESS') {
+        //     update.logs?.map((log) => log.message).forEach(console.log);
+        //   }
+        // },
+        abortSignal: request.signal,
+      });
+
+      const falData = result.data as {
+        audio: {
+          url: string;
+          content_type: string;
+          file_name: string;
+          file_size: number;
+        };
+      };
+
+      const audioResponse = await fetch(falData.audio.url);
+      const audioBuffer = await audioResponse.arrayBuffer();
+
+      url = await uploadFileToR2(
+        filename,
+        Buffer.from(audioBuffer),
+        'audio/mpeg',
+      );
+
+      await redis.set(filename, url);
+
+      requestId = result.requestId;
+      modelUsed = model;
     } else {
+      const replicate = new Replicate();
+      const onProgress = (prediction: Prediction) => {
+        replicateResponse = prediction;
+      };
       // Use chatterbox-multilingual for non-English
       model =
         'resemble-ai/chatterbox-multilingual:9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c';
       input = {
         seed: 0,
         text,
-        language: locale,
+        language: SUPPORTED_LOCALE_CODES.find((l) => l.value === locale)?.code,
         cfg_weight: 0.5,
         temperature: 0.8,
         exaggeration: 0.5,
         reference_audio: audioReferenceUrl,
       };
-    }
 
-    const output = (await replicate.run(
-      model,
-      {
-        input,
-        // signal
-      },
-      onProgress,
-    )) as ReplicateResponse;
-
-    if (typeof output === 'object' && 'error' in output) {
-      const errorObj = {
-        text,
-        locale,
-        audioReferenceUrl,
+      const output = (await replicate.run(
         model,
-        errorData: output.error,
-      };
-      captureException({
-        error: 'Voice cloning failed',
-        ...errorObj,
-      });
-      console.error(errorObj);
-      throw new Error(
-        output.error || 'Voice cloning failed, please try again',
         {
-          cause: 'REPLICATE_ERROR',
+          input,
+          // signal
         },
-      );
+        onProgress,
+      )) as ReplicateResponse;
+
+      if (typeof output === 'object' && 'error' in output) {
+        const errorObj = {
+          text,
+          locale,
+          audioReferenceUrl,
+          model,
+          errorData: output.error,
+        };
+        captureException({
+          error: 'Voice cloning failed',
+          ...errorObj,
+        });
+        console.error(errorObj);
+        throw new Error(
+          output.error || 'Voice cloning failed, please try again',
+          {
+            cause: 'REPLICATE_ERROR',
+          },
+        );
+      }
+
+      modelUsed = model.split(':')[0]; // Get model name without version hash
+      requestId = replicateResponse?.id || 'unknown';
+      const audioBuffer = await (output as ReplicateOutput).blob();
+
+      url = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
     }
-
-    const requestId = replicateResponse?.id || 'unknown';
-    modelUsed = model.split(':')[0]; // Get model name without version hash
-
-    const audioBuffer = await (output as ReplicateOutput).blob();
-
-    const url = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
 
     // Background tasks
     after(async () => {
@@ -404,3 +431,30 @@ const sanitizeFilename = (filename: string) => {
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
 };
+
+const SUPPORTED_LOCALE_CODES = [
+  { code: 'ar', value: 'arabic' },
+  { code: 'da', value: 'danish' },
+  { code: 'de', value: 'german' },
+  { code: 'el', value: 'greek' },
+  { code: 'en', value: 'english' },
+  { code: 'en-multi', value: 'english' },
+  { code: 'es', value: 'spanish' },
+  { code: 'fi', value: 'finnish' },
+  { code: 'fr', value: 'french' },
+  { code: 'he', value: 'hebrew' },
+  { code: 'hi', value: 'hindi' },
+  { code: 'it', value: 'italian' },
+  { code: 'ja', value: 'japanese' },
+  { code: 'ko', value: 'korean' },
+  { code: 'ms', value: 'malay' },
+  { code: 'nl', value: 'dutch' },
+  { code: 'no', value: 'norwegian' },
+  { code: 'pl', value: 'polish' },
+  { code: 'pt', value: 'portuguese' },
+  { code: 'ru', value: 'russian' },
+  { code: 'sv', value: 'swedish' },
+  { code: 'sw', value: 'swahili' },
+  { code: 'tr', value: 'turkish' },
+  { code: 'zh', value: 'chinese' },
+];

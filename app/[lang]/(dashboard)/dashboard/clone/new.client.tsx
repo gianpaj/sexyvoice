@@ -28,7 +28,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-// import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -37,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -47,6 +47,7 @@ import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { cn } from '@/lib/utils';
 import { AudioProvider, useAudio } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
 import CloneSampleCard from './CloneSampleCard';
@@ -62,7 +63,7 @@ const sampleAudios: readonly SampleAudio[] = [
   {
     id: 1,
     name: 'Marilyn Monroe 🇺🇸',
-    language: 'en',
+    language: 'english',
     prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
     audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
     audioExampleOutputSrc:
@@ -87,30 +88,30 @@ const sampleAudios: readonly SampleAudio[] = [
 ];
 
 const SUPPORTED_LOCALE_CODES = [
-  'ar',
-  'da',
-  'de',
-  'el',
-  'en',
-  'en-multi',
-  'es',
-  'fi',
-  'fr',
-  'he',
-  'hi',
-  'it',
-  'ja',
-  'ko',
-  'ms',
-  'nl',
-  'no',
-  'pl',
-  'pt',
-  'ru',
-  'sv',
-  'sw',
-  'tr',
-  'zh',
+  { code: 'ar', value: 'arabic' },
+  { code: 'da', value: 'danish' },
+  { code: 'de', value: 'german' },
+  { code: 'el', value: 'greek' },
+  { code: 'en', value: 'english' },
+  { code: 'en-multi', value: 'english' },
+  { code: 'es', value: 'spanish' },
+  { code: 'fi', value: 'finnish' },
+  { code: 'fr', value: 'french' },
+  { code: 'he', value: 'hebrew' },
+  { code: 'hi', value: 'hindi' },
+  { code: 'it', value: 'italian' },
+  { code: 'ja', value: 'japanese' },
+  { code: 'ko', value: 'korean' },
+  { code: 'ms', value: 'malay' },
+  { code: 'nl', value: 'dutch' },
+  { code: 'no', value: 'norwegian' },
+  { code: 'pl', value: 'polish' },
+  { code: 'pt', value: 'portuguese' },
+  { code: 'ru', value: 'russian' },
+  { code: 'sv', value: 'swedish' },
+  { code: 'sw', value: 'swahili' },
+  { code: 'tr', value: 'turkish' },
+  { code: 'zh', value: 'chinese' },
 ];
 
 export default function NewVoiceClient({
@@ -133,6 +134,8 @@ export default function NewVoiceClient({
   );
 }
 
+const MAX_LENGTH = 500;
+
 function NewVoiceClientInner({
   dict,
   lang,
@@ -146,9 +149,12 @@ function NewVoiceClientInner({
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
-  const [textToConvert, setTextToConvert] = useState('');
+  const [text, setText] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
-  const [selectedLocale, setSelectedLocale] = useState('en');
+  const [selectedLocale, setSelectedLocale] = useState({
+    code: 'en',
+    value: 'english',
+  });
   const [micBlob, setMicBlob] = useState<Blob | null>(null);
   const [micRecording, setMicRecording] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
@@ -161,8 +167,9 @@ function NewVoiceClientInner({
 
   const supportedLocales = useMemo(() => {
     const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
-    return SUPPORTED_LOCALE_CODES.map((code) => ({
+    return SUPPORTED_LOCALE_CODES.map(({ code, value }) => ({
       code,
+      value,
       name:
         `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
         code,
@@ -252,7 +259,7 @@ function NewVoiceClientInner({
       return;
     }
 
-    if (!textToConvert.trim()) {
+    if (!text.trim()) {
       setErrorMessage(dict.errors.noText);
       setStatus('error');
       return;
@@ -276,12 +283,7 @@ function NewVoiceClientInner({
           type: 'audio/wav',
         });
       } else if (audioToProcess) {
-        // Convert audio to WAV format (24kHz, mono) if needed
-        const preparedFile = await prepareAudioFile(audioToProcess);
-        if (!preparedFile) {
-          return;
-        }
-        audioToProcess = preparedFile;
+        audioToProcess = file;
       }
 
       if (!audioToProcess) {
@@ -293,8 +295,8 @@ function NewVoiceClientInner({
       // First upload and process the voice
       const formData = new FormData();
       formData.append('file', audioToProcess);
-      formData.append('text', textToConvert);
-      formData.append('locale', selectedLocale);
+      formData.append('text', text);
+      formData.append('locale', selectedLocale.value);
 
       voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -345,7 +347,7 @@ function NewVoiceClientInner({
     dict,
     file,
     micBlob,
-    textToConvert,
+    text,
     selectedLocale,
     clearErrors,
     prepareAudioFile,
@@ -365,11 +367,7 @@ function NewVoiceClientInner({
         event.preventDefault();
 
         // Only trigger if form can be submitted
-        if (
-          status !== 'generating' &&
-          textToConvert.trim() &&
-          hasEnoughCredits
-        ) {
+        if (status !== 'generating' && text.trim() && hasEnoughCredits) {
           handleGenerate();
         }
       }
@@ -382,7 +380,7 @@ function NewVoiceClientInner({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, textToConvert, handleGenerate, hasEnoughCredits]);
+  }, [status, text, handleGenerate, hasEnoughCredits]);
 
   const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
@@ -400,8 +398,8 @@ function NewVoiceClientInner({
   };
 
   const onSelectSample = (sample: SampleAudio) => {
-    setSelectedLocale(sample.language);
-    setTextToConvert(sample.prompt);
+    setSelectedLocale({ code: 'en', value: 'english' });
+    setText(sample.prompt);
   };
 
   const onMicStop = async (blob: Blob) => {
@@ -432,6 +430,8 @@ function NewVoiceClientInner({
     setMicBlob(null);
     setMicRecording(false);
   };
+
+  const textIsOverLimit = text.length > MAX_LENGTH;
 
   return (
     <Card>
@@ -582,8 +582,15 @@ function NewVoiceClientInner({
                 <Label htmlFor="language">{dict.languageLabel}</Label>
                 <Select
                   disabled={status === 'generating'}
-                  onValueChange={setSelectedLocale}
-                  value={selectedLocale}
+                  onValueChange={(code) =>
+                    setSelectedLocale({
+                      code,
+                      value:
+                        supportedLocales.find((c) => c.code === code)?.value ||
+                        '',
+                    })
+                  }
+                  value={selectedLocale?.code}
                 >
                   <SelectTrigger id="language">
                     <SelectValue placeholder={dict.languageSelectPlaceholder} />
@@ -598,7 +605,7 @@ function NewVoiceClientInner({
                 </Select>
               </div>
 
-              {selectedLocale !== 'en' && (
+              {selectedLocale.code !== 'en' && (
                 <Card className="border-blue-800">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -621,14 +628,23 @@ function NewVoiceClientInner({
                 <Label htmlFor="text-to-convert">
                   {dict.textToConvertLabel}
                 </Label>
-                <textarea
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                <Textarea
                   disabled={status === 'generating'}
                   id="text-to-convert"
-                  onChange={(e) => setTextToConvert(e.target.value)}
+                  maxLength={MAX_LENGTH * 2}
+                  onChange={(e) => setText(e.target.value)}
                   placeholder={dict.textAreaPlaceholder}
-                  value={textToConvert}
+                  rows={5}
+                  value={text}
                 />
+              </div>
+              <div
+                className={cn(
+                  '-mt-2 text-right text-muted-foreground text-sm',
+                  [textIsOverLimit ? 'font-bold text-red-500' : ''],
+                )}
+              >
+                {text.length} / {MAX_LENGTH}
               </div>
             </div>
 
@@ -649,10 +665,11 @@ function NewVoiceClientInner({
             <Button
               className="w-full"
               disabled={
-                !((file || micBlob) && textToConvert.trim()) ||
+                !((file || micBlob) && text.trim()) ||
                 status === 'generating' ||
                 !hasEnoughCredits ||
-                convertingMicAudio
+                convertingMicAudio ||
+                textIsOverLimit
               }
               onClick={handleGenerate}
             >
