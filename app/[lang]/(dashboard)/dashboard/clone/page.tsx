@@ -37,7 +37,7 @@ export default async function NewVoicePage(props: {
   const dict = await getDictionary(lang);
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       <div className="mb-6 lg:hidden">
         <CreditsSection
           creditTransactions={creditTransactions}

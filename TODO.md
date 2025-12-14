@@ -11,6 +11,7 @@
 - merge `r2` branch
   - share link & page after an audio has been generated
   - listened counter?
+- Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
