@@ -18,6 +18,7 @@
 - Implement `fakefilter` or `mailchecker` npm packages to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
   - `curl -X GET https://api.usercheck.com/domain/fursee.com`
 - RESEARCH: AudioWaveform React component. can it compute the wave form in the browser in a small package and computing resources?
+- Refactor terms and privacy-policy pages to use content layer and markdown pages
 - Translate pages in Dashboard:
   - Generate
   - History

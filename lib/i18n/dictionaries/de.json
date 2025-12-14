@@ -243,7 +243,9 @@
     },
     "history": {
       "title": "Credit-Verlauf"
-    }
+    },
+    "refundInfo": "Seien Sie versichert – wir bieten unkomplizierte Rückerstattungen innerhalb von 90 Tagen nach dem Kauf. Lesen Sie unsere vollständige Rückerstattungsrichtlinie unter",
+    "refundInfoLinkText": "Rückerstattungsrichtlinie"
   },
   "creditsSection": {
     "title": "Guthaben",

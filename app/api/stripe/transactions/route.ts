@@ -34,47 +34,27 @@ export async function GET(request: NextRequest) {
       //   expand: ['data.latest_invoice']
     });
 
-    // Get charges for this customer
-    // const charges = await stripe.charges.list({
-    //   customer: stripeId,
-    //   limit: 10
-    // })
-
-    // console.dir(subscriptions.data, { depth: null })
-
-    // Format the charges data
-    // const chargeTransactions = charges.data.map(charge => ({
-    //   id: charge.id,
-    //   amount: charge.amount,
-    //   type: 'payment',
-    //   description: charge.description || 'Stripe payment',
-    //   created: charge.created,
-    //   status: charge.status
-    // }))
-
     // Format subscription data
     const subscriptionTransactions = subscriptions.data.map((subscription) => {
       const invoice = subscription.latest_invoice as Stripe.Invoice;
+      const firstSubscriptionItem = subscription.items.data[0];
       return {
         id: subscription.id,
-        amount: subscription.items.data[0]?.price?.unit_amount || 0,
+        amount: firstSubscriptionItem?.price?.unit_amount || 0,
         type: 'subscription',
-        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
+        description: `Subscription: ${firstSubscriptionItem?.price?.nickname || 'Plan'} (${subscription.status})`,
         created: subscription.created,
         status: subscription.status,
-        current_period_end: subscription.current_period_end,
-        current_period_start: subscription.current_period_start,
+        current_period_end: firstSubscriptionItem?.current_period_end ?? null,
+        current_period_start:
+          firstSubscriptionItem?.current_period_start ?? null,
         invoice_id: typeof invoice === 'object' ? invoice.id : invoice,
       };
     });
 
-    // Combine transactions and sort by created date
-    const transactions = [
-      //   ...chargeTransactions,
-      ...subscriptionTransactions,
-    ].sort((a, b) => b.created - a.created);
+    subscriptionTransactions.sort((a, b) => b.created - a.created);
 
-    return NextResponse.json(transactions);
+    return NextResponse.json(subscriptionTransactions);
   } catch (error) {
     console.error('Error fetching Stripe transactions:', error);
     return NextResponse.json(
