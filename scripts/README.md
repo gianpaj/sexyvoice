@@ -239,6 +239,31 @@ All visualizations created! 📊
 Files saved with prefix: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_
 ```
 
+---
+
+## Waveform Video Generator
+
+Modern audio visualizer that turns any ffmpeg-compatible audio file into a
+gradient waveform video with multiple style presets.
+
+### Usage
+
+```bash
+# Neon gradient at 60fps with a custom title
+python scripts/generate_waveform_video.py input.wav output.mp4 --style neon --fps 60 --title "Deep Night Session"
+
+# Light mode preview at 720p
+python scripts/generate_waveform_video.py song.mp3 preview.mp4 --style minimal --width 1280 --height 720
+```
+
+### Options
+
+- `--style`: `neon` (default), `minimal`, `sunset`, `forest`
+- `--fps`: Frames per second (default 30)
+- `--width` / `--height`: Output resolution
+- `--title`: Optional text rendered above the waveform
+- `--preset`: ffmpeg x264 preset passed through MoviePy
+
 ## Stripe Payments Comparison and Analysis Scripts
 
 ```bash
