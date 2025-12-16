@@ -58,7 +58,6 @@ export type Status = 'idle' | 'generating' | 'complete' | 'error';
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
 const sampleAudios: readonly SampleAudio[] = [
   {
