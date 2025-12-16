@@ -26,7 +26,6 @@ import argparse
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple
 
 import matplotlib
 
@@ -35,20 +34,22 @@ matplotlib.use("Agg")
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.patches import Rectangle
-from moviepy.editor import AudioFileClip, VideoClip
+from matplotlib.collections import LineCollection
+from moviepy import AudioFileClip, VideoClip
 
 
 @dataclass(frozen=True)
 class WaveformStyle:
     """Visual style configuration for the waveform renderer."""
 
-    background: Tuple[str, str]
+    background: tuple[str, str]
     line: str
     accent: str
     grid: str
     title: str
     glow: bool = False
+    gradient_start: str | None = None
+    gradient_end: str | None = None
 
 
 STYLES: dict[str, WaveformStyle] = {
@@ -59,6 +60,8 @@ STYLES: dict[str, WaveformStyle] = {
         grid="#1f2937",
         title="#e0e7ff",
         glow=True,
+        gradient_start="#8B66FF",
+        gradient_end="#FF3366",
     ),
     "minimal": WaveformStyle(
         background=("#f5f7fb", "#e5e7eb"),
@@ -74,6 +77,8 @@ STYLES: dict[str, WaveformStyle] = {
         grid="#1f2937",
         title="#f8fafc",
         glow=True,
+        gradient_start="#f59e0b",
+        gradient_end="#f97316",
     ),
     "forest": WaveformStyle(
         background=("#0f172a", "#0b3b2e"),
@@ -81,6 +86,8 @@ STYLES: dict[str, WaveformStyle] = {
         accent="#10b981",
         grid="#0b3b2e",
         title="#ecfdf3",
+        gradient_start="#22c55e",
+        gradient_end="#10b981",
     ),
 }
 
@@ -90,17 +97,25 @@ def parse_args() -> argparse.Namespace:
         description="Generate a stylized waveform video from an audio file.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("audio", help="Path to the input audio file (any format ffmpeg supports)")
-    parser.add_argument("output", help="Path to the output video file (e.g., output.mp4)")
+    parser.add_argument(
+        "audio", help="Path to the input audio file (any format ffmpeg supports)"
+    )
+    parser.add_argument(
+        "output", help="Path to the output video file (e.g., output.mp4)"
+    )
     parser.add_argument(
         "--style",
         choices=sorted(STYLES),
         default="neon",
         help="Color and layout preset to use",
     )
-    parser.add_argument("--fps", type=int, default=30, help="Frames per second for the video")
-    parser.add_argument("--width", type=int, default=1920, help="Video width in pixels")
-    parser.add_argument("--height", type=int, default=1080, help="Video height in pixels")
+    parser.add_argument(
+        "--fps", type=int, default=30, help="Frames per second for the video"
+    )
+    parser.add_argument("--width", type=int, default=1280, help="Video width in pixels")
+    parser.add_argument(
+        "--height", type=int, default=720, help="Video height in pixels"
+    )
     parser.add_argument(
         "--sample-rate",
         type=int,
@@ -153,7 +168,9 @@ def decode_audio(audio_path: str, sample_rate: int) -> np.ndarray:
 
     audio = np.frombuffer(process.stdout, dtype=np.float32)
     if audio.size == 0:
-        raise ValueError("Decoded audio is empty. Check the input file path and format.")
+        raise ValueError(
+            "Decoded audio is empty. Check the input file path and format."
+        )
     return audio
 
 
@@ -170,12 +187,17 @@ def downsample_waveform(waveform: np.ndarray, target_points: int) -> np.ndarray:
 class WaveformRenderer:
     """Render waveform frames with modern styling and motion cues."""
 
+    # Layout dimensions as fractions of figure size [left, bottom, width, height]
+    MAIN_AXES_RECT = [0.05, 0.1, 0.9, 0.8]
+    TITLE_X = 0.05
+    TITLE_Y = 0.9
+
     def __init__(
         self,
         times: np.ndarray,
         waveform: np.ndarray,
         style: WaveformStyle,
-        resolution: Tuple[int, int],
+        resolution: tuple[int, int],
         title: str | None,
     ) -> None:
         self.times = times
@@ -184,9 +206,12 @@ class WaveformRenderer:
         self.width, self.height = resolution
         self.title = title
         self.dpi = 100
-        self.fig = plt.figure(figsize=(self.width / self.dpi, self.height / self.dpi), dpi=self.dpi)
+        self.fig = plt.figure(
+            figsize=(self.width / self.dpi, self.height / self.dpi), dpi=self.dpi
+        )
         self.canvas = FigureCanvasAgg(self.fig)
-        self.ax = self.fig.add_axes([0.05, 0.18, 0.9, 0.62])
+        self.ax = self.fig.add_axes(self.MAIN_AXES_RECT)
+        self.fig.patch.set_facecolor(self.style.background[0])
         self.ax.set_xlim(0, times[-1])
         self.ax.set_ylim(-1.1, 1.1)
         self.ax.axis("off")
@@ -197,21 +222,9 @@ class WaveformRenderer:
             self._setup_title()
 
     def _setup_background(self) -> None:
-        gradient = np.linspace(0, 1, 256)
-        gradient = np.vstack((gradient, gradient))
-        self.ax.imshow(
-            gradient,
-            aspect="auto",
-            cmap=matplotlib.colors.LinearSegmentedColormap.from_list(
-                "bg", [self.style.background[0], self.style.background[1]]
-            ),
-            extent=(0, self.times[-1], -1.1, 1.1),
-            origin="lower",
-            zorder=0,
-        )
         for spine in self.ax.spines.values():
             spine.set_visible(False)
-        self.ax.set_facecolor("none")
+        self.ax.set_facecolor(self.style.background[0])
 
     def _setup_waveform_layers(self) -> None:
         shadow_width = 6 if self.style.glow else 0
@@ -233,72 +246,116 @@ class WaveformRenderer:
             alpha=0.35,
             zorder=2,
         )
-        self.progress_line, = self.ax.plot(
-            [], [], color=self.style.line, linewidth=2.8, zorder=4, solid_capstyle="round"
-        )
-        if self.style.glow:
-            self.progress_glow, = self.ax.plot(
-                [], [], color=self.style.accent, linewidth=9, alpha=0.06, zorder=3, solid_capstyle="round"
-            )
-        else:
+
+        # Setup progress line with gradient if available
+        if self.style.gradient_start and self.style.gradient_end:
+            self.progress_line = None
             self.progress_glow = None
+        else:
+            (self.progress_line,) = self.ax.plot(
+                [],
+                [],
+                color=self.style.line,
+                linewidth=2.8,
+                zorder=4,
+                solid_capstyle="round",
+            )
+            if self.style.glow:
+                (self.progress_glow,) = self.ax.plot(
+                    [],
+                    [],
+                    color=self.style.accent,
+                    linewidth=9,
+                    alpha=0.06,
+                    zorder=3,
+                    solid_capstyle="round",
+                )
+            else:
+                self.progress_glow = None
 
     def _setup_progress_elements(self) -> None:
-        self.progress_ax = self.fig.add_axes([0.05, 0.08, 0.9, 0.06])
-        self.progress_ax.set_xlim(0, self.times[-1])
-        self.progress_ax.set_ylim(0, 1)
-        self.progress_ax.axis("off")
-        self.progress_ax.set_facecolor("none")
-        self.progress_bg = Rectangle((0, 0.35), self.times[-1], 0.3, color=self.style.grid, alpha=0.3)
-        self.progress_fill = Rectangle((0, 0.35), 0, 0.3, color=self.style.accent, alpha=0.9)
-        self.progress_ax.add_patch(self.progress_bg)
-        self.progress_ax.add_patch(self.progress_fill)
-        self.playhead = self.ax.axvline(0, color=self.style.accent, linewidth=1.5, alpha=0.8, zorder=5)
-        self.time_label = self.fig.text(
-            0.95,
-            0.92,
-            "0:00",
-            ha="right",
-            va="center",
-            color=self.style.title,
-            fontsize=12,
-            family="DejaVu Sans",
+        self.playhead = self.ax.axvline(
+            0, color=self.style.accent, linewidth=1.5, alpha=0.8, zorder=5
         )
 
     def _setup_title(self) -> None:
         self.fig.text(
-            0.05,
-            0.9,
+            self.TITLE_X,
+            self.TITLE_Y,
             self.title,
             ha="left",
             va="center",
             color=self.style.title,
             fontsize=18,
             fontweight="bold",
-            family="DejaVu Sans",
         )
-
-    def _format_timestamp(self, seconds: float) -> str:
-        minutes = int(seconds // 60)
-        secs = int(seconds % 60)
-        return f"{minutes}:{secs:02d}"
 
     def make_frame(self, t: float) -> np.ndarray:
         idx = int(np.searchsorted(self.times, t, side="right"))
         idx = min(idx, self.waveform.size)
 
-        self.progress_line.set_data(self.times[:idx], self.waveform[:idx])
-        if self.progress_glow is not None:
-            self.progress_glow.set_data(self.times[:idx], self.waveform[:idx])
+        if self.progress_line is not None:
+            self.progress_line.set_data(self.times[:idx], self.waveform[:idx])
+            if self.progress_glow is not None:
+                self.progress_glow.set_data(self.times[:idx], self.waveform[:idx])
+        else:
+            # Draw gradient waveform
+            self._draw_gradient_waveform(idx)
 
         clamped_t = min(t, self.times[-1])
         self.playhead.set_xdata([clamped_t, clamped_t])
-        self.progress_fill.set_width(clamped_t)
-        self.time_label.set_text(self._format_timestamp(t))
 
         self.canvas.draw()
         frame = np.asarray(self.canvas.buffer_rgba())[:, :, :3]
         return frame
+
+    def _draw_gradient_waveform(self, idx: int) -> None:
+        """Draw waveform with gradient color based on position."""
+        if idx < 2:
+            return
+
+        times = self.times[:idx]
+        waveform = self.waveform[:idx]
+
+        # Create line segments
+        points = np.array([times, waveform]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        # Create colors with gradient
+        colors = self._get_gradient_colors(idx)
+
+        # Remove any existing gradient collections
+        for artist in self.ax.collections[:]:
+            artist.remove()
+
+        # Add new line collection with gradient
+        lc = LineCollection(segments, colors=colors, linewidth=2.8, zorder=4)
+        self.ax.add_collection(lc)
+
+    def _get_gradient_colors(self, idx: int) -> list:
+        """Generate gradient colors from start to end."""
+        if idx < 1:
+            return []
+
+        # Parse hex colors to RGB tuples
+        start_rgb = self._hex_to_rgb(self.style.gradient_start)
+        end_rgb = self._hex_to_rgb(self.style.gradient_end)
+
+        colors = []
+        for i in range(idx - 1):
+            # Interpolate between start and end colors
+            t = i / max(idx - 2, 1)
+            r = start_rgb[0] * (1 - t) + end_rgb[0] * t
+            g = start_rgb[1] * (1 - t) + end_rgb[1] * t
+            b = start_rgb[2] * (1 - t) + end_rgb[2] * t
+            colors.append((r / 255.0, g / 255.0, b / 255.0, 1.0))
+
+        return colors
+
+    def _hex_to_rgb(self, hex_color: str) -> tuple[int, int, int]:
+        """Convert hex color to RGB tuple."""
+        hex_color = hex_color.lstrip("#")
+        return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
 
 
 def main() -> None:
@@ -308,6 +365,15 @@ def main() -> None:
     audio_path = Path(args.audio)
     if not audio_path.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
+
+    output_path = Path(args.output)
+    if output_path.exists():
+        response = input(
+            f"Output file '{args.output}' already exists. Overwrite (Y/n): "
+        )
+        if response.lower() == "n":
+            print("Cancelled.")
+            return
 
     waveform = decode_audio(str(audio_path), args.sample_rate)
     peak = np.max(np.abs(waveform))
@@ -330,14 +396,13 @@ def main() -> None:
     )
 
     video_clip = VideoClip(renderer.make_frame, duration=duration)
-    video_clip = video_clip.set_audio(audio_clip)
+    video_clip = video_clip.with_audio(audio_clip)
     video_clip.write_videofile(
         args.output,
         fps=args.fps,
         codec="libx264",
         audio_codec="aac",
         preset=args.preset,
-        threads=4,
     )
 
 
