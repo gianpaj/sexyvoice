@@ -10,16 +10,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import useMediaRecorder from '@/hooks/use-media-recorder';
 import { useMultibandTrackVolume } from '@/hooks/use-multiband-track-volume';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
 
 interface Props {
-  onStop: (blob: Blob) => void;
-  onMicStart: () => void;
-  onMicReset: () => void;
+  status:
+    | 'idle'
+    | 'acquiring_media'
+    | 'ready'
+    | 'recording'
+    | 'paused'
+    | 'stopping'
+    | 'stopped'
+    | 'failed';
+  mediaBlob: Blob | null;
+  mediaStream: MediaStream | null;
+  onToggleMicrophone: () => void;
+  onClearMediaStream: () => void;
 }
 
 function AudioPlayer({ blob }: { blob: Blob }) {
@@ -116,38 +125,16 @@ function DeviceSelectDropdown() {
 }
 
 export function MicrophoneMain(props: Props) {
-  const [hasPermission, setHasPermission] = useState(false);
-
   const {
     status,
-    startRecording,
-    stopRecording,
-    clearMediaStream,
-    clearMediaBlob,
-    mediaStream,
     mediaBlob,
-    getMediaStream,
-  } = useMediaRecorder({
-    mediaStreamConstraints: { audio: true },
-    onStop: (blob) => {
-      // onStop receives the complete blob (all chunks combined)
-      props.onStop(blob);
-    },
-    onError: (err) => {
-      console.error(err);
-    },
-    onStart: props.onMicStart,
-  });
+    mediaStream,
+    onToggleMicrophone,
+    onClearMediaStream,
+  } = props;
+  const [hasPermission, setHasPermission] = useState(false);
+
   const micMultibandVolume = useMultibandTrackVolume(mediaStream, 9);
-
-  const onClearMediaStream = () => {
-    clearMediaStream();
-    clearMediaBlob();
-    props.onMicReset();
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: from existing code
-  useEffect(() => clearMediaStream, []);
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -162,20 +149,6 @@ export function MicrophoneMain(props: Props) {
     };
     checkPermission();
   }, []);
-
-  const onToggleMicrophone = async () => {
-    if (status === 'idle' || status === 'stopped') {
-      clearMediaStream();
-      // Request microphone access on first toggle
-      const stream = await getMediaStream();
-      if (stream && !hasPermission) {
-        setHasPermission(true);
-      }
-      startRecording();
-    } else if (status === 'recording') {
-      stopRecording();
-    }
-  };
 
   return (
     <div className="mx-auto flex w-4/5 flex-col items-center rounded-md text-secondary-foreground sm:w-72">

@@ -63,6 +63,9 @@
       "nursery": {
         "noShadow": "off",
         "noLeakedRender": "off"
+      },
+      "performance": {
+        "useTopLevelRegex": "off"
       }
     },
     "domains": {

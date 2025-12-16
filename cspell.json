@@ -3,6 +3,7 @@
     "lucide",
     "supabase",
     "posthog",
-    "platform"
+    "platform",
+    "MAX_LENGTH_MULTILANGUAGE"
   ]
 }

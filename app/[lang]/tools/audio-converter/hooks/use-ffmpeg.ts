@@ -2,41 +2,48 @@
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
 
 const FFMPEG_CORE_VERSION = '0.12.6';
 
-export function useFFmpeg() {
+interface UseFFmpegOptions {
+  lazyLoad?: boolean;
+}
+
+async function loadFFmpegCore(): Promise<FFmpeg> {
+  const ffmpeg = new FFmpeg();
+
+  ffmpeg.on('log', ({ message }) => {
+    console.log('[FFmpeg]', message);
+  });
+
+  const baseURL = `https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/umd`;
+  await ffmpeg.load({
+    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+  });
+
+  console.info('FFmpeg loaded successfully');
+  return ffmpeg;
+}
+
+export function useFFmpeg(options?: UseFFmpegOptions) {
   const ffmpegRef = useRef<FFmpeg | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(options?.lazyLoad);
   const [error, setError] = useState<string | null>(null);
+  const lazyLoad = options?.lazyLoad ?? false;
 
   useEffect(() => {
+    if (lazyLoad) {
+      return;
+    }
+
     const loadFFmpeg = async () => {
       try {
         setIsLoading(true);
-        const ffmpeg = new FFmpeg();
-        ffmpegRef.current = ffmpeg;
-
-        ffmpeg.on('log', ({ message }) => {
-          console.log('[FFmpeg]', message);
-        });
-
-        const baseURL = `https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/umd`;
-        await ffmpeg.load({
-          coreURL: await toBlobURL(
-            `${baseURL}/ffmpeg-core.js`,
-            'text/javascript',
-          ),
-          wasmURL: await toBlobURL(
-            `${baseURL}/ffmpeg-core.wasm`,
-            'application/wasm',
-          ),
-        });
-
-        console.info('FFmpeg loaded successfully');
+        ffmpegRef.current = await loadFFmpegCore();
       } catch (err) {
         console.error('Failed to load FFmpeg:', err);
         setError('Failed to load FFmpeg');
@@ -46,6 +53,25 @@ export function useFFmpeg() {
     };
 
     loadFFmpeg();
+  }, [lazyLoad]);
+
+  const ensureLoaded = useCallback(async (): Promise<void> => {
+    if (ffmpegRef.current) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      ffmpegRef.current = await loadFFmpegCore();
+      setError(null);
+    } catch (err) {
+      const errorMsg = `Failed to load FFmpeg: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      console.error(errorMsg);
+      setError(errorMsg);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const convert = async (
@@ -102,6 +128,7 @@ export function useFFmpeg() {
 
   return {
     convert,
+    ensureLoaded,
     isLoading,
     error,
   };

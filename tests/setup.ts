@@ -215,9 +215,11 @@ vi.mock('@vercel/blob', () => ({
 export { mockBlobPut, mockBlobHead };
 
 // Mock R2 Storage
-const mockUploadFileToR2 = vi.fn().mockImplementation((filename: string) =>
-  Promise.resolve(`https://files.sexyvoice.ai/${filename}`),
-);
+const mockUploadFileToR2 = vi
+  .fn()
+  .mockImplementation((filename: string) =>
+    Promise.resolve(`https://files.sexyvoice.ai/${filename}`),
+  );
 
 vi.mock('@/lib/storage/upload', () => ({
   uploadFileToR2: mockUploadFileToR2,
@@ -227,7 +229,9 @@ vi.mock('@/lib/storage/upload', () => ({
 export { mockUploadFileToR2 };
 
 // Mock Stripe client
-const mockCheckUserPaidStatus = vi.fn().mockResolvedValue({ isPaidUser: false });
+const mockCheckUserPaidStatus = vi
+  .fn()
+  .mockResolvedValue({ isPaidUser: false });
 
 vi.mock('@/lib/stripe/stripe-client', () => ({
   checkUserPaidStatus: mockCheckUserPaidStatus,
@@ -324,7 +328,7 @@ const mockReplicateRun = vi.fn().mockImplementation((model: string) => {
   if (model.includes('chatterbox')) {
     return {
       url: () => 'https://replicate.delivery/pbxt/test-audio-output.mp3',
-      blob: async () => {
+      blob: () => {
         // Return a minimal audio blob
         const audioBuffer = new ArrayBuffer(1024);
         return new Blob([audioBuffer], { type: 'audio/wav' });
