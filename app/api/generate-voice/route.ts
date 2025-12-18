@@ -9,13 +9,13 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
-import { put } from '@vercel/blob';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
-import { convertToWav } from '@/lib/audio';
+import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
+import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCredits,
   getVoiceIdByName,
@@ -34,23 +34,7 @@ import {
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
-
-async function generateHash(
-  text: string,
-  voice: string,
-  // accent: string,
-  // speed: string,
-) {
-  const textEncoder = new TextEncoder();
-  const combinedString = `${text}-${voice}`;
-  const data = textEncoder.encode(combinedString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 8);
-}
+const FOLDER = 'generated-audio';
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 320; // seconds - fluid compute is enabled
@@ -143,12 +127,18 @@ export async function POST(request: Request) {
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice, and accent
-    const hash = await generateHash(text, voice);
+    // Generate hash for the combination of text, voice
+    const hash = await generateHash(`${text}-${voice}`);
 
     const abortController = new AbortController();
 
-    const path = `audio/${voice}-${hash}`;
+    const userHasPaid = await hasUserPaid(user.id);
+
+    let path = `${FOLDER}-free/${voice}-${hash}`;
+
+    if (userHasPaid) {
+      path = `${FOLDER}/${voice}-${hash}`;
+    }
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {
@@ -185,7 +175,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
-    const userHasPaid = await hasUserPaid(user.id);
     if (isGeminiVoice) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
       if (!userHasPaid && isOverLimit) {
@@ -201,7 +190,7 @@ export async function POST(request: Request) {
     let replicateResponse: Prediction | undefined;
     let genAIResponse: GenerateContentResponse | null;
     let modelUsed = '';
-    let blobResult: any;
+    let uploadUrl = '';
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -319,11 +308,7 @@ export async function POST(request: Request) {
       });
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
-      blobResult = await put(filename, audioBuffer, {
-        access: 'public',
-        contentType: 'audio/wav',
-        allowOverwrite: true,
-      });
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
     } else {
       // uses REPLICATE_API_TOKEN
       modelUsed = voiceObj.model;
@@ -359,14 +344,10 @@ export async function POST(request: Request) {
         );
       }
 
-      blobResult = await put(filename, output, {
-        access: 'public',
-        contentType: 'audio/mpeg',
-        allowOverwrite: true,
-      });
+      uploadUrl = await uploadFileToR2(filename, output, 'audio/mpeg');
     }
 
-    await redis.set(filename, blobResult.url);
+    await redis.set(filename, uploadUrl);
 
     after(async () => {
       if (!user) {
@@ -396,7 +377,7 @@ export async function POST(request: Request) {
         userId: user.id,
         filename,
         text,
-        url: blobResult.url,
+        url: uploadUrl,
         model: modelUsed,
         predictionId: replicateResponse?.id,
         isPublic: false,
@@ -435,7 +416,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        url: blobResult.url,
+        url: uploadUrl,
         creditsUsed: estimate,
         creditsRemaining: (currentAmount || 0) - estimate,
       },

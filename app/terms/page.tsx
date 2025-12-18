@@ -503,19 +503,12 @@ export default function TermsAndCondition() {
           name, address, and contact information of the party giving it, the
           facts giving rise to the dispute, and the relief requested. You must
           send any Notice of Dispute via email to: 
-          <a
-            className="__cf_email__"
-            data-cfemail="9af3f4fcf5dae9ffe2e3ecf5f3f9ffb4fbf3"
-            href="/cdn-cgi/l/email-protection"
-          >
-            [email&#160;protected]
-          </a>
-          . SexyVoice.ai will send any Notice of Dispute to you by mail to your
-          address if we have it, or otherwise to your email address. You and
-          SexyVoice.ai will attempt to resolve any dispute through informal
-          negotiation within sixty (60) days from the date the Notice of Dispute
-          is sent. After sixty (60) days, you or SexyVoice.ai may commence
-          arbitration.
+          <a href="mailto:info@sexyvoice.ai">info@sexyvoice.ai</a>. SexyVoice.ai
+          will send any Notice of Dispute to you by mail to your address if we
+          have it, or otherwise to your email address. You and SexyVoice.ai will
+          attempt to resolve any dispute through informal negotiation within
+          sixty (60) days from the date the Notice of Dispute is sent. After
+          sixty (60) days, you or SexyVoice.ai may commence arbitration.
         </p>
 
         <h2>Binding Arbitration</h2>

@@ -1,10 +1,10 @@
 'use server';
 import * as Sentry from '@sentry/nextjs';
-import { del } from '@vercel/blob';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import { deleteFileFromR2 } from '@/lib/storage/upload';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
@@ -108,7 +108,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
     .eq('user_id', user.id);
   if (audio_files) {
     const deletionResults = await Promise.allSettled(
-      audio_files.map((file) => del(file.storage_key)),
+      audio_files.map((file) => deleteFileFromR2(file.storage_key)),
     );
 
     deletionResults.forEach((result, index) => {
@@ -116,12 +116,12 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
         const file = audio_files[index];
         Sentry.captureException(result.reason, {
           extra: {
-            message: 'Failed to delete blob from storage.',
+            message: 'Failed to delete file from R2 storage.',
             file,
           },
         });
         console.error(
-          `Failed to delete blob ${file.storage_key}`,
+          `Failed to delete file ${file.storage_key} from R2`,
           result.reason,
         );
       }

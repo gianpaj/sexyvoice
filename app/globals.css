@@ -23,27 +23,27 @@
     --white: #fff;
 
     /* Promo theme colors - default to pink */
-    --promo-primary: theme('colors.pink.500');
-    --promo-primary-dark: theme('colors.pink.600');
-    --promo-accent: theme('colors.pink.400');
-    --promo-text: theme('colors.pink.600');
-    --promo-text-dark: theme('colors.pink.400');
+    --promo-primary: theme("colors.pink.500");
+    --promo-primary-dark: theme("colors.pink.600");
+    --promo-accent: theme("colors.pink.400");
+    --promo-text: theme("colors.pink.600");
+    --promo-text-dark: theme("colors.pink.400");
   }
 
   [data-promo-theme="orange"] {
-    --promo-primary: theme('colors.orange.500');
-    --promo-primary-dark: theme('colors.orange.600');
-    --promo-accent: theme('colors.orange.400');
-    --promo-text: theme('colors.orange.600');
-    --promo-text-dark: theme('colors.orange.400');
+    --promo-primary: theme("colors.orange.500");
+    --promo-primary-dark: theme("colors.orange.600");
+    --promo-accent: theme("colors.orange.400");
+    --promo-text: theme("colors.orange.600");
+    --promo-text-dark: theme("colors.orange.400");
   }
 
   [data-promo-theme="pink"] {
-    --promo-primary: theme('colors.pink.500');
-    --promo-primary-dark: theme('colors.pink.600');
-    --promo-accent: theme('colors.pink.400');
-    --promo-text: theme('colors.pink.600');
-    --promo-text-dark: theme('colors.pink.400');
+    --promo-primary: theme("colors.pink.500");
+    --promo-primary-dark: theme("colors.pink.600");
+    --promo-accent: theme("colors.pink.400");
+    --promo-text: theme("colors.pink.600");
+    --promo-text-dark: theme("colors.pink.400");
   }
 
   .dark {

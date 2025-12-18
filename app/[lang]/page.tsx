@@ -52,6 +52,7 @@ export default async function LandingPage(props: {
   }
 
   const dict = await getDictionary(lang, 'landing');
+  const dictHeader = await getDictionary(lang, 'header');
   const blackFridayDict = (await getDictionary(lang, 'promos'))
     .blackFridayBanner;
 
@@ -91,7 +92,7 @@ export default async function LandingPage(props: {
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
         text={blackFridayDict.text}
       />
-      <HeaderStatic lang={lang} />
+      <HeaderStatic lang={lang} dict={dictHeader} />
       <main id="main-content">
         <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
           <div className="container mx-auto px-4">

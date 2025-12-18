@@ -105,7 +105,10 @@ export async function GET(request: NextRequest) {
     supabase
       .from('audio_files')
       .select('id, created_at')
-      .eq('model', 'chatterbox-tts')
+      .in('model', [
+        'resemble-ai/chatterbox-multilingual',
+        'resemble-ai/chatterbox',
+      ])
       .gte('created_at', sevenDaysAgo.toISOString())
       .lt('created_at', today.toISOString()),
 

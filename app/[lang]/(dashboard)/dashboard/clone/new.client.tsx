@@ -28,7 +28,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-// import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -37,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -44,9 +44,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { cn } from '@/lib/utils';
 import { AudioProvider, useAudio } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
 import CloneSampleCard from './CloneSampleCard';
@@ -56,13 +58,12 @@ export type Status = 'idle' | 'generating' | 'complete' | 'error';
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
 
 const sampleAudios: readonly SampleAudio[] = [
   {
     id: 1,
     name: 'Marilyn Monroe 🇺🇸',
-    language: 'en',
+    language: 'english',
     prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
     audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
     audioExampleOutputSrc:
@@ -87,29 +88,30 @@ const sampleAudios: readonly SampleAudio[] = [
 ];
 
 const SUPPORTED_LOCALE_CODES = [
-  'ar',
-  'da',
-  'de',
-  'el',
-  'en',
-  'es',
-  'fi',
-  'fr',
-  'he',
-  'hi',
-  'it',
-  'ja',
-  'ko',
-  'ms',
-  'nl',
-  'no',
-  'pl',
-  'pt',
-  'ru',
-  'sv',
-  'sw',
-  'tr',
-  'zh',
+  { code: 'ar', value: 'arabic' },
+  { code: 'da', value: 'danish' },
+  { code: 'de', value: 'german' },
+  { code: 'el', value: 'greek' },
+  { code: 'en', value: 'english' },
+  { code: 'en-multi', value: 'english' },
+  { code: 'es', value: 'spanish' },
+  { code: 'fi', value: 'finnish' },
+  { code: 'fr', value: 'french' },
+  { code: 'he', value: 'hebrew' },
+  { code: 'hi', value: 'hindi' },
+  { code: 'it', value: 'italian' },
+  { code: 'ja', value: 'japanese' },
+  { code: 'ko', value: 'korean' },
+  { code: 'ms', value: 'malay' },
+  { code: 'nl', value: 'dutch' },
+  { code: 'no', value: 'norwegian' },
+  { code: 'pl', value: 'polish' },
+  { code: 'pt', value: 'portuguese' },
+  { code: 'ru', value: 'russian' },
+  { code: 'sv', value: 'swedish' },
+  { code: 'sw', value: 'swahili' },
+  { code: 'tr', value: 'turkish' },
+  { code: 'zh', value: 'chinese' },
 ];
 
 export default function NewVoiceClient({
@@ -132,6 +134,8 @@ export default function NewVoiceClient({
   );
 }
 
+const MAX_LENGTH = 500;
+
 function NewVoiceClientInner({
   dict,
   lang,
@@ -142,12 +146,21 @@ function NewVoiceClientInner({
   hasEnoughCredits: boolean;
 }) {
   const audio = useAudio();
+  const {
+    convert: convertWithFFmpeg,
+    ensureLoaded,
+    isLoading: ffmpegLoading,
+  } = useFFmpeg({ lazyLoad: true });
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
-  const [textToConvert, setTextToConvert] = useState('');
+  const [text, setText] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
-  const [selectedLocale, setSelectedLocale] = useState('en');
+  const [selectedLocale, setSelectedLocale] = useState({
+    code: 'en',
+    value: 'english',
+  });
+  const [ffmpegError, setFFmpegError] = useState<string | null>(null);
   const [micBlob, setMicBlob] = useState<Blob | null>(null);
   const [micRecording, setMicRecording] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
@@ -155,13 +168,72 @@ function NewVoiceClientInner({
   );
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
 
+  // Preload FFmpeg when non-English locale is selected
+  useEffect(() => {
+    if (selectedLocale.code !== 'en') {
+      setFFmpegError(null);
+      ensureLoaded().catch((error) => {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : 'Failed to load audio processor';
+        setFFmpegError(errorMsg);
+        console.error('FFmpeg preload error:', error);
+      });
+    }
+  }, [selectedLocale.code, ensureLoaded]);
+
+  const handleStartRecording = async () => {
+    try {
+      setFFmpegError(null);
+      // Preload FFmpeg before recording if needed for this locale
+      if (selectedLocale.code !== 'en') {
+        await ensureLoaded();
+      }
+      startRecording();
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'Failed to load audio processor';
+      setFFmpegError(errorMsg);
+      setErrorMessage(`Failed to start recording: ${errorMsg}`);
+    }
+  };
+
+  const {
+    status: micStatus,
+    startRecording,
+    stopRecording,
+    clearMediaStream,
+    clearMediaBlob,
+    mediaStream,
+    mediaBlob: recorderMediaBlob,
+    getMediaStream,
+  } = useMediaRecorder({
+    mediaStreamConstraints: { audio: true },
+    onStop: (blob) => {
+      // Store the raw blob - conversion will happen at generation time based on the locale
+      setMicBlob(blob);
+    },
+    onError: (err) => {
+      console.error(err);
+      setFFmpegError(err instanceof Error ? err.message : 'Microphone error');
+    },
+    onStart: () => {
+      setMicRecording(true);
+      setMicBlob(null);
+      setFFmpegError(null);
+    },
+  });
+
   // FFmpeg for audio conversion
-  const { convert } = useFFmpeg();
 
   const supportedLocales = useMemo(() => {
     const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
-    return SUPPORTED_LOCALE_CODES.map((code) => ({
+    return SUPPORTED_LOCALE_CODES.map(({ code, value }) => ({
       code,
+      value,
       name:
         `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
         code,
@@ -212,38 +284,6 @@ function NewVoiceClientInner({
 
   const abortController = useRef<AbortController | null>(null);
 
-  const prepareAudioFile = useCallback(
-    async (inputFile: File): Promise<File | null> => {
-      // Check if file needs conversion (not already WAV)
-      const isWav =
-        inputFile.type === 'audio/wav' || inputFile.type === 'audio/x-wav';
-      if (isWav) {
-        return inputFile;
-      }
-
-      try {
-        const wavBlob = await convert(inputFile, 'wav');
-        return new File(
-          [wavBlob],
-          `${inputFile.name.replace(FILE_EXTENSION_REGEX, '')}.wav`,
-          {
-            type: 'audio/wav',
-          },
-        );
-      } catch (convertError) {
-        console.error('Audio conversion error:', convertError);
-        setErrorMessage(
-          Error.isError(convertError)
-            ? `Audio conversion failed: ${convertError.message}`
-            : 'Audio conversion failed. Please try a different audio format.',
-        );
-        setStatus('error');
-        return null;
-      }
-    },
-    [convert],
-  );
-
   const handleGenerate = useCallback(async () => {
     if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
@@ -251,7 +291,7 @@ function NewVoiceClientInner({
       return;
     }
 
-    if (!textToConvert.trim()) {
+    if (!text.trim()) {
       setErrorMessage(dict.errors.noText);
       setStatus('error');
       return;
@@ -269,18 +309,38 @@ function NewVoiceClientInner({
       // Use micBlob if available, otherwise use file
       let audioToProcess = file;
       if (micBlob && !file) {
-        // Convert micBlob to File
-        const wavBlob = await convert(micBlob, 'wav');
-        audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
-          type: 'audio/wav',
-        });
-      } else if (audioToProcess) {
-        // Convert audio to WAV format (24kHz, mono) if needed
-        const preparedFile = await prepareAudioFile(audioToProcess);
-        if (!preparedFile) {
-          return;
+        // Convert WebM to WAV for non-English locales
+        // Check locale at GENERATION time, not recording time
+        if (micBlob.type.includes('webm') && selectedLocale.code !== 'en') {
+          setConvertingMicAudio(true);
+          try {
+            const wavBlob = await convertWithFFmpeg(micBlob, 'wav');
+            audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
+              type: wavBlob.type,
+            });
+          } catch (convertError) {
+            console.error('WebM to WAV conversion error:', convertError);
+            // TODO send logs to Sentry
+            setErrorMessage(
+              Error.isError(convertError)
+                ? `Audio conversion failed: ${convertError.message}`
+                : 'Audio conversion failed. Please try recording again.',
+            );
+            setStatus('error');
+            setConvertingMicAudio(false);
+            return;
+          } finally {
+            setConvertingMicAudio(false);
+          }
+        } else {
+          // For English or non-WebM formats, use blob directly
+          const mimeType = micBlob.type || 'audio/wav';
+          const isWebM = mimeType.includes('webm');
+          const filename = isWebM
+            ? 'microphone-recording.webm'
+            : 'microphone-recording.wav';
+          audioToProcess = new File([micBlob], filename, { type: mimeType });
         }
-        audioToProcess = preparedFile;
       }
 
       if (!audioToProcess) {
@@ -292,8 +352,8 @@ function NewVoiceClientInner({
       // First upload and process the voice
       const formData = new FormData();
       formData.append('file', audioToProcess);
-      formData.append('text', textToConvert);
-      formData.append('locale', selectedLocale);
+      formData.append('text', text);
+      formData.append('locale', selectedLocale.code);
 
       voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -344,11 +404,10 @@ function NewVoiceClientInner({
     dict,
     file,
     micBlob,
-    textToConvert,
+    text,
     selectedLocale,
     clearErrors,
-    prepareAudioFile,
-    convert,
+    convertWithFFmpeg,
   ]);
 
   const handleCancel = () => {
@@ -364,11 +423,7 @@ function NewVoiceClientInner({
         event.preventDefault();
 
         // Only trigger if form can be submitted
-        if (
-          status !== 'generating' &&
-          textToConvert.trim() &&
-          hasEnoughCredits
-        ) {
+        if (status !== 'generating' && text.trim() && hasEnoughCredits) {
           handleGenerate();
         }
       }
@@ -381,7 +436,7 @@ function NewVoiceClientInner({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, textToConvert, handleGenerate, hasEnoughCredits]);
+  }, [status, text, handleGenerate, hasEnoughCredits]);
 
   const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
@@ -399,38 +454,30 @@ function NewVoiceClientInner({
   };
 
   const onSelectSample = (sample: SampleAudio) => {
-    setSelectedLocale(sample.language);
-    setTextToConvert(sample.prompt);
+    setSelectedLocale({ code: 'en', value: 'english' });
+    setText(sample.prompt);
   };
 
-  const onMicStop = async (blob: Blob) => {
-    setConvertingMicAudio(true);
-
-    try {
-      // Convert the recorded audio to WAV format
-      const wavBlob = await convert(blob, 'wav');
-      setMicBlob(wavBlob);
-    } catch (convertError) {
-      console.error('Microphone audio conversion error:', convertError);
-      setErrorMessage(
-        Error.isError(convertError)
-          ? `Audio conversion failed: ${convertError.message}`
-          : 'Audio conversion failed. Please try recording again.',
-      );
-      setStatus('error');
-      setMicBlob(null);
-    } finally {
-      setConvertingMicAudio(false);
+  const onToggleMicrophone = async () => {
+    if (micStatus === 'idle' || micStatus === 'stopped') {
+      clearMediaStream();
+      // Request microphone access on first toggle
+      await getMediaStream();
+      await handleStartRecording();
+    } else if (micStatus === 'recording') {
+      stopRecording();
     }
   };
-  const onMicStart = () => {
-    setMicRecording(true);
-    setMicBlob(null);
-  };
-  const onMicReset = () => {
+
+  const onClearMediaStream = () => {
+    clearMediaStream();
+    clearMediaBlob();
     setMicBlob(null);
     setMicRecording(false);
+    setFFmpegError(null);
   };
+
+  const textIsOverLimit = text.length > MAX_LENGTH;
 
   return (
     <Card>
@@ -503,11 +550,38 @@ function NewVoiceClientInner({
                     <p className="text-center text-xs">
                       {dict.orUseMicrophone}
                     </p>
+                    {ffmpegLoading && selectedLocale.code !== 'en' && (
+                      <div className="flex items-center justify-center gap-2 py-2">
+                        <PulsatingDots />
+                        <span className="text-muted-foreground text-xs">
+                          Loading audio processor...
+                        </span>
+                      </div>
+                    )}
+                    {ffmpegError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Audio Processor Error</AlertTitle>
+                        <AlertDescription>{ffmpegError}</AlertDescription>
+                      </Alert>
+                    )}
                     <MicrophoneMain
-                      onMicReset={onMicReset}
-                      onMicStart={onMicStart}
-                      onStop={onMicStop}
+                      mediaBlob={recorderMediaBlob}
+                      mediaStream={mediaStream}
+                      onClearMediaStream={onClearMediaStream}
+                      onToggleMicrophone={onToggleMicrophone}
+                      status={micStatus}
                     />
+                  </div>
+                )}
+
+                {/* FFmpeg loading message for non-English locales */}
+                {ffmpegLoading && selectedLocale.code !== 'en' && (
+                  <div className="text-center text-muted-foreground text-xs">
+                    <span className="flex items-center justify-center gap-2">
+                      <PulsatingDots />
+                      Preparing audio processor for {selectedLocale.value}...
+                    </span>
                   </div>
                 )}
 
@@ -554,26 +628,28 @@ function NewVoiceClientInner({
                     </Button>
                   </div>
                 ) : (
-                  // Sample audio demo buttons
-                  <div className="grid w-full gap-2">
-                    <p className="text-muted-foreground text-xs">
-                      {dict.tryDemo}
-                    </p>
+                  !micBlob && (
+                    // Sample audio demo buttons
+                    <div className="grid w-full gap-2">
+                      <p className="text-muted-foreground text-xs">
+                        {dict.tryDemo}
+                      </p>
 
-                    <Accordion className="w-full" collapsible type="single">
-                      {sampleAudios.map((sample) => (
-                        <CloneSampleCard
-                          addFiles={addFiles}
-                          dict={dict}
-                          key={sample.id}
-                          onSelectSample={onSelectSample}
-                          sample={sample}
-                          setErrorMessage={setErrorMessage}
-                          setStatus={setStatus}
-                        />
-                      ))}
-                    </Accordion>
-                  </div>
+                      <Accordion className="w-full" collapsible type="single">
+                        {sampleAudios.map((sample) => (
+                          <CloneSampleCard
+                            addFiles={addFiles}
+                            dict={dict}
+                            key={sample.id}
+                            onSelectSample={onSelectSample}
+                            sample={sample}
+                            setErrorMessage={setErrorMessage}
+                            setStatus={setStatus}
+                          />
+                        ))}
+                      </Accordion>
+                    </div>
+                  )
                 )}
               </div>
 
@@ -581,8 +657,15 @@ function NewVoiceClientInner({
                 <Label htmlFor="language">{dict.languageLabel}</Label>
                 <Select
                   disabled={status === 'generating'}
-                  onValueChange={setSelectedLocale}
-                  value={selectedLocale}
+                  onValueChange={(code) =>
+                    setSelectedLocale({
+                      code,
+                      value:
+                        supportedLocales.find((c) => c.code === code)?.value ||
+                        '',
+                    })
+                  }
+                  value={selectedLocale.code}
                 >
                   <SelectTrigger id="language">
                     <SelectValue placeholder={dict.languageSelectPlaceholder} />
@@ -597,18 +680,46 @@ function NewVoiceClientInner({
                 </Select>
               </div>
 
+              {/*{selectedLocale.code !== 'en' && (
+                <Card className="border-blue-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <InfoIcon className="size-5 text-blue-600" />
+                      {dict.crossLanguageInfo.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-200 text-sm">
+                      {dict.crossLanguageInfo.description}
+                    </p>
+                    <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
+                      {dict.crossLanguageInfo.example}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}*/}
+
               <div className="grid w-full gap-2">
                 <Label htmlFor="text-to-convert">
                   {dict.textToConvertLabel}
                 </Label>
-                <textarea
-                  className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                <Textarea
                   disabled={status === 'generating'}
                   id="text-to-convert"
-                  onChange={(e) => setTextToConvert(e.target.value)}
+                  maxLength={MAX_LENGTH + 30}
+                  onChange={(e) => setText(e.target.value)}
                   placeholder={dict.textAreaPlaceholder}
-                  value={textToConvert}
+                  rows={5}
+                  value={text}
                 />
+              </div>
+              <div
+                className={cn(
+                  '-mt-2 text-right text-muted-foreground text-sm',
+                  [textIsOverLimit ? 'font-bold text-red-500' : ''],
+                )}
+              >
+                {text.length} / {MAX_LENGTH}
               </div>
             </div>
 
@@ -629,14 +740,23 @@ function NewVoiceClientInner({
             <Button
               className="w-full"
               disabled={
-                !((file || micBlob) && textToConvert.trim()) ||
+                !((file || micBlob) && text.trim()) ||
                 status === 'generating' ||
                 !hasEnoughCredits ||
-                convertingMicAudio
+                convertingMicAudio ||
+                textIsOverLimit
               }
               onClick={handleGenerate}
             >
-              {status === 'generating' ? (
+              {convertingMicAudio ? (
+                <span className="flex items-center">
+                  {/* TODO translate */}
+                  Converting audio...
+                  <span className="ml-1 inline-flex">
+                    <PulsatingDots />
+                  </span>
+                </span>
+              ) : status === 'generating' ? (
                 <span className="flex items-center">
                   {dict.generating}
                   <span className="ml-1 inline-flex">

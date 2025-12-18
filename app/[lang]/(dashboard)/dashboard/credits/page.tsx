@@ -83,7 +83,7 @@ export default async function CreditsPage(props: {
     .limit(100);
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8">
       <TopupStatus dict={dict.credits} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">

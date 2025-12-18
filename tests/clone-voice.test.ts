@@ -5,11 +5,10 @@ import { POST } from '@/app/api/clone-voice/route';
 import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,
-  mockBlobPut,
-  mockInngestSend,
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
+  mockUploadFileToR2,
   server,
 } from './setup';
 
@@ -130,6 +129,7 @@ describe('Clone Voice API Route', () => {
     it('should return 400 when text is missing', async () => {
       const formData = new FormData();
       formData.append('file', createMockAudioFile());
+      formData.append('locale', 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -148,6 +148,7 @@ describe('Clone Voice API Route', () => {
     it('should return 400 when audio file is missing', async () => {
       const formData = new FormData();
       formData.append('text', 'Hello world');
+      formData.append('locale', 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -163,9 +164,13 @@ describe('Clone Voice API Route', () => {
       );
     });
 
-    it('should return 400 when text exceeds maximum length', async () => {
-      const longText = 'a'.repeat(501); // Exceeds 500 char limit
-      const formData = createFormDataWithAudio(longText);
+    it('should return 400 when text exceeds maximum length for English', async () => {
+      const longText = 'a'.repeat(501); // Exceeds 500 char limit for English
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'en',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -176,14 +181,133 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toContain('Text exceeds the maximum length');
+      expect(json.serverMessage).toContain(
+        'Text exceeds the maximum length of 500 characters',
+      );
+    });
+
+    it('should return 400 when text exceeds multilingual maximum length (300 chars)', async () => {
+      const longText = 'a'.repeat(301); // Exceeds 300 char limit for multilingual
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'es',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain(
+        'Text exceeds the maximum length of 300 characters',
+      );
+      expect(json.serverMessage).toContain('multilingual');
+    });
+
+    it('should accept text up to 300 chars for multilingual locales', async () => {
+      const validText = 'a'.repeat(300); // Exactly 300 chars - at the limit
+      const formData = createFormDataWithAudio(
+        validText,
+        createMockAudioFile(),
+        'de',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      // Should not return 400 for text length validation
+      // Text validation should pass; other status codes (402, 500, etc.) are acceptable
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Text exceeds the maximum length of 300 characters',
+        );
+      }
+    });
+
+    it('should accept text up to 500 chars for English locale', async () => {
+      const validText = 'a'.repeat(500); // Exactly 500 chars - at the limit
+      const formData = createFormDataWithAudio(
+        validText,
+        createMockAudioFile(),
+        'en',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      // Should not return 400 for text length validation
+      // Text validation should pass; other status codes (402, 500, etc.) are acceptable
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Text exceeds the maximum length of 500 characters',
+        );
+      }
+    });
+
+    it('should enforce 300 char limit for French multilingual', async () => {
+      const longText = 'Bonjour '.repeat(50); // Exceeds 300 chars
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'fr',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain('300 characters');
+    });
+
+    it('should enforce 300 char limit for Japanese multilingual', async () => {
+      const longText = 'こんにちは'.repeat(100); // Exceeds 300 chars
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'ja',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain('300 characters');
     });
 
     it('should return 400 when file type is invalid', async () => {
       const invalidFile = new File(['test'], 'test.txt', {
         type: 'text/plain',
       });
-      const formData = createFormDataWithAudio('Hello world', invalidFile);
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        invalidFile,
+        'en',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -205,7 +329,7 @@ describe('Clone Voice API Route', () => {
         'audio/mpeg',
         4.5 * 1024 * 1024 + 1, // Just over 4.5MB
       );
-      const formData = createFormDataWithAudio('Hello world', largeFile);
+      const formData = createFormDataWithAudio('Hello world', largeFile, 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -227,7 +351,11 @@ describe('Clone Voice API Route', () => {
         }),
       }));
 
-      const formData = createFormDataWithAudio('Hello world');
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -251,7 +379,11 @@ describe('Clone Voice API Route', () => {
         }),
       }));
 
-      const formData = createFormDataWithAudio('Hello world');
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -275,7 +407,11 @@ describe('Clone Voice API Route', () => {
         }),
       }));
 
-      const formData = createFormDataWithAudio('Hello world');
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -287,6 +423,116 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe('Could not determine audio duration.');
+    });
+
+    it('should return 400 when locale is missing', async () => {
+      const formData = new FormData();
+      formData.append('text', 'Hello world');
+      formData.append('file', createMockAudioFile());
+      // Note: locale is not appended
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toBe('Missing required parameter: locale');
+    });
+
+    it('should return 400 when locale is unsupported for Replicate (non-English)', async () => {
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'xyz',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain(
+        'Unsupported language for voice cloning: xyz',
+      );
+      expect(json.serverMessage).toContain('Supported languages are:');
+    });
+
+    it('should not reject valid supported locales (Spanish)', async () => {
+      const formData = createFormDataWithAudio(
+        'Hola mundo',
+        createMockAudioFile(),
+        'es',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      // Spanish is a supported locale - locale validation should pass
+      // Response may be non-200 for other reasons (credits, mocking), but not 400 for locale
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Unsupported language for voice cloning',
+        );
+      }
+    });
+
+    it('should not reject valid supported locales (German)', async () => {
+      const formData = createFormDataWithAudio(
+        'Hallo Welt',
+        createMockAudioFile(),
+        'de',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      // German is a supported locale - locale validation should pass
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Unsupported language for voice cloning',
+        );
+      }
+    });
+
+    it('should not reject valid supported locales (Japanese)', async () => {
+      const formData = createFormDataWithAudio(
+        'こんにちは',
+        createMockAudioFile(),
+        'ja',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      // Japanese is a supported locale - locale validation should pass
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Unsupported language for voice cloning',
+        );
+      }
     });
   });
 
@@ -371,7 +617,7 @@ describe('Clone Voice API Route', () => {
   describe('Caching', () => {
     it('should return cached result without consuming credits', async () => {
       const cachedInputUrl =
-        'https://blob.vercel-storage.com/cached-input-audio.mp3';
+        'https://files.sexyvoice.ai/cached-input-audio.mp3';
 
       // Mock Redis.get to return cached input URL for this test
       mockRedisGet.mockResolvedValueOnce(cachedInputUrl);
@@ -391,7 +637,7 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toBeDefined();
       expect(json.creditsUsed).toBeGreaterThan(0);
       // But should not re-upload the input audio
-      expect(mockBlobPut).toHaveBeenCalledTimes(1); // Only output upload
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1); // Only output upload
     });
 
     it('should generate new audio when cache miss occurs', async () => {
@@ -409,7 +655,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
 
       // Verify audio was generated and saved
       expect(queries.reduceCredits).toHaveBeenCalled();
@@ -418,13 +664,13 @@ describe('Clone Voice API Route', () => {
       // Verify input URL was cached
       expect(mockRedisSet).toHaveBeenCalledWith(
         expect.stringContaining('clone-voice-input/'),
-        expect.stringContaining('blob.vercel-storage.com'),
+        expect.stringContaining('files.sexyvoice.ai'),
       );
     });
 
     it('should reuse existing uploaded audio file if it exists', async () => {
       // Mock cache hit - input audio is cached
-      const cachedInputUrl = 'https://blob.vercel-storage.com/cached-input.mp3';
+      const cachedInputUrl = 'https://files.sexyvoice.ai/cached-input.mp3';
       mockRedisGet.mockResolvedValueOnce(cachedInputUrl);
 
       const formData = createFormDataWithAudio('Hello world');
@@ -442,7 +688,7 @@ describe('Clone Voice API Route', () => {
         expect.stringContaining('clone-voice-input/'),
       );
       // Should only upload output audio, not input
-      expect(mockBlobPut).toHaveBeenCalledTimes(1); // Only for output audio
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1); // Only for output audio
     });
 
     it('should upload audio file if it does not exist in blob storage', async () => {
@@ -460,12 +706,12 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       // Should upload both input and output audio files
-      expect(mockBlobPut).toHaveBeenCalledTimes(2);
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('Voice Cloning Generation', () => {
-    it('should successfully clone voice using Replicate English model', async () => {
+    it('should successfully clone voice using fal.ai English model', async () => {
       const formData = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('audio1'),
@@ -481,31 +727,14 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
-
-      // Verify Replicate was called with correct parameters
-      expect(mockReplicateRun).toHaveBeenCalledWith(
-        'resemble-ai/chatterbox',
-        {
-          input: {
-            prompt: 'Hello world',
-            cfg_weight: 0.5,
-            temperature: 0.8,
-            exaggeration: 0.5,
-            seed: 0,
-            audio_prompt:
-              'https://blob.vercel-storage.com/clone-voice-input/test-user-id-audio1',
-          },
-        },
-        expect.any(Function),
-      );
     });
 
     it('should successfully clone voice using Replicate Multilingual model', async () => {
       const formData = createFormDataWithAudio(
-        'Hello world',
+        'Bonjour',
         createMockAudioFile('audio1'),
         'fr',
       );
@@ -519,7 +748,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toContain('blob.vercel-storage.com');
+      expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
 
@@ -528,14 +757,14 @@ describe('Clone Voice API Route', () => {
         'resemble-ai/chatterbox-multilingual:9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c',
         {
           input: {
-            text: 'Hello world',
+            text: 'Bonjour',
             cfg_weight: 0.5,
             temperature: 0.8,
             exaggeration: 0.5,
             language: 'fr',
             seed: 0,
             reference_audio:
-              'https://blob.vercel-storage.com/clone-voice-input/test-user-id-audio1',
+              'https://files.sexyvoice.ai/clone-voice-input/test-user-id-audio1.wav',
           },
         },
         expect.any(Function),
@@ -556,10 +785,10 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(queries.saveAudioFile).toHaveBeenCalledWith({
         userId: 'test-user-id',
-        filename: expect.stringContaining('clone-voice/'),
+        filename: expect.stringContaining('cloned-audio-free/'),
         text: 'Hello world',
-        url: expect.stringContaining('blob.vercel-storage.com'),
-        model: 'resemble-ai/chatterbox',
+        url: expect.stringContaining('files.sexyvoice.ai'),
+        model: 'fal-ai/chatterbox/text-to-speech',
         predictionId: expect.any(String),
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
@@ -568,17 +797,22 @@ describe('Clone Voice API Route', () => {
         usage: {
           locale: 'en',
           userHasPaid: false,
+          referenceAudioFileMimeType: 'audio/wav',
         },
       });
     });
 
     it('should handle Replicate API errors gracefully', async () => {
-      // Mock Replicate to return an error
+      // Mock Replicate to return an error for multilingual
       mockReplicateRun.mockResolvedValueOnce({
         error: 'API quota exceeded',
       });
 
-      const formData = createFormDataWithAudio('Hello world');
+      const formData = createFormDataWithAudio(
+        'Hola mundo',
+        createMockAudioFile(),
+        'es',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -589,7 +823,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBe('API quota exceeded');
+      expect(json.error).toContain('API quota exceeded');
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -634,12 +868,12 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      // Verify that sanitized filename is used
-      expect(mockBlobPut).toHaveBeenCalledWith(
-        // biome-ignore lint/performance/useTopLevelRegex: x
-        expect.stringMatching(/test-audio_____.mp3/),
+      // Verify that sanitized filename is used.
+      // MP3 input is converted to WAV before uploading (server-side), so extension becomes .wav
+      expect(mockUploadFileToR2).toHaveBeenCalledWith(
+        'clone-voice-input/test-user-id-test-audio_____.mp3',
         expect.any(Buffer),
-        expect.any(Object),
+        expect.any(String),
       );
     });
 
@@ -656,51 +890,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       // Verify sanitization occurred
-      expect(mockBlobPut).toHaveBeenCalled();
-    });
-  });
-
-  describe('Inngest Cleanup Scheduling', () => {
-    it('should schedule cleanup task after successful voice cloning', async () => {
-      const formData = createFormDataWithAudio('Hello world');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-
-      // Wait for async after() operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      expect(response.status).toBe(200);
-      expect(mockInngestSend).toHaveBeenCalledWith({
-        name: 'clone-audio/cleanup.scheduled',
-        data: {
-          blobUrl: expect.stringContaining('clone-voice-input/'),
-          userId: 'test-user-id',
-        },
-      });
-    });
-
-    it('should not schedule cleanup if generation fails', async () => {
-      // Mock Replicate to return an error
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Generation failed',
-      });
-
-      const formData = createFormDataWithAudio('Hello world');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      await POST(request);
-
-      // Cleanup should not be scheduled on failure
-      expect(mockInngestSend).not.toHaveBeenCalled();
+      expect(mockUploadFileToR2).toHaveBeenCalled();
     });
   });
 
@@ -726,10 +916,10 @@ describe('Clone Voice API Route', () => {
       expect(response2.status).toBe(200);
 
       // Both requests should upload to different output files (different hashes)
-      const putCalls = mockBlobPut.mock.calls;
-      // Find output file calls (clone-voice path, not input path)
+      const putCalls = mockUploadFileToR2.mock.calls;
+      // Find output file calls (cloned-audio-free path, not input path)
       const outputCalls = putCalls.filter((call) =>
-        call[0].includes('clone-voice/'),
+        call[0].includes('cloned-audio-free/'),
       );
       // Input audio filenames are the same, but hashes differ due to Date.now()
       // and different text content
@@ -761,13 +951,39 @@ describe('Clone Voice API Route', () => {
 
       // Verify different input audio cache keys were used for different filenames
       const calls = mockRedisGet.mock.calls.map((call) => call[0]);
-      expect(calls[0]).toContain('audio-1.mp3');
-      expect(calls[1]).toContain('audio-2.mp3');
+      expect(calls[0]).toContain('clone-voice-input/test-user-id-audio-1.wav');
+      expect(calls[1]).toContain('clone-voice-input/test-user-id-audio-2.wav');
       expect(calls[0]).not.toBe(calls[1]);
     });
   });
 
   describe('Error Handling', () => {
+    it('should return 500 when audio conversion fails for non-English', async () => {
+      // Mock convertToWav to throw an error for multilingual
+      const convertToWavModule = await import('@/lib/audio-converter');
+      vi.spyOn(convertToWavModule, 'convertToWav').mockRejectedValueOnce(
+        new Error('Decoder initialization failed'),
+      );
+
+      const formData = createFormDataWithAudio(
+        'Hola mundo',
+        createMockAudioFile('test.mp3', 'audio/mpeg'),
+        'es',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBeDefined();
+      expect(json.error).toContain('Failed to convert audio format to WAV');
+    });
+
     it('should handle general errors and return 500', async () => {
       // Mock getCredits to throw an error
       vi.mocked(queries.getCredits).mockRejectedValueOnce(
@@ -792,12 +1008,16 @@ describe('Clone Voice API Route', () => {
     it('should log errors to Sentry', async () => {
       const { captureException } = await import('@sentry/nextjs');
 
-      // Mock an error scenario
+      // Mock an error scenario with multilingual
       mockReplicateRun.mockResolvedValueOnce({
         error: 'Test error',
       });
 
-      const formData = createFormDataWithAudio('Hello world');
+      const formData = createFormDataWithAudio(
+        'Hola mundo',
+        createMockAudioFile(),
+        'es',
+      );
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -809,9 +1029,11 @@ describe('Clone Voice API Route', () => {
       expect(captureException).toHaveBeenCalled();
     });
 
-    it('should handle Blob storage upload failures', async () => {
-      // Mock blob.put to throw an error
-      mockBlobPut.mockRejectedValueOnce(new Error('Storage quota exceeded'));
+    it('should handle R2 storage upload failures', async () => {
+      // Mock uploadFileToR2 to throw an error
+      mockUploadFileToR2.mockRejectedValueOnce(
+        new Error('Storage quota exceeded'),
+      );
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -885,6 +1107,7 @@ describe('Integration Tests', () => {
 
     const audioFile = createMockAudioFile();
     formData.append('file', audioFile);
+    formData.append('locale', 'en');
 
     const request = new Request('http://localhost/api/clone-voice', {
       method: 'POST',

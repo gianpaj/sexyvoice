@@ -1,3 +1,5 @@
+'use server';
+
 import { createAdminClient } from './admin';
 import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
@@ -248,6 +250,20 @@ const updateUserCredits = async (userId: string, creditAmount: number) => {
   });
 
   if (error) throw error;
+};
+
+export const getPaidTransactions = async (userId: string) => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup'])
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  return data;
 };
 
 export const hasUserPaid = async (userId: string): Promise<boolean> => {

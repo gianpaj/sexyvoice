@@ -16,7 +16,7 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
 - **fal.ai** – Alternative voice cloning service *(optional)*
 - **Google Generative AI** – Text-to-speech, text enhancement, and automatic emotion tagging
-- **Vercel Blob Storage** – Scalable storage for generated audio files and user-uploaded samples
+- **Cloudflare R2** – Scalable storage for generated audio files and user-uploaded samples with global CDN delivery
 - **Upstash Redis** – High-performance caching for audio URLs and request deduplication
 - **Stripe** – Payment processing, credit top-ups, subscription management
 - **Sentry** – Error tracking and performance monitoring
@@ -35,7 +35,7 @@ flowchart TD
     D --> E{Check Redis Cache}
     E -->|Cache Hit| F[Return Cached Audio]
     E -->|Cache Miss| G[Generate Audio via AI Service]
-    G --> H[Upload to Vercel Blob]
+    G --> H[Upload to Cloudflare R2]
     H --> I[Cache URL in Redis]
     I --> J[Background: Deduct Credits]
     J --> K[Background: Save to Database]
@@ -54,8 +54,8 @@ flowchart TD
 7. **Cache Miss**:
    - Call appropriate AI service (Replicate or Google Generative AI)
    - Generate audio from text
-8. **Storage**: Upload generated audio to Vercel Blob Storage
-9. **Cache Update**: Store blob URL in Redis for future requests
+8. **Storage**: Upload generated audio to Cloudflare R2
+9. **Cache Update**: Store R2 URL in Redis for future requests
 10. **Background Tasks** (using Next.js `after()`):
     - Deduct credits from user balance
     - Save audio metadata to database
@@ -80,7 +80,7 @@ flowchart TD
     I -->|Cache Hit| J[Return Cached Audio]
     I -->|Cache Miss| K[Select Model by Locale]
     K --> L[Generate Cloned Voice via Replicate]
-    L --> M[Upload to Vercel Blob]
+    L --> M[Upload to Cloudflare R2]
     M --> N[Cache URL in Redis]
     N --> O[Background: Deduct Credits]
     O --> P[Background: Save to Database]
@@ -100,7 +100,7 @@ flowchart TD
 4. **Credit Check**: Query user's credit balance in Supabase
 5. **Credit Estimation**: Calculate required credits (higher cost than regular generation)
 6. **Audio Upload**:
-   - Check if user's audio file already exists in Blob Storage
+   - Check if user's audio file already exists in R2 Storage
    - If not, upload to `clone-voice-input/{userId}-{sanitizedFilename}`
    - Use existing URL if already uploaded (based on filename)
 7. **Cache Lookup**: Generate hash from (locale + text + audio blob URL) and check Redis
@@ -111,7 +111,7 @@ flowchart TD
      - Other languages: `resemble-ai/chatterbox-multilingual`
    - Call Replicate API with reference audio and text/prompt
    - Generate cloned voice audio
-10. **Fetch & Storage**: Fetch generated audio from Replicate and upload to Vercel Blob as `clone-voice/{hash}.wav`
+10. **Fetch & Storage**: Fetch generated audio from Replicate and upload to Cloudflare R2 as `clone-voice/{hash}.wav`
 11. **Cache Update**: Store blob URL in Redis for future identical requests
 12. **Background Tasks** (using Next.js `after()`):
     - Deduct credits from user balance
