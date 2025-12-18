@@ -22,7 +22,6 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits } from '@/lib/utils';
 
-
 const ALLOWED_TYPES = [
   'audio/mpeg',
   'audio/mp3',
@@ -549,48 +548,17 @@ async function runBackgroundTasks(
     console.error(errorObj);
   }
 
-  await sendPosthogEvent({
-    userId,
-    event: 'clone-voice',
-    predictionId: audioFileData.requestId,
-    text: audioFileData.text,
-    locale: audioFileData.locale,
-    audioReferenceUrl: audioFileData.url,
-    creditUsed: estimate,
-    model: audioFileData.modelUsed,
-  });
-}
-
-async function sendPosthogEvent({
-  userId,
-  event,
-  text,
-  locale,
-  audioReferenceUrl,
-  predictionId,
-  creditUsed,
-  model,
-}: {
-  userId: string;
-  event: string;
-  text: string;
-  locale: string;
-  audioReferenceUrl: string;
-  predictionId?: string;
-  creditUsed: number;
-  model: string;
-}): Promise<void> {
   const posthog = PostHogClient();
   posthog.capture({
     distinctId: userId,
-    event,
+    event: 'clone-voice',
     properties: {
-      predictionId,
-      model,
-      text,
-      locale,
-      audioReferenceUrl,
-      credits_used: creditUsed,
+      predictionId: audioFileData.requestId,
+      model: audioFileData.modelUsed,
+      text: audioFileData.text,
+      locale: audioFileData.locale,
+      audioReferenceUrl: audioFileData.url,
+      credits_used: estimate,
     },
   });
   await posthog.shutdown();
@@ -604,7 +572,7 @@ export async function POST(request: Request) {
   let text = '';
   let audioReferenceUrl: string | null = '';
   let locale = '';
-  let duration: number | null = -1;
+  let duration: number | null = null;
   let modelUsed = '';
   let referenceAudioFile: File | null = null;
 
@@ -772,7 +740,7 @@ export async function POST(request: Request) {
       ...errorObj,
     });
 
-    if (error && typeof error === 'object' && 'body' in error) {
+    if (Error.isError(error) && 'body' in error) {
       console.error(
         'Validation error details:',
         JSON.stringify(error.body, null, 2),
@@ -781,14 +749,8 @@ export async function POST(request: Request) {
       console.error(errorObj);
     }
 
-    console.error('Voice cloning error:', error);
-
-    if (Error.isError(error)) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
     return NextResponse.json(
-      { error: 'Failed to clone voice' },
+      { error: Error.isError(error) ? error.message : 'Failed to clone voice' },
       { status: 500 },
     );
   }

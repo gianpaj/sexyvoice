@@ -35,26 +35,15 @@ export function useIsMobileSizes() {
   );
 
   React.useEffect(() => {
-    const mql375 = window.matchMedia(`(max-width: ${BREAKPOINT_375 - 1}px)`);
-    const mql414 = window.matchMedia(`(max-width: ${BREAKPOINT_414 - 1}px)`);
-    const mql430 = window.matchMedia(`(max-width: ${BREAKPOINT_430 - 1}px)`);
-
-    const onChange = () => {
+    const onResize = () => {
       setIsMobile375(window.innerWidth <= BREAKPOINT_375);
       setIsMobile414(window.innerWidth <= BREAKPOINT_414);
       setIsMobile430(window.innerWidth <= BREAKPOINT_430);
     };
-
-    mql375.addEventListener('change', onChange);
-    mql414.addEventListener('change', onChange);
-    mql430.addEventListener('change', onChange);
-
-    onChange();
-
+    window.addEventListener('resize', onResize);
+    onResize();
     return () => {
-      mql375.removeEventListener('change', onChange);
-      mql414.removeEventListener('change', onChange);
-      mql430.removeEventListener('change', onChange);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 

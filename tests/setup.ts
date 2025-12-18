@@ -331,7 +331,7 @@ const mockReplicateRun = vi.fn().mockImplementation((model: string) => {
       blob: () => {
         // Return a minimal audio blob
         const audioBuffer = new ArrayBuffer(1024);
-        return new Blob([audioBuffer], { type: 'audio/wav' });
+        return Promise.resolve(new Blob([audioBuffer], { type: 'audio/wav' }));
       },
     };
   }

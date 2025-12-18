@@ -67,9 +67,9 @@ export function convertToWav(rawData: string, mimeType: string): Buffer {
   return Buffer.concat([wavHeader, buffer]);
 }
 
-export async function generateHash(string: string) {
+export async function generateHash(input: string) {
   const textEncoder = new TextEncoder();
-  const data = textEncoder.encode(string);
+  const data = textEncoder.encode(input);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray

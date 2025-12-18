@@ -399,7 +399,16 @@ function NewVoiceClientInner({
       setErrorMessage(errorMsg);
       setStatus('error');
     }
-  }, [audio, dict, file, micBlob, text, selectedLocale, clearErrors]);
+  }, [
+    audio,
+    dict,
+    file,
+    micBlob,
+    text,
+    selectedLocale,
+    clearErrors,
+    convertWithFFmpeg,
+  ]);
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -656,7 +665,7 @@ function NewVoiceClientInner({
                         '',
                     })
                   }
-                  value={selectedLocale?.code}
+                  value={selectedLocale.code}
                 >
                   <SelectTrigger id="language">
                     <SelectValue placeholder={dict.languageSelectPlaceholder} />
@@ -697,7 +706,7 @@ function NewVoiceClientInner({
                 <Textarea
                   disabled={status === 'generating'}
                   id="text-to-convert"
-                  maxLength={MAX_LENGTH * 2}
+                  maxLength={MAX_LENGTH + 30}
                   onChange={(e) => setText(e.target.value)}
                   placeholder={dict.textAreaPlaceholder}
                   rows={5}
@@ -741,6 +750,7 @@ function NewVoiceClientInner({
             >
               {convertingMicAudio ? (
                 <span className="flex items-center">
+                  {/* TODO translate */}
                   Converting audio...
                   <span className="ml-1 inline-flex">
                     <PulsatingDots />

@@ -6,8 +6,6 @@ import { POST } from '@/app/api/generate-voice/route';
 import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
-  mockBlobPut,
-  mockCheckUserPaidStatus,
   mockRedisGet,
   mockRedisKeys,
   mockRedisSet,

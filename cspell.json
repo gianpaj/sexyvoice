@@ -4,6 +4,9 @@
     "supabase",
     "posthog",
     "platform",
-    "MAX_LENGTH_MULTILANGUAGE"
+    "MAX_LENGTH_MULTILANGUAGE",
+    "signup",
+    "minmax",
+    "TOPUP"
   ]
 }

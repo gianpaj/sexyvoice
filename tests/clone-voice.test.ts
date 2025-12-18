@@ -5,7 +5,6 @@ import { POST } from '@/app/api/clone-voice/route';
 import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,
-  mockInngestSend,
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
@@ -892,50 +891,6 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(200);
       // Verify sanitization occurred
       expect(mockUploadFileToR2).toHaveBeenCalled();
-    });
-  });
-
-  describe.skip('Inngest Cleanup Scheduling', () => {
-    it('should schedule cleanup task after successful voice cloning', async () => {
-      const formData = createFormDataWithAudio('Hello world');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-
-      // Wait for async after() operations to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      expect(response.status).toBe(200);
-      expect(mockInngestSend).toHaveBeenCalledWith({
-        name: 'clone-audio/cleanup.scheduled',
-        data: {
-          blobUrl: expect.stringContaining('clone-voice-input/'),
-          userId: 'test-user-id',
-        },
-      });
-    });
-
-    it('should not schedule cleanup if generation fails', async () => {
-      // Mock Replicate to return an error
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Generation failed',
-      });
-
-      const formData = createFormDataWithAudio('Hello world');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      await POST(request);
-
-      // Cleanup should not be scheduled on failure
-      expect(mockInngestSend).not.toHaveBeenCalled();
     });
   });
 
