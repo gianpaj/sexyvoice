@@ -1,0 +1,233 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  useConnectionState,
+  useLocalParticipant,
+  useVoiceAssistant,
+} from '@livekit/components-react';
+import { ConnectionState } from 'livekit-client';
+import { useCallback, useEffect, useRef } from 'react';
+import type { UseFormReturn } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+
+import { SessionConfig } from '@/components/call/session-config';
+import { Form } from '@/components/ui/form';
+import { ModelId } from '@/data/models';
+import { defaultSessionConfig } from '@/data/playground-state';
+import { VoiceId } from '@/data/voices';
+import { useConnection } from '@/hooks/use-connection';
+import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { playgroundStateHelpers } from '@/lib/playground-state-helpers';
+import { PresetSave } from './preset-save';
+import { PresetSelector } from './preset-selector';
+
+// import { useToast } from "@/hooks/use-toast";
+
+// Configuration changes that require full reconnection instead of hot-reload
+const RECONNECT_REQUIRED_FIELDS = ['voice', 'grok_image_enabled'];
+
+export const ConfigurationFormSchema = z.object({
+  model: z.nativeEnum(ModelId),
+  voice: z.nativeEnum(VoiceId),
+  temperature: z.number().min(0.6).max(1.2),
+  maxOutputTokens: z.number().nullable(),
+  grokImageEnabled: z.boolean(),
+});
+
+export interface ConfigurationFormFieldProps {
+  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
+  schema?: typeof ConfigurationFormSchema;
+}
+
+export function ConfigurationForm() {
+  const { pgState, dispatch } = usePlaygroundState();
+  const { connect, disconnect } = useConnection();
+  const connectionState = useConnectionState();
+  const { localParticipant } = useLocalParticipant();
+  const form = useForm<z.infer<typeof ConfigurationFormSchema>>({
+    resolver: zodResolver(ConfigurationFormSchema),
+    defaultValues: { ...defaultSessionConfig },
+    mode: 'onChange',
+  });
+  const formValues = form.watch();
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to track timeout
+  const hasConnectedOnceRef = useRef(false); // Track if we've connected once
+  const isReconnectingRef = useRef(false); // Track if we're currently reconnecting to prevent loops
+  // const { toast } = useToast();
+  const { agent } = useVoiceAssistant();
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fine
+  const updateConfig = useCallback(async () => {
+    // Don't update if we're currently reconnecting to prevent loops
+    if (isReconnectingRef.current) {
+      console.log('Skipping config update - reconnection in progress');
+      return;
+    }
+
+    const values = pgState.sessionConfig;
+    const fullInstructions =
+      playgroundStateHelpers.getFullInstructions(pgState);
+    const attributes: { [key: string]: string | number | boolean } = {
+      instructions: fullInstructions,
+      model: values.model,
+      voice: values.voice,
+      temperature: values.temperature,
+      max_output_tokens: values.maxOutputTokens || '',
+      grok_image_enabled: values.grokImageEnabled,
+    };
+    if (!agent?.identity) {
+      return;
+    }
+
+    // Skip the very first update right after connection
+    // (config was already sent via token)
+    if (!hasConnectedOnceRef.current) {
+      hasConnectedOnceRef.current = true;
+      return;
+    }
+
+    // Check if any attributes have changed
+    // Convert both to strings for comparison since attributes are stored as strings
+    const hasChanges = Object.keys(attributes).some(
+      (key) =>
+        String(attributes[key]) !== String(localParticipant.attributes[key]),
+    );
+
+    if (!hasChanges) {
+      // console.debug('no changes');
+      return;
+    }
+
+    // Check if any critical fields changed that require full reconnection
+    const hasCriticalChanges = RECONNECT_REQUIRED_FIELDS.some(
+      (key) =>
+        String(attributes[key]) !== String(localParticipant.attributes[key]),
+    );
+
+    //const listOfThingsThatChanged = Object.keys(attributes).filter(key => String(attributes[key]) !== String(localParticipant.attributes[key]));
+    //console.log("listOfThingsThatChanged: ", listOfThingsThatChanged);
+
+    if (hasCriticalChanges) {
+      console.debug(
+        'Critical config change detected, triggering reconnection...',
+      );
+
+      // Set reconnecting flag to prevent update loops
+      isReconnectingRef.current = true;
+
+      try {
+        // Trigger full reconnection
+        disconnect();
+        // Small delay to ensure clean disconnect
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Reset the connection flag so the first update after reconnect is skipped
+        hasConnectedOnceRef.current = false;
+
+        await connect();
+
+        // Wait a bit longer for the connection to stabilize and attributes to sync
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        toast.success('Reconnected');
+      } catch {
+        toast.error('Reconnection failed');
+      } finally {
+        // Always reset the reconnecting flag
+        isReconnectingRef.current = false;
+      }
+      return;
+    }
+
+    console.debug('has changes, sending RPC');
+
+    try {
+      const response = await localParticipant.performRpc({
+        destinationIdentity: agent.identity,
+        method: 'pg.updateConfig',
+        payload: JSON.stringify(attributes),
+      });
+      console.debug('pg.updateConfig', response);
+      const responseObj = JSON.parse(response);
+      if (responseObj.changed) {
+        toast('Configuration updated');
+      }
+    } catch {
+      toast('Error Updating Configuration');
+    }
+  }, [
+    pgState.sessionConfig,
+    pgState.instructions,
+    localParticipant,
+    toast,
+    agent?.identity,
+    connect,
+    disconnect,
+  ]);
+
+  // Function to debounce updates when user stops interacting
+  const handleDebouncedUpdate = useCallback(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current); // Clear existing timeout
+    }
+
+    // Set a new timeout to perform the update after 500ms of inactivity
+    debounceTimeoutRef.current = setTimeout(() => {
+      updateConfig();
+    }, 500); // Adjust delay as needed
+  }, [updateConfig]);
+
+  // Reset connection flag when disconnected
+  useEffect(() => {
+    if (connectionState !== ConnectionState.Connected) {
+      hasConnectedOnceRef.current = false;
+      // Don't reset isReconnectingRef here - it's managed by the reconnection flow
+    }
+  }, [connectionState]);
+
+  // Propagate form upates from the user
+  useEffect(() => {
+    if (form.formState.isValid && form.formState.isDirty) {
+      dispatch({
+        type: 'SET_SESSION_CONFIG',
+        payload: formValues,
+      });
+    }
+  }, [formValues, dispatch, form]);
+
+  useEffect(() => {
+    if (ConnectionState.Connected === connectionState) {
+      handleDebouncedUpdate(); // Call debounced update when form changes
+    }
+
+    form.reset(pgState.sessionConfig);
+  }, [pgState.sessionConfig, connectionState, handleDebouncedUpdate, form]);
+
+  return (
+    <header className="flex w-full flex-col items-stretch justify-stretch">
+      <Form {...form}>
+        <div className="w-full border-separator1 border-b px-5 py-4 md:px-1">
+          <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
+            Configuration
+          </div>
+        </div>
+        <div className="flex w-full flex-col justify-between border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
+          {/*<div className="flex-1 flex-col items-center gap-3 space-x-2">*/}
+          {/*<PresetShare />*/}
+          {/*<div className="flex-grow overflow-y-auto py-4 pt-4">
+            <div className="space-y-5">*/}
+
+          <SessionConfig form={form} />
+          <div className="flex gap-3">
+            <PresetSelector />
+            <PresetSave />
+          </div>
+          {/*</div>*/}
+        </div>
+      </Form>
+    </header>
+  );
+}

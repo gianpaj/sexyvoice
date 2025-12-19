@@ -358,6 +358,7 @@
     "/": "",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
+    "/dashboard/call": "Anruf",
     "/dashboard/generate": "Generieren",
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",

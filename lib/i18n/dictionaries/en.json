@@ -358,6 +358,7 @@
     "/": "",
     "/login": "Log in",
     "/signup": "Sign up with email or Google",
+    "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
