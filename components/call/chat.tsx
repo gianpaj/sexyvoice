@@ -25,7 +25,7 @@ export function Chat() {
   const [isChatRunning, setIsChatRunning] = useState(false);
   const { agent } = useAgent();
   const { disconnect } = useConnection();
-  const [isEditingInstructions, setIsEditingInstructions] = useState(false);
+  // const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const searchParams = useSearchParams();
 
   const showInstruction = searchParams.get('showInstruction');
@@ -75,8 +75,8 @@ export function Chat() {
     };
   }, [connectionState, agent, disconnect, hasSeenAgent]);
 
-  const toggleInstructionsEdit = () =>
-    setIsEditingInstructions(!isEditingInstructions);
+  // const toggleInstructionsEdit = () =>
+  //   setIsEditingInstructions(!isEditingInstructions);
 
   // const renderVisualizer = () => (
   //   <div className="flex w-full items-center">

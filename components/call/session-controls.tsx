@@ -9,7 +9,7 @@ import {
 import { useKrispNoiseFilter } from '@livekit/components-react/krisp';
 import { Track } from 'livekit-client';
 import { ChevronDown, Mic, MicOff, PhoneOff } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,10 +22,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useConnection } from '@/hooks/use-connection';
 
+const AUDIO_DEVICE_STORAGE_KEY = 'sv_audio_device_id';
+
 export function SessionControls() {
   const localParticipant = useLocalParticipant();
   const deviceSelect = useMediaDeviceSelect({ kind: 'audioinput' });
   const { disconnect } = useConnection();
+  const hasInitialized = useRef(false);
 
   const [isMuted, setIsMuted] = useState(localParticipant.isMicrophoneEnabled);
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
@@ -36,6 +39,35 @@ export function SessionControls() {
   useEffect(() => {
     setIsMuted(localParticipant.isMicrophoneEnabled === false);
   }, [localParticipant.isMicrophoneEnabled]);
+
+  // Load saved device on mount and when devices change
+  useEffect(() => {
+    if (
+      !hasInitialized.current &&
+      deviceSelect.devices.length > 0 &&
+      deviceSelect.activeDeviceId === undefined
+    ) {
+      const savedDeviceId = localStorage.getItem(AUDIO_DEVICE_STORAGE_KEY);
+      if (savedDeviceId) {
+        const deviceExists = deviceSelect.devices.some(
+          (device) => device.deviceId === savedDeviceId,
+        );
+        if (deviceExists) {
+          deviceSelect.setActiveMediaDevice(savedDeviceId);
+        }
+      }
+      hasInitialized.current = true;
+    }
+  }, [
+    deviceSelect.devices,
+    deviceSelect.activeDeviceId,
+    deviceSelect.setActiveMediaDevice,
+  ]);
+
+  const handleDeviceChange = (deviceId: string) => {
+    deviceSelect.setActiveMediaDevice(deviceId);
+    localStorage.setItem(AUDIO_DEVICE_STORAGE_KEY, deviceId);
+  };
 
   return (
     <div className="flex flex-row gap-2">
@@ -90,9 +122,7 @@ export function SessionControls() {
                 checked={device.deviceId === deviceSelect.activeDeviceId}
                 className="text-xs"
                 key={`device-${index}`}
-                onCheckedChange={() =>
-                  deviceSelect.setActiveMediaDevice(device.deviceId)
-                }
+                onCheckedChange={() => handleDeviceChange(device.deviceId)}
               >
                 {device.label}
               </DropdownMenuCheckboxItem>

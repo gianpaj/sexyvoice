@@ -71,7 +71,39 @@ function AudioPlayer({ blob }: { blob: Blob }) {
 }
 
 function DeviceSelectDropdown() {
+  const STORAGE_KEY = 'sv_audio_device_id';
   const deviceSelect = useMediaDeviceSelect({ kind: 'audioinput' });
+  const hasInitialized = useRef(false);
+
+  // Load saved device on mount and when devices change
+  useEffect(() => {
+    if (
+      !hasInitialized.current &&
+      deviceSelect.devices.length > 0 &&
+      deviceSelect.activeDeviceId === undefined
+    ) {
+      const savedDeviceId = localStorage.getItem(STORAGE_KEY);
+
+      if (savedDeviceId) {
+        const deviceExists = deviceSelect.devices.some(
+          (device) => device.deviceId === savedDeviceId,
+        );
+        if (deviceExists) {
+          deviceSelect.setActiveMediaDevice(savedDeviceId);
+        }
+      }
+      hasInitialized.current = true;
+    }
+  }, [
+    deviceSelect.devices,
+    deviceSelect.activeDeviceId,
+    deviceSelect.setActiveMediaDevice,
+  ]);
+
+  const handleDeviceChange = (deviceId: string) => {
+    deviceSelect.setActiveMediaDevice(deviceId);
+    localStorage.setItem(STORAGE_KEY, deviceId);
+  };
 
   return (
     <DropdownMenu>
@@ -98,9 +130,7 @@ function DeviceSelectDropdown() {
             checked={device.deviceId === deviceSelect.activeDeviceId}
             className="text-xs"
             key={`device-${index}`}
-            onCheckedChange={() =>
-              deviceSelect.setActiveMediaDevice(device.deviceId)
-            }
+            onCheckedChange={() => handleDeviceChange(device.deviceId)}
           >
             {device.label}
           </DropdownMenuCheckboxItem>
