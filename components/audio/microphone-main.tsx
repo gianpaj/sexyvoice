@@ -1,6 +1,6 @@
 import { useMediaDeviceSelect } from '@livekit/components-react';
 import { ChevronDown, Mic, MicOff, XIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   DropdownMenu,

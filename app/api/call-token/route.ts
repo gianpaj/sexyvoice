@@ -90,6 +90,7 @@ export async function POST(request: Request) {
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,
       xai_api_key: xaiAPIKey,
+      user: user.id,
     };
 
     // Create access token

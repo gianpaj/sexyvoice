@@ -108,7 +108,7 @@ export function Chat() {
         onToggleEdit={toggleInstructionsEdit}
         showEditButton={isChatRunning}
       />
-      <div className="chat-container mt-12 flex min-w-0 flex-grow flex-col items-center lg:mt-0">
+      <div className="chat-container flex min-w-0 flex-grow flex-col items-center">
         <div className="flex w-full min-w-0 flex-grow flex-col gap-4">
           {/* Mobile: Show instructions and visualizer stacked */}
           <div className="flex w-full min-w-0 flex-col gap-4 lg:hidden">

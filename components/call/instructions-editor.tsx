@@ -62,7 +62,7 @@ export function InstructionsEditor({
       onChange={handleInputChange}
       onFocus={onFocus}
       placeholder="Enter system instructions"
-      rows={4}
+      rows={10}
       value={inputValue}
     />
   );

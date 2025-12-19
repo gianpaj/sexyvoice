@@ -209,7 +209,7 @@ export function ConfigurationForm() {
   return (
     <header className="flex w-full flex-col items-stretch justify-stretch">
       <Form {...form}>
-        <div className="w-full border-separator1 border-b px-5 py-4 md:px-1">
+        <div className="w-full border-separator1 border-b px-5 pt-0 pb-4 md:px-1 md:py-4">
           <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
             Configuration
           </div>

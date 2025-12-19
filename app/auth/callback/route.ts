@@ -59,5 +59,5 @@ export async function GET(request: Request) {
   }
 
   // URL to redirect to after sign up process completes
-  return NextResponse.redirect(`${origin}/dashboard/generate`);
+  return NextResponse.redirect(`${origin}/dashboard/call`);
 }
