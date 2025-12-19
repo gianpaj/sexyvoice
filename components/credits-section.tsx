@@ -10,6 +10,7 @@ import { useContext, useEffect } from 'react';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import useSupabaseBrowser from '@/lib/supabase/client';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { getCredits } from '@/lib/supabase/queries.client';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
@@ -56,42 +57,47 @@ function CreditsSection({
         throw new Error('User not found');
       }
 
-      return { user };
+      const userHasPaid = await hasUserPaid(user.id);
+
+      return { user, userHasPaid };
     };
 
     const sendUserAnalyticsData = (
       user: User,
       creditsData: Pick<Credit, 'amount'> | null | undefined,
+      userHasPaid: boolean,
     ) => {
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
         creditsLeft: creditsData?.amount || 0,
       });
-      if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-        Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-          locale: lang,
-        });
-        if (user.email) {
-          Crisp.user.setEmail(user.email);
-        }
-        const nickname =
-          user.user_metadata.full_name || user.user_metadata.username;
-        if (nickname) {
-          Crisp.user.setNickname(nickname);
-        }
-        Crisp.session.setData({
-          user_id: user.id,
-          creditsLeft: creditsData?.amount || 0,
-          // plan
-        });
+      if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
+        return;
       }
+      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
+        locale: lang,
+      });
+      if (user.email) {
+        Crisp.user.setEmail(user.email);
+      }
+      const nickname =
+        user.user_metadata.full_name || user.user_metadata.username;
+      if (nickname) {
+        Crisp.user.setNickname(nickname);
+      }
+      Crisp.session.setData({
+        user_id: user.id,
+        creditsLeft: creditsData?.amount || 0,
+        userHasPaid,
+        // plan
+      });
     };
 
     getData()
-      .then(({ user }) => {
+      .then(({ user, userHasPaid }) => {
         // console.log({ creditsData });
-        sendUserAnalyticsData(user, creditsData);
+        sendUserAnalyticsData(user, creditsData, userHasPaid);
       })
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);

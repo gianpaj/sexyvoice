@@ -54,10 +54,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Starke Stimmen, frei",
-      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller, Entwickler und Geschichtenerzähler. 😉",
+      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
+      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 60 Sekunden kostenlosen Anruf",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich",
+      "noCreditCard": "Keine Anmeldung erforderlich. Sie können jederzeit auflegen",
       "signIn": "Anmelden"
     },
     "features": {

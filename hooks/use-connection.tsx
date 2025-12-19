@@ -39,8 +39,6 @@ export const ConnectionProvider = ({
   const { pgState } = usePlaygroundState();
 
   const connect = async () => {
-    console.log('connect');
-
     const response = await fetch('/api/call-token', {
       method: 'POST',
       headers: {

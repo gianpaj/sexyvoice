@@ -42,21 +42,20 @@ export function ConnectButton() {
     <>
       <div className="flex items-center gap-2">
         <Button
-          className="gradient-bg h-9 p-2 font-semibold text-sm"
+          className="gradient-bg"
           disabled={connecting || shouldConnect}
+          icon={() =>
+            connecting || shouldConnect ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <PhoneCall />
+            )
+          }
+          iconPlacement="left"
           onClick={handleConnectionToggle}
+          size="lg"
         >
-          {connecting || shouldConnect ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Connecting
-            </>
-          ) : (
-            <>
-              <PhoneCall className="mr-2 h-4 w-4" />
-              Start a call
-            </>
-          )}
+          {connecting || shouldConnect ? 'Connecting' : 'Start a call'}
         </Button>
       </div>
       {/*<AuthDialog

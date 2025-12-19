@@ -196,7 +196,7 @@ export function PresetSelector(props: PopoverProps) {
 
               <CommandSeparator />
 
-              <CommandGroup>
+              {/*<CommandGroup>
                 <CommandItem
                   onSelect={() => handlePresetSelect(null)}
                   value="blank"
@@ -206,7 +206,7 @@ export function PresetSelector(props: PopoverProps) {
                     <span>Start from scratch</span>
                   </div>
                 </CommandItem>
-              </CommandGroup>
+              </CommandGroup>*/}
 
               {Object.values(PresetGroup).map((group) => (
                 <CommandGroup heading={group} key={group}>

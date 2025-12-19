@@ -9,13 +9,12 @@ import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 
 export const metadata: Metadata = {
-  title: 'Call & Phonesex - SexyVoice',
   description: 'Real-time voice AI',
 };
 
 import '@livekit/components-styles';
 
-export default function RootLayout({
+export default function CallLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

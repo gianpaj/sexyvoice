@@ -7,6 +7,7 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
@@ -58,6 +59,10 @@ export function ConfigurationForm() {
   const isReconnectingRef = useRef(false); // Track if we're currently reconnecting to prevent loops
   // const { toast } = useToast();
   const { agent } = useVoiceAssistant();
+
+  const searchParams = useSearchParams();
+
+  const showInstruction = searchParams.get('showInstruction');
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
   const updateConfig = useCallback(async () => {
@@ -223,7 +228,7 @@ export function ConfigurationForm() {
           <SessionConfig form={form} />
           <div className="flex gap-3">
             <PresetSelector />
-            <PresetSave />
+            {showInstruction && <PresetSave />}
           </div>
           {/*</div>*/}
         </div>

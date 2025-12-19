@@ -54,10 +54,10 @@
   "landing": {
     "latestPosts": "Ultimos Posts",
     "hero": {
-      "title": "Voces Expressivas, Sin Censura",
-      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
-      "buttonCTA": "Comienza",
-      "noCreditCard": "Sin tarjeta de crédito",
+      "title": "Llamada privada con una IA, Habla libremente sin juzgarte",
+      "subtitle": "Experimenta la conexión - prueba una llamada gratuita de 60 segundos",
+      "buttonCTA": "Empezar",
+      "noCreditCard": "No es necesario registrarse. Puedes colgar en cualquier momento",
       "signIn": "Iniciar Sesión"
     },
     "features": {

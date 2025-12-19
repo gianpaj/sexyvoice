@@ -7,10 +7,10 @@ import {
 } from '@livekit/components-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { ChatControls } from '@/components/call/chat-controls';
 import { Instructions } from '@/components/call/instructions';
 import { SessionControls } from '@/components/call/session-controls';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
@@ -26,6 +26,9 @@ export function Chat() {
   const { agent } = useAgent();
   const { disconnect } = useConnection();
   const [isEditingInstructions, setIsEditingInstructions] = useState(false);
+  const searchParams = useSearchParams();
+
+  const showInstruction = searchParams.get('showInstruction');
 
   const [hasSeenAgent, setHasSeenAgent] = useState(false);
 
@@ -103,19 +106,19 @@ export function Chat() {
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden p-2 lg:p-4">
-      <ChatControls
+      {/*<ChatControls
         isEditingInstructions={isEditingInstructions}
         onToggleEdit={toggleInstructionsEdit}
         showEditButton={isChatRunning}
-      />
+      />*/}
       <div className="chat-container flex min-w-0 flex-grow flex-col items-center">
         <div className="flex w-full min-w-0 flex-grow flex-col gap-4">
           {/* Mobile: Show instructions and visualizer stacked */}
           <div className="flex w-full min-w-0 flex-col gap-4 lg:hidden">
-            <Instructions />
+            {showInstruction && <Instructions />}
 
             {/* Button for short screens on mobile - show after instructions */}
-            <div className="hidden w-full flex-shrink-0 items-center justify-center [@media(max-height:800px)]:flex">
+            <div className="hidden w-full flex-shrink-0 items-center justify-center [@media(max-width:800px)]:flex">
               {renderConnectionControl()}
             </div>
 
@@ -125,12 +128,14 @@ export function Chat() {
 
           {/* Desktop: Show instructions at top, visualizer in middle */}
           <div className="chat-desktop-layout hidden w-full lg:flex lg:flex-grow lg:flex-col">
-            <div className="chat-instructions-wrapper flex w-full min-w-0 items-center justify-center">
-              <Instructions />
-            </div>
+            {showInstruction && (
+              <div className="chat-instructions-wrapper flex w-full min-w-0 items-center justify-center">
+                <Instructions />
+              </div>
+            )}
 
             {/* Button for short screens - show after instructions */}
-            <div className="my-2 hidden w-full flex-shrink-0 items-center justify-center [@media(max-height:800px)]:flex">
+            <div className="my-2 hidden w-full flex-shrink-0 items-center justify-center [@media(max-width:800px)]:flex">
               {renderConnectionControl()}
             </div>
 
@@ -146,9 +151,9 @@ export function Chat() {
         </div>
 
         {/* Button for normal screens - show after visualizer */}
-        <div className="my-4 flex-shrink-0 [@media(max-height:800px)]:hidden">
+        {/*<div className="my-4 flex-shrink-0 [@media(max-height:800px)]:hidden">
           {renderConnectionControl()}
-        </div>
+        </div>*/}
       </div>
     </div>
   );
