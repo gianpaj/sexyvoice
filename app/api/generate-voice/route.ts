@@ -34,7 +34,6 @@ import {
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
-const FOLDER = 'generated-audio';
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 320; // seconds - fluid compute is enabled
@@ -134,11 +133,12 @@ export async function POST(request: Request) {
 
     const userHasPaid = await hasUserPaid(user.id);
 
-    let path = `${FOLDER}-free/${voice}-${hash}`;
+    let folder = 'generated-audio-free';
 
     if (userHasPaid) {
-      path = `${FOLDER}/${voice}-${hash}`;
+      folder = 'generated-audio';
     }
+      const path = `${folder}/${voice}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {

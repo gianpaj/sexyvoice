@@ -8,9 +8,7 @@
   - a famous Arab male actor like Ahmed Helmy
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
-- merge `r2` branch
-  - share link & page after an audio has been generated
-  - listened counter?
+- share link & page after an audio has been generated
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
@@ -116,3 +114,4 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
   - It is my steadfast wish that we move forward with dignity and compassion. May our empire continue to flourish through unity and understanding.
 - Winston Churchill
   - We shall go forward together with resolute hearts. Let us face our challenges with the firmness and courage that have always defined our people.
+- Schedule on Grok to research every month top Netflix series which are popular. From those, fine female actress which are 'sex' symbols. Could be in English, Spanish, German, Indian, Arab. From those find video clips of these actress in their series being flirty or seductive.
