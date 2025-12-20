@@ -105,14 +105,14 @@ export function Chat() {
   );
 
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden p-2 lg:p-4">
+    <div className="flex min-h-24 flex-col overflow-hidden p-2 lg:p-4">
       {/*<ChatControls
         isEditingInstructions={isEditingInstructions}
         onToggleEdit={toggleInstructionsEdit}
         showEditButton={isChatRunning}
       />*/}
-      <div className="chat-container flex min-w-0 flex-grow flex-col items-center">
-        <div className="flex w-full min-w-0 flex-grow flex-col gap-4">
+      <div className="chat-container flex min-w-0 flex-col items-center">
+        <div className="flex w-full flex-col gap-4">
           {/* Mobile: Show instructions and visualizer stacked */}
           <div className="flex w-full min-w-0 flex-col gap-4 lg:hidden">
             {showInstruction && <Instructions />}

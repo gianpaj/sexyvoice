@@ -249,7 +249,8 @@
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
-    "remainingCredits": "Verbleibend"
+    "remainingCredits": "Verbleibend",
+    "remainingTime": "Verbleibende Zeit"
   },
   "generate": {
     "abortedCloning": "Sprachgenerierung abgebrochen.",
@@ -277,6 +278,10 @@
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
     }
+  },
+  "call": {
+    "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
+    "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche"
   },
   "clone": {
     "audioFileLabel": "Audiodatei",

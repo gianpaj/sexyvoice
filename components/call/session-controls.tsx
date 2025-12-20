@@ -75,9 +75,6 @@ export function SessionControls() {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <div className="font-mono text-muted-foreground text-sm">
-        {formattedTime}
-      </div>
       <div className="flex flex-row gap-2">
         <div className="flex items-center overflow-hidden rounded-md bg-bg2 text-secondary-foreground">
           <div className="flex items-center gap-2">
@@ -156,6 +153,9 @@ export function SessionControls() {
           <PhoneOff className="h-4 w-4" />
           Disconnect
         </Button>
+      </div>
+      <div className="font-mono text-muted-foreground text-sm">
+        {formattedTime}
       </div>
     </div>
   );

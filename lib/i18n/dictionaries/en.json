@@ -54,7 +54,7 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Private call with an AI, Talk freely no judgment",
+      "title": "Private call with an AI, Talk freely – no judgment",
       "subtitle": "Experience the connection – try 60 sec free call",
       "buttonCTA": "Sign up for Free",
       "noCreditCard": "No sign up required. You can hang up anytime",
@@ -249,7 +249,8 @@
     "title": "Credits",
     "topupButton": "Top-up",
     "totalCredits": "Total",
-    "remainingCredits": "Remaining"
+    "remainingCredits": "Remaining",
+    "remainingTime": "Remaining time"
   },
   "generate": {
     "abortedCloning": "Voice generation aborted.",
@@ -277,6 +278,10 @@
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
     }
+  },
+  "call": {
+    "notice1": "Explore your deepest desires in total privacy.",
+    "notice2": "End-to-end encrypted, judgment-free conversations."
   },
   "clone": {
     "audioFileLabel": "Audio File",

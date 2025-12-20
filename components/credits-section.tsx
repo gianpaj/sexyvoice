@@ -23,12 +23,14 @@ function CreditsSection({
   userId,
   creditTransactions,
   doNotToggleSidebar,
+  showMinutes,
 }: {
   lang: Locale;
   userId: string;
   dict: (typeof langDict)['creditsSection'];
   creditTransactions: Pick<CreditTransaction, 'amount'>[] | null;
   doNotToggleSidebar?: boolean;
+  showMinutes?: boolean;
 }) {
   const posthog = usePostHog();
   const supabase = useSupabaseBrowser();
@@ -106,6 +108,8 @@ function CreditsSection({
 
   if (!creditsData) return <Skeleton className="h-[150px] w-full rounded-lg" />;
 
+  const minutesRemaining = Math.floor(creditsData.amount / 200);
+
   return (
     <div className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0">
       <div className="mb-4 flex w-50 items-center justify-between">
@@ -133,22 +137,30 @@ function CreditsSection({
         </Button>
       </div>
       <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-200">{dict.totalCredits}</span>
-              <span className="font-medium">
-                {total_credits.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-200">{dict.remainingCredits}</span>
-              <span className="font-medium">
-                {creditsData.amount.toLocaleString()}
-              </span>
-            </div>
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-200">{dict.totalCredits}</span>
+            <span className="font-medium">
+              {total_credits.toLocaleString()}
+            </span>
           </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-200">{dict.remainingCredits}</span>
+            <span className="font-medium">
+              {creditsData.amount.toLocaleString()}
+            </span>
+          </div>
+
+          {showMinutes && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-200">{dict.remainingTime}</span>
+              <span className="font-medium">
+                {`~${minutesRemaining.toLocaleString()} min`}
+              </span>
+            </div>
+          )}
         </div>
+
         <div className="relative h-10 w-10">
           <ProgressCircle
             className="size-10"

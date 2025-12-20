@@ -99,7 +99,7 @@ export default async function LandingPage(props: {
             {/* Hero Section */}
             <div className="z-10 flex h-[calc(100svh-60px)] min-h-[600px] flex-col items-center justify-center space-y-3 text-center md:space-y-6">
               {/*<LandingHero />*/}
-              <h1 className="font-bold text-4xl text-white leading-[2.75rem] md:text-6xl">
+              <h1 className="font-bold text-4xl text-white leading-[2.75rem] md:text-6xl md:leading-[5rem]">
                 <span>{firstPart}</span>
                 <br />
                 {titleRestParts && (

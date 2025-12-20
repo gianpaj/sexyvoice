@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 
-import { ConfigurationForm } from '@/components/call/configuration-form';
 // import { NavLogo } from "@/components/custom/nav-logo";
 // import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { RoomWrapper } from '@/components/call/room-wrapper';
@@ -24,14 +23,7 @@ export default function CallLayout({
     <PlaygroundStateProvider>
       <ConnectionProvider>
         <TooltipProvider>
-          <RoomWrapper>
-            <div className="mx-auto flex w-full flex-col md:max-w-3xl">
-              <div className="mb-6 flex w-full px-0 md:px-4">
-                <ConfigurationForm />
-              </div>
-              {children}
-            </div>
-          </RoomWrapper>
+          <RoomWrapper>{children}</RoomWrapper>
         </TooltipProvider>
       </ConnectionProvider>
     </PlaygroundStateProvider>

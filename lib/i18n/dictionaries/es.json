@@ -249,7 +249,8 @@
     "title": "Créditos",
     "topupButton": "Recargar",
     "totalCredits": "Total",
-    "remainingCredits": "Restantes"
+    "remainingCredits": "Restantes",
+    "remainingTime": "Tiempo restante"
   },
   "generate": {
     "abortedCloning": "Clonación de voz cancelada",
@@ -277,6 +278,10 @@
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
       "geminiInfo": "Soporta 24 idiomas:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
     }
+  },
+  "call": {
+    "notice1": "Explora tus deseos más profundos en total privacidad.",
+    "notice2": "Conversaciones cifradas de extremo a extremo, sin juzgarte."
   },
   "clone": {
     "audioFileLabel": "Archivo de Audio",
