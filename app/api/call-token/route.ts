@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 
 import type { PlaygroundState } from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
-import { getCredits } from '@/lib/supabase/queries';
+import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
@@ -81,11 +81,18 @@ export async function POST(request: Request) {
       throw new Error('LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set');
     }
 
+    const voiceObj = await getVoiceIdByName(voice);
+
+    if (!voiceObj) {
+      captureException({ error: 'Voice not found', voice });
+      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+    }
+
     // Create metadata for agent to start with
     const metadata = {
       instructions,
       model,
-      voice,
+      voice: voiceObj.id,
       temperature,
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,
