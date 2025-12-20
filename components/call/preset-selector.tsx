@@ -3,7 +3,7 @@
 import { CaretSortIcon, FileIcon } from '@radix-ui/react-icons';
 import type { PopoverProps } from '@radix-ui/react-popover';
 import { Check, Trash } from 'lucide-react';
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -41,17 +41,15 @@ import { cn } from '@/lib/utils';
 import { type Preset, PresetGroup } from '../../data/presets';
 
 export function PresetSelector(props: PopoverProps) {
-  const [open, setOpen] = React.useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
-  const [presetToDelete, setPresetToDelete] = React.useState<Preset | null>(
-    null,
-  );
+  const [open, setOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [presetToDelete, setPresetToDelete] = useState<Preset | null>(null);
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect } = useConnection();
 
-  const [lastPresetId, setLastPresetId] = React.useState<string | null>(null);
+  const [lastPresetId, setLastPresetId] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (pgState.selectedPresetId !== lastPresetId) {
       setLastPresetId(pgState.selectedPresetId);
       if (shouldConnect) {

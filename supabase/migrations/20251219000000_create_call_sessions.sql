@@ -2,12 +2,10 @@
 CREATE TABLE call_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
-  room_name TEXT NOT NULL,
 
   -- Session configuration
   model TEXT NOT NULL,
-  voice TEXT NOT NULL,
-  temperature FLOAT,
+  voice_id UUID REFERENCES voices(id) NOT NULL,
   max_output_tokens INTEGER,
   grok_image_enabled BOOLEAN DEFAULT false,
 
