@@ -1,5 +1,19 @@
 import { allPosts } from 'contentlayer/generated';
-import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import { Trigger as AccordionPrimitiveTrigger } from '@radix-ui/react-accordion';
+import {
+  ArrowRightIcon,
+  ChevronDownIcon,
+  Coins,
+  Globe2,
+  Languages,
+  Mic2,
+  PhoneCall,
+  PlusIcon,
+  Shield,
+  ShieldCheck,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -24,10 +38,14 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
@@ -59,10 +77,20 @@ export default async function LandingPage(props: {
   const [firstPart, ...restParts] = dict.hero.title.split(',');
   const titleRestParts = restParts.join(',');
 
+  const faqIconMap: Record<string, LucideIcon> = {
+    liveCalling: PhoneCall,
+    voiceCreation: Sparkles,
+    languages: Languages,
+    trustAndPolicies: ShieldCheck,
+    pricingAndAccess: Coins,
+  };
+
+  const faqQuestions = dict.faq.groups.flatMap((group) => group.questions);
+
   const jsonLd: WithContext<FAQPage> = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: dict.faq.questions.map((q) => ({
+    mainEntity: faqQuestions.map((q) => ({
       '@type': 'Question',
       name: q.question,
       acceptedAnswer: {
@@ -223,7 +251,7 @@ export default async function LandingPage(props: {
             <PricingTable lang={lang} />
 
             {/* FAQ Section */}
-            <div className="mx-auto max-w-3xl py-16">
+            <div className="mx-auto max-w-5xl py-16">
               <div className="mb-12 text-left md:text-center">
                 <h2 className="mb-2 font-bold text-3xl text-white">
                   {dict.faq.title}
@@ -231,21 +259,51 @@ export default async function LandingPage(props: {
                 <p className="text-gray-200">{dict.faq.subtitle}</p>
               </div>
 
-              <Accordion className="w-full" collapsible type="single">
-                {dict.faq.questions.map((faq, index) => (
-                  <AccordionItem
-                    className="border-white/10 border-b"
-                    key={`item-${index}`}
-                    value={`item-${index}`}
-                  >
-                    <AccordionTrigger className="py-5 text-left text-white hover:text-blue-400 hover:no-underline">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="whitespace-break-spaces text-justify text-gray-200">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
+              <Accordion
+                className="w-full rounded-md border border-white/10"
+                collapsible
+                defaultValue="item-1"
+                type="single"
+              >
+                {dict.faq.groups.map((group, index) => {
+                  const Icon = faqIconMap[group.id] ?? Sparkles;
+
+                  return (
+                    <AccordionItem
+                      className="outline-none first:rounded-t-md last:rounded-b-md has-focus-visible:z-10 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
+                      key={group.id}
+                      value={`item-${index + 1}`}
+                    >
+                      <AccordionPrimitiveTrigger
+                        data-slot="accordion-trigger"
+                        className="flex w-full flex-1 items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none transition-all hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-135"
+                      >
+                        <span className="flex items-center gap-4">
+                          <Icon className="size-4 shrink-0" />
+                          <span>{group.category}</span>
+                        </span>
+                        <PlusIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                      </AccordionPrimitiveTrigger>
+                      <AccordionContent className="pb-0">
+                        {group.questions.map((faq, i) => (
+                          <Collapsible
+                            className="border-white/10 border-t bg-accent/30 px-5"
+                            defaultOpen={i === 0}
+                            key={faq.question}
+                          >
+                            <CollapsibleTrigger className="flex w-full items-center gap-4 rounded-sm py-4 text-left font-medium text-white outline-none focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 [&[data-state=open]>svg]:rotate-180">
+                              <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
+                              {faq.question}
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="whitespace-break-spaces pb-4 text-muted-foreground text-sm">
+                              {faq.answer}
+                            </CollapsibleContent>
+                          </Collapsible>
+                        ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
               </Accordion>
             </div>
 
