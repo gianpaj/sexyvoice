@@ -289,7 +289,7 @@ export default async function LandingPage(props: {
                           <Collapsible
                             className="border-white/10 border-t bg-accent/30 px-5"
                             defaultOpen={i === 0}
-                            key={faq.question}
+                            key={i}
                           >
                             <CollapsibleTrigger className="flex w-full items-center gap-4 rounded-sm py-4 text-left font-medium text-white outline-none focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 [&[data-state=open]>svg]:rotate-180">
                               <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
