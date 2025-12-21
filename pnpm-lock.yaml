@@ -273,8 +273,8 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
       ultracite:
-        specifier: 6.3.9
-        version: 6.3.9(typescript@5.9.3)
+        specifier: 6.5.0
+        version: 6.5.0(typescript@5.9.3)
       vitest:
         specifier: 4.0.15
         version: 4.0.15(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(jiti@2.6.1)(msw@2.12.4(@types/node@24.10.1)(typescript@5.9.3))(sass@1.86.3)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
@@ -3414,8 +3414,8 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@trpc/server@11.7.2':
-    resolution: {integrity: sha512-AgB26PXY69sckherIhCacKLY49rxE2XP5h38vr/KMZTbLCL1p8IuIoKPjALTcugC2kbyQ7Lbqo2JDVfRSmPmfQ==}
+  '@trpc/server@11.8.1':
+    resolution: {integrity: sha512-P4rzZRpEL7zDFgjxK65IdyH0e41FMFfTkQkuq0BA5tKcr7E6v9/v38DEklCpoDN6sPiB1Sigy/PUEzHENhswDA==}
     peerDependencies:
       typescript: '>=5.7.2'
 
@@ -4007,10 +4007,6 @@ packages:
 
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
-
-  commander@14.0.0:
-    resolution: {integrity: sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA==}
-    engines: {node: '>=20'}
 
   commander@14.0.2:
     resolution: {integrity: sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ==}
@@ -6208,8 +6204,8 @@ packages:
     resolution: {integrity: sha512-ZPtzy0hu4cZjv3z5NW9gfKnNLjoz4y6uv4HlelAjDK7sY/xOkKZv9xK/WQpcsBB3jEybChz9DPC2U/+cusjJVQ==}
     engines: {node: '>=18'}
 
-  ultracite@6.3.9:
-    resolution: {integrity: sha512-bqj8Eh3VWYcjHXMR3+a9xqZXbgFY3PxwB+m9LTC+W1HHs5qtOtxH4QX51MiH513jfThpdM+cnWAk5KNltVh+Kg==}
+  ultracite@6.5.0:
+    resolution: {integrity: sha512-HrXvM0CX/S3t5HEoepWQ6kpMVD9mzNB5X0k/T7zvNObQ6X9+s1pAE4efDR3Nc4KwqDiemK/bwI7pgPApT7Fktw==}
     hasBin: true
 
   uncrypto@0.1.3:
@@ -10282,7 +10278,7 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@trpc/server@11.7.2(typescript@5.9.3)':
+  '@trpc/server@11.8.1(typescript@5.9.3)':
     dependencies:
       typescript: 5.9.3
 
@@ -10889,8 +10885,6 @@ snapshots:
       delayed-stream: 1.0.0
 
   comma-separated-tokens@2.0.3: {}
-
-  commander@14.0.0: {}
 
   commander@14.0.2: {}
 
@@ -13254,7 +13248,7 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.8
       commander: 4.1.1
-      glob: 10.4.5
+      glob: 10.5.0
       lines-and-columns: 1.2.4
       mz: 2.7.0
       pirates: 4.0.7
@@ -13408,11 +13402,11 @@ snapshots:
 
   trough@2.2.0: {}
 
-  trpc-cli@0.12.1(@trpc/server@11.7.2(typescript@5.9.3))(zod@4.1.13):
+  trpc-cli@0.12.1(@trpc/server@11.8.1(typescript@5.9.3))(zod@4.1.13):
     dependencies:
-      commander: 14.0.0
+      commander: 14.0.2
     optionalDependencies:
-      '@trpc/server': 11.7.2(typescript@5.9.3)
+      '@trpc/server': 11.8.1(typescript@5.9.3)
       zod: 4.1.13
 
   ts-debounce@4.0.0: {}
@@ -13448,15 +13442,16 @@ snapshots:
 
   uint8array-extras@1.4.0: {}
 
-  ultracite@6.3.9(typescript@5.9.3):
+  ultracite@6.5.0(typescript@5.9.3):
     dependencies:
       '@clack/prompts': 0.11.0
-      '@trpc/server': 11.7.2(typescript@5.9.3)
+      '@trpc/server': 11.8.1(typescript@5.9.3)
       deepmerge: 4.3.1
       glob: 13.0.0
       jsonc-parser: 3.3.1
       nypm: 0.6.2
-      trpc-cli: 0.12.1(@trpc/server@11.7.2(typescript@5.9.3))(zod@4.1.13)
+      picocolors: 1.1.1
+      trpc-cli: 0.12.1(@trpc/server@11.8.1(typescript@5.9.3))(zod@4.1.13)
       zod: 4.1.13
     transitivePeerDependencies:
       - '@orpc/server'
