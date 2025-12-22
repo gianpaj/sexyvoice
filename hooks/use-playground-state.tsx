@@ -1,6 +1,5 @@
 'use client';
 
-import type React from 'react';
 import {
   createContext,
   type Dispatch,
@@ -8,7 +7,6 @@ import {
   useContext,
   useEffect,
   useReducer,
-  useState,
 } from 'react';
 
 import { ModelId } from '@/data/models';
@@ -128,8 +126,6 @@ interface PlaygroundStateContextProps {
   pgState: PlaygroundState;
   dispatch: Dispatch<Action>;
   helpers: typeof playgroundStateHelpers;
-  showAuthDialog: boolean;
-  setShowAuthDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Create the context
@@ -160,7 +156,6 @@ export const PlaygroundStateProvider = ({
     playgroundStateReducer,
     defaultPlaygroundState,
   );
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   useEffect(() => {
     // Load presets from localStorage
@@ -235,8 +230,6 @@ export const PlaygroundStateProvider = ({
         pgState: state,
         dispatch,
         helpers: playgroundStateHelpers,
-        showAuthDialog,
-        setShowAuthDialog,
       }}
     >
       {children}

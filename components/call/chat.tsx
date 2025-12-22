@@ -118,7 +118,7 @@ export function Chat() {
             {showInstruction && <Instructions />}
 
             {/* Button for short screens on mobile - show after instructions */}
-            <div className="hidden w-full flex-shrink-0 flex-col items-center justify-center gap-2 [@media(max-width:800px)]:flex">
+            <div className="flex w-full flex-shrink-0 flex-col items-center justify-center gap-2 md:hidden">
               {renderConnectionControl()}
             </div>
 
@@ -135,7 +135,7 @@ export function Chat() {
             )}
 
             {/* Button for short screens - show after instructions */}
-            <div className="my-2 hidden w-full flex-shrink-0 flex-col items-center justify-center gap-2 [@media(max-width:800px)]:flex">
+            <div className="my-2 hidden w-full flex-shrink-0 flex-col items-center justify-center gap-2 md:flex">
               {renderConnectionControl()}
             </div>
 

@@ -1,11 +1,13 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import { createContext, useCallback, useContext, useState } from 'react';
 
 import type { PlaygroundState } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
 import { playgroundStateHelpers } from '@/lib/playground-state-helpers';
+import useSupabaseBrowser from '@/lib/supabase/client';
 import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = () => Promise<void>;
@@ -36,6 +38,8 @@ export const ConnectionProvider = ({
     voice: VoiceId;
   }>({ wsUrl: '', token: '', shouldConnect: false, voice: VoiceId.ARA });
 
+  const queryClient = useQueryClient();
+  const supabase = useSupabaseBrowser();
   const { pgState } = usePlaygroundState();
 
   const connect = async () => {
@@ -63,19 +67,14 @@ export const ConnectionProvider = ({
     });
   };
 
-  // biome-ignore lint/suspicious/useAwait: needed
   const disconnect = useCallback(async () => {
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
-  }, []);
+    const { data } = await supabase.auth.getUser();
+    if (data?.user?.id) {
 
-  // // Effect to handle API key changes
-  // useEffect(() => {
-  //   console.log("shouldConnect", connectionDetails.shouldConnect);
-
-  //   if (connectionDetails.shouldConnect) {
-  //     disconnect();
-  //   }
-  // }, [connectionDetails.shouldConnect, disconnect]);
+      queryClient.invalidateQueries({ queryKey: ['credits', data.user.id] });
+    }
+  }, [queryClient, supabase.auth]);
 
   return (
     <ConnectionContext.Provider

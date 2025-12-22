@@ -31,14 +31,16 @@ export default async function Call(props: {
 
   return (
     <div className="mx-auto flex w-full flex-col md:max-w-3xl">
-      <CreditsSection
-        creditTransactions={creditTransactions}
-        dict={dict.creditsSection}
-        doNotToggleSidebar
-        lang={lang}
-        showMinutes
-        userId={user.id}
-      />
+      <div className="lg:hidden">
+        <CreditsSection
+          creditTransactions={creditTransactions}
+          dict={dict.creditsSection}
+          doNotToggleSidebar
+          lang={lang}
+          showMinutes
+          userId={user.id}
+        />
+      </div>
       <div className="my-6 flex w-full px-0 md:px-4">
         <ConfigurationForm />
       </div>

@@ -53,7 +53,7 @@ export const initialInstruction =
 export const defaultPlaygroundState: PlaygroundState = {
   sessionConfig: { ...defaultSessionConfig },
   userPresets: [],
-  selectedPresetId: 'porn-whisper',
+  selectedPresetId: 'soft-amanda',
   instructions,
   initialInstruction,
 };

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useConnection } from '@/hooks/use-connection';
-// import { AuthDialog } from "./auth";
 
 export function ConnectButton() {
   const { connect, disconnect, shouldConnect } = useConnection();
@@ -39,30 +38,23 @@ export function ConnectButton() {
   }, [initiateConnectionFlag, initiateConnection]);
 
   return (
-    <>
-      <div className="flex items-center gap-2">
-        <Button
-          className="gradient-bg"
-          disabled={connecting || shouldConnect}
-          icon={() =>
-            connecting || shouldConnect ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <PhoneCall />
-            )
-          }
-          iconPlacement="left"
-          onClick={handleConnectionToggle}
-          size="lg"
-        >
-          {connecting || shouldConnect ? 'Connecting' : 'Start a call'}
-        </Button>
-      </div>
-      {/*<AuthDialog
-        open={showAuthDialog}
-        onOpenChange={setShowAuthDialog}
-        onAuthComplete={handleAuthComplete}
-      />*/}
-    </>
+    <div className="flex items-center gap-2">
+      <Button
+        className="gradient-bg"
+        disabled={connecting || shouldConnect}
+        icon={() =>
+          connecting || shouldConnect ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <PhoneCall />
+          )
+        }
+        iconPlacement="left"
+        onClick={handleConnectionToggle}
+        size="lg"
+      >
+        {connecting || shouldConnect ? 'Connecting' : 'Start a call'}
+      </Button>
+    </div>
   );
 }

@@ -19,7 +19,6 @@ export default function CallLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // <PHProvider>
     <PlaygroundStateProvider>
       <ConnectionProvider>
         <TooltipProvider>
@@ -27,25 +26,5 @@ export default function CallLayout({
         </TooltipProvider>
       </ConnectionProvider>
     </PlaygroundStateProvider>
-    // </PHProvider>
   );
 }
-
-// <SidebarProvider defaultOpen={true}>
-//   <Sidebar className="bg-bg1">
-//     {/*<SidebarHeader>
-//               <NavLogo />
-//             </SidebarHeader>*/}
-//     <SidebarContent className="px-4">
-//       <ConfigurationForm />
-//     </SidebarContent>
-//     {/*<SidebarFooter className="p-4">
-//               <ThemeToggle />
-//             </SidebarFooter>*/}
-//   </Sidebar>
-//   <SidebarInset>
-//     {/*<PostHogPageView />*/}
-//     {children}
-//     {/*<Toaster />*/}
-//   </SidebarInset>
-// </SidebarProvider>

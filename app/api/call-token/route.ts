@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const roomName = Math.random().toString(36).slice(7);
+    const roomName = `ro-${crypto.randomUUID()}`;
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     if (!(apiKey && apiSecret)) {

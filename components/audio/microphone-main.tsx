@@ -1,6 +1,5 @@
-import { useMediaDeviceSelect } from '@livekit/components-react';
 import { ChevronDown, Mic, MicOff, XIcon } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   DropdownMenu,
@@ -11,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useMultibandTrackVolume } from '@/hooks/use-multiband-track-volume';
+import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
@@ -71,38 +71,10 @@ function AudioPlayer({ blob }: { blob: Blob }) {
 }
 
 function DeviceSelectDropdown() {
-  const STORAGE_KEY = 'sv_audio_device_id';
-  const deviceSelect = useMediaDeviceSelect({ kind: 'audioinput' });
-  const hasInitialized = useRef(false);
-
-  // Load saved device on mount and when devices change
-  useEffect(() => {
-    if (
-      !hasInitialized.current &&
-      deviceSelect.devices.length > 0 &&
-      deviceSelect.activeDeviceId === undefined
-    ) {
-      const savedDeviceId = localStorage.getItem(STORAGE_KEY);
-
-      if (savedDeviceId) {
-        const deviceExists = deviceSelect.devices.some(
-          (device) => device.deviceId === savedDeviceId,
-        );
-        if (deviceExists) {
-          deviceSelect.setActiveMediaDevice(savedDeviceId);
-        }
-      }
-      hasInitialized.current = true;
-    }
-  }, [
-    deviceSelect.devices,
-    deviceSelect.activeDeviceId,
-    deviceSelect.setActiveMediaDevice,
-  ]);
+  const deviceSelect = usePersistentMediaDevice();
 
   const handleDeviceChange = (deviceId: string) => {
     deviceSelect.setActiveMediaDevice(deviceId);
-    localStorage.setItem(STORAGE_KEY, deviceId);
   };
 
   return (

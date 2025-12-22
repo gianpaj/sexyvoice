@@ -184,7 +184,7 @@ export default async function LandingPage(props: {
                 </CardHeader>
                 <CardContent>
                   <p className="text-justify text-sm">
-                    Explore your deepest desires in total privacy - end to end
+                    Explore your deepest desires in total privacy - end-to-end
                     encrypted judgment-free conversations
                   </p>
                 </CardContent>

@@ -39,7 +39,7 @@ export function PresetSave() {
       id:
         selectedPreset && !selectedPreset.defaultGroup
           ? selectedPreset.id
-          : Math.random().toString(36).substr(2, 9),
+          : crypto.randomUUID(),
       name,
       description,
       instructions: pgState.instructions,

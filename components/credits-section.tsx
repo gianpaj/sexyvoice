@@ -73,6 +73,7 @@ function CreditsSection({
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
         creditsLeft: creditsData?.amount || 0,
+        userHasPaid,
       });
       if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
         return;
@@ -92,7 +93,6 @@ function CreditsSection({
         user_id: user.id,
         creditsLeft: creditsData?.amount || 0,
         userHasPaid,
-        // plan
       });
     };
 
