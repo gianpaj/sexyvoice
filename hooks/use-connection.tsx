@@ -71,7 +71,7 @@ export const ConnectionProvider = ({
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
     const { data } = await supabase.auth.getUser();
     if (data?.user?.id) {
-
+      queryClient.refetchQueries({ queryKey: ['credits', data.user.id] });
       queryClient.invalidateQueries({ queryKey: ['credits', data.user.id] });
     }
   }, [queryClient, supabase.auth]);

@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       throw new Error('LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set');
     }
 
-    const voiceObj = await getVoiceIdByName(voice);
+    const voiceObj = await getVoiceIdByName(voice, false);
 
     if (!voiceObj) {
       captureException({ error: 'Voice not found', voice });
