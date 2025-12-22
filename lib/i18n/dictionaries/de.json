@@ -281,7 +281,8 @@
   },
   "call": {
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
-    "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche"
+    "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__"
   },
   "clone": {
     "audioFileLabel": "Audiodatei",

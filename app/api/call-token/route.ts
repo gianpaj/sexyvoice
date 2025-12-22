@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 
 import type { PlaygroundState } from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     // Check if user has credits
     const currentAmount = await getCredits(user.id);
 
-    if (currentAmount <= 10) {
+    if (currentAmount <= MINIMUM_CREDITS_FOR_CALL) {
       logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { currentCreditsAmount: currentAmount },
