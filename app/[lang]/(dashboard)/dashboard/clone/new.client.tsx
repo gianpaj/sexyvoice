@@ -390,13 +390,13 @@ function NewVoiceClientInner({
       ) {
         return;
       }
-      let errorMsg = 'Unexpected error occurred';
+      let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
       } else if (Error.isError(err)) {
         errorMsg = err.message;
       }
-      setErrorMessage(errorMsg);
+      setErrorMessage(errorMsg || 'Unexpected error occurred');
       setStatus('error');
     }
   }, [

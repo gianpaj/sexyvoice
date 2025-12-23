@@ -13,6 +13,7 @@ import {
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
   hasUserPaid,
@@ -37,7 +38,6 @@ const ALLOWED_TYPES = [
 
 const MAX_LENGTH_EN = 500;
 const MAX_LENGTH_MULTILANGUAGE = 300;
-const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 const MIN_DURATION = 10;
 const MAX_DURATION = 5 * 60; // 5 minutes
 
@@ -195,7 +195,7 @@ function validateFileType(file: File): string {
 }
 
 function validateFileSize(file: File): void {
-  if (file.size > MAX_SIZE) {
+  if (file.size > CLONING_FILE_MAX_SIZE) {
     throw new APIError(
       'File too large. Max 4.5MB allowed.',
       new Response('File too large. Max 4.5MB allowed.', { status: 400 }),
