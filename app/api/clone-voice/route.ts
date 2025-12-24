@@ -196,9 +196,11 @@ function validateFileType(file: File): string {
 
 function validateFileSize(file: File): void {
   if (file.size > CLONING_FILE_MAX_SIZE) {
+    const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
+    const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
     throw new APIError(
-      'File too large. Max 4.5MB allowed.',
-      new Response('File too large. Max 4.5MB allowed.', { status: 400 }),
+      errorMessage,
+      new Response(errorMessage, { status: 400 }),
     );
   }
 }
