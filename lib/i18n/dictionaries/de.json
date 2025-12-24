@@ -54,10 +54,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Starke Stimmen, frei",
-      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller, Entwickler und Geschichtenerzähler. 😉",
+      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
+      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 60 Sekunden kostenlosen Anruf",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich",
+      "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
       "signIn": "Anmelden"
     },
     "features": {
@@ -249,7 +249,8 @@
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
-    "remainingCredits": "Verbleibend"
+    "remainingCredits": "Verbleibend",
+    "remainingTime": "Verbleibende Zeit"
   },
   "generate": {
     "abortedCloning": "Sprachgenerierung abgebrochen.",
@@ -277,6 +278,11 @@
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
     }
+  },
+  "call": {
+    "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
+    "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__"
   },
   "clone": {
     "audioFileLabel": "Audiodatei",
@@ -358,6 +364,7 @@
     "/": "",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
+    "/dashboard/call": "Anruf",
     "/dashboard/generate": "Generieren",
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",

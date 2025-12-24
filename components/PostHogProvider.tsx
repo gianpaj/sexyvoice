@@ -9,8 +9,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+        // api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
         api_host: '/ingest',
         ui_host: 'https://eu.posthog.com',
+        // api_host: '/ph',
+        // ui_host: 'https://eu.posthog.com',
         capture_pageview: false, // We capture pageviews manually
         capture_pageleave: true, // Enable pageleave capture
         // Enable debug mode in development

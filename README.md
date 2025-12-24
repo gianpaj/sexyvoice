@@ -265,6 +265,18 @@ We welcome contributions!
 - Submit pull requests
 <!-- - Follow the code of conduct -->
 
+### Setup
+
+Zed with [Cspell](https://github.com/mantou132/zed-cspell/) extension
+
+```bash
+npm install -g cspell @cspell/dict-de-de @cspell/dict-es-es
+asdf reshim nodejs
+cspell link add @cspell/dict-de-de
+cspell link add @cspell/dict-es-es
+# restart Zed language server
+```
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
@@ -273,7 +285,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
-- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*
+<!--- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*-->
 - **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status

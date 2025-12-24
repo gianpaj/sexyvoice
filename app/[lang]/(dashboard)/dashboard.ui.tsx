@@ -1,6 +1,12 @@
 'use client';
 
-import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
+import {
+  CreditCard,
+  FileClock,
+  Mic2,
+  PhoneCallIcon,
+  Wand2,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -46,6 +52,12 @@ export default function DashboardUI({
   const pathname = usePathname();
 
   const navigation = [
+    {
+      name: dict.pages['/dashboard/call'],
+      href: `/${lang}/dashboard/call`,
+      icon: PhoneCallIcon,
+      current: pathname === `/${lang}/dashboard/call`,
+    },
     {
       name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
@@ -126,6 +138,7 @@ export default function DashboardUI({
                 creditTransactions={creditTransactions}
                 dict={dict.creditsSection}
                 lang={lang}
+                showMinutes={pathname === `/${lang}/dashboard/call`}
                 userId={userId}
               />
 

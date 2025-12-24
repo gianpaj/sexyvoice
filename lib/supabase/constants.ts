@@ -1,1 +1,3 @@
 export const MAX_FREE_GENERATIONS = 6;
+
+export const MINIMUM_CREDITS_FOR_CALL = 200;
