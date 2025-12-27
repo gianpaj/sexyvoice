@@ -4,7 +4,11 @@ import type { User } from '@supabase/supabase-js';
 import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 
-import type { PlaygroundState } from '@/data/playground-state';
+import {
+  defaultLanguage,
+  languageInitialInstructions,
+  type PlaygroundState,
+} from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
@@ -52,6 +56,7 @@ export async function POST(request: Request) {
 
     const {
       instructions,
+      language = defaultLanguage,
       sessionConfig: {
         model,
         voice,
@@ -60,6 +65,13 @@ export async function POST(request: Request) {
         grokImageEnabled,
       },
     } = playgroundState;
+
+    const selectedLanguage = languageInitialInstructions[language]
+      ? language
+      : defaultLanguage;
+    const initialInstruction =
+      languageInitialInstructions[selectedLanguage] ||
+      languageInitialInstructions[defaultLanguage];
 
     const xaiAPIKey = process.env.XAI_API_KEY;
     if (!xaiAPIKey) {
@@ -98,6 +110,8 @@ export async function POST(request: Request) {
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,
       xai_api_key: xaiAPIKey,
+      language: selectedLanguage,
+      initial_instruction: initialInstruction,
       user_id: user.id,
     };
 
