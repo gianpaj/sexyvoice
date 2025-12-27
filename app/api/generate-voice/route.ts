@@ -26,9 +26,9 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  calculateCreditsFromTokens,
   ERROR_CODES,
   estimateCredits,
-  estimateCreditsFromTokens,
   extractMetadata,
   getErrorMessage,
 } from '@/lib/utils';
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     if (userHasPaid) {
       folder = 'generated-audio';
     }
-      const path = `${folder}/${voice}-${hash}`;
+    const path = `${folder}/${voice}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {
@@ -366,7 +366,7 @@ export async function POST(request: Request) {
       );
 
       if (isGeminiVoice && usage) {
-        creditsUsed = estimateCreditsFromTokens(
+        creditsUsed = calculateCreditsFromTokens(
           Number.parseInt(usage.totalTokenCount, 10),
         );
       }

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getCharactersLimit } from '@/lib/ai';
 import { getVoiceIdByName } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCreditsFromTokens } from '@/lib/utils';
+import { calculateCreditsFromTokens } from '@/lib/utils';
 
 type ValidationResult<T> =
   | { ok: true; data: T }
@@ -167,16 +167,31 @@ export async function POST(request: Request) {
 
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
+
     const tokenResponse = await ai.models.countTokens({
       model: 'gemini-2.5-pro-preview-tts',
       contents: [{ parts: [{ text: finalText }], role: 'user' }],
     });
 
-    const totalTokens = tokenResponse.totalTokens ?? 0;
-    const credits = estimateCreditsFromTokens(totalTokens);
+    const inputTokens = tokenResponse.totalTokens ?? 0;
+
+    // Estimate output tokens for audio
+    // Characters per second ~ 15 (faster speech)
+    // Tokens per second of audio ~ 32 (based on documentation)
+    const CHARACTERS_PER_SECOND = 15;
+    const TOKENS_PER_SECOND = 32;
+
+    const estimatedDurationSeconds = text.length / CHARACTERS_PER_SECOND;
+    const estimatedOutputTokens = Math.ceil(
+      estimatedDurationSeconds * TOKENS_PER_SECOND,
+    );
+
+    const totalEstimatedTokens = inputTokens + estimatedOutputTokens;
+
+    const credits = calculateCreditsFromTokens(totalEstimatedTokens);
 
     return NextResponse.json({
-      tokens: totalTokens,
+      tokens: totalEstimatedTokens,
       estimatedCredits: credits,
     });
   } catch (error) {
