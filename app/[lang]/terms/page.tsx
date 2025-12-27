@@ -5,9 +5,8 @@ import { redirect } from 'next/navigation';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
-
 import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 const TERMS_SLUG = 'terms';
 
@@ -81,7 +80,7 @@ export default async function TermsPolicyPage(props: {
         <p className="mt-2 text-muted-foreground text-sm">
           Updated {policy.updated}
         </p>
-        <div className="prose prose-invert mt-6 prose-h1:text-3xl prose-h1:font-bold prose-h1:mb-4 prose-h2:text-2xl prose-h2:font-bold prose-h2:mb-4 prose-p:text-lg prose-p:mb-4">
+        <div className="prose prose-invert mt-6 prose-h1:mb-4 prose-h2:mb-4 prose-p:mb-4 prose-h1:font-bold prose-h2:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg">
           <Mdx code={policy.body.code} />
         </div>
       </div>
