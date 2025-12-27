@@ -1,18 +1,18 @@
-import { allPosts } from 'contentlayer/generated';
 import { Trigger as AccordionPrimitiveTrigger } from '@radix-ui/react-accordion';
+import { allPosts } from 'contentlayer/generated';
 import {
   ArrowRightIcon,
   ChevronDownIcon,
   Coins,
   Globe2,
   Languages,
+  type LucideIcon,
   Mic2,
   PhoneCall,
   PlusIcon,
   Shield,
   ShieldCheck,
   Sparkles,
-  type LucideIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -120,7 +120,7 @@ export default async function LandingPage(props: {
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
         text={blackFridayDict.text}
       />
-      <HeaderStatic lang={lang} dict={dictHeader} />
+      <HeaderStatic dict={dictHeader} lang={lang} />
       <main id="main-content">
         <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
           <div className="container mx-auto px-4">
@@ -251,7 +251,7 @@ export default async function LandingPage(props: {
             <PricingTable lang={lang} />
 
             {/* FAQ Section */}
-            <div className="mx-auto max-w-5xl py-16">
+            <div className="mx-auto max-w-3xl py-16">
               <div className="mb-12 text-left md:text-center">
                 <h2 className="mb-2 font-bold text-3xl text-white">
                   {dict.faq.title}
@@ -260,7 +260,7 @@ export default async function LandingPage(props: {
               </div>
 
               <Accordion
-                className="w-full rounded-md border border-white/10"
+                className="w-full rounded-md border border-gray-500"
                 collapsible
                 defaultValue="item-1"
                 type="single"
@@ -270,13 +270,13 @@ export default async function LandingPage(props: {
 
                   return (
                     <AccordionItem
-                      className="outline-none first:rounded-t-md last:rounded-b-md has-focus-visible:z-10 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
+                      className="border-gray-500 outline-none first:rounded-t-md last:rounded-b-md has-focus-visible:z-10 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
                       key={group.id}
                       value={`item-${index + 1}`}
                     >
                       <AccordionPrimitiveTrigger
+                        className="flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-[135deg]"
                         data-slot="accordion-trigger"
-                        className="flex w-full flex-1 items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none transition-all hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-135"
                       >
                         <span className="flex items-center gap-4">
                           <Icon className="size-4 shrink-0" />
@@ -287,12 +287,12 @@ export default async function LandingPage(props: {
                       <AccordionContent className="pb-0">
                         {group.questions.map((faq, i) => (
                           <Collapsible
-                            className="border-white/10 border-t bg-accent/30 px-5"
+                            className="border-gray-500 border-t bg-accent px-5"
                             defaultOpen={i === 0}
                             key={i}
                           >
-                            <CollapsibleTrigger className="flex w-full items-center gap-4 rounded-sm py-4 text-left font-medium text-white outline-none focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 [&[data-state=open]>svg]:rotate-180">
-                              <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground" />
+                            <CollapsibleTrigger className="flex w-full items-center gap-4 rounded-sm py-4 text-left font-medium text-white outline-none focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 [&[data-state=open]>svg]:rotate-[180deg]">
+                              <ChevronDownIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                               {faq.question}
                             </CollapsibleTrigger>
                             <CollapsibleContent className="whitespace-break-spaces pb-4 text-muted-foreground text-sm">
