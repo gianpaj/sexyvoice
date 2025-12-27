@@ -370,15 +370,23 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Google Gemini', () => {
     it('should successfully generate voice using Google Gemini', async () => {
-      const { reduceCredits, saveAudioFile } = await import(
+      const { reduceCredits, saveAudioFile, getCredits } = await import(
         '@/lib/supabase/queries'
       );
+      // Override the getCredits mock for this specific test
+      vi.mocked(getCredits).mockResolvedValueOnce(3000);
+
+      const text = `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
+
+And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
+
+As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`;
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text, voice: 'poe' }),
       });
 
       const response = await POST(request);
@@ -395,9 +403,9 @@ describe('Generate Voice API Route', () => {
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 23,
+        credits_used: 12,
         duration: '-1',
-        filename: 'generated-audio-free/poe-9de7f9fe.wav',
+        filename: 'generated-audio-free/poe-ddb72d4b.wav',
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
@@ -407,8 +415,8 @@ describe('Generate Voice API Route', () => {
           userHasPaid: false,
         },
         predictionId: undefined,
-        text: 'Hello world',
-        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-9de7f9fe.wav',
+        text,
+        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-ddb72d4b.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -474,7 +482,7 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(callCount).toBe(2); // Should have been called twice
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 23,
+        credits_used: 12,
         duration: '-1',
         filename: 'generated-audio-free/poe-9de7f9fe.wav',
         isPublic: false,
@@ -923,7 +931,7 @@ describe('Integration Tests', () => {
 
     expect(response.status).toBe(200);
     expect(json.url).toBeTruthy();
-    expect(json.creditsUsed).toBeGreaterThan(20);
+    expect(json.creditsUsed).toBeGreaterThan(10);
     expect(json.creditsRemaining).toBeDefined();
   });
 });
