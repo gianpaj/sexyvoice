@@ -72,7 +72,7 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
                       <ChevronRightIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
                       {faq.question}
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="whitespace-break-spaces pb-4 text-muted-foreground text-sm">
+                    <CollapsibleContent className="whitespace-pre-wrap pb-4 text-muted-foreground text-sm">
                       {faq.answer}
                     </CollapsibleContent>
                   </Collapsible>
