@@ -79,21 +79,19 @@ async function Footer({ lang }: { lang: Locale }) {
                 {dict.footer.statusPage}
               </a>
               {' - '}
-              <a
+              <Link
                 className="hover:text-primary hover:underline"
-                href="/privacy-policy"
-                rel="noreferrer"
+                href={`/${lang}/privacy-policy`}
               >
                 {dict.footer.privacyPolicy}
-              </a>
+              </Link>
               {' - '}
-              <a
+              <Link
                 className="hover:text-primary hover:underline"
-                href="/terms"
-                rel="noreferrer"
+                href={`/${lang}/terms`}
               >
                 {dict.footer.termsAndConditions}
-              </a>
+              </Link>
             </p>
           </div>
         </div>

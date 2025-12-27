@@ -72,6 +72,7 @@
     "inngest": "^3.44.3",
     "lucide-react": "^0.523.0",
     "mailchecker": "^6.0.19",
+    "mdx-bundler": "^10.1.1",
     "mpg123-decoder": "^1.0.3",
     "music-metadata": "^11.2.3",
     "nanoid": "^5.0.9",

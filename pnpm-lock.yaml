@@ -157,6 +157,9 @@ importers:
       mailchecker:
         specifier: ^6.0.19
         version: 6.0.19
+      mdx-bundler:
+        specifier: ^10.1.1
+        version: 10.1.1(acorn@8.15.0)(esbuild@0.27.1)
       mpg123-decoder:
         specifier: ^1.0.3
         version: 1.0.3
@@ -12885,7 +12888,7 @@ snapshots:
       estree-util-value-to-estree: 3.4.0
       toml: 3.0.0
       unified: 11.0.5
-      yaml: 2.8.0
+      yaml: 2.8.2
 
   remark-mdx@3.1.0:
     dependencies:
