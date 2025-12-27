@@ -3,10 +3,9 @@ import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 import Script from 'next/script';
 import type { Metadata } from 'next/types';
-import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
-import { Header } from '@/components/header';
+import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
 import { PromoBanner } from '@/components/promo-banner';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
@@ -32,7 +31,7 @@ export const generateStaticParams = ({
         ) || i18n.defaultLocale;
 
       return {
-        slug: post._raw.flattenedPath,
+        slug: post.slugAsParams,
         locale,
       };
     })
@@ -47,7 +46,7 @@ interface PostProps {
 
 async function getPostFromParams(params: PostProps['params']) {
   const slug = params.slug;
-  const post = allPosts.find((post) => post._raw.flattenedPath === slug);
+  const post = allPosts.find((post) => post.slugAsParams === slug);
 
   if (!post) {
     return null;
@@ -124,6 +123,7 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
+  const dictHeader = await getDictionary(lang, 'header');
   const blackFridayDict = (await getDictionary(lang, 'promos'))
     .blackFridayBanner;
 
@@ -211,9 +211,7 @@ const PostLayout = async (props: {
         text={blackFridayDict.text}
       />
 
-      <Suspense fallback={<div>Loading...</div>}>
-        <Header lang={lang} />
-      </Suspense>
+      <HeaderStatic dict={dictHeader} lang={lang} />
 
       {/* Semantic content structure for AI extraction */}
       <div

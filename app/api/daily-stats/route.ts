@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
   const creditTransactions = allCreditTransactionsResult.data ?? [];
 
-  // Separate refunds from purchases/topups
+  // Separate refunds from purchases/top-ups
   const refundTransactions = creditTransactions.filter(
     (t) => t.type === 'refund',
   );
@@ -238,7 +238,7 @@ export async function GET(request: NextRequest) {
           .map(([voiceName, count]) => `${voiceName} (${count})`)
           .join(', ');
 
-  // Filter credit transactions by date ranges (purchases/topups only)
+  // Filter credit transactions by date ranges (purchases/top-ups only)
   const purchasePrevDayData = filterByDateRange(
     purchaseTransactions,
     previousDay,
@@ -338,7 +338,7 @@ export async function GET(request: NextRequest) {
     0,
   );
 
-  // MTD revenue calculations (purchases/topups only)
+  // MTD revenue calculations (purchases/top-ups only)
   const mtdRevenueData = filterByDateRange(
     creditTransactions,
     monthStart,

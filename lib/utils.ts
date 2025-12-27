@@ -50,7 +50,7 @@ function getCreditMultiplier(voice: string, model?: string): number {
   }
 
   if (model === 'gpro') {
-    multiplier = 2;
+    multiplier = 1.1;
   }
 
   return multiplier;
@@ -92,9 +92,9 @@ export function estimateCredits(
 }
 
 // Credit calculation constants for gpro voices
-const CREDITS_PER_TOKEN = 1;
+const CREDITS_PER_TOKEN = 0.5;
 
-export function estimateCreditsFromTokens(
+export function calculateCreditsFromTokens(
   tokenCount: number,
   // voice?: string,
   // model?: string,
