@@ -289,6 +289,7 @@
     "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
+    "errorTooLarge": "Dateiengröße zu groß. Bitte verwenden Sie eine kleinere Audiodatei.",
     "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",
     "generating": "Wird generiert",
     "languageLabel": "Sprache",

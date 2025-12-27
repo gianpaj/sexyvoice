@@ -200,7 +200,7 @@ function validateFileSize(file: File): void {
     const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
     throw new APIError(
       errorMessage,
-      new Response(errorMessage, { status: 400 }),
+      new Response(errorMessage, { status: 413 }),
     );
   }
 }

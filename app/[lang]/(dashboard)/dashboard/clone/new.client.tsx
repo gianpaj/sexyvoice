@@ -362,16 +362,24 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        const voiceResult = await voiceRes.json();
-        setErrorMessage(
-          voiceResult.message ||
-            voiceResult.error ||
-            dict.errorCloning ||
-            'Failed to clone voice.',
-        );
+        let errorMessage = dict.errorCloning || 'Failed to clone voice.';
+
+        // Handle 413 Payload Too Large - returns plain text
+        if (voiceRes.status === 413) {
+          errorMessage =
+            dict.errorTooLarge ||
+            'File size too large. Please use a smaller audio file.';
+        } else {
+          const voiceResult = await voiceRes.json();
+          errorMessage =
+            voiceResult.message || voiceResult.error || errorMessage;
+        }
+
+        setErrorMessage(errorMessage);
         setStatus('error');
         return;
       }
+
       const voiceResult = await voiceRes.json();
 
       setGeneratedAudioUrl(voiceResult.url);

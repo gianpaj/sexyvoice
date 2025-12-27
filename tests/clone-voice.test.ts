@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/clone-voice/route';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,
@@ -339,8 +340,10 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe('File too large. Max 4.5MB allowed.');
+      expect(response.status).toBe(413);
+      const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
+      const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
+      expect(json.serverMessage).toBe(errorMessage);
     });
 
     it('should return 400 when audio duration is too short', async () => {
