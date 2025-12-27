@@ -14,18 +14,13 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
+import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { PromoBanner } from '@/components/promo-banner';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSampleAudiosByLanguage } from '../sample-audio';
@@ -59,10 +54,12 @@ export default async function LandingPage(props: {
   const [firstPart, ...restParts] = dict.hero.title.split(',');
   const titleRestParts = restParts.join(',');
 
+  const faqQuestions = dict.faq.groups.flatMap((group) => group.questions);
+
   const jsonLd: WithContext<FAQPage> = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: dict.faq.questions.map((q) => ({
+    mainEntity: faqQuestions.map((q) => ({
       '@type': 'Question',
       name: q.question,
       acceptedAnswer: {
@@ -92,7 +89,7 @@ export default async function LandingPage(props: {
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
         text={blackFridayDict.text}
       />
-      <HeaderStatic lang={lang} dict={dictHeader} />
+      <HeaderStatic dict={dictHeader} lang={lang} />
       <main id="main-content">
         <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
           <div className="container mx-auto px-4">
@@ -224,29 +221,7 @@ export default async function LandingPage(props: {
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">
-              <div className="mb-12 text-left md:text-center">
-                <h2 className="mb-2 font-bold text-3xl text-white">
-                  {dict.faq.title}
-                </h2>
-                <p className="text-gray-200">{dict.faq.subtitle}</p>
-              </div>
-
-              <Accordion className="w-full" collapsible type="single">
-                {dict.faq.questions.map((faq, index) => (
-                  <AccordionItem
-                    className="border-white/10 border-b"
-                    key={`item-${index}`}
-                    value={`item-${index}`}
-                  >
-                    <AccordionTrigger className="py-5 text-left text-white hover:text-blue-400 hover:no-underline">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="whitespace-break-spaces text-justify text-gray-200">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              <FAQComponent lang={lang} />
             </div>
 
             {/* Blog posts Section */}
