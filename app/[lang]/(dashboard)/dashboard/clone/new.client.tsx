@@ -48,6 +48,7 @@ import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { AudioProvider, useAudio } from './audio-provider';
 import type { SampleAudio } from './CloneSampleCard';
@@ -57,7 +58,6 @@ export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const sampleAudios: readonly SampleAudio[] = [
   {
@@ -260,7 +260,7 @@ function NewVoiceClientInner({
     },
   ] = useFileUpload({
     onFilesAdded,
-    maxSize: MAX_FILE_SIZE,
+    maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
   });
@@ -546,7 +546,7 @@ function NewVoiceClientInner({
                       <p className="mt-1 text-muted-foreground text-xs">
                         {dict.fileFormatsText.replace(
                           '__SIZE__',
-                          formatBytes(MAX_FILE_SIZE),
+                          formatBytes(CLONING_FILE_MAX_SIZE),
                         )}
                       </p>
                     </div>
