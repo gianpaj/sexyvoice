@@ -288,6 +288,7 @@
     "downloadAudio": "Download Audio",
     "dragDropText": "Drag & drop or click to browse",
     "errorCloning": "Failed to clone voice",
+    "errorTooLarge": "File size too large. Please use a smaller audio file.",
     "errorTitle": "Error",
     "fileFormatsText": "MP3, WAV, M4A or OGG (max. __SIZE__)",
     "generating": "Generating",
