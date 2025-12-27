@@ -57,6 +57,7 @@ export function AudioGenerator({
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
+  const [estimatedTokens, setEstimatedTokens] = useState<number | null>(null);
 
   const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
@@ -91,6 +92,7 @@ export function AudioGenerator({
           text,
           voice: selectedVoice?.name,
           styleVariant,
+          estimatedTokens: isGeminiVoice ? estimatedTokens : undefined,
         }),
         signal: abortController.current.signal,
       });
@@ -230,6 +232,7 @@ export function AudioGenerator({
   // biome-ignore lint/correctness/useExhaustiveDependencies: needed
   useEffect(() => {
     setEstimatedCredits(null);
+    setEstimatedTokens(null);
   }, [selectedVoice, text]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
@@ -266,8 +269,12 @@ export function AudioGenerator({
       }
 
       const estimatedCredits = Number(data.estimatedCredits);
+      const estimatedTokens = Number(data.tokens);
       if (Number.isFinite(estimatedCredits)) {
         setEstimatedCredits(estimatedCredits);
+      }
+      if (Number.isFinite(estimatedTokens)) {
+        setEstimatedTokens(estimatedTokens);
       }
     } catch (error) {
       if (error instanceof APIError) {
