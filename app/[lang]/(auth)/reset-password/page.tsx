@@ -1,4 +1,4 @@
-import { Header } from '@/components/header';
+import { HeaderStatic } from '@/components/header-static';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { type Message, ResetPasswordForm } from './reset-password-form';
@@ -15,7 +15,7 @@ export default async function ResetPasswordPage(props: {
 
   return (
     <>
-      <Header lang={lang} />
+      <HeaderStatic dict={dict.header} lang={lang} />
       <div className="flex min-h-[calc(100vh-65px)] flex-col justify-end p-4 pt-11 sm:min-h-screen sm:items-center sm:justify-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
