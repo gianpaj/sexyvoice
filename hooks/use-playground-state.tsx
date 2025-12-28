@@ -11,8 +11,10 @@ import {
 
 import { ModelId } from '@/data/models';
 import {
+  type CallLanguage,
   defaultPlaygroundState,
   defaultSessionConfig,
+  languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
 import { defaultPresets, type Preset } from '@/data/presets';
@@ -50,7 +52,8 @@ type Action =
   | { type: 'SET_USER_PRESETS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SAVE_USER_PRESET'; payload: Preset }
-  | { type: 'DELETE_USER_PRESET'; payload: string };
+  | { type: 'DELETE_USER_PRESET'; payload: string }
+  | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
 // Create the reducer function
 function playgroundStateReducer(
@@ -116,6 +119,14 @@ function playgroundStateReducer(
         userPresets: updatedPresetsDelete,
       };
     }
+    case 'SET_LANGUAGE':
+      return {
+        ...state,
+        language: action.payload,
+        initialInstruction:
+          languageInitialInstructions[action.payload] ||
+          languageInitialInstructions.en,
+      };
     default:
       return state;
   }
