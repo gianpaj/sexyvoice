@@ -1,14 +1,15 @@
+import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
 import {
+  defaultSessionConfig,
   type PlaygroundState,
   type SessionConfig,
-  defaultSessionConfig,
-} from "@/data/playground-state";
-import { type Preset, defaultPresets } from "@/data/presets";
-import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from "@/data/immutable-prompt";
+} from '@/data/playground-state';
+import { defaultPresets, type Preset } from '@/data/presets';
 
 export const playgroundStateHelpers = {
-  getSelectedPreset: (state: PlaygroundState) => [...defaultPresets, ...state.userPresets].find(
-      (preset) => preset.id === state.selectedPresetId
+  getSelectedPreset: (state: PlaygroundState) =>
+    [...defaultPresets, ...state.userPresets].find(
+      (preset) => preset.id === state.selectedPresetId,
     ),
   getDefaultPresets: () => defaultPresets,
   getAllPresets: (state: PlaygroundState) => [
@@ -22,19 +23,19 @@ export const playgroundStateHelpers = {
     let isDefaultPreset = false;
     const selectedPreset = playgroundStateHelpers.getSelectedPreset(state);
     if (selectedPreset) {
-      params.set("preset", selectedPreset.id);
+      params.set('preset', selectedPreset.id);
       isDefaultPreset = !!selectedPreset.defaultGroup;
     }
 
     if (!isDefaultPreset) {
       if (state.instructions) {
-        params.set("instructions", state.instructions);
+        params.set('instructions', state.instructions);
       }
 
       if (selectedPreset) {
-        params.set("presetName", selectedPreset.name);
+        params.set('presetName', selectedPreset.name);
         if (selectedPreset.description) {
-          params.set("presetDescription", selectedPreset.description);
+          params.set('presetDescription', selectedPreset.description);
         }
       }
 
@@ -50,7 +51,7 @@ export const playgroundStateHelpers = {
   },
 
   decodeFromURLParams: (
-    urlParams: string
+    urlParams: string,
   ): { state: Partial<PlaygroundState>; preset?: Partial<Preset> } => {
     const params = new URLSearchParams(urlParams);
     const returnValue: {
@@ -58,17 +59,17 @@ export const playgroundStateHelpers = {
       preset?: Partial<Preset>;
     } = { state: {} };
 
-    const instructions = params.get("instructions");
+    const instructions = params.get('instructions');
     if (instructions) {
       returnValue.state.instructions = instructions;
     }
 
-    const sessionConfig: Partial<PlaygroundState["sessionConfig"]> = {};
+    const sessionConfig: Partial<PlaygroundState['sessionConfig']> = {};
     params.forEach((value, key) => {
-      if (key.startsWith("sessionConfig.")) {
+      if (key.startsWith('sessionConfig.')) {
         const configKey = key.split(
-          "."
-        )[1] as keyof PlaygroundState["sessionConfig"];
+          '.',
+        )[1] as keyof PlaygroundState['sessionConfig'];
         sessionConfig[configKey] = value as any;
       }
     });
@@ -77,12 +78,12 @@ export const playgroundStateHelpers = {
       returnValue.state.sessionConfig = sessionConfig as SessionConfig;
     }
 
-    const presetId = params.get("preset");
+    const presetId = params.get('preset');
     if (presetId) {
       returnValue.preset = {
         id: presetId,
-        name: params.get("presetName") || undefined,
-        description: params.get("presetDescription") || undefined,
+        name: params.get('presetName') || undefined,
+        description: params.get('presetDescription') || undefined,
       };
       returnValue.state.selectedPresetId = presetId;
     }
@@ -91,10 +92,10 @@ export const playgroundStateHelpers = {
   },
 
   updateBrowserUrl: (state: PlaygroundState) => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const params = playgroundStateHelpers.encodeToUrlParams(state);
-      const newUrl = `${window.location.origin}${window.location.pathname}${params ? `?${params}` : ""}`;
-      window.history.replaceState({}, "", newUrl);
+      const newUrl = `${window.location.origin}${window.location.pathname}${params ? `?${params}` : ''}`;
+      window.history.replaceState({}, '', newUrl);
     }
   },
 
@@ -105,7 +106,7 @@ export const playgroundStateHelpers = {
   shouldUseImmutablePrompt: (state: PlaygroundState): boolean => {
     const { sessionConfig, selectedPresetId } = state;
     return (
-      sessionConfig.grokImageEnabled && selectedPresetId !== "creative-artist"
+      sessionConfig.grokImageEnabled && selectedPresetId !== 'creative-artist'
     );
   },
 
@@ -126,7 +127,8 @@ export const playgroundStateHelpers = {
   /**
    * Gets just the immutable prompt if it should be used
    */
-  getImmutablePrompt: (state: PlaygroundState): string | null => playgroundStateHelpers.shouldUseImmutablePrompt(state)
+  getImmutablePrompt: (state: PlaygroundState): string | null =>
+    playgroundStateHelpers.shouldUseImmutablePrompt(state)
       ? IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT
       : null,
 
