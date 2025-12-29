@@ -15,7 +15,6 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface PlatformWrappedStats {
   totalAudioFiles: number;
@@ -25,6 +24,9 @@ interface PlatformWrappedStats {
   totalPaidUsers: number;
   totalVoiceClones: number;
   totalClonedAudioFiles: number;
+  totalRevenue: number;
+  totalRefunds: number;
+  netRevenue: number;
   topVoices: Array<{
     name: string;
     count: number;
@@ -33,6 +35,7 @@ interface PlatformWrappedStats {
     month: string;
     audioCount: number;
     userCount: number;
+    revenue: number;
   }>;
   longestTextCharacters: number;
   averageTextLength: number;
@@ -47,13 +50,17 @@ function formatNumber(num: number): string {
   return num.toLocaleString();
 }
 
+function formatCurrency(num: number): string {
+  return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function StatCard({
   title,
   value,
   subtitle,
   icon: Icon,
   gradient,
-  delay,
+  delay: _delay,
 }: {
   title: string;
   value: string | number;
@@ -202,7 +209,7 @@ function MonthlyGrowthCard({
           <h3 className="font-bold text-lg">Monthly Growth</h3>
         </div>
         <div className="space-y-2">
-          {stats.monthlyStats.slice(-6).map((month) => (
+          {stats.monthlyStats.map((month) => (
             <div className="flex items-center gap-3" key={month.month}>
               <span className="w-16 text-xs opacity-80">{month.month}</span>
               <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/20">
@@ -224,48 +231,24 @@ function MonthlyGrowthCard({
   );
 }
 
-function LoadingSkeleton() {
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto space-y-6 px-4 py-10">
-        <Skeleton className="h-80 w-full rounded-xl" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-48 rounded-xl" />
-          <Skeleton className="h-48 rounded-xl" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton className="h-32 rounded-xl" key={i} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ErrorState({ error }: { error: string }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Card className="p-6 text-center text-red-500">Error: {error}</Card>
-    </div>
-  );
-}
-
-const launchDate = new Date('2025-03-25');
+const launchDate = new Date('2025-04-25');
 const daysSinceLaunch = Math.floor(
   (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
 );
 const stats = {
-  totalAudioFiles: 38_763,
-  totalDurationSeconds: 54_325.691_367_347_41,
-  totalCharactersGenerated: 23_846_669,
+  totalAudioFiles: 38_765,
+  totalDurationSeconds: 54_323.691_367_347_41,
+  totalCharactersGenerated: 23_848_157,
   longestTextCharacters: 8206,
   averageTextLength: 615,
   totalUniqueVoicesUsed: 18,
-  totalUsers: 11_167,
+  totalUsers: 11_171,
   totalPaidUsers: 185,
   totalVoiceClones: 2,
   totalClonedAudioFiles: 368,
+  totalRevenue: 4917,
+  totalRefunds: 97.4,
+  netRevenue: 4819.6,
   topVoices: [
     { name: 'zephyr', count: 14_999 },
     { name: 'tara', count: 6870 },
@@ -274,19 +257,17 @@ const stats = {
     { name: 'gacrux', count: 2391 },
   ],
   monthlyStats: [
-    { month: 'Feb 2025', audioCount: 0, userCount: 5 },
-    { month: 'Mar 2025', audioCount: 12, userCount: 10 },
-    { month: 'Apr 2025', audioCount: 150, userCount: 39 },
-    { month: 'May 2025', audioCount: 372, userCount: 205 },
-    { month: 'Jun 2025', audioCount: 1182, userCount: 609 },
-    { month: 'Jul 2025', audioCount: 4587, userCount: 1226 },
-    { month: 'Aug 2025', audioCount: 3614, userCount: 936 },
-    { month: 'Sep 2025', audioCount: 3625, userCount: 1099 },
-    { month: 'Oct 2025', audioCount: 7062, userCount: 2000 },
-    { month: 'Nov 2025', audioCount: 10_844, userCount: 2288 },
-    { month: 'Dec 2025', audioCount: 7315, userCount: 2750 },
+    { month: 'Apr 2025', audioCount: 150, userCount: 39, revenue: 0 },
+    { month: 'May 2025', audioCount: 372, userCount: 205, revenue: 0 },
+    { month: 'Jun 2025', audioCount: 1182, userCount: 609, revenue: 5 },
+    { month: 'Jul 2025', audioCount: 4587, userCount: 1226, revenue: 50 },
+    { month: 'Aug 2025', audioCount: 3614, userCount: 936, revenue: 494 },
+    { month: 'Sep 2025', audioCount: 3625, userCount: 1099, revenue: 399 },
+    { month: 'Oct 2025', audioCount: 7062, userCount: 2000, revenue: 868 },
+    { month: 'Nov 2025', audioCount: 10_844, userCount: 2288, revenue: 1584.6 },
+    { month: 'Dec 2025', audioCount: 7317, userCount: 2754, revenue: 1419 },
   ],
-  platformLaunchDate: '2025-03-25',
+  platformLaunchDate: '2025-04-25',
   daysSinceLaunch,
 };
 
@@ -408,10 +389,38 @@ export function PlatformWrappedClient() {
           />
         </div>
 
+        {/* Revenue Stats */}
+        {/*<div className="grid gap-4 md:grid-cols-3">
+          <StatCard
+            delay={800}
+            gradient="from-green-500 to-emerald-500"
+            icon={DollarSign}
+            subtitle="Total revenue generated"
+            title="Total Revenue"
+            value={formatCurrency(stats.totalRevenue)}
+          />
+          <StatCard
+            delay={850}
+            gradient="from-teal-500 to-cyan-500"
+            icon={DollarSign}
+            subtitle="After refunds"
+            title="Net Revenue"
+            value={formatCurrency(stats.netRevenue)}
+          />
+          <StatCard
+            delay={900}
+            gradient="from-indigo-500 to-blue-500"
+            icon={Users}
+            subtitle="Customers who paid"
+            title="Paid Users"
+            value={formatNumber(stats.totalPaidUsers)}
+          />
+        </div>*/}
+
         {/* Fun Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            delay={900}
+            delay={950}
             gradient="from-green-500 to-emerald-500"
             icon={Flame}
             subtitle="Characters in one generation"
@@ -425,6 +434,15 @@ export function PlatformWrappedClient() {
             subtitle="Characters per generation"
             title="Avg Text Length"
             value={formatNumber(stats.averageTextLength)}
+          />
+
+          <StatCard
+            delay={900}
+            gradient="from-indigo-500 to-blue-500"
+            icon={Users}
+            subtitle="Customers who paid"
+            title="Paid Users"
+            value={formatNumber(stats.totalPaidUsers)}
           />
           <StatCard
             delay={1100}

@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 
+interface CreditTransaction {
+  id: string;
+  created_at: string;
+  metadata: {
+    dollarAmount?: number;
+  } | null;
+}
+
 interface PlatformWrappedStats {
   // Core stats
   totalAudioFiles: number;
@@ -16,6 +24,11 @@ interface PlatformWrappedStats {
   totalVoiceClones: number;
   totalClonedAudioFiles: number;
 
+  // Revenue stats
+  totalRevenue: number;
+  totalRefunds: number;
+  netRevenue: number;
+
   // Top voices
   topVoices: Array<{
     name: string;
@@ -27,6 +40,7 @@ interface PlatformWrappedStats {
     month: string;
     audioCount: number;
     userCount: number;
+    revenue: number;
   }>;
 
   // Fun stats
@@ -60,7 +74,7 @@ const CLONE_MODELS = [
 ];
 
 // Platform launch date (you can adjust this)
-const PLATFORM_LAUNCH_DATE = '2025-03-25';
+const PLATFORM_LAUNCH_DATE = '2025-04-25';
 
 const PAGE_SIZE = 1000;
 
@@ -145,12 +159,15 @@ function calculateTopVoices(audioFiles: AudioFile[], limit = 5) {
     .slice(0, limit);
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Function iterates over multiple data sources separately for clarity
 function calculateMonthlyStats(
   audioFiles: AudioFile[],
   profiles: Array<{ created_at: string | null }>,
+  creditTransactions: CreditTransaction[],
 ) {
   const monthlyAudio = new Map<string, number>();
   const monthlyUsers = new Map<string, number>();
+  const monthlyRevenue = new Map<string, number>();
 
   for (const audio of audioFiles) {
     if (audio.created_at) {
@@ -168,8 +185,26 @@ function calculateMonthlyStats(
     }
   }
 
+  for (const transaction of creditTransactions) {
+    if (transaction.created_at && transaction.metadata) {
+      const { dollarAmount } = transaction.metadata;
+      if (typeof dollarAmount === 'number') {
+        const date = new Date(transaction.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthlyRevenue.set(
+          monthKey,
+          (monthlyRevenue.get(monthKey) ?? 0) + dollarAmount,
+        );
+      }
+    }
+  }
+
   // Get all unique months and sort them
-  const allMonths = new Set([...monthlyAudio.keys(), ...monthlyUsers.keys()]);
+  const allMonths = new Set([
+    ...monthlyAudio.keys(),
+    ...monthlyUsers.keys(),
+    ...monthlyRevenue.keys(),
+  ]);
   const sortedMonths = [...allMonths].sort();
 
   // Take last 12 months
@@ -185,6 +220,7 @@ function calculateMonthlyStats(
       month: monthName,
       audioCount: monthlyAudio.get(monthKey) ?? 0,
       userCount: monthlyUsers.get(monthKey) ?? 0,
+      revenue: monthlyRevenue.get(monthKey) ?? 0,
     };
   });
 }
@@ -219,6 +255,30 @@ function calculateCoreStats(audioFiles: AudioFile[]) {
   };
 }
 
+function calculateRevenueStats(creditTransactions: CreditTransaction[]) {
+  let totalRevenue = 0;
+  let totalRefunds = 0;
+
+  for (const transaction of creditTransactions) {
+    if (transaction.metadata) {
+      const { dollarAmount } = transaction.metadata;
+      if (typeof dollarAmount === 'number') {
+        if (dollarAmount < 0) {
+          totalRefunds += Math.abs(dollarAmount);
+        } else {
+          totalRevenue += dollarAmount;
+        }
+      }
+    }
+  }
+
+  return {
+    totalRevenue,
+    totalRefunds,
+    netRevenue: totalRevenue - totalRefunds,
+  };
+}
+
 export async function GET() {
   try {
     const isProd = process.env.NODE_ENV === 'production';
@@ -232,34 +292,52 @@ export async function GET() {
     const supabase = createAdminClient();
 
     // Fetch data - paginated queries run separately, others in parallel
-    const [audioFiles, profiles, voicesResult, paidUsersResult] =
-      await Promise.all([
-        // All audio files with voice info (paginated)
-        fetchAllAudioFiles(supabase),
-        // All profiles (paginated)
-        fetchAllProfiles(supabase),
-        // All cloned voices (non-public) - unlikely to exceed 1000
-        supabase
-          .from('voices')
-          .select('id')
-          .eq('is_public', false),
-        // Users with payment transactions - unlikely to exceed 1000
-        supabase
-          .from('credit_transactions')
-          .select('user_id')
-          .in('type', ['purchase', 'topup']),
-      ]);
+    const [
+      audioFiles,
+      profiles,
+      voicesResult,
+      paidUsersResult,
+      creditTransactionsResult,
+    ] = await Promise.all([
+      // All audio files with voice info (paginated)
+      fetchAllAudioFiles(supabase),
+      // All profiles (paginated)
+      fetchAllProfiles(supabase),
+      // All cloned voices (non-public) - unlikely to exceed 1000
+      supabase
+        .from('voices')
+        .select('id')
+        .eq('is_public', false),
+      // Users with payment transactions
+      supabase
+        .from('credit_transactions')
+        .select('user_id')
+        .in('type', ['purchase', 'topup']),
+      // All credit transactions for revenue calculation
+      supabase
+        .from('credit_transactions')
+        .select('id, created_at, metadata')
+        .in('type', ['purchase', 'topup', 'refund']),
+    ]);
 
     if (voicesResult.error) throw voicesResult.error;
     if (paidUsersResult.error) throw paidUsersResult.error;
+    if (creditTransactionsResult.error) throw creditTransactionsResult.error;
 
     const userVoices = voicesResult.data ?? [];
     const paidTransactions = paidUsersResult.data ?? [];
+    const creditTransactions = (creditTransactionsResult.data ??
+      []) as CreditTransaction[];
 
     // Calculate stats
     const coreStats = calculateCoreStats(audioFiles);
     const topVoices = calculateTopVoices(audioFiles);
-    const monthlyStats = calculateMonthlyStats(audioFiles, profiles);
+    const revenueStats = calculateRevenueStats(creditTransactions);
+    const monthlyStats = calculateMonthlyStats(
+      audioFiles,
+      profiles,
+      creditTransactions,
+    );
 
     // Voice cloning stats
     const clonedAudioFiles = audioFiles.filter((file) =>
@@ -282,6 +360,7 @@ export async function GET() {
       totalPaidUsers: uniquePaidUsers,
       totalVoiceClones: userVoices.length,
       totalClonedAudioFiles: clonedAudioFiles.length,
+      ...revenueStats,
       topVoices,
       monthlyStats,
       platformLaunchDate: PLATFORM_LAUNCH_DATE,
