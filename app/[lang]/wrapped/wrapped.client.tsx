@@ -4,7 +4,7 @@ import {
   Calendar,
   FileAudio,
   Flame,
-  Sparkles,
+  Mic2,
   TrendingUp,
   Trophy,
   Type,
@@ -13,8 +13,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+import { HeaderStatic } from '@/components/header-static';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 interface PlatformWrappedStats {
   totalAudioFiles: number;
@@ -59,175 +60,192 @@ function StatCard({
   value,
   subtitle,
   icon: Icon,
-  gradient,
-  delay: _delay,
 }: {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: React.ElementType;
-  gradient: string;
-  delay: number;
 }) {
-  const isVisible = true;
-  // const [isVisible, setIsVisible] = useState(false);
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => setIsVisible(true), delay);
-  //   return () => clearTimeout(timer);
-  // }, [delay]);
-
   return (
-    <Card
-      className={`overflow-hidden border-0 transition-all duration-700 ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-      }`}
-    >
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-20`}
-      />
-      <CardHeader className="relative pb-2">
-        <CardTitle className="flex items-center gap-2 font-medium text-muted-foreground text-sm">
-          <Icon className="size-4" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="relative">
-        <div className="font-bold text-3xl tracking-tight">{value}</div>
-        {subtitle && (
-          <p className="mt-1 text-muted-foreground text-xs">{subtitle}</p>
-        )}
-      </CardContent>
-    </Card>
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-primary/50 hover:bg-secondary">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="mb-1 flex items-center gap-2 text-muted-foreground text-sm">
+            <Icon className="size-4" />
+            {title}
+          </p>
+          <div className="font-bold text-4xl text-foreground tracking-tight">
+            {value}
+          </div>
+          {subtitle && (
+            <p className="mt-2 text-muted-foreground text-xs">{subtitle}</p>
+          )}
+        </div>
+      </div>
+      <div className="-right-4 -top-4 pointer-events-none absolute size-24 rounded-full bg-primary/5 transition-transform duration-500 group-hover:scale-150" />
+    </div>
   );
 }
 
-function HeroCard({
-  stats,
-  isVisible,
-}: {
-  stats: PlatformWrappedStats;
-  isVisible: boolean;
-}) {
+function HeroSection({ stats }: { stats: PlatformWrappedStats }) {
   return (
-    <Card
-      className={`relative overflow-hidden border-0 bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500 transition-all duration-1000 ${
-        isVisible
-          ? 'translate-y-0 scale-100 opacity-100'
-          : 'translate-y-8 scale-95 opacity-0'
-      }`}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
-      <CardContent className="relative flex flex-col items-center justify-center p-8 text-center text-white md:p-12">
-        <Sparkles className="mb-4 size-16 animate-pulse" />
-        <h1 className="mb-2 font-bold text-4xl tracking-tight md:text-6xl">
-          2025 Wrapped
-        </h1>
-        <p className="mb-2 text-xl opacity-90">SexyVoice.ai Platform Stats</p>
-        <p className="mb-8 opacity-70">A year of expressive voices</p>
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <div className="font-bold text-3xl md:text-4xl">
-              {formatNumber(stats.totalAudioFiles)}
-            </div>
-            <div className="text-sm opacity-80">Audio Files</div>
+    <section className="relative overflow-hidden rounded-3xl border border-border bg-card">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-purple/20 via-transparent to-brand-red/20" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-chart-2/10 via-transparent to-transparent" />
+
+      <div className="relative px-8 py-16 md:px-16 md:py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 font-semibold text-primary text-sm">
+            <Mic2 className="size-4" />
+            Platform Year in Review
           </div>
-          <div>
-            <div className="font-bold text-3xl md:text-4xl">
-              {formatNumber(stats.totalUsers)}
+
+          <h1 className="mb-4 font-bold text-5xl text-foreground tracking-tight md:text-7xl">
+            2025 Wrapped
+          </h1>
+
+          <p className="mb-2 text-muted-foreground text-xl">SexyVoice.ai</p>
+          <p className="mb-12 text-muted-foreground">
+            A year of expressive voices
+          </p>
+
+          <div className="grid grid-cols-2 gap-8 md:gap-16">
+            <div className="text-center">
+              <div className="font-bold text-4xl text-foreground md:text-6xl">
+                {formatNumber(stats.totalAudioFiles)}
+              </div>
+              <div className="mt-2 text-muted-foreground text-sm uppercase tracking-wider">
+                Audio Files
+              </div>
             </div>
-            <div className="text-sm opacity-80">Users</div>
+            <div className="text-center">
+              <div className="font-bold text-4xl text-foreground md:text-6xl">
+                {formatNumber(stats.totalUsers)}
+              </div>
+              <div className="mt-2 text-muted-foreground text-sm uppercase tracking-wider">
+                Users
+              </div>
+            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
-function TopVoicesCard({
-  stats,
-  isVisible,
-}: {
-  stats: PlatformWrappedStats;
-  isVisible: boolean;
-}) {
+function TopVoicesSection({ stats }: { stats: PlatformWrappedStats }) {
   if (stats.topVoices.length === 0) return null;
 
+  const maxCount = Math.max(...stats.topVoices.map((v) => v.count));
+
   return (
-    <Card
-      className={`relative overflow-hidden border-0 bg-gradient-to-br from-amber-500 to-orange-600 transition-all duration-700 ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-      }`}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
-      <CardContent className="relative p-6 text-white">
-        <div className="mb-4 flex items-center gap-2">
-          <Trophy className="size-6" />
-          <h3 className="font-bold text-lg">Top Voices</h3>
+    <section className="rounded-3xl border border-border bg-card p-8">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-brand-purple/10">
+          <Trophy className="size-5 text-brand-purple" />
         </div>
-        <div className="space-y-3">
-          {stats.topVoices.map((voice, index) => (
-            <div className="flex items-center justify-between" key={voice.name}>
+        <h2 className="font-semibold text-foreground text-xl">Top Voices</h2>
+      </div>
+
+      <div className="space-y-4">
+        {stats.topVoices.map((voice, index) => (
+          <div className="group" key={voice.name}>
+            <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex size-8 items-center justify-center rounded-full bg-white/20 font-bold text-sm">
+                <span
+                  className={`flex size-8 items-center justify-center rounded-lg font-bold text-sm ${
+                    index === 0
+                      ? 'bg-brand-purple/90 text-primary-foreground'
+                      : 'bg-secondary text-foreground'
+                  }`}
+                >
                   {index + 1}
                 </span>
-                <span className="font-medium">{voice.name}</span>
+                <span className="font-medium text-foreground capitalize">
+                  {voice.name}
+                </span>
               </div>
-              <span className="opacity-80">
+              <span className="text-muted-foreground text-sm">
                 {formatNumber(voice.count)} uses
               </span>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <div className="h-2 overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full bg-brand-purple/80 transition-all duration-700"
+                style={{ width: `${(voice.count / maxCount) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function MonthlyGrowthCard({
-  stats,
-  isVisible,
-}: {
-  stats: PlatformWrappedStats;
-  isVisible: boolean;
-}) {
+function MonthlyGrowthSection({ stats }: { stats: PlatformWrappedStats }) {
   if (stats.monthlyStats.length === 0) return null;
 
   const maxAudio = Math.max(...stats.monthlyStats.map((m) => m.audioCount));
 
   return (
-    <Card
-      className={`relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-teal-600 transition-all duration-700 ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-      }`}
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
-      <CardContent className="relative p-6 text-white">
-        <div className="mb-4 flex items-center gap-2">
-          <TrendingUp className="size-6" />
-          <h3 className="font-bold text-lg">Monthly Growth</h3>
+    <section className="rounded-3xl border border-border bg-card p-8">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-chart-2/10">
+          <TrendingUp className="size-5 text-chart-2/80" />
         </div>
-        <div className="space-y-2">
-          {stats.monthlyStats.map((month) => (
-            <div className="flex items-center gap-3" key={month.month}>
-              <span className="w-16 text-xs opacity-80">{month.month}</span>
-              <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/20">
-                <div
-                  className="h-full rounded-full bg-white/60 transition-all duration-500"
-                  style={{
-                    width: `${maxAudio > 0 ? (month.audioCount / maxAudio) * 100 : 0}%`,
-                  }}
-                />
-              </div>
-              <span className="w-12 text-right text-xs">
-                {formatNumber(month.audioCount)}
-              </span>
+        <h2 className="font-semibold text-foreground text-xl">
+          Monthly Growth
+        </h2>
+      </div>
+
+      <div className="space-y-3">
+        {stats.monthlyStats.map((month) => (
+          <div
+            className="group flex items-center gap-1 md:gap-4"
+            key={month.month}
+          >
+            <span className="w-18 shrink-0 text-muted-foreground text-xs">
+              {month.month}
+            </span>
+            <div className="h-3 flex-1 overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full bg-chart-2/70 transition-all duration-500"
+                style={{
+                  width: `${maxAudio > 0 ? (month.audioCount / maxAudio) * 100 : 0}%`,
+                }}
+              />
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <span className="w-12 text-right font-medium text-foreground text-xs">
+              {formatNumber(month.audioCount)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CTASection() {
+  return (
+    <section className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-12">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-purple via-transparent to-transparent" />
+
+      <div className="relative text-center">
+        <h2 className="mb-3 font-bold text-2xl text-primary-foreground md:text-3xl">
+          Ready to create your own voice?
+        </h2>
+        <p className="mb-6 text-primary-foreground/80">
+          Join thousands of creators using SexyVoice.ai
+        </p>
+        <Button
+          asChild
+          className="bg-background font-semibold text-foreground hover:bg-background/90"
+          size="lg"
+        >
+          <Link href="/en/signup">Get Started Free</Link>
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -271,117 +289,43 @@ const stats = {
   daysSinceLaunch,
 };
 
-export function PlatformWrappedClient() {
-  // const [stats, setStats] = useState<PlatformWrappedStats | null>(null);
-  // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState<string | null>(null);
-  const showContent = true;
-  // const [showContent, setShowContent] = useState(false);
-
-  // useEffect(() => {
-  //   function fetchStats() {
-  //     try {
-  //       // const response = await fetch('/api/wrapped/platform');
-  //       // if (!response.ok) {
-  //       //   throw new Error('Failed to fetch platform stats');
-  //       // }
-  //       // const data = await response.json();
-
-  //       const launchDate = new Date('2025-03-25');
-  //       const daysSinceLaunch = Math.floor(
-  //         (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
-  //       );
-  //       const data = {
-  //         totalAudioFiles: 38_763,
-  //         totalDurationSeconds: 54_325.691_367_347_41,
-  //         totalCharactersGenerated: 23_846_669,
-  //         longestTextCharacters: 8206,
-  //         averageTextLength: 615,
-  //         totalUniqueVoicesUsed: 18,
-  //         totalUsers: 11_167,
-  //         totalPaidUsers: 185,
-  //         totalVoiceClones: 2,
-  //         totalClonedAudioFiles: 368,
-  //         topVoices: [
-  //           { name: 'zephyr', count: 14_999 },
-  //           { name: 'tara', count: 6870 },
-  //           { name: 'kore', count: 4867 },
-  //           { name: 'sulafat', count: 2908 },
-  //           { name: 'gacrux', count: 2391 },
-  //         ],
-  //         monthlyStats: [
-  //           { month: 'Feb 2025', audioCount: 0, userCount: 5 },
-  //           { month: 'Mar 2025', audioCount: 12, userCount: 10 },
-  //           { month: 'Apr 2025', audioCount: 150, userCount: 39 },
-  //           { month: 'May 2025', audioCount: 372, userCount: 205 },
-  //           { month: 'Jun 2025', audioCount: 1182, userCount: 609 },
-  //           { month: 'Jul 2025', audioCount: 4587, userCount: 1226 },
-  //           { month: 'Aug 2025', audioCount: 3614, userCount: 936 },
-  //           { month: 'Sep 2025', audioCount: 3625, userCount: 1099 },
-  //           { month: 'Oct 2025', audioCount: 7062, userCount: 2000 },
-  //           { month: 'Nov 2025', audioCount: 10_844, userCount: 2288 },
-  //           { month: 'Dec 2025', audioCount: 7315, userCount: 2750 },
-  //         ],
-  //         platformLaunchDate: '2025-03-25',
-  //         daysSinceLaunch,
-  //       };
-  //       setStats(data);
-  //       // setTimeout(() => setShowContent(true), 100);
-  //     } catch (err) {
-  //       setError(err instanceof Error ? err.message : 'An error occurred');
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   fetchStats();
-  // }, []);
-
-  // if (loading) return <LoadingSkeleton />;
-  // if (error) return <ErrorState error={error} />;
-  // if (!stats) return <ErrorState error="No stats available" />;
+export async function PlatformWrappedClient() {
+  const dictHeader = await getDictionary('en', 'header');
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto space-y-6 px-4 py-10">
+      <HeaderStatic dict={dictHeader} lang="en" />
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-10 md:py-16">
         {/* Hero Section */}
-        <HeroCard isVisible={showContent} stats={stats} />
+        <HeroSection stats={stats} />
 
         {/* Featured Cards */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <TopVoicesCard isVisible={showContent} stats={stats} />
-          <MonthlyGrowthCard isVisible={showContent} stats={stats} />
+        <div className="grid gap-6 md:grid-cols-2">
+          <TopVoicesSection stats={stats} />
+          <MonthlyGrowthSection stats={stats} />
         </div>
 
         {/* Core Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            delay={200}
-            gradient="from-blue-500 to-cyan-500"
             icon={FileAudio}
             subtitle="Generated on the platform"
             title="Total Audio Files"
             value={formatNumber(stats.totalAudioFiles)}
           />
           <StatCard
-            delay={400}
-            gradient="from-amber-500 to-orange-500"
             icon={Users}
             subtitle="Creators on the platform"
             title="Total Users"
             value={formatNumber(stats.totalUsers)}
           />
           <StatCard
-            delay={500}
-            gradient="from-rose-500 to-red-500"
             icon={Type}
             subtitle="Total characters spoken"
             title="Characters Generated"
             value={formatNumber(stats.totalCharactersGenerated)}
           />
           <StatCard
-            delay={700}
-            gradient="from-fuchsia-500 to-pink-500"
             icon={Zap}
             subtitle="Generated with cloned voices"
             title="Cloned Audio Files"
@@ -389,64 +333,27 @@ export function PlatformWrappedClient() {
           />
         </div>
 
-        {/* Revenue Stats */}
-        {/*<div className="grid gap-4 md:grid-cols-3">
-          <StatCard
-            delay={800}
-            gradient="from-green-500 to-emerald-500"
-            icon={DollarSign}
-            subtitle="Total revenue generated"
-            title="Total Revenue"
-            value={formatCurrency(stats.totalRevenue)}
-          />
-          <StatCard
-            delay={850}
-            gradient="from-teal-500 to-cyan-500"
-            icon={DollarSign}
-            subtitle="After refunds"
-            title="Net Revenue"
-            value={formatCurrency(stats.netRevenue)}
-          />
-          <StatCard
-            delay={900}
-            gradient="from-indigo-500 to-blue-500"
-            icon={Users}
-            subtitle="Customers who paid"
-            title="Paid Users"
-            value={formatNumber(stats.totalPaidUsers)}
-          />
-        </div>*/}
-
         {/* Fun Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            delay={950}
-            gradient="from-green-500 to-emerald-500"
             icon={Flame}
             subtitle="Characters in one generation"
             title="Longest Text"
             value={formatNumber(stats.longestTextCharacters)}
           />
           <StatCard
-            delay={1000}
-            gradient="from-violet-500 to-purple-500"
             icon={Type}
             subtitle="Characters per generation"
             title="Avg Text Length"
             value={formatNumber(stats.averageTextLength)}
           />
-
           <StatCard
-            delay={900}
-            gradient="from-indigo-500 to-blue-500"
             icon={Users}
             subtitle="Customers who paid"
             title="Paid Users"
             value={formatNumber(stats.totalPaidUsers)}
           />
           <StatCard
-            delay={1100}
-            gradient="from-slate-500 to-gray-600"
             icon={Calendar}
             subtitle={`${stats.daysSinceLaunch} days ago`}
             title="Platform Launch"
@@ -461,35 +368,14 @@ export function PlatformWrappedClient() {
         </div>
 
         {/* CTA Section */}
-        <Card
-          className={`relative overflow-hidden border-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 transition-all duration-700 ${
-            showContent
-              ? 'translate-y-0 opacity-100'
-              : 'translate-y-4 opacity-0'
-          }`}
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
-          <CardContent className="relative flex flex-col items-center justify-center gap-4 p-8 text-center text-white md:p-12">
-            <h2 className="font-bold text-2xl md:text-3xl">
-              Ready to create your own voice?
-            </h2>
-            <p className="opacity-80">
-              Join thousands of creators using SexyVoice.ai
-            </p>
-            <Button
-              asChild
-              className="mt-2 bg-white font-semibold text-purple-600 hover:bg-white/90"
-              size="lg"
-            >
-              <Link href="/en/signup">Get Started Free</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <CTASection />
 
         {/* Footer */}
-        <div className="pt-8 text-center text-muted-foreground text-sm">
-          <p>SexyVoice.ai - Expressive Voices, Uncensored</p>
-        </div>
+        <footer className="pt-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            SexyVoice.ai — Expressive Voices, Uncensored
+          </p>
+        </footer>
       </div>
     </div>
   );

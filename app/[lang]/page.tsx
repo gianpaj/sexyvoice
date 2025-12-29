@@ -103,7 +103,7 @@ export default async function LandingPage(props: {
                     className="bg-gradient-to-r bg-clip-text text-transparent"
                     style={{
                       backgroundImage:
-                        'linear-gradient(146deg, rgb(var(--brand-purple)) 0%, rgb(var(--brand-red)) 80%)',
+                        'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
                     }}
                   >
                     {titleRestParts}

@@ -5,8 +5,8 @@
 	fill: url(#header-shape-gradient) #fff;
 }
 #header-shape-gradient {
-  --color-stop: rgb(from rgb(var(--brand-purple)) calc(r * 1.2) calc(g * 1.2) calc(b * 1.2));
-  --color-bot: rgb(from rgb(var(--brand-red)) calc(r * 1.1) calc(g * 1.1) calc(b * 1.1));
+  --color-stop: rgb(from hsl(var(--brand-purple)) calc(r * 1.2) calc(g * 1.2) calc(b * 1.2));
+  --color-bot: rgb(from hsl(var(--brand-red)) calc(r * 1.1) calc(g * 1.1) calc(b * 1.1));
 }
 @for $i from 1 through 17 {
 	#Line_#{$i} {
