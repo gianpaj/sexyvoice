@@ -1,4 +1,4 @@
-'use client';
+// 'use client';
 
 import {
   Calendar,
@@ -12,7 +12,6 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,12 +62,13 @@ function StatCard({
   gradient: string;
   delay: number;
 }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const isVisible = true;
+  // const [isVisible, setIsVisible] = useState(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), delay);
-    return () => clearTimeout(timer);
-  }, [delay]);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => setIsVisible(true), delay);
+  //   return () => clearTimeout(timer);
+  // }, [delay]);
 
   return (
     <Card
@@ -251,74 +251,114 @@ function ErrorState({ error }: { error: string }) {
   );
 }
 
+const launchDate = new Date('2025-03-25');
+const daysSinceLaunch = Math.floor(
+  (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
+);
+const stats = {
+  totalAudioFiles: 38_763,
+  totalDurationSeconds: 54_325.691_367_347_41,
+  totalCharactersGenerated: 23_846_669,
+  longestTextCharacters: 8206,
+  averageTextLength: 615,
+  totalUniqueVoicesUsed: 18,
+  totalUsers: 11_167,
+  totalPaidUsers: 185,
+  totalVoiceClones: 2,
+  totalClonedAudioFiles: 368,
+  topVoices: [
+    { name: 'zephyr', count: 14_999 },
+    { name: 'tara', count: 6870 },
+    { name: 'kore', count: 4867 },
+    { name: 'sulafat', count: 2908 },
+    { name: 'gacrux', count: 2391 },
+  ],
+  monthlyStats: [
+    { month: 'Feb 2025', audioCount: 0, userCount: 5 },
+    { month: 'Mar 2025', audioCount: 12, userCount: 10 },
+    { month: 'Apr 2025', audioCount: 150, userCount: 39 },
+    { month: 'May 2025', audioCount: 372, userCount: 205 },
+    { month: 'Jun 2025', audioCount: 1182, userCount: 609 },
+    { month: 'Jul 2025', audioCount: 4587, userCount: 1226 },
+    { month: 'Aug 2025', audioCount: 3614, userCount: 936 },
+    { month: 'Sep 2025', audioCount: 3625, userCount: 1099 },
+    { month: 'Oct 2025', audioCount: 7062, userCount: 2000 },
+    { month: 'Nov 2025', audioCount: 10_844, userCount: 2288 },
+    { month: 'Dec 2025', audioCount: 7315, userCount: 2750 },
+  ],
+  platformLaunchDate: '2025-03-25',
+  daysSinceLaunch,
+};
+
 export function PlatformWrappedClient() {
-  const [stats, setStats] = useState<PlatformWrappedStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showContent, setShowContent] = useState(false);
+  // const [stats, setStats] = useState<PlatformWrappedStats | null>(null);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState<string | null>(null);
+  const showContent = true;
+  // const [showContent, setShowContent] = useState(false);
 
-  useEffect(() => {
-    function fetchStats() {
-      try {
-        // const response = await fetch('/api/wrapped/platform');
-        // if (!response.ok) {
-        //   throw new Error('Failed to fetch platform stats');
-        // }
-        // const data = await response.json();
+  // useEffect(() => {
+  //   function fetchStats() {
+  //     try {
+  //       // const response = await fetch('/api/wrapped/platform');
+  //       // if (!response.ok) {
+  //       //   throw new Error('Failed to fetch platform stats');
+  //       // }
+  //       // const data = await response.json();
 
-        const launchDate = new Date('2025-03-25');
-        const daysSinceLaunch = Math.floor(
-          (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
-        );
-        const data = {
-          totalAudioFiles: 38_763,
-          totalDurationSeconds: 54_325.691_367_347_41,
-          totalCharactersGenerated: 23_846_669,
-          longestTextCharacters: 8206,
-          averageTextLength: 615,
-          totalUniqueVoicesUsed: 18,
-          totalUsers: 11_167,
-          totalPaidUsers: 185,
-          totalVoiceClones: 2,
-          totalClonedAudioFiles: 368,
-          topVoices: [
-            { name: 'zephyr', count: 14_999 },
-            { name: 'tara', count: 6870 },
-            { name: 'kore', count: 4867 },
-            { name: 'sulafat', count: 2908 },
-            { name: 'gacrux', count: 2391 },
-          ],
-          monthlyStats: [
-            { month: 'Feb 2025', audioCount: 0, userCount: 5 },
-            { month: 'Mar 2025', audioCount: 12, userCount: 10 },
-            { month: 'Apr 2025', audioCount: 150, userCount: 39 },
-            { month: 'May 2025', audioCount: 372, userCount: 205 },
-            { month: 'Jun 2025', audioCount: 1182, userCount: 609 },
-            { month: 'Jul 2025', audioCount: 4587, userCount: 1226 },
-            { month: 'Aug 2025', audioCount: 3614, userCount: 936 },
-            { month: 'Sep 2025', audioCount: 3625, userCount: 1099 },
-            { month: 'Oct 2025', audioCount: 7062, userCount: 2000 },
-            { month: 'Nov 2025', audioCount: 10_844, userCount: 2288 },
-            { month: 'Dec 2025', audioCount: 7315, userCount: 2750 },
-          ],
-          platformLaunchDate: '2025-03-25',
-          daysSinceLaunch,
-        };
-        setStats(data);
-        setTimeout(() => setShowContent(true), 100);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
+  //       const launchDate = new Date('2025-03-25');
+  //       const daysSinceLaunch = Math.floor(
+  //         (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
+  //       );
+  //       const data = {
+  //         totalAudioFiles: 38_763,
+  //         totalDurationSeconds: 54_325.691_367_347_41,
+  //         totalCharactersGenerated: 23_846_669,
+  //         longestTextCharacters: 8206,
+  //         averageTextLength: 615,
+  //         totalUniqueVoicesUsed: 18,
+  //         totalUsers: 11_167,
+  //         totalPaidUsers: 185,
+  //         totalVoiceClones: 2,
+  //         totalClonedAudioFiles: 368,
+  //         topVoices: [
+  //           { name: 'zephyr', count: 14_999 },
+  //           { name: 'tara', count: 6870 },
+  //           { name: 'kore', count: 4867 },
+  //           { name: 'sulafat', count: 2908 },
+  //           { name: 'gacrux', count: 2391 },
+  //         ],
+  //         monthlyStats: [
+  //           { month: 'Feb 2025', audioCount: 0, userCount: 5 },
+  //           { month: 'Mar 2025', audioCount: 12, userCount: 10 },
+  //           { month: 'Apr 2025', audioCount: 150, userCount: 39 },
+  //           { month: 'May 2025', audioCount: 372, userCount: 205 },
+  //           { month: 'Jun 2025', audioCount: 1182, userCount: 609 },
+  //           { month: 'Jul 2025', audioCount: 4587, userCount: 1226 },
+  //           { month: 'Aug 2025', audioCount: 3614, userCount: 936 },
+  //           { month: 'Sep 2025', audioCount: 3625, userCount: 1099 },
+  //           { month: 'Oct 2025', audioCount: 7062, userCount: 2000 },
+  //           { month: 'Nov 2025', audioCount: 10_844, userCount: 2288 },
+  //           { month: 'Dec 2025', audioCount: 7315, userCount: 2750 },
+  //         ],
+  //         platformLaunchDate: '2025-03-25',
+  //         daysSinceLaunch,
+  //       };
+  //       setStats(data);
+  //       // setTimeout(() => setShowContent(true), 100);
+  //     } catch (err) {
+  //       setError(err instanceof Error ? err.message : 'An error occurred');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
 
-    fetchStats();
-  }, []);
+  //   fetchStats();
+  // }, []);
 
-  if (loading) return <LoadingSkeleton />;
-  if (error) return <ErrorState error={error} />;
-  if (!stats) return <ErrorState error="No stats available" />;
+  // if (loading) return <LoadingSkeleton />;
+  // if (error) return <ErrorState error={error} />;
+  // if (!stats) return <ErrorState error="No stats available" />;
 
   return (
     <div className="min-h-screen bg-background">
