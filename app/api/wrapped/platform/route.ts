@@ -49,10 +49,83 @@ interface AudioFile {
   voices: { name: string } | null;
 }
 
-const CLONE_MODELS = ['resemble-ai/chatterbox', 'resemble-ai/chatterbox-multilingual'];
+interface Profile {
+  id: string;
+  created_at: string | null;
+}
+
+const CLONE_MODELS = [
+  'resemble-ai/chatterbox',
+  'resemble-ai/chatterbox-multilingual',
+];
 
 // Platform launch date (you can adjust this)
-const PLATFORM_LAUNCH_DATE = '2024-01-01';
+const PLATFORM_LAUNCH_DATE = '2025-03-25';
+
+const PAGE_SIZE = 1000;
+
+/**
+ * Fetches all audio files with pagination to handle Supabase's 1000 row limit
+ */
+async function fetchAllAudioFiles(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<AudioFile[]> {
+  const allAudioFiles: AudioFile[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('audio_files')
+      .select(
+        'id, created_at, duration, text_content, model, voice_id, voices(name)',
+      )
+      .is('deleted_at', null)
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      allAudioFiles.push(...(data as AudioFile[]));
+      offset += PAGE_SIZE;
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allAudioFiles;
+}
+
+/**
+ * Fetches all profiles with pagination to handle Supabase's 1000 row limit
+ */
+async function fetchAllProfiles(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<Profile[]> {
+  const allProfiles: Profile[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, created_at')
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      allProfiles.push(...data);
+      offset += PAGE_SIZE;
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allProfiles;
+}
 
 function calculateTopVoices(audioFiles: AudioFile[], limit = 5) {
   const voiceCounts = new Map<string, { name: string; count: number }>();
@@ -118,7 +191,10 @@ function calculateMonthlyStats(
 
 function calculateCoreStats(audioFiles: AudioFile[]) {
   const totalAudioFiles = audioFiles.length;
-  const totalDurationSeconds = audioFiles.reduce((sum, file) => sum + (file.duration || 0), 0);
+  const totalDurationSeconds = audioFiles.reduce(
+    (sum, file) => sum + (file.duration || 0),
+    0,
+  );
   const totalCharactersGenerated = audioFiles.reduce(
     (sum, file) => sum + (file.text_content?.length || 0),
     0,
@@ -127,9 +203,10 @@ function calculateCoreStats(audioFiles: AudioFile[]) {
     (max, file) => Math.max(max, file.text_content?.length || 0),
     0,
   );
-  const averageTextLength = totalAudioFiles > 0
-    ? Math.round(totalCharactersGenerated / totalAudioFiles)
-    : 0;
+  const averageTextLength =
+    totalAudioFiles > 0
+      ? Math.round(totalCharactersGenerated / totalAudioFiles)
+      : 0;
   const totalUniqueVoicesUsed = new Set(audioFiles.map((f) => f.voice_id)).size;
 
   return {
@@ -144,43 +221,38 @@ function calculateCoreStats(audioFiles: AudioFile[]) {
 
 export async function GET() {
   try {
+    const isProd = process.env.NODE_ENV === 'production';
+
+    if (isProd) {
+      return new NextResponse('Unauthorized', {
+        status: 401,
+      });
+    }
+
     const supabase = createAdminClient();
 
-    // Fetch all required data in parallel
-    const [
-      audioFilesResult,
-      profilesResult,
-      voicesResult,
-      paidUsersResult,
-    ] = await Promise.all([
-      // All audio files with voice info
-      supabase
-        .from('audio_files')
-        .select('id, created_at, duration, text_content, model, voice_id, voices(name)')
-        .is('deleted_at', null),
-      // All profiles
-      supabase
-        .from('profiles')
-        .select('id, created_at'),
-      // All cloned voices (non-public)
-      supabase
-        .from('voices')
-        .select('id')
-        .eq('is_public', false),
-      // Users with payment transactions
-      supabase
-        .from('credit_transactions')
-        .select('user_id')
-        .in('type', ['purchase', 'topup']),
-    ]);
+    // Fetch data - paginated queries run separately, others in parallel
+    const [audioFiles, profiles, voicesResult, paidUsersResult] =
+      await Promise.all([
+        // All audio files with voice info (paginated)
+        fetchAllAudioFiles(supabase),
+        // All profiles (paginated)
+        fetchAllProfiles(supabase),
+        // All cloned voices (non-public) - unlikely to exceed 1000
+        supabase
+          .from('voices')
+          .select('id')
+          .eq('is_public', false),
+        // Users with payment transactions - unlikely to exceed 1000
+        supabase
+          .from('credit_transactions')
+          .select('user_id')
+          .in('type', ['purchase', 'topup']),
+      ]);
 
-    if (audioFilesResult.error) throw audioFilesResult.error;
-    if (profilesResult.error) throw profilesResult.error;
     if (voicesResult.error) throw voicesResult.error;
     if (paidUsersResult.error) throw paidUsersResult.error;
 
-    const audioFiles = (audioFilesResult.data ?? []) as AudioFile[];
-    const profiles = profilesResult.data ?? [];
     const userVoices = voicesResult.data ?? [];
     const paidTransactions = paidUsersResult.data ?? [];
 
@@ -190,10 +262,13 @@ export async function GET() {
     const monthlyStats = calculateMonthlyStats(audioFiles, profiles);
 
     // Voice cloning stats
-    const clonedAudioFiles = audioFiles.filter((file) => CLONE_MODELS.includes(file.model));
+    const clonedAudioFiles = audioFiles.filter((file) =>
+      CLONE_MODELS.includes(file.model),
+    );
 
     // Unique paid users
-    const uniquePaidUsers = new Set(paidTransactions.map((t) => t.user_id)).size;
+    const uniquePaidUsers = new Set(paidTransactions.map((t) => t.user_id))
+      .size;
 
     // Platform age
     const launchDate = new Date(PLATFORM_LAUNCH_DATE);

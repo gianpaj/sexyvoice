@@ -2,12 +2,9 @@
 
 import {
   Calendar,
-  Clock,
   FileAudio,
   Flame,
-  Mic2,
   Sparkles,
-  Star,
   TrendingUp,
   Trophy,
   Type,
@@ -45,17 +42,6 @@ interface PlatformWrappedStats {
   daysSinceLaunch: number;
 }
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.round((seconds % 3600) / 60);
-  if (hours < 24) return `${hours}h ${minutes}m`;
-  const days = Math.floor(hours / 24);
-  const remainingHours = hours % 24;
-  return `${days}d ${remainingHours}h`;
-}
-
 function formatNumber(num: number): string {
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -90,7 +76,9 @@ function StatCard({
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-20`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-20`}
+      />
       <CardHeader className="relative pb-2">
         <CardTitle className="flex items-center gap-2 font-medium text-muted-foreground text-sm">
           <Icon className="size-4" />
@@ -117,18 +105,20 @@ function HeroCard({
   return (
     <Card
       className={`relative overflow-hidden border-0 bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500 transition-all duration-1000 ${
-        isVisible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-8 scale-95 opacity-0'
+        isVisible
+          ? 'translate-y-0 scale-100 opacity-100'
+          : 'translate-y-8 scale-95 opacity-0'
       }`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
       <CardContent className="relative flex flex-col items-center justify-center p-8 text-center text-white md:p-12">
         <Sparkles className="mb-4 size-16 animate-pulse" />
         <h1 className="mb-2 font-bold text-4xl tracking-tight md:text-6xl">
-          2024 Wrapped
+          2025 Wrapped
         </h1>
         <p className="mb-2 text-xl opacity-90">SexyVoice.ai Platform Stats</p>
         <p className="mb-8 opacity-70">A year of expressive voices</p>
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-6">
           <div>
             <div className="font-bold text-3xl md:text-4xl">
               {formatNumber(stats.totalAudioFiles)}
@@ -137,21 +127,9 @@ function HeroCard({
           </div>
           <div>
             <div className="font-bold text-3xl md:text-4xl">
-              {formatDuration(stats.totalDurationSeconds)}
-            </div>
-            <div className="text-sm opacity-80">Total Duration</div>
-          </div>
-          <div>
-            <div className="font-bold text-3xl md:text-4xl">
               {formatNumber(stats.totalUsers)}
             </div>
             <div className="text-sm opacity-80">Users</div>
-          </div>
-          <div>
-            <div className="font-bold text-3xl md:text-4xl">
-              {stats.daysSinceLaunch}
-            </div>
-            <div className="text-sm opacity-80">Days Live</div>
           </div>
         </div>
       </CardContent>
@@ -182,14 +160,16 @@ function TopVoicesCard({
         </div>
         <div className="space-y-3">
           {stats.topVoices.map((voice, index) => (
-            <div key={voice.name} className="flex items-center justify-between">
+            <div className="flex items-center justify-between" key={voice.name}>
               <div className="flex items-center gap-3">
                 <span className="flex size-8 items-center justify-center rounded-full bg-white/20 font-bold text-sm">
                   {index + 1}
                 </span>
                 <span className="font-medium">{voice.name}</span>
               </div>
-              <span className="opacity-80">{formatNumber(voice.count)} uses</span>
+              <span className="opacity-80">
+                {formatNumber(voice.count)} uses
+              </span>
             </div>
           ))}
         </div>
@@ -223,7 +203,7 @@ function MonthlyGrowthCard({
         </div>
         <div className="space-y-2">
           {stats.monthlyStats.slice(-6).map((month) => (
-            <div key={month.month} className="flex items-center gap-3">
+            <div className="flex items-center gap-3" key={month.month}>
               <span className="w-16 text-xs opacity-80">{month.month}</span>
               <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/20">
                 <div
@@ -233,7 +213,9 @@ function MonthlyGrowthCard({
                   }}
                 />
               </div>
-              <span className="w-12 text-right text-xs">{formatNumber(month.audioCount)}</span>
+              <span className="w-12 text-right text-xs">
+                {formatNumber(month.audioCount)}
+              </span>
             </div>
           ))}
         </div>
@@ -253,7 +235,7 @@ function LoadingSkeleton() {
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" key={i} />
           ))}
         </div>
       </div>
@@ -276,13 +258,52 @@ export function PlatformWrappedClient() {
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    async function fetchStats() {
+    function fetchStats() {
       try {
-        const response = await fetch('/api/wrapped/platform');
-        if (!response.ok) {
-          throw new Error('Failed to fetch platform stats');
-        }
-        const data = await response.json();
+        // const response = await fetch('/api/wrapped/platform');
+        // if (!response.ok) {
+        //   throw new Error('Failed to fetch platform stats');
+        // }
+        // const data = await response.json();
+
+        const launchDate = new Date('2025-03-25');
+        const daysSinceLaunch = Math.floor(
+          (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        const data = {
+          totalAudioFiles: 38_763,
+          totalDurationSeconds: 54_325.691_367_347_41,
+          totalCharactersGenerated: 23_846_669,
+          longestTextCharacters: 8206,
+          averageTextLength: 615,
+          totalUniqueVoicesUsed: 18,
+          totalUsers: 11_167,
+          totalPaidUsers: 185,
+          totalVoiceClones: 2,
+          totalClonedAudioFiles: 368,
+          topVoices: [
+            { name: 'zephyr', count: 14_999 },
+            { name: 'tara', count: 6870 },
+            { name: 'kore', count: 4867 },
+            { name: 'sulafat', count: 2908 },
+            { name: 'gacrux', count: 2391 },
+          ],
+          monthlyStats: [
+            { month: 'Feb 2025', audioCount: 0, userCount: 5 },
+            { month: 'Mar 2025', audioCount: 12, userCount: 10 },
+            { month: 'Apr 2025', audioCount: 150, userCount: 39 },
+            { month: 'May 2025', audioCount: 372, userCount: 205 },
+            { month: 'Jun 2025', audioCount: 1182, userCount: 609 },
+            { month: 'Jul 2025', audioCount: 4587, userCount: 1226 },
+            { month: 'Aug 2025', audioCount: 3614, userCount: 936 },
+            { month: 'Sep 2025', audioCount: 3625, userCount: 1099 },
+            { month: 'Oct 2025', audioCount: 7062, userCount: 2000 },
+            { month: 'Nov 2025', audioCount: 10_844, userCount: 2288 },
+            { month: 'Dec 2025', audioCount: 7315, userCount: 2750 },
+          ],
+          platformLaunchDate: '2025-03-25',
+          daysSinceLaunch,
+        };
         setStats(data);
         setTimeout(() => setShowContent(true), 100);
       } catch (err) {
@@ -303,113 +324,90 @@ export function PlatformWrappedClient() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto space-y-6 px-4 py-10">
         {/* Hero Section */}
-        <HeroCard stats={stats} isVisible={showContent} />
+        <HeroCard isVisible={showContent} stats={stats} />
 
         {/* Featured Cards */}
         <div className="grid gap-4 md:grid-cols-2">
-          <TopVoicesCard stats={stats} isVisible={showContent} />
-          <MonthlyGrowthCard stats={stats} isVisible={showContent} />
+          <TopVoicesCard isVisible={showContent} stats={stats} />
+          <MonthlyGrowthCard isVisible={showContent} stats={stats} />
         </div>
 
         {/* Core Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
+            delay={200}
+            gradient="from-blue-500 to-cyan-500"
+            icon={FileAudio}
+            subtitle="Generated on the platform"
             title="Total Audio Files"
             value={formatNumber(stats.totalAudioFiles)}
-            subtitle="Generated on the platform"
-            icon={FileAudio}
-            gradient="from-blue-500 to-cyan-500"
-            delay={200}
           />
           <StatCard
-            title="Total Duration"
-            value={formatDuration(stats.totalDurationSeconds)}
-            subtitle="Of audio created"
-            icon={Clock}
-            gradient="from-purple-500 to-pink-500"
-            delay={300}
-          />
-          <StatCard
+            delay={400}
+            gradient="from-amber-500 to-orange-500"
+            icon={Users}
+            subtitle="Creators on the platform"
             title="Total Users"
             value={formatNumber(stats.totalUsers)}
-            subtitle="Creators on the platform"
-            icon={Users}
-            gradient="from-amber-500 to-orange-500"
-            delay={400}
           />
           <StatCard
+            delay={500}
+            gradient="from-rose-500 to-red-500"
+            icon={Type}
+            subtitle="Total characters spoken"
             title="Characters Generated"
             value={formatNumber(stats.totalCharactersGenerated)}
-            subtitle="Total characters spoken"
-            icon={Type}
-            gradient="from-rose-500 to-red-500"
-            delay={500}
-          />
-        </div>
-
-        {/* Voice Cloning Section */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <StatCard
-            title="Voice Clones Created"
-            value={formatNumber(stats.totalVoiceClones)}
-            subtitle="Custom voices by users"
-            icon={Mic2}
-            gradient="from-indigo-500 to-purple-500"
-            delay={600}
           />
           <StatCard
+            delay={700}
+            gradient="from-fuchsia-500 to-pink-500"
+            icon={Zap}
+            subtitle="Generated with cloned voices"
             title="Cloned Audio Files"
             value={formatNumber(stats.totalClonedAudioFiles)}
-            subtitle="Generated with cloned voices"
-            icon={Zap}
-            gradient="from-fuchsia-500 to-pink-500"
-            delay={700}
           />
         </div>
 
         {/* Fun Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Unique Voices Used"
-            value={stats.totalUniqueVoicesUsed}
-            subtitle="Different voices explored"
-            icon={Star}
-            gradient="from-cyan-500 to-blue-500"
-            delay={800}
-          />
-          <StatCard
+            delay={900}
+            gradient="from-green-500 to-emerald-500"
+            icon={Flame}
+            subtitle="Characters in one generation"
             title="Longest Text"
             value={formatNumber(stats.longestTextCharacters)}
-            subtitle="Characters in one generation"
-            icon={Flame}
-            gradient="from-green-500 to-emerald-500"
-            delay={900}
           />
           <StatCard
+            delay={1000}
+            gradient="from-violet-500 to-purple-500"
+            icon={Type}
+            subtitle="Characters per generation"
             title="Avg Text Length"
             value={formatNumber(stats.averageTextLength)}
-            subtitle="Characters per generation"
-            icon={Type}
-            gradient="from-violet-500 to-purple-500"
-            delay={1000}
           />
           <StatCard
-            title="Platform Launch"
-            value={new Date(stats.platformLaunchDate).toLocaleDateString('en-US', {
-              month: 'short',
-              year: 'numeric',
-            })}
-            subtitle={`${stats.daysSinceLaunch} days ago`}
-            icon={Calendar}
-            gradient="from-slate-500 to-gray-600"
             delay={1100}
+            gradient="from-slate-500 to-gray-600"
+            icon={Calendar}
+            subtitle={`${stats.daysSinceLaunch} days ago`}
+            title="Platform Launch"
+            value={new Date(stats.platformLaunchDate).toLocaleDateString(
+              'en-US',
+              {
+                month: 'short',
+                year: 'numeric',
+              },
+            )}
           />
         </div>
 
         {/* CTA Section */}
         <Card
           className={`relative overflow-hidden border-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 transition-all duration-700 ${
-            showContent ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+            showContent
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-4 opacity-0'
           }`}
         >
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
@@ -425,7 +423,7 @@ export function PlatformWrappedClient() {
               className="mt-2 bg-white font-semibold text-purple-600 hover:bg-white/90"
               size="lg"
             >
-              <Link href="/signup">Get Started Free</Link>
+              <Link href="/en/signup">Get Started Free</Link>
             </Button>
           </CardContent>
         </Card>

@@ -20,7 +20,7 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    --white: #fff;
+    --white: 0 0% 100%;
 
     /* Promo theme colors - default to pink */
     --promo-primary: theme("colors.pink.500");

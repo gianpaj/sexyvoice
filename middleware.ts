@@ -34,6 +34,7 @@ const publicRoutesWithoutAuth = [
 
 const publicRoutesWithLang = (locales: readonly string[]) =>
   locales.flatMap((locale) => [
+    `/${locale}/wrapped`,
     `/${locale}/privacy-policy`,
     `/${locale}/terms`,
   ]);
