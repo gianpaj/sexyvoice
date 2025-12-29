@@ -1,6 +1,6 @@
 'use client';
 
-import { CreditCard, FileClock, Gift, Mic2, Wand2 } from 'lucide-react';
+import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -69,12 +69,6 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
-    },
-    {
-      name: dict.pages['/dashboard/wrapped'],
-      href: `/${lang}/dashboard/wrapped`,
-      icon: Gift,
-      current: pathname === `/${lang}/dashboard/wrapped`,
     },
   ];
 

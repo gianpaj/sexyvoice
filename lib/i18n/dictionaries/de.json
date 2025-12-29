@@ -395,7 +395,6 @@
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",
     "/dashboard/credits": "Credits",
-    "/dashboard/wrapped": "Wrapped",
     "/tools/audio-converter": "Kostenloser Audio-Konverter"
   },
   "sidebar": {
