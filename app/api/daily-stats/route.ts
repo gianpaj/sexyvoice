@@ -272,6 +272,8 @@ export async function GET(request: NextRequest) {
   // Top customers calculation
   let hasInvalidMetadata = false;
   const customerSpending = new Map<string, number>();
+  // Track customer purchase types for display
+  const customerPurchaseType = new Map<string, string>();
 
   for (const transaction of purchasePrevDayData) {
     if (!transaction.metadata || typeof transaction.metadata !== 'object') {
@@ -279,11 +281,27 @@ export async function GET(request: NextRequest) {
       hasInvalidMetadata = true;
       continue;
     }
-    const { dollarAmount } = transaction.metadata as {
-      dollarAmount: number;
-    };
+    const { dollarAmount, isFirstTopup, isFirstSubscription } =
+      transaction.metadata as {
+        dollarAmount: number;
+        isFirstTopup?: boolean;
+        isFirstSubscription?: boolean;
+      };
     const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
     customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
+
+    // Determine purchase type label
+    let purchaseTypeLabel = '';
+    if (transaction.type === 'topup') {
+      purchaseTypeLabel = isFirstTopup ? 'new topup' : 'existing topup';
+    } else if (transaction.type === 'purchase') {
+      purchaseTypeLabel = isFirstSubscription ? 'new sub' : 'existing sub';
+    }
+
+    // Store the purchase type (use first transaction type if multiple)
+    if (!customerPurchaseType.has(transaction.user_id)) {
+      customerPurchaseType.set(transaction.user_id, purchaseTypeLabel);
+    }
   }
 
   const topCustomerIds = [...customerSpending.entries()]
@@ -293,21 +311,19 @@ export async function GET(request: NextRequest) {
 
   const topCustomersList =
     topCustomerIds.length === 0
-      ? 'N/A'
-      : topCustomerIds
-          .map((userId) => {
-            // Find the transaction for this user to get their profile data
-            const transaction = purchasePrevDayData.find(
-              (t) => t.user_id === userId,
-            );
-            const username =
-              maskUsername(transaction?.profiles?.username) || 'Unknown';
-            const spending = customerSpending.get(userId) ?? 0;
-            return `${username} ($${spending.toFixed(2)})`;
-          })
-          .join(', ');
-
-  const topCustomerProfilesCount = topCustomerIds.length || '';
+      ? ['N/A']
+      : topCustomerIds.map((userId, index) => {
+          // Find the transaction for this user to get their profile data
+          const transaction = purchasePrevDayData.find(
+            (t) => t.user_id === userId,
+          );
+          const username =
+            maskUsername(transaction?.profiles?.username) || 'Unknown';
+          const spending = customerSpending.get(userId) ?? 0;
+          const purchaseType = customerPurchaseType.get(userId) || '';
+          const typeLabel = purchaseType ? ` - ${purchaseType}` : '';
+          return `  - Top ${index + 1} Customers: ${username} ($${spending.toFixed(2)}${typeLabel})`;
+        });
 
   const totalUniquePaidUsers = new Set(
     purchaseTransactions.map((t) => t.user_id),
@@ -372,7 +388,7 @@ export async function GET(request: NextRequest) {
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
-    `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
+    ...topCustomersList,
     '',
     `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) ${refundsTodayCount > 0 ? '😢' : ''}`,
     `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
