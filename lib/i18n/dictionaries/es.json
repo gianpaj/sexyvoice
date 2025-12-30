@@ -6,6 +6,8 @@
       "email": "Correo electrónico",
       "password": "Contraseña",
       "submit": "Iniciar sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "signInWithGoogle": "Iniciar sesión con Google",
       "noAccount": "¿No tienes una cuenta?",
       "signUp": "Regístrate",
       "error": "Correo o contraseña inválidos"
@@ -29,6 +31,7 @@
       "email": "Correo electrónico",
       "submit": "Restablecer contraseña",
       "error": "Correo electrónico inválido",
+      "loading": "Enviando correo electrónico...",
       "success": "Revisa tu correo electrónico para restablecer tu contraseña",
       "backToLogin": "Volver al inicio de sesión",
       "errors": {
