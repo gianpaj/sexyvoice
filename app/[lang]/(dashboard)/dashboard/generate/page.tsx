@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -20,7 +18,7 @@ export default async function GeneratePage(props: {
     error,
   } = await supabase.auth.getUser();
   if (!user || error) {
-    redirect(`/${lang}/login`);
+    return <div>Not logged in</div>;
   }
 
   // Get user's credits
@@ -55,30 +53,30 @@ export default async function GeneratePage(props: {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">{dict['generate'].title}</h2>
-        <p className="text-muted-foreground">
-          {dict['generate'].subtitle}
-        </p>
+        <h2 className="font-bold text-3xl tracking-tight">
+          {dict.generate.title}
+        </h2>
+        <p className="text-muted-foreground">{dict.generate.subtitle}</p>
       </div>
 
       <div className="lg:hidden">
         <CreditsSection
-          lang={lang}
-          dict={dict['creditsSection']}
-          credits={credits.amount || 0}
-          credit_transactions={credit_transactions || []}
+          creditTransactions={credit_transactions || []}
+          dict={dict.creditsSection}
           doNotToggleSidebar
+          lang={lang}
+          userId={user.id}
         />
       </div>
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
-          dict={dict['generate']}
-          hasEnoughCredits={credits.amount >= 1}
-          publicVoices={publicVoices}
+          dict={dict.generate}
+          hasEnoughCredits={credits.amount >= 10}
           locale={lang}
+          publicVoices={publicVoices}
         />
       </div>
     </div>

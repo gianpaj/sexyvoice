@@ -6,6 +6,8 @@
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
+      "forgotPassword": "Forgot your password?",
+      "signInWithGoogle": "Sign in with Google",
       "noAccount": "Don't have an account?",
       "signUp": "Sign up",
       "error": "Invalid email or password"
@@ -29,6 +31,7 @@
       "email": "Email address",
       "submit": "Reset password",
       "error": "Invalid email address",
+      "loading": "Sending email...",
       "success": "Check your email for a password reset link",
       "backToLogin": "Back to Login",
       "errors": {
@@ -63,22 +66,22 @@
     "features": {
       "voiceCloning": {
         "title": "Natural Voices",
-        "description": "Integrate natural emotions—add laughter, sighs, coughs, and more—to create authentic, captivating audio experiences."
+        "description": "Integrate natural emotions — add laughter, sighs, coughs, and more — to create authentic, captivating audio experiences."
       },
       "multiLanguage": {
         "title": "Multi-Language Support",
-        "description": "Clone voices in multiple languages and accents, perfect for global content creation and localization."
+        "description": "Pick from 20+ unique voices in multiple languages, perfect for your specific needs and preferences."
       },
       "security": {
         "title": "Secure & Private",
-        "description": "Your voice data is protected with enterprise-grade security. Full control over privacy settings and usage."
+        "description": "Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history."
       }
     },
     "cta": {
       "freeCredits": "Start with 10,000 free credits",
       "title": "Ready to find your voice?",
-      "subtitle": "Join thousands of creators who trust our platform for their voice cloning needs.",
-      "action": "Create Your First Voice"
+      "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
+      "action": "Create your first voice"
     },
     "generator": {
       "title": "Try it now",
@@ -99,99 +102,134 @@
       "subtitle": "Listen to what others have created",
       "loading": "Loading popular audios...",
       "trySamplesTitle": "Try Our Voice Samples",
-      "trySamplesSubtitle": "Listen to sample voice clones created with our advanced AI technology"
+      "trySamplesSubtitle": "Listen to voice samples created with our advanced AI technology"
     },
     "faq": {
       "title": "Frequently Asked Questions",
       "subtitle": "Everything you need to know about SexyVoice.ai",
-      "questions": [
+      "groups": [
         {
-          "question": "How does voice cloning work?",
-          "answer": "Our AI analyzes your voice samples to learn its unique patterns and characteristics. With just seconds of audio, we can create a digital voice that sounds just like you. The system uses advanced AI to match your tone, accent, and speaking style."
+          "id": "liveCalling",
+          "category": "Live AI Calling",
+          "questions": [
+            {
+              "question": "How does Live AI Calling work?",
+              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or just listen—your call flows like a real conversation."
+            },
+            {
+              "question": "How much does it cost?",
+              "answer": "Live calling costs 200 credits per minute while you’re connected."
+            }
+          ]
         },
         {
-          "question": "Can I clone my own voice?",
-          "answer": "Yes! For ethical reasons, you need permission before cloning someone else's voice. We take voice rights seriously."
+          "id": "voiceCreation",
+          "category": "Voice creation & styles",
+          "questions": [
+            {
+              "question": "How does voice cloning work?",
+              "answer": "Our AI analyzes your voice sample (10 seconds to 5 mins) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
+            },
+            {
+              "question": "Can I clone my own voice?",
+              "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
+            },
+            {
+              "question": "What languages do your AI voices support?",
+              "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including:\nArabic (Egyptian),\nEnglish (US),\nFrench (France),\nGerman (Germany),\nSpanish (US),\nHindi (India),\nIndonesian (Indonesia),\nItalian (Italy),\nJapanese (Japan),\nKorean (Korea),\nPortuguese (Brazil),\nRussian (Russia),\nDutch (Netherlands),\nPolish (Poland),\nThai (Thailand),\nTurkish (Turkey),\nVietnamese (Vietnam),\nRomanian (Romania),\nUkrainian (Ukraine),\nBengali (Bangladesh),\nEnglish/Hindi (India),\nMarathi (India),\nTamil (India),\nand Telugu (India).\n\nOther voices are language-specific:\nDan (English UK 🇬🇧),\nPietro (Italian 🇮🇹),\nEmma (English US 🇺🇸),\nJavi (Spanish 🇪🇸),\nJosh (English US 🇺🇸),\nand Tara (English US 🇺🇸).\n\nChoose your voice based on your target language for the most natural results."
+            },
+            {
+              "question": "What languages does voice cloning support?",
+              "answer": "Voice cloning supports the following 23 languages: Arabic,\nDanish,\nGerman,\nGreek,\nEnglish,\nSpanish,\nFinnish,\nFrench,\nHebrew,\nHindi,\nItalian,\nJapanese,\nKorean,\nMalay,\nDutch,\nNorwegian,\nPolish,\nPortuguese,\nRussian,\nSwedish,\nSwahili,\nTurkish,\nand Mandarin Chinese."
+            },
+            {
+              "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
+              "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
+            }
+          ]
         },
         {
-          "question": "Is my voice data secure?",
-          "answer": "Yes. We encrypt all voice data and store it securely. You control your audio generations completely and can delete them anytime. We never share your voice data with others without your permission. Your privacy is our priority."
+          "id": "trustAndPolicies",
+          "category": "Usage, safety & policies",
+          "questions": [
+            {
+              "question": "Is my voice data secure?",
+              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files and can delete them whenever you want. We never share voice data without your consent."
+            },
+            {
+              "question": "What can I use the generated voices for?",
+              "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
+            },
+            {
+              "question": "Is erotica or adult content generation allowed?",
+              "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
+            }
+          ]
         },
         {
-          "question": "What can I use the generated voices for?",
-          "answer": "You can use generated voices for podcasts, videos, social media content, e-learning, audiobooks, games, and more. Many creators use our voices to save time recording or to maintain consistent audio quality. Just remember our terms prohibit deception or impersonation."
-        },
-        {
-          "question": "How many credits do I need?",
-          "answer": "About 1,000 credits makes 1 minute of audio. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 30,000 monthly credits, while Pro offers 500,000 credits for bigger projects. Choose what works for your needs."
-        },
-        {
-          "question": "What languages do you support?",
-          "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including Arabic (Egyptian), English (US), French (France), German (Germany), Spanish (US), Hindi (India), Indonesian (Indonesia), Italian (Italy), Japanese (Japan), Korean (Korea), Portuguese (Brazil), Russian (Russia), Dutch (Netherlands), Polish (Poland), Thai (Thailand), Turkish (Turkey), Vietnamese (Vietnam), Romanian (Romania), Ukrainian (Ukraine), Bengali (Bangladesh), English/Hindi (India), Marathi (India), Tamil (India), and Telugu (India).\n\nOther voices are language-specific: Dan (English UK 🇬🇧), Pietro (Italian 🇮🇹), Emma (English US 🇺🇸), Javi (Spanish 🇪🇸), Josh (English US 🇺🇸), and tara (English US 🇺🇸).\nChoose your voice based on your target language for the best results."
-        },
-        {
-          "question": "Do you have an API for developers?",
-          "answer": "It's coming soon! Our API will let developers add voice generation to apps, websites, and games. You'll be able to create speech on-demand and manage voice models programmatically with simple API calls."
-        },
-        {
-          "question": "Why choose SexyVoice.ai?",
-          "answer": "We offer the best combination of voice quality, ease of use, and affordable pricing. Unlike competitors, we provide professional-grade voices for creators of all sizes. With generous free credits and no contracts, you can start creating amazing voice content right away."
-        },
-        {
-          "question": "Is erotica or adult content generation allowed?",
-          "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
-        },
-        {
-          "question": "Can I make a voice speak with a specific accent or style, like British or pirate?",
-          "answer": "Yes! Choose a multilingual voice (for example, Zephyr) and add your instruction in the style box, like: 'Speak with a British accent' or 'Speak like a pirate.' The voice will instantly adapt. You can use this for accents, character voices, or unique speaking styles—experiment with different prompts until you find the perfect fit."
+          "id": "pricingAndAccess",
+          "category": "Pricing & access",
+          "questions": [
+            {
+              "question": "How many credits do I need?",
+              "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
+            },
+            {
+              "question": "Do you have an API for developers?",
+              "answer": "It's coming soon! Our API will let developers add voice generation and cloning to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically."
+            },
+            {
+              "question": "Why choose SexyVoice.ai?",
+              "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
+            }
+          ]
         }
       ]
     }
   },
   "credits": {
-    "pricingPlan": "Pricing Plans",
-    "title": "Plans built for creators and businesses of all sizes",
-    "description": "Choose the plan that best fits your needs",
-    "availableCredits": "Available Credits",
-    "creditsUsage": "Credits are used for voice generation",
+    "pricingPlan": "Pricing",
+    "title": "Purchase credits for creators and businesses of all sizes",
+    "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
-      "monthly": "Monthly",
-      "annually": "Annually",
-      "monthsFree": "2 months free",
-      "forever": "forever"
+      "forever": "(forever)"
     },
     "plans": {
       "popular": "Most Popular",
-      "subscribe": "Subscribe",
+      "startFree": "Start for Free",
+      "buyCredits": "Buy credits",
+      "x_credits": "__NUM_CREDITS__ credits",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio.",
-        "credits": "10,000 credits (~10 min audio)",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
         "features": [
           "Generate speech in unique voices",
-          "Create custom, synthetic voices",
-          "Generate sound effects",
-          "API access (coming soon)"
+          "Clone your voice with as little as 10 seconds of audio"
         ]
       },
       "starter": {
-        "name": "Starter",
-        "description": "For hobbyists creating projects with AI audio and create custom voices.",
-        "credits": "30,000 credits per month (~30 min audio)",
+        "name": "Starter"
+      },
+      "standard": {
+        "name": "Standard",
+        "description": "For hobbyists creating projects with AI audio and custom voices.",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
-          "Everything in free, plus",
-          "Clone your voice with as little as 10 seconds of audio"
+          "Everything in Free",
+          "API access (coming soon)"
         ]
       },
       "pro": {
         "name": "Pro",
         "description": "For larger creators ramping up their content production.",
-        "credits": "500,000 credits per month (~10 hours audio)",
+        "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
-          "Everything in starter, plus",
-          "Higher quality audio",
-          "44.1 kHz PCM audio output via API (coming soon)"
+          "Everything in Standard",
+          "Quick style and voice preview of your short sentence (coming soon)"
         ]
       }
     },
@@ -202,17 +240,17 @@
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
       "packages": {
-        "standard": {
-          "name": "10,000 Credits",
+        "starter": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Perfect for getting started"
         },
-        "base": {
-          "name": "25,000 Credits",
+        "standard": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "Most popular choice",
           "value": "Best Value"
         },
-        "premium": {
-          "name": "300,000 Credits",
+        "pro": {
+          "name": "__NUM_CREDITS__ Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }
@@ -223,11 +261,11 @@
       "success": {
         "title": "Payment Successful!",
         "description": "Your credits have been successfully added to your account.",
-        "descriptionWithAmount": "Your account has been credited with {amount} credits.",
+        "descriptionWithAmount": "Your account has been credited with {creditsAmount} credits.",
         "dismiss": "Dismiss"
       },
       "canceled": {
-        "title": "Payment Canceled",
+        "title": "Payment Cancelled",
         "description": "Your payment was canceled. No charges were made to your account.",
         "dismiss": "Dismiss"
       },
@@ -249,27 +287,75 @@
     "remainingCredits": "Remaining"
   },
   "generate": {
-    "title": "Generate Audio",
-    "subtitle": "Select a voice and generate audio from text",
-    "notEnoughCredits": "You don't have enough credits to generate audio.",
-    "success": "Audio generated successfully!",
-    "error": "Failed to generate audio",
-    "errorCloning": "Failed to clone voice",
-    "textAreaPlaceholder": "Enter the text you want to convert to speech...",
-    "generating": "Generating",
-    "playAudio": "Play Audio",
+    "abortedCloning": "Voice generation aborted.",
     "cancel": "Cancel generation",
     "ctaButton": "Generate Audio",
-    "resetForm": "Reset Form",
     "downloadAudio": "Download Audio",
-    "abortedCloning": "Voice generation aborted.",
-    "gproLimitExceeded": "You have exceeded the limit of 4 multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
+    "error": "Failed to generate audio",
+    "errorEstimating": "Failed to estimate credits",
+    "estimateCreditsButton": "Estimate credits",
+    "generating": "Generating",
+    "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
+    "languageLabel": "Language",
+    "languageSelectPlaceholder": "Select a language",
+    "notEnoughCredits": "You don't have enough credits to generate audio.",
+    "playAudio": "Play Audio",
+    "resetPlayer": "Reset Player",
+    "subtitle": "Select a voice and generate audio from text",
+    "success": "Audio generated successfully!",
+    "textAreaPlaceholder": "Enter the text you want to convert to speech...",
+    "title": "Generate Audio",
     "voiceSelector": {
       "title": "Select Voice",
       "description": "Choose from available voices",
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
+    }
+  },
+  "clone": {
+    "audioFileLabel": "Audio File",
+    "cancelButton": "Cancel",
+    "cloneNotice": "Please only clone voices with permission – respect others and follow the law.",
+    "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.\nYou have exclusive access to your cloned voices and audio files – no one else can access them.",
+    "cloneNoticeTooltipLabel": "Open voice clone safety notice",
+    "ctaButton": "Generate Audio",
+    "downloadAudio": "Download Audio",
+    "dragDropText": "Drag & drop or click to browse",
+    "errorCloning": "Failed to clone voice",
+    "errorTooLarge": "File size too large. Please use a smaller audio file.",
+    "errorTitle": "Error",
+    "fileFormatsText": "MP3, WAV, M4A or OGG (max. __SIZE__)",
+    "generating": "Generating",
+    "languageLabel": "Language",
+    "languageSelectPlaceholder": "Select a language",
+    "notEnoughCredits": "You don't have enough credits to generate audio.",
+    "playAudio": "Play Audio",
+    "previewTitle": "Generated Voice Preview",
+    "subtitle": "Upload an audio file and enter text to create a voice clone and generate speech in one step",
+    "success": "Audio generated successfully!",
+    "tabPreview": "Preview",
+    "tabUpload": "Upload",
+    "textAreaPlaceholder": "Enter the text you want to convert to speech...",
+    "textToConvertLabel": "Enter text to generate speech",
+    "title": "Clone a Voice",
+    "tryDemo": "Or try with a demo:",
+    "uploadAudioFile": "Upload audio file",
+    "orUseMicrophone": "or use your microphone",
+    "errors": {
+      "noAudioFile": "Please select an audio file.",
+      "noText": "Please enter some text to convert to speech.",
+      "ffmpegLoading": "The audio converter is still loading. Please try again in a moment"
+    },
+    "sampleCard": {
+      "sourceAudio": "Source audio",
+      "exampleOutput": "Example",
+      "loadSource": "Load source"
+    },
+    "crossLanguageInfo": {
+      "title": "Cross-Language Voice Transfer",
+      "description": "Clone a voice in one language and have it speak fluently in any of the other 23 supported languages while preserving the speaker's unique characteristics.",
+      "example": "Example: Upload an English speaker's voice sample → Generate French speech in their voice"
     }
   },
   "profile": {
@@ -302,16 +388,99 @@
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai - Free Text to Speech & AI Voice Generator",
-    "description": "The best AI voice generator that allows you to convert text to speech online for free, create voiceovers, and generate natural-sounding speech in any language.",
+    "description": "Create natural AI voices with emotions in 24 languages. Free text-to-speech generator with voice cloning. Start with 10,000 free credits - no card required.",
+    "descriptionLogin": "Sign in to SexyVoice.ai to access your AI voice projects, manage credits, and generate expressive speech in multiple languages with advanced voice cloning.",
+    "descriptionSignup": "Join SexyVoice.ai free - Get 10,000 credits to create realistic AI voices with emotions. Advanced text-to-speech and voice cloning in 24 languages.",
     "/": "",
     "/login": "Log in",
-    "/signup": "Signup",
-    "/dashboard/generate": "Generate"
+    "/signup": "Sign up with email or Google",
+    "/dashboard/generate": "Generate",
+    "/dashboard/clone": "Clone",
+    "/dashboard/history": "History",
+    "/dashboard/credits": "Credits",
+    "/tools/audio-converter": "Free Audio Converter"
+  },
+  "sidebar": {
+    "profile": "Profile",
+    "signOut": "Sign Out"
+  },
+  "header": {
+    "generate": "Generate",
+    "login": "Log in",
+    "signup": "Sign up"
   },
   "footer": {
     "statusPage": "Status page",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
-    "copyright": "SexyVoice.ai. All rights reserved."
+    "copyright": "SexyVoice.ai. All rights reserved.",
+    "audioConverter": "Free Audio Converter"
+  },
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
+      "ctaLoggedIn": "Claim Offer 🎃",
+      "ctaLoggedOut": "Sign Up Now 🎃",
+      "arialLabelDismiss": "Dismiss Halloween banner",
+      "pricing": {
+        "bannerText": "🎃 Halloween Special"
+      }
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Black Friday Sale – Get up to 35% extra credits!",
+      "ctaLoggedIn": "Claim Offer",
+      "ctaLoggedOut": "Claim Offer",
+      "arialLabelDismiss": "Dismiss Black Friday banner",
+      "countdown": {
+        "prefix": "Deal ends in:",
+        "days": "Days",
+        "hours": "Hours",
+        "minutes": "Min",
+        "seconds": "Sec"
+      },
+      "pricing": {
+        "bannerText": "Black Friday Sale"
+      }
+    }
+  },
+  "audioConverter": {
+    "title": "Free Audio Converter",
+    "subtitle": "Convert audio files to MP3, WAV, MP4 and more formats offline in your browser",
+    "tagline": "– free & easy",
+    "dropZone": {
+      "title": "Drop your audio file here",
+      "description": "or click to browse"
+    },
+    "fileInfo": {
+      "remove": "Remove file"
+    },
+    "formatSelector": {
+      "label": "Convert to",
+      "placeholder": "Select output format"
+    },
+    "convertButton": {
+      "convert": "Convert Audio",
+      "converting": "Converting",
+      "progress": "Progress"
+    },
+    "downloadSection": {
+      "title": "Conversion Complete",
+      "description": "Your file has been converted successfully",
+      "download": "Download",
+      "convertAnother": "Convert Another File"
+    },
+    "errors": {
+      "loadingFailed": "Failed to load FFmpeg. Please refresh the page.",
+      "conversionFailed": "Conversion failed. Please try again.",
+      "unsupportedFormat": "Unsupported file format",
+      "converterFailedToLoad": "Audio converter failed to load. Please refresh the page.",
+      "converterLoadFailed": "Failed to load audio converter. Please refresh the page or try a different browser."
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "No uploads, 100% in-browser",
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
+    }
   }
 }

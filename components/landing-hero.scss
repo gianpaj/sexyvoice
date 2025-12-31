@@ -5,13 +5,13 @@
 	fill: url(#header-shape-gradient) #fff;
 }
 #header-shape-gradient {
-	--color-stop: #f12c06;
-	--color-bot: #a81313;
-  }
+  --color-stop: rgb(from hsl(var(--brand-purple)) calc(r * 1.2) calc(g * 1.2) calc(b * 1.2));
+  --color-bot: rgb(from hsl(var(--brand-red)) calc(r * 1.1) calc(g * 1.1) calc(b * 1.1));
+}
 @for $i from 1 through 17 {
 	#Line_#{$i} {
 		animation: pulse 0.75s infinite;
-		animation-delay: ($i * 0.15s) % 0.75s;
+		animation-delay: ($i * 0.2s) % 0.75s;
 	}
 }
 
@@ -20,12 +20,12 @@
 		transform: scaleY(1);
 		transform-origin: 50% 50%;
 	}
-	
+
 	50% {
 		transform: scaleY(.7);
 		transform-origin: 50% 50%;
 	}
-	
+
 	100% {
 		transform: scaleY(1);
 		transform-origin: 50% 50%;

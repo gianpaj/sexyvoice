@@ -1,0 +1,16 @@
+{
+  "dictionaries": [
+    "de-de",
+    "es-es"
+  ],
+  "words": [
+    "lucide",
+    "supabase",
+    "posthog",
+    "platform",
+    "MAX_LENGTH_MULTILANGUAGE",
+    "signup",
+    "minmax",
+    "TOPUP"
+  ]
+}

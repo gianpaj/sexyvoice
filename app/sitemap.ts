@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/complexity/noForEach: fine */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { globby } from 'globby';
@@ -41,7 +42,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE_URL = 'https://sexyvoice.ai';
 
   const routes: MetadataRoute.Sitemap = [];
-  i18n.locales.forEach(async (lang: string) => {
+  i18n.locales.forEach((lang) => {
     // Process each page
     pages.forEach((page: string) => {
       let url = addPage(page);

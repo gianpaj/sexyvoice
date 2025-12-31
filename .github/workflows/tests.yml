@@ -1,0 +1,59 @@
+name: Run Unit Tests
+
+permissions:
+  # e.g. contents: read permits an action to list the commits, and contents: write allows the action to create a release
+  contents: read
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # Skip if PR is a draft
+    # if: github.event.pull_request.draft == false || github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          REDISMS_DISABLE_POSTINSTALL: 1
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.8.1
+        with:
+          redis-version: 7
+
+      - name: Run tests
+        run: pnpm test

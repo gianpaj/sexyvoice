@@ -7,7 +7,7 @@ declare type Json =
   | Json[];
 
 declare type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: '12.2.3 (519615d)';
@@ -29,6 +29,7 @@ declare type Database = {
           text_content: string;
           total_votes: number;
           url: string;
+          usage: Json | null;
           user_id: string | null;
           voice_id: string;
         };
@@ -46,6 +47,7 @@ declare type Database = {
           text_content: string;
           total_votes?: number;
           url: string;
+          usage?: Json | null;
           user_id?: string | null;
           voice_id: string;
         };
@@ -63,6 +65,7 @@ declare type Database = {
           text_content?: string;
           total_votes?: number;
           url?: string;
+          usage?: Json | null;
           user_id?: string | null;
           voice_id?: string;
         };
@@ -120,7 +123,15 @@ declare type Database = {
           updated_at?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'credit_transactions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       credits: {
         Row: {
@@ -237,16 +248,21 @@ declare type Database = {
     };
     Functions: {
       decrement_user_credits: {
-        Args: { user_id: string; credit_amount: number };
+        Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
       increment_user_credits: {
-        Args: { user_id_var: string; credit_amount: number };
+        Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
     };
     Enums: {
-      credit_transaction_type: 'purchase' | 'usage' | 'freemium' | 'topup';
+      credit_transaction_type:
+        | 'purchase'
+        | 'usage'
+        | 'freemium'
+        | 'topup'
+        | 'refund';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -377,18 +393,13 @@ declare type CompositeTypes<
 declare const Constants = {
   public: {
     Enums: {
-      credit_transaction_type: ['purchase', 'usage', 'freemium', 'topup'],
+      credit_transaction_type: [
+        'purchase',
+        'usage',
+        'freemium',
+        'topup',
+        'refund',
+      ],
     },
   },
 } as const;
-
-declare type AudioFile = Database['public']['Tables']['audio_files']['Row'];
-
-declare type CreditTransaction =
-  Database['public']['Tables']['credit_transactions']['Row'];
-
-declare type Credit = Database['public']['Tables']['credits']['Row'];
-
-declare type Profile = Database['public']['Tables']['profiles']['Row'];
-
-declare type Voice = Database['public']['Tables']['voices']['Row'];

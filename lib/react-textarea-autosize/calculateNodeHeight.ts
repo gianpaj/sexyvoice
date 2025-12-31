@@ -1,0 +1,69 @@
+// https://github.com/Andarist/react-textarea-autosize/blob/ed1894cd8611d99fbea1c47adcf6ee522b1030fd/src/calculateNodeHeight.ts
+
+import forceHiddenStyles from './forceHiddenStyles';
+import type { SizingData } from './getSizingData';
+
+// TODO: use labeled tuples once they are available:
+//   export type CalculatedNodeHeights = [height: number, rowHeight: number];
+// https://github.com/microsoft/TypeScript/issues/28259
+type CalculatedNodeHeights = number[];
+
+let hiddenTextarea: HTMLTextAreaElement | null = null;
+
+const getHeight = (node: HTMLElement, sizingData: SizingData): number => {
+  const height = node.scrollHeight;
+
+  if (sizingData.sizingStyle.boxSizing === 'border-box') {
+    // border-box: add border, since height = content + padding + border
+    return height + sizingData.borderSize;
+  }
+
+  // remove padding, since height = content
+  return height - sizingData.paddingSize;
+};
+
+export default function calculateNodeHeight(
+  sizingData: SizingData,
+  value: string,
+  minRows = 1,
+  maxRows = Number.POSITIVE_INFINITY,
+): CalculatedNodeHeights {
+  if (!hiddenTextarea) {
+    hiddenTextarea = document.createElement('textarea');
+    hiddenTextarea.setAttribute('tabindex', '-1');
+    hiddenTextarea.setAttribute('aria-hidden', 'true');
+    forceHiddenStyles(hiddenTextarea);
+  }
+
+  if (hiddenTextarea.parentNode === null) {
+    document.body.appendChild(hiddenTextarea);
+  }
+
+  const { paddingSize, borderSize, sizingStyle } = sizingData;
+  const { boxSizing } = sizingStyle;
+
+  Object.assign(hiddenTextarea!.style, sizingStyle);
+
+  forceHiddenStyles(hiddenTextarea);
+
+  hiddenTextarea.value = value;
+  let height = getHeight(hiddenTextarea, sizingData);
+
+  // measure height of a textarea with a single row
+  hiddenTextarea.value = 'x';
+  const rowHeight = hiddenTextarea.scrollHeight - paddingSize;
+
+  let minHeight = rowHeight * minRows;
+  if (boxSizing === 'border-box') {
+    minHeight = minHeight + paddingSize + borderSize;
+  }
+  height = Math.max(minHeight, height);
+
+  let maxHeight = rowHeight * maxRows;
+  if (boxSizing === 'border-box') {
+    maxHeight = maxHeight + paddingSize + borderSize;
+  }
+  height = Math.min(maxHeight, height);
+
+  return [height, rowHeight];
+}

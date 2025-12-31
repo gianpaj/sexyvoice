@@ -1,9 +1,9 @@
+import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
 
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
-import type { Metadata, ResolvingMetadata } from 'next';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -11,9 +11,9 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
-type Props = {
+interface Props {
   params: Promise<{ lang: Locale }>;
-};
+}
 
 export async function generateMetadata(
   { params }: Props,
@@ -23,26 +23,41 @@ export async function generateMetadata(
 
   const { alternates, openGraph, title: parentTitle } = await parent;
 
-  const pathname = new URL(alternates?.canonical?.url!).pathname;
+  const canonicalUrl = alternates?.canonical?.url;
+  const pathname = canonicalUrl ? new URL(canonicalUrl).pathname : '/';
   const pagePath = pathname.replace(`/${lang}`, '') || '/';
 
-  const dict = await getDictionary(lang);
-  // @ts-ignore FIXME
-  const pageTitle = dict.pages[pagePath];
-  // @ts-ignore FIXME
-  const defaultTitle = dict.pages.defaultTitle;
+  // Validate that the language is a supported locale
+  if (!i18n.locales.includes(lang as Locale)) {
+    return {
+      title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+    };
+  }
+
+  const dict = await getDictionary(lang, 'pages');
+  // @ts-expect-error FIXME
+  const pageTitle = dict[pagePath];
+  const defaultTitle = dict.defaultTitle;
 
   const title = pageTitle || defaultTitle;
 
+  // Get page-specific description based on route
+  let description = dict.description;
+  if (pagePath === '/login') {
+    description = dict.descriptionLogin || dict.description;
+  } else if (pagePath === '/signup') {
+    description = dict.descriptionSignup || dict.description;
+  }
+
   return {
     title: {
-      template: (parentTitle as any).template,
+      template: parentTitle?.template || '',
       default: title,
     },
-    description: dict.pages.description,
+    description,
     openGraph: {
-      title: title,
-      description: dict.pages.description,
+      title,
+      description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
       ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
@@ -60,7 +75,7 @@ export default async function LangLayout({
   return (
     <html lang={(await params).lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
-        <a href="#main-content" className="sr-only focus:not-sr-only">
+        <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
         </a>
         <Providers>{children}</Providers>

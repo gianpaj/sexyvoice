@@ -1,18 +1,46 @@
 import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
 
+import { i18n, type Locale } from './lib/i18n/i18n-config';
+
+const isLocale = (value: string | undefined): value is Locale =>
+  Boolean(value && i18n.locales.includes(value as Locale));
+
 const getLocale = (path: string) => {
   const pathArray = path.split('.');
-  return pathArray.length > 2 ? pathArray.slice(-2)[0] : 'en';
+  const potentialLocale = pathArray.length > 1 ? pathArray.at(-2) : undefined;
+  return isLocale(potentialLocale) ? potentialLocale : i18n.defaultLocale;
+};
+
+const getBasePath = (path: string) => {
+  const parts = path.split('.');
+
+  // remove extension
+  parts.pop();
+
+  // remove locale suffix if present
+  if (isLocale(parts.at(-1))) {
+    parts.pop();
+  }
+
+  const joined = parts.join('.');
+  const segments = joined.split('/');
+
+  if (segments.length > 1) {
+    return segments.slice(1).join('/');
+  }
+
+  return joined;
 };
 
 const getSlug = (path: string) => {
-  const pathArray = path.split('.');
-  return pathArray[0];
+  const basePath = getBasePath(path);
+  const segments = basePath.split('/');
+  return segments.at(-1) ?? basePath;
 };
 
 const Post = defineDocumentType(() => ({
   name: 'Post',
-  filePathPattern: '**/*.mdx',
+  filePathPattern: 'posts/**/*.mdx',
   contentType: 'mdx',
   fields: {
     title: {
@@ -44,21 +72,15 @@ const Post = defineDocumentType(() => ({
   computedFields: {
     locale: {
       type: 'string',
-      resolve: (doc) => {
-        return getLocale(doc._raw.sourceFilePath);
-      },
+      resolve: (doc) => getLocale(doc._raw.sourceFilePath),
     },
     slug: {
       type: 'string',
-      resolve: (doc) => {
-        return getSlug(doc._raw.sourceFilePath);
-      },
+      resolve: (doc) => getSlug(doc._raw.sourceFilePath),
     },
     url: {
       type: 'string',
-      resolve: (doc) => {
-        return `/blog/${doc._raw.flattenedPath}`;
-      },
+      resolve: (doc) => `/blog/${doc._raw.flattenedPath}`,
     },
     slugAsParams: {
       type: 'string',
@@ -67,7 +89,46 @@ const Post = defineDocumentType(() => ({
   },
 }));
 
+const PolicyPage = defineDocumentType(() => ({
+  name: 'PolicyPage',
+  filePathPattern: 'policies/**/*.mdx',
+  contentType: 'mdx',
+  fields: {
+    title: {
+      type: 'string',
+      description: 'The page title',
+      required: true,
+    },
+    description: {
+      type: 'string',
+      description: 'Meta description for SEO',
+      required: false,
+    },
+    updated: {
+      type: 'string',
+      description: 'Last updated date text',
+      required: true,
+    },
+  },
+  computedFields: {
+    locale: {
+      type: 'string',
+      resolve: (doc) => getLocale(doc._raw.sourceFilePath),
+    },
+    slug: {
+      type: 'string',
+      resolve: (doc) => getSlug(doc._raw.sourceFilePath),
+    },
+    url: {
+      type: 'string',
+      resolve: (doc) =>
+        `/${getLocale(doc._raw.sourceFilePath)}/${getSlug(doc._raw.sourceFilePath)}`,
+    },
+  },
+}));
+
 export default makeSource({
-  contentDirPath: 'posts',
-  documentTypes: [Post],
+  contentDirPath: '.',
+  contentDirInclude: ['posts', 'policies'],
+  documentTypes: [Post, PolicyPage],
 });

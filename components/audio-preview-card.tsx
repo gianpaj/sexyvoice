@@ -5,15 +5,18 @@ import { useState } from 'react';
 
 import { Button } from './ui/button';
 
-// AudioPreviewCard component
 export function AudioPreviewCard({
   name,
   prompt,
   audioSrc,
+  lang,
+  dir,
 }: {
   name: string;
   prompt: string;
   audioSrc: string;
+  lang: string;
+  dir: 'ltr' | 'rtl';
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
@@ -21,7 +24,13 @@ export function AudioPreviewCard({
   );
 
   const togglePlay = () => {
-    if (!isPlaying) {
+    if (isPlaying) {
+      // Pause the current audio
+      if (audioElement) {
+        audioElement.pause();
+      }
+      setIsPlaying(false);
+    } else {
       // Stop any existing audio first
       audioElement?.pause();
 
@@ -35,25 +44,19 @@ export function AudioPreviewCard({
       audio.play();
       setAudioElement(audio);
       setIsPlaying(true);
-    } else {
-      // Pause the current audio
-      if (audioElement) {
-        audioElement.pause();
-      }
-      setIsPlaying(false);
     }
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">{name}</h3>
+    <div className="flex flex-col rounded-xl bg-white/10 p-6 backdrop-blur-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-semibold text-lg text-white">{name}</h3>
         <Button
           aria-label={isPlaying ? 'Pause' : 'Play'}
+          className="!text-blue-400 border-none bg-blue-600/20 hover:bg-blue-600/40"
           onClick={togglePlay}
-          variant="outline"
           size="icon"
-          className="bg-blue-600/20 border-none hover:bg-blue-600/40 !text-blue-400"
+          variant="outline"
         >
           {isPlaying ? (
             <Pause className="size-4" />
@@ -62,7 +65,12 @@ export function AudioPreviewCard({
           )}
         </Button>
       </div>
-      <div className="bg-gray-800/60 rounded p-3 text-sm text-gray-200 grow whitespace-break-spaces">
+      <div
+        className="line-clamp-5 whitespace-break-spaces rounded border-[12px] border-transparent bg-accent text-justify text-gray-200 text-sm"
+        dir={dir}
+        lang={lang}
+        title={prompt}
+      >
         {prompt}
       </div>
     </div>

@@ -3,11 +3,12 @@ import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 import Script from 'next/script';
 import type { Metadata } from 'next/types';
-import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
-import { Header } from '@/components/header';
+import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
+import { PromoBanner } from '@/components/promo-banner';
+import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
@@ -19,17 +20,18 @@ export const dynamicParams = false;
 export const generateStaticParams = ({
   params: { lang },
 }: {
-  params: { lang: string };
+  params: { lang: Locale };
 }) =>
   allPosts
     .map((post) => {
       // Determine locale from file extension or default to 'en'
-      const locale = i18n.locales.find((loc) =>
-        post._raw.flattenedPath.endsWith(`.${loc}`)
-      ) || i18n.defaultLocale;
+      const locale =
+        i18n.locales.find((loc) =>
+          post._raw.flattenedPath.endsWith(`.${loc}`),
+        ) || i18n.defaultLocale;
 
       return {
-        slug: post._raw.flattenedPath,
+        slug: post.slugAsParams,
         locale,
       };
     })
@@ -44,10 +46,10 @@ interface PostProps {
 
 async function getPostFromParams(params: PostProps['params']) {
   const slug = params.slug;
-  const post = allPosts.find((post) => post._raw.flattenedPath === slug);
+  const post = allPosts.find((post) => post.slugAsParams === slug);
 
   if (!post) {
-    null;
+    return null;
   }
 
   return post;
@@ -109,10 +111,7 @@ export async function generateMetadata({
     alternates: {
       canonical: postUrl,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [
-          locale,
-          `/${locale}/blog/${post.slug}`,
-        ])
+        i18n.locales.map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
       ),
     },
   };
@@ -124,8 +123,11 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
+  const dictHeader = await getDictionary(lang, 'header');
+  const blackFridayDict = (await getDictionary(lang, 'promos'))
+    .blackFridayBanner;
 
-  if (post === undefined) {
+  if (!post) {
     return <div>Post not found ({params.slug})</div>;
   }
 
@@ -158,7 +160,7 @@ const PostLayout = async (props: {
       <Script id="article-schema" type="application/ld+json">
         {JSON.stringify({
           ...articleSchema,
-          wordCount: wordCount,
+          wordCount,
           timeRequired: `PT${readingTime}M`,
           about: [
             {
@@ -192,9 +194,24 @@ const PostLayout = async (props: {
         {JSON.stringify(breadcrumbSchema)}
       </Script>
 
-      <Suspense fallback={<div>Loading...</div>}>
-        <Header lang={lang} />
-      </Suspense>
+      <PromoBanner
+        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
+        countdown={
+          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+            ? {
+                enabled: true,
+                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                labels: blackFridayDict.countdown,
+              }
+            : undefined
+        }
+        ctaLink={`/${lang}/signup`}
+        ctaText={blackFridayDict.ctaLoggedOut}
+        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+        text={blackFridayDict.text}
+      />
+
+      <HeaderStatic dict={dictHeader} lang={lang} />
 
       {/* Semantic content structure for AI extraction */}
       <div
@@ -202,30 +219,40 @@ const PostLayout = async (props: {
         itemScope
         itemType="https://schema.org/TechArticle"
       >
-        <h1 itemProp="name">{post.title}</h1>
+        <p itemProp="name">{post.title}</p>
         <div itemProp="abstract">{post.description}</div>
-        <div itemProp="about">
-          This article covers advanced concepts in AI voice generation,
-          including neural networks, machine learning algorithms, voice
-          synthesis techniques, and practical applications of artificial
-          intelligence in speech technology.
-        </div>
-        <meta
-          itemProp="audience"
-          content="Developers, AI researchers, content creators"
-        />
-        <meta itemProp="educationalLevel" content="Intermediate to Advanced" />
-        <meta itemProp="learningResourceType" content="Tutorial" />
+        <p>
+          Target audience:
+          <span
+            itemProp="audience"
+            itemScope
+            itemType="https://schema.org/EducationalAudience"
+          >
+            <span itemProp="educationalRole">developers</span>,
+            <span itemProp="educationalRole">content creators</span>
+          </span>
+        </p>
+        <p
+          itemProp="educationalLevel"
+          itemScope
+          itemType="https://schema.org/DefinedTerm"
+        >
+          <span itemProp="name">Beginner to Intermediate</span>
+        </p>
+        <p>
+          Resource type:
+          <span itemProp="learningResourceType">tutorial</span>
+        </p>
       </div>
 
       <main itemScope itemType="https://schema.org/WebPage">
         <article
-          className="py-8 px-4 md:px-0 md:mx-auto max-w-2xl prose dark:prose-invert"
+          className="prose dark:prose-invert max-w-2xl px-4 py-8 md:mx-auto md:px-0"
+          itemProp="mainEntity"
           itemScope
           itemType="https://schema.org/BlogPosting"
-          itemProp="mainEntity"
         >
-          <header className="text-center my-8">
+          <header className="my-8 text-center">
             {/* <nav aria-label="Breadcrumb" className="mb-4">
               <ol className="inline-flex items-center space-x-1 sm:space-x-0 list-none">
                 <li className="inline-flex items-center">
@@ -258,35 +285,35 @@ const PostLayout = async (props: {
               </ol>
             </nav> */}
 
-            <div className="flex items-center justify-center space-x-4 mb-4 text-xs text-gray-600">
+            <div className="mb-4 flex items-center justify-center space-x-4 text-gray-600 text-xs">
               <time
+                content={post.date}
                 dateTime={post.date}
                 itemProp="datePublished"
-                content={post.date}
               >
                 Published: {format(parseISO(post.date), 'LLLL d, yyyy')}
               </time>
               <span>•</span>
-              <span itemProp="timeRequired" content={`PT${readingTime}M`}>
+              <span content={`PT${readingTime}M`} itemProp="timeRequired">
                 {readingTime} min read
               </span>
               <span>•</span>
               <span itemProp="wordCount">{wordCount} words</span>
             </div>
 
-            <h1 itemProp="headline" className="mb-4 mt-12">
+            <h1 className="mt-12 mb-4" itemProp="headline">
               {post.title}
             </h1>
 
             <div
+              className="mt-8 mb-6 text-gray-400 text-lg"
               itemProp="description"
-              className="mt-8 text-lg text-gray-400 mb-6"
             >
               {post.description}
             </div>
 
             {/* Enhanced author and publisher information */}
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+            <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm">
               <span>By</span>
               <div
                 itemProp="author"
@@ -294,86 +321,86 @@ const PostLayout = async (props: {
                 itemType="https://schema.org/Organization"
               >
                 <span itemProp="name">SexyVoice.ai</span>
-                <meta itemProp="url" content="https://sexyvoice.ai" />
+                <meta content="https://sexyvoice.ai" itemProp="url" />
                 <meta
-                  itemProp="logo"
                   content="https://sexyvoice.ai/sexyvoice.png"
+                  itemProp="logo"
                 />
               </div>
             </div>
 
             {/* Publisher information for LLM extraction */}
             <div
+              className="sr-only"
               itemProp="publisher"
               itemScope
               itemType="https://schema.org/Organization"
-              className="sr-only"
             >
-              <meta itemProp="name" content="SexyVoice.ai" />
-              <meta itemProp="url" content="https://sexyvoice.ai" />
+              <meta content="SexyVoice.ai" itemProp="name" />
+              <meta content="https://sexyvoice.ai" itemProp="url" />
               <div
                 itemProp="logo"
                 itemScope
                 itemType="https://schema.org/ImageObject"
               >
                 <meta
-                  itemProp="url"
                   content="https://sexyvoice.ai/sexyvoice.png"
+                  itemProp="url"
                 />
-                <meta itemProp="width" content="512" />
-                <meta itemProp="height" content="512" />
+                <meta content="512" itemProp="width" />
+                <meta content="512" itemProp="height" />
               </div>
             </div>
 
-            <meta itemProp="dateModified" content={post.date} />
-            <meta itemProp="inLanguage" content={post.locale} />
-            <meta itemProp="isAccessibleForFree" content="true" />
-            <meta itemProp="genre" content="Technology" />
+            <meta content={post.date} itemProp="dateModified" />
+            <meta content={post.locale} itemProp="inLanguage" />
+            <meta content="true" itemProp="isAccessibleForFree" />
+            <meta content="Technology" itemProp="genre" />
             <meta
-              itemProp="keywords"
               content="AI voice cloning, voice synthesis, machine learning, neural networks, speech technology"
+              itemProp="keywords"
             />
           </header>
 
           {post.image && (
             <figure className="mb-8">
               <Image
-                src={post.image}
                 alt={post.title}
                 className="mx-auto rounded-lg"
-                width={800}
                 height={450}
                 itemProp="image"
                 priority
+                src={post.image}
+                width={800}
               />
-              <figcaption className="text-center text-sm text-gray-500 mt-2">
+              <figcaption className="mt-2 text-center text-gray-500 text-sm">
                 {post.title}
               </figcaption>
             </figure>
           )}
 
-          <div itemProp="articleBody" className="prose-headings:scroll-mt-20">
+          <div className="prose-headings:scroll-mt-20" itemProp="articleBody">
             <Mdx code={post.body.code} />
           </div>
 
           {/* Article metadata for AI understanding */}
-          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex flex-wrap gap-2 mb-4" itemProp="keywords">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="mt-12 border-gray-200 border-t pt-8 dark:border-gray-700">
+            <div className="mb-4 flex flex-wrap gap-2" itemProp="keywords">
+              <span className="font-medium text-gray-700 text-sm dark:text-gray-300">
                 Topics:
               </span>
-              <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
                 Voice AI
               </span>
-              <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
                 Machine Learning
               </span>
-              <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded">
+              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
                 Speech Synthesis
               </span>
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-gray-600 text-sm dark:text-gray-400">
               <p>
                 This article is part of our comprehensive guide to AI voice
                 technology.

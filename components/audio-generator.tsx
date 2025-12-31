@@ -6,26 +6,26 @@ import {
   Download,
   Info,
   Loader2,
-  Pause,
-  Play,
+  Maximize2,
+  Minimize2,
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 
+import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { toast } from '@/components/services/toast';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  // CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
+import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import type lang from '@/lib/i18n/dictionaries/en.json';
+import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
+import { cn } from '@/lib/utils';
+import { AudioPlayerWithContext } from './audio-player-with-context';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -48,17 +48,18 @@ export function AudioGenerator({
   selectedStyle,
   hasEnoughCredits,
   dict,
-  locale,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [audioURL, setAudioURL] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
 
-  const isGeminiVoice = selectedVoice?.model == 'gpro';
+  const audio = useAudio();
+  const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || ''),
     [selectedVoice],
@@ -99,7 +100,13 @@ export function AudioGenerator({
 
         // Check if we have an error code for translation
         if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
-          throw new APIError(dict[error.errorCode as keyof typeof dict] as string, response);
+          const errorMessage = dict[
+            error.errorCode as keyof typeof dict
+          ] as string;
+          throw new APIError(
+            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+            response,
+          );
         }
 
         // Fallback to the default English error message from API
@@ -108,20 +115,17 @@ export function AudioGenerator({
 
       const { url } = await response.json();
 
-      // creditsUsed is undefined if the audio was previously generated
-      // creditsUsed && setCreditsUsed(creditsUsed);
+      // FIXME: this doesn't work
+      // refetch credits after generating audio
+      // setTimeout(() => {
+      // await queryClient.refetchQueries({
+      //   queryKey: ['credits'],
+      // });
+      // console.log('Credits refetched');
+      // }, 1000);
 
-      const newAudio = new Audio(url);
-
-      newAudio.addEventListener('ended', () => {
-        setIsPlaying(false);
-      });
-
-      setAudio(newAudio);
-
-      // Automatically play the audio
-      newAudio.play();
-      setIsPlaying(true);
+      setAudioURL(url);
+      audio?.setUrlAndPlay(url);
 
       toast.success(dict.success);
     } catch (error) {
@@ -143,9 +147,9 @@ export function AudioGenerator({
     abortController.current?.abort();
   };
 
-  // Keyboard shortcut handler
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // biome-ignore lint/correctness/useExhaustiveDependencies: it's grand
   useEffect(() => {
+    // Keyboard shortcut handler
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
@@ -167,46 +171,27 @@ export function AudioGenerator({
     };
   }, [isGenerating, text, selectedVoice, hasEnoughCredits]);
 
-  const togglePlayback = () => {
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
   const resetPlayer = () => {
     if (!audio) {
-      setIsPlaying(false);
       return;
     }
 
-    try {
-      audio.pause();
-      audio.currentTime = 0;
-
-      if (audio.src.startsWith('blob:')) {
-        URL.revokeObjectURL(audio.src);
-      }
-    } catch (error) {
-      console.error('Failed to reset audio', error);
-    } finally {
-      setAudio(null);
-      setIsPlaying(false);
-    }
+    audio?.reset();
   };
 
-  const downloadAudio = () => {
-    if (!audio) return;
+  const downloadAudio = async () => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
 
-    const link = document.createElement('a');
-    link.href = audio.src;
-    link.download = 'generated_audio.mp3';
-    link.target = '_blank';
-    link.click();
+    if (!audio?.url) return;
+
+    try {
+      await downloadUrl(audioURL, anchorElement);
+    } catch {
+      toast.error(dict.error);
+    }
   };
 
   const { complete } = useCompletion({
@@ -214,7 +199,7 @@ export function AudioGenerator({
   });
 
   const handleEnhanceText = async () => {
-    if (!text.trim() || !selectedVoice) return;
+    if (!(text.trim() && selectedVoice)) return;
 
     setIsEnhancingText(true);
     setPreviousText(text);
@@ -239,41 +224,105 @@ export function AudioGenerator({
       setIsEnhancingText(false);
     }
   };
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: needed
+  useEffect(() => {
+    setEstimatedCredits(null);
+  }, [selectedVoice, text]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
+  useEffect(() => {
+    // Auto-resize textarea when content changes
+    if (textareaRef.current && !isFullscreen) {
+      resizeTextarea(textareaRef.current, 6);
+    }
+  }, [text, isFullscreen]);
+
+  const textIsOverLimit = text.length > charactersLimit;
+
+  const handleEstimateCredits = async () => {
+    if (!(selectedVoice && isGeminiVoice && text.trim())) return;
+
+    setIsEstimating(true);
+    try {
+      const response = await fetch('/api/estimate-credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voice: selectedVoice.name,
+          styleVariant: selectedStyle,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new APIError(data.error || dict.error, response);
+      }
+
+      const estimatedCredits = Number(data.estimatedCredits);
+      if (Number.isFinite(estimatedCredits)) {
+        setEstimatedCredits(estimatedCredits);
+      }
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message || dict.error);
+      } else {
+        toast.error(dict.errorEstimating);
+      }
+    } finally {
+      setIsEstimating(false);
+    }
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Generate Audio</CardTitle>
+        <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
         <div className="space-y-2">
           <div className="relative">
             <Textarea
-              value={text}
+              className={cn(
+                'textarea-2 transition-[height] duration-200 ease-in-out',
+                [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
+              )}
+              maxLength={charactersLimit * 2}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
-              className="h-32 pr-16"
-              maxLength={charactersLimit}
+              ref={textareaRef}
+              style={
+                {
+                  '--ta2-height': isFullscreen ? '30vh' : '8rem',
+                } as React.CSSProperties
+              }
+              value={text}
             />
             {!isGeminiVoice && (
               <>
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>
                     <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 ml-2 absolute top-4 right-12" />
+                      <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Add emotion tags</p>
+                      <p>This model supports emotion tags</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute top-2 right-2 h-8 w-8 bg-neutral-600"
-                  onClick={handleEnhanceText}
+                  className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
                   disabled={!text.trim() || isEnhancingText || isGenerating}
+                  onClick={handleEnhanceText}
+                  size="icon"
                   title="Enhance text with AI emotion tags"
+                  variant="ghost"
                 >
                   {isEnhancingText ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -283,30 +332,82 @@ export function AudioGenerator({
                 </Button>
               </>
             )}
+            <Button
+              className={
+                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+              }
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              size="icon"
+              title="Fullscreen"
+              variant="ghost"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-          <div className="text-sm text-muted-foreground text-right">
+
+          <div
+            className={cn('text-right text-muted-foreground text-sm', [
+              textIsOverLimit ? 'font-bold text-red-500' : '',
+            ])}
+          >
             {text.length} / {charactersLimit}
           </div>
+          {isGeminiVoice && (
+            <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
+              <Button
+                className="h-8 bg-secondary text-xs"
+                disabled={
+                  !text.trim() ||
+                  isEstimating ||
+                  isGenerating ||
+                  textIsOverLimit
+                }
+                onClick={handleEstimateCredits}
+                size="sm"
+                variant="outline"
+              >
+                {isEstimating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  dict.estimateCreditsButton
+                )}
+              </Button>
+              {estimatedCredits !== null && (
+                <div className="text-muted-foreground text-xs">
+                  ~{estimatedCredits.toString()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div
-          className={`flex ${hasEnoughCredits ? 'items-center' : 'flex-col items-start'} grid grid-cols-1 sm:grid-cols-2 justify-start gap-2`}
+          className={cn(
+            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-2',
+            hasEnoughCredits ? 'items-center' : 'flex flex-col items-start',
+          )}
         >
           {!hasEnoughCredits && (
-            <Alert variant="destructive" className="w-fit">
+            <Alert className="w-fit" variant="destructive">
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
-          <div>
+          <div className="flex flex-grow-0 gap-2">
             <Button
-              onClick={handleGenerate}
+              className="h-10 w-full sm:w-fit"
               data-testid="generate-button"
               disabled={
                 isGenerating ||
                 !text.trim() ||
                 !selectedVoice ||
-                !hasEnoughCredits
+                !hasEnoughCredits ||
+                textIsOverLimit
               }
+              onClick={handleGenerate}
               size="lg"
             >
               {isGenerating ? (
@@ -317,7 +418,7 @@ export function AudioGenerator({
               ) : (
                 <span className="flex items-center gap-2">
                   {dict.ctaButton}
-                  <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
+                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </span>
@@ -325,46 +426,39 @@ export function AudioGenerator({
             </Button>
             {isGenerating && (
               <Button
-                variant="outline"
-                title={dict.cancel}
-                size="icon"
+                aria-label={dict.cancel}
+                className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
+                icon={() => <CircleStop className="!size-8" name="cancel" />}
+                iconPlacement="right"
                 onClick={handleCancel}
-                asChild
-                className="ml-2"
-              >
-                <CircleStop name="cancel" className="size-4" />
-              </Button>
+                size="icon"
+                title={dict.cancel}
+                variant="outline"
+              />
             )}
           </div>
 
-          <div className="">
-            {audio && (
-              <div className="flex sm:w-full justify-center sm:justify-start gap-2">
+          <div>
+            {audioURL && (
+              <div className="flex justify-start gap-2 sm:w-full">
+                <AudioPlayerWithContext
+                  className="rounded-md"
+                  playAudioTitle={dict.playAudio}
+                  url={audioURL}
+                />
                 <Button
-                  variant="secondary"
-                  title={dict.playAudio}
-                  size="icon"
-                  onClick={togglePlayback}
-                >
-                  {isPlaying ? (
-                    <Pause className="size-6" />
-                  ) : (
-                    <Play className="size-6" />
-                  )}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  title={dict.resetForm}
                   onClick={resetPlayer}
+                  size="icon"
+                  title={dict.resetPlayer}
+                  variant="secondary"
                 >
                   <RotateCcw className="size-6" />
                 </Button>
                 <Button
-                  variant="secondary"
+                  onClick={downloadAudio}
                   size="icon"
                   title={dict.downloadAudio}
-                  onClick={downloadAudio}
+                  variant="secondary"
                 >
                   <Download className="size-6" />
                 </Button>

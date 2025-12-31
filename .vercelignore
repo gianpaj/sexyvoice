@@ -1,0 +1,49 @@
+# Testing
+tests
+*.test.ts
+*.test.tsx
+vitest.config.mts
+
+# Development files
+.cursor
+.github
+.husky
+.zed
+.tool-versions
+.lintstagedrc.js
+prettier.config.cjs
+
+# Documentation
+AGENTS.md
+ARCHITECTURE.md
+LICENSE
+README.md
+ROADMAP.md
+TODO.md
+prompts.md
+*.prompt.yml
+
+# Environment files
+.env.*
+
+# Scripts
+scripts/*
+!scripts/check-translations.js
+
+# Supabase (local development only and Telegram bot (Deno Cloud))
+/supabase
+
+# Screenshots and media for documentation
+screenshot*.jpg
+
+# Python requirements (if not needed for deployment)
+requirements.txt
+pyrightconfig.json
+
+# Deno files (if not used in production)
+deno.lock
+
+# Other config files
+renovate.json
+biome.json
+components.json

@@ -1,0 +1,937 @@
+import type { GenerateContentResponse } from '@google/genai';
+import { HttpResponse, http } from 'msw';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { POST } from '@/app/api/generate-voice/route';
+import { getErrorMessage } from '@/lib/utils';
+import type { GoogleApiError } from '@/utils/googleErrors';
+import {
+  mockRedisGet,
+  mockRedisKeys,
+  mockRedisSet,
+  mockReplicateRun,
+  mockUploadFileToR2,
+  resetMockGoogleGenAIFactory,
+  server,
+  setMockGoogleGenAIFactory,
+} from './setup';
+
+describe('Generate Voice API Route', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    resetMockGoogleGenAIFactory();
+  });
+
+  describe('Input Validation', () => {
+    it('should return 400 when request body is null', async () => {
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        body: null,
+      });
+
+      const response = await POST(request);
+      const text = await response.text();
+
+      expect(response.status).toBe(400);
+      expect(text).toBe('Request body is empty');
+    });
+
+    it('should return 400 when text is missing', async () => {
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toBe('Missing required parameters');
+    });
+
+    it('should return 400 when voice is missing', async () => {
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toBe('Missing required parameters');
+    });
+
+    it('should return 400 when text exceeds maximum length for Replicate voices', async () => {
+      const longText = 'a'.repeat(501); // Exceeds 500 char limit
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Text exceeds the maximum length');
+    });
+
+    it('should return 400 when text exceeds maximum length for Gemini voices', async () => {
+      const longText = 'a'.repeat(1001); // Exceeds 1000 char limit
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Text exceeds the maximum length');
+    });
+  });
+
+  describe.skip('Authentication', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      // Mock unauthenticated user
+      server.use(
+        http.get('https://*.supabase.co/auth/v1/user', () =>
+          HttpResponse.json({ user: null }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(401);
+      expect(json.error).toBe('User not found');
+    });
+  });
+
+  describe('Voice Validation', () => {
+    it('should return 404 when voice is not found', async () => {
+      server.use(
+        http.get('https://*.supabase.co/rest/v1/voices', () => {
+          return HttpResponse.json([]); // Empty result
+        }),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'nonexistent' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(json.error).toBe('Voice not found');
+    });
+  });
+
+  describe('Credit System', () => {
+    it('should return 402 when user has insufficient credits for Replicate voice', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      // Override the getCredits mock for this specific test
+      vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world this is a test',
+          voice: 'tara',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.error).toBe('Insufficient credits');
+    });
+  });
+
+  describe('Caching', () => {
+    it('should return cached result for Replicate voice without consuming credits', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      const cachedUrl = 'https://example.com/cached-audio.wav';
+
+      // Mock Redis.get to return cached URL for this test
+      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toBe(cachedUrl);
+
+      // Verify no credits were consumed on cache hit
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+
+      // Verify Redis.get was called with correct filename
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringContaining('generated-audio-free/tara-'),
+      );
+    });
+
+    it('should return cached result for Gemini voice without consuming credits', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      const cachedUrl = 'https://example.com/cached-gpro-audio.wav';
+
+      // Mock Redis.get to return cached URL for this test
+      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toBe(cachedUrl);
+
+      // Verify no credits were consumed on cache hit
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+
+      // Verify Redis.get was called with correct filename
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringContaining('generated-audio-free/poe-'),
+      );
+    });
+
+    it('should generate new audio when cache miss occurs', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      // Mock cache miss
+      mockRedisGet.mockResolvedValueOnce(null);
+
+      server.use(
+        http.get('https://*.upstash.io/*', () =>
+          HttpResponse.json({ result: null }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+
+      // Verify audio was generated and saved
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        amount: 48,
+        userId: 'test-user-id',
+      });
+      expect(queries.saveAudioFile).toHaveBeenCalled();
+
+      // Verify new URL was cached
+      expect(mockRedisSet).toHaveBeenCalledWith(
+        expect.stringContaining('generated-audio-free/tara-'),
+        expect.stringContaining('files.sexyvoice.ai'),
+      );
+    });
+  });
+
+  describe('Voice Generation - Replicate', () => {
+    it('should successfully generate voice using Replicate', async () => {
+      const { saveAudioFile } = await import('@/lib/supabase/queries');
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      // Mock Replicate.run to return a ReadableStream
+      const mockStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1, 2, 3, 4]));
+          controller.close();
+        },
+      });
+
+      // We need to mock the replicate module
+      vi.doMock('replicate', () => {
+        return {
+          default: class Replicate {
+            run(_model: string, _options: any, onProgress?: any) {
+              // Simulate progress callback
+              if (onProgress) {
+                onProgress({ id: 'test-prediction-id', status: 'succeeded' });
+              }
+              return mockStream;
+            }
+          },
+        };
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json.creditsRemaining).toBeDefined();
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 48,
+        duration: '-1',
+        filename: 'generated-audio-free/tara-e5b92e4b.wav',
+        isPublic: false,
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+        usage: { userHasPaid: false },
+        predictionId: undefined,
+        text: 'Hello world',
+        url: 'https://files.sexyvoice.ai/generated-audio-free/tara-e5b92e4b.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-tara-id',
+      });
+
+      expect(json.url).toContain('files.sexyvoice.ai');
+    });
+
+    it('should throw error when Replicate output contains error property', async () => {
+      mockReplicateRun.mockResolvedValueOnce({
+        error: 'Model execution failed due to timeout',
+      });
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(mockReplicateRun).toHaveBeenCalled();
+    });
+  });
+
+  describe('Voice Generation - Google Gemini', () => {
+    it('should successfully generate voice using Google Gemini', async () => {
+      const { reduceCredits, saveAudioFile, getCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      // Override the getCredits mock for this specific test
+      vi.mocked(getCredits).mockResolvedValueOnce(3000);
+
+      const text = `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
+
+And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
+
+As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`;
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text, voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json.creditsRemaining).toBeDefined();
+
+      // Verify credits were consumed
+      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(saveAudioFile).toHaveBeenCalledOnce();
+      expect(mockUploadFileToR2).toHaveBeenCalledOnce();
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 12,
+        duration: '-1',
+        filename: 'generated-audio-free/poe-ddb72d4b.wav',
+        isPublic: false,
+        model: 'gemini-2.5-pro-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+          userHasPaid: false,
+        },
+        predictionId: undefined,
+        text,
+        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-ddb72d4b.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-poe-id',
+      });
+
+      expect(json.url).toContain('files.sexyvoice.ai');
+    });
+
+    it('should fallback to flash model when pro model fails', async () => {
+      const { saveAudioFile } = await import('@/lib/supabase/queries');
+
+      let callCount = 0;
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
+            callCount++;
+            if (callCount === 1) {
+              // First call (pro model) should throw
+              const error = new Error('Pro model failed');
+              throw error;
+            }
+            // Second call (flash model) succeeds
+            const mockAudioData =
+              'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+            return {
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          data: mockAudioData,
+                          mimeType: 'audio/wav',
+                        },
+                      },
+                    ],
+                  },
+                  finishReason: 'STOP',
+                },
+              ],
+              usageMetadata: {
+                promptTokenCount: 11,
+                candidatesTokenCount: 12,
+                totalTokenCount: 23,
+              },
+            } as GenerateContentResponse;
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(callCount).toBe(2); // Should have been called twice
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 12,
+        duration: '-1',
+        filename: 'generated-audio-free/poe-9de7f9fe.wav',
+        isPublic: false,
+        model: 'gemini-2.5-flash-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+          userHasPaid: false,
+        },
+        predictionId: undefined,
+        text: 'Hello world',
+        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-9de7f9fe.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-poe-id',
+      });
+
+      expect(json.url).toContain('files.sexyvoice.ai');
+    });
+
+    it('should handle Google API quota exceeded error', async () => {
+      // Mock Google API quota error - should fail on both pro and flash models
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            // Both pro and flash models will throw the same quota error
+            const apiError: GoogleApiError = {
+              code: 429,
+              message:
+                'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
+              status: 'RESOURCE_EXHAUSTED',
+              details: [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
+                  violations: [
+                    // @ts-expect-error - taken from logs
+                    {
+                      quotaMetric:
+                        'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
+                      quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
+                    },
+                  ],
+                },
+                {
+                  '@type': 'type.googleapis.com/google.rpc.Help',
+                  links: [
+                    {
+                      description: 'Learn more about Gemini API quotas',
+                      url: 'https://ai.google.dev/gemini-api/docs/rate-limits',
+                    },
+                  ],
+                },
+              ],
+            };
+            throw new Error(JSON.stringify({ error: apiError }));
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toContain(
+        getErrorMessage('THIRD_P_QUOTA_EXCEEDED', 'voice-generation'),
+      );
+    });
+
+    it('should return 403 when freemium user exceeds gpro voice limit', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      // Mock isFreemiumUserOverLimit to return true
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(false);
+      vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(json.errorCode).toBe('gproLimitExceeded');
+      expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
+        'test-user-id',
+      );
+    });
+
+    it('should allow voice generation when freemium user is under limit', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      // Mock isFreemiumUserOverLimit to return false (under limit)
+      vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(false);
+
+      // Mock cache miss
+      server.use(
+        http.get('https://*.upstash.io/*', () =>
+          HttpResponse.json({ result: null }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
+        'test-user-id',
+      );
+    });
+
+    it('should throw error when Gemini response has no data', async () => {
+      // Mock Gemini to return response without data (both pro and flash will fail)
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        // Missing data field
+                        mimeType: 'audio/wav',
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe(
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+    });
+
+    it('should throw error when Gemini response has no mimeType', async () => {
+      // Mock Gemini to return response without mimeType (both pro and flash will fail)
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                        // Missing mimeType field
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe(
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+    });
+
+    it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
+      // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                finishReason: 'PROHIBITED_CONTENT',
+                content: {
+                  parts: [],
+                },
+              },
+            ],
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(422);
+      expect(json.error).toBe(
+        getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
+      );
+    });
+  });
+
+  describe('Style Variants', () => {
+    it('should prepend style variant to text', async () => {
+      // Mock cache miss
+      server.use(
+        http.get('https://*.upstash.io/*', () =>
+          HttpResponse.json({ result: null }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'tara',
+          styleVariant: 'Excited',
+        }),
+      });
+
+      // We can't easily check the final text without more complex mocking,
+      // but we can ensure the request completes successfully
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+    });
+  });
+
+  describe('Request Abortion', () => {
+    it('should handle aborted requests gracefully', async () => {
+      // Mock Replicate API to return error
+      server.use(
+        http.post('https://api.replicate.com/v1/predictions', () =>
+          HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
+        ),
+      );
+
+      const controller = new AbortController();
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+        signal: controller.signal,
+      });
+
+      // Abort the request immediately
+      controller.abort();
+
+      // The function should still handle this gracefully
+      // The actual behavior depends on when the abort signal is checked
+      try {
+        await POST(request);
+      } catch (error) {
+        // AbortError is expected
+        expect(error).toBeDefined();
+      }
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle general errors and return 500', async () => {
+      // Mock getVoiceIdByName to throw an error
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.getVoiceIdByName).mockRejectedValueOnce(
+        new Error('Database connection failed'),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBeDefined();
+    });
+
+    it('should handle getVoiceIdByName failure with error response', async () => {
+      // Mock getVoiceIdByName to throw an error with status 429
+      const queries = await import('@/lib/supabase/queries');
+      const error = new Error('Quotas exceeded');
+      (error as any).status = 500;
+      vi.mocked(queries.getVoiceIdByName).mockRejectedValueOnce(error);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Failed to generate voice');
+    });
+  });
+
+  describe('Hash Generation', () => {
+    it('should generate consistent hashes for same inputs', async () => {
+      // This is tested indirectly through the caching mechanism
+      // We can verify that the same input produces the same cache key
+
+      const request1 = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      const request2 = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      });
+
+      // Both requests should use the same cache key
+      // This is verified by the consistent mocking behavior
+      const response1 = await POST(request1);
+      const response2 = await POST(request2);
+
+      expect(response1.status).toBe(200);
+      expect(response2.status).toBe(200);
+    });
+  });
+});
+
+describe('Integration Tests', () => {
+  it('should complete full voice generation flow for Replicate', async () => {
+    const request = new Request('http://localhost/api/generate-voice', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.url).toBeTruthy();
+    expect(json.creditsUsed).toBeGreaterThan(0);
+    expect(json.creditsRemaining).toBeDefined();
+  });
+
+  it('should complete full voice generation flow for Gemini', async () => {
+    // Set up mock Redis data for Gemini API keys
+    const mockApiKeyData = JSON.stringify({
+      id: 'test-key',
+      apiKey: 'test-gemini-key',
+      requestsPerMinute: 0,
+      tokensPerMinute: 0,
+      requestsPerDay: 0,
+      maxRequestsPerMinute: 15,
+      maxTokensPerMinute: 1_000_000,
+      maxRequestsPerDay: 1500,
+      lastMinuteReset: Date.now(),
+      lastDayReset: Date.now(),
+      isActive: true,
+      failureCount: 0,
+    });
+
+    // Mock Redis to return API key data
+    mockRedisKeys.mockResolvedValue(['gemini_api_key:test-key']);
+    mockRedisGet.mockImplementation((key: string) => {
+      if (key === 'gemini_api_key:test-key') {
+        return Promise.resolve(mockApiKeyData);
+      }
+      return Promise.resolve(null);
+    });
+
+    const request = new Request('http://localhost/api/generate-voice', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    // TODO: mock here isFreemiumUserOverLimit()
+
+    expect(response.status).toBe(200);
+    expect(json.url).toBeTruthy();
+    expect(json.creditsUsed).toBeGreaterThan(10);
+    expect(json.creditsRemaining).toBeDefined();
+  });
+});

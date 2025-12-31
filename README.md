@@ -22,7 +22,7 @@
 
 ## 🌟 About
 
-- Generate AI voices in multiple languages (English & Spanish)
+- Generate AI voices in 20+ languages with voice cloning support
 - Voice selection system with customizable options
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
@@ -38,7 +38,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices in English, Spanish, and Italian (more languages coming soon)
+- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, French, German, Japanese, Korean, and more
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -69,7 +69,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **[Supabase](https://supabase.com)** - Authentication and PostgreSQL database with SSR support
 - **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations *(planned)*
-- **[Vercel Blob Storage](https://vercel.com/storage/blob)** - Scalable audio file storage
+- **[Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)** - Scalable audio file storage with global CDN
 
 ### DevOps & Monitoring
 
@@ -90,7 +90,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Prerequisites
 
-- **Node.js 22+**
+- **Node.js 24+**
 - **pnpm**
 - **Supabase account** - <https://supabase.com>
 
@@ -116,24 +116,33 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    ```
 
    Fill in the required environment variables as defined in [`.env.example`](.env.example):
-   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-   - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram cronjob)
-   - `KV_REST_API_URL` - Your Redis (Upstash) KV REST API URL
-   - `KV_REST_API_TOKEN` - Your Redis (Upstash) KV REST API token
-   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-   - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-   - `FAL_KEY` - Your fal.ai API key for voice cloning
-   - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-   - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
-   - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing
-   - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-   - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-   - `STRIPE_TOPUP_5_PRICE_ID`
-   - `STRIPE_TOPUP_10_PRICE_ID`
-   - `STRIPE_TOPUP_99_PRICE_ID`
-   - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
-   - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Supabase
+      - `NEXT_PUBLIC_SUPABASE_URL`
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+   - Your Redis (Upstash)
+      - `KV_REST_API_URL`
+      - `KV_REST_API_TOKEN`
+   - Cloudflare R2 storage
+      - `R2_ACCESS_KEY_ID`
+      - `R2_SECRET_ACCESS_KEY`
+      - `R2_BUCKET_NAME`
+      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+   - AI 3rd party services
+      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+      - `FAL_KEY` - Your fal.ai API key for voice cloning
+      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+   - Stripe
+      - `STRIPE_SECRET_KEY`
+      - `STRIPE_WEBHOOK_SECRET`
+      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
+      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
+      - `STRIPE_TOPUP_5_PRICE_ID`
+      - `STRIPE_TOPUP_10_PRICE_ID`
+      - `STRIPE_TOPUP_99_PRICE_ID`
+    - Telegram cronjob
+      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
 4. **Set up Supabase**
@@ -166,7 +175,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm test:watch`         | Run tests in watch mode                 |
 | `pnpm lint`               | Lint codebase with Biome                |
 | `pnpm lint:fix`           | Fix linting issues automatically        |
-| `pnpm type-check`         | Run TypeScript type checking            |
+| `pnpm typecheck`          | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
 | `pnpm check-translations` | Validate translation files              |
 | `pnpm build:content`      | Build content layer                     |
@@ -188,10 +197,10 @@ pnpm test:watch
 
 ### Database Operations
 
-Generate TypeScript types from Supabase:
+Generate TypeScript types from Supabase Cloud Database:
 
 ```bash
-supabase gen types typescript --project-id PROJECT_ID > database.types.ts
+pnpm run generate-supabase-types
 ```
 
 Push schema changes to Supabase:
@@ -222,6 +231,19 @@ pip3 install seewav
 seewav your_audio.mp3 --color '0.8,0.0,0.4'
 ```
 
+### wav to mp3
+
+```bash
+# Convert WAV to MP3 with specific audio settings
+# -i input.wav: Input file
+# -acodec libmp3lame: Use LAME MP3 encoder
+# -q:a 2: Variable bit rate quality (0=highest, 9=lowest)
+# -ar 24000: Set audio sample rate to 24kHz
+# -ac 1: Set audio channels to mono (1 channel)
+# output.mp3: Output file
+ffmpeg -i input.wav -acodec libmp3lame -q:a 2 -ar 24000 -ac 1 output.mp3
+```
+
 ## 🔒 Security
 
 SexyVoice.ai implements multiple security layers:
@@ -229,7 +251,7 @@ SexyVoice.ai implements multiple security layers:
 - **Authentication**: Secure OAuth integration with Supabase Auth
 - **Data Protection**: Row-level security (RLS) policies in PostgreSQL
 - **API Security**: Rate limiting and request validation
-- **File Security**: Secure blob storage with access controls
+- **File Security**: Secure R2 storage with access controls
 - **Error Handling**: Comprehensive error tracking with Sentry
 - **Environment Isolation**: Separate configurations for development and production
 
