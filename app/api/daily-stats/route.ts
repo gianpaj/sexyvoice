@@ -276,17 +276,21 @@ export async function GET(request: NextRequest) {
   const customerPurchaseType = new Map<string, string>();
 
   for (const transaction of purchasePrevDayData) {
-    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
-      console.log('Invalid metadata in transaction:', transaction);
-      hasInvalidMetadata = true;
-      continue;
-    }
     const { dollarAmount, isFirstTopup, isFirstSubscription } =
       transaction.metadata as {
         dollarAmount: number;
         isFirstTopup?: boolean;
         isFirstSubscription?: boolean;
       };
+    if (
+      !transaction.metadata ||
+      typeof transaction.metadata !== 'object' ||
+      typeof dollarAmount !== 'number'
+    ) {
+      console.log('Invalid metadata in transaction:', transaction);
+      hasInvalidMetadata = true;
+      continue;
+    }
     const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
     customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
 
@@ -311,19 +315,23 @@ export async function GET(request: NextRequest) {
 
   const topCustomersList =
     topCustomerIds.length === 0
-      ? ['N/A']
-      : topCustomerIds.map((userId, index) => {
-          // Find the transaction for this user to get their profile data
-          const transaction = purchasePrevDayData.find(
-            (t) => t.user_id === userId,
-          );
-          const username =
-            maskUsername(transaction?.profiles?.username) || 'Unknown';
-          const spending = customerSpending.get(userId) ?? 0;
-          const purchaseType = customerPurchaseType.get(userId) || '';
-          const typeLabel = purchaseType ? ` - ${purchaseType}` : '';
-          return `  - Top ${index + 1} Customers: ${username} ($${spending.toFixed(2)}${typeLabel})`;
-        });
+      ? 'N/A'
+      : topCustomerIds
+          .map((userId) => {
+            // Find the transaction for this user to get their profile data
+            const transaction = purchasePrevDayData.find(
+              (t) => t.user_id === userId,
+            );
+            const username =
+              maskUsername(transaction?.profiles?.username) || 'Unknown';
+            const spending = customerSpending.get(userId) ?? 0;
+            const purchaseType = customerPurchaseType.get(userId) || '';
+            const typeLabel = purchaseType ? ` - ${purchaseType}` : '';
+            return `${username} ($${spending.toFixed(2)}${typeLabel})`;
+          })
+          .join(', ');
+
+  const topCustomerProfilesCount = topCustomerIds.length || '';
 
   const totalUniquePaidUsers = new Set(
     purchaseTransactions.map((t) => t.user_id),
@@ -388,7 +396,7 @@ export async function GET(request: NextRequest) {
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
-    ...topCustomersList,
+    `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
     '',
     `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) ${refundsTodayCount > 0 ? '😢' : ''}`,
     `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
