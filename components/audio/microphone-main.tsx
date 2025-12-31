@@ -155,15 +155,16 @@ export function MicrophoneMain(props: Props) {
       <div className="flex w-full">
         <div
           className={cn(
-            'flex w-full gap-1 bg-gray-800 pr-4',
+            'flex w-full gap-1 bg-secondary/60 pr-4',
             hasPermission ? 'rounded-l-md' : 'rounded-r-md rounded-l-md',
           )}
         >
           <Button
             aria-label="Toggle Microphone"
-            className="neutral-50 inline-flex items-center justify-center whitespace-nowrap rounded-r-none rounded-l-md bg-neutral-800 px-3 py-2 font-medium text-sm shadow-none transition-colors hover:bg-neutral-700 focus-visible:ring-1 focus-visible:ring-neutral-300 disabled:pointer-events-none disabled:opacity-50"
+            className="rounded-r-none rounded-l-md px-3 py-2"
             disabled={status === 'acquiring_media'}
             onClick={onToggleMicrophone}
+            variant="secondary"
           >
             {[
               'paused',
