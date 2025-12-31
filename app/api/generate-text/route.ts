@@ -2,6 +2,7 @@ import { google } from '@ai-sdk/google';
 // import { GoogleAICacheManager } from '@google/generative-ai/server';
 import * as Sentry from '@sentry/nextjs';
 import { streamText } from 'ai';
+import { checkBotId } from 'botid/server';
 import { NextResponse } from 'next/server';
 
 import { getEmotionTags } from '@/lib/ai';
@@ -33,6 +34,12 @@ export async function POST(request: Request) {
     selectedVoiceLanguage,
   }: { prompt: string; selectedVoiceLanguage: string } = await request.json();
   try {
+    const verification = await checkBotId();
+
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
     const supabase = await createClient();
 
     // Check if user is authenticated
