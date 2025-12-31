@@ -129,5 +129,6 @@ const PolicyPage = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: '.',
+  contentDirInclude: ['posts', 'policies'],
   documentTypes: [Post, PolicyPage],
 });
