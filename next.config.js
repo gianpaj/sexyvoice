@@ -6,7 +6,7 @@ const { withContentlayer } = require('next-contentlayer2');
  * Content Security Policy Header - Without Nonce
  * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
  */
- // DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
+// DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
 const cspHeader = `
     default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com;
     script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live;
@@ -86,13 +86,6 @@ let nextConfig = {
   },
 };
 
-if (process.env.ANALYZE === 'true') {
-  const withBundleAnalyzer = require('@next/bundle-analyzer')({
-    enabled: true,
-  });
-  nextConfig = withBundleAnalyzer(nextConfig);
-}
-
 nextConfig = withContentlayer(nextConfig);
 
 // nextConfig = withBotId(nextConfig);
@@ -102,9 +95,6 @@ if (process.env.NODE_ENV === 'production') {
   const { withSentryConfig } = require('@sentry/nextjs');
 
   nextConfig = withSentryConfig(nextConfig, {
-    // For all available options, see:
-    // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
     org: 'sexyvoiceai',
     project: 'sexyvoice-ai',
 

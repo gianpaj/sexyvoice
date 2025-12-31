@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "prebuild": "pnpm run check-translations && pnpm run build:content",
     "build": "SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
     "start": "next start",
@@ -20,7 +20,7 @@
     "check:fix": "biome check ./app components hooks lib middleware.ts --write",
     "preview": "next build && next start",
     "typecheck": "tsc --noEmit",
-    "analyze": "ANALYZE=true next build",
+    "analyze": "next experimental-analyze",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.js",
     "prepare": "husky"
@@ -77,7 +77,7 @@
     "music-metadata": "^11.2.3",
     "nanoid": "^5.0.9",
     "negotiator": "^1.0.0",
-    "next": "16.0.1",
+    "next": "16.1.1",
     "next-contentlayer2": "^0.5.8",
     "ogg-opus-decoder": "^1.7.3",
     "posthog-js": "^1.233.1",
@@ -97,7 +97,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
-    "@next/bundle-analyzer": "15.4.1",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^24.10.1",
     "@types/react": "19.2.7",
@@ -130,8 +129,8 @@
   "pnpm": {
     "overrides": {
       "@babel/runtime@<7.26.10": ">=7.26.10",
-      "@types/react": "19.0.12",
-      "@types/react-dom": "19.0.4",
+      "@types/react": "19.2.7",
+      "@types/react-dom": "19.2.3",
       "undici@<5.28.4": ">=5.28.4",
       "undici@<=5.28.2": ">=5.28.3",
       "undici@>=4.5.0 <5.28.5": ">=5.28.5",
