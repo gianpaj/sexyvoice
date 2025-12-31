@@ -444,10 +444,13 @@ export async function GET(request: NextRequest) {
         error: 'Failed to send Telegram message',
       });
     }
+    Sentry.captureException(error);
     Sentry.captureCheckIn({
       checkInId,
       monitorSlug: 'telegram-bot-daily-stats',
       status: 'error',
     });
+  } finally {
+    await Sentry.flush();
   }
 }
