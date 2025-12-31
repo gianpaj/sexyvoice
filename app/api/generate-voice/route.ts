@@ -345,7 +345,17 @@ export async function POST(request: Request) {
         );
       }
 
-      uploadUrl = await uploadFileToR2(filename, output, 'audio/mpeg');
+      // Convert ReadableStream to Buffer before uploading
+      const chunks: Uint8Array[] = [];
+      const reader = output.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) chunks.push(value);
+      }
+      const audioBuffer = Buffer.concat(chunks);
+
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
     }
 
     await redis.set(filename, uploadUrl);
