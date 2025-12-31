@@ -276,21 +276,22 @@ export async function GET(request: NextRequest) {
   const customerPurchaseType = new Map<string, string>();
 
   for (const transaction of purchasePrevDayData) {
+    if (
+      !transaction.metadata ||
+      typeof transaction.metadata !== 'object' ||
+      typeof (transaction.metadata as { dollarAmount?: unknown })
+        .dollarAmount !== 'number'
+    ) {
+      console.log('Invalid metadata in transaction:', transaction);
+      hasInvalidMetadata = true;
+      continue;
+    }
     const { dollarAmount, isFirstTopup, isFirstSubscription } =
       transaction.metadata as {
         dollarAmount: number;
         isFirstTopup?: boolean;
         isFirstSubscription?: boolean;
       };
-    if (
-      !transaction.metadata ||
-      typeof transaction.metadata !== 'object' ||
-      typeof dollarAmount !== 'number'
-    ) {
-      console.log('Invalid metadata in transaction:', transaction);
-      hasInvalidMetadata = true;
-      continue;
-    }
     const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
     customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
 
