@@ -30,27 +30,8 @@ export function formatDate(
   });
 }
 
-export function estimateCredits(
-  text: string,
-  voice: string,
-  model?: string,
-): number {
-  // Remove extra whitespace and split into words
-  const words = text.trim().split(/\s+/).length;
-
-  if (!text.trim()) {
-    return 0;
-  }
-
-  if (!voice) {
-    throw new Error('Voice is required');
-  }
-
-  // Using average speaking rate of 100 words per minute (middle of 120-150 range)
-  const wordsPerSecond = 100 / 60; // 2.25 words per second
-
+function getCreditMultiplier(voice: string, model?: string): number {
   let multiplier: number;
-  // Calculate multiplier based on voice
   switch (voice) {
     case 'pietro':
     case 'giulia':
@@ -69,11 +50,60 @@ export function estimateCredits(
   }
 
   if (model === 'gpro') {
-    multiplier = 4;
+    multiplier = 1.1;
   }
 
-  // Calculate estimated seconds (credits) by 10
+  return multiplier;
+}
+
+function calculateCredits(
+  words: number,
+  voice: string,
+  model?: string,
+): number {
+  if (!voice) {
+    throw new Error('Voice is required');
+  }
+
+  if (words <= 0) {
+    return 0;
+  }
+
+  // Using average speaking rate of 100 words per minute (middle of 120-150 range)
+  const wordsPerSecond = 100 / 60; // 2.25 words per second
+  const multiplier = getCreditMultiplier(voice, model);
+
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
+}
+
+export function estimateCredits(
+  text: string,
+  voice: string,
+  model?: string,
+): number {
+  // Remove extra whitespace and split into words
+  const words = text.trim().split(/\s+/).length;
+
+  if (!text.trim()) {
+    return 0;
+  }
+
+  return calculateCredits(words, voice, model);
+}
+
+// Credit calculation constants for gpro voices
+const CREDITS_PER_TOKEN = 0.5;
+
+export function calculateCreditsFromTokens(
+  tokenCount: number,
+  // voice?: string,
+  // model?: string,
+): number {
+  const normalizedTokens = Math.max(0, tokenCount);
+
+  // Calculate estimated credits based on tokens
+  // Using a ratio that approximates the actual credit consumption
+  return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN);
 }
 
 export function capitalizeFirstLetter(str: string) {
@@ -114,12 +144,13 @@ export function extractMetadata(
   if (isGeminiVoice) {
     const metadata = genAIResponse?.usageMetadata;
     if (
-      !metadata ||
-      !metadata.promptTokenCount ||
-      !metadata.candidatesTokenCount ||
-      !metadata.totalTokenCount
+      !(
+        metadata?.promptTokenCount &&
+        metadata.candidatesTokenCount &&
+        metadata.totalTokenCount
+      )
     ) {
-      return undefined;
+      return;
     }
     return {
       promptTokenCount: metadata.promptTokenCount.toString(),
@@ -128,8 +159,8 @@ export function extractMetadata(
     } as const;
   }
   const metrics = replicateResponse?.metrics;
-  if (!metrics?.predict_time || !metrics?.total_time) {
-    return undefined;
+  if (!(metrics?.predict_time && metrics?.total_time)) {
+    return;
   }
   return {
     predict_time: metrics.predict_time.toString(),
@@ -144,6 +175,29 @@ export const ERROR_CODES = {
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
+
+/**
+ * Maps error codes to appropriate HTTP status codes.
+ * - 422: Client input issues (content policy violations)
+ * - 500: Server/upstream errors (third-party API failures)
+ * - 503: Service temporarily unavailable (quota exceeded)
+ */
+export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
+  PROHIBITED_CONTENT: 422,
+  OTHER_GEMINI_BLOCK: 500,
+  REPLICATE_ERROR: 500,
+  THIRD_P_QUOTA_EXCEEDED: 503,
+  INTERNAL_SERVER_ERROR: 500,
+};
+
+export const getErrorStatusCode = (
+  errorCode: keyof typeof ERROR_CODES | unknown,
+): number => {
+  if (typeof errorCode === 'string' && errorCode in ERROR_STATUS_CODES) {
+    return ERROR_STATUS_CODES[errorCode as keyof typeof ERROR_CODES];
+  }
+  return 500;
+};
 
 export const getErrorMessage = (
   errorCode: keyof typeof ERROR_CODES | unknown,
@@ -191,3 +245,12 @@ export const getErrorMessage = (
 
   return serviceMessages[service] || serviceMessages.default;
 };
+
+export function isWavFormat(buffer: Buffer): boolean {
+  // WAV files start with "RIFF" and have "WAVE" at byte 8
+  return (
+    buffer.length > 12 &&
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WAVE'
+  );
+}

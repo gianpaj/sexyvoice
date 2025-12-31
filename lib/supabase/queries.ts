@@ -1,3 +1,5 @@
+'use server';
+
 import { createAdminClient } from './admin';
 import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
@@ -34,23 +36,20 @@ export async function getVoiceIdByName(
 
 export async function reduceCredits({
   userId,
-  currentAmount,
   amount,
 }: {
   userId: string;
-  currentAmount: number;
   amount: number;
 }) {
   const supabase = await createClient();
 
-  const newAmount = (currentAmount || 0) - amount;
+  // Decrement user credits by the specified amount using an RPC call
+  const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
 
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: newAmount })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
+  if (creditsError) throw creditsError;
 }
 
 export async function saveAudioFile({
@@ -76,7 +75,7 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
-  usage?: Record<string, string>;
+  usage?: Record<string, string | number | boolean>;
 }) {
   const supabase = await createClient();
 
@@ -84,8 +83,8 @@ export async function saveAudioFile({
     user_id: userId,
     storage_key: filename,
     text_content: text,
-    url: url,
-    model: model,
+    url,
+    model,
     prediction_id: predictionId,
     is_public: isPublic,
     voice_id: voiceId,
@@ -117,6 +116,17 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
     .single();
 
   return data?.id;
+};
+
+export const getUserByStripeCustomerId = async (customerId: string) => {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('stripe_id', customerId)
+    .single();
+  return data;
 };
 
 export const insertSubscriptionCreditTransaction = async (
@@ -151,6 +161,17 @@ export const insertSubscriptionCreditTransaction = async (
     // Transaction doesn't exist, continue with insertion
   }
 
+  // Check if this is the user's first subscription transaction
+  const { data: existingSubscriptions } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'purchase')
+    .limit(1);
+
+  const isFirstSubscription =
+    !existingSubscriptions || existingSubscriptions.length === 0;
+
   // Insert the transaction with reference_id (payment_intent)
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
@@ -161,6 +182,7 @@ export const insertSubscriptionCreditTransaction = async (
     description: `Subscription payment - $${dollarAmount}`,
     metadata: {
       dollarAmount,
+      isFirstSubscription,
       // Figure out how to send promo metadata with a Stripe pricing table
       // ...(promo && { promo }),
     },
@@ -211,6 +233,16 @@ export const insertTopupCreditTransaction = async (
     // Transaction doesn't exist, continue with insertion
   }
 
+  // Check if this is the user's first transaction (topup)
+  const { data: existingTopup } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'topup')
+    .limit(1);
+
+  const isFirstTopup = !existingTopup || existingTopup.length === 0;
+
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
@@ -221,6 +253,7 @@ export const insertTopupCreditTransaction = async (
     metadata: {
       packageId,
       dollarAmount,
+      isFirstTopup,
       ...(promo && { promo }),
     },
   });
@@ -231,10 +264,7 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
-export const updateUserCredits = async (
-  userId: string,
-  creditAmount: number,
-) => {
+const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
@@ -243,6 +273,20 @@ export const updateUserCredits = async (
   });
 
   if (error) throw error;
+};
+
+export const getPaidTransactions = async (userId: string) => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup'])
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  return data;
 };
 
 export const hasUserPaid = async (userId: string): Promise<boolean> => {

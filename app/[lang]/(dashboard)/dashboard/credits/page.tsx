@@ -11,6 +11,7 @@ import { getCustomerData } from '@/lib/redis/queries';
 import {
   createCustomerSession,
   createOrRetrieveCustomer,
+  refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -26,34 +27,53 @@ export default async function CreditsPage(props: {
   const { lang } = params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang, 'credits');
+  const dict = await getDictionary(lang);
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   const userData = user && (await getUserById(user.id));
-  if (!user || !userData) {
+  if (!(user && userData)) {
     throw new Error('User not found');
   }
 
-  if (!userData.stripe_id) {
-    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-    if (!stripe_id) {
-      console.error('Failed to create or retrieve Stripe customer.');
-      Sentry.captureMessage('Failed to create or retrieve Stripe customer.', {
-        level: 'error',
-        extra: { userId: user.id, email: user.email },
-      });
-    }
-    userData.stripe_id = stripe_id;
-  }
-
-  const customerData = await getCustomerData(userData.stripe_id);
-
-  const clientSecret = await createCustomerSession(
-    userData.id,
+  const stripeId = await createOrRetrieveCustomer(
+    user.id,
+    user.email!,
     userData.stripe_id,
   );
+
+  if (!stripeId) {
+    const error = new Error('Failed to create or retrieve Stripe customer.');
+    console.error(error.message);
+    Sentry.captureException(error, {
+      level: 'error',
+      extra: { userId: user.id, email: user.email },
+    });
+    throw error;
+  }
+
+  userData.stripe_id = stripeId;
+
+  let customerData = await getCustomerData(stripeId);
+  let shouldShowPricingTable =
+    !customerData || customerData.status !== 'active';
+  let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
+
+  if (shouldShowPricingTable) {
+    try {
+      customerData = await refreshCustomerSubscriptionData(stripeId);
+      shouldShowPricingTable = customerData.status !== 'active';
+    } catch (error) {
+      console.error('Failed to refresh Stripe subscription data', error);
+      // refreshCustomerSubscriptionData already reports errors to Sentry
+      shouldShowPricingTable = false;
+    }
+  }
+
+  if (shouldShowPricingTable) {
+    clientSecret = await createCustomerSession(userData.id, stripeId);
+  }
 
   const { data: existingTransactions } = await supabase
     .from('credit_transactions')
@@ -63,12 +83,16 @@ export default async function CreditsPage(props: {
     .limit(100);
 
   return (
-    <div className="space-y-8">
-      <TopupStatus dict={dict} />
+    <div className="mx-auto max-w-5xl space-y-8">
+      <TopupStatus dict={dict.credits} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 text-lg font-semibold">{dict.topup.title}</h3>
-          <p className="text-muted-foreground">{dict.topup.description}</p>
+          <h3 className="mb-4 font-semibold text-lg">
+            {dict.credits.topup.title}
+          </h3>
+          <p className="text-muted-foreground">
+            {dict.credits.topup.description}
+          </p>
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
@@ -84,11 +108,16 @@ export default async function CreditsPage(props: {
       <CreditTopup dict={dict} lang={lang} />
 
       <div className="my-8">
-        <h3 className="mb-4 text-lg font-semibold">{dict.history.title}</h3>
-        <CreditHistory dict={dict} transactions={existingTransactions} />
+        <h3 className="mb-4 font-semibold text-lg">
+          {dict.credits.history.title}
+        </h3>
+        <CreditHistory
+          dict={dict.credits}
+          transactions={existingTransactions}
+        />
       </div>
 
-      {(!customerData || customerData?.status !== 'active') && (
+      {shouldShowPricingTable && clientSecret && (
         <NextStripePricingTable clientSecret={clientSecret} />
       )}
     </div>
@@ -104,20 +133,20 @@ const NextStripePricingTable = ({
   const pricingTableId = process.env.STRIPE_PRICING_ID;
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
 
-  if (!pricingTableId || !publishableKey || !clientSecret) return null;
+  if (!(pricingTableId && publishableKey && clientSecret)) return null;
 
   return (
     <>
       <Script
         async
-        strategy="lazyOnload"
         src="https://js.stripe.com/v3/pricing-table.js"
+        strategy="lazyOnload"
       />
       {/* @ts-ignore */}
       <stripe-pricing-table
+        customer-session-client-secret={clientSecret.client_secret}
         pricing-table-id={pricingTableId}
         publishable-key={publishableKey}
-        customer-session-client-secret={clientSecret.client_secret}
       />
     </>
   );

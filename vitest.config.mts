@@ -11,11 +11,13 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    testTimeout: 30000, // 30 seconds default timeout for all tests
-    hookTimeout: 120000, // 2 minutes for hooks (beforeAll/afterAll) - needed for redis-memory-server binary download in CI
+    testTimeout: 30_000, // 30 seconds default timeout for all tests
+    hookTimeout: 120_000, // 2 minutes for hooks (beforeAll/afterAll) - needed for redis-memory-server binary download in CI
     onConsoleLog(log, type) {
       if (
-        ((log.startsWith('[STRIPE HOOK') ||
+        ((['[STRIPE HOOK', '[STRIPE ADMIN'].some((str) =>
+          log.startsWith(str),
+        ) ||
           log.includes('OTHER_GEMINI_BLOCK')) &&
           type === 'stdout') ||
         type === 'stderr'
@@ -25,12 +27,12 @@ export default defineConfig({
       return true;
     },
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/generate-voice.test.ts', 'tests/stripe-webhook.test.ts'],
-    // exclude: ['lib/utils.test.ts'],
+    include: ['tests/*.test.ts'],
     coverage: {
       provider: 'v8',
       include: [
-        // app/api/clone-voice/route.ts
+        'lib/utils.ts',
+        'app/api/clone-voice/*.ts',
         'app/api/generate-voice/*.ts',
         'app/api/stripe/webhook/route.ts',
       ],
@@ -38,7 +40,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, '.'),
+      '@': resolve(__dirname, './'),
     },
   },
 });

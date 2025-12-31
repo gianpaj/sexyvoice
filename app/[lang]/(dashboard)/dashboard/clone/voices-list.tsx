@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import type { Locale } from '@/lib/i18n/i18n-config';
 // import {
 //   DropdownMenu,
 //   DropdownMenuContent,
@@ -31,7 +32,7 @@ export function VoicesList({
   lang,
 }: {
   voices: Voice[];
-  lang: string;
+  lang: Locale;
 }) {
   // const [isLoading, setIsLoading] = useState<string | null>(null);
   // const router = useRouter();
@@ -63,9 +64,9 @@ export function VoicesList({
 
   if (voices.length === 0) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-lg font-semibold mb-2">No voices yet</h3>
-        <p className="text-muted-foreground mb-4">
+      <div className="py-12 text-center">
+        <h3 className="mb-2 font-semibold text-lg">No voices yet</h3>
+        <p className="mb-4 text-muted-foreground">
           Create your first voice clone to get started
         </p>
       </div>
@@ -77,7 +78,7 @@ export function VoicesList({
       {voices.map((voice) => (
         <Card key={voice.id}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">
+            <CardTitle className="font-semibold text-lg">
               {voice.name}
             </CardTitle>
             {/* {!voice.is_public && (
@@ -117,7 +118,7 @@ export function VoicesList({
 
               <div className="mt-4 space-y-4">
                 {voice.created_at && (
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-muted-foreground text-sm">
                     Created{' '}
                     {formatDistanceToNow(new Date(voice.created_at), {
                       addSuffix: true,

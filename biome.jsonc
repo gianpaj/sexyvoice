@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.3/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,7 +7,16 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+    "includes": [
+      "**",
+      "!**/venv",
+      "!**/.venv",
+      "!**/node_modules",
+      "!components/ui",
+      "!.next",
+      "!dist",
+      "!build"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -22,6 +31,13 @@
         "useLiteralEnumMembers": "error",
         "useNodejsImportProtocol": "error",
         "useAsConstAssertion": "error",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": {
+            "style": "interface"
+          }
+        },
+        "useBlockStatements": "off",
         "useEnumInitializers": "error",
         "useSelfClosingElements": "error",
         "useConst": "error",
@@ -45,9 +61,15 @@
       },
       "correctness": {
         "useUniqueElementIds": "off"
+      },
+      "nursery": {
+        "noShadow": "off",
+        "noLeakedRender": "off"
+      },
+      "performance": {
+        "useTopLevelRegex": "off"
       }
     },
-
     "domains": {
       "next": "recommended",
       "react": "recommended"
@@ -61,7 +83,8 @@
       "lineEnding": "lf",
       "lineWidth": 80,
       "attributePosition": "auto",
-      "quoteStyle": "single"
+      "quoteStyle": "single",
+      "trailingCommas": "all"
     }
   },
   "assist": {
@@ -70,7 +93,15 @@
         "organizeImports": {
           "level": "on",
           "options": {
-            "groups": [":NODE:", ":PACKAGE:", ":BLANK_LINE:", ":ALIAS:"]
+            "groups": [
+              // Modules imported with the `npm:` protocol
+              "npm:*",
+              "npm:*/**",
+              ":NODE:",
+              ":PACKAGE:",
+              ":BLANK_LINE:",
+              ":ALIAS:"
+            ]
           }
         }
       }
@@ -80,5 +111,9 @@
     "parser": {
       "tailwindDirectives": true
     }
-  }
+  },
+  "extends": [
+    "ultracite/core",
+    "ultracite/next"
+  ]
 }

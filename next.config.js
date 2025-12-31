@@ -1,17 +1,20 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
 
+// TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
  * Content Security Policy Header - Without Nonce
  * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
  */
+ // DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
 const cspHeader = `
-    default-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://api.unisvg.com https://api.iconify.design;
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://client.crisp.chat https://js.stripe.com https://vercel.live;
+    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
     img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
     font-src 'self' https://client.crisp.chat;
     object-src 'none';
+    worker-src 'self' blob:;
     frame-src 'self' https://js.stripe.com;
     base-uri 'self';
     form-action 'self';
@@ -32,8 +35,9 @@ let nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
+        hostname: 'images.sexyvoice.ai',
         port: '',
+        pathname: '**',
       },
     ],
   },
@@ -106,6 +110,11 @@ if (process.env.NODE_ENV === 'production') {
 
     // Only print logs for uploading source maps in CI
     silent: !process.env.CI,
+
+    telemetry: process.env.VERCEL_ENV === 'production',
+    sourcemaps: {
+      disable: process.env.VERCEL_ENV !== 'production',
+    },
 
     // For all available options, see:
     // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/

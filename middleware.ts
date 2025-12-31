@@ -32,19 +32,32 @@ const publicRoutesWithoutAuth = [
   '/api/inngest',
 ];
 
+const publicRoutesWithLang = (locales: readonly string[]) =>
+  locales.flatMap((locale) => [
+    `/${locale}/wrapped`,
+    `/${locale}/privacy-policy`,
+    `/${locale}/terms`,
+  ]);
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  if (publicRoutesWithoutAuth.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (publicRoutesWithLang(i18n.locales).includes(pathname)) {
+    return NextResponse.next();
+  }
+
   const pathnameIsMissingLocale = i18n.locales.every(
     (locale) =>
-      !pathname.startsWith(`/${locale}/`) &&
-      !pathname.startsWith('/auth') &&
-      !pathname.startsWith('/privacy-policy') &&
-      !pathname.startsWith('/terms') &&
-      !pathname.startsWith('/api') &&
-      !pathname.startsWith('/sitemap') &&
-      !pathname.startsWith('/webhook') &&
-      pathname !== `/${locale}`,
+      !(
+        pathname.startsWith(`/${locale}/`) ||
+        pathname.startsWith('/auth') ||
+        pathname.startsWith('/api') ||
+        pathname.startsWith('/webhook')
+      ) && pathname !== `/${locale}`,
   );
 
   // console.log({ pathnameIsMissingLocale, pathname });
@@ -63,10 +76,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  if (publicRoutesWithoutAuth.includes(pathname)) {
-    return NextResponse.next();
-  }
-
   const locale = getLocaleFromPathname(req);
 
   return await updateSession(req, locale);
@@ -79,15 +88,15 @@ export const config = {
      * - _next/image (image optimization files)
      * - ingest (Posthug rewrites)
      * - favicon.ico (favicon file)
+     * - robots.txt (robots file)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
      * - sitemap - xml
      * - /{2-letter-lang}/blog/* paths
-     * - /privacy-policy
-     * - /terms
+     * - /{2-letter-lang}/tools/* paths=
      * - /manifest.json
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|[a-z]{2}/blog/|privacy-policy|terms|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|[a-z]{2}/tools/|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },

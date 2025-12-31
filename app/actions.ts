@@ -1,14 +1,15 @@
 'use server';
 import * as Sentry from '@sentry/nextjs';
-import { del } from '@vercel/blob';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { deleteFileFromR2 } from '@/lib/storage/upload';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
-const EMAIL_SCHEMA = z.string().email({ message: 'Invalid email' });
+const EMAIL_SCHEMA = z.email({ message: 'Invalid email' });
 
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = formData.get('email')?.toString();
@@ -55,7 +56,7 @@ export const updatePasswordAction = async (formData: FormData) => {
   const confirmPassword = formData.get('confirmPassword') as string;
   const lang = formData.get('lang')?.toString();
 
-  if (!password || !confirmPassword) {
+  if (!(password && confirmPassword)) {
     encodedRedirect(
       'error',
       `/${lang}/protected/update-password`,
@@ -87,7 +88,7 @@ export const updatePasswordAction = async (formData: FormData) => {
   encodedRedirect('success', `/${lang}/dashboard`, 'passwords_updated');
 };
 
-export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
+export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   'use server';
 
   const supabase = await createClient();
@@ -108,7 +109,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
     .eq('user_id', user.id);
   if (audio_files) {
     const deletionResults = await Promise.allSettled(
-      audio_files.map((file) => del(file.storage_key)),
+      audio_files.map((file) => deleteFileFromR2(file.storage_key)),
     );
 
     deletionResults.forEach((result, index) => {
@@ -116,12 +117,12 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
         const file = audio_files[index];
         Sentry.captureException(result.reason, {
           extra: {
-            message: 'Failed to delete blob from storage.',
+            message: 'Failed to delete file from R2 storage.',
             file,
           },
         });
         console.error(
-          `Failed to delete blob ${file.storage_key}`,
+          `Failed to delete file ${file.storage_key} from R2`,
           result.reason,
         );
       }

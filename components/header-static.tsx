@@ -1,57 +1,61 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
-// import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { useIsMobileSizes } from '@/hooks/use-mobile';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
-export async function HeaderStatic({ lang }: { lang: Locale }) {
-  const dict = await getDictionary(lang, 'pages');
+export function HeaderStatic({
+  lang,
+  dict,
+}: {
+  lang: Locale;
+  dict: (typeof langDict)['header'];
+}) {
+  const { isMobile375 } = useIsMobileSizes();
+
   return (
-    <header className="border-b border-gray-700 bg-gray-900">
-      <nav className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href={`/${lang}`} className="z-10 gap-0 items-end flex">
-          <div className="aspect-square">
-            <Image
-              src={logoSmall}
-              alt="Logo"
-              width={221 / 8}
-              height={292 / 8}
-            />
-          </div>
-          <span className="text-xl text-white font-semibold">exyVoice.ai</span>
+    <header className="border-gray-700 border-b bg-gray-900">
+      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+        <Link className="z-10 flex items-end gap-0" href={`/${lang}`}>
+          <Image alt="Logo" height={292 / 8} src={logoSmall} width={221 / 8} />
+          <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-4 justify-center z-10">
-          {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
-
+        <div className="z-10 hidden items-center justify-center gap-4 md:flex">
           <div className="space-x-4">
-            <Button variant="secondary" asChild>
+            <Button asChild variant="secondary">
               <Link href={`/${lang}/login`} prefetch>
-                {dict['/login']}
+                {dict.login}
               </Link>
             </Button>
-            <Button variant="default" asChild effect="ringHover">
+            <Button asChild effect="ringHover" variant="default">
               <Link href={`/${lang}/signup`} prefetch>
-                {dict['/signup']}
+                {dict.signup}
               </Link>
             </Button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden z-10 flex gap-2">
-          <Button asChild size="sm" variant="secondary">
-            <Link href={`/${lang}/login`} className="w-full" prefetch>
-              {dict['/login']}
+        <div className="z-10 flex gap-2 md:hidden">
+          <Button
+            asChild
+            size={isMobile375 && lang !== 'en' ? 'xs' : 'sm'}
+            variant="secondary"
+          >
+            <Link className="w-full" href={`/${lang}/login`} prefetch>
+              {dict.login}
             </Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href={`/${lang}/signup`} className="w-full" prefetch>
-              {dict['/signup']}
+          <Button asChild size={isMobile375 && lang !== 'en' ? 'xs' : 'sm'}>
+            <Link className="w-full" href={`/${lang}/signup`} prefetch>
+              {dict.signup}
             </Link>
           </Button>
         </div>

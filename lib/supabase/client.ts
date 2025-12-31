@@ -6,7 +6,7 @@ export type TypedSupabaseClient = SupabaseClient<Database>;
 
 let client: TypedSupabaseClient | undefined;
 
-export function createClient() {
+export function getSupabaseBrowserClient() {
   if (client) {
     return client;
   }
@@ -24,7 +24,7 @@ export function createClient() {
 }
 
 function useSupabaseBrowser() {
-  return useMemo(createClient, []);
+  return useMemo(getSupabaseBrowserClient, []);
 }
 
 export default useSupabaseBrowser;

@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import { AudioPlayer } from '@/app/[lang]/(dashboard)/dashboard/history/audio-player';
+import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import {
   Card,
   CardContent,
@@ -27,6 +27,7 @@ import { getEmotionTags } from '@/lib/ai';
 import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter } from '@/lib/utils';
+import { AudioPlayerWithContext } from './audio-player-with-context';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import {
@@ -63,10 +64,9 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  // const textIsOverLimit = text.length > charactersLimit;
   return (
     <Card>
-      <CardHeader className="sm:p-6 p-4 pt-6 sm:pb-2">
+      <CardHeader className="p-4 pt-6 sm:p-6 sm:pb-2">
         <CardTitle className="flex flex-row">
           {dict.voiceSelector.title}
           <TooltipProvider>
@@ -74,10 +74,10 @@ export function VoiceSelector({
               <TooltipTrigger asChild>
                 <Button
                   className="h-auto w-auto self-end pb-[2px]"
-                  variant="link"
                   size="icon"
+                  variant="link"
                 >
-                  <Info className="w-4 h-4 ml-2" />
+                  <Info className="ml-2 h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
@@ -95,8 +95,8 @@ export function VoiceSelector({
         </CardTitle>
         <CardDescription>{dict.voiceSelector.description}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6 sm:p-6 p-4">
-        <Select value={selectedVoice?.name} onValueChange={setSelectedVoice}>
+      <CardContent className="space-y-6 p-4 sm:p-6">
+        <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
@@ -104,7 +104,7 @@ export function VoiceSelector({
             {publicVoices.length > 0 &&
               publicVoices.map((voice) => (
                 <SelectItem
-                  className="py-3 cursor-pointer"
+                  className="cursor-pointer py-3"
                   key={voice.id}
                   value={voice.name}
                 >
@@ -113,28 +113,68 @@ export function VoiceSelector({
               ))}
           </SelectContent>
         </Select>
+        <AudioProvider>
+          {selectedVoice?.sample_url && (
+            <div className="flex items-center justify-start gap-2 py-2 lg:w-2/3">
+              <AudioPlayerWithContext
+                playAudioTitle={dict.playAudio}
+                url={selectedVoice.sample_url}
+              />
+              <div className="flex items-center gap-3">
+                <p className="text-muted-foreground text-sm">
+                  <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
+                  prompt: <i>{selectedVoice.sample_prompt}</i>
+                </p>
+                {getEmotionTags(selectedVoice.language) && (
+                  <TooltipProvider>
+                    <Tooltip delayDuration={100} supportMobileTap>
+                      <TooltipTrigger asChild>
+                        <Button
+                          className="h-auto w-auto p-1"
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          <strong>
+                            {dict.voiceSelector.toolTipEmotionTags}
+                          </strong>
+                          <br />
+                          {getEmotionTags(selectedVoice.language)}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+            </div>
+          )}
+        </AudioProvider>
         {isGeminiVoice && (
           <div className="relative">
             <Textarea
+              className="textarea-1 pr-16 transition-[height] duration-200 ease-in-out"
               onChange={(e) => setSelectedStyle(e.target.value)}
-              value={selectedStyle}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
-              className="textarea-1 transition-[height] duration-200 ease-in-out"
+              ref={textareaRef}
               style={
                 {
                   '--ta1-height': isFullscreen ? '30vh' : '4rem',
                 } as React.CSSProperties
               }
-              ref={textareaRef}
+              value={selectedStyle}
             />
             <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setIsFullscreen(!isFullscreen)}
               className={
-                'absolute right-2 top-2 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
               }
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              size="icon"
               title="Fullscreen"
+              variant="ghost"
             >
               {isFullscreen ? (
                 <Minimize2 className="h-4 w-4" />
@@ -142,39 +182,6 @@ export function VoiceSelector({
                 <Maximize2 className="h-4 w-4" />
               )}
             </Button>
-          </div>
-        )}
-        {selectedVoice?.sample_url && (
-          <div className="flex gap-2 items-center justify-start py-2 lg:w-2/3">
-            <AudioPlayer url={selectedVoice.sample_url} />
-            <div className="flex items-center gap-3">
-              <p className="text-sm text-muted-foreground">
-                <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
-                prompt: <i>{selectedVoice.sample_prompt}</i>
-              </p>
-              {getEmotionTags(selectedVoice.language) && (
-                <TooltipProvider>
-                  <Tooltip delayDuration={100} supportMobileTap>
-                    <TooltipTrigger asChild>
-                      <Button
-                        className="h-auto w-auto p-1"
-                        variant="ghost"
-                        size="icon"
-                      >
-                        <Info className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="max-w-xs">
-                        <strong>{dict.voiceSelector.toolTipEmotionTags}</strong>
-                        <br />
-                        {getEmotionTags(selectedVoice.language)}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
           </div>
         )}
       </CardContent>

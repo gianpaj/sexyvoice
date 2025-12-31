@@ -4,13 +4,19 @@ import {
   AlertCircle,
   CircleStop,
   Download,
+  InfoIcon,
   PaperclipIcon,
   UploadIcon,
   XIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
+import { MicrophoneMain } from '@/components/audio/microphone-main';
+import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import PulsatingDots from '@/components/PulsatingDots';
+import { toast } from '@/components/services/toast';
+import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,36 +28,222 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-// import { Progress } from '@/components/ui/progress';
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
-import type lang from '@/lib/i18n/dictionaries/en.json';
-import { AudioPlayer } from '../history/audio-player';
+import useMediaRecorder from '@/hooks/use-media-recorder';
+import { downloadUrl } from '@/lib/download';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+import { cn } from '@/lib/utils';
+import { AudioProvider, useAudio } from './audio-provider';
+import type { SampleAudio } from './CloneSampleCard';
+import CloneSampleCard from './CloneSampleCard';
 
-type Status = 'idle' | 'generating' | 'complete' | 'error';
+export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a';
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
+
+const sampleAudios: readonly SampleAudio[] = [
+  {
+    id: 1,
+    name: 'Marilyn Monroe 🇺🇸',
+    language: 'english',
+    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
+    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
+    audioExampleOutputSrc:
+      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
+  },
+  // {
+  //   id: 2,
+  //   name: 'Morgan Freeman 🇺🇸',
+  //   prompt: 'The most important thing is the mission, not the money',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  // },
+  // {
+  //   id: 3,
+  //   name: 'Audrey Hepburn 🇬🇧',
+  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  // },
+  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
+];
+
+const SUPPORTED_LOCALE_CODES = [
+  { code: 'ar', value: 'arabic' },
+  { code: 'da', value: 'danish' },
+  { code: 'de', value: 'german' },
+  { code: 'el', value: 'greek' },
+  { code: 'en', value: 'english' },
+  { code: 'en-multi', value: 'english' },
+  { code: 'es', value: 'spanish' },
+  { code: 'fi', value: 'finnish' },
+  { code: 'fr', value: 'french' },
+  { code: 'he', value: 'hebrew' },
+  { code: 'hi', value: 'hindi' },
+  { code: 'it', value: 'italian' },
+  { code: 'ja', value: 'japanese' },
+  { code: 'ko', value: 'korean' },
+  { code: 'ms', value: 'malay' },
+  { code: 'nl', value: 'dutch' },
+  { code: 'no', value: 'norwegian' },
+  { code: 'pl', value: 'polish' },
+  { code: 'pt', value: 'portuguese' },
+  { code: 'ru', value: 'russian' },
+  { code: 'sv', value: 'swedish' },
+  { code: 'sw', value: 'swahili' },
+  { code: 'tr', value: 'turkish' },
+  { code: 'zh', value: 'chinese' },
+];
 
 export default function NewVoiceClient({
   dict,
+  lang,
+  hasEnoughCredits,
 }: {
-  dict: (typeof lang)['generate'];
+  dict: (typeof langDict)['clone'];
+  lang: Locale;
+  hasEnoughCredits: boolean;
 }) {
+  return (
+    <AudioProvider>
+      <NewVoiceClientInner
+        dict={dict}
+        hasEnoughCredits={hasEnoughCredits}
+        lang={lang}
+      />
+    </AudioProvider>
+  );
+}
+
+const MAX_LENGTH = 500;
+
+function NewVoiceClientInner({
+  dict,
+  lang,
+  hasEnoughCredits,
+}: {
+  dict: (typeof langDict)['clone'];
+  lang: Locale;
+  hasEnoughCredits: boolean;
+}) {
+  const audio = useAudio();
+  const {
+    convert: convertWithFFmpeg,
+    ensureLoaded,
+    isLoading: ffmpegLoading,
+  } = useFFmpeg({ lazyLoad: true });
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
-  const [textToConvert, setTextToConvert] = useState('');
-  const [generatedAudioUrl, setGeneratedAudioUrl] = useState('');
+  const [text, setText] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
+  const [selectedLocale, setSelectedLocale] = useState({
+    code: 'en',
+    value: 'english',
+  });
+  const [ffmpegError, setFFmpegError] = useState<string | null>(null);
+  const [micBlob, setMicBlob] = useState<Blob | null>(null);
+  const [micRecording, setMicRecording] = useState(false);
+  const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
+    null,
+  );
+  const [convertingMicAudio, setConvertingMicAudio] = useState(false);
+
+  // Preload FFmpeg when non-English locale is selected
+  useEffect(() => {
+    if (selectedLocale.code !== 'en') {
+      setFFmpegError(null);
+      ensureLoaded().catch((error) => {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : 'Failed to load audio processor';
+        setFFmpegError(errorMsg);
+        console.error('FFmpeg preload error:', error);
+      });
+    }
+  }, [selectedLocale.code, ensureLoaded]);
+
+  const handleStartRecording = async () => {
+    try {
+      setFFmpegError(null);
+      // Preload FFmpeg before recording if needed for this locale
+      if (selectedLocale.code !== 'en') {
+        await ensureLoaded();
+      }
+      startRecording();
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'Failed to load audio processor';
+      setFFmpegError(errorMsg);
+      setErrorMessage(`Failed to start recording: ${errorMsg}`);
+    }
+  };
+
+  const {
+    status: micStatus,
+    startRecording,
+    stopRecording,
+    clearMediaStream,
+    clearMediaBlob,
+    mediaStream,
+    mediaBlob: recorderMediaBlob,
+    getMediaStream,
+  } = useMediaRecorder({
+    mediaStreamConstraints: { audio: true },
+    onStop: (blob) => {
+      // Store the raw blob - conversion will happen at generation time based on the locale
+      setMicBlob(blob);
+    },
+    onError: (err) => {
+      console.error(err);
+      setFFmpegError(err instanceof Error ? err.message : 'Microphone error');
+    },
+    onStart: () => {
+      setMicRecording(true);
+      setMicBlob(null);
+      setFFmpegError(null);
+    },
+  });
+
+  // FFmpeg for audio conversion
+
+  const supportedLocales = useMemo(() => {
+    const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
+    return SUPPORTED_LOCALE_CODES.map(({ code, value }) => ({
+      code,
+      value,
+      name:
+        `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
+        code,
+    })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [lang]);
+
+  const onFilesAdded = () => {
+    setStatus('idle');
+    setErrorMessage('');
+  };
 
   const [
     { files, isDragging, errors },
@@ -64,9 +256,11 @@ export default function NewVoiceClient({
       removeFile,
       getInputProps,
       clearErrors,
+      addFiles,
     },
   ] = useFileUpload({
-    maxSize: MAX_FILE_SIZE,
+    onFilesAdded,
+    maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
   });
@@ -89,15 +283,16 @@ export default function NewVoiceClient({
   }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
+
   const handleGenerate = useCallback(async () => {
-    if (!file) {
-      setErrorMessage('Please select an audio file.');
+    if (!(file || micBlob)) {
+      setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
       return;
     }
 
-    if (!textToConvert.trim()) {
-      setErrorMessage('Please enter some text to convert to speech.');
+    if (!text.trim()) {
+      setErrorMessage(dict.errors.noText);
       setStatus('error');
       return;
     }
@@ -107,49 +302,121 @@ export default function NewVoiceClient({
     clearErrors();
     setStatus('generating');
 
+    let voiceRes: Response | undefined;
     try {
       abortController.current = new AbortController();
+
+      // Use micBlob if available, otherwise use file
+      let audioToProcess = file;
+      if (micBlob && !file) {
+        // Convert WebM to WAV for non-English locales
+        // Check locale at GENERATION time, not recording time
+        if (micBlob.type.includes('webm') && selectedLocale.code !== 'en') {
+          setConvertingMicAudio(true);
+          try {
+            const wavBlob = await convertWithFFmpeg(micBlob, 'wav');
+            audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
+              type: wavBlob.type,
+            });
+          } catch (convertError) {
+            console.error('WebM to WAV conversion error:', convertError);
+            // TODO send logs to Sentry
+            setErrorMessage(
+              Error.isError(convertError)
+                ? `Audio conversion failed: ${convertError.message}`
+                : 'Audio conversion failed. Please try recording again.',
+            );
+            setStatus('error');
+            setConvertingMicAudio(false);
+            return;
+          } finally {
+            setConvertingMicAudio(false);
+          }
+        } else {
+          // For English or non-WebM formats, use blob directly
+          const mimeType = micBlob.type || 'audio/wav';
+          const isWebM = mimeType.includes('webm');
+          const filename = isWebM
+            ? 'microphone-recording.webm'
+            : 'microphone-recording.wav';
+          audioToProcess = new File([micBlob], filename, { type: mimeType });
+        }
+      }
+
+      if (!audioToProcess) {
+        setErrorMessage(dict.errors.noAudioFile);
+        setStatus('error');
+        return;
+      }
+
       // First upload and process the voice
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('text', textToConvert);
+      formData.append('file', audioToProcess);
+      formData.append('text', text);
+      formData.append('locale', selectedLocale.code);
 
-      const voiceRes = await fetch('/api/clone-voice', {
+      voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
         body: formData,
         signal: abortController.current.signal,
       });
 
-      const voiceResult = await voiceRes.json();
-
       if (!voiceRes.ok) {
-        setErrorMessage(
-          voiceResult.message ||
-            voiceResult.error ||
-            dict.errorCloning ||
-            'Failed to clone voice.',
-        );
+        let errorMessage = dict.errorCloning || 'Failed to clone voice.';
+
+        // Handle 413 Payload Too Large - returns plain text
+        if (voiceRes.status === 413) {
+          errorMessage =
+            dict.errorTooLarge ||
+            'File size too large. Please use a smaller audio file.';
+        } else {
+          const voiceResult = await voiceRes.json();
+          errorMessage =
+            voiceResult.message || voiceResult.error || errorMessage;
+        }
+
+        setErrorMessage(errorMessage);
         setStatus('error');
         return;
       }
 
+      const voiceResult = await voiceRes.json();
+
       setGeneratedAudioUrl(voiceResult.url);
+
+      // Automatically play the audio using the context
+      audio?.setUrlAndPlay(voiceResult.url);
+
+      toast.success(dict.success);
 
       setStatus('complete');
       setActiveTab('preview');
-    } catch (err: unknown) {
+    } catch (err) {
       if (
-        err instanceof Error &&
+        Error.isError(err) &&
         err.message === 'signal is aborted without reason'
       ) {
         return;
       }
-      setErrorMessage(
-        err instanceof Error ? err.message : 'Unexpected error occurred',
-      );
+      let errorMsg = '';
+      if (voiceRes && !voiceRes.ok) {
+        errorMsg = voiceRes.statusText;
+      } else if (Error.isError(err)) {
+        errorMsg = err.message;
+      }
+      setErrorMessage(errorMsg || 'Unexpected error occurred');
       setStatus('error');
     }
-  }, [dict, file, textToConvert, clearErrors]);
+  }, [
+    audio,
+    dict,
+    file,
+    micBlob,
+    text,
+    selectedLocale,
+    clearErrors,
+    convertWithFFmpeg,
+  ]);
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -164,11 +431,7 @@ export default function NewVoiceClient({
         event.preventDefault();
 
         // Only trigger if form can be submitted
-        if (
-          status !== 'generating' &&
-          textToConvert.trim()
-          // && hasEnoughCredits
-        ) {
+        if (status !== 'generating' && text.trim() && hasEnoughCredits) {
           handleGenerate();
         }
       }
@@ -181,220 +444,405 @@ export default function NewVoiceClient({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, textToConvert, handleGenerate]);
+  }, [status, text, handleGenerate, hasEnoughCredits]);
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = generatedAudioUrl;
-    link.target = '_blank';
-    link.download = 'generated_audio.mp3';
-    link.click();
+  const downloadAudio = async () => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
+
+    if (!generatedAudioUrl) return;
+
+    try {
+      await downloadUrl(generatedAudioUrl, anchorElement);
+    } catch {
+      toast.error(dict.errorCloning);
+    }
   };
 
+  const onSelectSample = (sample: SampleAudio) => {
+    setSelectedLocale({ code: 'en', value: 'english' });
+    setText(sample.prompt);
+  };
+
+  const onToggleMicrophone = async () => {
+    if (micStatus === 'idle' || micStatus === 'stopped') {
+      clearMediaStream();
+      // Request microphone access on first toggle
+      await getMediaStream();
+      await handleStartRecording();
+    } else if (micStatus === 'recording') {
+      stopRecording();
+    }
+  };
+
+  const onClearMediaStream = () => {
+    clearMediaStream();
+    clearMediaBlob();
+    setMicBlob(null);
+    setMicRecording(false);
+    setFFmpegError(null);
+  };
+
+  const textIsOverLimit = text.length > MAX_LENGTH;
+
   return (
-    <div className="mx-auto max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>Clone a Voice</CardTitle>
-          <CardDescription>
-            <p className="mb-4">
-              Upload an audio file and enter text to create a voice clone and
-              generate speech in one step
-            </p>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* TODO add examples */}
-          {/* https://maskgct.github.io/audios/celeb_samples/rick_0.wav */}
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload">Create Voice</TabsTrigger>
-              <TabsTrigger value="preview" disabled={status !== 'complete'}>
-                Preview
-              </TabsTrigger>
-            </TabsList>
+    <Card>
+      <CardHeader>
+        <CardTitle>{dict.title}</CardTitle>
+        <CardDescription>
+          <p className="mb-4">{dict.subtitle}</p>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
+            <TabsTrigger disabled={status !== 'complete'} value="preview">
+              {dict.tabPreview}
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="upload" className="space-y-6 py-4">
-              <div className="grid w-full gap-4">
-                <div className="grid w-full gap-2">
-                  <Label htmlFor="audio-file">Audio File</Label>
+          <TabsContent className="space-y-6 py-4" value="upload">
+            <div className="grid w-full gap-6">
+              <div className="grid w-full gap-2">
+                <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
 
-                  {/* Drop area */}
-                  {!file && (
-                    <button
-                      type="button"
-                      onClick={openFileDialog}
-                      onKeyUp={openFileDialog}
-                      onDragEnter={handleDragEnter}
-                      onDragLeave={handleDragLeave}
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                      data-dragging={isDragging || undefined}
-                      className="border-input hover:bg-accent/50 data-[dragging=true]:bg-accent/50 has-[input:focus]:border-ring has-[input:focus]:ring-ring/50 flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed p-4 transition-colors has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:ring-[3px]"
-                    >
-                      <input
-                        {...getInputProps()}
-                        className="sr-only"
-                        aria-label="Upload audio file"
-                        disabled={Boolean(file)}
+                {/* Drop area */}
+                {!(file || micRecording) && (
+                  <button
+                    className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+                    data-dragging={isDragging || undefined}
+                    disabled={Boolean(micRecording)}
+                    onClick={openFileDialog}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onKeyUp={openFileDialog}
+                    type="button"
+                  >
+                    <input
+                      {...getInputProps()}
+                      aria-label="Upload audio file"
+                      className="sr-only"
+                      disabled={Boolean(file) || Boolean(micBlob)}
+                    />
+
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div
+                        aria-hidden="true"
+                        className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
+                      >
+                        <UploadIcon className="size-4 opacity-60" />
+                      </div>
+                      <p className="mb-1.5 font-medium text-sm">
+                        {dict.uploadAudioFile}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {dict.dragDropText}
+                      </p>
+                      <p className="mt-1 text-muted-foreground text-xs">
+                        {dict.fileFormatsText.replace(
+                          '__SIZE__',
+                          formatBytes(CLONING_FILE_MAX_SIZE),
+                        )}
+                      </p>
+                    </div>
+                  </button>
+                )}
+
+                {!file && (
+                  <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
+                    <p className="text-center text-xs">
+                      {dict.orUseMicrophone}
+                    </p>
+                    {ffmpegLoading && selectedLocale.code !== 'en' && (
+                      <div className="flex items-center justify-center gap-2 py-2">
+                        <PulsatingDots />
+                        <span className="text-muted-foreground text-xs">
+                          Loading audio processor...
+                        </span>
+                      </div>
+                    )}
+                    {ffmpegError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>Audio Processor Error</AlertTitle>
+                        <AlertDescription>{ffmpegError}</AlertDescription>
+                      </Alert>
+                    )}
+                    <MicrophoneMain
+                      mediaBlob={recorderMediaBlob}
+                      mediaStream={mediaStream}
+                      onClearMediaStream={onClearMediaStream}
+                      onToggleMicrophone={onToggleMicrophone}
+                      status={micStatus}
+                    />
+                  </div>
+                )}
+
+                {/* FFmpeg loading message for non-English locales */}
+                {ffmpegLoading && selectedLocale.code !== 'en' && (
+                  <div className="text-center text-muted-foreground text-xs">
+                    <span className="flex items-center justify-center gap-2">
+                      <PulsatingDots />
+                      Preparing audio processor for {selectedLocale.value}...
+                    </span>
+                  </div>
+                )}
+
+                {/* File upload errors */}
+                {errors.length > 0 && (
+                  <div
+                    className="flex items-center gap-1 text-destructive text-xs"
+                    role="alert"
+                  >
+                    <AlertCircle className="size-3 shrink-0" />
+                    <span>{errors[0]}</span>
+                  </div>
+                )}
+
+                {/* Selected file display */}
+                {file ? (
+                  <div
+                    className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                    key={files[0]?.id}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <PaperclipIcon
+                        aria-hidden="true"
+                        className="size-4 shrink-0 opacity-60"
                       />
-
-                      <div className="flex flex-col items-center justify-center text-center">
-                        <div
-                          className="bg-background mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border"
-                          aria-hidden="true"
-                        >
-                          <UploadIcon className="size-4 opacity-60" />
-                        </div>
-                        <p className="mb-1.5 text-sm font-medium">
-                          Upload audio file
+                      <div className="min-w-0">
+                        <p className="truncate whitespace-normal break-all font-medium text-[13px]">
+                          {file.name}
                         </p>
                         <p className="text-muted-foreground text-xs">
-                          Drag & drop or click to browse
-                        </p>
-                        <p className="text-muted-foreground text-xs mt-1">
-                          MP3, WAV, M4A or OGG (max.{' '}
-                          {formatBytes(MAX_FILE_SIZE)})
+                          {formatBytes(file.size)}
                         </p>
                       </div>
-                    </button>
-                  )}
-
-                  {/* File upload errors */}
-                  {errors.length > 0 && (
-                    <div
-                      className="text-destructive flex items-center gap-1 text-xs"
-                      role="alert"
-                    >
-                      <AlertCircle className="size-3 shrink-0" />
-                      <span>{errors[0]}</span>
                     </div>
-                  )}
 
-                  {/* Selected file display */}
-                  {file && (
-                    <div
-                      key={files[0]?.id}
-                      className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                    <Button
+                      aria-label="Remove file"
+                      className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
+                      onClick={() => removeFile(files[0]?.id)}
+                      size="icon"
+                      variant="ghost"
                     >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <PaperclipIcon
-                          className="size-4 shrink-0 opacity-60"
-                          aria-hidden="true"
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate break-all whitespace-normal text-[13px] font-medium">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatBytes(file.size)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-muted-foreground/80 hover:text-foreground -me-2 size-12 hover:bg-transparent"
-                        onClick={() => removeFile(files[0]?.id)}
-                        aria-label="Remove file"
-                      >
-                        <XIcon className="!size-6" aria-hidden="true" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid w-full gap-2">
-                  <Label htmlFor="text-to-convert">Text to Convert</Label>
-                  <textarea
-                    id="text-to-convert"
-                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder={dict.textAreaPlaceholder}
-                    value={textToConvert}
-                    onChange={(e) => setTextToConvert(e.target.value)}
-                    disabled={status === 'generating'}
-                  />
-                </div>
-              </div>
-
-              {status === 'error' && errorMessage && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button
-                onClick={handleGenerate}
-                disabled={
-                  !file || !textToConvert.trim() || status === 'generating'
-                  // || !hasEnoughCredits
-                }
-                className="w-full"
-              >
-                {status === 'generating' ? (
-                  <span className="flex items-center">
-                    {dict.generating}
-                    <span className="inline-flex ml-1">
-                      <PulsatingDots />
-                    </span>
-                  </span>
+                      <XIcon aria-hidden="true" className="!size-6" />
+                    </Button>
+                  </div>
                 ) : (
-                  <>
-                    <span>{dict.ctaButton}</span>
-                    <span className="text-xs text-gray-300 opacity-70 border-[1px] rounded-sm border-gray-400 p-1">
-                      {shortcutKey}
-                    </span>
-                  </>
+                  !micBlob && (
+                    // Sample audio demo buttons
+                    <div className="grid w-full gap-2">
+                      <p className="text-muted-foreground text-xs">
+                        {dict.tryDemo}
+                      </p>
+
+                      <Accordion className="w-full" collapsible type="single">
+                        {sampleAudios.map((sample) => (
+                          <CloneSampleCard
+                            addFiles={addFiles}
+                            dict={dict}
+                            key={sample.id}
+                            onSelectSample={onSelectSample}
+                            sample={sample}
+                            setErrorMessage={setErrorMessage}
+                            setStatus={setStatus}
+                          />
+                        ))}
+                      </Accordion>
+                    </div>
+                  )
                 )}
-              </Button>
-              {status === 'generating' && (
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  className="mx-auto"
-                >
-                  Cancel <CircleStop name="cancel" className="size-4" />
-                </Button>
-              )}
-            </TabsContent>
-
-            <TabsContent value="preview" className="space-y-4 py-4">
-              <div className="space-y-4">
-                <h3 className="text-xl font-medium text-center">
-                  Generated Voice Preview
-                </h3>
-
-                <div className="border rounded-lg p-4 bg-muted/30 w-fit mx-auto">
-                  {/* <AudioWaveform audioUrl={generatedAudioUrl || ''} /> */}
-                  <AudioPlayer url={generatedAudioUrl} />
-                </div>
-
-                <div className="flex justify-center gap-4">
-                  <Button
-                    onClick={handleDownload}
-                    className="flex items-center gap-2"
-                  >
-                    <Download className="w-4 h-4" />
-                    {dict.downloadAudio}
-                  </Button>
-                </div>
               </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            Voice clones are created for demonstration purposes only.
-          </p>
-        </CardFooter>
-      </Card>
-    </div>
+
+              <div className="grid w-full gap-2">
+                <Label htmlFor="language">{dict.languageLabel}</Label>
+                <Select
+                  disabled={status === 'generating'}
+                  onValueChange={(code) =>
+                    setSelectedLocale({
+                      code,
+                      value:
+                        supportedLocales.find((c) => c.code === code)?.value ||
+                        '',
+                    })
+                  }
+                  value={selectedLocale.code}
+                >
+                  <SelectTrigger id="language">
+                    <SelectValue placeholder={dict.languageSelectPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supportedLocales.map((locale) => (
+                      <SelectItem key={locale.code} value={locale.code}>
+                        {locale.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/*{selectedLocale.code !== 'en' && (
+                <Card className="border-blue-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <InfoIcon className="size-5 text-blue-600" />
+                      {dict.crossLanguageInfo.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-200 text-sm">
+                      {dict.crossLanguageInfo.description}
+                    </p>
+                    <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
+                      {dict.crossLanguageInfo.example}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}*/}
+
+              <div className="grid w-full gap-2">
+                <Label htmlFor="text-to-convert">
+                  {dict.textToConvertLabel}
+                </Label>
+                <Textarea
+                  disabled={status === 'generating'}
+                  id="text-to-convert"
+                  maxLength={MAX_LENGTH + 30}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={dict.textAreaPlaceholder}
+                  rows={5}
+                  value={text}
+                />
+              </div>
+              <div
+                className={cn(
+                  '-mt-2 text-right text-muted-foreground text-sm',
+                  [textIsOverLimit ? 'font-bold text-red-500' : ''],
+                )}
+              >
+                {text.length} / {MAX_LENGTH}
+              </div>
+            </div>
+
+            {status === 'error' && errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{dict.errorTitle}</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+
+            {!hasEnoughCredits && (
+              <Alert className="mx-auto w-fit" variant="destructive">
+                <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              className="w-full"
+              disabled={
+                !((file || micBlob) && text.trim()) ||
+                status === 'generating' ||
+                !hasEnoughCredits ||
+                convertingMicAudio ||
+                textIsOverLimit
+              }
+              onClick={handleGenerate}
+            >
+              {convertingMicAudio ? (
+                <span className="flex items-center">
+                  {/* TODO translate */}
+                  Converting audio...
+                  <span className="ml-1 inline-flex">
+                    <PulsatingDots />
+                  </span>
+                </span>
+              ) : status === 'generating' ? (
+                <span className="flex items-center">
+                  {dict.generating}
+                  <span className="ml-1 inline-flex">
+                    <PulsatingDots />
+                  </span>
+                </span>
+              ) : (
+                <>
+                  <span>{dict.ctaButton}</span>
+                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+                    {shortcutKey}
+                  </span>
+                </>
+              )}
+            </Button>
+            {status === 'generating' && (
+              <Button
+                className="mx-auto"
+                onClick={handleCancel}
+                variant="outline"
+              >
+                {dict.cancelButton}{' '}
+                <CircleStop className="size-4" name="cancel" />
+              </Button>
+            )}
+          </TabsContent>
+
+          <TabsContent className="space-y-4 py-4" value="preview">
+            <div className="space-y-4">
+              <h3 className="text-center font-medium text-xl">
+                {dict.previewTitle}
+              </h3>
+
+              <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
+                {generatedAudioUrl && (
+                  <AudioPlayerWithContext
+                    className="rounded-full"
+                    playAudioTitle={dict.playAudio}
+                    url={generatedAudioUrl}
+                  />
+                )}
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={downloadAudio}
+                >
+                  <Download className="h-4 w-4" />
+                  {dict.downloadAudio}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter className="flex items-center justify-between gap-3 border-t pt-6">
+        <p className="text-muted-foreground text-sm">{dict.cloneNotice}</p>
+        <TooltipProvider>
+          <Tooltip supportMobileTap>
+            <TooltipTrigger aria-label={dict.cloneNoticeTooltipLabel} asChild>
+              <button
+                className="text-muted-foreground transition-colors hover:text-foreground"
+                type="button"
+              >
+                <InfoIcon aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              align="end"
+              className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
+              side="left"
+            >
+              {dict.cloneNoticeTooltip}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </CardFooter>
+    </Card>
   );
 }

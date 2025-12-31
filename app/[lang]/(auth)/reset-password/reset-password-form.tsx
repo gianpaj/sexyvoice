@@ -7,6 +7,8 @@ import { forgotPasswordAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 export type Message =
   | { success: string }
@@ -18,52 +20,51 @@ export function ResetPasswordForm({
   lang,
   message,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  dict: any;
-  lang: string;
+  dict: (typeof langDict)['auth']['resetPassword'];
+  lang: Locale;
   message: Message;
 }) {
   const { pending } = useFormStatus();
 
   return (
     <form className="space-y-4">
-      <input type="hidden" name="lang" value={lang} />
+      <input name="lang" type="hidden" value={lang} />
       <div className="flex flex-col gap-6">
         <div className="grid gap-2">
           <Label htmlFor="email">{dict.email}</Label>
           <Input
+            autoComplete="current-email"
             id="email"
-            type="email"
             name="email"
             required
-            autoComplete="current-email"
+            type="email"
           />
         </div>
       </div>
 
       {'error' in message && (
-        <div className="text-destructive-foreground border-l-2 border-destructive px-4 text-sm">
+        <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
           {/* @ts-ignore */}
           {dict.errors[message.error as keyof typeof dict.errors]}
         </div>
       )}
       {'success' in message && (
-        <div className="text-foreground border-l-2 border-foreground px-4 text-sm">
+        <div className="border-foreground border-l-2 px-4 text-foreground text-sm">
           {dict.success}
         </div>
       )}
 
       <Button
-        type="submit"
         aria-disabled={pending}
         className="w-full"
         disabled={pending}
         formAction={forgotPasswordAction}
+        type="submit"
       >
         {pending ? dict.loading : dict.submit}
       </Button>
 
-      <Button type="button" variant="secondary" className="w-full" asChild>
+      <Button asChild className="w-full" type="button" variant="secondary">
         <Link href="login">{dict.backToLogin}</Link>
       </Button>
     </form>

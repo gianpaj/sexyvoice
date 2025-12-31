@@ -5,11 +5,33 @@ let redisServer: RedisMemoryServer | null = null;
 let redisClient: Redis | null = null;
 
 /**
- * Starts an in-memory Redis server for testing
+ * Starts a Redis connection for testing
+ * In CI: connects to a regular Redis server running on localhost
+ * Otherwise: starts an in-memory Redis server
  * @returns Redis client instance connected to the test server
  */
 export async function setupRedis(): Promise<Redis> {
-  // Configure redis-memory-server with explicit settings for faster CI downloads
+  if (process.env.CI) {
+    // In CI, connect to Redis server running on localhost
+    const host = process.env.REDIS_HOST || 'localhost';
+    const port = Number.parseInt(process.env.REDIS_PORT || '6379', 10);
+
+    redisClient = new Redis({
+      host,
+      port,
+      retryStrategy: (times) => {
+        if (times > 3) {
+          return null; // Stop retrying after 3 attempts
+        }
+        return Math.min(times * 50, 2000);
+      },
+    });
+
+    return redisClient;
+  }
+
+  // Local development: use in-memory Redis server
+  // Configure redis-memory-server with explicit settings for faster downloads
   const config: any = {
     instance: {
       port: undefined, // auto-assign available port
@@ -64,11 +86,4 @@ export async function clearRedis(): Promise<void> {
   if (redisClient) {
     await redisClient.flushall();
   }
-}
-
-/**
- * Gets the current test Redis client instance
- */
-export function getTestRedisClient(): Redis | null {
-  return redisClient;
 }

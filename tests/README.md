@@ -1,6 +1,6 @@
 # API Route Testing Setup
 
-This directory contains comprehensive tests for the SexyVoice.ai API routes, including the `generate-voice` endpoint and `stripe-webhook` handler.
+This directory contains comprehensive tests for the SexyVoice.ai API routes and utility functions, including the `generate-voice` endpoint, `stripe-webhook` handler, and `stripe-admin` functions.</parameter>
 
 ## Setup Requirements
 
@@ -15,6 +15,7 @@ pnpm add -D vitest @vitest/ui msw @types/supertest supertest @vitest/coverage-v8
 ### Files:
 - `setup.ts` - Test environment setup with MSW mocking
 - `generate-voice.test.ts` - Comprehensive tests for the generate voice API route
+- `clone-voice.test.ts` - Comprehensive tests for the voice cloning API route
 - `stripe-webhook.test.ts` - Comprehensive tests for Stripe webhook handling
 - `test-stripe-plan.md` - Detailed technical specification for Stripe webhook testing
 - `README.md` - This documentation
@@ -35,6 +36,7 @@ The test setup includes comprehensive mocks for all external services:
 #### AI Services
 - **Replicate API**: Voice generation with prediction handling
 - **Google Generative AI**: TTS with pro/flash model fallback
+- **fal.ai**: Voice cloning with chatterbox-tts model
 
 #### Storage
 - **Vercel Blob**: Audio file upload and storage
@@ -42,6 +44,9 @@ The test setup includes comprehensive mocks for all external services:
 #### Analytics & Monitoring
 - **PostHog**: Event tracking
 - **Sentry**: Error logging and monitoring
+
+#### Background Jobs
+- **Inngest**: Scheduled cleanup tasks for uploaded audio files
 
 #### Stripe (for webhook tests)
 - **Webhook signature verification**: Using `stripe.webhooks.generateTestHeaderString()`
@@ -114,6 +119,75 @@ The voice generation tests cover:
 - PostHog event tracking
 - Sentry error reporting
 
+---
+
+### Clone Voice API (`clone-voice.test.ts`)
+
+The voice cloning tests cover:
+
+### Input Validation
+- Content-Type verification (multipart/form-data required)
+- Missing required parameters (text, audio file)
+- Text length limits (500 characters max)
+- File type validation (MP3, WAV, OGG, M4A only)
+- File size limits (10MB max)
+- Audio duration validation (10 seconds minimum, 5 minutes maximum)
+- Audio duration detection failures
+
+### Authentication & Authorization
+- Unauthenticated users
+- User session validation
+
+### Credit System
+- Insufficient credits scenarios
+- Credit estimation for voice cloning (higher cost than regular generation)
+- Credit deduction after successful cloning
+- Credit transaction logging
+
+### Voice Cloning
+- fal.ai API integration (chatterbox-tts model)
+- Audio file upload and processing
+- Generated audio storage
+- Request parameter handling (cfg_weight, temperature, exaggeration)
+- Error handling for AI service failures
+
+### Caching
+- Redis cache hits/misses for generated audio
+- Hash generation based on text + audio filename
+- Cache invalidation
+- Reuse of existing uploaded audio files (via blob.head check)
+
+### Audio File Management
+- Audio file upload to Vercel Blob storage
+- Input audio file caching and reuse
+- Output audio file generation and storage
+- Filename sanitization (special characters, unicode)
+
+### Background Tasks
+- Inngest cleanup scheduling
+- Audio file deletion after 1 hour
+- Event payload validation
+
+### Error Handling
+- Network failures
+- API errors from fal.ai
+- Blob storage failures
+- General server errors (500s)
+- Request abortion handling
+
+### Analytics Integration
+- PostHog event tracking
+- Sentry error reporting
+- Event tracking for cached results (0 credits)
+
+### Audio Format Support
+- MP3 file handling
+- WAV file handling
+- OGG file handling
+- M4A file handling
+
+---
+
 ### Stripe Webhooks (`stripe-webhook.test.ts`)
 
 The Stripe webhook tests cover:
@@ -132,9 +206,264 @@ The Stripe webhook tests cover:
 - Subscription checkouts (mode: 'subscription')
   - Customer data syncing to Redis
   - Initial subscription credit awards
+
+### Stripe Admin (`stripe-admin.test.ts`)
+
+The Stripe admin tests cover the `createOrRetrieveCustomer()` function:
+
+#### Happy Path
+- Retrieve existing customer by Stripe ID with correct metadata
+- Find customer by supabaseUUID metadata when not found by ID
+- Find customer by email when not found by UUID or existing Stripe ID
+- Create new customer when none exists
+
+#### Metadata Handling
+- Update metadata when supabaseUUID is missing
+- Update metadata when supabaseUUID differs from userId
+- Preserve existing metadata when updating
+- Handle null or missing metadata
+
+#### Error Handling
+- Customer retrieval errors with graceful fallback
+- Metadata update failures with Sentry logging
+- Deleted customer handling
+- API rate limiting and connection errors
+- Database update errors in Supabase
+
+#### Multiple Customers Handling
+- Use first customer when multiple found by UUID
+- Use first customer when multiple found by email
+- Log warning messages for duplicate customers
+- Handle edge cases with empty customer lists
+
+#### Database Updates
+- Update stripe_id in profiles table
+- Handle database connection failures
+- Ensure proper Supabase query chaining
+
+#### Edge Cases
+- Handle customer with null metadata
+- Handle undefined existingStripeId parameter
+- Handle null existingStripeId parameter
+- Handle empty customer search results
+- Handle special characters in email addresses
+
+#### Logging and Monitoring
+- Log info messages when creating new customers
+- Capture warning messages for multiple customers
+- Send error context to Sentry with full metadata
+
+## Mock Setup for Stripe Admin Tests
+
+### Overview
+The `stripe-admin.test.ts` file uses Vitest with comprehensive mocking for Stripe, Supabase, and Sentry. All external API calls are mocked to ensure tests are fast, reliable, and don't depend on external services.
+
+### Stripe Mock Setup
+
+```typescript
+vi.mock('@/lib/stripe/stripe-admin', async () => {
+  const actual = await vi.importActual<
+    typeof import('@/lib/stripe/stripe-admin')
+  >('@/lib/stripe/stripe-admin');
+
+  return {
+    ...actual,
+    stripe: {
+      customers: {
+        retrieve: vi.fn(),      // Fetch existing customer by ID
+        search: vi.fn(),        // Search customers by metadata or other criteria
+        list: vi.fn(),          // List customers by email or other filters
+        update: vi.fn(),        // Update customer properties (e.g., metadata)
+        create: vi.fn(),        // Create new customer
+      },
+    },
+  };
+});
+```
+
+Each mocked method returns a Vitest spy function (`vi.fn()`) that you can:
+- Control the return value with `.mockResolvedValue()`
+- Simulate errors with `.mockRejectedValue()`
+- Verify it was called with `.toHaveBeenCalledWith()`
+
+### Supabase Mock Setup
+
+```typescript
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}));
+```
+
+In each test, configure the mock client:
+
+```typescript
+beforeEach(() => {
+  mockSupabase = {
+    from: vi.fn().mockReturnValue({
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    }),
+  };
+  vi.mocked(createClient).mockResolvedValue(mockSupabase);
+});
+```
+
+This allows testing the Supabase query chain:
+```typescript
+await supabase
+  .from('profiles')
+  .update({ stripe_id: customerId })
+  .eq('id', userId);
+```
+
+### Sentry Mock Setup
+
+```typescript
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+```
+
+This allows verifying error handling:
+
+```typescript
+expect(Sentry.captureException).toHaveBeenCalledWith(
+  error,
+  expect.objectContaining({
+    level: 'error',
+    extra: { customerId, email, userId },
+  }),
+);
+```
+
+### Common Mock Patterns
+
+#### Mocking Successful Customer Retrieval
+
+```typescript
+const customer: Stripe.Customer = {
+  id: 'cus_123',
+  object: 'customer',
+  metadata: { supabaseUUID: userId },
+  email: 'test@example.com',
+} as Stripe.Customer;
+
+vi.mocked(stripe.customers.retrieve).mockResolvedValue(customer);
+```
+
+#### Mocking Customer Search Results
+
+```typescript
+vi.mocked(stripe.customers.search).mockResolvedValue({
+  object: 'search_result',
+  data: [customer1, customer2],
+  has_more: false,
+  url: '',
+});
+```
+
+#### Mocking API Errors
+
+```typescript
+const error = new Error('API Rate Limit Exceeded');
+vi.mocked(stripe.customers.retrieve).mockRejectedValue(error);
+```
+
+#### Mocking Empty Results
+
+```typescript
+vi.mocked(stripe.customers.search).mockResolvedValue({
+  object: 'search_result',
+  data: [],
+  has_more: false,
+  url: '',
+});
+```
+
+### Test Structure Template
+
+```typescript
+describe('Feature or Function', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset mocks before each test
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    // Clean up after each test
+  });
+
+  it('should do something when condition is met', async () => {
+    // Arrange: Set up mocks
+    vi.mocked(stripe.customers.retrieve).mockResolvedValue(customer);
+
+    // Act: Call the function
+    const result = await createOrRetrieveCustomer(userId, email, stripeId);
+
+    // Assert: Verify behavior
+    expect(result).toBe(stripeId);
+    expect(stripe.customers.retrieve).toHaveBeenCalledWith(stripeId);
+  });
+});
+```
+
+### Verification Patterns
+
+#### Verify Mock Was Called
+
+```typescript
+expect(stripe.customers.retrieve).toHaveBeenCalledWith(customerId);
+```
+
+#### Verify Mock Was NOT Called
+
+```typescript
+expect(stripe.customers.search).not.toHaveBeenCalled();
+```
+
+#### Verify Call Count
+
+```typescript
+expect(stripe.customers.create).toHaveBeenCalledTimes(1);
+```
+
+#### Verify Called With Partial Match
+
+```typescript
+expect(stripe.customers.update).toHaveBeenCalledWith(
+  customerId,
+  expect.objectContaining({
+    metadata: expect.objectContaining({
+      supabaseUUID: userId,
+    }),
+  }),
+);
+```
+
+#### Verify Sentry Logging
+
+```typescript
+expect(Sentry.logger.info).toHaveBeenCalledWith(
+  'Created new Stripe customer',
+  expect.objectContaining({
+    customerId: 'cus_123',
+    email: 'test@example.com',
+    userId: 'user_123',
+  }),
+);
+```
+
 ## Mock Data
 
 The test setup provides realistic mock data for:
+
 - User profiles and authentication
 - Voice models (Replicate and Gemini voices)
 - Credit balances and transactions
@@ -144,6 +473,7 @@ The test setup provides realistic mock data for:
 ## Audio Buffer Testing
 
 Special attention is given to testing audio buffer handling:
+
 - Mock ReadableStream for Replicate responses
 - Base64 encoded mock audio data for Gemini
 - WAV conversion testing

@@ -11,7 +11,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Frontend**: Next.js 15 with App Router, React 19, TypeScript 5
 - **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
 - **Database**: Supabase PostgreSQL
-- **Storage**: Vercel Blob Storage for audio files
+- **Storage**: Cloudflare R2 for audio files
 - **Caching**: Upstash Redis for audio URL caching
 - **Styling**: Tailwind CSS 3.4, shadcn/ui components, Radix UI primitives
 - **Content**: Contentlayer2 for MDX blog processing
@@ -21,7 +21,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Code Quality**: Biome for linting and formatting
 - **Testing**: Vitest for unit/integration tests, MSW for API mocking
 - **Package Manager**: pnpm 9
-- **Internationalization**: English, Spanish, and German support
+- **Internationalization**: Website support for English, Spanish, and German; voice generation and cloning in 20+ languages
 
 ## Architecture Overview
 
@@ -74,8 +74,8 @@ Core tables:
 2. API route validates request and checks user credits in Supabase
 3. Request hash is looked up in Redis cache; if found, cached URL is returned
 4. Otherwise, API invokes Replicate (voice generation) or fal.ai (voice cloning) to synthesize audio
-5. Generated audio is uploaded to Vercel Blob Storage
-6. Blob URL is cached in Redis and stored in Supabase with metadata
+5. Generated audio is uploaded to Cloudflare R2 Storage
+6. R2 URL is cached in Redis and stored in Supabase with metadata
 7. Analytics sent to PostHog, errors logged in Sentry
 8. Final audio URL returned to client
 
@@ -175,7 +175,6 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:ui` - Run tests with UI interface
 - `pnpm test:coverage` - Generate test coverage report
-- `pnpm test:legacy` - Run legacy tests with tsx (lib/utils.test.ts)
 
 ### Content & Data
 - `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)
@@ -217,7 +216,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Use Google Generative AI for text-to-speech and text enhancement (emotion tags)
 - Implement credit tracking for API usage
 - Handle voice cloning with proper permissions
-- Support multiple languages (EN/ES/DE with more planned)
+- Support voice generation and cloning in 20+ languages (including Arabic, Bengali, Dutch, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Marathi, Polish, Portuguese, Romanian, Russian, Spanish, Tamil, Telugu, Thai, Turkish, Ukrainian, Vietnamese, and more)
 - Implement audio preview functionality
 
 ### Content Moderation
@@ -268,7 +267,7 @@ pnpm run preview    # Preview production build
 ### Environment Variables
 Key environment variables include:
 - **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- **Storage**: `BLOB_READ_WRITE_TOKEN` (Vercel Blob Storage)
+- **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions

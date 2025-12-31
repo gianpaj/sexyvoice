@@ -1,13 +1,9 @@
 'use client';
 
-import type { User } from '@supabase/supabase-js';
-import { Crisp } from 'crisp-sdk-web';
 import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usePostHog } from 'posthog-js/react';
-import { useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import CreditsSection from '@/components/credits-section';
@@ -29,111 +25,47 @@ import {
 } from '@/components/ui/sidebar';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { createClient } from '@/lib/supabase/client';
 
 interface DashboardUIProps {
   children: React.ReactNode;
+  creditTransactions: Pick<CreditTransaction, 'amount'>[];
+  userId: string;
   lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
-  halloweenDict: (typeof langDict)['promos']['halloweenBanner'];
+  dict: typeof langDict;
+  blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
 }
 
 export default function DashboardUI({
   children,
+  creditTransactions,
+  userId,
   lang,
   dict,
-  halloweenDict,
+  blackFridayDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
-  const supabase = createClient();
-
-  const [credit_transactions, setCreditTransactions] = useState<
-    CreditTransaction[] | null
-  >([]);
-  const [credits, setCredits] = useState<Pick<Credit, 'amount'> | null>();
-
-  const posthog = usePostHog();
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: credits state dependency
-  useEffect(() => {
-    const getData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) throw new Error('User not found');
-
-      // Get user's credits
-      const { data: creditsData } = await supabase
-        .from('credits')
-        .select('amount')
-        .eq('user_id', user?.id)
-        .single();
-      setCredits(creditsData);
-      const { data: credit_transactions } = await supabase
-        .from('credit_transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      setCreditTransactions(credit_transactions);
-      return { user, creditsData };
-    };
-
-    const sendUserAnalyticsData = async (
-      user: User,
-      creditsData: Pick<Credit, 'amount'> | null | undefined,
-    ) => {
-      posthog.identify(user.id, {
-        email: user.email,
-        name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft: creditsData?.amount || 0,
-      });
-      if (process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-        Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-          locale: lang,
-        });
-        user.email && Crisp.user.setEmail(user.email);
-        const nickname =
-          user.user_metadata.full_name || user.user_metadata.username;
-        if (nickname) {
-          Crisp.user.setNickname(nickname);
-        }
-        Crisp.session.setData({
-          user_id: user.id,
-          creditsLeft: creditsData?.amount || 0,
-          // plan
-        });
-      }
-    };
-
-    getData()
-      .then(({ user, creditsData }) => {
-        sendUserAnalyticsData(user, creditsData);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize dashboard layout:', error);
-      });
-  }, []);
 
   const navigation = [
     {
-      name: 'Generate',
+      name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
     {
-      name: 'Clone',
+      name: dict.pages['/dashboard/clone'],
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
       current: pathname === `/${lang}/dashboard/clone`,
     },
     {
-      name: 'History',
+      name: dict.pages['/dashboard/history'],
       href: `/${lang}/dashboard/history`,
       icon: FileClock,
       current: pathname === `/${lang}/dashboard/history`,
     },
     {
-      name: 'Credits',
+      name: dict.pages['/dashboard/credits'],
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
@@ -142,25 +74,25 @@ export default function DashboardUI({
 
   return (
     <PostHogProvider>
-      <div className="bg-background min-h-screen">
+      <div className="min-h-screen bg-background">
         <SidebarProvider defaultOpen>
           <Sidebar collapsible="icon">
             <SidebarHeader>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
                     size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0 items-end"
                   >
                     <div className="aspect-square group-data-[collapsible=icon]:size-9">
                       <Image
-                        src={logoSmall}
                         alt="Logo"
-                        width={221 / 8}
                         height={292 / 8}
+                        src={logoSmall}
+                        width={221 / 8}
                       />
                     </div>
-                    <span className="text-xl font-semibold">exyVoice.ai</span>
+                    <span className="font-semibold text-xl">exyVoice.ai</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -173,9 +105,9 @@ export default function DashboardUI({
                     {navigation.map((item) => (
                       <SidebarMenuItem key={item.name}>
                         <SidebarMenuButton
+                          asChild
                           isActive={item.current}
                           tooltip={item.name}
-                          asChild
                         >
                           <Link href={item.href}>
                             <item.icon className="mr-3 size-5" />
@@ -191,51 +123,60 @@ export default function DashboardUI({
 
             <SidebarFooter>
               <CreditsSection
+                creditTransactions={creditTransactions}
+                dict={dict.creditsSection}
                 lang={lang}
-                dict={dict}
-                credits={credits?.amount || 0}
-                credit_transactions={credit_transactions || []}
+                userId={userId}
               />
 
-              <SidebarMenuCustom lang={lang} />
+              <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
             </SidebarFooter>
           </Sidebar>
 
           <PromoBanner
-            inDashboard
-            text={halloweenDict.text}
+            arialLabelDismiss={blackFridayDict.arialLabelDismiss}
+            countdown={
+              process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+                ? {
+                    enabled: true,
+                    endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                    labels: blackFridayDict.countdown,
+                  }
+                : undefined
+            }
             ctaLink={`/${lang}/dashboard/credits`}
-            ctaText={halloweenDict.ctaLoggedIn}
-            arialLabelDismiss={halloweenDict.arialLabelDismiss}
+            ctaText={blackFridayDict.ctaLoggedIn}
+            inDashboard
             isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+            text={blackFridayDict.text}
           />
-          <div className="flex flex-col flex-1 w-full">
-            <div className="sticky top-0 z-30 flex h-16 items-center border-b px-4 sm:px-6 lg:hidden bg-background shadow-sm">
+          <div className="flex w-full flex-1 flex-col">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
               <SidebarTrigger className="lg:hidden" />
             </div>
 
             <main
+              className="flex-1 px-4 py-8 sm:px-6 lg:px-8"
               id="main-content"
-              className="px-4 py-8 sm:px-6 lg:px-8 flex-1"
             >
               {children}
             </main>
-            <footer className="p-4 border-t text-center">
-              <p className="text-xs text-gray-500">
+            <footer className="border-t p-4 text-center">
+              <p className="text-gray-500 text-xs">
                 <a
-                  href="https://sexyvoice.checkly-dashboards.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="hover:underline"
+                  href="https://sexyvoice.checkly-dashboards.com/"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   Status Page
                 </a>
                 <span> - </span>
                 <a
-                  href="https://sexyvoice.featurebase.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="hover:underline"
+                  href="https://sexyvoice.featurebase.app/"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
                   Roadmap
                 </a>

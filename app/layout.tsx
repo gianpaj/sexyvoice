@@ -46,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
-        <a href="#main-content" className="sr-only focus:not-sr-only">
+        <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
         </a>
         {children}

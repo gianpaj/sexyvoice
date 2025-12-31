@@ -11,9 +11,9 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
-type Props = {
+interface Props {
   params: Promise<{ lang: Locale }>;
-};
+}
 
 export async function generateMetadata(
   { params }: Props,
@@ -34,22 +34,30 @@ export async function generateMetadata(
     };
   }
 
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'pages');
   // @ts-expect-error FIXME
-  const pageTitle = dict.pages[pagePath];
-  const defaultTitle = dict.pages.defaultTitle;
+  const pageTitle = dict[pagePath];
+  const defaultTitle = dict.defaultTitle;
 
   const title = pageTitle || defaultTitle;
+
+  // Get page-specific description based on route
+  let description = dict.description;
+  if (pagePath === '/login') {
+    description = dict.descriptionLogin || dict.description;
+  } else if (pagePath === '/signup') {
+    description = dict.descriptionSignup || dict.description;
+  }
 
   return {
     title: {
       template: parentTitle?.template || '',
       default: title,
     },
-    description: dict.pages.description,
+    description,
     openGraph: {
-      title: title,
-      description: dict.pages.description,
+      title,
+      description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
       ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
@@ -67,7 +75,7 @@ export default async function LangLayout({
   return (
     <html lang={(await params).lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
-        <a href="#main-content" className="sr-only focus:not-sr-only">
+        <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
         </a>
         <Providers>{children}</Providers>

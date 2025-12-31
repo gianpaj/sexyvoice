@@ -4,6 +4,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
 import { useState } from 'react';
 
+import { AudioPlayer } from '@/components/audio-player';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,35 +12,28 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
-import { AudioPlayer } from './audio-player';
 import { DeleteButton } from './delete-button';
+import { downloadUrl } from '@/lib/download';
+import { toast } from '@/components/services/toast';
 
-type AudioFile = {
-  id: string;
-  storage_key: string;
-  created_at: string;
-  text_content: string;
-  url: string;
-  user_id: string;
-  voice_id: string;
-  voices: {
-    name: string;
-  };
+const downloadFile = async (url: string) => {
+  const anchorElement = document.createElement('a');
+  anchorElement.href = url;
+  const filename = url.split('/').pop()?.split('?')[0];
+  anchorElement.download = filename || 'generated_audio.mp3';
+  anchorElement.target = '_blank';
+  if (!url) return;
+
+  try {
+    await downloadUrl(url, anchorElement);
+  } catch {
+    toast.error('errorCloning'); // TODO: translate - passing
+  }
 };
 
-const downloadFile = (url: string) => {
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'generated_audio.mp3';
-  // link.setAttribute('download', 'generated_audio.mp3');
-  link.target = '_blank';
-  // document.body.appendChild(link);
-  link.click();
-  // document.body.removeChild(link);
-};
-
-export const columns: ColumnDef<AudioFile>[] = [
+export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
   {
     id: 'file name',
     accessorKey: 'storage_key',
@@ -53,7 +47,7 @@ export const columns: ColumnDef<AudioFile>[] = [
     header: 'Voice',
     cell: ({ row }) => (
       <div className="w-full lg:w-32">
-        <Badge variant="outline" className="px-1.5 text-muted-foreground">
+        <Badge className="px-1.5 text-muted-foreground" variant="outline">
           {row.original.voices?.name || 'Unknown'}
         </Badge>
       </div>
@@ -63,35 +57,31 @@ export const columns: ColumnDef<AudioFile>[] = [
     id: 'text',
     accessorKey: 'text_content',
     header: 'Text',
-    cell: ({ row }) => {
-      return (
-        <div className="flex items-center gap-2 max-w-[300px]">
-          <span
-            className="text-sm text-muted-foreground truncate"
-            title={row.original.text_content}
-          >
-            {row.original.text_content}
-          </span>
-        </div>
-      );
-    },
+    cell: ({ row }) => (
+      <div className="flex max-w-[300px] items-center gap-2">
+        <span
+          className="truncate text-muted-foreground text-sm"
+          title={row.original.text_content}
+        >
+          {row.original.text_content}
+        </span>
+      </div>
+    ),
   },
   {
     id: 'created at',
     accessorKey: 'created_at',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Created At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <Button
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        variant="ghost"
+      >
+        Created At
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) =>
-      formatDate(new Date(row.original.created_at), { withTime: true }),
+      formatDate(new Date(row.original.created_at!), { withTime: true }),
   },
   {
     id: 'Preview',
@@ -107,11 +97,11 @@ export const columns: ColumnDef<AudioFile>[] = [
     header: 'Download',
     cell: ({ row }) => (
       <Button
-        variant="outline"
-        size="icon"
-        title="Download"
         className="ml-2"
         onClick={() => downloadFile(row.original.url)}
+        size="icon"
+        title="Download"
+        variant="outline"
       >
         <Download className="size-4" />
       </Button>
@@ -131,12 +121,12 @@ export const columns: ColumnDef<AudioFile>[] = [
 
       return (
         <div className="flex items-center gap-2">
-          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
                 className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
                 size="icon"
+                variant="ghost"
               >
                 <MoreVerticalIcon />
                 <span className="sr-only">Open menu</span>

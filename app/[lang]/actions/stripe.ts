@@ -29,7 +29,7 @@ export async function createCheckoutSession(
     const package_ = getTopupPackages('en')[packageId];
 
     // Verify the price ID exists to avoid runtime errors
-    if (!package_ || !package_.priceId) {
+    if (!(package_ && package_.priceId)) {
       const error = new Error('Invalid package id');
       console.error(
         `Missing price ID for package id: ${packageId} - priceId: ${package_?.priceId}`,
@@ -54,7 +54,7 @@ export async function createCheckoutSession(
     } = await supabase.auth.getUser();
 
     const userData = user && (await getUserById(user.id));
-    if (!userData || !userData.stripe_id) {
+    if (!(userData && userData.stripe_id)) {
       const error = new Error('User not found or Stripe ID missing');
       Sentry.captureException(error, {
         tags: {
@@ -114,7 +114,7 @@ export async function createCheckoutSession(
       extra: {
         packageId,
         ui_mode: data.get('uiMode'),
-        error_message: error instanceof Error ? error.message : 'Unknown error',
+        error_message: Error.isError(error) ? error.message : 'Unknown error',
       },
     });
     throw error;
