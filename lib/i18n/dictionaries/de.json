@@ -6,6 +6,8 @@
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "submit": "Anmelden",
+      "forgotPassword": "Passwort vergessen?",
+      "signInWithGoogle": "Über Google anmelden",
       "noAccount": "Haben Sie noch kein Konto?",
       "signUp": "Registrieren",
       "error": "Ungültige E-Mail-Adresse oder Passwort"
@@ -29,6 +31,7 @@
       "email": "E-Mail-Adresse",
       "submit": "Passwort zurücksetzen",
       "error": "Ungültige E-Mail-Adresse",
+      "loading": "E-Mail wird gesendet...",
       "success": "Überprüfen Sie Ihre E-Mails auf einen Link zum Zurücksetzen des Passworts",
       "backToLogin": "Zurück zum Login",
       "errors": {

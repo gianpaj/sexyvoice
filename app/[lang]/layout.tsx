@@ -34,19 +34,19 @@ export async function generateMetadata(
     };
   }
 
-  const dict = await getDictionary(lang);
+  const dict = await getDictionary(lang, 'pages');
   // @ts-expect-error FIXME
-  const pageTitle = dict.pages[pagePath];
-  const defaultTitle = dict.pages.defaultTitle;
+  const pageTitle = dict[pagePath];
+  const defaultTitle = dict.defaultTitle;
 
   const title = pageTitle || defaultTitle;
 
   // Get page-specific description based on route
-  let description = dict.pages.description;
+  let description = dict.description;
   if (pagePath === '/login') {
-    description = dict.pages.descriptionLogin || dict.pages.description;
+    description = dict.descriptionLogin || dict.description;
   } else if (pagePath === '/signup') {
-    description = dict.pages.descriptionSignup || dict.pages.description;
+    description = dict.descriptionSignup || dict.description;
   }
 
   return {

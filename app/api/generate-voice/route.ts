@@ -31,6 +31,7 @@ import {
   estimateCredits,
   extractMetadata,
   getErrorMessage,
+  getErrorStatusCode,
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
@@ -467,7 +468,7 @@ export async function POST(request: Request) {
             getErrorMessage(error.cause, 'voice-generation') ||
             'Voice generation failed, please retry',
         },
-        { status: 500 },
+        { status: getErrorStatusCode(error.cause) },
       );
     }
 

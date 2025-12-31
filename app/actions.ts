@@ -4,11 +4,12 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
-const EMAIL_SCHEMA = z.string().email({ message: 'Invalid email' });
+const EMAIL_SCHEMA = z.email({ message: 'Invalid email' });
 
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = formData.get('email')?.toString();
@@ -87,7 +88,7 @@ export const updatePasswordAction = async (formData: FormData) => {
   encodedRedirect('success', `/${lang}/dashboard`, 'passwords_updated');
 };
 
-export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
+export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   'use server';
 
   const supabase = await createClient();
