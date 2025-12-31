@@ -723,7 +723,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(422);
       expect(json.error).toBe(
         getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
       );

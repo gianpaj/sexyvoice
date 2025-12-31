@@ -176,6 +176,29 @@ export const ERROR_CODES = {
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
 
+/**
+ * Maps error codes to appropriate HTTP status codes.
+ * - 422: Client input issues (content policy violations)
+ * - 500: Server/upstream errors (third-party API failures)
+ * - 503: Service temporarily unavailable (quota exceeded)
+ */
+export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
+  PROHIBITED_CONTENT: 422,
+  OTHER_GEMINI_BLOCK: 500,
+  REPLICATE_ERROR: 500,
+  THIRD_P_QUOTA_EXCEEDED: 503,
+  INTERNAL_SERVER_ERROR: 500,
+};
+
+export const getErrorStatusCode = (
+  errorCode: keyof typeof ERROR_CODES | unknown,
+): number => {
+  if (typeof errorCode === 'string' && errorCode in ERROR_STATUS_CODES) {
+    return ERROR_STATUS_CODES[errorCode as keyof typeof ERROR_CODES];
+  }
+  return 500;
+};
+
 export const getErrorMessage = (
   errorCode: keyof typeof ERROR_CODES | unknown,
   service: string,
