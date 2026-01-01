@@ -59,13 +59,15 @@ export async function GET(request: NextRequest) {
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
   const thirtyDaysAgo = subtractDays(today, 30);
-  const monthStart = startOfMonth(untilNow);
-  const previousMonthStart = startOfPreviousMonth(untilNow);
+  // Use previousDay for MTD calculations since we're reporting on that day's month
+  const monthStart = startOfMonth(previousDay);
+  const previousMonthStart = startOfPreviousMonth(previousDay);
 
   // Calculate previous month period end for comparison
+  // Cap at monthStart to avoid bleeding into the current month when prev month has fewer days
   const duration = today.getTime() - monthStart.getTime();
   const previousMonthPeriodEnd = new Date(
-    previousMonthStart.getTime() + duration,
+    Math.min(previousMonthStart.getTime() + duration, monthStart.getTime()),
   );
 
   // Fetch data in parallel - combine related queries and filter in memory
