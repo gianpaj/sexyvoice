@@ -86,17 +86,18 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - ingest (Posthug rewrites)
+     * - ingest (Posthog rewrites)
      * - favicon.ico (favicon file)
      * - robots.txt (robots file)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
      * - sitemap - xml
+     * - scripts - .js (for botid client-side library)
      * - /{2-letter-lang}/blog/* paths
      * - /{2-letter-lang}/tools/* paths=
      * - /manifest.json
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|[a-z]{2}/tools/|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|[a-z]{2}/tools/|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml|js)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },

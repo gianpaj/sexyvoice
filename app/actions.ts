@@ -33,7 +33,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   const verification = await checkBotId();
 
   if (verification.isBot) {
-    throw new Error('Access denied');
+    return encodedRedirect('error', `/${lang}/reset-password`, 'access_denied');
   }
 
   const supabase = await createClient();

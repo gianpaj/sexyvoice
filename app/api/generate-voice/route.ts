@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const verification = await checkBotId();
 
     if (verification.isBot) {
-      throw new Error('Access denied');
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     if (request.body === null) {
