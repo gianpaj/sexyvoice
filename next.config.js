@@ -1,5 +1,5 @@
 const { withContentlayer } = require('next-contentlayer2');
-// const { withBotId } = require('botid/next/config');
+const { withBotId } = require('botid/next/config');
 
 // TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
@@ -98,7 +98,7 @@ let nextConfig = {
 
 nextConfig = withContentlayer(nextConfig);
 
-// nextConfig = withBotId(nextConfig);
+nextConfig = withBotId(nextConfig);
 
 // Injected content via Sentry wizard below
 if (process.env.NODE_ENV === 'production') {
