@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const nextSubscriptionCustomer =
+  const nextPayingSubscriber =
     nextSubscriptionDueForPayment &&
     (await getUserByStripeCustomerId(
       nextSubscriptionDueForPayment?.customerId,
@@ -408,7 +408,7 @@ export async function GET(request: NextRequest) {
     `  - Today: $${totalAmountUsdToday.toFixed(2)} ($${formatChange(totalAmountUsdToday, avg7dRevenue)})`,
     `  - All-time: $${totalAmountUsd.toFixed(2)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
     `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active - ${nextSubscriptionCustomer?.username} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
       ? [
