@@ -102,7 +102,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
-    "@vitest/coverage-v8": "4.0.15",
+    "@vitest/coverage-v8": "4.0.16",
     "autoprefixer": "^10.4.22",
     "dotenv": "^16.5.0",
     "husky": "^9.1.7",
@@ -115,7 +115,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
     "ultracite": "6.3.9",
-    "vitest": "4.0.15"
+    "vitest": "4.0.16"
   },
   "browserslist": [
     "chrome >0 and last 2.5 years",
