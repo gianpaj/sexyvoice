@@ -9,7 +9,6 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
-import { checkBotId } from 'botid/server';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -49,12 +48,6 @@ export async function POST(request: Request) {
   let styleVariant = '';
   let user: User | null = null;
   try {
-    const verification = await checkBotId();
-
-    if (verification.isBot) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
-
     if (request.body === null) {
       logger.error('Request body is empty', {
         headers: Object.fromEntries(request.headers.entries()),

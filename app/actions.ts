@@ -1,6 +1,5 @@
 'use server';
 import * as Sentry from '@sentry/nextjs';
-import { checkBotId } from 'botid/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -28,12 +27,6 @@ export const forgotPasswordAction = async (formData: FormData) => {
       `/${lang}/reset-password`,
       'email_required',
     );
-  }
-
-  const verification = await checkBotId();
-
-  if (verification.isBot) {
-    return encodedRedirect('error', `/${lang}/reset-password`, 'access_denied');
   }
 
   const supabase = await createClient();

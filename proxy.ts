@@ -101,12 +101,11 @@ export const config = {
      *
      * - ingest (Posthog rewrites)
      * - monitoring - Sentry error reporting tunnel
-     * - UUID paths - botid client-side library (e.g., /149e9513-01fa-4fb0-aad4-566afd725d1b/...)
      *
      * - /{2-letter-lang}/blog/* paths
      * - /{2-letter-lang}/tools/* paths
      */
-    '/((?!_next/static|_next/image|ingest|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|_next/image|ingest|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },
