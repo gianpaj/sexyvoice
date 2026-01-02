@@ -1,6 +1,7 @@
 import { fal } from '@fal-ai/client';
 import { captureException, logger } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
+import { checkBotId } from 'botid/server';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -579,6 +580,12 @@ export async function POST(request: Request) {
   let referenceAudioFile: File | null = null;
 
   try {
+    const verification = await checkBotId();
+
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
     // Authentication
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();

@@ -78,6 +78,11 @@ export async function proxy(req: NextRequest) {
 
   const locale = getLocaleFromPathname(req);
 
+  // Skip session check for landing page
+  if (pathname === `/${locale}` || pathname === `/${locale}/`) {
+    return NextResponse.next();
+  }
+
   return await updateSession(req, locale);
 }
 export const config = {
@@ -86,17 +91,22 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - ingest (Posthug rewrites)
      * - favicon.ico (favicon file)
      * - robots.txt (robots file)
+     * - manifest.json
+     *
      * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
-     * - sitemap - xml
+     * - sitemap - .xml
+     *
+     * - ingest (Posthog rewrites)
+     * - monitoring - Sentry error reporting tunnel
+     * - UUID paths - botid client-side library (e.g., /149e9513-01fa-4fb0-aad4-566afd725d1b/...)
+     *
      * - /{2-letter-lang}/blog/* paths
-     * - /{2-letter-lang}/tools/* paths=
-     * - /manifest.json
+     * - /{2-letter-lang}/tools/* paths
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|[a-z]{2}/tools/|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|_next/image|ingest|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },

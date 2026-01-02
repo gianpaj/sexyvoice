@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { checkBotId } from 'botid/server';
 import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
@@ -138,6 +139,12 @@ function validateApiKey(): ValidationResult<string> {
 
 export async function POST(request: Request) {
   try {
+    const verification = await checkBotId();
+
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
     const bodyResult = await validateRequestBody(request);
     if (!bodyResult.ok) {
       return bodyResult.response;
