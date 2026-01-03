@@ -71,7 +71,7 @@ export const handleDeleteAction = async (id: string) => {
 
     if (deleteError) {
       Sentry.captureException(deleteError, {
-        user: { id: user.id },
+        user: { id: user.id, email: user.email },
         extra: {
           audioId: id,
         },

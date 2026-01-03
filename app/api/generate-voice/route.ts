@@ -84,6 +84,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
+    Sentry.setUser({
+      id: user.id,
+      email: user.email,
+    });
+
     const voiceObj = await getVoiceIdByName(voice);
 
     if (!voiceObj) {
@@ -445,7 +450,7 @@ export async function POST(request: Request) {
       errorData: error,
     };
     captureException(error, {
-      extra:errorObj,
+      extra: errorObj,
       user: user ? { id: user.id, email: user.email } : undefined,
     });
     console.error(errorObj);

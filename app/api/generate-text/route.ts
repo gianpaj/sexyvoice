@@ -1,6 +1,7 @@
 import { google } from '@ai-sdk/google';
 // import { GoogleAICacheManager } from '@google/generative-ai/server';
 import * as Sentry from '@sentry/nextjs';
+import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
@@ -18,12 +19,13 @@ export async function POST(request: Request) {
     prompt,
     selectedVoiceLanguage,
   }: { prompt: string; selectedVoiceLanguage: string } = await request.json();
+  let user: User | null = null;
   try {
     const supabase = await createClient();
 
     // Check if user is authenticated
     const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    user = data?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
@@ -72,6 +74,7 @@ Rules:
     console.error('Text generation error:', error);
 
     Sentry.captureException(error, {
+      user: { id: user?.id, email: user?.email },
       extra: { prompt },
     });
 

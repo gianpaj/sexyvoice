@@ -553,6 +553,7 @@ async function runBackgroundTasks(
       audioFileDBResult.error.message || 'Failed to insert audio file row',
     );
     captureException(error, {
+      user: { id: userId },
       extra: errorObj,
     });
     console.error(errorObj);

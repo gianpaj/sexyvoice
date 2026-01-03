@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '../redis/queries';
+import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -258,7 +259,9 @@ export async function refreshCustomerSubscriptionData(
       '[STRIPE ADMIN] Error refreshing Stripe customer subscription data:',
       error,
     );
+    const userId = await getUserIdByStripeCustomerId(customerId);
     Sentry.captureException(error, {
+      user: userId ? { id: userId } : undefined,
       extra: { customerId },
     });
     throw error;
