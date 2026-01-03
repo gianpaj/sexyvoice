@@ -424,6 +424,11 @@ async function generateVoiceWithReplicate(
     throw new Error(`Unsupported locale: ${locale}`);
   }
 
+  let language = locale;
+  if (locale === 'en-multi') {
+    language = 'en';
+  }
+
   const replicate = new Replicate();
   let replicateResponse: Prediction | undefined;
 
@@ -436,7 +441,7 @@ async function generateVoiceWithReplicate(
   const input = {
     seed: 0,
     text,
-    language: localeConfig.code,
+    language,
     cfg_weight: 0.5,
     temperature: 0.8,
     exaggeration: 0.5,
@@ -453,6 +458,7 @@ async function generateVoiceWithReplicate(
     const errorObj = {
       text,
       locale,
+      language,
       audioReferenceUrl,
       model,
       errorData: output.error,
