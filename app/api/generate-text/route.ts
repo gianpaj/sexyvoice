@@ -85,10 +85,8 @@ Rules:
   } catch (error) {
     console.error('Text generation error:', error);
 
-    Sentry.captureException({
-      error: 'Text generation failed',
-      originalError: error,
-      prompt,
+    Sentry.captureException(error, {
+      extra: { prompt },
     });
 
     if (Error.isError(error)) {

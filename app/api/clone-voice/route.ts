@@ -1,5 +1,5 @@
 import { fal } from '@fal-ai/client';
-import { captureException, logger } from '@sentry/nextjs';
+import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
@@ -348,14 +348,9 @@ async function processAudioFile(
         bufferSize: buffer.length,
       });
 
-      captureException({
+      captureException(conversionError, {
         user: { id: userId },
-        error: 'Audio conversion failed',
-        errorData: errorMessage,
-        errorStack,
-        locale,
-        mimeType: file.type,
-        filename: file.name,
+        extra: { locale, mimeType: file.type, filename: file.name },
       });
 
       const errorMsg =
@@ -463,9 +458,14 @@ async function generateVoiceWithReplicate(
       model,
       errorData: output.error,
     };
-    captureException({
-      error: 'Voice cloning failed',
-      ...errorObj,
+    const error = new Error(
+      output.error || 'Voice cloning failed, please try again',
+      {
+        cause: 'REPLICATE_ERROR',
+      },
+    );
+    captureException(error, {
+      extra: errorObj,
     });
     console.error(errorObj);
     throw new Error(output.error || 'Voice cloning failed, please try again', {
@@ -549,9 +549,11 @@ async function runBackgroundTasks(
       model: 'chatterbox-tts',
       errorData: audioFileDBResult.error,
     };
-    captureException({
-      error: 'Failed to insert audio file row',
-      ...errorObj,
+    const error = new Error(
+      audioFileDBResult.error.message || 'Failed to insert audio file row',
+    );
+    captureException(error, {
+      extra: errorObj,
     });
     console.error(errorObj);
   }
@@ -593,6 +595,11 @@ export async function POST(request: Request) {
     if (!user) {
       return APIErrorResponse('User not found', 401);
     }
+
+    setUser({
+      id: user.id,
+      email: user.email,
+    });
 
     // Parse and validate request
     const contentType = request.headers.get('content-type') || '';
@@ -743,9 +750,8 @@ export async function POST(request: Request) {
       audioReferenceUrl,
       errorData: error,
     };
-    captureException({
-      error: 'Voice cloning error',
-      ...errorObj,
+    captureException(error, {
+      extra: errorObj,
     });
 
     if (Error.isError(error) && 'body' in error) {

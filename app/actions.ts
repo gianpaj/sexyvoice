@@ -107,6 +107,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     .from('audio_files')
     .select()
     .eq('user_id', user.id);
+
   if (audio_files) {
     const deletionResults = await Promise.allSettled(
       audio_files.map((file) => deleteFileFromR2(file.storage_key)),
@@ -115,12 +116,15 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     deletionResults.forEach((result, index) => {
       if (result.status === 'rejected') {
         const file = audio_files[index];
-        Sentry.captureException(result.reason, {
-          extra: {
-            message: 'Failed to delete file from R2 storage.',
-            file,
+        Sentry.captureException(
+          new Error(result.reason || 'Failed to delete file from R2 storage.'),
+          {
+            user: { id: user.id, email: user.email },
+            extra: {
+              file,
+            },
           },
-        });
+        );
         console.error(
           `Failed to delete file ${file.storage_key} from R2`,
           result.reason,

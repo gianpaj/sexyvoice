@@ -29,11 +29,15 @@ export const handleDeleteAction = async (id: string) => {
       .single();
 
     if (fetchError) {
-      Sentry.captureException({
-        error: 'Failed to fetch audio file',
-        audioId: id,
-        userId: user.id,
-        errorData: fetchError,
+      Sentry.captureException(fetchError, {
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+        extra: {
+          audioId: id,
+          errorData: fetchError,
+        },
       });
       throw new Error('Audio file not found');
     }
@@ -66,24 +70,22 @@ export const handleDeleteAction = async (id: string) => {
     await posthog.shutdown();
 
     if (deleteError) {
-      Sentry.captureException({
-        error: 'Failed to soft delete audio file from database',
-        audioId: id,
-        userId: user.id,
-        errorData: deleteError,
+      Sentry.captureException(deleteError, {
+        user: { id: user.id },
+        extra: {
+          audioId: id,
+        },
       });
       throw new Error('Failed to delete audio file');
     }
 
-    // Note: We keep the file in blob storage for potential recovery
+    // Note: We keep the file in R2 storage for potential recovery
     // In the future, we could implement a cleanup job to remove old deleted files
 
     return { success: true };
   } catch (error) {
-    Sentry.captureException({
-      error: 'Audio file deletion error',
-      errorData: error,
-      audioId: id,
+    Sentry.captureException(error, {
+      extra: { audioId: id },
     });
     console.error('Error deleting audio file:', error);
     throw error;
