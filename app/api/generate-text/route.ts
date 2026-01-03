@@ -7,25 +7,11 @@ import { NextResponse } from 'next/server';
 import { getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
-// const cacheManager = new GoogleAICacheManager(
-//   process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-// );
-
-// Configure the model
-const model = google('gemini-2.0-flash-lite');
-
-// const { name: cachedContent } = await cacheManager.create({
-//   model,
-//   contents: [
-//     {
-//       role: 'user',
-//       parts: [{ text: '1000 Lasagna Recipes...' }],
-//     },
-//   ],
-//   ttlSeconds: 60 * 5,
-// });
-
-// OR gpt-4.1-nano with temperature 0.7
+// gemini-2.5-flash-lite
+// Launch stage: GA
+// Release date: July 22, 2025
+// Discontinuation date: July 22, 2026
+const model = google('gemini-2.5-flash-lite');
 
 export async function POST(request: Request) {
   const {
