@@ -20,8 +20,8 @@
 //         event.data.blobUrl,
 //       );
 //       logger.info('Cleaned up clone audio file', {
+//         user: { id: event.data.userId },
 //         extra: {
-//           userId: event.data.userId,
 //           blobUrl: event.data.blobUrl,
 //         },
 //       });

@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       console.error('Failed to create Stripe customer.');
       Sentry.captureMessage('Failed to create Stripe customer.', {
         level: 'error',
-        extra: { userId: user.id, email: user.email },
+        user: { id: user.id, email: user.email },
       });
     }
 

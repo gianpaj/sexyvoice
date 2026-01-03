@@ -84,10 +84,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
 
+    Sentry.setUser({
+      id: user.id,
+      email: user.email,
+    });
+
     const voiceObj = await getVoiceIdByName(voice);
 
     if (!voiceObj) {
-      captureException({ error: 'Voice not found', voice, text });
+      const error = new Error('Voice not found');
+      captureException(error, { extra: { voice, text } });
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
@@ -330,10 +336,12 @@ export async function POST(request: Request) {
           model: voiceObj.model,
           errorData: output.error,
         };
-        captureException({
-          error: 'Voice generation failed',
+        const error = new Error('Voice generation failed', {
+          cause: 'REPLICATE_ERROR',
+        });
+        captureException(error, {
+          extra: errorObj,
           user: { id: user.id, email: user.email },
-          ...errorObj,
         });
         console.error(errorObj);
         throw new Error(
@@ -362,9 +370,7 @@ export async function POST(request: Request) {
 
     after(async () => {
       if (!user) {
-        captureException({
-          error: 'User not found',
-        });
+        captureException(new Error('User not found'));
         return;
       }
 
@@ -408,9 +414,9 @@ export async function POST(request: Request) {
           model: modelUsed,
           errorData: audioFileDBResult.error,
         };
-        captureException({
-          error: 'Failed to insert audio file row',
-          ...errorObj,
+        const error = new Error('Failed to insert audio file row');
+        captureException(error, {
+          extra: errorObj,
         });
         console.error(errorObj);
       }
@@ -443,10 +449,9 @@ export async function POST(request: Request) {
       voice,
       errorData: error,
     };
-    captureException({
-      error: 'Voice generation error',
+    captureException(error, {
+      extra: errorObj,
       user: user ? { id: user.id, email: user.email } : undefined,
-      ...errorObj,
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
