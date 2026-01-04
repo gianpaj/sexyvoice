@@ -4,11 +4,12 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
-const EMAIL_SCHEMA = z.string().email({ message: 'Invalid email' });
+const EMAIL_SCHEMA = z.email({ message: 'Invalid email' });
 
 export const forgotPasswordAction = async (formData: FormData) => {
   const email = formData.get('email')?.toString();
@@ -87,7 +88,7 @@ export const updatePasswordAction = async (formData: FormData) => {
   encodedRedirect('success', `/${lang}/dashboard`, 'passwords_updated');
 };
 
-export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
+export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   'use server';
 
   const supabase = await createClient();
@@ -106,6 +107,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
     .from('audio_files')
     .select()
     .eq('user_id', user.id);
+
   if (audio_files) {
     const deletionResults = await Promise.allSettled(
       audio_files.map((file) => deleteFileFromR2(file.storage_key)),
@@ -114,12 +116,15 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: string }) => {
     deletionResults.forEach((result, index) => {
       if (result.status === 'rejected') {
         const file = audio_files[index];
-        Sentry.captureException(result.reason, {
-          extra: {
-            message: 'Failed to delete file from R2 storage.',
-            file,
+        Sentry.captureException(
+          new Error(result.reason || 'Failed to delete file from R2 storage.'),
+          {
+            user: { id: user.id, email: user.email },
+            extra: {
+              file,
+            },
           },
-        });
+        );
         console.error(
           `Failed to delete file ${file.storage_key} from R2`,
           result.reason,

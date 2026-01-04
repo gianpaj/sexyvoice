@@ -48,16 +48,16 @@ import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { AudioProvider, useAudio } from './audio-provider';
-import type { SampleAudio } from './CloneSampleCard';
-import CloneSampleCard from './CloneSampleCard';
+import type { SampleAudio } from './clone-sample-card';
+import CloneSampleCard from './clone-sample-card';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const sampleAudios: readonly SampleAudio[] = [
   {
@@ -260,7 +260,7 @@ function NewVoiceClientInner({
     },
   ] = useFileUpload({
     onFilesAdded,
-    maxSize: MAX_FILE_SIZE,
+    maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
   });
@@ -362,16 +362,24 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        const voiceResult = await voiceRes.json();
-        setErrorMessage(
-          voiceResult.message ||
-            voiceResult.error ||
-            dict.errorCloning ||
-            'Failed to clone voice.',
-        );
+        let errorMessage = dict.errorCloning || 'Failed to clone voice.';
+
+        // Handle 413 Payload Too Large - returns plain text
+        if (voiceRes.status === 413) {
+          errorMessage =
+            dict.errorTooLarge ||
+            'File size too large. Please use a smaller audio file.';
+        } else {
+          const voiceResult = await voiceRes.json();
+          errorMessage =
+            voiceResult.message || voiceResult.error || errorMessage;
+        }
+
+        setErrorMessage(errorMessage);
         setStatus('error');
         return;
       }
+
       const voiceResult = await voiceRes.json();
 
       setGeneratedAudioUrl(voiceResult.url);
@@ -390,13 +398,13 @@ function NewVoiceClientInner({
       ) {
         return;
       }
-      let errorMsg = 'Unexpected error occurred';
+      let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
       } else if (Error.isError(err)) {
         errorMsg = err.message;
       }
-      setErrorMessage(errorMsg);
+      setErrorMessage(errorMsg || 'Unexpected error occurred');
       setStatus('error');
     }
   }, [
@@ -538,7 +546,7 @@ function NewVoiceClientInner({
                       <p className="mt-1 text-muted-foreground text-xs">
                         {dict.fileFormatsText.replace(
                           '__SIZE__',
-                          formatBytes(MAX_FILE_SIZE),
+                          formatBytes(CLONING_FILE_MAX_SIZE),
                         )}
                       </p>
                     </div>

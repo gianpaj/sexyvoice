@@ -16,15 +16,9 @@ const publicRoutes = [
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
-const landingPageRoutes = routesPerLocale(['/']);
-
 export const updateSession = async (request: NextRequest, locale: string) => {
   try {
     const { pathname } = request.nextUrl;
-
-    if (landingPageRoutes.includes(pathname)) {
-      return NextResponse.next();
-    }
 
     const supabaseResponse = NextResponse.next({
       request,
@@ -36,14 +30,14 @@ export const updateSession = async (request: NextRequest, locale: string) => {
       data: { user },
     } = await supabase.auth.getUser();
 
-    const isPublicRoute = publicRoutes.includes(pathname);
-
     if (!user && pathname.includes('/dashboard')) {
       // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       return NextResponse.redirect(url);
     }
+
+    const isPublicRoute = publicRoutes.includes(pathname);
 
     if (!(user || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page

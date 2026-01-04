@@ -138,6 +138,7 @@ export default function DashboardUI({
                 creditTransactions={creditTransactions}
                 dict={dict.creditsSection}
                 lang={lang}
+                showMinutes={pathname === `/${lang}/dashboard/call`}
                 userId={userId}
               />
 

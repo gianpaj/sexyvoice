@@ -1,7 +1,7 @@
 import { Sparkles } from 'lucide-react';
 
 import Footer from '@/components/footer';
-import { Header } from '@/components/header';
+import { HeaderStatic } from '@/components/header-static';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { SignUpForm } from './signup-form';
@@ -17,7 +17,7 @@ export default async function SignUpPage(props: {
 
   return (
     <>
-      <Header lang={lang} />
+      <HeaderStatic dict={dict.header} lang={lang} />
       <main
         className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
         id="main-content"

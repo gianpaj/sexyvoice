@@ -7,11 +7,11 @@ import {
 } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 
-type CallInstructionConfig = {
+interface CallInstructionConfig {
   defaultInstructions: string;
   initialInstruction: string;
   presetInstructions?: Record<string, string>;
-};
+}
 
 const FALLBACK_CONFIG: CallInstructionConfig = {
   defaultInstructions: fallbackInstructions,
@@ -24,10 +24,7 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
       await get<Partial<CallInstructionConfig>>('call-instructions');
 
     return {
-      defaultInstructions:
-        config?.defaultInstructions ??
-        config?.instructions ??
-        fallbackInstructions,
+      defaultInstructions: config?.defaultInstructions ?? fallbackInstructions,
       initialInstruction:
         config?.initialInstruction ?? fallbackInitialInstruction,
       presetInstructions: config?.presetInstructions,

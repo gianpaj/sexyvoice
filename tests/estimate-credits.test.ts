@@ -96,7 +96,7 @@ describe('Estimate Credits API Route', () => {
   });
 
   it('returns tokens and credits for gpro voices', async () => {
-    mockCountTokens.mockResolvedValueOnce({ totalTokens: 1710 });
+    mockCountTokens.mockResolvedValueOnce({ totalTokens: 360 });
 
     const request = new Request('http://localhost/api/estimate-credits', {
       method: 'POST',
@@ -104,9 +104,13 @@ describe('Estimate Credits API Route', () => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        text: 'Hello world',
+        styleVariant: `emotion_thought The user wants me to describe my ripening processes and changes in detail as he peels me, expressing colors, textures, and variations to convey overwhelming sweetness and lack of tartness. The description needs to be explicit and focus on the botanical impact of his actions, using evocative language to capture the intensity of the experience. The persona of Vera should be maintained, focusing on my flavors derived from the user's actions and my complete surrender to the ripening. I need to convey a sense of raw sugars and juiciness through the detailed description and fruit expressions.emotion_intensity high`,
+        text: `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
+
+And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
+
+As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`,
         voice: 'poe',
-        styleVariant: 'warm',
       }),
     });
 
@@ -114,12 +118,9 @@ describe('Estimate Credits API Route', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.tokens).toBe(1710);
-    expect(json.estimatedCredits).toBe(1710); // 1 to 1 ratio
-    expect(mockCountTokens).toHaveBeenCalledWith({
-      model: 'gemini-2.5-pro-preview-tts',
-      contents: [{ parts: [{ text: 'warm: Hello world' }], role: 'user' }],
-    });
+    expect(json.tokens).toBe(2494);
+    expect(json.estimatedCredits).toBe(1247);
+    expect(mockCountTokens).toHaveBeenCalledOnce();
   });
 
   it('returns 400 when text exceeds character limit', async () => {

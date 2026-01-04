@@ -32,10 +32,21 @@ const publicRoutesWithoutAuth = [
   '/api/inngest',
 ];
 
-export async function middleware(req: NextRequest) {
+const publicRoutesWithLang = (locales: readonly string[]) =>
+  locales.flatMap((locale) => [
+    `/${locale}/wrapped`,
+    `/${locale}/privacy-policy`,
+    `/${locale}/terms`,
+  ]);
+
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (publicRoutesWithoutAuth.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  if (publicRoutesWithLang(i18n.locales).includes(pathname)) {
     return NextResponse.next();
   }
 
@@ -44,10 +55,7 @@ export async function middleware(req: NextRequest) {
       !(
         pathname.startsWith(`/${locale}/`) ||
         pathname.startsWith('/auth') ||
-        pathname.startsWith('/privacy-policy') ||
-        pathname.startsWith('/terms') ||
         pathname.startsWith('/api') ||
-        pathname.startsWith('/sitemap') ||
         pathname.startsWith('/webhook')
       ) && pathname !== `/${locale}`,
   );
@@ -70,6 +78,11 @@ export async function middleware(req: NextRequest) {
 
   const locale = getLocaleFromPathname(req);
 
+  // Skip session check for landing page
+  if (pathname === `/${locale}` || pathname === `/${locale}/`) {
+    return NextResponse.next();
+  }
+
   return await updateSession(req, locale);
 }
 export const config = {
@@ -78,18 +91,21 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - ingest (Posthug rewrites)
      * - favicon.ico (favicon file)
      * - robots.txt (robots file)
+     * - manifest.json
+     *
      * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
-     * - sitemap - xml
+     * - sitemap - .xml
+     *
+     * - ingest (Posthog rewrites)
+     * - monitoring - Sentry error reporting tunnel
+     *
      * - /{2-letter-lang}/blog/* paths
-     * - /privacy-policy
-     * - /terms
-     * - /manifest.json
+     * - /{2-letter-lang}/tools/* paths
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|privacy-policy|terms|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|_next/image|ingest|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },

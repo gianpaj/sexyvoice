@@ -7,6 +7,7 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
@@ -57,6 +58,10 @@ export function ConfigurationForm() {
   const isReconnectingRef = useRef(false); // Track if we're currently reconnecting to prevent loops
   // const { toast } = useToast();
   const { agent } = useVoiceAssistant();
+
+  const searchParams = useSearchParams();
+
+  const showInstruction = searchParams.get('showInstruction');
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
   const updateConfig = useCallback(async () => {
@@ -202,7 +207,7 @@ export function ConfigurationForm() {
     if (form.formState.isValid) {
       handleDebouncedUpdate();
     }
-  }, [formValues, form.formState.isValid, handleDebouncedUpdate]);
+  }, [form.formState.isValid, handleDebouncedUpdate]);
 
   // Debug: log the current form values whenever they change
   // useEffect(() => {
@@ -214,17 +219,31 @@ export function ConfigurationForm() {
   // };
 
   return (
-    <Form {...form}>
-      <div className="flex flex-col gap-4 rounded-xl bg-bg1 px-4 py-3 shadow-2xl shadow-neutral-950/30">
-        <div className="flex items-center justify-between">
-          <div className="font-bold text-neutral-50">Call Settings</div>
-          <div className="text-neutral-500 text-sm">Real-time voice chat</div>
+    <header className="flex w-full flex-col items-stretch justify-stretch">
+      <Form {...form}>
+        <div className="w-full border-separator1 border-b px-5 pt-0 pb-4 md:px-1 md:py-4">
+          <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
+            Configuration
+          </div>
+        </div>
+        <div className="flex w-full flex-col justify-between border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
+          {/*<div className="flex-1 flex-col items-center gap-3 space-x-2">*/}
+          {/*<PresetShare />*/}
+          {/*<div className="flex-grow overflow-y-auto py-4 pt-4">
+            <div className="space-y-5">*/}
+
+          <SessionConfig form={form} />
+          <div className="flex gap-3">
+            <PresetSelector />
+            {showInstruction && <PresetSave />}
+          </div>
+          {/*</div>*/}
         </div>
 
-        <PresetSelector form={form} />
+        <PresetSelector />
         <SessionConfig form={form} />
         <PresetSave />
-      </div>
-    </Form>
+      </Form>
+    </header>
   );
 }

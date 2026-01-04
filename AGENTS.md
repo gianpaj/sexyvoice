@@ -188,7 +188,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Telegram bot function available in `supabase/functions/telegram-bot/` using Deno and deployed on Deno Deploy
 
 ### Additional Commands
-- `pnpm run analyze` - Analyze bundle size with ANALYZE=true
+- `pnpm run analyze` - Analyze bundle size
 - `pnpm clean` - Remove unused dependencies with knip
 - `pnpm prepare` - Setup Husky git hooks
 

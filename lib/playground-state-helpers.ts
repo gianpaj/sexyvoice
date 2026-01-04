@@ -1,10 +1,13 @@
+import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
 import {
+  defaultSessionConfig,
   type PlaygroundState,
   type SessionConfig,
-  defaultSessionConfig,
 } from '@/data/playground-state';
-import { type Preset, defaultPresets as baseDefaultPresets } from '@/data/presets';
-import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
+import {
+  defaultPresets as baseDefaultPresets,
+  type Preset,
+} from '@/data/presets';
 
 export const createPlaygroundStateHelpers = (
   defaultPresets: Preset[] = baseDefaultPresets,
@@ -70,7 +73,9 @@ export const createPlaygroundStateHelpers = (
       const sessionConfig: Partial<PlaygroundState['sessionConfig']> = {};
       params.forEach((value, key) => {
         if (key.startsWith('sessionConfig.')) {
-          const configKey = key.split('.')[1] as keyof PlaygroundState['sessionConfig'];
+          const configKey = key.split(
+            '.',
+          )[1] as keyof PlaygroundState['sessionConfig'];
           sessionConfig[configKey] = value as any;
         }
       });

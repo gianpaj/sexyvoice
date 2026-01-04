@@ -59,13 +59,15 @@ export async function GET(request: NextRequest) {
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
   const thirtyDaysAgo = subtractDays(today, 30);
-  const monthStart = startOfMonth(untilNow);
-  const previousMonthStart = startOfPreviousMonth(untilNow);
+  // Use previousDay for MTD calculations since we're reporting on that day's month
+  const monthStart = startOfMonth(previousDay);
+  const previousMonthStart = startOfPreviousMonth(previousDay);
 
   // Calculate previous month period end for comparison
+  // Cap at monthStart to avoid bleeding into the current month when prev month has fewer days
   const duration = today.getTime() - monthStart.getTime();
   const previousMonthPeriodEnd = new Date(
-    previousMonthStart.getTime() + duration,
+    Math.min(previousMonthStart.getTime() + duration, monthStart.getTime()),
   );
 
   // Fetch data in parallel - combine related queries and filter in memory
@@ -165,7 +167,7 @@ export async function GET(request: NextRequest) {
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
   const creditTransactions = allCreditTransactionsResult.data ?? [];
 
-  // Separate refunds from purchases/topups
+  // Separate refunds from purchases/top-ups
   const refundTransactions = creditTransactions.filter(
     (t) => t.type === 'refund',
   );
@@ -212,7 +214,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const nextSubscriptionCustomer =
+  const nextPayingSubscriber =
     nextSubscriptionDueForPayment &&
     (await getUserByStripeCustomerId(
       nextSubscriptionDueForPayment?.customerId,
@@ -238,7 +240,7 @@ export async function GET(request: NextRequest) {
           .map(([voiceName, count]) => `${voiceName} (${count})`)
           .join(', ');
 
-  // Filter credit transactions by date ranges (purchases/topups only)
+  // Filter credit transactions by date ranges (purchases/top-ups only)
   const purchasePrevDayData = filterByDateRange(
     purchaseTransactions,
     previousDay,
@@ -272,18 +274,41 @@ export async function GET(request: NextRequest) {
   // Top customers calculation
   let hasInvalidMetadata = false;
   const customerSpending = new Map<string, number>();
+  // Track customer purchase types for display
+  const customerPurchaseType = new Map<string, string>();
 
   for (const transaction of purchasePrevDayData) {
-    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+    if (
+      !transaction.metadata ||
+      typeof transaction.metadata !== 'object' ||
+      typeof (transaction.metadata as { dollarAmount?: unknown })
+        .dollarAmount !== 'number'
+    ) {
       console.log('Invalid metadata in transaction:', transaction);
       hasInvalidMetadata = true;
       continue;
     }
-    const { dollarAmount } = transaction.metadata as {
-      dollarAmount: number;
-    };
+    const { dollarAmount, isFirstTopup, isFirstSubscription } =
+      transaction.metadata as {
+        dollarAmount: number;
+        isFirstTopup?: boolean;
+        isFirstSubscription?: boolean;
+      };
     const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
     customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
+
+    // Determine purchase type label
+    let purchaseTypeLabel = '';
+    if (transaction.type === 'topup') {
+      purchaseTypeLabel = isFirstTopup ? 'new topup' : 'existing topup';
+    } else if (transaction.type === 'purchase') {
+      purchaseTypeLabel = isFirstSubscription ? 'new sub' : 'existing sub';
+    }
+
+    // Store the purchase type (use first transaction type if multiple)
+    if (!customerPurchaseType.has(transaction.user_id)) {
+      customerPurchaseType.set(transaction.user_id, purchaseTypeLabel);
+    }
   }
 
   const topCustomerIds = [...customerSpending.entries()]
@@ -303,7 +328,9 @@ export async function GET(request: NextRequest) {
             const username =
               maskUsername(transaction?.profiles?.username) || 'Unknown';
             const spending = customerSpending.get(userId) ?? 0;
-            return `${username} ($${spending.toFixed(2)})`;
+            const purchaseType = customerPurchaseType.get(userId) || '';
+            const typeLabel = purchaseType ? ` - ${purchaseType}` : '';
+            return `${username} ($${spending.toFixed(2)}${typeLabel})`;
           })
           .join(', ');
 
@@ -338,7 +365,7 @@ export async function GET(request: NextRequest) {
     0,
   );
 
-  // MTD revenue calculations (purchases/topups only)
+  // MTD revenue calculations (purchases/top-ups only)
   const mtdRevenueData = filterByDateRange(
     creditTransactions,
     monthStart,
@@ -381,7 +408,7 @@ export async function GET(request: NextRequest) {
     `  - Today: $${totalAmountUsdToday.toFixed(2)} ($${formatChange(totalAmountUsdToday, avg7dRevenue)})`,
     `  - All-time: $${totalAmountUsd.toFixed(2)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
     `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active - ${nextSubscriptionCustomer?.username} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
       ? [
@@ -419,10 +446,13 @@ export async function GET(request: NextRequest) {
         error: 'Failed to send Telegram message',
       });
     }
+    Sentry.captureException(error);
     Sentry.captureCheckIn({
       checkInId,
       monitorSlug: 'telegram-bot-daily-stats',
       status: 'error',
     });
+  } finally {
+    await Sentry.flush();
   }
 }

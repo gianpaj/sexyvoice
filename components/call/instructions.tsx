@@ -9,23 +9,31 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { type CallLanguage, callLanguages } from '@/data/playground-state';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function Instructions() {
   // const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const { pgState, helpers } = usePlaygroundState();
+  const { pgState, dispatch, helpers } = usePlaygroundState();
 
   const immutablePrompt = helpers.getImmutablePrompt(pgState);
 
+  const handleLanguageChange = (value: string) => {
+    dispatch({ type: 'SET_LANGUAGE', payload: value as CallLanguage });
+  };
+
   return (
-    <div
-      className={
-        'flex w-full min-w-0 flex-1 flex-col gap-[4px] overflow-y-auto overflow-x-hidden rounded-lg p-4 text-neutral-300 shadow-md'
-      }
-    >
-      <div className="mb-2 flex items-center justify-between">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-[4px] overflow-y-auto overflow-x-hidden rounded-lg p-4 text-neutral-300 shadow-md">
+      <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center">
           <div className="mr-1 font-semibold text-xs uppercase tracking-widest">
             INSTRUCTIONS
@@ -55,6 +63,24 @@ export function Instructions() {
               )}
             </HoverCardContent>
           </HoverCard>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+            Language
+          </div>
+          <Select onValueChange={handleLanguageChange} value={pgState.language}>
+            <SelectTrigger className="h-9 w-[220px] border-neutral-700 bg-transparent text-neutral-200">
+              <SelectValue placeholder="Choose language" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72 overflow-y-auto border-neutral-700 bg-bg2 text-neutral-100">
+              {callLanguages.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

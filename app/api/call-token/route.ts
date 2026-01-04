@@ -4,9 +4,14 @@ import type { User } from '@supabase/supabase-js';
 import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 
-import type { PlaygroundState } from '@/data/playground-state';
+import {
+  defaultLanguage,
+  languageInitialInstructions,
+  type PlaygroundState,
+} from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
-import { getCredits } from '@/lib/supabase/queries';
+import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
+import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
@@ -27,7 +32,7 @@ export async function POST(request: Request) {
     // Check if user has credits
     const currentAmount = await getCredits(user.id);
 
-    if (currentAmount <= 10) {
+    if (currentAmount <= MINIMUM_CREDITS_FOR_CALL) {
       logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { currentCreditsAmount: currentAmount },
@@ -51,6 +56,7 @@ export async function POST(request: Request) {
 
     const {
       instructions,
+      language = defaultLanguage,
       sessionConfig: {
         model,
         voice,
@@ -59,6 +65,13 @@ export async function POST(request: Request) {
         grokImageEnabled,
       },
     } = playgroundState;
+
+    const selectedLanguage = languageInitialInstructions[language]
+      ? language
+      : defaultLanguage;
+    const initialInstruction =
+      languageInitialInstructions[selectedLanguage] ||
+      languageInitialInstructions[defaultLanguage];
 
     const xaiAPIKey = process.env.XAI_API_KEY;
     if (!xaiAPIKey) {
@@ -71,7 +84,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const roomName = Math.random().toString(36).slice(7);
+    const roomName = `ro-${crypto.randomUUID()}`;
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     if (!(apiKey && apiSecret)) {
@@ -81,15 +94,24 @@ export async function POST(request: Request) {
       throw new Error('LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set');
     }
 
+    const voiceObj = await getVoiceIdByName(voice, false);
+
+    if (!voiceObj) {
+      captureException({ error: 'Voice not found', voice });
+      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+    }
+
     // Create metadata for agent to start with
     const metadata = {
       instructions,
       model,
-      voice,
+      voice: voiceObj.id,
       temperature,
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,
       xai_api_key: xaiAPIKey,
+      language: selectedLanguage,
+      initial_instruction: initialInstruction,
       user_id: user.id,
     };
 

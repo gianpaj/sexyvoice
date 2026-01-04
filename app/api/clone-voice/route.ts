@@ -1,5 +1,5 @@
 import { fal } from '@fal-ai/client';
-import { captureException, logger } from '@sentry/nextjs';
+import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
@@ -13,6 +13,7 @@ import {
 import { APIError, APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
   hasUserPaid,
@@ -37,7 +38,6 @@ const ALLOWED_TYPES = [
 
 const MAX_LENGTH_EN = 500;
 const MAX_LENGTH_MULTILANGUAGE = 300;
-const MAX_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 const MIN_DURATION = 10;
 const MAX_DURATION = 5 * 60; // 5 minutes
 
@@ -195,10 +195,12 @@ function validateFileType(file: File): string {
 }
 
 function validateFileSize(file: File): void {
-  if (file.size > MAX_SIZE) {
+  if (file.size > CLONING_FILE_MAX_SIZE) {
+    const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
+    const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
     throw new APIError(
-      'File too large. Max 4.5MB allowed.',
-      new Response('File too large. Max 4.5MB allowed.', { status: 400 }),
+      errorMessage,
+      new Response(errorMessage, { status: 413 }),
     );
   }
 }
@@ -346,14 +348,9 @@ async function processAudioFile(
         bufferSize: buffer.length,
       });
 
-      captureException({
+      captureException(conversionError, {
         user: { id: userId },
-        error: 'Audio conversion failed',
-        errorData: errorMessage,
-        errorStack,
-        locale,
-        mimeType: file.type,
-        filename: file.name,
+        extra: { locale, mimeType: file.type, filename: file.name },
       });
 
       const errorMsg =
@@ -422,6 +419,11 @@ async function generateVoiceWithReplicate(
     throw new Error(`Unsupported locale: ${locale}`);
   }
 
+  let language = locale;
+  if (locale === 'en-multi') {
+    language = 'en';
+  }
+
   const replicate = new Replicate();
   let replicateResponse: Prediction | undefined;
 
@@ -434,7 +436,7 @@ async function generateVoiceWithReplicate(
   const input = {
     seed: 0,
     text,
-    language: localeConfig.code,
+    language,
     cfg_weight: 0.5,
     temperature: 0.8,
     exaggeration: 0.5,
@@ -451,13 +453,19 @@ async function generateVoiceWithReplicate(
     const errorObj = {
       text,
       locale,
+      language,
       audioReferenceUrl,
       model,
       errorData: output.error,
     };
-    captureException({
-      error: 'Voice cloning failed',
-      ...errorObj,
+    const error = new Error(
+      output.error || 'Voice cloning failed, please try again',
+      {
+        cause: 'REPLICATE_ERROR',
+      },
+    );
+    captureException(error, {
+      extra: errorObj,
     });
     console.error(errorObj);
     throw new Error(output.error || 'Voice cloning failed, please try again', {
@@ -541,9 +549,12 @@ async function runBackgroundTasks(
       model: 'chatterbox-tts',
       errorData: audioFileDBResult.error,
     };
-    captureException({
-      error: 'Failed to insert audio file row',
-      ...errorObj,
+    const error = new Error(
+      audioFileDBResult.error.message || 'Failed to insert audio file row',
+    );
+    captureException(error, {
+      user: { id: userId },
+      extra: errorObj,
     });
     console.error(errorObj);
   }
@@ -585,6 +596,11 @@ export async function POST(request: Request) {
     if (!user) {
       return APIErrorResponse('User not found', 401);
     }
+
+    setUser({
+      id: user.id,
+      email: user.email,
+    });
 
     // Parse and validate request
     const contentType = request.headers.get('content-type') || '';
@@ -735,9 +751,8 @@ export async function POST(request: Request) {
       audioReferenceUrl,
       errorData: error,
     };
-    captureException({
-      error: 'Voice cloning error',
-      ...errorObj,
+    captureException(error, {
+      extra: errorObj,
     });
 
     if (Error.isError(error) && 'body' in error) {

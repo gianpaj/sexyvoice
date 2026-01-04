@@ -86,6 +86,80 @@ declare type Database = {
           },
         ];
       };
+      call_sessions: {
+        Row: {
+          billed_minutes: number;
+          created_at: string | null;
+          credits_used: number;
+          duration_seconds: number;
+          end_reason: string | null;
+          ended_at: string | null;
+          free_call: boolean | null;
+          grok_image_enabled: boolean | null;
+          id: string;
+          last_metered_at: string;
+          max_output_tokens: number | null;
+          metadata: Json | null;
+          model: string;
+          started_at: string;
+          status: string;
+          transcript: Json | null;
+          updated_at: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Insert: {
+          billed_minutes?: number;
+          created_at?: string | null;
+          credits_used?: number;
+          duration_seconds?: number;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          free_call?: boolean | null;
+          grok_image_enabled?: boolean | null;
+          id?: string;
+          last_metered_at?: string;
+          max_output_tokens?: number | null;
+          metadata?: Json | null;
+          model: string;
+          started_at?: string;
+          status?: string;
+          transcript?: Json | null;
+          updated_at?: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Update: {
+          billed_minutes?: number;
+          created_at?: string | null;
+          credits_used?: number;
+          duration_seconds?: number;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          free_call?: boolean | null;
+          grok_image_enabled?: boolean | null;
+          id?: string;
+          last_metered_at?: string;
+          max_output_tokens?: number | null;
+          metadata?: Json | null;
+          model?: string;
+          started_at?: string;
+          status?: string;
+          transcript?: Json | null;
+          updated_at?: string | null;
+          user_id?: string;
+          voice_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'call_sessions_voice_id_fkey';
+            columns: ['voice_id'];
+            isOneToOne: false;
+            referencedRelation: 'voices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       credit_transactions: {
         Row: {
           amount: number;

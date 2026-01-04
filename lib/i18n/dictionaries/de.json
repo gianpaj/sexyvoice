@@ -6,6 +6,8 @@
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "submit": "Anmelden",
+      "forgotPassword": "Passwort vergessen?",
+      "signInWithGoogle": "Über Google anmelden",
       "noAccount": "Haben Sie noch kein Konto?",
       "signUp": "Registrieren",
       "error": "Ungültige E-Mail-Adresse oder Passwort"
@@ -29,6 +31,7 @@
       "email": "E-Mail-Adresse",
       "submit": "Passwort zurücksetzen",
       "error": "Ungültige E-Mail-Adresse",
+      "loading": "E-Mail wird gesendet...",
       "success": "Überprüfen Sie Ihre E-Mails auf einen Link zum Zurücksetzen des Passworts",
       "backToLogin": "Zurück zum Login",
       "errors": {
@@ -54,10 +57,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Starke Stimmen, frei",
-      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller, Entwickler und Geschichtenerzähler. 😉",
+      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
+      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 60 Sekunden kostenlosen Anruf",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich",
+      "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
       "signIn": "Anmelden"
     },
     "features": {
@@ -104,50 +107,82 @@
     "faq": {
       "title": "Häufig gestellte Fragen",
       "subtitle": "Alles, was Sie über SexyVoice.ai wissen müssen",
-      "questions": [
+      "groups": [
         {
-          "question": "Wie funktioniert das Klonen von Stimmen?",
-          "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+          "id": "liveCalling",
+          "category": "Live-KI-Anrufe",
+          "questions": [
+            {
+              "question": "Wie funktionieren Live-KI-Anrufe?",
+              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
+            },
+            {
+              "question": "Was kostet das?",
+              "answer": "Live-Anrufe kosten 200 Credits pro Minute, solange Sie verbunden sind."
+            }
+          ]
         },
         {
-          "question": "Kann ich meine eigene Stimme klonen?",
-          "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+          "id": "voiceCreation",
+          "category": "Stimmerstellung und Stile",
+          "questions": [
+            {
+              "question": "Wie funktioniert das Klonen von Stimmen?",
+              "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+            },
+            {
+              "question": "Kann ich meine eigene Stimme klonen?",
+              "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+            },
+            {
+              "question": "Welche Sprachen unterstützen Ihre KI-Stimmen?",
+              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter:\nArabisch (Ägyptisch),\nEnglisch (US),\nFranzösisch (Frankreich),\nDeutsch (Deutschland),\nSpanisch (US),\nHindi (Indien),\nIndonesisch (Indonesien),\nItalienisch (Italien),\nJapanisch (Japan),\nKoreanisch (Korea),\nPortugiesisch (Brasilien),\nRussisch (Russland),\nNiederländisch (Niederlande),\nPolnisch (Polen),\nThailändisch (Thailand),\nTürkisch (Türkei),\nVietnamesisch (Vietnam),\nRumänisch (Rumänien),\nUkrainisch (Ukraine),\nBengali (Bangladesch),\nEnglisch/Hindi (Indien),\nMarathi (Indien),\nTamil (Indien),\nund Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch:\nDan (Englisch UK 🇬🇧),\nPietro (Italienisch 🇮🇹),\nEmma (Englisch US 🇺🇸),\nJavi (Spanisch 🇪🇸),\nJosh (Englisch US 🇺🇸),\nund Tara (Englisch US 🇺🇸).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+            },
+            {
+              "question": "Welche Sprachen unterstützt das Stimmklonen?",
+              "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\nArabisch,\nDänisch,\nDeutsch,\nGriechisch,\nEnglisch,\nSpanisch,\nFinnisch,\nFranzösisch,\nHebräisch,\nHindi,\nItalienisch,\nJapanisch,\nKoreanisch,\nMalaiisch,\nNiederländisch,\nNorwegisch,\nPolnisch,\nPortugiesisch,\nRussisch,\nSchwedisch,\nSuaheli,\nTürkisch,\nund Mandarin-Chinesisch."
+            },
+            {
+              "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
+              "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
+            }
+          ]
         },
         {
-          "question": "Sind meine Stimm-Daten sicher?",
-          "answer": "Absolut. Alle Sprachaufnahmen und generierten Dateien sind verschlüsselt und sicher gespeichert. Wenn Sie eine Stimme klonen, löschen wir die hochgeladene Sprachprobe und niemand sonst kann sie verwenden. Sie haben vollständige Kontrolle über die generierten Audiodateien und können diese jederzeit löschen. Wir geben Ihre Stimmendaten niemals ohne Ihre Zustimmung weiter."
+          "id": "trustAndPolicies",
+          "category": "Nutzung, Sicherheit & Richtlinien",
+          "questions": [
+            {
+              "question": "Sind meine Stimm-Daten sicher?",
+              "answer": "Absolut. Alle Sprachaufnahmen und generierten Dateien sind verschlüsselt und sicher gespeichert. Wenn Sie eine Stimme klonen, löschen wir die hochgeladene Sprachprobe und niemand sonst kann sie verwenden. Sie haben vollständige Kontrolle über die generierten Audiodateien und können diese jederzeit löschen. Wir geben Ihre Stimmendaten niemals ohne Ihre Zustimmung weiter."
+            },
+            {
+              "question": "Wofür kann ich die generierten Stimmen verwenden?",
+              "answer": "Kreative verwenden unsere Stimmen für Videos, Podcasts, Hörbücher, Social-Media-Inhalte, Spiele, E-Learning und vieles mehr. Es ist eine einfache Möglichkeit, eine konsistente Audioqualität zu gewährleisten. Denken Sie nur daran, dass unsere Nutzungsbedingungen Täuschung oder Identitätsdiebstahl verbieten."
+            },
+            {
+              "question": "Ist die Erstellung von erotischen oder erwachsenenorientierten Inhalten erlaubt?",
+              "answer": "Ja, wir erlauben die Erstellung von erwachsenenorientierten und erotischen Inhalten auf unserer Plattform. Wir glauben an kreative Freiheit bei gleichzeitig verantwortungsvoller Nutzung. Alle Inhalte müssen jedoch unseren Nutzungsbedingungen und den geltenden Gesetzen entsprechen. Wir verbieten Inhalte, die Minderjährige, nicht einvernehmliche Szenarien oder illegale Aktivitäten beinhalten."
+            }
+          ]
         },
         {
-          "question": "Wofür kann ich die generierten Stimmen verwenden?",
-          "answer": "Kreative verwenden unsere Stimmen für Videos, Podcasts, Hörbücher, Social-Media-Inhalte, Spiele, E-Learning und vieles mehr. Es ist eine einfache Möglichkeit, eine konsistente Audioqualität zu gewährleisten. Denken Sie nur daran, dass unsere Nutzungsbedingungen Täuschung oder Identitätsdiebstahl verbieten."
-        },
-        {
-          "question": "Wie viele Credits benötige ich?",
-          "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 10 Minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
-        },
-        {
-          "question": "Welche Sprachen unterstützen Ihre KI-Stimmen?",
-          "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter:\nArabisch (Ägyptisch),\nEnglisch (US),\nFranzösisch (Frankreich),\nDeutsch (Deutschland),\nSpanisch (US),\nHindi (Indien),\nIndonesisch (Indonesien),\nItalienisch (Italien),\nJapanisch (Japan),\nKoreanisch (Korea),\nPortugiesisch (Brasilien),\nRussisch (Russland),\nNiederländisch (Niederlande),\nPolnisch (Polen),\nThailändisch (Thailand),\nTürkisch (Türkei),\nVietnamesisch (Vietnam),\nRumänisch (Rumänien),\nUkrainisch (Ukraine),\nBengali (Bangladesch),\nEnglisch/Hindi (Indien),\nMarathi (Indien),\nTamil (Indien),\nund Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch:\nDan (Englisch UK 🇬🇧),\nPietro (Italienisch 🇮🇹),\nEmma (Englisch US 🇺🇸),\nJavi (Spanisch 🇪🇸),\nJosh (Englisch US 🇺🇸),\nund Tara (Englisch US 🇺🇸).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
-        },
-        {
-          "question": "Welche Sprachen unterstützt das Stimmklonen?",
-          "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\nArabisch,\nDänisch,\nDeutsch,\nGriechisch,\nEnglisch,\nSpanisch,\nFinnisch,\nFranzösisch,\nHebräisch,\nHindi,\nItalienisch,\nJapanisch,\nKoreanisch,\nMalaiisch,\nNiederländisch,\nNorwegisch,\nPolnisch,\nPortugiesisch,\nRussisch,\nSchwedisch,\nSuaheli,\nTürkisch,\nund Mandarin-Chinesisch."
-        },
-        {
-          "question": "Haben Sie eine API für Entwickler?",
-          "answer": "Sie kommt bald! Mit unserer API können Entwickler Sprachgenerierung und Stimmklonen zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert verwalten."
-        },
-        {
-          "question": "Warum SexyVoice.ai wählen?",
-          "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie ein Kreative oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
-        },
-        {
-          "question": "Ist die Erstellung von erotischen oder erwachsenenorientierten Inhalten erlaubt?",
-          "answer": "Ja, wir erlauben die Erstellung von erwachsenenorientierten und erotischen Inhalten auf unserer Plattform. Wir glauben an kreative Freiheit bei gleichzeitig verantwortungsvoller Nutzung. Alle Inhalte müssen jedoch unseren Nutzungsbedingungen und den geltenden Gesetzen entsprechen. Wir verbieten Inhalte, die Minderjährige, nicht einvernehmliche Szenarien oder illegale Aktivitäten beinhalten."
-        },
-        {
-          "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
-          "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\", etc. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
+          "id": "pricingAndAccess",
+          "category": "Preise & Zugang",
+          "questions": [
+            {
+              "question": "Wie viele Credits benötige ich?",
+              "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 10 Minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
+            },
+            {
+              "question": "Haben Sie eine API für Entwickler?",
+              "answer": "Sie kommt bald! Mit unserer API können Entwickler Sprachgenerierung und Stimmklonen zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert verwalten."
+            },
+            {
+              "question": "Warum SexyVoice.ai wählen?",
+              "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
+            }
+          ]
         }
       ]
     }
@@ -249,7 +284,8 @@
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
-    "remainingCredits": "Verbleibend"
+    "remainingCredits": "Verbleibend",
+    "remainingTime": "Verbleibende Zeit"
   },
   "generate": {
     "abortedCloning": "Sprachgenerierung abgebrochen.",
@@ -278,6 +314,11 @@
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
     }
   },
+  "call": {
+    "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
+    "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__"
+  },
   "clone": {
     "audioFileLabel": "Audiodatei",
     "cancelButton": "Abbrechen",
@@ -289,6 +330,7 @@
     "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
+    "errorTooLarge": "Dateigröße zu groß. Bitte verwenden Sie eine kleinere Audiodatei.",
     "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",
     "generating": "Wird generiert",
     "languageLabel": "Sprache",

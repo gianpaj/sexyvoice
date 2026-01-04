@@ -6,6 +6,8 @@
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
+      "forgotPassword": "Forgot your password?",
+      "signInWithGoogle": "Sign in with Google",
       "noAccount": "Don't have an account?",
       "signUp": "Sign up",
       "error": "Invalid email or password"
@@ -29,6 +31,7 @@
       "email": "Email address",
       "submit": "Reset password",
       "error": "Invalid email address",
+      "loading": "Sending email...",
       "success": "Check your email for a password reset link",
       "backToLogin": "Back to Login",
       "errors": {
@@ -54,10 +57,10 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Expressive Voices, Uncensored",
-      "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators, developers, and storytellers. 😉",
+      "title": "Private call with an AI, Talk freely – no judgment",
+      "subtitle": "Experience the connection – try 60 sec free call",
       "buttonCTA": "Sign up for Free",
-      "noCreditCard": "No credit card required",
+      "noCreditCard": "No credit card required. You can hang up anytime",
       "signIn": "Sign In"
     },
     "features": {
@@ -104,50 +107,82 @@
     "faq": {
       "title": "Frequently Asked Questions",
       "subtitle": "Everything you need to know about SexyVoice.ai",
-      "questions": [
+      "groups": [
         {
-          "question": "How does voice cloning work?",
-          "answer": "Our AI analyzes your voice sample (10 seconds to 5 mins) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
+          "id": "liveCalling",
+          "category": "Live AI Calling",
+          "questions": [
+            {
+              "question": "How does Live AI Calling work?",
+              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or just listen—your call flows like a real conversation."
+            },
+            {
+              "question": "How much does it cost?",
+              "answer": "Live calling costs 200 credits per minute while you’re connected."
+            }
+          ]
         },
         {
-          "question": "Can I clone my own voice?",
-          "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
+          "id": "voiceCreation",
+          "category": "Voice creation & styles",
+          "questions": [
+            {
+              "question": "How does voice cloning work?",
+              "answer": "Our AI analyzes your voice sample (10 seconds to 5 mins) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
+            },
+            {
+              "question": "Can I clone my own voice?",
+              "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
+            },
+            {
+              "question": "What languages do your AI voices support?",
+              "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including:\nArabic (Egyptian),\nEnglish (US),\nFrench (France),\nGerman (Germany),\nSpanish (US),\nHindi (India),\nIndonesian (Indonesia),\nItalian (Italy),\nJapanese (Japan),\nKorean (Korea),\nPortuguese (Brazil),\nRussian (Russia),\nDutch (Netherlands),\nPolish (Poland),\nThai (Thailand),\nTurkish (Turkey),\nVietnamese (Vietnam),\nRomanian (Romania),\nUkrainian (Ukraine),\nBengali (Bangladesh),\nEnglish/Hindi (India),\nMarathi (India),\nTamil (India),\nand Telugu (India).\n\nOther voices are language-specific:\nDan (English UK 🇬🇧),\nPietro (Italian 🇮🇹),\nEmma (English US 🇺🇸),\nJavi (Spanish 🇪🇸),\nJosh (English US 🇺🇸),\nand Tara (English US 🇺🇸).\n\nChoose your voice based on your target language for the most natural results."
+            },
+            {
+              "question": "What languages does voice cloning support?",
+              "answer": "Voice cloning supports the following 23 languages: Arabic,\nDanish,\nGerman,\nGreek,\nEnglish,\nSpanish,\nFinnish,\nFrench,\nHebrew,\nHindi,\nItalian,\nJapanese,\nKorean,\nMalay,\nDutch,\nNorwegian,\nPolish,\nPortuguese,\nRussian,\nSwedish,\nSwahili,\nTurkish,\nand Mandarin Chinese."
+            },
+            {
+              "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
+              "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
+            }
+          ]
         },
         {
-          "question": "Is my voice data secure?",
-          "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete them uploaded voice sample and no one else can use it. You have full control over the generated audio files and can delete them whenever you want. We never share voice data without your consent."
+          "id": "trustAndPolicies",
+          "category": "Usage, safety & policies",
+          "questions": [
+            {
+              "question": "Is my voice data secure?",
+              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files and can delete them whenever you want. We never share voice data without your consent."
+            },
+            {
+              "question": "What can I use the generated voices for?",
+              "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
+            },
+            {
+              "question": "Is erotica or adult content generation allowed?",
+              "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
+            }
+          ]
         },
         {
-          "question": "What can I use the generated voices for?",
-          "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
-        },
-        {
-          "question": "How many credits do I need?",
-          "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
-        },
-        {
-          "question": "What languages do your AI voices support?",
-          "answer": "Language support depends on the selected voice when generating speech.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat) support 24 languages including:\nArabic (Egyptian),\nEnglish (US),\nFrench (France),\nGerman (Germany),\nSpanish (US),\nHindi (India),\nIndonesian (Indonesia),\nItalian (Italy),\nJapanese (Japan),\nKorean (Korea),\nPortuguese (Brazil),\nRussian (Russia),\nDutch (Netherlands),\nPolish (Poland),\nThai (Thailand),\nTurkish (Turkey),\nVietnamese (Vietnam),\nRomanian (Romania),\nUkrainian (Ukraine),\nBengali (Bangladesh),\nEnglish/Hindi (India),\nMarathi (India),\nTamil (India),\nand Telugu (India).\n\nOther voices are language-specific:\nDan (English UK 🇬🇧),\nPietro (Italian 🇮🇹),\nEmma (English US 🇺🇸),\nJavi (Spanish 🇪🇸),\nJosh (English US 🇺🇸),\nand Tara (English US 🇺🇸).\n\nChoose your voice based on your target language for the most natural results."
-        },
-        {
-          "question": "What languages does voice cloning support?",
-          "answer": "Voice cloning supports the following 23 languages: Arabic,\nDanish,\nGerman,\nGreek,\nEnglish,\nSpanish,\nFinnish,\nFrench,\nHebrew,\nHindi,\nItalian,\nJapanese,\nKorean,\nMalay,\nDutch,\nNorwegian,\nPolish,\nPortuguese,\nRussian,\nSwedish,\nSwahili,\nTurkish,\nand Mandarin Chinese."
-        },
-        {
-          "question": "Do you have an API for developers?",
-          "answer": "It's coming soon! Our API will let developers add voice generation and cloning to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically."
-        },
-        {
-          "question": "Why choose SexyVoice.ai?",
-          "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
-        },
-        {
-          "question": "Is erotica or adult content generation allowed?",
-          "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
-        },
-        {
-          "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
-          "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
+          "id": "pricingAndAccess",
+          "category": "Pricing & access",
+          "questions": [
+            {
+              "question": "How many credits do I need?",
+              "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 10 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
+            },
+            {
+              "question": "Do you have an API for developers?",
+              "answer": "It's coming soon! Our API will let developers add voice generation and cloning to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically."
+            },
+            {
+              "question": "Why choose SexyVoice.ai?",
+              "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
+            }
+          ]
         }
       ]
     }
@@ -249,7 +284,8 @@
     "title": "Credits",
     "topupButton": "Top-up",
     "totalCredits": "Total",
-    "remainingCredits": "Remaining"
+    "remainingCredits": "Remaining",
+    "remainingTime": "Remaining time"
   },
   "generate": {
     "abortedCloning": "Voice generation aborted.",
@@ -278,6 +314,11 @@
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
     }
   },
+  "call": {
+    "notice1": "Explore your deepest desires in total privacy.",
+    "notice2": "End-to-end encrypted, judgment-free conversations.",
+    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__"
+  },
   "clone": {
     "audioFileLabel": "Audio File",
     "cancelButton": "Cancel",
@@ -288,6 +329,7 @@
     "downloadAudio": "Download Audio",
     "dragDropText": "Drag & drop or click to browse",
     "errorCloning": "Failed to clone voice",
+    "errorTooLarge": "File size too large. Please use a smaller audio file.",
     "errorTitle": "Error",
     "fileFormatsText": "MP3, WAV, M4A or OGG (max. __SIZE__)",
     "generating": "Generating",

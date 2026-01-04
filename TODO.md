@@ -9,6 +9,7 @@
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - share link & page after an audio has been generated
+- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected

@@ -1,29 +1,31 @@
 import type { Metadata } from 'next';
 
-import { ConfigurationForm } from '@/components/call/configuration-form';
 // import { NavLogo } from "@/components/custom/nav-logo";
 // import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { defaultPresets as baseDefaultPresets } from '@/data/presets';
+import { ConnectionProvider } from '@/hooks/use-connection';
+import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import {
   applyPresetInstructionOverrides,
   getCallInstructionConfig,
 } from '@/lib/edge-config/call-instructions';
-import { ConnectionProvider } from '@/hooks/use-connection';
-import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
-
-export const metadata: Metadata = {
-  title: 'Call & Phonesex - SexyVoice',
-  description: 'Real-time voice AI',
-};
+import { getDictionary } from '@/lib/i18n/get-dictionary';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 import '@livekit/components-styles';
 
-export default async function RootLayout({
+export const metadata: Metadata = {
+  description: 'Real-time voice AI',
+};
+
+export default async function CallLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ lang: Locale }>;
 }>) {
   const { defaultInstructions, initialInstruction, presetInstructions } =
     await getCallInstructionConfig();
@@ -32,6 +34,10 @@ export default async function RootLayout({
     baseDefaultPresets,
     presetInstructions,
   );
+
+  const { lang } = await params;
+
+  const dict = await getDictionary(lang, 'call');
 
   return (
     // <PHProvider>
@@ -42,38 +48,11 @@ export default async function RootLayout({
         initialInstruction,
       }}
     >
-      <ConnectionProvider>
+      <ConnectionProvider dict={dict}>
         <TooltipProvider>
-          <RoomWrapper>
-            <div className="mx-auto flex w-full flex-col md:max-w-3xl">
-              <div className="mb-6 flex w-full px-0 md:px-4">
-                <ConfigurationForm />
-              </div>
-              {children}
-            </div>
-          </RoomWrapper>
+          <RoomWrapper>{children}</RoomWrapper>
         </TooltipProvider>
       </ConnectionProvider>
     </PlaygroundStateProvider>
-    // </PHProvider>
   );
 }
-
-// <SidebarProvider defaultOpen={true}>
-//   <Sidebar className="bg-bg1">
-//     {/*<SidebarHeader>
-//               <NavLogo />
-//             </SidebarHeader>*/}
-//     <SidebarContent className="px-4">
-//       <ConfigurationForm />
-//     </SidebarContent>
-//     {/*<SidebarFooter className="p-4">
-//               <ThemeToggle />
-//             </SidebarFooter>*/}
-//   </Sidebar>
-//   <SidebarInset>
-//     {/*<PostHogPageView />*/}
-//     {children}
-//     {/*<Toaster />*/}
-//   </SidebarInset>
-// </SidebarProvider>

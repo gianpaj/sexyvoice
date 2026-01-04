@@ -1,11 +1,8 @@
-import { Headphones } from 'lucide-react';
-
-import {
-  defaultSessionConfig,
-  instructions,
-  type SessionConfig,
-} from './playground-state';
+import { defaultSessionConfig, instructions } from './default-config';
+import type { SessionConfig } from './session-config';
 import { VoiceId } from './voices';
+
+export type PresetIconId = 'headphones';
 
 export interface Preset {
   id: string;
@@ -14,7 +11,7 @@ export interface Preset {
   instructions: string;
   sessionConfig: SessionConfig;
   defaultGroup?: PresetGroup;
-  icon?: React.ComponentType<{ className?: string }>;
+  iconId?: PresetIconId;
 }
 
 // biome-ignore lint/style/noEnum: fine
@@ -34,7 +31,7 @@ export const defaultPresets: Preset[] = [
       voice: VoiceId.ARA,
     },
     defaultGroup: PresetGroup.PERSONALITY,
-    icon: Headphones,
+    iconId: 'headphones',
   },
   {
     id: 'hard-brandi',
@@ -64,6 +61,6 @@ export const defaultPresets: Preset[] = [
       voice: VoiceId.ARA,
     },
     defaultGroup: PresetGroup.PERSONALITY,
-    icon: Headphones,
+    iconId: 'headphones',
   },
 ];
