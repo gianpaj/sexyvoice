@@ -203,7 +203,7 @@ export function ConfigurationForm() {
     }
   }, [connectionState]);
 
-  // Propagate form upates from the user
+  // Propagate form updates from the user
   useEffect(() => {
     if (form.formState.isValid && form.formState.isDirty) {
       dispatch({
@@ -212,6 +212,11 @@ export function ConfigurationForm() {
       });
     }
   }, [formValues, dispatch, form]);
+
+  // Reset form when preset changes
+  useEffect(() => {
+    form.reset(pgState.sessionConfig);
+  }, [pgState.sessionConfig, form]);
 
   // Push config updates to LiveKit agent when user stops interacting with the form
   useEffect(() => {
