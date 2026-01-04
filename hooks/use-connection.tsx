@@ -5,7 +5,6 @@ import { createContext, useCallback, useContext, useState } from 'react';
 
 import type { PlaygroundState } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
-import { playgroundStateHelpers } from '@/lib/playground-state-helpers';
 import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = () => Promise<void>;
@@ -36,7 +35,7 @@ export const ConnectionProvider = ({
     voice: VoiceId;
   }>({ wsUrl: '', token: '', shouldConnect: false, voice: VoiceId.ARA });
 
-  const { pgState } = usePlaygroundState();
+  const { pgState, helpers } = usePlaygroundState();
 
   const connect = async () => {
     console.log('connect');
@@ -46,9 +45,7 @@ export const ConnectionProvider = ({
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(
-        playgroundStateHelpers.getStateWithFullInstructions(pgState),
-      ),
+      body: JSON.stringify(helpers.getStateWithFullInstructions(pgState)),
     });
 
     if (!response.ok) {

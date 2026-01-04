@@ -20,7 +20,6 @@ import { defaultSessionConfig } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-import { playgroundStateHelpers } from '@/lib/playground-state-helpers';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
 
@@ -43,7 +42,7 @@ export interface ConfigurationFormFieldProps {
 }
 
 export function ConfigurationForm() {
-  const { pgState, dispatch } = usePlaygroundState();
+  const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect } = useConnection();
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
@@ -68,8 +67,7 @@ export function ConfigurationForm() {
     }
 
     const values = pgState.sessionConfig;
-    const fullInstructions =
-      playgroundStateHelpers.getFullInstructions(pgState);
+    const fullInstructions = helpers.getFullInstructions(pgState);
     const attributes: { [key: string]: string | number | boolean } = {
       instructions: fullInstructions,
       model: values.model,
@@ -166,6 +164,7 @@ export function ConfigurationForm() {
     agent?.identity,
     connect,
     disconnect,
+    helpers,
   ]);
 
   // Function to debounce updates when user stops interacting
@@ -198,36 +197,34 @@ export function ConfigurationForm() {
     }
   }, [formValues, dispatch, form]);
 
+  // Push config updates to LiveKit agent when user stops interacting with the form
   useEffect(() => {
-    if (ConnectionState.Connected === connectionState) {
-      handleDebouncedUpdate(); // Call debounced update when form changes
+    if (form.formState.isValid) {
+      handleDebouncedUpdate();
     }
+  }, [formValues, form.formState.isValid, handleDebouncedUpdate]);
 
-    form.reset(pgState.sessionConfig);
-  }, [pgState.sessionConfig, connectionState, handleDebouncedUpdate, form]);
+  // Debug: log the current form values whenever they change
+  // useEffect(() => {
+  //   console.log('Form Values:', formValues);
+  // }, [formValues]);
+
+  // const onSubmit = async (values: z.infer<typeof ConfigurationFormSchema>) => {
+  //   console.log("submitted", values);
+  // };
 
   return (
-    <header className="flex w-full flex-col items-stretch justify-stretch">
-      <Form {...form}>
-        <div className="w-full border-separator1 border-b px-5 pt-0 pb-4 md:px-1 md:py-4">
-          <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
-            Configuration
-          </div>
+    <Form {...form}>
+      <div className="flex flex-col gap-4 rounded-xl bg-bg1 px-4 py-3 shadow-2xl shadow-neutral-950/30">
+        <div className="flex items-center justify-between">
+          <div className="font-bold text-neutral-50">Call Settings</div>
+          <div className="text-neutral-500 text-sm">Real-time voice chat</div>
         </div>
-        <div className="flex w-full flex-col justify-between border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
-          {/*<div className="flex-1 flex-col items-center gap-3 space-x-2">*/}
-          {/*<PresetShare />*/}
-          {/*<div className="flex-grow overflow-y-auto py-4 pt-4">
-            <div className="space-y-5">*/}
 
-          <SessionConfig form={form} />
-          <div className="flex gap-3">
-            <PresetSelector />
-            <PresetSave />
-          </div>
-          {/*</div>*/}
-        </div>
-      </Form>
-    </header>
+        <PresetSelector form={form} />
+        <SessionConfig form={form} />
+        <PresetSave />
+      </div>
+    </Form>
   );
 }

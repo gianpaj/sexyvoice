@@ -1,6 +1,7 @@
 import { VoiceId } from '@/data/voices';
 import { ModelId } from './models';
 import type { Preset } from './presets';
+import { defaultPresets } from './presets';
 
 export interface SessionConfig {
   model: ModelId;
@@ -16,6 +17,7 @@ export interface PlaygroundState {
   selectedPresetId: string | null;
   instructions: string;
   initialInstruction: string;
+  defaultPresets: Preset[];
 }
 
 export const defaultSessionConfig: SessionConfig = {
@@ -56,4 +58,5 @@ export const defaultPlaygroundState: PlaygroundState = {
   selectedPresetId: 'porn-whisper',
   instructions,
   initialInstruction,
+  defaultPresets,
 };

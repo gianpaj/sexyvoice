@@ -7,6 +7,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
   useState,
 } from 'react';
@@ -17,8 +18,11 @@ import {
   defaultSessionConfig,
   type PlaygroundState,
 } from '@/data/playground-state';
-import { defaultPresets, type Preset } from '@/data/presets';
-import { playgroundStateHelpers } from '@/lib/playground-state-helpers';
+import {
+  defaultPresets as baseDefaultPresets,
+  type Preset,
+} from '@/data/presets';
+import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
 const LS_USER_PRESETS_KEY = 'PG_USER_PRESETS';
 const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
@@ -32,7 +36,7 @@ const presetStorageHelper = {
     localStorage.setItem(LS_USER_PRESETS_KEY, JSON.stringify(presets));
   },
   getStoredSelectedPresetId: (): string =>
-    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || defaultPresets[0].id,
+    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || baseDefaultPresets[0].id,
   setStoredSelectedPresetId: (presetId: string | null): void => {
     if (presetId !== null) {
       localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
@@ -86,10 +90,11 @@ function playgroundStateReducer(
         selectedPresetId: action.payload,
       };
 
+      const helpers = createPlaygroundStateHelpers(state.defaultPresets);
       newState.instructions =
-        playgroundStateHelpers.getSelectedPreset(newState)?.instructions || '';
+        helpers.getSelectedPreset(newState)?.instructions || '';
       newState.sessionConfig =
-        playgroundStateHelpers.getSelectedPreset(newState)?.sessionConfig ||
+        helpers.getSelectedPreset(newState)?.sessionConfig ||
         defaultSessionConfig;
       return newState;
     }
@@ -127,7 +132,7 @@ function playgroundStateReducer(
 interface PlaygroundStateContextProps {
   pgState: PlaygroundState;
   dispatch: Dispatch<Action>;
-  helpers: typeof playgroundStateHelpers;
+  helpers: ReturnType<typeof createPlaygroundStateHelpers>;
   showAuthDialog: boolean;
   setShowAuthDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -151,14 +156,36 @@ export const usePlaygroundState = (): PlaygroundStateContextProps => {
 // Create the provider component
 interface PlaygroundStateProviderProps {
   children: ReactNode;
+  defaultPresets?: Preset[];
+  initialState?: Partial<PlaygroundState>;
 }
 
 export const PlaygroundStateProvider = ({
   children,
+  defaultPresets: defaultPresetsProp,
+  initialState,
 }: PlaygroundStateProviderProps) => {
+  const mergedDefaultPresets = defaultPresetsProp ?? baseDefaultPresets;
+  const helpers = useMemo(
+    () => createPlaygroundStateHelpers(mergedDefaultPresets),
+    [mergedDefaultPresets],
+  );
+  const mergedInitialState: PlaygroundState = useMemo(
+    () => ({
+      ...defaultPlaygroundState,
+      defaultPresets: mergedDefaultPresets,
+      ...initialState,
+      sessionConfig: {
+        ...defaultPlaygroundState.sessionConfig,
+        ...(initialState?.sessionConfig ?? {}),
+      },
+    }),
+    [initialState, mergedDefaultPresets],
+  );
+
   const [state, dispatch] = useReducer(
     playgroundStateReducer,
-    defaultPlaygroundState,
+    mergedInitialState,
   );
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
@@ -192,12 +219,10 @@ export const PlaygroundStateProvider = ({
     dispatch({ type: 'SET_USER_PRESETS', payload: userPresets });
 
     // Read the URL
-    const urlData = playgroundStateHelpers.decodeFromURLParams(
-      window.location.search,
-    );
+    const urlData = helpers.decodeFromURLParams(window.location.search);
 
     if (urlData.state.selectedPresetId) {
-      const defaultPreset = playgroundStateHelpers
+      const defaultPreset = helpers
         .getDefaultPresets()
         .find((preset) => preset.id === urlData.state.selectedPresetId);
 
@@ -227,14 +252,14 @@ export const PlaygroundStateProvider = ({
       // Clear the URL for non-default presets
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+  }, [helpers]);
 
   return (
     <PlaygroundStateContext.Provider
       value={{
         pgState: state,
         dispatch,
-        helpers: playgroundStateHelpers,
+        helpers,
         showAuthDialog,
         setShowAuthDialog,
       }}

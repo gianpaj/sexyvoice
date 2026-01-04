@@ -5,6 +5,11 @@ import { ConfigurationForm } from '@/components/call/configuration-form';
 // import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { defaultPresets as baseDefaultPresets } from '@/data/presets';
+import {
+  applyPresetInstructionOverrides,
+  getCallInstructionConfig,
+} from '@/lib/edge-config/call-instructions';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 
@@ -15,14 +20,28 @@ export const metadata: Metadata = {
 
 import '@livekit/components-styles';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { defaultInstructions, initialInstruction, presetInstructions } =
+    await getCallInstructionConfig();
+
+  const defaultPresets = applyPresetInstructionOverrides(
+    baseDefaultPresets,
+    presetInstructions,
+  );
+
   return (
     // <PHProvider>
-    <PlaygroundStateProvider>
+    <PlaygroundStateProvider
+      defaultPresets={defaultPresets}
+      initialState={{
+        instructions: defaultInstructions,
+        initialInstruction,
+      }}
+    >
       <ConnectionProvider>
         <TooltipProvider>
           <RoomWrapper>

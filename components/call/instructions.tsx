@@ -10,15 +10,14 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-import { playgroundStateHelpers } from '@/lib/playground-state-helpers';
 
 export function Instructions() {
   // const [isFocused, setIsFocused] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const { pgState } = usePlaygroundState();
+  const { pgState, helpers } = usePlaygroundState();
 
-  const immutablePrompt = playgroundStateHelpers.getImmutablePrompt(pgState);
+  const immutablePrompt = helpers.getImmutablePrompt(pgState);
 
   return (
     <div
