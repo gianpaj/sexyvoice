@@ -109,8 +109,8 @@ export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
           </div>
 
           {/* Floating music notes */}
-          <Music className="-top-2 -right-2 absolute h-5 w-5 animate-float text-teal-700 opacity-70" />
-          <Music className="-bottom-1 -left-3 absolute h-4 w-4 animate-float-delayed text-brand-purple opacity-60" />
+          <Music className="absolute -top-2 -right-2 h-5 w-5 animate-float text-teal-700 opacity-70" />
+          <Music className="absolute -bottom-1 -left-3 h-4 w-4 animate-float-delayed text-brand-purple opacity-60" />
         </div>
 
         {/* Text */}

@@ -30,7 +30,7 @@ export function formatCurrencyChange(
   return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
 }
 
-export function reduceAmountUsd(acc: number, row: { metadata: any }): number {
+export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     console.log('Invalid metadata in row:', row);
     return acc;
