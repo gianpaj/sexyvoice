@@ -48,7 +48,7 @@ export default async function CreditsPage(props: {
     console.error(error.message);
     Sentry.captureException(error, {
       level: 'error',
-      extra: { userId: user.id, email: user.email },
+      user: { id: user.id, email: user.email },
     });
     throw error;
   }

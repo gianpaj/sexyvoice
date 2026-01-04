@@ -20,7 +20,7 @@ export const dynamicParams = false;
 export const generateStaticParams = ({
   params: { lang },
 }: {
-  params: { lang: string };
+  params: { lang: Locale };
 }) =>
   allPosts
     .map((post) => {

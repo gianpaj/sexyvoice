@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
@@ -16,8 +18,8 @@ export function LoginForm({
   dict,
   lang,
 }: {
-  dict: Record<string, string>;
-  lang: string;
+  dict: (typeof langDict)['auth']['login'];
+  lang: Locale;
 }) {
   const searchParams = useSearchParams();
   const [lastUsedAuth, setLastUsedAuth] = useLocalStorage('lastUsedAuth', '');
@@ -51,7 +53,7 @@ export function LoginForm({
     router.refresh();
   };
 
-  const loginWithGoogle = async () => {
+  const signInWithGoogle = async () => {
     setIsLoading(true);
     setError(null);
 
@@ -90,7 +92,7 @@ export function LoginForm({
             className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
             href={`/${lang}/reset-password`}
           >
-            {dict.forgotPassword || 'Forgot your password?'}
+            {dict.forgotPassword}
           </Link>
         </div>
         <Input
@@ -115,13 +117,13 @@ export function LoginForm({
       <div className="relative">
         {lastUsedAuthFixed.current === 'google' && <LastUsedBanner />}
         <Button
-          className="w-full"
+          className="w-full gap-[10px]"
           disabled={isLoading}
-          onClick={loginWithGoogle}
+          onClick={signInWithGoogle}
           variant="secondary"
         >
-          <LogosGoogleIcon />
-          Login with Google
+          <LogosGoogleIcon className="size-5" />
+          {dict.signInWithGoogle}
         </Button>
       </div>
 

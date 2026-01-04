@@ -17,12 +17,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 export function DeleteAccountForm({
   lang,
   dict,
 }: {
-  lang: string;
+  lang: Locale;
   dict: (typeof langDict)['profile'];
 }) {
   const handleDeleteAccount = async () => {

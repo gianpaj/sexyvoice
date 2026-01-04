@@ -7,6 +7,8 @@ import { forgotPasswordAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 export type Message =
   | { success: string }
@@ -18,9 +20,8 @@ export function ResetPasswordForm({
   lang,
   message,
 }: {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  dict: any;
-  lang: string;
+  dict: (typeof langDict)['auth']['resetPassword'];
+  lang: Locale;
   message: Message;
 }) {
   const { pending } = useFormStatus();

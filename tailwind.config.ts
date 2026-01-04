@@ -24,8 +24,8 @@ const config = {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         brand: {
-          purple: 'rgb(var(--brand-purple) / <alpha-value>)',
-          red: 'rgb(var(--brand-red) / <alpha-value>)',
+          purple: 'hsl(var(--brand-purple))',
+          red: 'hsl(var(--brand-red))',
         },
         card: {
           DEFAULT: 'hsl(var(--card))',
@@ -60,7 +60,7 @@ const config = {
         ring: 'hsl(var(--ring))',
         chart: {
           '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
+          '2': 'hsl(var(--brand-red))',
           '3': 'hsl(var(--chart-3))',
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',

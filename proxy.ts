@@ -34,11 +34,12 @@ const publicRoutesWithoutAuth = [
 
 const publicRoutesWithLang = (locales: readonly string[]) =>
   locales.flatMap((locale) => [
+    `/${locale}/wrapped`,
     `/${locale}/privacy-policy`,
     `/${locale}/terms`,
   ]);
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (publicRoutesWithoutAuth.includes(pathname)) {
@@ -77,6 +78,11 @@ export async function middleware(req: NextRequest) {
 
   const locale = getLocaleFromPathname(req);
 
+  // Skip session check for landing page
+  if (pathname === `/${locale}` || pathname === `/${locale}/`) {
+    return NextResponse.next();
+  }
+
   return await updateSession(req, locale);
 }
 export const config = {
@@ -85,17 +91,21 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - ingest (Posthug rewrites)
      * - favicon.ico (favicon file)
      * - robots.txt (robots file)
+     * - manifest.json
+     *
      * - images - .svg, .png, .jpg, .jpeg, .gif, .ico, .webp
      * - audio - .mp3
-     * - sitemap - xml
+     * - sitemap - .xml
+     *
+     * - ingest (Posthog rewrites)
+     * - monitoring - Sentry error reporting tunnel
+     *
      * - /{2-letter-lang}/blog/* paths
-     * - /{2-letter-lang}/tools/* paths=
-     * - /manifest.json
+     * - /{2-letter-lang}/tools/* paths
      */
-    '/((?!_next/static|ingest|_next/image|favicon.ico|robots\\.txt|[a-z]{2}/blog/|[a-z]{2}/tools/|manifest\\.json|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|_next/image|ingest|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },

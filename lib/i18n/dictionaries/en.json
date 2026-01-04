@@ -6,6 +6,8 @@
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
+      "forgotPassword": "Forgot your password?",
+      "signInWithGoogle": "Sign in with Google",
       "noAccount": "Don't have an account?",
       "signUp": "Sign up",
       "error": "Invalid email or password"
@@ -29,6 +31,7 @@
       "email": "Email address",
       "submit": "Reset password",
       "error": "Invalid email address",
+      "loading": "Sending email...",
       "success": "Check your email for a password reset link",
       "backToLogin": "Back to Login",
       "errors": {

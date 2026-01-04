@@ -161,6 +161,17 @@ export const insertSubscriptionCreditTransaction = async (
     // Transaction doesn't exist, continue with insertion
   }
 
+  // Check if this is the user's first subscription transaction
+  const { data: existingSubscriptions } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'purchase')
+    .limit(1);
+
+  const isFirstSubscription =
+    !existingSubscriptions || existingSubscriptions.length === 0;
+
   // Insert the transaction with reference_id (payment_intent)
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
@@ -171,6 +182,7 @@ export const insertSubscriptionCreditTransaction = async (
     description: `Subscription payment - $${dollarAmount}`,
     metadata: {
       dollarAmount,
+      isFirstSubscription,
       // Figure out how to send promo metadata with a Stripe pricing table
       // ...(promo && { promo }),
     },
@@ -221,6 +233,16 @@ export const insertTopupCreditTransaction = async (
     // Transaction doesn't exist, continue with insertion
   }
 
+  // Check if this is the user's first transaction (topup)
+  const { data: existingTopup } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'topup')
+    .limit(1);
+
+  const isFirstTopup = !existingTopup || existingTopup.length === 0;
+
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
@@ -231,6 +253,7 @@ export const insertTopupCreditTransaction = async (
     metadata: {
       packageId,
       dollarAmount,
+      isFirstTopup,
       ...(promo && { promo }),
     },
   });
