@@ -10,11 +10,11 @@ import {
   useReducer,
 } from 'react';
 
+import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import {
   type CallLanguage,
   defaultPlaygroundState,
-  defaultSessionConfig,
   languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';

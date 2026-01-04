@@ -1,13 +1,11 @@
+import { defaultSessionConfig } from '@/data/default-config';
 import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
-import {
-  defaultSessionConfig,
-  type PlaygroundState,
-  type SessionConfig,
-} from '@/data/playground-state';
+import type { PlaygroundState } from '@/data/playground-state';
 import {
   defaultPresets as baseDefaultPresets,
   type Preset,
 } from '@/data/presets';
+import type { SessionConfig } from '@/data/session-config';
 
 export const createPlaygroundStateHelpers = (
   defaultPresets: Preset[] = baseDefaultPresets,

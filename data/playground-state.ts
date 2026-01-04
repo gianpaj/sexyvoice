@@ -1,7 +1,3 @@
-// biome-ignore lint/performance/noBarrelFile: intentional re-exports for backward compatibility
-export { defaultSessionConfig, instructions } from './default-config';
-export type { SessionConfig } from './session-config';
-
 import { defaultSessionConfig, instructions } from './default-config';
 import { defaultPresets, type Preset } from './presets';
 import type { SessionConfig } from './session-config';

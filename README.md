@@ -143,9 +143,30 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
     - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Vercel Edge Config (optional)
+      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-4. **Set up Supabase**
+4. **Set up Vercel Edge Config** (optional, for production)
+
+   Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
+
+   ```json
+   {
+     "call-instructions": {
+       "defaultInstructions": "You are a ...",
+       "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
+       "presetInstructions": {
+         "soft-amanda": "You are a ...",
+         "hard-brandi": "You are a ..."
+       }
+     }
+   }
+   ```
+
+   The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
+
+5. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -153,13 +174,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-5. **Start the development server**
+6. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 🧪 Development

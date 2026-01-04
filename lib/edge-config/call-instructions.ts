@@ -1,10 +1,8 @@
 import { captureException } from '@sentry/nextjs';
 import { get } from '@vercel/edge-config';
 
-import {
-  initialInstruction as fallbackInitialInstruction,
-  instructions as fallbackInstructions,
-} from '@/data/playground-state';
+import { instructions as fallbackInstructions } from '@/data/default-config';
+import { initialInstruction as fallbackInitialInstruction } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 
 interface CallInstructionConfig {
@@ -32,7 +30,7 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
   } catch (error) {
     captureException(error, {
       data: {
-        message: 'Failed to load call instructions from Edge Config',
+        message: 'Failed to load "call-instructions" from Edge Config',
       },
     });
 

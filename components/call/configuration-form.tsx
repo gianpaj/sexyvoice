@@ -16,8 +16,8 @@ import { z } from 'zod';
 
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
+import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
-import { defaultSessionConfig } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
