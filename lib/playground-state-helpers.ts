@@ -21,8 +21,14 @@ export const createPlaygroundStateHelpers = (
       ...state.userPresets,
     ],
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: fine
     encodeToUrlParams: (state: PlaygroundState): string => {
-      const params = new URLSearchParams();
+      // Preserve existing search params from the current URL
+      const existingParams =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search)
+          : new URLSearchParams();
+      const params = new URLSearchParams(existingParams);
 
       let isDefaultPreset = false;
       const selectedPreset = helpers.getSelectedPreset(state);
@@ -44,13 +50,14 @@ export const createPlaygroundStateHelpers = (
         }
 
         if (state.sessionConfig) {
-          Object.entries(state.sessionConfig).forEach(([key, value]) => {
+          for (const [key, value] of Object.entries(state.sessionConfig)) {
             if (value !== defaultSessionConfig[key as keyof SessionConfig]) {
               params.set(`sessionConfig.${key}`, String(value));
             }
-          });
+          }
         }
       }
+
       return params.toString();
     },
 

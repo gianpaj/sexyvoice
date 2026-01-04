@@ -28,7 +28,9 @@ export function Chat() {
   // const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const searchParams = useSearchParams();
 
-  const showInstruction = searchParams.get('showInstruction');
+  const showInstruction =
+    searchParams.get('showInstruction') === '' ||
+    searchParams.get('showInstruction') === 'true';
 
   const [hasSeenAgent, setHasSeenAgent] = useState(false);
 
@@ -105,7 +107,7 @@ export function Chat() {
   );
 
   return (
-    <div className="flex min-h-24 flex-col overflow-hidden p-2 lg:p-4">
+    <div className="flex min-h-24 flex-col overflow-hidden p-0 lg:p-4">
       {/*<ChatControls
         isEditingInstructions={isEditingInstructions}
         onToggleEdit={toggleInstructionsEdit}
@@ -113,38 +115,19 @@ export function Chat() {
       />*/}
       <div className="chat-container flex min-w-0 flex-col items-center">
         <div className="flex w-full flex-col gap-4">
-          {/* Mobile: Show instructions and visualizer stacked */}
-          <div className="flex w-full min-w-0 flex-col gap-4 lg:hidden">
-            {showInstruction && <Instructions />}
-
-            {/* Button for short screens on mobile - show after instructions */}
-            <div className="flex w-full flex-shrink-0 flex-col items-center justify-center gap-2 md:hidden">
-              {renderConnectionControl()}
-            </div>
-
-            {/*{renderVisualizer()}*/}
-            <RoomAudioRenderer />
-          </div>
-
-          {/* Desktop: Show instructions at top, visualizer in middle */}
-          <div className="chat-desktop-layout hidden w-full lg:flex lg:flex-grow lg:flex-col">
+          {/* Show instructions and visualizer stacked */}
+          <div className="flex w-full flex-col gap-4">
             {showInstruction && (
-              <div className="chat-instructions-wrapper flex w-full min-w-0 items-center justify-center">
+              <div className="flex w-full items-center justify-center">
                 <Instructions />
               </div>
             )}
 
-            {/* Button for short screens - show after instructions */}
-            <div className="my-2 hidden w-full flex-shrink-0 flex-col items-center justify-center gap-2 md:flex">
+            <div className="flex w-full flex-shrink-0 flex-col items-center justify-center gap-2">
               {renderConnectionControl()}
             </div>
 
             <RoomAudioRenderer />
-            {/*<div className="chat-visualizer-wrapper flex min-w-0 flex-grow items-center justify-center">
-              <div className="w-full min-w-0">*/}
-            {/*{!isEditingInstructions && renderVisualizer()}*/}
-            {/*</div>
-            </div>*/}
           </div>
 
           {/*<GrokImageFeed />*/}

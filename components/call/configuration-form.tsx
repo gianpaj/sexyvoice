@@ -18,9 +18,18 @@ import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
+import type { CallLanguage } from '@/data/playground-state';
+import { callLanguages } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
 
@@ -61,7 +70,9 @@ export function ConfigurationForm() {
 
   const searchParams = useSearchParams();
 
-  const showInstruction = searchParams.get('showInstruction');
+  const showInstruction =
+    searchParams.get('showInstruction') === '' ||
+    searchParams.get('showInstruction') === 'true';
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
   const updateConfig = useCallback(async () => {
@@ -218,19 +229,49 @@ export function ConfigurationForm() {
   //   console.log("submitted", values);
   // };
 
+  const handleLanguageChange = (value: string) => {
+    dispatch({ type: 'SET_LANGUAGE', payload: value as CallLanguage });
+  };
+  const displayLanguage = true;
+
+  callLanguages.sort((a, b) => a.label.localeCompare(b.label));
+
   return (
     <header className="flex w-full flex-col items-stretch justify-stretch">
       <Form {...form}>
-        <div className="w-full border-separator1 border-b px-5 pt-0 pb-4 md:px-1 md:py-4">
+        <div className="w-full border-separator1 border-b px-4 pt-0 pb-4 md:px-1 md:py-4">
           <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
             Configuration
           </div>
         </div>
-        <div className="flex w-full flex-col justify-between border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
+        <div className="flex w-full flex-col justify-between gap-2 border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
           {/*<div className="flex-1 flex-col items-center gap-3 space-x-2">*/}
           {/*<PresetShare />*/}
           {/*<div className="flex-grow overflow-y-auto py-4 pt-4">
             <div className="space-y-5">*/}
+
+          {displayLanguage && (
+            <div className="flex w-full items-center justify-between">
+              <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                Language
+              </div>
+              <Select
+                onValueChange={handleLanguageChange}
+                value={pgState.language}
+              >
+                <SelectTrigger className="h-9 w-fit text-neutral-200">
+                  <SelectValue placeholder="Choose language" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
+                  {callLanguages.map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <SessionConfig form={form} />
           <div className="flex gap-3">
@@ -240,9 +281,7 @@ export function ConfigurationForm() {
           {/*</div>*/}
         </div>
 
-        <PresetSelector />
         <SessionConfig form={form} />
-        <PresetSave />
       </Form>
     </header>
   );
