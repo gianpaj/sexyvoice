@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
 import { type CustomerData, setCustomerData } from '../redis/queries';
+import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -32,12 +33,10 @@ export async function createOrRetrieveCustomer(
       );
       console.error(`[STRIPE ADMIN] ${error.message}`);
       Sentry.captureException(error, {
-        level: 'error',
+        user: { id: userId, email },
         extra: {
           customerId: customer.id,
           metadataUuid,
-          email,
-          userId,
         },
       });
       throw error;
@@ -52,10 +51,9 @@ export async function createOrRetrieveCustomer(
           `Updated metadata for Stripe customer ${customer.id} to link to Supabase user ${userId}.`,
           {
             level: 'info',
+            user: { id: userId, email },
             extra: {
               customerId: customer.id,
-              email,
-              userId,
             },
           },
         );
@@ -65,11 +63,9 @@ export async function createOrRetrieveCustomer(
           error,
         );
         Sentry.captureException(error, {
-          level: 'error',
+          user: { id: userId, email },
           extra: {
             customerId: customer.id,
-            email,
-            userId,
           },
         });
         throw error;
@@ -90,7 +86,8 @@ export async function createOrRetrieveCustomer(
         console.error(`[STRIPE ADMIN] ${error.message}`);
         Sentry.captureMessage(error.message, {
           level: 'warning',
-          extra: { customerId, userId, email },
+          user: { id: userId, email },
+          extra: { customerId },
         });
         return null;
       }
@@ -101,8 +98,8 @@ export async function createOrRetrieveCustomer(
         error,
       );
       Sentry.captureException(error, {
-        level: 'error',
-        extra: { customerId, userId, email },
+        user: { id: userId, email },
+        extra: { customerId },
       });
       return null;
     }
@@ -127,10 +124,9 @@ export async function createOrRetrieveCustomer(
     console.error(`[STRIPE ADMIN] ${error.message}`);
     Sentry.captureMessage(error.message, {
       level: 'warning',
+      user: { id: userId, email },
       extra: {
         customerCount: customersResults.data.length,
-        email,
-        userId,
       },
     });
   }
@@ -151,7 +147,8 @@ export async function createOrRetrieveCustomer(
     console.warn(error.message);
     Sentry.captureMessage(error.message, {
       level: 'warning',
-      extra: { customerCount: customers.data.length, email, userId },
+      user: { id: userId, email },
+      extra: { customerCount: customers.data.length },
     });
   }
 
@@ -211,11 +208,9 @@ export async function createCustomerSession(userId: string, stripeId: string) {
     if (process.env.NODE_ENV !== 'production') {
       return null;
     }
-    Sentry.captureException({
-      message: 'Error creating Stripe customer session',
-      error,
-      userId,
-      stripeId,
+    Sentry.captureException(error, {
+      user: { id: userId },
+      extra: { stripeId },
     });
     throw error;
   }
@@ -264,8 +259,9 @@ export async function refreshCustomerSubscriptionData(
       '[STRIPE ADMIN] Error refreshing Stripe customer subscription data:',
       error,
     );
+    const userId = await getUserIdByStripeCustomerId(customerId);
     Sentry.captureException(error, {
-      level: 'error',
+      user: userId ? { id: userId } : undefined,
       extra: { customerId },
     });
     throw error;

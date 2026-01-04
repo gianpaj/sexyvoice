@@ -1,43 +1,31 @@
 import { google } from '@ai-sdk/google';
 // import { GoogleAICacheManager } from '@google/generative-ai/server';
 import * as Sentry from '@sentry/nextjs';
+import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
 import { getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
-// const cacheManager = new GoogleAICacheManager(
-//   process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-// );
-
-// Configure the model
-const model = google('gemini-2.0-flash-lite');
-
-// const { name: cachedContent } = await cacheManager.create({
-//   model,
-//   contents: [
-//     {
-//       role: 'user',
-//       parts: [{ text: '1000 Lasagna Recipes...' }],
-//     },
-//   ],
-//   ttlSeconds: 60 * 5,
-// });
-
-// OR gpt-4.1-nano with temperature 0.7
+// gemini-2.5-flash-lite
+// Launch stage: GA
+// Release date: July 22, 2025
+// Discontinuation date: July 22, 2026
+const model = google('gemini-2.5-flash-lite');
 
 export async function POST(request: Request) {
   const {
     prompt,
     selectedVoiceLanguage,
   }: { prompt: string; selectedVoiceLanguage: string } = await request.json();
+  let user: User | null = null;
   try {
     const supabase = await createClient();
 
     // Check if user is authenticated
     const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    user = data?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
@@ -85,10 +73,9 @@ Rules:
   } catch (error) {
     console.error('Text generation error:', error);
 
-    Sentry.captureException({
-      error: 'Text generation failed',
-      originalError: error,
-      prompt,
+    Sentry.captureException(error, {
+      user: { id: user?.id, email: user?.email },
+      extra: { prompt },
     });
 
     if (Error.isError(error)) {
