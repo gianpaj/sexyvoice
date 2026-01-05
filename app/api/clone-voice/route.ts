@@ -656,7 +656,6 @@ export async function POST(request: Request) {
 
     if (locale === 'en') {
       // English: Use fal.ai
-      // Download from fal.ai
       const model = 'fal-ai/chatterbox/text-to-speech' as `${string}/${string}`;
       const input = {
         seed: 0,
@@ -664,7 +663,7 @@ export async function POST(request: Request) {
         cfg_weight: 0.5,
         temperature: 0.8,
         exaggeration: 0.5,
-        audio_prompt: audioReferenceUrl,
+        audio_url: audioReferenceUrl,
       };
 
       const falResult = await fal.subscribe(model, {
