@@ -28,7 +28,7 @@ prompts.md
 
 # Scripts
 scripts/*
-!scripts/check-translations.js
+!scripts/check-translations.mjs
 
 # Supabase (local development only and Telegram bot (Deno Cloud))
 /supabase

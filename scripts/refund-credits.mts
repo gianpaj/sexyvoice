@@ -34,6 +34,7 @@ interface RefundCalculation {
   totalPurchased: number;
   totalUsed: number;
   totalRefunded: number;
+  totalRefundAdjustment: number;
   availableCredits: number;
   totalSpentUSD: number;
   creditRate: number;
@@ -166,15 +167,23 @@ function calculateRefund(
     .filter((t) => t.type === 'freemium')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Calculate total already refunded
-  const totalRefunded = transactions
+  // Calculate refund adjustments
+  // Platform bug refunds: positive amounts (credits added back)
+  // Purchase refunds: negative amounts (credits taken back)
+  const totalRefundAdjustment = transactions
     .filter((t) => t.type === 'refund')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // Calculate purchase refunds only (negative amounts, for max refund calculation)
+  const totalPurchaseRefunded = transactions
+    .filter((t) => t.type === 'refund' && t.amount < 0)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-  // Calculate available credits: total added (purchase + topup + freemium) minus used and refunded
+  // Calculate available credits: total added (purchase + topup + freemium) minus used, plus/minus refund adjustments
   const totalCreditsAdded = totalPurchased + totalFreemium;
 
-  const availableCredits = totalCreditsAdded - totalCreditsUsed - totalRefunded;
+  const availableCredits =
+    totalCreditsAdded - totalCreditsUsed + totalRefundAdjustment;
 
   // Calculate credit rate (USD per credit)
   const creditRate = totalSpentUSD / totalPurchased;
@@ -184,16 +193,17 @@ function calculateRefund(
     totalCreditsUsed - totalFreemium,
   );
 
-  // Max refund is based on purchase unused credits minus already refunded credits
+  // Max refund is based on purchase unused credits minus purchase refunds (USD refunds only)
   const unusedCredits =
-    totalPurchased - totalPurchaseCreditsUsed - totalRefunded;
+    totalPurchased - totalPurchaseCreditsUsed - totalPurchaseRefunded;
   const maxRefundCredits = Math.max(0, unusedCredits);
   const maxRefundUSD = maxRefundCredits * creditRate;
 
   return {
     totalPurchased,
     totalUsed: totalCreditsUsed,
-    totalRefunded,
+    totalRefunded: totalPurchaseRefunded, // Only purchase refunds (USD refunds)
+    totalRefundAdjustment,
     availableCredits,
     totalSpentUSD,
     creditRate,
@@ -210,35 +220,67 @@ async function insertRefundTransaction(options: {
   userId: string;
   refundCredits: number;
   refundUSD: number;
-  originalTransaction: CreditTransaction;
+  originalTransaction: CreditTransaction | null;
   chargeId?: string;
+  platformBugReason?: string;
 }): Promise<void> {
-  const { userId, refundCredits, refundUSD, originalTransaction, chargeId } =
-    options;
+  const {
+    userId,
+    refundCredits,
+    refundUSD,
+    originalTransaction,
+    chargeId,
+    platformBugReason,
+  } = options;
   const supabase = createAdminClient();
 
+  // For platform bug refunds, we're adding credits back (no USD involved)
+  // For regular refunds, we're taking credits back (negative USD)
+  const isPlatformBugRefund = !!platformBugReason;
+
   const metadata: {
-    dollarAmount: number;
+    dollarAmount?: number;
     chargeId?: string;
-    originalTransactionId: string;
-    originalTransactionRefId: string | null;
-  } = {
-    dollarAmount: -Math.abs(refundUSD),
-    originalTransactionId: originalTransaction.id,
-    originalTransactionRefId: originalTransaction.reference_id,
-  };
+    originalTransactionId?: string;
+    originalTransactionRefId?: string | null;
+    reason?: string;
+  } = {};
+
+  // Only set original transaction info for regular refunds (not platform bug refunds)
+  if (!isPlatformBugRefund && originalTransaction) {
+    metadata.originalTransactionId = originalTransaction.id;
+    metadata.originalTransactionRefId = originalTransaction.reference_id;
+    metadata.dollarAmount = -Math.abs(refundUSD);
+  }
 
   if (chargeId) {
     metadata.chargeId = chargeId;
   }
 
+  if (platformBugReason) {
+    metadata.reason = platformBugReason;
+  }
+
+  // Build description
+  const description = platformBugReason
+    ? `Refund - ${platformBugReason}`
+    : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`;
+
   // Insert refund transaction
+  // Platform bug refund: positive amount (adding credits back to user)
+  // Regular refund: negative amount (taking credits back, giving USD refund)
+  const transactionAmount = isPlatformBugRefund
+    ? Math.abs(refundCredits)
+    : -Math.abs(refundCredits);
+
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
-    amount: -Math.abs(refundCredits),
+    amount: transactionAmount,
     type: 'refund',
-    description: `Refund for transaction of ${new Date(originalTransaction.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`,
-    reference_id: originalTransaction.reference_id,
+    description,
+    reference_id: isPlatformBugRefund
+      ? null
+      : originalTransaction!.reference_id,
     metadata,
   });
 
@@ -246,14 +288,37 @@ async function insertRefundTransaction(options: {
     throw new Error(`Failed to insert refund transaction: ${error.message}`);
   }
 
-  // Update credits table by decrementing the refunded amount
-  const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
-    user_id_var: userId,
-    credit_amount_var: Math.abs(refundCredits),
-  });
+  // Update credits table
+  // Platform bug refund: increment credits (giving credits back)
+  // Regular refund: decrement credits (taking credits back)
+  if (isPlatformBugRefund) {
+    const { error: creditsError } = await supabase.rpc(
+      'increment_user_credits',
+      {
+        user_id_var: userId,
+        credit_amount_var: Math.abs(refundCredits),
+      },
+    );
 
-  if (creditsError) {
-    throw new Error(`Failed to update credits table: ${creditsError.message}`);
+    if (creditsError) {
+      throw new Error(
+        `Failed to update credits table: ${creditsError.message}`,
+      );
+    }
+  } else {
+    const { error: creditsError } = await supabase.rpc(
+      'decrement_user_credits',
+      {
+        user_id_var: userId,
+        credit_amount_var: Math.abs(refundCredits),
+      },
+    );
+
+    if (creditsError) {
+      throw new Error(
+        `Failed to update credits table: ${creditsError.message}`,
+      );
+    }
   }
 }
 
@@ -264,7 +329,10 @@ function displayRefundInfo(calculation: RefundCalculation): void {
   console.log('\n=== Credit Refund Calculation ===\n');
   console.log(`Total Credits Purchased: ${calculation.totalPurchased}`);
   console.log(`Total Credits Used: ${calculation.totalUsed}`);
-  console.log(`Total Credits Refunded: ${calculation.totalRefunded}`);
+  console.log(
+    `Total Refund Adjustment: ${calculation.totalRefundAdjustment >= 0 ? '+' : ''}${calculation.totalRefundAdjustment}`,
+  );
+  console.log(`Total Purchase Refunds (USD): ${calculation.totalRefunded}`);
   console.log(`Available Credits: ${calculation.availableCredits}`);
   console.log(`Total Spent: $${calculation.totalSpentUSD.toFixed(2)}`);
   console.log(
@@ -318,11 +386,13 @@ async function getUserId(
 async function getRefundAmount(
   rl: ReturnType<typeof createInterface>,
   calculation: RefundCalculation,
+  isPlatformBugRefund: boolean,
 ): Promise<number> {
-  const refundCreditsInput = await promptUser(
-    rl,
-    `Enter number of credits to refund (max ${calculation.maxRefundCredits}): `,
-  );
+  const promptText = isPlatformBugRefund
+    ? 'Enter number of credits to refund: '
+    : `Enter number of credits to refund (max ${calculation.maxRefundCredits}): `;
+
+  const refundCreditsInput = await promptUser(rl, promptText);
 
   const refundCredits = Number.parseInt(refundCreditsInput, 10);
 
@@ -330,7 +400,8 @@ async function getRefundAmount(
     throw new Error('Invalid refund amount');
   }
 
-  if (refundCredits > calculation.maxRefundCredits) {
+  // Only validate max for purchase refunds (not platform bug refunds)
+  if (!isPlatformBugRefund && refundCredits > calculation.maxRefundCredits) {
     throw new Error(
       `Refund amount exceeds maximum of ${calculation.maxRefundCredits} credits`,
     );
@@ -345,7 +416,7 @@ async function getRefundAmount(
 async function selectTransaction(
   rl: ReturnType<typeof createInterface>,
   calculation: RefundCalculation,
-): Promise<CreditTransaction> {
+): Promise<{ transaction: CreditTransaction | null; skipped: boolean }> {
   console.log('\nSelect transaction to refund:');
   for (let i = 0; i < calculation.purchaseTransactions.length; i++) {
     const t = calculation.purchaseTransactions[i];
@@ -356,8 +427,17 @@ async function selectTransaction(
 
   const transactionIndexInput = await promptUser(
     rl,
-    '\nEnter transaction number: ',
+    '\nEnter transaction number (or press Enter to skip for platform bug refund): ',
   );
+
+  // If skipped, don't use any transaction (platform bug refund)
+  if (transactionIndexInput === '') {
+    console.log(
+      '\n💡 Skipped transaction selection for platform bug refund (no original transaction will be tracked)',
+    );
+    return { transaction: null, skipped: true };
+  }
+
   const transactionIndex = Number.parseInt(transactionIndexInput, 10) - 1;
 
   if (
@@ -368,7 +448,10 @@ async function selectTransaction(
     throw new Error('Invalid transaction selection');
   }
 
-  return calculation.purchaseTransactions[transactionIndex];
+  return {
+    transaction: calculation.purchaseTransactions[transactionIndex],
+    skipped: false,
+  };
 }
 
 /**
@@ -467,31 +550,54 @@ async function main() {
     // Display info
     displayRefundInfo(calculation);
 
-    if (calculation.maxRefundCredits <= 0) {
+    // Select transaction to refund (or skip for platform bug refund)
+    const { transaction: selectedTransaction, skipped: isPlatformBugRefund } =
+      await selectTransaction(rl, calculation);
+
+    // Check if purchase refund is available
+    if (!isPlatformBugRefund && calculation.maxRefundCredits <= 0) {
       console.log(
-        '❌ No refund available. User has used all or more credits than purchased.\n',
+        '❌ No purchase refund available. User has used all or more credits than purchased.\n',
+      );
+      console.log(
+        '💡 Tip: Press Enter at transaction selection to do a platform bug refund (credits-only).\n',
       );
       rl.close();
       return;
     }
 
-    // Get refund amount
-    const refundCredits = await getRefundAmount(rl, calculation);
-
-    // Select transaction to refund
-    const selectedTransaction = await selectTransaction(rl, calculation);
-
-    // Get dollar amount to refund
-    const refundUSD = await getRefundDollarAmount(
+    // Get refund amount (validation differs based on refund type)
+    const refundCredits = await getRefundAmount(
       rl,
-      refundCredits,
-      selectedTransaction,
-      calculation.creditRate,
+      calculation,
+      isPlatformBugRefund,
     );
 
-    console.log(
-      `\nRefund: ${refundCredits} credits = $${refundUSD.toFixed(2)}`,
-    );
+    // Get reason for platform bug refund (credits only, no USD refund)
+    let platformBugReason: string | undefined;
+    let refundUSD = 0;
+
+    if (isPlatformBugRefund) {
+      const reasonInput = await promptUser(
+        rl,
+        'Enter refund reason [default: Platform bug]: ',
+      );
+      platformBugReason = reasonInput || 'Platform bug';
+      console.log(
+        `\nRefund: ${refundCredits} credits (credits only, no USD refund)`,
+      );
+    } else {
+      // Get dollar amount to refund (only for regular refunds)
+      refundUSD = await getRefundDollarAmount(
+        rl,
+        refundCredits,
+        selectedTransaction!,
+        calculation.creditRate,
+      );
+      console.log(
+        `\nRefund: ${refundCredits} credits = $${refundUSD.toFixed(2)}`,
+      );
+    }
 
     // Optional charge ID
     const chargeId = await promptUser(
@@ -503,11 +609,18 @@ async function main() {
     console.log('\n=== Refund Summary ===');
     console.log(`User ID: ${userId}`);
     console.log(`Credits to refund: ${refundCredits}`);
-    console.log(`USD to refund: $${refundUSD.toFixed(2)}`);
-    console.log(
-      `Original transaction: ${selectedTransaction.id.substring(0, 8)}`,
-    );
-    console.log(`Reference ID: ${selectedTransaction.reference_id || 'N/A'}`);
+    if (platformBugReason) {
+      console.log('USD to refund: $0.00 (credits only)');
+      console.log(`Reason: ${platformBugReason}`);
+    } else {
+      console.log(`USD to refund: $${refundUSD.toFixed(2)}`);
+    }
+    if (selectedTransaction) {
+      console.log(
+        `Original transaction: ${selectedTransaction.id.substring(0, 8)}`,
+      );
+      console.log(`Reference ID: ${selectedTransaction.reference_id || 'N/A'}`);
+    }
     if (chargeId) {
       console.log(`Charge ID: ${chargeId}`);
     }
@@ -529,6 +642,7 @@ async function main() {
       refundUSD,
       originalTransaction: selectedTransaction,
       chargeId: chargeId || undefined,
+      platformBugReason,
     });
 
     console.log('✅ Refund transaction created successfully!\n');
