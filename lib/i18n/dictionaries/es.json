@@ -416,6 +416,17 @@
     "login": "Iniciar sesión",
     "signup": "Registrarse"
   },
+  "history": {
+    "header": "Historial de Generación",
+    "empty": "Sin historial aún",
+    "ui": {
+      "filterText": "Filtrar texto...",
+      "customizeColumns": "Personalizar Columnas",
+      "columns": "Columnas",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
+  },
   "footer": {
     "statusPage": "Página de estado",
     "privacyPolicy": "Política de privacidad",

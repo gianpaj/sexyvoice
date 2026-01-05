@@ -33,6 +33,21 @@ const downloadFile = async (url: string) => {
   }
 };
 
+const getBadgeClasses = (name: string) => {
+  const colorPairs = [
+    { bg: 'bg-red-100', text: 'text-red-900' },
+    { bg: 'bg-orange-100', text: 'text-orange-900' },
+    { bg: 'bg-yellow-100', text: 'text-yellow-900' },
+    { bg: 'bg-green-100', text: 'text-green-900' },
+    { bg: 'bg-blue-100', text: 'text-blue-900' },
+    { bg: 'bg-indigo-100', text: 'text-indigo-900' },
+    { bg: 'bg-purple-100', text: 'text-purple-900' },
+    { bg: 'bg-pink-100', text: 'text-pink-900' },
+  ];
+  const index = name.charCodeAt(0) % colorPairs.length;
+  return `${colorPairs[index].bg} ${colorPairs[index].text}`;
+};
+
 export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
   {
     id: 'file name',
@@ -45,13 +60,20 @@ export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
     id: 'voice',
     accessorKey: 'voices.name',
     header: 'Voice',
-    cell: ({ row }) => (
-      <div className="w-full lg:w-32">
-        <Badge className="px-1.5 text-muted-foreground" variant="outline">
-          {row.original.voices?.name || 'Unknown'}
-        </Badge>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const voiceName = row.original.voices?.name || 'Unknown';
+
+      return (
+        <div className="w-full lg:w-32">
+          <Badge
+            className={`rounded-lg px-1.5 sm:rounded-full ${getBadgeClasses(voiceName)}`}
+            variant="outline"
+          >
+            {voiceName.charAt(0).toUpperCase() + voiceName.slice(1)}
+          </Badge>
+        </div>
+      );
+    },
   },
   {
     id: 'text',

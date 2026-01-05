@@ -17,6 +17,7 @@ import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
   hasUserPaid,
+  insertUsageEvent,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';

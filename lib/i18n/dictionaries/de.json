@@ -416,6 +416,17 @@
     "login": "Anmelden",
     "signup": "Registrieren"
   },
+  "history": {
+    "header": "Generierungsverlauf",
+    "empty": "Noch kein Verlauf",
+    "ui": {
+      "filterText": "Text filtern...",
+      "customizeColumns": "Spalten anpassen",
+      "columns": "Spalten",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
   "footer": {
     "statusPage": "Statusseite",
     "privacyPolicy": "Datenschutzrichtlinie",
