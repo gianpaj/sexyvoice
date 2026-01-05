@@ -1,5 +1,6 @@
 # TODO
 
+- fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
 - fix: landing page audios not stopping if another audio is played
 - add audio clones demos on landing page
   - Bruce Lee

@@ -162,7 +162,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `pnpm preview` - Build and start (preview production locally)
 
 ### Code Quality
-- `pnpm lint` - Run Biome linting on app/, components/, hooks/, lib/, middleware.ts
+- `pnpm lint` - Run Biome linting on app/, components/, hooks/, lib/, proxy.ts
 - `pnpm lint:write` / `pnpm lint --write` - Auto-fix linting issues
 - `pnpm format` - Format code with Biome
 - `pnpm format:write` / `pnpm format --write` - Auto-format code
@@ -197,7 +197,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 ### Security Requirements
 - **Content Security Policy**: Comprehensive CSP headers configured in `next.config.js`
 - **Security Headers**: X-Content-Type-Options set to `nosniff`
-- **Authentication**: Supabase Auth with SSR support and middleware session management
+- **Authentication**: Supabase Auth with SSR support and middleware (proxy) session management
 - **API Security**: Rate limiting and input validation on API routes
 - **Voice Ethics**: Follow voice cloning ethical guidelines (require permission)
 - **Email Security**: Block temporary email addresses for signups
