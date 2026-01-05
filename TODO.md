@@ -44,8 +44,7 @@
 - daily stats:
   - add num of delete profiles
 - Translate pages in Dashboard:
-  - Generate
-  - History
+  - History (table headers)
   - Credits (table headers)
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
