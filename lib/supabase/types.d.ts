@@ -266,6 +266,56 @@ declare type Database = {
         };
         Relationships: [];
       };
+      usage_events: {
+        Row: {
+          created_at: string;
+          credit_transaction_id: string | null;
+          credits_used: number;
+          id: string;
+          metadata: Json | null;
+          occurred_at: string;
+          quantity: number;
+          source_id: string | null;
+          source_type: Database['public']['Enums']['usage_source_type'];
+          unit: Database['public']['Enums']['usage_unit_type'];
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          credit_transaction_id?: string | null;
+          credits_used: number;
+          id?: string;
+          metadata?: Json | null;
+          occurred_at?: string;
+          quantity: number;
+          source_id?: string | null;
+          source_type: Database['public']['Enums']['usage_source_type'];
+          unit: Database['public']['Enums']['usage_unit_type'];
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          credit_transaction_id?: string | null;
+          credits_used?: number;
+          id?: string;
+          metadata?: Json | null;
+          occurred_at?: string;
+          quantity?: number;
+          source_id?: string | null;
+          source_type?: Database['public']['Enums']['usage_source_type'];
+          unit?: Database['public']['Enums']['usage_unit_type'];
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
+            columns: ['credit_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'credit_transactions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       voices: {
         Row: {
           created_at: string | null;
@@ -286,7 +336,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model?: string;
+          model: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -337,6 +387,12 @@ declare type Database = {
         | 'freemium'
         | 'topup'
         | 'refund';
+      usage_source_type:
+        | 'tts'
+        | 'voice_cloning'
+        | 'live_call'
+        | 'audio_processing';
+      usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -474,6 +530,13 @@ declare const Constants = {
         'topup',
         'refund',
       ],
+      usage_source_type: [
+        'tts',
+        'voice_cloning',
+        'live_call',
+        'audio_processing',
+      ],
+      usage_unit_type: ['chars', 'mins', 'secs', 'operation'],
     },
   },
 } as const;
