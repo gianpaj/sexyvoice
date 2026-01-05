@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit",
     "analyze": "next experimental-analyze",
     "clean": "knip",
-    "check-translations": "node scripts/check-translations.js",
+    "check-translations": "node scripts/check-translations.mjs",
     "prepare": "husky"
   },
   "dependencies": {

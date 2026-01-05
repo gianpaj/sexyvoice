@@ -34,6 +34,7 @@ interface RefundCalculation {
   totalPurchased: number;
   totalUsed: number;
   totalRefunded: number;
+  totalRefundAdjustment: number;
   availableCredits: number;
   totalSpentUSD: number;
   creditRate: number;
@@ -166,15 +167,23 @@ function calculateRefund(
     .filter((t) => t.type === 'freemium')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Calculate total already refunded
-  const totalRefunded = transactions
+  // Calculate refund adjustments
+  // Platform bug refunds: positive amounts (credits added back)
+  // Purchase refunds: negative amounts (credits taken back)
+  const totalRefundAdjustment = transactions
     .filter((t) => t.type === 'refund')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  // Calculate purchase refunds only (negative amounts, for max refund calculation)
+  const totalPurchaseRefunded = transactions
+    .filter((t) => t.type === 'refund' && t.amount < 0)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-  // Calculate available credits: total added (purchase + topup + freemium) minus used and refunded
+  // Calculate available credits: total added (purchase + topup + freemium) minus used, plus/minus refund adjustments
   const totalCreditsAdded = totalPurchased + totalFreemium;
 
-  const availableCredits = totalCreditsAdded - totalCreditsUsed - totalRefunded;
+  const availableCredits =
+    totalCreditsAdded - totalCreditsUsed + totalRefundAdjustment;
 
   // Calculate credit rate (USD per credit)
   const creditRate = totalSpentUSD / totalPurchased;
@@ -184,16 +193,17 @@ function calculateRefund(
     totalCreditsUsed - totalFreemium,
   );
 
-  // Max refund is based on purchase unused credits minus already refunded credits
+  // Max refund is based on purchase unused credits minus purchase refunds (USD refunds only)
   const unusedCredits =
-    totalPurchased - totalPurchaseCreditsUsed - totalRefunded;
+    totalPurchased - totalPurchaseCreditsUsed - totalPurchaseRefunded;
   const maxRefundCredits = Math.max(0, unusedCredits);
   const maxRefundUSD = maxRefundCredits * creditRate;
 
   return {
     totalPurchased,
     totalUsed: totalCreditsUsed,
-    totalRefunded,
+    totalRefunded: totalPurchaseRefunded, // Only purchase refunds (USD refunds)
+    totalRefundAdjustment,
     availableCredits,
     totalSpentUSD,
     creditRate,
@@ -253,7 +263,7 @@ async function insertRefundTransaction(options: {
 
   // Build description
   const description = platformBugReason
-    ? `Refund - ${platformBugReason} - ${refundCredits} credits`
+    ? `Refund - ${platformBugReason}`
     : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`;
 
   // Insert refund transaction
@@ -319,7 +329,10 @@ function displayRefundInfo(calculation: RefundCalculation): void {
   console.log('\n=== Credit Refund Calculation ===\n');
   console.log(`Total Credits Purchased: ${calculation.totalPurchased}`);
   console.log(`Total Credits Used: ${calculation.totalUsed}`);
-  console.log(`Total Credits Refunded: ${calculation.totalRefunded}`);
+  console.log(
+    `Total Refund Adjustment: ${calculation.totalRefundAdjustment >= 0 ? '+' : ''}${calculation.totalRefundAdjustment}`,
+  );
+  console.log(`Total Purchase Refunds (USD): ${calculation.totalRefunded}`);
   console.log(`Available Credits: ${calculation.availableCredits}`);
   console.log(`Total Spent: $${calculation.totalSpentUSD.toFixed(2)}`);
   console.log(
@@ -373,11 +386,13 @@ async function getUserId(
 async function getRefundAmount(
   rl: ReturnType<typeof createInterface>,
   calculation: RefundCalculation,
+  isPlatformBugRefund: boolean,
 ): Promise<number> {
-  const refundCreditsInput = await promptUser(
-    rl,
-    `Enter number of credits to refund (max ${calculation.maxRefundCredits}): `,
-  );
+  const promptText = isPlatformBugRefund
+    ? 'Enter number of credits to refund: '
+    : `Enter number of credits to refund (max ${calculation.maxRefundCredits}): `;
+
+  const refundCreditsInput = await promptUser(rl, promptText);
 
   const refundCredits = Number.parseInt(refundCreditsInput, 10);
 
@@ -385,7 +400,8 @@ async function getRefundAmount(
     throw new Error('Invalid refund amount');
   }
 
-  if (refundCredits > calculation.maxRefundCredits) {
+  // Only validate max for purchase refunds (not platform bug refunds)
+  if (!isPlatformBugRefund && refundCredits > calculation.maxRefundCredits) {
     throw new Error(
       `Refund amount exceeds maximum of ${calculation.maxRefundCredits} credits`,
     );
@@ -534,20 +550,28 @@ async function main() {
     // Display info
     displayRefundInfo(calculation);
 
-    if (calculation.maxRefundCredits <= 0) {
+    // Select transaction to refund (or skip for platform bug refund)
+    const { transaction: selectedTransaction, skipped: isPlatformBugRefund } =
+      await selectTransaction(rl, calculation);
+
+    // Check if purchase refund is available
+    if (!isPlatformBugRefund && calculation.maxRefundCredits <= 0) {
       console.log(
-        '❌ No refund available. User has used all or more credits than purchased.\n',
+        '❌ No purchase refund available. User has used all or more credits than purchased.\n',
+      );
+      console.log(
+        '💡 Tip: Press Enter at transaction selection to do a platform bug refund (credits-only).\n',
       );
       rl.close();
       return;
     }
 
-    // Get refund amount
-    const refundCredits = await getRefundAmount(rl, calculation);
-
-    // Select transaction to refund
-    const { transaction: selectedTransaction, skipped: isPlatformBugRefund } =
-      await selectTransaction(rl, calculation);
+    // Get refund amount (validation differs based on refund type)
+    const refundCredits = await getRefundAmount(
+      rl,
+      calculation,
+      isPlatformBugRefund,
+    );
 
     // Get reason for platform bug refund (credits only, no USD refund)
     let platformBugReason: string | undefined;
