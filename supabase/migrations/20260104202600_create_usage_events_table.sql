@@ -75,11 +75,6 @@ CREATE TABLE usage_events (
   -- Stored separately from quantity because credit rates may vary
   credits_used INTEGER NOT NULL CHECK (credits_used > 0),
 
-  -- Credit transaction reference: Links to the balance-changing transaction
-  -- This creates the audit trail between usage and balance changes
-  -- Nullable for cases where transaction is created asynchronously
-  credit_transaction_id UUID REFERENCES credit_transactions(id) ON DELETE RESTRICT,
-
   -- Timestamps: When the usage occurred and was recorded
   -- occurred_at: When the action actually happened (may differ from created_at)
   -- created_at: When this record was inserted (immutable)
@@ -115,11 +110,6 @@ CREATE INDEX usage_events_user_type_time_idx
 -- Source ID lookups: "What usage events are linked to this audio file?"
 CREATE INDEX usage_events_source_id_idx ON usage_events(source_id)
   WHERE source_id IS NOT NULL;
-
--- Credit transaction lookups: Audit trail from transaction to usage
-CREATE INDEX usage_events_credit_transaction_id_idx
-  ON usage_events(credit_transaction_id)
-  WHERE credit_transaction_id IS NOT NULL;
 
 -- JSONB index: For metadata queries (e.g., filter by model)
 CREATE INDEX usage_events_metadata_idx ON usage_events USING gin(metadata);
@@ -206,9 +196,6 @@ COMMENT ON COLUMN usage_events.quantity IS
 COMMENT ON COLUMN usage_events.credits_used IS
   'Actual credit cost - always positive for consumption';
 
-COMMENT ON COLUMN usage_events.credit_transaction_id IS
-  'Reference to the credit_transactions record that deducted the balance';
-
 COMMENT ON COLUMN usage_events.occurred_at IS
   'When the usage actually occurred (may differ from record creation time)';
 
@@ -226,28 +213,14 @@ COMMENT ON COLUMN usage_events.metadata IS
 -- -----------------------------------------------------------------------------
 -- EXAMPLE 1: TTS Generation Usage
 -- -----------------------------------------------------------------------------
--- When a user generates audio from text, record the usage event and
--- create a corresponding credit transaction.
+-- When a user generates audio from text, record the usage event.
+-- NOTE: Credit deduction is handled by the reduceCredits() function in the app,
+-- which calls the decrement_user_credits RPC. We don't create a credit_transaction
+-- record for consumption - only for balance additions (purchase, topup, freemium).
 
--- Step 1: Insert credit transaction (deduct credits)
-INSERT INTO credit_transactions (
-  user_id,
-  amount,
-  type,
-  description,
-  reference_id,
-  metadata
-) VALUES (
-  '123e4567-e89b-12d3-a456-426614174000',  -- user_id
-  -5,                                        -- negative amount (deduction)
-  'usage',                                   -- transaction type
-  'TTS generation: 500 chars',          -- human-readable description
-  'audio_abc123',                            -- reference to audio file
-  '{"source": "tts", "chars": 500}'::jsonb
-) RETURNING id;
--- Returns: credit_transaction_id = 'txn_xyz789'
+-- The usage_event provides the audit trail for WHY credits were consumed.
 
--- Step 2: Insert usage event (audit trail)
+-- Insert usage event (audit trail)
 INSERT INTO usage_events (
   user_id,
   source_type,
@@ -255,16 +228,14 @@ INSERT INTO usage_events (
   unit,
   quantity,
   credits_used,
-  credit_transaction_id,
   metadata
 ) VALUES (
   '123e4567-e89b-12d3-a456-426614174000',  -- user_id
-  'tts',                          -- source_type
+  'tts',                                     -- source_type
   'audio_abc123',                            -- audio_files.id
-  'chars',                              -- unit
-  500,                                       -- quantity (chars)
+  'chars',                                   -- unit
+  500,                                       -- quantity (characters)
   5,                                         -- credits_used (positive)
-  'txn_xyz789',                              -- credit_transaction_id from step 1
   '{
     "text_preview": "Hello, this is a test...",
     "voice_id": "voice_sarah_123",
@@ -279,26 +250,9 @@ INSERT INTO usage_events (
 -- -----------------------------------------------------------------------------
 -- When a live call ends, record the usage for the call duration.
 -- Live calls may have multiple billing events if billed incrementally.
+-- Credit deduction is handled by app logic (reduceCredits function).
 
--- Step 1: Insert credit transaction for the call
-INSERT INTO credit_transactions (
-  user_id,
-  amount,
-  type,
-  description,
-  reference_id,
-  metadata
-) VALUES (
-  '123e4567-e89b-12d3-a456-426614174000',
-  -15,                                       -- 15 credits for ~3 mins
-  'usage',
-  'Live voice call: 3.5 mins',
-  'call_session_def456',
-  '{"source": "live_call", "duration_mins": 3.5}'::jsonb
-) RETURNING id;
--- Returns: credit_transaction_id = 'txn_call_001'
-
--- Step 2: Insert usage event
+-- Insert usage event
 INSERT INTO usage_events (
   user_id,
   source_type,
@@ -306,16 +260,14 @@ INSERT INTO usage_events (
   unit,
   quantity,
   credits_used,
-  credit_transaction_id,
   metadata
 ) VALUES (
   '123e4567-e89b-12d3-a456-426614174000',
   'live_call',                               -- source_type
   'call_session_def456',                     -- call_sessions.id
-  'mins',                                 -- unit
-  3.5,                                       -- quantity (mins, allows decimals)
+  'mins',                                    -- unit
+  3.5,                                       -- quantity (minutes, allows decimals)
   15,                                        -- credits_used
-  'txn_call_001',                            -- credit_transaction_id
   '{
     "model": "gpt-4o-realtime",
     "voice_id": "voice_sarah_123",
@@ -330,26 +282,9 @@ INSERT INTO usage_events (
 -- EXAMPLE 3: Voice Cloning Usage
 -- -----------------------------------------------------------------------------
 -- When a user clones a voice, record the fixed-cost operation.
+-- Credit deduction is handled by app logic (reduceCredits function).
 
--- Step 1: Insert credit transaction
-INSERT INTO credit_transactions (
-  user_id,
-  amount,
-  type,
-  description,
-  reference_id,
-  metadata
-) VALUES (
-  '123e4567-e89b-12d3-a456-426614174000',
-  -50,                                       -- voice cloning costs 50 credits
-  'usage',
-  'Voice cloning: My Custom Voice',
-  'voice_clone_ghi789',
-  '{"source": "voice_cloning", "voice_name": "My Custom Voice"}'::jsonb
-) RETURNING id;
--- Returns: credit_transaction_id = 'txn_clone_001'
-
--- Step 2: Insert usage event
+-- Insert usage event
 INSERT INTO usage_events (
   user_id,
   source_type,
@@ -357,7 +292,6 @@ INSERT INTO usage_events (
   unit,
   quantity,
   credits_used,
-  credit_transaction_id,
   metadata
 ) VALUES (
   '123e4567-e89b-12d3-a456-426614174000',
@@ -366,7 +300,6 @@ INSERT INTO usage_events (
   'operation',                               -- unit (fixed cost per operation)
   1,                                         -- quantity (1 operation)
   50,                                        -- credits_used
-  'txn_clone_001',                           -- credit_transaction_id
   '{
     "voice_name": "My Custom Voice",
     "source_audio_duration_seconds": 45,
@@ -415,25 +348,8 @@ INSERT INTO credit_transactions (
 -- When a user processes audio (e.g., removes background noise, enhances quality),
 -- record the usage based on audio duration in seconds.
 
--- Step 1: Insert credit transaction
-INSERT INTO credit_transactions (
-  user_id,
-  amount,
-  type,
-  description,
-  reference_id,
-  metadata
-) VALUES (
-  '123e4567-e89b-12d3-a456-426614174000',
-  -8,                                        -- credits based on duration
-  'usage',
-  'Audio processing: 45 seconds noise removal',
-  'processed_audio_jkl012',
-  '{"source": "audio_processing", "operation": "noise_removal", "duration_secs": 45}'::jsonb
-) RETURNING id;
--- Returns: credit_transaction_id = 'txn_process_001'
-
--- Step 2: Insert usage event
+-- Insert usage event
+-- Credit deduction is handled by app logic (reduceCredits function).
 INSERT INTO usage_events (
   user_id,
   source_type,
@@ -441,7 +357,6 @@ INSERT INTO usage_events (
   unit,
   quantity,
   credits_used,
-  credit_transaction_id,
   metadata
 ) VALUES (
   '123e4567-e89b-12d3-a456-426614174000',
@@ -450,7 +365,6 @@ INSERT INTO usage_events (
   'secs',                                    -- unit (duration-based billing)
   45,                                        -- quantity (seconds of audio processed)
   8,                                         -- credits_used
-  'txn_process_001',                         -- credit_transaction_id
   '{
     "operation": "noise_removal",
     "input_audio_id": "original_audio_xyz",
@@ -495,14 +409,5 @@ WHERE user_id = '123e4567-e89b-12d3-a456-426614174000'
   AND occurred_at >= NOW() - INTERVAL '30 days'
 GROUP BY day, source_type
 ORDER BY day DESC;
-
--- Audit trail: Find all usage for a specific audio file
-SELECT
-  ue.*,
-  ct.amount as transaction_amount,
-  ct.created_at as transaction_created_at
-FROM usage_events ue
-LEFT JOIN credit_transactions ct ON ue.credit_transaction_id = ct.id
-WHERE ue.source_id = 'audio_abc123';
 
 */

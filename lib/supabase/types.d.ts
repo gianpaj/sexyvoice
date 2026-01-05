@@ -269,7 +269,6 @@ declare type Database = {
       usage_events: {
         Row: {
           created_at: string;
-          credit_transaction_id: string | null;
           credits_used: number;
           id: string;
           metadata: Json | null;
@@ -282,7 +281,6 @@ declare type Database = {
         };
         Insert: {
           created_at?: string;
-          credit_transaction_id?: string | null;
           credits_used: number;
           id?: string;
           metadata?: Json | null;
@@ -295,7 +293,6 @@ declare type Database = {
         };
         Update: {
           created_at?: string;
-          credit_transaction_id?: string | null;
           credits_used?: number;
           id?: string;
           metadata?: Json | null;
@@ -306,15 +303,7 @@ declare type Database = {
           unit?: Database['public']['Enums']['usage_unit_type'];
           user_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
-            columns: ['credit_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'credit_transactions';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       voices: {
         Row: {

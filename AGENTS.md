@@ -350,7 +350,7 @@ pnpm run analyze                 # Analyze bundle size
 
 ## Rules
 
-- Do not execute any `supabase` CLI commands or SQL queries that can write data
+- NEVER execute any `supabase` CLI commands or SQL queries that can write data
 
 ---
 
