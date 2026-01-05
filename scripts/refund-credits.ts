@@ -210,35 +210,67 @@ async function insertRefundTransaction(options: {
   userId: string;
   refundCredits: number;
   refundUSD: number;
-  originalTransaction: CreditTransaction;
+  originalTransaction: CreditTransaction | null;
   chargeId?: string;
+  platformBugReason?: string;
 }): Promise<void> {
-  const { userId, refundCredits, refundUSD, originalTransaction, chargeId } =
-    options;
+  const {
+    userId,
+    refundCredits,
+    refundUSD,
+    originalTransaction,
+    chargeId,
+    platformBugReason,
+  } = options;
   const supabase = createAdminClient();
 
+  // For platform bug refunds, we're adding credits back (no USD involved)
+  // For regular refunds, we're taking credits back (negative USD)
+  const isPlatformBugRefund = !!platformBugReason;
+
   const metadata: {
-    dollarAmount: number;
+    dollarAmount?: number;
     chargeId?: string;
-    originalTransactionId: string;
-    originalTransactionRefId: string | null;
-  } = {
-    dollarAmount: -Math.abs(refundUSD),
-    originalTransactionId: originalTransaction.id,
-    originalTransactionRefId: originalTransaction.reference_id,
-  };
+    originalTransactionId?: string;
+    originalTransactionRefId?: string | null;
+    reason?: string;
+  } = {};
+
+  // Only set original transaction info for regular refunds (not platform bug refunds)
+  if (!isPlatformBugRefund && originalTransaction) {
+    metadata.originalTransactionId = originalTransaction.id;
+    metadata.originalTransactionRefId = originalTransaction.reference_id;
+    metadata.dollarAmount = -Math.abs(refundUSD);
+  }
 
   if (chargeId) {
     metadata.chargeId = chargeId;
   }
 
+  if (platformBugReason) {
+    metadata.reason = platformBugReason;
+  }
+
+  // Build description
+  const description = platformBugReason
+    ? `Refund - ${platformBugReason} - ${refundCredits} credits`
+    : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`;
+
   // Insert refund transaction
+  // Platform bug refund: positive amount (adding credits back to user)
+  // Regular refund: negative amount (taking credits back, giving USD refund)
+  const transactionAmount = isPlatformBugRefund
+    ? Math.abs(refundCredits)
+    : -Math.abs(refundCredits);
+
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
-    amount: -Math.abs(refundCredits),
+    amount: transactionAmount,
     type: 'refund',
-    description: `Refund for transaction of ${new Date(originalTransaction.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`,
-    reference_id: originalTransaction.reference_id,
+    description,
+    reference_id: isPlatformBugRefund
+      ? null
+      : originalTransaction!.reference_id,
     metadata,
   });
 
@@ -246,14 +278,37 @@ async function insertRefundTransaction(options: {
     throw new Error(`Failed to insert refund transaction: ${error.message}`);
   }
 
-  // Update credits table by decrementing the refunded amount
-  const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
-    user_id_var: userId,
-    credit_amount_var: Math.abs(refundCredits),
-  });
+  // Update credits table
+  // Platform bug refund: increment credits (giving credits back)
+  // Regular refund: decrement credits (taking credits back)
+  if (isPlatformBugRefund) {
+    const { error: creditsError } = await supabase.rpc(
+      'increment_user_credits',
+      {
+        user_id_var: userId,
+        credit_amount_var: Math.abs(refundCredits),
+      },
+    );
 
-  if (creditsError) {
-    throw new Error(`Failed to update credits table: ${creditsError.message}`);
+    if (creditsError) {
+      throw new Error(
+        `Failed to update credits table: ${creditsError.message}`,
+      );
+    }
+  } else {
+    const { error: creditsError } = await supabase.rpc(
+      'decrement_user_credits',
+      {
+        user_id_var: userId,
+        credit_amount_var: Math.abs(refundCredits),
+      },
+    );
+
+    if (creditsError) {
+      throw new Error(
+        `Failed to update credits table: ${creditsError.message}`,
+      );
+    }
   }
 }
 
@@ -345,7 +400,7 @@ async function getRefundAmount(
 async function selectTransaction(
   rl: ReturnType<typeof createInterface>,
   calculation: RefundCalculation,
-): Promise<CreditTransaction> {
+): Promise<{ transaction: CreditTransaction | null; skipped: boolean }> {
   console.log('\nSelect transaction to refund:');
   for (let i = 0; i < calculation.purchaseTransactions.length; i++) {
     const t = calculation.purchaseTransactions[i];
@@ -356,8 +411,17 @@ async function selectTransaction(
 
   const transactionIndexInput = await promptUser(
     rl,
-    '\nEnter transaction number: ',
+    '\nEnter transaction number (or press Enter to skip for platform bug refund): ',
   );
+
+  // If skipped, don't use any transaction (platform bug refund)
+  if (transactionIndexInput === '') {
+    console.log(
+      '\n💡 Skipped transaction selection for platform bug refund (no original transaction will be tracked)',
+    );
+    return { transaction: null, skipped: true };
+  }
+
   const transactionIndex = Number.parseInt(transactionIndexInput, 10) - 1;
 
   if (
@@ -368,7 +432,10 @@ async function selectTransaction(
     throw new Error('Invalid transaction selection');
   }
 
-  return calculation.purchaseTransactions[transactionIndex];
+  return {
+    transaction: calculation.purchaseTransactions[transactionIndex],
+    skipped: false,
+  };
 }
 
 /**
@@ -479,19 +546,34 @@ async function main() {
     const refundCredits = await getRefundAmount(rl, calculation);
 
     // Select transaction to refund
-    const selectedTransaction = await selectTransaction(rl, calculation);
+    const { transaction: selectedTransaction, skipped: isPlatformBugRefund } =
+      await selectTransaction(rl, calculation);
 
-    // Get dollar amount to refund
-    const refundUSD = await getRefundDollarAmount(
-      rl,
-      refundCredits,
-      selectedTransaction,
-      calculation.creditRate,
-    );
+    // Get reason for platform bug refund (credits only, no USD refund)
+    let platformBugReason: string | undefined;
+    let refundUSD = 0;
 
-    console.log(
-      `\nRefund: ${refundCredits} credits = $${refundUSD.toFixed(2)}`,
-    );
+    if (isPlatformBugRefund) {
+      const reasonInput = await promptUser(
+        rl,
+        'Enter refund reason [default: Platform bug]: ',
+      );
+      platformBugReason = reasonInput || 'Platform bug';
+      console.log(
+        `\nRefund: ${refundCredits} credits (credits only, no USD refund)`,
+      );
+    } else {
+      // Get dollar amount to refund (only for regular refunds)
+      refundUSD = await getRefundDollarAmount(
+        rl,
+        refundCredits,
+        selectedTransaction!,
+        calculation.creditRate,
+      );
+      console.log(
+        `\nRefund: ${refundCredits} credits = $${refundUSD.toFixed(2)}`,
+      );
+    }
 
     // Optional charge ID
     const chargeId = await promptUser(
@@ -503,11 +585,18 @@ async function main() {
     console.log('\n=== Refund Summary ===');
     console.log(`User ID: ${userId}`);
     console.log(`Credits to refund: ${refundCredits}`);
-    console.log(`USD to refund: $${refundUSD.toFixed(2)}`);
-    console.log(
-      `Original transaction: ${selectedTransaction.id.substring(0, 8)}`,
-    );
-    console.log(`Reference ID: ${selectedTransaction.reference_id || 'N/A'}`);
+    if (platformBugReason) {
+      console.log('USD to refund: $0.00 (credits only)');
+      console.log(`Reason: ${platformBugReason}`);
+    } else {
+      console.log(`USD to refund: $${refundUSD.toFixed(2)}`);
+    }
+    if (selectedTransaction) {
+      console.log(
+        `Original transaction: ${selectedTransaction.id.substring(0, 8)}`,
+      );
+      console.log(`Reference ID: ${selectedTransaction.reference_id || 'N/A'}`);
+    }
     if (chargeId) {
       console.log(`Charge ID: ${chargeId}`);
     }
@@ -529,6 +618,7 @@ async function main() {
       refundUSD,
       originalTransaction: selectedTransaction,
       chargeId: chargeId || undefined,
+      platformBugReason,
     });
 
     console.log('✅ Refund transaction created successfully!\n');
