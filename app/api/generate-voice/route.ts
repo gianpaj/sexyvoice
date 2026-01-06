@@ -13,6 +13,7 @@ import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
+import { validatePromptSafeguard } from '@/lib/ai/safeguard';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -127,6 +128,27 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Insufficient credits' },
         { status: 402 },
+      );
+    }
+
+    // Safeguard policy check
+    const safeguardResult = await validatePromptSafeguard(text, user.id);
+    if (!safeguardResult.isValid) {
+      logger.warn('Safeguard policy violation in voice generation', {
+        user: { id: user.id, email: user.email },
+        extra: {
+          voice,
+          textPreview: text.substring(0, 200),
+          result: safeguardResult.result,
+        },
+      });
+      return NextResponse.json(
+        {
+          error:
+            'Content policy violation: This type of voice generation is not permitted.',
+          errorCode: 'SAFEGUARD_VIOLATION',
+        },
+        { status: 403 },
       );
     }
 

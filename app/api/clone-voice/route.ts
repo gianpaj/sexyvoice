@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { validatePromptSafeguard } from '@/lib/ai/safeguard';
 import { generateHash } from '@/lib/audio';
 import {
   convertToWav,
@@ -623,6 +624,27 @@ export async function POST(request: Request) {
       text,
       user.email,
     );
+
+    // Safeguard policy check
+    const safeguardResult = await validatePromptSafeguard(text, user.id);
+    if (!safeguardResult.isValid) {
+      logger.warn('Safeguard policy violation in voice cloning', {
+        user: { id: user.id },
+        extra: {
+          locale,
+          textPreview: text.substring(0, 200),
+          result: safeguardResult.result,
+        },
+      });
+      return NextResponse.json(
+        {
+          error:
+            'Content policy violation: This type of voice generation is not permitted.',
+          errorCode: 'SAFEGUARD_VIOLATION',
+        },
+        { status: 403 },
+      );
+    }
 
     // Process audio file
     const processedAudio = await processAudioFile(
