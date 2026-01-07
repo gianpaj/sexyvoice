@@ -1,10 +1,9 @@
+import { groq } from '@ai-sdk/groq';
 import { logger } from '@sentry/nextjs';
+import { generateText } from 'ai';
 
 const SAFEGUARD_POLICY =
-  'Classify TTS prompts as VALID (adult voice permitted) or INVALID (minor/child voice blocked). INVALID includes: children, kids, minors under 18, childlike voices, little boy/girl, young child, teen, adolescent, baby, toddler, school kid, cartoon kids. VALID = adult, mature, elderly, professional voices only. Respond ONLY with VALID or INVALID.';
-
-const SAFEGUARD_MODEL = 'openai/gpt-oss-safeguard-20b';
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+  'Classify TTS prompts as VALID (adult voice permitted) or INVALID (minor/child voice blocked). INVALID includes: children, kids, minors under 18, childlike voices, little boy/girl, young child, teen, adolescent, baby, toddler, school kid, cartoon kids. VALID = adult, mature, sexual, consensual voices only. Respond ONLY with VALID or INVALID.';
 
 export interface SafeguardResult {
   isValid: boolean;
@@ -13,19 +12,12 @@ export interface SafeguardResult {
   errorMessage?: string;
 }
 
-interface GroqChatResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
-
 /**
  * Validates a prompt against the safeguard policy to ensure it doesn't
  * request generation of minor/child voices.
  *
- * Uses harmony format with system role for policy and user role for prompt
+ * Uses harmony format with system role for policy and user role for prompt,
+ * matching how the gpt-oss-safeguard-20b model was trained.
  *
  * @param prompt - The text prompt to validate
  * @param userId - The user ID for logging purposes
@@ -36,53 +28,19 @@ export async function validatePromptSafeguard(
   userId: string,
 ): Promise<SafeguardResult> {
   try {
-    const apiKey = process.env.GROQ_API_KEY;
-
-    if (!apiKey) {
-      logger.error('GROQ_API_KEY is not configured', {
-        user: { id: userId },
-      });
-      return {
-        isValid: false,
-        prompt,
-        result: 'ERROR',
-        errorMessage: 'Safeguard service not configured',
-      };
-    }
-
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        messages: [
-          // Policy as system instruction (harmony format)
-          {
-            role: 'system',
-            content: SAFEGUARD_POLICY,
-          },
-          {
-            role: 'user',
-            content: `Classify the following prompt:\n\n"${prompt}"`,
-          },
-        ],
-        model: SAFEGUARD_MODEL,
-        temperature: 1,
-        max_completion_tokens: 10,
-        top_p: 1,
-        stream: false,
-      }),
+    const { text } = await generateText({
+      model: groq('openai/gpt-oss-safeguard-20b'),
+      system: SAFEGUARD_POLICY,
+      messages: [
+        {
+          role: 'user',
+          content: `Classify the following prompt:\n\n"${prompt}"`,
+        },
+      ],
+      temperature: 1,
+      maxOutputTokens: 250,
+      topP: 1,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
-    }
-
-    const data = (await response.json()) as GroqChatResponse;
-    const text = data.choices?.[0]?.message?.content || '';
 
     const normalizedResult = text.trim().toUpperCase();
     const isValid = normalizedResult === 'VALID';

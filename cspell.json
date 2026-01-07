@@ -4,13 +4,14 @@
     "es-es"
   ],
   "words": [
-    "lucide",
-    "supabase",
-    "posthog",
-    "platform",
     "MAX_LENGTH_MULTILANGUAGE",
-    "signup",
+    "TOPUP",
+    "groq",
+    "lucide",
     "minmax",
-    "TOPUP"
+    "platform",
+    "posthog",
+    "signup",
+    "supabase"
   ]
 }

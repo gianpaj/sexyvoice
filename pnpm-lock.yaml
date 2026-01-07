@@ -22,6 +22,9 @@ importers:
       '@ai-sdk/google':
         specifier: ^3.0.0
         version: 3.0.5(zod@4.3.2)
+      '@ai-sdk/groq':
+        specifier: ^3.0.4
+        version: 3.0.4(zod@4.3.2)
       '@ai-sdk/react':
         specifier: ^3.0.16
         version: 3.0.16(react@19.2.3)(zod@4.3.2)
@@ -295,6 +298,12 @@ packages:
 
   '@ai-sdk/google@3.0.5':
     resolution: {integrity: sha512-+aaq8HEdEqJdXt/7ULHlc4oRL9RGdSNfJ8ptF/q1lWvuvH+Rz0c8zVk9DELCjQYxreuFgEMdtLtMD6cejNKjJg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/groq@3.0.4':
+    resolution: {integrity: sha512-xhqeUZ9DclSZntfIAsIDsMzk2QpeWA9NMAdyrfP3Lbu+Nqccv1fWPoy9SaYwRwdluUUvc45gl9GtMDnWUbO0oA==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -6297,6 +6306,12 @@ snapshots:
       zod: 4.3.2
 
   '@ai-sdk/google@3.0.5(zod@4.3.2)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.2
+      '@ai-sdk/provider-utils': 4.0.4(zod@4.3.2)
+      zod: 4.3.2
+
+  '@ai-sdk/groq@3.0.4(zod@4.3.2)':
     dependencies:
       '@ai-sdk/provider': 3.0.2
       '@ai-sdk/provider-utils': 4.0.4(zod@4.3.2)

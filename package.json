@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.0",
+    "@ai-sdk/groq": "^3.0.4",
     "@ai-sdk/react": "^3.0.16",
     "@aws-sdk/client-s3": "^3.842.0",
     "@fal-ai/client": "^1.5.0",

@@ -131,29 +131,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Safeguard policy check
-    const safeguardResult = await validatePromptSafeguard(text, user.id);
-    if (!safeguardResult.isValid) {
-      logger.warn('Safeguard policy violation in voice generation', {
-        user: { id: user.id, email: user.email },
-        extra: {
-          voice,
-          textPreview: text.substring(0, 200),
-          result: safeguardResult.result,
-        },
-      });
-      return NextResponse.json(
-        {
-          error:
-            'Content policy violation: This type of voice generation is not permitted.',
-          errorCode: 'SAFEGUARD_VIOLATION',
-        },
-        { status: 403 },
-      );
-    }
-
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
+
+    if (styleVariant !== process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN) {
+      // Safeguard policy check
+      const safeguardResult = await validatePromptSafeguard(text, user.id);
+
+      if (!safeguardResult.isValid) {
+        logger.warn('Safeguard policy violation in voice generation', {
+          user: { id: user.id, email: user.email },
+          extra: {
+            voice,
+            textPreview: text.substring(0, 200),
+            result: safeguardResult.result,
+          },
+        });
+        return NextResponse.json(
+          {
+            error:
+              'Content policy violation: This type of voice generation is not permitted.',
+            errorCode: 'SAFEGUARD_VIOLATION',
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     // Generate hash for the combination of text, voice
     const hash = await generateHash(`${text}-${voice}`);
