@@ -8,6 +8,10 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
     "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && pnpm run format:write",
     "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
     "build:content": "contentlayer2 build",
@@ -98,6 +102,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
+    "@playwright/test": "^1.57.0",
     "@types/negotiator": "^0.6.3",
     "@types/node": "^24.10.1",
     "@types/react": "19.2.7",

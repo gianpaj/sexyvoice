@@ -44,3 +44,10 @@ build
 tsconfig.tsbuildinfo
 
 backups
+
+# Playwright
+.auth/
+playwright-report/
+test-results/
+playwright/.cache/
+.env.e2e
