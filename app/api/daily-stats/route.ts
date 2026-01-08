@@ -276,7 +276,7 @@ export async function GET(request: NextRequest) {
   // Track individual transactions per customer for detailed display
   const customerTransactions = new Map<
     string,
-    Array<{ amount: number; type: string }>
+    Array<{ amount: number; type: string; username: string }>
   >();
 
   for (const transaction of purchasePrevDayData) {
@@ -305,9 +305,13 @@ export async function GET(request: NextRequest) {
       purchaseTypeLabel = isFirstSubscription ? 'new sub' : 'existing sub';
     }
 
-    // Store each transaction individually
+    // Store each transaction individually with username
     const existing = customerTransactions.get(transaction.user_id) ?? [];
-    existing.push({ amount: dollarAmount, type: purchaseTypeLabel });
+    existing.push({
+      amount: dollarAmount,
+      type: purchaseTypeLabel,
+      username: transaction.profiles?.username || 'Unknown',
+    });
     customerTransactions.set(transaction.user_id, existing);
   }
 
@@ -317,6 +321,7 @@ export async function GET(request: NextRequest) {
       userId,
       total: transactions.reduce((sum, t) => sum + t.amount, 0),
       transactions,
+      username: transactions[0].username,
     }),
   );
 
@@ -330,13 +335,9 @@ export async function GET(request: NextRequest) {
     topCustomers.length === 0
       ? 'N/A'
       : topCustomers
-          .map(({ userId, transactions }) => {
-            // Find the transaction for this user to get their profile data
-            const transaction = purchasePrevDayData.find(
-              (t) => t.user_id === userId,
-            );
-            const username =
-              maskUsername(transaction?.profiles?.username) || 'Unknown';
+          .map(({ username, transactions }) => {
+            // Use username from customer totals - no need for inefficient find()
+            const maskedUsername = maskUsername(username);
 
             // Format amounts: show individual amounts if multiple transactions
             // e.g., "$5+$5 topup" or "$5 topup + $10 sub" for mixed types
@@ -362,7 +363,7 @@ export async function GET(request: NextRequest) {
                 .join(' + ');
             }
 
-            return `${username} (${amountDisplay})`;
+            return `${maskedUsername} (${amountDisplay})`;
           })
           .join(', ');
 
