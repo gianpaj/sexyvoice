@@ -185,7 +185,7 @@ importers:
         specifier: ^1.7.3
         version: 1.7.3
       posthog-js:
-        specifier: ^1.233.1
+        specifier: ^1.257.1
         version: 1.257.1
       posthog-node:
         specifier: ^4.10.2
@@ -5329,8 +5329,8 @@ packages:
     resolution: {integrity: sha512-XROs1h+DNatgKh/AlIlCtDxWzwrKdYDb2mOs58n4yN8BkGN9ewqeQwG5ApS4/IzwCb7HPttUkOVulkYatd2PIw==}
     engines: {node: '>=15.0.0'}
 
-  preact@10.26.9:
-    resolution: {integrity: sha512-SSjF9vcnF27mJK1XyFMNJzFd5u3pQiATFqoaDy03XuN00u4ziveVVEGt5RKJrDR8MHE/wJo9Nnad56RLzS2RMA==}
+  preact@10.28.2:
+    resolution: {integrity: sha512-lbteaWGzGHdlIuiJ0l2Jq454m6kcpI1zNje6d8MlGAFlYvP2GO4ibnat7P74Esfz4sPTdM6UxtTwh/d3pwM9JA==}
 
   process@0.11.10:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
@@ -12298,7 +12298,7 @@ snapshots:
     dependencies:
       core-js: 3.44.0
       fflate: 0.4.8
-      preact: 10.26.9
+      preact: 10.28.2
       web-vitals: 4.2.4
 
   posthog-node@4.18.0:
@@ -12307,7 +12307,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  preact@10.26.9: {}
+  preact@10.28.2: {}
 
   process@0.11.10:
     optional: true
