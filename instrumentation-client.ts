@@ -10,6 +10,30 @@ Sentry.init({
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,
 
+  // Only capture errors from sexyvoice.ai domain
+  allowUrls: [/https?:\/\/(www\.)?sexyvoice\.ai/],
+
+  // Ignore specific error messages from browser extensions and wallets
+  ignoreErrors: [
+    // Browser extension errors
+    /extension not found/i,
+    /Cannot assign to read only property/i,
+    // Wallet-related errors
+    /MetaMask/i,
+    /tronLink/i,
+  ],
+
+  beforeSend(event, hint) {
+    const eventUrl = event.request?.url ?? '';
+
+    // Additional filtering for app:// protocol (browser extensions)
+    if (eventUrl.includes('app://')) {
+      return null;
+    }
+
+    return event;
+  },
+
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
