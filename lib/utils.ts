@@ -170,6 +170,7 @@ export function extractMetadata(
 
 export const ERROR_CODES = {
   THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
+  FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
@@ -184,6 +185,7 @@ export const ERROR_CODES = {
  */
 export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   PROHIBITED_CONTENT: 422,
+  FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
   REPLICATE_ERROR: 500,
   THIRD_P_QUOTA_EXCEEDED: 503,
@@ -214,6 +216,10 @@ export const getErrorMessage = (
     THIRD_P_QUOTA_EXCEEDED: {
       default:
         'We have exceeded our third-party API current quota, please try later or tomorrow',
+    },
+    FREE_QUOTA_EXCEEDED: {
+      default:
+        'Free users have exceeded the quota. Please please try tomorrow or upgrade your account to continue',
     },
     // UNAUTHORIZED: {
     //   default: 'You are not authorized to perform this action.',

@@ -47,6 +47,7 @@ export async function POST(request: Request) {
   let voice = '';
   let styleVariant = '';
   let user: User | null = null;
+  let userHasPaid = false;
   try {
     if (request.body === null) {
       logger.error('Request body is empty', {
@@ -138,7 +139,7 @@ export async function POST(request: Request) {
 
     const abortController = new AbortController();
 
-    const userHasPaid = await hasUserPaid(user.id);
+    userHasPaid = await hasUserPaid(user.id);
 
     let folder = 'generated-audio-free';
 
@@ -182,6 +183,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
+    let replicateResponse: Prediction | undefined;
+    let genAIResponse: GenerateContentResponse | null;
+    let modelUsed = '';
+    let uploadUrl = '';
+
     if (isGeminiVoice) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
       if (!userHasPaid && isOverLimit) {
@@ -192,14 +198,7 @@ export async function POST(request: Request) {
           { status: 403 },
         );
       }
-    }
 
-    let replicateResponse: Prediction | undefined;
-    let genAIResponse: GenerateContentResponse | null;
-    let modelUsed = '';
-    let uploadUrl = '';
-
-    if (isGeminiVoice) {
       const ai = new GoogleGenAI({
         apiKey: userHasPaid
           ? process.env.GOOGLE_GENERATIVE_AI_API_KEY
@@ -464,7 +463,9 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error: getErrorMessage(
-              ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
+              userHasPaid
+                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
+                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
               'voice-generation',
             ),
           },

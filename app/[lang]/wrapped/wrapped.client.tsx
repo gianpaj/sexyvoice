@@ -82,7 +82,7 @@ function StatCard({
           )}
         </div>
       </div>
-      <div className="-right-4 -top-4 pointer-events-none absolute size-24 rounded-full bg-primary/5 transition-transform duration-500 group-hover:scale-150" />
+      <div className="pointer-events-none absolute -top-4 -right-4 size-24 rounded-full bg-primary/5 transition-transform duration-500 group-hover:scale-150" />
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
           <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
             <CircleCheckIcon
               aria-hidden="true"
-              className="-mt-0.5 !text-emerald-500 me-3 inline-flex"
+              className="!text-emerald-500 me-3 -mt-0.5 inline-flex"
             />
 
             <AlertTitle>{dict.status.success.title}</AlertTitle>

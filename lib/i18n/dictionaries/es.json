@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Ultimos Posts",
     "hero": {
-      "title": "Voces Expressivas, Sin Censura",
-      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
-      "buttonCTA": "Comienza",
-      "noCreditCard": "Sin tarjeta de crédito",
+      "title": "Llamada privada con una IA, Habla libremente sin juzgarte",
+      "subtitle": "Experimenta la conexión - prueba una llamada gratuita de 60 segundos",
+      "buttonCTA": "Empezar",
+      "noCreditCard": "Sin tarjeta de crédito. Puedes colgar en cualquier momento",
       "signIn": "Iniciar Sesión"
     },
     "features": {
@@ -284,7 +284,8 @@
     "title": "Créditos",
     "topupButton": "Recargar",
     "totalCredits": "Total",
-    "remainingCredits": "Restantes"
+    "remainingCredits": "Restantes",
+    "remainingTime": "Tiempo restante"
   },
   "generate": {
     "abortedCloning": "Clonación de voz cancelada",
@@ -312,6 +313,11 @@
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
       "geminiInfo": "Soporta 24 idiomas:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
     }
+  },
+  "call": {
+    "notice1": "Explora tus deseos más profundos en total privacidad.",
+    "notice2": "Conversaciones cifradas de extremo a extremo, sin juzgarte.",
+    "notEnoughCredits": "No tienes suficientes créditos. El mínimo requerido es __COUNT__"
   },
   "clone": {
     "audioFileLabel": "Archivo de Audio",
@@ -394,6 +400,7 @@
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
+    "/dashboard/call": "Llamada",
     "/dashboard/generate": "Generar",
     "/dashboard/clone": "Clonar",
     "/dashboard/history": "Historial",
@@ -408,6 +415,17 @@
     "generate": "Generar",
     "login": "Iniciar sesión",
     "signup": "Registrarse"
+  },
+  "history": {
+    "header": "Historial de Generación",
+    "empty": "Sin historial aún",
+    "ui": {
+      "filterText": "Filtrar texto...",
+      "customizeColumns": "Personalizar Columnas",
+      "columns": "Columnas",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
   },
   "footer": {
     "statusPage": "Página de estado",

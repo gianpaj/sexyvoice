@@ -49,7 +49,7 @@ export function LoginForm({
     }
     setLastUsedAuth('email');
 
-    router.push(`/${lang}/dashboard/generate`);
+    router.push(`/${lang}/dashboard/call`);
     router.refresh();
   };
 
@@ -143,7 +143,7 @@ export function LoginForm({
 function LastUsedBanner() {
   return (
     <Badge
-      className="-top-2 -right-2 pointer-events-none absolute z-10 border-none bg-[#6c2243] px-[0.4rem]"
+      className="pointer-events-none absolute -top-2 -right-2 z-10 border-none bg-[#6c2243] px-[0.4rem]"
       variant="outline"
     >
       <span className="font-normal text-[11px] text-pink-200">Last used</span>

@@ -14,7 +14,7 @@
 - Set up API routes structure
 - Set up internationalization (i18n) system for English and Spanish
 - Set up voice selection system
-- Add authentication middleware (using Supabase)
+- Add authentication middleware (proxy) (using Supabase)
 
 ## Phase 3: User Interface
 - Design and implement landing page where you can create a new voice without logging in. Select a voice from a dropdown, select language and type the text you want to generate into speech (voice).

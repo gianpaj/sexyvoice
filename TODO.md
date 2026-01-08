@@ -1,5 +1,6 @@
 # TODO
 
+- fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
 - fix: landing page audios not stopping if another audio is played
 - add audio clones demos on landing page
   - Bruce Lee
@@ -9,6 +10,7 @@
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - share link & page after an audio has been generated
+- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
@@ -42,8 +44,7 @@
 - daily stats:
   - add num of delete profiles
 - Translate pages in Dashboard:
-  - Generate
-  - History
+  - History (table headers)
   - Credits (table headers)
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar

@@ -52,7 +52,7 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
               value={`item-${group.id}`}
             >
               <AccordionPrimitiveTrigger
-                className="[&[data-state=open]>svg]:-rotate-45 flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50"
+                className="flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:-rotate-45"
                 data-slot="accordion-trigger"
               >
                 <span className="flex items-center gap-4">

@@ -51,8 +51,8 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { AudioProvider, useAudio } from './audio-provider';
-import type { SampleAudio } from './CloneSampleCard';
-import CloneSampleCard from './CloneSampleCard';
+import type { SampleAudio } from './clone-sample-card';
+import CloneSampleCard from './clone-sample-card';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 

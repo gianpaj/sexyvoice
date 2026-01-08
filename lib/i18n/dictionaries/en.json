@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Expressive Voices, Uncensored",
-      "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators, developers, and storytellers. 😉",
+      "title": "Private call with an AI, Talk freely – no judgment",
+      "subtitle": "Experience the connection – try 60 sec free call",
       "buttonCTA": "Sign up for Free",
-      "noCreditCard": "No credit card required",
+      "noCreditCard": "No credit card required. You can hang up anytime",
       "signIn": "Sign In"
     },
     "features": {
@@ -284,7 +284,8 @@
     "title": "Credits",
     "topupButton": "Top-up",
     "totalCredits": "Total",
-    "remainingCredits": "Remaining"
+    "remainingCredits": "Remaining",
+    "remainingTime": "Remaining time"
   },
   "generate": {
     "abortedCloning": "Voice generation aborted.",
@@ -312,6 +313,11 @@
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
     }
+  },
+  "call": {
+    "notice1": "Explore your deepest desires in total privacy.",
+    "notice2": "End-to-end encrypted, judgment-free conversations.",
+    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__"
   },
   "clone": {
     "audioFileLabel": "Audio File",
@@ -394,6 +400,7 @@
     "/": "",
     "/login": "Log in",
     "/signup": "Sign up with email or Google",
+    "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
@@ -408,6 +415,17 @@
     "generate": "Generate",
     "login": "Log in",
     "signup": "Sign up"
+  },
+  "history": {
+    "header": "Generation History",
+    "empty": "No history yet",
+    "ui": {
+      "filterText": "Filter text...",
+      "customizeColumns": "Customize Columns",
+      "columns": "Columns",
+      "previous": "Previous",
+      "next": "Next"
+    }
   },
   "footer": {
     "statusPage": "Status page",
