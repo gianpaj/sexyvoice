@@ -56,19 +56,20 @@ let nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/ingest/static/:path*',
+        source: '/seguimiento/static/:path*',
         destination: 'https://eu-assets.i.posthog.com/static/:path*',
       },
       {
-        source: '/ingest/:path*',
+        source: '/seguimiento/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
       {
-        source: '/ingest/decide',
+        source: '/seguimiento/decide',
         destination: 'https://eu.i.posthog.com/decide',
       },
     ];
   },
+  // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
   skipTrailingSlashRedirect: true,
   async headers() {
     return [
