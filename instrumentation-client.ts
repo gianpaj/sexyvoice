@@ -1,8 +1,8 @@
-// This file configures the initialization of Sentry on the client.
 // The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from '@sentry/nextjs';
+import posthog from 'posthog-js';
 
 Sentry.init({
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
@@ -32,3 +32,11 @@ Sentry.init({
 // This export will instrument router navigations, and is only relevant if you enable tracing.
 // `captureRouterTransitionStart` is available from SDK version 9.12.0 onwards
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+
+posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+  api_host: '/seguimiento',
+  ui_host: 'https://eu.posthog.com',
+  defaults: '2025-05-24',
+  capture_pageview: false, // We capture pageviews manually
+  capture_pageleave: true, // Enable pageleave capture
+});
