@@ -248,9 +248,6 @@ importers:
       autoprefixer:
         specifier: ^10.4.22
         version: 10.4.23(postcss@8.5.6)
-      dotenv:
-        specifier: ^16.5.0
-        version: 16.5.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
