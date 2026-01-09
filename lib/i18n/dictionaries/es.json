@@ -359,9 +359,10 @@
     }
   },
   "profile": {
-    "title": "Configuración del Perfil",
+    "title": "Cuenta",
     "subtitle": "Gestiona la configuración y preferencias de tu cuenta",
     "notLoggedIn": "No has iniciado sesión",
+    "logOut": "Cerrar sesión",
     "tabs": {
       "profile": "Perfil",
       "security": "Seguridad"
@@ -370,6 +371,33 @@
       "title": "Información Personal",
       "description": "Actualiza tu información de perfil y avatar"
     },
+    "myPlan": {
+      "title": "Mi plan",
+      "creativeEnergy": "Energía creativa",
+      "energyReplenish": "Tu energía diaria se recargará en __HOURS__h.",
+      "freePlan": "Plan gratuito",
+      "upgrade": "Mejorar"
+    },
+    "login": {
+      "title": "Inicio de sesión",
+      "password": "Contraseña",
+      "resetPassword": "Restablecer tu contraseña",
+      "reset": "Restablecer",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "No conectado aún",
+      "connect": "Conectar",
+      "remove": "Eliminar"
+    },
+    "support": {
+      "title": "Soporte",
+      "faq": "Preguntas frecuentes",
+      "faqDescription": "¿Necesitas ayuda? Empieza aquí",
+      "open": "Abrir",
+      "contactSupport": "Contactar soporte",
+      "contactDescription": "Ponte en contacto con el equipo de Reve",
+      "contact": "Contactar"
+    },
     "security": {
       "title": "Configuración de Seguridad",
       "description": "Gestiona tu correo electrónico y contraseña"
@@ -377,13 +405,18 @@
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
-        "button": "Eliminar cuenta",
+        "button": "Eliminar mi cuenta",
         "confirmTitle": "¿Estás absolutamente seguro?",
         "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y removerá tus datos de nuestros servidores.",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar"
       }
+    },
+    "links": {
+      "privacyPolicy": "Política de privacidad",
+      "termsOfService": "Términos de servicio",
+      "enableApiAccess": "Habilitar acceso a la API"
     }
   },
   "pages": {
