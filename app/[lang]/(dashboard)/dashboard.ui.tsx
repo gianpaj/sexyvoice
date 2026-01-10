@@ -132,7 +132,7 @@ export default function DashboardUI({
         </Sidebar>
 
         <PromoBanner
-          arialLabelDismiss={blackFridayDict.arialLabelDismiss}
+          ariaLabelDismiss={blackFridayDict.ariaLabelDismiss}
           countdown={
             process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
               ? {

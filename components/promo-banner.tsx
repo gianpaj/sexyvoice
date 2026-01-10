@@ -14,7 +14,7 @@ interface PromoBannerProps {
   text: string;
   ctaLink: string;
   ctaText: string;
-  arialLabelDismiss: string;
+  ariaLabelDismiss: string;
   isEnabled?: boolean;
   countdown?: {
     enabled: boolean;
@@ -67,7 +67,7 @@ export function PromoBanner({
   text,
   ctaLink,
   ctaText,
-  arialLabelDismiss,
+  ariaLabelDismiss,
   isEnabled = false,
   countdown,
 }: PromoBannerProps) {
@@ -207,7 +207,7 @@ export function PromoBanner({
           </Button>
 
           <Button
-            aria-label={arialLabelDismiss}
+            aria-label={ariaLabelDismiss}
             className="absolute right-0 md:relative"
             onClick={handleDismissBanner}
             size="sm"
