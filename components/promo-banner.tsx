@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 
 import { dismissBannerAction } from '@/app/[lang]/actions/promos';
 import { Button } from '@/components/ui/button';
+import { getCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
 interface PromoBannerProps {
@@ -80,15 +81,15 @@ export function PromoBanner({
     if (!isEnabled) {
       return;
     }
-    const getCookie = async () => {
-      const promoBannerCookie = await cookieStore.get(PROMO_BANNER_COOKIE);
+    const checkCookie = async () => {
+      const promoBannerCookie = await getCookie(PROMO_BANNER_COOKIE);
 
       if (!promoBannerCookie) {
         setIsVisible(true);
       }
     };
 
-    getCookie();
+    checkCookie();
   }, []);
 
   // Countdown timer effect
