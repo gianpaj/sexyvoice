@@ -91,7 +91,7 @@ export default async function LandingPage(props: {
       />
       <HeaderStatic dict={dictHeader} lang={lang} />
       <main id="main-content">
-        <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+        <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 flex h-[calc(100svh-60px)] min-h-[600px] flex-col items-center justify-center space-y-3 text-center md:space-y-6">

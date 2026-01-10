@@ -110,7 +110,7 @@
   }
 
   .bg-grid-gradient {
-    @apply bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)];
+    @apply bg-[linear-gradient(to_right, var(--color-border)_1px, transparent_1px), linear-gradient(to_bottom, var(--color-border)_1px, transparent_1px)];
   }
 }
 
@@ -142,6 +142,7 @@
 
 /* Added incoming call animation */
 @keyframes incoming-call {
+
   0%,
   100% {
     transform: scale(1) rotate(0deg);

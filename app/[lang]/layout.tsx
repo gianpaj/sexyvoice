@@ -1,3 +1,5 @@
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
 
@@ -10,6 +12,8 @@ const inter = Inter({ subsets: ['latin'] });
 export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
+
+import '../globals.css';
 
 interface Props {
   params: Promise<{ lang: Locale }>;
@@ -50,17 +54,34 @@ export async function generateMetadata(
   }
 
   return {
+    metadataBase: new URL(
+      process.env.NODE_ENV === 'production'
+        ? 'https://sexyvoice.ai'
+        : 'http://localhost:3000',
+    ),
     title: {
-      template: parentTitle?.template || '',
+      template: parentTitle?.template || '%s | SexyVoice.ai',
       default: title,
     },
     description,
     openGraph: {
-      title,
+      title: {
+        template: '%s | SexyVoice.ai',
+        default: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+      },
       description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
       ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
+    },
+    alternates: {
+      canonical: './',
+      languages: {
+        'x-default': './',
+        ...Object.fromEntries(
+          i18n.locales.map((locale) => [locale, `./${locale}`]),
+        ),
+      },
     },
   };
 }
@@ -78,6 +99,12 @@ export default async function LangLayout({
         <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
         </a>
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            <Analytics debug={false} />
+            <SpeedInsights debug={false} />
+          </>
+        )}
         <Providers>{children}</Providers>
       </body>
     </html>
