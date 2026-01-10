@@ -143,12 +143,14 @@ export function PromoBanner({
   }
 
   const isLongText = text.length > 100;
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
 
   return (
     <div
       className={cn('w-full', {
-        'fixed z-50 bg-pink-900/30 backdrop-blur-sm': inDashboard,
+        'fixed z-50 bg-promo-primary-dark backdrop-blur-sm': inDashboard,
       })}
+      data-promo-theme={promoTheme}
     >
       <div
         className={cn(
@@ -199,7 +201,7 @@ export function PromoBanner({
         <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 sm:absolute sm:mt-0">
           <Button
             asChild
-            className="whitespace-nowrap bg-pink-600/70 font-semibold hover:bg-pink-900"
+            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-primary"
             size="sm"
             variant="outline"
           >

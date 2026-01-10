@@ -444,8 +444,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Oferta de Invierno – Consigue hasta un 35% de créditos extra con tu compra ☃️\nOferta por tiempo limitado 🎿",
-      "ctaLoggedIn": "Obtener Oferta ❄️",
-      "ctaLoggedOut": "Regístrate Ahora ❄️",
+      "ctaLoggedIn": "Obtener Oferta",
+      "ctaLoggedOut": "Regístrate Ahora",
       "ariaLabelDismiss": "Descartar banner de Oferta de Invierno",
       "pricing": {
         "bannerText": "❄️ Oferta de Invierno"

@@ -116,8 +116,10 @@ const PostLayout = async (props: {
   const { lang } = params;
   const post = await getPostFromParams(params);
   const dictHeader = await getDictionary(lang, 'header');
-  const blackFridayDict = (await getDictionary(lang, 'promos'))
-    .blackFridayBanner;
+  const promoDictKey =
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+  // @ts-expect-error fix me
+  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
 
   if (!post) {
     return <div>Post not found ({params.slug})</div>;
@@ -187,20 +189,20 @@ const PostLayout = async (props: {
       </Script>
 
       <PromoBanner
-        ariaLabelDismiss={blackFridayDict.ariaLabelDismiss}
+        ariaLabelDismiss={promoDict.ariaLabelDismiss}
         countdown={
           process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
             ? {
                 enabled: true,
                 endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: blackFridayDict.countdown,
+                labels: promoDict.countdown,
               }
             : undefined
         }
         ctaLink={`/${lang}/signup`}
-        ctaText={blackFridayDict.ctaLoggedOut}
+        ctaText={promoDict.ctaLoggedOut}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={blackFridayDict.text}
+        text={promoDict.text}
       />
 
       <HeaderStatic dict={dictHeader} lang={lang} />

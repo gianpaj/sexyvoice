@@ -24,8 +24,10 @@ export default async function DashboardLayout(props: {
   const supabase = await createClient();
 
   const dict = await getDictionary(lang);
-  const blackFridayDict = (await getDictionary(lang, 'promos'))
-    .blackFridayBanner;
+  const promoDictKey =
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+  // @ts-expect-error fix me
+  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
 
   const {
     data: { user },
@@ -54,10 +56,10 @@ export default async function DashboardLayout(props: {
       {/* HydrationBoundary is a Client Component, so hydration will happen there */}
       <HydrationBoundary state={dehydrate(queryClient)}>
         <DashboardUI
-          blackFridayDict={blackFridayDict}
           creditTransactions={creditTransactions}
           dict={dict}
           lang={lang}
+          promoDict={promoDict}
           userId={user.id}
         >
           {props.children}

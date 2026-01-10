@@ -31,7 +31,7 @@ interface DashboardUIProps {
   userId: string;
   lang: Locale;
   dict: typeof langDict;
-  blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
+  promoDict: (typeof langDict)['promos']['blackFridayBanner'];
 }
 
 export default function DashboardUI({
@@ -40,7 +40,7 @@ export default function DashboardUI({
   userId,
   lang,
   dict,
-  blackFridayDict,
+  promoDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
 
@@ -132,21 +132,21 @@ export default function DashboardUI({
         </Sidebar>
 
         <PromoBanner
-          ariaLabelDismiss={blackFridayDict.ariaLabelDismiss}
+          ariaLabelDismiss={promoDict.ariaLabelDismiss}
           countdown={
             process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
               ? {
                   enabled: true,
                   endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                  labels: blackFridayDict.countdown,
+                  labels: promoDict.countdown,
                 }
               : undefined
           }
           ctaLink={`/${lang}/dashboard/credits`}
-          ctaText={blackFridayDict.ctaLoggedIn}
+          ctaText={promoDict.ctaLoggedIn}
           inDashboard
           isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-          text={blackFridayDict.text}
+          text={promoDict.text}
         />
         <div className="flex w-full flex-1 flex-col">
           <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
