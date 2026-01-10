@@ -6,26 +6,13 @@
  * to document.cookie for broader browser compatibility.
  */
 
-interface CookieOptions {
+interface CookieOptions extends Omit<CookieInit, 'expires'> {
   name: string;
   value: string;
   expires?: number | Date;
   maxAge?: number;
   path?: string;
   sameSite?: 'strict' | 'lax' | 'none';
-}
-
-// Type definition for Cookie Store API
-interface CookieStore {
-  get(name: string): Promise<{ name: string; value: string } | null>;
-  set(options: {
-    name: string;
-    value: string;
-    expires?: number;
-    path?: string;
-    sameSite?: 'strict' | 'lax' | 'none';
-  }): Promise<void>;
-  delete(options: { name: string; path?: string }): Promise<void>;
 }
 
 type WindowWithCookieStore = Window & { cookieStore: CookieStore };
@@ -176,6 +163,11 @@ export async function deleteCookie(name: string, path = '/'): Promise<void> {
   }
 
   // Set cookie with expired date to delete it
-  const expiredCookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}`;
+  const expiredCookie = buildCookieString({
+    name,
+    value: '',
+    expires: new Date(0),
+    path,
+  });
   setDocumentCookie(expiredCookie);
 }
