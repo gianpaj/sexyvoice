@@ -441,6 +441,15 @@
       "pricing": {
         "bannerText": "Black Friday Verkauf"
       }
+    },
+    "winterSaleBanner": {
+      "text": "❄️ Winterschlussverkauf – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf ☃️\nZeitlich begrenztes Angebot 🎿",
+      "ctaLoggedIn": "Angebot Sichern ❄️",
+      "ctaLoggedOut": "Jetzt Registrieren ❄️",
+      "arialLabelDismiss": "Winterschlussverkauf-Banner schließen",
+      "pricing": {
+        "bannerText": "❄️ Winterschlussverkauf"
+      }
     }
   },
   "audioConverter": {

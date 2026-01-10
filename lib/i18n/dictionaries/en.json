@@ -441,6 +441,15 @@
       "pricing": {
         "bannerText": "Black Friday Sale"
       }
+    },
+    "winterSaleBanner": {
+      "text": "❄️ Winter Sale – Get up to 35% extra credits with a purchase ☃️\nLimited time offer 🎿",
+      "ctaLoggedIn": "Claim Offer ❄️",
+      "ctaLoggedOut": "Sign Up Now ❄️",
+      "arialLabelDismiss": "Dismiss Winter Sale banner",
+      "pricing": {
+        "bannerText": "❄️ Winter Sale"
+      }
     }
   },
   "audioConverter": {
