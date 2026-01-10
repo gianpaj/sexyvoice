@@ -2,6 +2,8 @@
 
 - fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
 - fix: landing page audios not stopping if another audio is played
+- Add usage page in Dashboard
+- Update daily-stats API route to include usage and a section for Voice calls. Mins, credits used, Top preset/voice/language and the averages
 - add audio clones demos on landing page
   - Bruce Lee
   - Sophia Loren
@@ -42,7 +44,7 @@
   ```
 
 - daily stats:
-  - add num of delete profiles
+  - add num of deleted profiles
 - Translate pages in Dashboard:
   - History (table headers)
   - Credits (table headers)
@@ -61,6 +63,10 @@
 Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può sembrare una persona.
 
 > sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
+
+## Payments
+
+- add nowpayments.io to support Crypto
 
 ## SEO
 
