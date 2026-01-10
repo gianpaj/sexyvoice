@@ -56,7 +56,7 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/nextjs": "^10.32.1",
-    "@supabase-cache-helpers/postgrest-react-query": "^1.13.6",
+    "@supabase-cache-helpers/postgrest-react-query": "^1.13.7",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/typography": "^0.5.16",
@@ -92,8 +92,8 @@
     "next": "16.1.1",
     "next-contentlayer2": "^0.5.8",
     "ogg-opus-decoder": "^1.7.3",
-    "posthog-js": "^1.233.1",
-    "posthog-node": "^4.10.2",
+    "posthog-js": "^1.315.1",
+    "posthog-node": "^5.19.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.62.0",
@@ -128,7 +128,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
     "ultracite": "6.3.9",
-    "vitest": "4.0.15"
+    "vitest": "4.0.16"
   },
   "browserslist": [
     "chrome >0 and last 2.5 years",
