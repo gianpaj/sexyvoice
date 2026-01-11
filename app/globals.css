@@ -47,11 +47,11 @@
   }
 
   [data-promo-theme="blue"] {
-    --promo-primary: #000;
-    --promo-primary-dark: #4c63d2;
-    --promo-accent: #7c5cff;
-    --promo-text: #4c63d2;
-    --promo-text-dark: #8b7fff;
+    --promo-primary: 0 0% 0%;
+    --promo-primary-dark: 229.7 59.82% 56.08%;
+    --promo-accent: 251.78 100% 68.04%;
+    --promo-text: 229.7 59.82% 56.08%;
+    --promo-text-dark: 245.63 100% 74.9%;
   }
 
   .dark {
