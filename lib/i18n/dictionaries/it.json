@@ -241,7 +241,7 @@
       "processing": "Elaborazione...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ crediti",
+          "name": "__NUM_CREDITS__ Crediti",
           "description": "Perfetto per iniziare"
         },
         "standard": {
