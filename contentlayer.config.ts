@@ -80,11 +80,11 @@ const Post = defineDocumentType(() => ({
     },
     url: {
       type: 'string',
-      resolve: (doc) => `/blog/${doc._raw.flattenedPath}`,
+      resolve: (doc) => `/blog/${getSlug(doc._raw.sourceFilePath)}`,
     },
     slugAsParams: {
       type: 'string',
-      resolve: (doc) => doc._raw.flattenedPath.split('/').slice(1).join('/'),
+      resolve: (doc) => getSlug(doc._raw.sourceFilePath),
     },
   },
 }));

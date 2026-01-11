@@ -20,7 +20,6 @@ import {
   getCredits,
   getVoiceIdByName,
   hasUserPaid,
-  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -189,20 +188,18 @@ export async function POST(request: Request) {
     let uploadUrl = '';
 
     if (isGeminiVoice) {
-      const isOverLimit = await isFreemiumUserOverLimit(user.id);
-      if (!userHasPaid && isOverLimit) {
-        return NextResponse.json(
-          {
-            errorCode: 'gproLimitExceeded',
-          },
-          { status: 403 },
-        );
-      }
+      // const isOverLimit = await isFreemiumUserOverLimit(user.id);
+      // if (!userHasPaid && isOverLimit) {
+      //   return NextResponse.json(
+      //     {
+      //       errorCode: 'gproLimitExceeded',
+      //     },
+      //     { status: 403 },
+      //   );
+      // }
 
       const ai = new GoogleGenAI({
-        apiKey: userHasPaid
-          ? process.env.GOOGLE_GENERATIVE_AI_API_KEY
-          : process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY,
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
 
       const geminiTTSConfig: GenerateContentConfig = {

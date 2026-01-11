@@ -273,9 +273,11 @@ export async function GET(request: NextRequest) {
 
   // Top customers calculation
   let hasInvalidMetadata = false;
-  const customerSpending = new Map<string, number>();
-  // Track customer purchase types for display
-  const customerPurchaseType = new Map<string, string>();
+  // Track individual transactions per customer for detailed display
+  const customerTransactions = new Map<
+    string,
+    Array<{ amount: number; type: string; username: string }>
+  >();
 
   for (const transaction of purchasePrevDayData) {
     if (
@@ -294,8 +296,6 @@ export async function GET(request: NextRequest) {
         isFirstTopup?: boolean;
         isFirstSubscription?: boolean;
       };
-    const currentSpending = customerSpending.get(transaction.user_id) ?? 0;
-    customerSpending.set(transaction.user_id, currentSpending + dollarAmount);
 
     // Determine purchase type label
     let purchaseTypeLabel = '';
@@ -305,32 +305,65 @@ export async function GET(request: NextRequest) {
       purchaseTypeLabel = isFirstSubscription ? 'new sub' : 'existing sub';
     }
 
-    // Store the purchase type (use first transaction type if multiple)
-    if (!customerPurchaseType.has(transaction.user_id)) {
-      customerPurchaseType.set(transaction.user_id, purchaseTypeLabel);
-    }
+    // Store each transaction individually with username
+    const existing = customerTransactions.get(transaction.user_id) ?? [];
+    existing.push({
+      amount: dollarAmount,
+      type: purchaseTypeLabel,
+      username: transaction.profiles?.username || 'Unknown',
+    });
+    customerTransactions.set(transaction.user_id, existing);
   }
 
-  const topCustomerIds = [...customerSpending.entries()]
-    .sort(([, spendingA], [, spendingB]) => spendingB - spendingA)
-    .slice(0, 3)
-    .map(([userId]) => userId);
+  // Calculate total spending per customer for sorting
+  const customerTotals = [...customerTransactions.entries()].map(
+    ([userId, transactions]) => ({
+      userId,
+      total: transactions.reduce((sum, t) => sum + t.amount, 0),
+      transactions,
+      username: transactions[0].username,
+    }),
+  );
+
+  const topCustomers = customerTotals
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 3);
+
+  const topCustomerIds = topCustomers.map((c) => c.userId);
 
   const topCustomersList =
-    topCustomerIds.length === 0
+    topCustomers.length === 0
       ? 'N/A'
-      : topCustomerIds
-          .map((userId) => {
-            // Find the transaction for this user to get their profile data
-            const transaction = purchasePrevDayData.find(
-              (t) => t.user_id === userId,
-            );
-            const username =
-              maskUsername(transaction?.profiles?.username) || 'Unknown';
-            const spending = customerSpending.get(userId) ?? 0;
-            const purchaseType = customerPurchaseType.get(userId) || '';
-            const typeLabel = purchaseType ? ` - ${purchaseType}` : '';
-            return `${username} ($${spending.toFixed(2)}${typeLabel})`;
+      : topCustomers
+          .map(({ username, transactions }) => {
+            // Use username from customer totals - no need for inefficient find()
+            const maskedUsername = maskUsername(username);
+
+            // Format amounts: show individual amounts if multiple transactions
+            // e.g., "$5+$5 topup" or "$5 topup + $10 sub" for mixed types
+            const allSameType =
+              transactions.length > 1 &&
+              transactions.every((t) => t.type === transactions[0].type);
+
+            let amountDisplay: string;
+            if (transactions.length === 1) {
+              // Single transaction: "$10.00 - existing topup"
+              const t = transactions[0];
+              amountDisplay = `$${t.amount.toFixed(2)} - ${t.type}`;
+            } else if (allSameType) {
+              // Multiple same-type: "$5+$5 topup"
+              const amounts = transactions
+                .map((t) => `$${t.amount.toFixed(2)}`)
+                .join('+');
+              amountDisplay = `${amounts} ${transactions[0].type}`;
+            } else {
+              // Mixed types: "$5 topup + $10 sub"
+              amountDisplay = transactions
+                .map((t) => `$${t.amount.toFixed(2)} ${t.type}`)
+                .join(' + ');
+            }
+
+            return `${maskedUsername} (${amountDisplay})`;
           })
           .join(', ');
 

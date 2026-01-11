@@ -439,7 +439,7 @@
       "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
       "ctaLoggedIn": "Credits Erhalten",
       "ctaLoggedOut": "Jetzt Registrieren",
-      "arialLabelDismiss": "Halloween-Banner schließen",
+      "ariaLabelDismiss": "Halloween-Banner schließen",
       "pricing": {
         "bannerText": "🎃 Halloween-Special"
       }
@@ -448,7 +448,7 @@
       "text": "🛍️ Black Friday Sale – Erhalten Sie bis zu 50% Extra-Credits bei jedem Kauf!\nZeitlich begrenztes Angebot 🔥",
       "ctaLoggedIn": "Angebot Sichern",
       "ctaLoggedOut": "Jetzt Registrieren",
-      "arialLabelDismiss": "Black Friday-Banner schließen",
+      "ariaLabelDismiss": "Black Friday-Banner schließen",
       "countdown": {
         "prefix": "Angebot endet in:",
         "days": "Tage",
@@ -458,6 +458,15 @@
       },
       "pricing": {
         "bannerText": "Black Friday Verkauf"
+      }
+    },
+    "winterSaleBanner": {
+      "text": "❄️ Winterschlussverkauf – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf ☃️\nZeitlich begrenztes Angebot 🎿",
+      "ctaLoggedIn": "Angebot Sichern",
+      "ctaLoggedOut": "Jetzt Registrieren",
+      "ariaLabelDismiss": "Winterschlussverkauf-Banner schließen",
+      "pricing": {
+        "bannerText": "❄️ Winterschlussverkauf"
       }
     }
   },

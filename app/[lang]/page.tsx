@@ -48,8 +48,10 @@ export default async function LandingPage(props: {
 
   const dict = await getDictionary(lang, 'landing');
   const dictHeader = await getDictionary(lang, 'header');
-  const blackFridayDict = (await getDictionary(lang, 'promos'))
-    .blackFridayBanner;
+  const promoDictKey =
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+  // @ts-expect-error fix me
+  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
 
   const [firstPart, ...restParts] = dict.hero.title.split(',');
   const titleRestParts = restParts.join(',');
@@ -74,20 +76,20 @@ export default async function LandingPage(props: {
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
       <PromoBanner
-        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
+        ariaLabelDismiss={promoDict.ariaLabelDismiss}
         countdown={
           process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
             ? {
                 enabled: true,
                 endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: blackFridayDict.countdown,
+                labels: promoDict.countdown,
               }
             : undefined
         }
         ctaLink={`/${lang}/signup`}
-        ctaText={blackFridayDict.ctaLoggedOut}
+        ctaText={promoDict.ctaLoggedOut}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={blackFridayDict.text}
+        text={promoDict.text}
       />
       <HeaderStatic dict={dictHeader} lang={lang} />
       <main id="main-content">

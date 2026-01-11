@@ -53,7 +53,7 @@
 - Translate website to French
 - Translate website to Arabic
 - Translate website to Indian
-- Add option to clean audio using <https://replicate.com/gianpaj/audio_separator>
+- Add option to clean audio using <https://replicate.com/gianpaj/audio_separator> <https://fal.ai/models/fal-ai/deepfilternet3>
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
 - Add a Share page for individual generated audio files.
   - Allow user to toggle Sharing profile page in Settings.
@@ -88,10 +88,6 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 - Setup Playwright for end-to-end testing.
 - Uses a test DB (in memory)
-
-## AI server
-
-- Monitor third-party API calls. Which users are making more calls.
 
 ## Security
 

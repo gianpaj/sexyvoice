@@ -5,6 +5,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
+import { setCookie } from '@/lib/cookies';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -90,7 +91,7 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        await cookieStore.set({
+        await setCookie({
           name: SIDEBAR_COOKIE_NAME,
           value: String(openState),
           expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,

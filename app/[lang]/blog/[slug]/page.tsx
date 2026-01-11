@@ -23,19 +23,10 @@ export const generateStaticParams = ({
   params: { lang: Locale };
 }) =>
   allPosts
-    .map((post) => {
-      // Determine locale from file extension or default to 'en'
-      const locale =
-        i18n.locales.find((loc) =>
-          post._raw.flattenedPath.endsWith(`.${loc}`),
-        ) || i18n.defaultLocale;
-
-      return {
-        slug: post.slugAsParams,
-        locale,
-      };
-    })
-    .filter((post) => post.locale === lang);
+    .filter((post) => post.locale === lang)
+    .map((post) => ({
+      slug: post.slugAsParams,
+    }));
 
 interface PostProps {
   params: {
@@ -44,9 +35,10 @@ interface PostProps {
   };
 }
 
-async function getPostFromParams(params: PostProps['params']) {
-  const slug = params.slug;
-  const post = allPosts.find((post) => post.slugAsParams === slug);
+async function getPostFromParams({ slug, lang }: PostProps['params']) {
+  const post = allPosts.find(
+    (post) => post.slugAsParams === slug && post.locale === lang,
+  );
 
   if (!post) {
     return null;
@@ -124,8 +116,10 @@ const PostLayout = async (props: {
   const { lang } = params;
   const post = await getPostFromParams(params);
   const dictHeader = await getDictionary(lang, 'header');
-  const blackFridayDict = (await getDictionary(lang, 'promos'))
-    .blackFridayBanner;
+  const promoDictKey =
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+  // @ts-expect-error fix me
+  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
 
   if (!post) {
     return <div>Post not found ({params.slug})</div>;
@@ -195,20 +189,20 @@ const PostLayout = async (props: {
       </Script>
 
       <PromoBanner
-        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
+        ariaLabelDismiss={promoDict.ariaLabelDismiss}
         countdown={
           process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
             ? {
                 enabled: true,
                 endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: blackFridayDict.countdown,
+                labels: promoDict.countdown,
               }
             : undefined
         }
         ctaLink={`/${lang}/signup`}
-        ctaText={blackFridayDict.ctaLoggedOut}
+        ctaText={promoDict.ctaLoggedOut}
         isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={blackFridayDict.text}
+        text={promoDict.text}
       />
 
       <HeaderStatic dict={dictHeader} lang={lang} />

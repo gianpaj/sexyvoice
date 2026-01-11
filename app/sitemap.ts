@@ -1,11 +1,11 @@
 /** biome-ignore-all lint/complexity/noForEach: fine */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { allPosts } from 'contentlayer/generated';
 import { globby } from 'globby';
 import type { MetadataRoute } from 'next';
 
 import { i18n } from '@/lib/i18n/i18n-config';
-import { generateStaticParams } from './[lang]/blog/[slug]/page';
 
 function addPage(page: string) {
   const path = page
@@ -72,39 +72,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     });
 
-    // Add individual entries for translated posts in non-default locales
-    generateStaticParams({ params: { lang } }).forEach(({ slug, locale }) => {
-      if (lang === i18n.defaultLocale) {
-        // Build alternates only for locales where the post actually exists
-        const alternates: Record<string, string> = {};
+    // Add individual entries for translated posts
+    allPosts
+      .filter((post) => post.locale === lang)
+      .forEach((post) => {
+        const slug = post.slugAsParams;
+        const locale = post.locale;
 
-        i18n.locales.forEach((loc) => {
-          if (loc !== i18n.defaultLocale && checkPostExists(slug, loc)) {
-            alternates[loc] = `${BASE_URL}/${loc}/blog/${slug}.${loc}`;
-          }
-        });
+        if (lang === i18n.defaultLocale) {
+          // Build alternates only for locales where the post actually exists
+          const alternates: Record<string, string> = {};
 
-        routes.push({
-          url: `${BASE_URL}/${locale}/blog/${slug}`,
-          ...(Object.keys(alternates).length > 0 && {
-            alternates: {
-              languages: alternates,
-            },
-          }),
-        });
-      } else {
-        // Add individual entries for translated posts in non-default locales
-        generateStaticParams({ params: { lang } }).forEach(
-          ({ slug, locale }) => {
-            if (locale === lang && checkPostExists(slug, locale)) {
-              routes.push({
-                url: `${BASE_URL}/${locale}/blog/${slug}`,
-              });
+          i18n.locales.forEach((loc) => {
+            if (loc !== i18n.defaultLocale && checkPostExists(slug, loc)) {
+              alternates[loc] = `${BASE_URL}/${loc}/blog/${slug}`;
             }
-          },
-        );
-      }
-    });
+          });
+
+          routes.push({
+            url: `${BASE_URL}/${locale}/blog/${slug}`,
+            ...(Object.keys(alternates).length > 0 && {
+              alternates: {
+                languages: alternates,
+              },
+            }),
+          });
+        } else {
+          routes.push({
+            url: `${BASE_URL}/${locale}/blog/${slug}`,
+          });
+        }
+      });
   });
 
   const removedDuplicates = routes.filter(

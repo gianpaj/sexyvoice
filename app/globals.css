@@ -46,6 +46,14 @@
     --promo-text-dark: theme("colors.pink.400");
   }
 
+  [data-promo-theme="blue"] {
+    --promo-primary: #000;
+    --promo-primary-dark: #4c63d2;
+    --promo-accent: #7c5cff;
+    --promo-text: #4c63d2;
+    --promo-text-dark: #8b7fff;
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

@@ -48,6 +48,7 @@
     "node_modules",
     ".next",
     ".contentlayer",
+    "scripts/analyze-text-content.ts",
     "supabase/functions/telegram-bot"
   ]
 }

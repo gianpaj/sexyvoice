@@ -439,7 +439,7 @@
       "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
       "ctaLoggedIn": "Claim Offer 🎃",
       "ctaLoggedOut": "Sign Up Now 🎃",
-      "arialLabelDismiss": "Dismiss Halloween banner",
+      "ariaLabelDismiss": "Dismiss Halloween banner",
       "pricing": {
         "bannerText": "🎃 Halloween Special"
       }
@@ -448,7 +448,7 @@
       "text": "🛍️ Black Friday Sale – Get up to 35% extra credits!",
       "ctaLoggedIn": "Claim Offer",
       "ctaLoggedOut": "Claim Offer",
-      "arialLabelDismiss": "Dismiss Black Friday banner",
+      "ariaLabelDismiss": "Dismiss Black Friday banner",
       "countdown": {
         "prefix": "Deal ends in:",
         "days": "Days",
@@ -458,6 +458,15 @@
       },
       "pricing": {
         "bannerText": "Black Friday Sale"
+      }
+    },
+    "winterSaleBanner": {
+      "text": "❄️ Winter Sale – Get up to 35% extra credits with a purchase ☃️\nLimited time offer 🎿",
+      "ctaLoggedIn": "Claim Offer",
+      "ctaLoggedOut": "Sign Up Now",
+      "ariaLabelDismiss": "Dismiss Winter Sale banner",
+      "pricing": {
+        "bannerText": "❄️ Winter Sale"
       }
     }
   },
