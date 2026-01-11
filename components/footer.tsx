@@ -46,14 +46,14 @@ async function Footer({ lang }: { lang: Locale }) {
               </a>
               {' - '}
               <Link
-                className="hover:text-primary hover:underline"
+                className="whitespace-nowrap hover:text-primary hover:underline"
                 href={`/${lang}/privacy-policy`}
               >
                 {dict.privacyPolicy}
               </Link>
               {' - '}
               <Link
-                className="hover:text-primary hover:underline"
+                className="whitespace-nowrap hover:text-primary hover:underline"
                 href={`/${lang}/terms`}
               >
                 {dict.termsAndConditions}

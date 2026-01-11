@@ -59,7 +59,7 @@
     "hero": {
       "title": "Voix expressives, sans censure",
       "subtitle": "Générateur gratuit de synthèse vocale et de voix IA. \nParfait pour les créateurs de contenu, développeurs et conteurs. 😉",
-      "buttonCTA": "Inscrivez-vous gratuitement",
+      "buttonCTA": "S'inscrire",
       "noCreditCard": "Aucune carte de crédit requise",
       "signIn": "Se connecter"
     },
@@ -445,7 +445,7 @@
     "winterSaleBanner": {
       "text": "❄️ Soldes d'hiver – Obtenez jusqu'à 35% de crédits supplémentaires avec un achat ☃️\nOffre à durée limitée 🎿",
       "ctaLoggedIn": "Obtenir l'offre",
-      "ctaLoggedOut": "Inscrivez-vous maintenant",
+      "ctaLoggedOut": "S'inscrire",
       "ariaLabelDismiss": "Fermer la bannière des soldes d'hiver",
       "pricing": {
         "bannerText": "❄️ Soldes d'hiver"

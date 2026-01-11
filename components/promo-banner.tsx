@@ -148,7 +148,7 @@ export function PromoBanner({
   return (
     <div
       className={cn('w-full', {
-        'fixed z-50 bg-promo-primary-dark backdrop-blur-sm': inDashboard,
+        'fixed z-50 bg-promo-primary-dark/50 backdrop-blur-sm': inDashboard,
       })}
       data-promo-theme={promoTheme}
     >
@@ -201,7 +201,7 @@ export function PromoBanner({
         <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 sm:absolute sm:mt-0">
           <Button
             asChild
-            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-primary"
+            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark"
             size="sm"
             variant="outline"
           >

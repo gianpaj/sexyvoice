@@ -76,11 +76,11 @@ const config = {
           ring: 'hsl(var(--sidebar-ring))',
         },
         promo: {
-          primary: 'var(--promo-primary)',
-          'primary-dark': 'var(--promo-primary-dark)',
-          accent: 'var(--promo-accent)',
-          text: 'var(--promo-text)',
-          'text-dark': 'var(--promo-text-dark)',
+          primary: 'hsl(var(--promo-primary))',
+          'primary-dark': 'hsl(var(--promo-primary-dark))',
+          accent: 'hsl(var(--promo-accent))',
+          text: 'hsl(var(--promo-text))',
+          'text-dark': 'hsl(var(--promo-text-dark))',
         },
       },
       keyframes: {
