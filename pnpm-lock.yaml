@@ -45,7 +45,7 @@ importers:
         version: 1.19.0
       '@iconify-json/logos':
         specifier: ^1.2.4
-        version: 1.2.4
+        version: 1.2.10
       '@iconify/tailwind':
         specifier: ^1.2.0
         version: 1.2.0
@@ -918,8 +918,8 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  '@iconify-json/logos@1.2.4':
-    resolution: {integrity: sha512-XC4If5D/hbaZvUkTV8iaZuGlQCyG6CNOlaAaJaGa13V5QMYwYjgtKk3vPP8wz3wtTVNVEVk3LRx1fOJz+YnSMw==}
+  '@iconify-json/logos@1.2.10':
+    resolution: {integrity: sha512-qxaXKJ6fu8jzTMPQdHtNxlfx6tBQ0jXRbHZIYy5Ilh8Lx9US9FsAdzZWUR8MXV8PnWTKGDFO4ZZee9VwerCyMA==}
 
   '@iconify/tailwind@1.2.0':
     resolution: {integrity: sha512-KgpIHWOTcRYw1XcoUqyNSrmYyfLLqZYu3AmP8zdfLk0F5TqRO8YerhlvlQmGfn7rJXgPeZN569xPAJnJ53zZxA==}
@@ -7250,7 +7250,7 @@ snapshots:
       protobufjs: 7.5.3
       yargs: 17.7.2
 
-  '@iconify-json/logos@1.2.4':
+  '@iconify-json/logos@1.2.10':
     dependencies:
       '@iconify/types': 2.0.0
 
