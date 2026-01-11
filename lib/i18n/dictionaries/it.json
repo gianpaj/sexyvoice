@@ -486,7 +486,7 @@
       "converterLoadFailed": "Impossibile caricare il convertitore audio. Aggiorna la pagina o prova un browser diverso."
     },
     "footer": {
-      "poweredBy": "Powered by",
+      "poweredBy": "Realizzato da",
       "ffmpeg": "FFmpeg",
       "noUploads": "Nessun upload, 100% nel browser",
       "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio AI gratuito da provare"

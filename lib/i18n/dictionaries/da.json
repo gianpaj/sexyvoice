@@ -241,7 +241,7 @@
       "processing": "Behandler...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ kreditter",
+          "name": "__NUM_CREDITS__ Kreditter",
           "description": "Perfekt til at komme i gang"
         },
         "standard": {
