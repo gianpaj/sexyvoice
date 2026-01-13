@@ -8,31 +8,31 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 
 ### Key Technologies
 
-- **Frontend**: Next.js 15 with App Router, React 19, TypeScript 5
+- **Frontend**: Next.js 16 with App Router, React 19, TypeScript 5
 - **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
 - **Database**: Supabase PostgreSQL
 - **Storage**: Cloudflare R2 for audio files
 - **Caching**: Upstash Redis for audio URL caching
-- **Styling**: Tailwind CSS 3.4, shadcn/ui components, Radix UI primitives
+- **Styling**: Tailwind CSS 3, shadcn/ui components, Radix UI primitives
 - **Content**: Contentlayer2 for MDX blog processing
 - **Payments**: Stripe integration with promotional bonus system
 - **Monitoring**: Sentry error tracking and PostHog analytics
 - **AI Services**: Google Generative AI for text enhancement
 - **Code Quality**: Biome for linting and formatting
 - **Testing**: Vitest for unit/integration tests, MSW for API mocking
-- **Package Manager**: pnpm 9
-- **Internationalization**: Website support for English, Spanish, and German; voice generation and cloning in 20+ languages
+- **Package Manager**: pnpm 10
+- **Internationalization**: Website support for English, Spanish, German, Danish, Italian, and French; voice generation and cloning in 20+ languages
 
 ## Architecture Overview
 
 ### Application Structure
-This is a Next.js 15 App Router application with the following key architectural patterns:
+This is a Next.js 16 App Router application with the following key architectural patterns:
 
-- **Internationalization**: Route-based i18n with English (en), Spanish (es), and German (de) support using `[lang]` dynamic segments
+- **Internationalization**: Route-based i18n with English (en), Spanish (es), German (de), Danish (da), Italian (it), and French (fr) support using `[lang]` dynamic segments
 - **Authentication**: Supabase Auth with SSR support, session management in middleware
 - **Database**: Supabase PostgreSQL with type-safe operations
 - **Content**: Contentlayer2 for MDX blog posts with locale support
-- **Styling**: Tailwind CSS with shadcn/ui components and Radix UI primitives
+- **Styling**: Tailwind 3 CSS with shadcn/ui components and Radix UI primitives
 - **Caching**: Upstash Redis for performance optimization
 
 ### Key Directory Structure
@@ -119,7 +119,7 @@ components/
 #### App Router Structure
 ```
 app/
-├── [lang]/         # Internationalized routes (en/es)
+├── [lang]/         # Internationalized routes (en/es/de/da/it/fr)
 │   ├── (auth)/     # Authentication pages
 │   ├── (dashboard)/ # Protected dashboard pages
 │   └── layout.tsx  # Language-specific layout
@@ -241,7 +241,7 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Internationalization
 - Add translations to `lib/i18n/dictionaries/`
-- Currently supports English (`en.json`), Spanish (`es.json`), German (`de.json`)
+- Currently supports English (`en.json`), Spanish (`es.json`), German (`de.json`), Danish (`da.json`), Italian (`it.json`), French (`fr.json`)
 - Configured in `lib/i18n/i18n-config.ts` with `en` as default locale
 - Uses route-based i18n with `[lang]` dynamic segments
 - Middleware handles locale detection and routing
@@ -302,7 +302,7 @@ Based on TODO.md, current priorities include:
 
 1. **Data Management**: Account deletion with audio cleanup, branch merges (r2, terms-and-conditions)
 2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
-3. **Internationalization**: Translate dashboard pages and SEO content to German, French; expand voice models to French, German, Korean, Mandarin
+3. **Internationalization**: Translate dashboard pages and SEO content to German, French, Italian, and Danish; expand voice models to French, German, Korean, Mandarin
 4. **User Experience**: Share pages for audio files, usage statistics, history page with regeneration
 5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
 6. **Analytics**: Add PostHog to auth pages, track paid user status, usage monitoring
@@ -317,7 +317,7 @@ Based on TODO.md, current priorities include:
 2. **Follow the existing code patterns** and architectural decisions
 3. **Run `pnpm run fixall` before committing** to ensure code quality
 4. **Update documentation** when adding new features or changing APIs
-5. **Consider internationalization** for user-facing text (currently EN/ES/DE, expanding to FR/IT/KO/PT/ZH)
+5. **Consider internationalization** for user-facing text (currently EN/ES/DE/DA/IT/FR, expanding to KO/PT/ZH)
 6. **Implement proper error handling** and loading states
 7. **Follow security best practices** for voice-related features
 8. **Use TodoWrite tool** for multi-step tasks to track progress
