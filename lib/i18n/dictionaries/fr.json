@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Commencez avec 10 000 crédits gratuits",
+      "freeCredits": "Commencez avec 10 000 crédits gratuits ( ͡° ͜ʖ ͡°)",
       "title": "Prêt à trouver votre voix ?",
       "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
       "action": "Créez votre première voix"
@@ -135,12 +135,12 @@
               "answer": "Oui ! Avec seulement quelques secondes d'audio clair, il peut créer une version numérique de votre voix qui sonne naturelle et réaliste."
             },
             {
-              "question": "Quelles langues vos voix IA supportent-elles ?",
-              "answer": "Le support linguistique dépend de la voix sélectionnée lors de la génération vocale.\n\nCertaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat) supportent 24 langues, notamment :\nArabe (égyptien),\nAnglais (US),\nFrançais (France),\nAllemand (Allemagne),\nEspagnol (US),\nHindi (Inde),\nIndonésien (Indonésie),\nItalien (Italie),\nJaponais (Japon),\nCoréen (Corée),\nPortugais (Brésil),\nRusse (Russie),\nNéerlandais (Pays-Bas),\nPolonais (Pologne),\nThaï (Thaïlande),\nTurc (Turquie),\nVietnamien (Vietnam),\nRoumain (Roumanie),\nUkrainien (Ukraine),\nBengali (Bangladesh),\nAnglais/Hindi (Inde),\nMarathi (Inde),\nTamoul (Inde),\net Telugu (Inde).\n\nD'autres voix sont spécifiques à une langue :\nDan (Anglais UK 🇬🇧),\nPietro (Italien 🇮🇹),\nEmma (Anglais US 🇺🇸),\nJavi (Espagnol 🇪🇸),\nJosh (Anglais US 🇺🇸),\net Tara (Anglais US 🇺🇸).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
+              "question": "Quelles langues sont supportées pour la génération vocale ?",
+              "answer": "Le support linguistique dépend de la voix sélectionnée.\n\nCertaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) supportent 24 langues, notamment :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam).\nD'autres voix sont spécifiques à une langue :\n🇮🇹 Pietro (Italien),\n🇪🇸 Javi (Espagnol),\n🇬🇧 Dan (Anglais UK),\n🇺🇸 Emma (Anglais US),\n🇺🇸 Josh (Anglais US),\n🇺🇸 et Tara (Anglais US).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
             },
             {
-              "question": "Quelles langues le clonage vocal supporte-t-il ?",
-              "answer": "Le clonage vocal supporte les 23 langues suivantes : Arabe,\nDanois,\nAllemand,\nGrec,\nAnglais,\nEspagnol,\nFinnois,\nFrançais,\nHébreu,\nHindi,\nItalien,\nJaponais,\nCoréen,\nMalais,\nNéerlandais,\nNorvégien,\nPolonais,\nPortugais,\nRusse,\nSuédois,\nSwahili,\nTurc,\net Chinois mandarin."
+              "question": "Quelles langues sont supportées pour le clonage vocal ?",
+              "answer": "Le clonage vocal supporte les 23 langues suivantes :\n\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
             },
             {
               "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
@@ -310,7 +310,7 @@
       "description": "Choisissez parmi les voix disponibles",
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un murmure dramatique\"",
       "toolTipEmotionTags": "Tags d'émotion supportés :",
-      "geminiInfo": "Il supporte 24 langues :\n🇪🇬 Arabe (égyptien),\n🇺🇸 Anglais (US),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇺🇸 Espagnol (US),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇧🇷 Portugais (Brésil),\n🇷🇺 Russe (Russie),\n🇳🇱 Néerlandais (Pays-Bas),\n🇵🇱 Polonais (Pologne),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇻🇳 Vietnamien (Vietnam),\n🇷🇴 Roumain (Roumanie),\n🇺🇦 Ukrainien (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇳 Marathi (Inde),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde)"
+      "geminiInfo": "Soutient 24 langues :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)."
     }
   },
   "clone": {
