@@ -1,3 +1,5 @@
 venv
 *.csv
 __pycache__
+
+*.mp4
