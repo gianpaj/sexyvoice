@@ -191,6 +191,7 @@
     "pricingPlan": "Tarifas",
     "title": "Compra créditos para creadores y empresas de todos los tamaños",
     "description": "Elige la cantidad de créditos que mejor se adapte a tus necesidades",
+    "promoNotice": "Los créditos de bonificación se aplican mientras la promoción esté activa.",
     "historyEmpty": "Tu historial de uso de créditos aparecerá aquí",
     "billing": {
       "forever": "(para siempre)"

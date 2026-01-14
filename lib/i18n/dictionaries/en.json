@@ -191,6 +191,7 @@
     "pricingPlan": "Pricing",
     "title": "Purchase credits for creators and businesses of all sizes",
     "description": "Choose the amount of credits that best fits your needs",
+    "promoNotice": "Bonus credits applied while promotion is active.",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
       "forever": "(forever)"
