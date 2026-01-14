@@ -7,19 +7,19 @@ import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type lang from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getTopupPackages } from '@/lib/stripe/pricing';
+import type messages from '@/messages/en.json';
 
 interface CreditTopupProps {
-  dict: (typeof lang)['credits'];
+  dict: (typeof messages)['credits'];
   lang: Locale;
 }
 
-type ActionState = {
+interface ActionState {
   error: string | null;
   success: boolean;
-};
+}
 
 const initialState: ActionState = {
   error: null,
@@ -111,9 +111,9 @@ function CreditCard({
     creditsText: string;
     promoBonus?: string;
   };
-  dict: (typeof lang)['credits'];
+  dict: (typeof messages)['credits'];
   isPromoEnabled: boolean;
-  pPlans: (typeof lang)['credits']['plans'];
+  pPlans: (typeof messages)['credits']['plans'];
 }) {
   const formAction = async (
     _prevState: ActionState,

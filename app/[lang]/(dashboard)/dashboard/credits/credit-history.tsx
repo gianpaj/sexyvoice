@@ -8,13 +8,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 
 export function CreditHistory({
   dict,
   transactions,
 }: {
-  dict: (typeof lang)['credits'];
+  dict: (typeof messages)['credits'];
   transactions:
     | Pick<
         CreditTransaction,

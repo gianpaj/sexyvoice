@@ -1,5 +1,6 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
+const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
 
 /**
  * Content Security Policy Header - Without Nonce
@@ -91,6 +92,7 @@ if (process.env.ANALYZE === 'true') {
   nextConfig = withBundleAnalyzer(nextConfig);
 }
 
+nextConfig = withNextIntl(nextConfig);
 nextConfig = withContentlayer(nextConfig);
 
 // nextConfig = withBotId(nextConfig);

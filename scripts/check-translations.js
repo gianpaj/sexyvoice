@@ -2,8 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Path to dictionaries folder
-const DICTIONARIES_PATH = path.join(__dirname, '../lib/i18n/dictionaries');
+// Path to messages folder
+const DICTIONARIES_PATH = path.join(__dirname, '../messages');
 
 // Function to get all keys in a nested object (flattened with dot notation)
 function getAllKeys(obj, parentKey = '') {

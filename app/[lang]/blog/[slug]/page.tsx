@@ -5,11 +5,12 @@ import Script from 'next/script';
 import type { Metadata } from 'next/types';
 import { Suspense } from 'react';
 
+import { getMessages } from 'next-intl/server';
+
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
 import { Mdx } from '@/components/mdx-components';
 import { PromoBanner } from '@/components/promo-banner';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
@@ -124,8 +125,8 @@ const PostLayout = async (props: {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
-  const blackFridayDict = (await getDictionary(lang, 'promos'))
-    .blackFridayBanner;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const blackFridayDict = messages.promos.blackFridayBanner;
 
   if (post === undefined) {
     return <div>Post not found ({params.slug})</div>;

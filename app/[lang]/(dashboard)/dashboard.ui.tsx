@@ -4,8 +4,8 @@ import type { User } from '@supabase/supabase-js';
 import { Crisp } from 'crisp-sdk-web';
 import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import type messages from '@/messages/en.json';
+import { Link, usePathname } from '@/lib/i18n/navigation';
 import { usePostHog } from 'posthog-js/react';
 import { useEffect, useState } from 'react';
 
@@ -27,21 +27,18 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/client';
 
 interface DashboardUIProps {
   children: React.ReactNode;
   lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
-  blackFridayDict: (typeof langDict)['promos']['blackFridayBanner'];
+  blackFridayDict: (typeof messages)['promos']['blackFridayBanner'];
 }
 
 export default function DashboardUI({
   children,
   lang,
-  dict,
   blackFridayDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
@@ -116,27 +113,27 @@ export default function DashboardUI({
   const navigation = [
     {
       name: 'Generate',
-      href: `/${lang}/dashboard/generate`,
+      href: '/dashboard/generate',
       icon: Wand2,
-      current: pathname === `/${lang}/dashboard/generate`,
+      current: pathname === '/dashboard/generate',
     },
     {
       name: 'Clone',
-      href: `/${lang}/dashboard/clone`,
+      href: '/dashboard/clone',
       icon: Mic2,
-      current: pathname === `/${lang}/dashboard/clone`,
+      current: pathname === '/dashboard/clone',
     },
     {
       name: 'History',
-      href: `/${lang}/dashboard/history`,
+      href: '/dashboard/history',
       icon: FileClock,
-      current: pathname === `/${lang}/dashboard/history`,
+      current: pathname === '/dashboard/history',
     },
     {
       name: 'Credits',
-      href: `/${lang}/dashboard/credits`,
+      href: '/dashboard/credits',
       icon: CreditCard,
-      current: pathname === `/${lang}/dashboard/credits`,
+      current: pathname === '/dashboard/credits',
     },
   ];
 
@@ -193,8 +190,6 @@ export default function DashboardUI({
               <CreditsSection
                 credit_transactions={credit_transactions || []}
                 credits={credits?.amount || 0}
-                dict={dict}
-                lang={lang}
               />
 
               <SidebarMenuCustom lang={lang} />

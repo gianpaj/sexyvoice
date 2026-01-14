@@ -1,17 +1,16 @@
+import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
 import CreditsSection from '@/components/credits-section';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
 
 export default async function GeneratePage(props: {
-  params: Promise<{ lang: Locale }>;
+  params: { lang: Locale };
 }) {
-  const params = await props.params;
-  const { lang } = params;
-  const dict = await getDictionary(lang);
+  const { lang } = props.params;
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   const supabase = await createClient();
 
@@ -19,15 +18,17 @@ export default async function GeneratePage(props: {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  if (!user || error) {
+  const userId = user?.id;
+  if (!userId || error) {
     redirect(`/${lang}/login`);
   }
+  const ensuredUserId = userId ?? '';
 
   // Get user's credits
   const { data: creditsData } = (await supabase
     .from('credits')
     .select('amount')
-    .eq('user_id', user.id)
+    .eq('user_id', ensuredUserId)
     .single()) || { amount: 0 };
 
   const credits = creditsData || { amount: 0 };
@@ -35,7 +36,7 @@ export default async function GeneratePage(props: {
   const { data: credit_transactions } = await supabase
     .from('credit_transactions')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', ensuredUserId)
     .order('created_at', { ascending: false });
 
   // Get user's voices
@@ -67,9 +68,7 @@ export default async function GeneratePage(props: {
         <CreditsSection
           credit_transactions={credit_transactions || []}
           credits={credits.amount || 0}
-          dict={dict.creditsSection}
           doNotToggleSidebar
-          lang={lang}
         />
       </div>
 

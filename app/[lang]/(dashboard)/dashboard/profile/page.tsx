@@ -6,27 +6,25 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 // import { ProfileForm } from './profile-form';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { getMessages } from 'next-intl/server';
+
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
 import { SecurityForm } from './security-form';
 
 export default async function ProfilePage(props: {
-  params: Promise<{ lang: Locale }>;
+  params: { lang: Locale };
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
-
   const supabase = await createClient();
-  const dict = await getDictionary(lang);
+  const messages = (await getMessages()) as IntlMessages;
+  const profileDict = messages.profile;
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   if (!user) {
-    return <div>{dict.profile.notLoggedIn}</div>;
+    return <div>{profileDict.notLoggedIn}</div>;
   }
 
   return (
@@ -61,8 +59,8 @@ export default async function ProfilePage(props: {
       {/* <TabsContent value="security"> */}
       <Card>
         <CardHeader>
-          <CardTitle>{dict.profile.security.title}</CardTitle>
-          <CardDescription>{dict.profile.security.description}</CardDescription>
+          <CardTitle>{profileDict.security.title}</CardTitle>
+          <CardDescription>{profileDict.security.description}</CardDescription>
         </CardHeader>
         <CardContent>
           <SecurityForm email={user.email} />
@@ -70,10 +68,10 @@ export default async function ProfilePage(props: {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{dict.profile.dangerZone.title}</CardTitle>
+          <CardTitle>{profileDict.dangerZone.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <DeleteAccountForm dict={dict} lang={lang} />
+          <DeleteAccountForm />
         </CardContent>
       </Card>
       {/* </TabsContent> */}

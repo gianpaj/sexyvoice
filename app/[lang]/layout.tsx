@@ -1,7 +1,8 @@
+import { NextIntlClientProvider } from 'next-intl';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
+import { getMessages } from 'next-intl/server';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Providers } from '../providers';
 
@@ -11,15 +12,11 @@ export async function generateStaticParams() {
   return i18n.locales.map((locale) => ({ lang: locale }));
 }
 
-type Props = {
-  params: Promise<{ lang: Locale }>;
-};
-
 export async function generateMetadata(
-  { params }: Props,
+  { params }: { params: { lang: Locale } },
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const lang = (await params).lang;
+  const lang = params.lang;
 
   const { alternates, openGraph, title: parentTitle } = await parent;
 
@@ -34,22 +31,22 @@ export async function generateMetadata(
     };
   }
 
-  const dict = await getDictionary(lang);
-  // @ts-expect-error FIXME
-  const pageTitle = dict.pages[pagePath];
-  const defaultTitle = dict.pages.defaultTitle;
-
-  const title = pageTitle || defaultTitle;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const pageTitle =
+    pagePath in messages.pages
+      ? messages.pages[pagePath as keyof typeof messages.pages]
+      : undefined;
+  const title = pageTitle || messages.pages.defaultTitle;
 
   return {
     title: {
       template: parentTitle?.template || '',
       default: title,
     },
-    description: dict.pages.description,
+    description: messages.pages.description,
     openGraph: {
       title,
-      description: dict.pages.description,
+      description: messages.pages.description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
       ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
@@ -62,15 +59,20 @@ export default async function LangLayout({
   params,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ lang: Locale }>;
+  params: { lang: Locale };
 }>) {
+  const { lang } = params;
+  const messages = await getMessages({ locale: lang });
+
   return (
-    <html lang={(await params).lang}>
+    <html lang={lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
         </a>
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider locale={lang} messages={messages}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

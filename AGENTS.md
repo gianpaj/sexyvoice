@@ -241,12 +241,12 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 ## Content Management
 
 ### Internationalization
-- Add translations to `lib/i18n/dictionaries/`
+- Add translations to `messages/`
 - Currently supports English (`en.json`), Spanish (`es.json`), German (`de.json`)
 - Configured in `lib/i18n/i18n-config.ts` with `en` as default locale
-- Uses route-based i18n with `[lang]` dynamic segments
-- Middleware handles locale detection and routing
-- Use `getDictionary()` for server components
+- Uses route-based i18n with `[lang]` dynamic segments powered by `next-intl`
+- Middleware handles locale detection and routing via `next-intl` middleware
+- Use `useTranslations`/`getTranslations` (or `getMessages`) for localized text
 - Run `pnpm run check-translations` before commits
 
 ### Content Guidelines

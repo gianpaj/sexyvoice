@@ -1,28 +1,24 @@
 'use client';
 
-import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useContext } from 'react';
 
-import type langDict from '@/lib/i18n/dictionaries/en.json';
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { SidebarContext } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
-  lang,
-  dict,
   credits,
   credit_transactions,
   doNotToggleSidebar,
 }: {
-  lang: Locale;
-  dict: (typeof langDict)['creditsSection'];
   credits?: number | null;
   credit_transactions: CreditTransaction[];
   doNotToggleSidebar?: boolean;
 }) {
+  const t = useTranslations('creditsSection');
   // Safely access the sidebar context without throwing an error
   const sidebarContext = useContext(SidebarContext);
   const isMobile = sidebarContext?.isMobile;
@@ -42,7 +38,7 @@ function CreditsSection({
       <div className="mb-4 flex w-50 items-center justify-between">
         <div className="flex items-center">
           <span className="whitespace-nowrap text-gray-200 text-xs">
-            {dict.title}
+            {t('title')}
           </span>
         </div>
         <Button
@@ -52,14 +48,14 @@ function CreditsSection({
           variant="link"
         >
           <Link
-            href={`/${lang}/dashboard/credits`}
+            href="/dashboard/credits"
             onClick={() => {
               if (isMobile && !doNotToggleSidebar) {
                 toggleSidebar();
               }
             }}
           >
-            {dict.topupButton}
+            {t('topupButton')}
           </Link>
         </Button>
       </div>
@@ -67,13 +63,13 @@ function CreditsSection({
         <div className="flex-1">
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-200">{dict.totalCredits}</span>
+              <span className="text-gray-200">{t('totalCredits')}</span>
               <span className="font-medium">
                 {total_credits.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-200">{dict.remainingCredits}</span>
+              <span className="text-gray-200">{t('remainingCredits')}</span>
               <span className="font-medium">
                 {remainingCredits.toLocaleString()}
               </span>

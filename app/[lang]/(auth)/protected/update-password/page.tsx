@@ -1,18 +1,18 @@
+import { getMessages } from 'next-intl/server';
+
 import { Header } from '@/components/header';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import type { Message } from '../../reset-password/reset-password-form';
 import { UpdatePasswordForm } from './update-password-form';
 
 export default async function UpdatePasswordPage(props: {
-  params: Promise<{ lang: Locale }>;
-  searchParams: Promise<Message>;
+  params: { lang: Locale };
+  searchParams: Message;
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
+  const { lang } = props.params;
+  const searchParams = props.searchParams;
 
-  const { lang } = params;
-  const dict = await getDictionary(lang);
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <>

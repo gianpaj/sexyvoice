@@ -1,15 +1,15 @@
 import { Check } from 'lucide-react';
-import Link from 'next/link';
+import { getMessages } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 import { getTopupPackages } from '@/lib/stripe/pricing';
 
 async function PricingTable({ lang }: { lang: Locale }) {
-  const credits = await getDictionary(lang, 'credits');
+  const credits = ((await getMessages()) as IntlMessages).credits;
   const { plans: pPlans, billing } = credits;
 
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
@@ -126,7 +126,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
               className="my-4 w-full"
               variant={plan.buttonVariant as 'outline' | 'default'}
             >
-              <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
+              <Link href="/signup">{plan.buttonText}</Link>
             </Button>
             <div className="space-y-2">
               <div className="font-medium text-sm">

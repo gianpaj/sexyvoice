@@ -1,19 +1,17 @@
 import { Sparkles } from 'lucide-react';
+import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
 import { Header } from '@/components/header';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { SignUpForm } from './signup-form';
 
 export default async function SignUpPage(props: {
-  params: Promise<{ lang: Locale }>;
+  params: { lang: Locale };
 }) {
-  const params = await props.params;
+  const { lang } = props.params;
 
-  const { lang } = params;
-
-  const dict = await getDictionary(lang);
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <>

@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -49,7 +49,7 @@ export function VoiceSelector({
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
-  dict: (typeof lang)['generate'];
+  dict: (typeof messages)['generate'];
 }) {
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const [isFullscreen, setIsFullscreen] = useState(false);

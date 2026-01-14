@@ -34,7 +34,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import { downloadUrl } from '@/lib/download';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { AudioPlayer } from '../history/audio-player';
 
 type Status = 'idle' | 'generating' | 'complete' | 'error';
@@ -46,7 +46,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export default function NewVoiceClient({
   dict,
 }: {
-  dict: (typeof lang)['generate'];
+  dict: (typeof messages)['generate'];
 }) {
   const [status, setStatus] = useState<Status>('idle');
   const [activeTab, setActiveTab] = useState('upload');

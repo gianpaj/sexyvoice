@@ -16,12 +16,14 @@ const publicRoutes = [
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
-export const updateSession = async (request: NextRequest, locale: string) => {
+export const updateSession = async (
+  request: NextRequest,
+  locale: string,
+  response: NextResponse = NextResponse.next({ request }),
+) => {
   try {
     const { pathname } = request.nextUrl;
-    const supabaseResponse = NextResponse.next({
-      request,
-    });
+    const supabaseResponse = response;
 
     const supabase = await createClient();
 

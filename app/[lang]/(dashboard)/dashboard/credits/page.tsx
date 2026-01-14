@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Script from 'next/script';
 import type Stripe from 'stripe';
 
+import { getMessages } from 'next-intl/server';
+
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import {
@@ -20,14 +21,13 @@ import { CreditTopup } from './credit-topup';
 import { TopupStatus } from './topup-status';
 
 export default async function CreditsPage(props: {
-  params: Promise<{ lang: Locale }>;
+  params: { lang: Locale };
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
+  const { lang } = props.params;
 
   const supabase = await createClient();
-  const dict = await getDictionary(lang, 'credits');
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const creditsDict = dict.credits;
 
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -84,11 +84,11 @@ export default async function CreditsPage(props: {
 
   return (
     <div className="space-y-8">
-      <TopupStatus dict={dict} />
+      <TopupStatus dict={creditsDict} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 font-semibold text-lg">{dict.topup.title}</h3>
-          <p className="text-muted-foreground">{dict.topup.description}</p>
+          <h3 className="mb-4 font-semibold text-lg">{creditsDict.topup.title}</h3>
+          <p className="text-muted-foreground">{creditsDict.topup.description}</p>
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
@@ -101,11 +101,13 @@ export default async function CreditsPage(props: {
       </div>
 
       {/* Add Credit Top-up Section */}
-      <CreditTopup dict={dict} lang={lang} />
+      <CreditTopup dict={creditsDict} lang={lang} />
 
       <div className="my-8">
-        <h3 className="mb-4 font-semibold text-lg">{dict.history.title}</h3>
-        <CreditHistory dict={dict} transactions={existingTransactions} />
+        <h3 className="mb-4 font-semibold text-lg">
+          {creditsDict.history.title}
+        </h3>
+        <CreditHistory dict={creditsDict} transactions={existingTransactions} />
       </div>
 
       {shouldShowPricingTable && clientSecret && (

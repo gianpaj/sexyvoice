@@ -2,14 +2,14 @@ import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { getMessages } from 'next-intl/server';
 import Script from 'next/script';
 import type { ReactNode } from 'react';
 import type { FAQPage, WithContext } from 'schema-dts';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
+import { redirect } from 'next/navigation';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -39,21 +39,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LandingPage(props: {
-  params: Promise<{ lang: Locale }>;
-}) {
-  const params = await props.params;
-
-  const { lang } = params;
+export default async function LandingPage(props: { params: { lang: Locale } }) {
+  const { lang } = props.params;
 
   // Validate that the language is a supported locale
   if (!i18n.locales.includes(lang as Locale)) {
     redirect(`/${i18n.defaultLocale}`);
   }
 
-  const dict = await getDictionary(lang, 'landing');
-  const blackFridayDict = (await getDictionary(lang, 'promos'))
-    .blackFridayBanner;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.landing;
+  const blackFridayDict = messages.promos.blackFridayBanner;
 
   const [firstPart, ...restParts] = dict.hero.title.split(',');
   const titleRestParts = restParts.join(',');

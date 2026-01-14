@@ -1,13 +1,14 @@
 // import { Input } from '@/components/ui/input';
 // import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+import { getMessages } from 'next-intl/server';
+
+import { Link } from '@/lib/i18n/navigation';
 
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
-async function Footer({ lang }: { lang: Locale }) {
-  const dict = await getDictionary(lang);
+async function Footer({ lang: _lang }: { lang: Locale }) {
+  const dict = (await getMessages({ locale: _lang })) as IntlMessages;
   const currentYear = new Date().getFullYear();
   return (
     <footer className="bg-gray-900 py-12">
@@ -63,30 +64,28 @@ async function Footer({ lang }: { lang: Locale }) {
               © {currentYear} {dict.footer.copyright}
             </p>
             <p className="mt-4 text-muted-foreground text-sm">
-              <a
+              <Link
                 className="hover:text-primary hover:underline"
                 href="https://sexyvoice.checkly-dashboards.com/"
                 rel="noreferrer"
                 target="_blank"
               >
                 {dict.footer.statusPage}
-              </a>
+              </Link>
               {' - '}
-              <a
+              <Link
                 className="hover:text-primary hover:underline"
                 href="/privacy-policy"
-                rel="noreferrer"
               >
                 {dict.footer.privacyPolicy}
-              </a>
+              </Link>
               {' - '}
-              <a
+              <Link
                 className="hover:text-primary hover:underline"
                 href="/terms"
-                rel="noreferrer"
               >
                 {dict.footer.termsAndConditions}
-              </a>
+              </Link>
             </p>
           </div>
         </div>
