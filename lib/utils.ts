@@ -219,7 +219,7 @@ export const getErrorMessage = (
     },
     FREE_QUOTA_EXCEEDED: {
       default:
-        'Free users have exceeded the quota. Please please try tomorrow or upgrade your account to continue',
+        'Free users have exceeded the quota. Please try tomorrow or upgrade your account to continue',
     },
     // UNAUTHORIZED: {
     //   default: 'You are not authorized to perform this action.',
