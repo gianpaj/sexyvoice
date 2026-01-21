@@ -46,17 +46,21 @@ export default async function LandingPage(props: {
     redirect(`/${i18n.defaultLocale}`);
   }
 
-  const dict = await getDictionary(lang, 'landing');
-  const dictHeader = await getDictionary(lang, 'header');
+  const dict = await getDictionary(lang);
+  const dictLanding = dict.landing;
+  const dictHeader = dict.header;
+
   const promoDictKey =
     process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
   // @ts-expect-error fix me
   const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
 
-  const [firstPart, ...restParts] = dict.hero.title.split(',');
+  const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
   const titleRestParts = restParts.join(',');
 
-  const faqQuestions = dict.faq.groups.flatMap((group) => group.questions);
+  const faqQuestions = dictLanding.faq.groups.flatMap(
+    (group) => group.questions,
+  );
 
   const jsonLd: WithContext<FAQPage> = {
     '@context': 'https://schema.org',
@@ -114,7 +118,7 @@ export default async function LandingPage(props: {
                 )}
               </h1>
               <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl">
-                {dict.hero.subtitle}
+                {dictLanding.hero.subtitle}
               </p>
 
               <div className="mx-auto">
@@ -129,10 +133,12 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href={`/${lang}/signup`}>{dict.hero.buttonCTA}</Link>
+                  <Link href={`/${lang}/signup`}>
+                    {dictLanding.hero.buttonCTA}
+                  </Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
-                  {dict.hero.noCreditCard}
+                  {dictLanding.hero.noCreditCard}
                 </p>
               </div>
             </div>
@@ -140,8 +146,8 @@ export default async function LandingPage(props: {
             {/* Audio Previews Grid */}
             <SampleAudioPreviews
               initialAudios={getSampleAudiosByLanguage()}
-              trySamplesSubtitle={dict.popular.trySamplesSubtitle}
-              trySamplesTitle={dict.popular.trySamplesTitle}
+              trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
+              trySamplesTitle={dictLanding.popular.trySamplesTitle}
             />
 
             {/* Voice Generator Section */}
@@ -183,8 +189,7 @@ export default async function LandingPage(props: {
                 </CardHeader>
                 <CardContent>
                   <p className="text-justify text-sm">
-                    Explore your deepest desires in total privacy - end-to-end
-                    encrypted judgment-free conversations
+                    {dict.call.notice1} - {dict.call.notice2}
                   </p>
                 </CardContent>
               </Card>
@@ -195,13 +200,13 @@ export default async function LandingPage(props: {
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
-                    {dict.features.voiceCloning.title}
+                    {dictLanding.features.voiceCloning.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
                   <p className="text-justify text-sm">
-                    {dict.features.voiceCloning.description}
+                    {dictLanding.features.voiceCloning.description}
                   </p>
                 </CardContent>
               </Card>
@@ -213,13 +218,13 @@ export default async function LandingPage(props: {
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
-                    {dict.features.multiLanguage.title}
+                    {dictLanding.features.multiLanguage.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
                   <p className="text-justify text-sm">
-                    {dict.features.multiLanguage.description}
+                    {dictLanding.features.multiLanguage.description}
                   </p>
                 </CardContent>
               </Card>
@@ -251,7 +256,9 @@ export default async function LandingPage(props: {
 
             {/* Blog posts Section */}
             <div className="mx-auto grid grid-cols-1 gap-4 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
-              <h2 className="mb-4 font-bold text-2xl">{dict.latestPosts}</h2>
+              <h2 className="mb-4 font-bold text-2xl">
+                {dictLanding.latestPosts}
+              </h2>
               {get3PostsByLang(lang).map((post, idx) => (
                 <Card
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
@@ -283,13 +290,13 @@ export default async function LandingPage(props: {
             <div className="space-y-8 py-16 text-center">
               <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
                 <Sparkles className="mr-2 size-4" />
-                <span>{dict.cta.freeCredits}</span>
+                <span>{dictLanding.cta.freeCredits}</span>
               </div>
               <h2 className="font-bold text-3xl text-white md:text-4xl">
-                {dict.cta.title}
+                {dictLanding.cta.title}
               </h2>
               <p className="mx-auto max-w-2xl text-gray-300 text-xl">
-                {dict.cta.subtitle}
+                {dictLanding.cta.subtitle}
               </p>
               <Button
                 asChild
@@ -297,7 +304,7 @@ export default async function LandingPage(props: {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href={`/${lang}/signup`}>{dict.cta.action}</Link>
+                <Link href={`/${lang}/signup`}>{dictLanding.cta.action}</Link>
               </Button>
             </div>
           </div>
