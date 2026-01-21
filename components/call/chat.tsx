@@ -5,6 +5,7 @@ import {
   useConnectionState,
   // useVoiceAssistant,
 } from '@livekit/components-react';
+import * as Sentry from '@sentry/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
 import { useSearchParams } from 'next/navigation';
@@ -42,6 +43,8 @@ export function Chat() {
       appearanceTimer = setTimeout(() => {
         disconnect();
         setHasSeenAgent(false);
+
+        Sentry.captureMessage('Agent Unavailable');
 
         toast.error('Agent Unavailable');
       }, 5000);

@@ -118,3 +118,8 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 - Winston Churchill
   - We shall go forward together with resolute hearts. Let us face our challenges with the firmness and courage that have always defined our people.
 - Schedule on Grok to research every month top Netflix series which are popular. From those, fine female actress which are 'sex' symbols. Could be in English, Spanish, German, Indian, Arab. From those find video clips of these actress in their series being flirty or seductive.
+
+## Indian TTS
+
+- https://timepay.ai/products/tts - has emotion tags
+- https://sarvam.ai

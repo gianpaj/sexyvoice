@@ -114,7 +114,7 @@
           "questions": [
             {
               "question": "How does Live AI Calling work?",
-              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or just listen—your call flows like a real conversation."
+              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
               "question": "How much does it cost?",
@@ -154,7 +154,7 @@
           "questions": [
             {
               "question": "Is my voice data secure?",
-              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files and can delete them whenever you want. We never share voice data without your consent."
+              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files, and can delete them whenever you want. We never share voice data without your consent."
             },
             {
               "question": "What can I use the generated voices for?",
