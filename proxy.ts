@@ -99,13 +99,13 @@ export const config = {
      * - audio - .mp3
      * - sitemap - .xml
      *
-     * - ingest (Posthog rewrites)
+     * - seguimiento (Posthog rewrites)
      * - monitoring - Sentry error reporting tunnel
      *
      * - /{2-letter-lang}/blog/* paths
      * - /{2-letter-lang}/tools/* paths
      */
-    '/((?!_next/static|_next/image|ingest|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },
