@@ -356,7 +356,8 @@
       "title": "Transfert vocal inter-langues",
       "description": "Clonez une voix dans une langue et faites-la parler couramment dans l'une des 23 autres langues supportées tout en préservant les caractéristiques uniques du locuteur.",
       "example": "Exemple : Téléchargez un échantillon vocal d'un locuteur anglais → Générez de la parole française avec sa voix"
-    }
+    },
+    "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles."
   },
   "profile": {
     "title": "Paramètres du profil",

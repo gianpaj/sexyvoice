@@ -19,6 +19,7 @@ import { toast } from '@/components/services/toast';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Card,
   CardContent,
@@ -167,6 +168,7 @@ function NewVoiceClientInner({
     null,
   );
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
+  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
 
   // Preload FFmpeg when non-English locale is selected
   useEffect(() => {
@@ -745,6 +747,23 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="legal-consent"
+                checked={legalConsentChecked}
+                onCheckedChange={(checked) =>
+                  setLegalConsentChecked(checked === true)
+                }
+                required
+              />
+              <Label
+                htmlFor="legal-consent"
+                className="text-muted-foreground text-sm leading-tight"
+              >
+                {dict.legalConsentCheckbox}
+              </Label>
+            </div>
+
             <Button
               className="w-full"
               disabled={
@@ -752,7 +771,8 @@ function NewVoiceClientInner({
                 status === 'generating' ||
                 !hasEnoughCredits ||
                 convertingMicAudio ||
-                textIsOverLimit
+                textIsOverLimit ||
+                !legalConsentChecked
               }
               onClick={handleGenerate}
             >

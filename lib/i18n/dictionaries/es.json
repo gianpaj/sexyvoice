@@ -356,7 +356,8 @@
       "title": "Transferencia de Voz Entre Idiomas",
       "description": "Clona una voz en un idioma y hazla hablar con fluidez en cualquiera de los otros 23 idiomas soportados mientras se preservan las características únicas del hablante.",
       "example": "Ejemplo: Sube una muestra de voz de un hablante en inglés → Genera un discurso en francés con su voz"
-    }
+    },
+    "legalConsentCheckbox": "Al usar la clonación de voz, certificas que tienes todos los consentimientos/derechos legales para clonar estas muestras de voz y que no usarás nada de lo generado para fines ilegales o dañinos."
   },
   "profile": {
     "title": "Configuración del Perfil",
