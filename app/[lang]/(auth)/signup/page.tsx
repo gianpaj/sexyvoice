@@ -34,7 +34,7 @@ export default async function SignUpPage(props: {
             <p className="mb-8 text-center text-muted-foreground">
               {dict.auth.signup.subtitle}
             </p>
-            <SignUpForm dict={dict.auth.signup} lang={lang} />
+            <SignUpForm dict={dict} lang={lang} />
           </div>
         </div>
       </main>
