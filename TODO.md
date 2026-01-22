@@ -97,9 +97,14 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 - <https://nextra.site>
 
+## Emails
+
+- 'Welcome to SexyVoice!' - Glad to have you on board! – Gianfri
+
 ## Later
 
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- add a 'Remove background noise' checkbox in the Voice cloning upload step. (Extra 500 credits). 'You can download the cleaned audio after too'.
 
 ## Other Voice cloning demos
 

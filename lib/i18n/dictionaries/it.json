@@ -356,7 +356,8 @@
       "title": "Trasferimento vocale cross-lingua",
       "description": "Clona una voce in una lingua e falla parlare fluentemente in una qualsiasi delle altre 23 lingue supportate preservando le caratteristiche uniche del parlante.",
       "example": "Esempio: Carica un campione vocale di un parlante inglese → Genera parlato francese con la sua voce"
-    }
+    },
+    "legalConsentCheckbox": "Utilizzando la clonazione vocale, certifico di avere tutti i consensi/diritti legali per clonare questi campioni vocali e che non utilizzerò nulla di generato per scopi illegali o dannosi."
   },
   "profile": {
     "title": "Impostazioni profilo",

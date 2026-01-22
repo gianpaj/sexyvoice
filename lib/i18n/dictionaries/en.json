@@ -356,7 +356,8 @@
       "title": "Cross-Language Voice Transfer",
       "description": "Clone a voice in one language and have it speak fluently in any of the other 23 supported languages while preserving the speaker's unique characteristics.",
       "example": "Example: Upload an English speaker's voice sample → Generate French speech in their voice"
-    }
+    },
+    "legalConsentCheckbox": "By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes."
   },
   "profile": {
     "title": "Profile Settings",
