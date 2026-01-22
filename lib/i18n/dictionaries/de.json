@@ -491,5 +491,9 @@
       "noUploads": "Keine Uploads, 100% im Browser",
       "madeWith": "Mit ♡ von SexyVoice.ai - Kostenloser KI-Audio-Generator zum Ausprobieren"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach _XX_ Sekunden anfordern."
   }
 }

@@ -68,6 +68,7 @@
     "contentlayer2": "^0.5.7",
     "crisp-sdk-web": "^1.0.26",
     "date-fns": "^3.6.0",
+    "disposable-email-domains-js": "^1.21.0",
     "globby": "^14.1.0",
     "import-in-the-middle": "1.14.2",
     "inngest": "^3.44.3",

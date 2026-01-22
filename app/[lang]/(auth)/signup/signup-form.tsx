@@ -18,7 +18,7 @@ export function SignUpForm({
   dict,
   lang,
 }: {
-  dict: (typeof langDict)['auth']['signup'];
+  dict: typeof langDict;
   lang: Locale;
 }) {
   const [email, setEmail] = useState('');
@@ -27,6 +27,8 @@ export function SignUpForm({
   const [isLoading, setIsLoading] = useState(false);
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();
+
+  const dictSignup = dict.auth.signup;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,16 +49,19 @@ export function SignUpForm({
         return;
       }
 
-      const { error: signUpError, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          // data: {
-          //   username,
-          // },
+      const res = await fetch('/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ email, password }),
       });
+
+      if (res.ok) {
+        return;
+      }
+
+      const { error: signUpError, data } = await res.json();
 
       setIsLoading(false);
       if (signUpError || !data.user) {
@@ -64,13 +69,31 @@ export function SignUpForm({
         // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
         if (signUpError?.message.includes('already registered')) {
           router.push(`/${lang}/login?email=${encodeURIComponent(email)}`);
+        } else if (
+          [
+            'VALIDATION_ERROR_DISPOSABLE_EMAIL',
+            'AUTH_PROVIDER_RATELIMIT',
+          ].includes(signUpError?.message)
+        ) {
+          if (signUpError.seconds) {
+            setError(
+              dict.errorCodes[
+                signUpError?.message as keyof typeof dict.errorCodes
+              ].replace('_XX_', signUpError.seconds.toString()),
+            );
+          }
+          setError(
+            dict.errorCodes[
+              signUpError?.message as keyof typeof dict.errorCodes
+            ],
+          );
         } else {
-          setError(signUpError?.message || dict.error);
+          setError(signUpError?.message || dictSignup.error);
         }
         return;
       }
 
-      toast.success(dict.signupSuccess, {
+      toast.success(dictSignup.signupSuccess, {
         duration: 60_000,
         cancel: (
           <Button onClick={() => toast.dismiss()} size="sm" variant="outline">
@@ -79,8 +102,11 @@ export function SignUpForm({
         ),
       });
     } catch (_error) {
+      console.error(_error);
+
+      setError(dictSignup.error || 'Error creating account');
+    } finally {
       setIsLoading(false);
-      setError(dict.error || 'Error creating account');
     }
   };
 
@@ -96,7 +122,7 @@ export function SignUpForm({
     });
 
     if (error) {
-      setError(error.message || dict.error);
+      setError(error.message || dictSignup.error);
       setIsLoading(false);
       return;
     }
@@ -105,10 +131,12 @@ export function SignUpForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-2">
-        <Label htmlFor="email">{dict.email}</Label>
+        <Label htmlFor="email">{dictSignup.email}</Label>
         <Input
           autoComplete="email"
           id="email"
+          maxLength={25}
+          minLength={6}
           onChange={(e) => setEmail(e.target.value)}
           required
           type="email"
@@ -116,7 +144,7 @@ export function SignUpForm({
         />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="password">{dict.password}</Label>
+        <Label htmlFor="password">{dictSignup.password}</Label>
         <Input
           autoComplete="new-password"
           id="password"
@@ -130,7 +158,7 @@ export function SignUpForm({
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <Button className="w-full" disabled={isLoading} type="submit">
-        {isLoading ? 'Loading...' : dict.submit}
+        {isLoading ? 'Loading...' : dictSignup.submit}
       </Button>
 
       <Button
@@ -144,12 +172,12 @@ export function SignUpForm({
       </Button>
 
       <p className="text-center text-gray-500 text-sm">
-        {dict.hasAccount}{' '}
+        {dictSignup.hasAccount}{' '}
         <Link
           className="text-blue-600 hover:text-blue-500"
           href={`/${lang}/login`}
         >
-          {dict.signIn}
+          {dictSignup.signIn}
         </Link>
       </p>
     </form>

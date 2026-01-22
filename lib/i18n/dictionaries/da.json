@@ -491,5 +491,9 @@
       "noUploads": "Ingen uploads, 100% i browseren",
       "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter _XX_ sekunder."
   }
 }

@@ -491,5 +491,9 @@
       "noUploads": "Sin cargas, 100% en el navegador",
       "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Las direcciones de correo desechables no están permitidas",
+    "AUTH_PROVIDER_RATELIMIT": "Por razones de seguridad, solo puedes solicitar esto después de _XX_ segundos."
   }
 }
