@@ -58,49 +58,42 @@ export function SignUpForm({
       });
 
       if (res.ok) {
+        toast.success(dictSignup.signupSuccess, {
+          duration: 60_000,
+          cancel: (
+            <Button onClick={() => toast.dismiss()} size="sm" variant="outline">
+              Ok
+            </Button>
+          ),
+        });
         return;
       }
 
       const { error: signUpError, data } = await res.json();
 
-      setIsLoading(false);
+      const errorCode = signUpError?.message as keyof typeof dict.errorCodes;
+
       if (signUpError || !data.user) {
         console.error(signUpError, data);
         // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
-        if (signUpError?.message.includes('already registered')) {
+        if (signUpError?.message === 'VALIDATION_ERROR_EMAIL_EXISTS') {
           router.push(`/${lang}/login?email=${encodeURIComponent(email)}`);
-        } else if (
-          [
-            'VALIDATION_ERROR_DISPOSABLE_EMAIL',
-            'AUTH_PROVIDER_RATELIMIT',
-          ].includes(signUpError?.message)
-        ) {
+        } else if (errorCode && dict.errorCodes[errorCode]) {
           if (signUpError.seconds) {
             setError(
-              dict.errorCodes[
-                signUpError?.message as keyof typeof dict.errorCodes
-              ].replace('_XX_', signUpError.seconds.toString()),
+              dict.errorCodes[errorCode].replace(
+                '_XX_',
+                signUpError.seconds.toString(),
+              ),
             );
+          } else {
+            setError(dict.errorCodes[errorCode]);
           }
-          setError(
-            dict.errorCodes[
-              signUpError?.message as keyof typeof dict.errorCodes
-            ],
-          );
         } else {
           setError(signUpError?.message || dictSignup.error);
         }
         return;
       }
-
-      toast.success(dictSignup.signupSuccess, {
-        duration: 60_000,
-        cancel: (
-          <Button onClick={() => toast.dismiss()} size="sm" variant="outline">
-            Ok
-          </Button>
-        ),
-      });
     } catch (_error) {
       console.error(_error);
 
@@ -135,8 +128,6 @@ export function SignUpForm({
         <Input
           autoComplete="email"
           id="email"
-          maxLength={25}
-          minLength={6}
           onChange={(e) => setEmail(e.target.value)}
           required
           type="email"
@@ -148,6 +139,8 @@ export function SignUpForm({
         <Input
           autoComplete="new-password"
           id="password"
+          maxLength={25}
+          minLength={6}
           onChange={(e) => setPassword(e.target.value)}
           required
           type="password"

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
   const schema = z.object({
     email: z.email(),
-    password: z.string().min(6).max(25),
+    password: z.string().min(6).max(72),
   });
 
   const result = schema.safeParse({ email, password });
