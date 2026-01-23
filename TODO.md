@@ -105,7 +105,6 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
 - Audio wave preview like https://www.muna.ai/@kitten-ml/kitten-tts (canvas)
-- Voice list search and preview like https://platform.inworld.ai/v2/workspaces/default-g16raugwkppmeeuex7qjla/tts-playground
 - add a 'Remove background noise' checkbox in the Voice cloning upload step. (Extra 500 credits). 'You can download the cleaned audio after too'.
 
 ## Other Voice cloning demos
