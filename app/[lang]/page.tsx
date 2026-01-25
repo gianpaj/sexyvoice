@@ -98,8 +98,11 @@ export default async function LandingPage(props: {
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <LandingHero />
-              <h1 className="font-bold text-5xl text-white leading-10 md:text-6xl">
-                <span className="leading-[3.5rem]">{firstPart}</span>
+              <h1 className="font-bold text-5xl leading-10 md:text-6xl">
+                <span className="text-white/90 leading-[3.5rem]">
+                  {firstPart}
+                </span>
+                <br />
                 {titleRestParts && (
                   <span
                     className="bg-gradient-to-r bg-clip-text text-transparent"
@@ -112,7 +115,7 @@ export default async function LandingPage(props: {
                   </span>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl leading-10">
                 {dict.hero.subtitle}
               </p>
               <div className="mx-auto flex w-fit flex-col gap-2">

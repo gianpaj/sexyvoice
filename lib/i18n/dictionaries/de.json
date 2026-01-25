@@ -58,7 +58,7 @@
     "latestPosts": "Neueste Beiträge",
     "hero": {
       "title": "Starke Stimmen, frei",
-      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller, Entwickler und Geschichtenerzähler. 😉",
+      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller und Geschichtenerzähler. 😉",
       "buttonCTA": "Kostenlos anmelden",
       "noCreditCard": "Keine Kreditkarte erforderlich",
       "signIn": "Anmelden"
@@ -420,8 +420,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
-      "ctaLoggedIn": "Credits Erhalten",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Credits erhalten",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Halloween-Banner schließen",
       "pricing": {
         "bannerText": "🎃 Halloween-Special"
@@ -429,8 +429,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Black Friday Sale – Erhalten Sie bis zu 50% Extra-Credits bei jedem Kauf!\nZeitlich begrenztes Angebot 🔥",
-      "ctaLoggedIn": "Angebot Sichern",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Black Friday-Banner schließen",
       "countdown": {
         "prefix": "Angebot endet in:",
@@ -445,8 +445,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Winterschlussverkauf – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf ☃️\nZeitlich begrenztes Angebot 🎿",
-      "ctaLoggedIn": "Angebot Sichern",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Winterschlussverkauf-Banner schließen",
       "pricing": {
         "bannerText": "❄️ Winterschlussverkauf"

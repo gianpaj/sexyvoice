@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 
 import { dismissBannerAction } from '@/app/[lang]/actions/promos';
 import { Button } from '@/components/ui/button';
+import { useIsMobileSizes } from '@/hooks/use-mobile';
 import { getCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
@@ -137,6 +138,7 @@ export function PromoBanner({
     await dismissBannerAction();
     setIsVisible(false);
   };
+  const { innerWidth } = useIsMobileSizes();
 
   if (!isVisible) {
     return null;
@@ -154,7 +156,7 @@ export function PromoBanner({
     >
       <div
         className={cn(
-          'relative mx-auto flex-inline items-center justify-center gap-32 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-6',
+          'relative mx-auto flex-inline items-center justify-center gap-32 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-8',
           isLongText ? 'sm:h-16' : 'sm:h-8',
         )}
       >
@@ -163,7 +165,7 @@ export function PromoBanner({
             className={cn(
               'truncate whitespace-pre-line text-wrap font-medium text-sm sm:whitespace-normal md:text-base',
               {
-                'sm:text-nowrap': !isLongText,
+                'sm:text-nowrap': !isLongText && innerWidth > 1000,
               },
             )}
           >
@@ -198,10 +200,11 @@ export function PromoBanner({
           )}
         </div>
 
-        <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 sm:absolute sm:mt-0">
+        <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 md:absolute md:mt-0">
           <Button
             asChild
-            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark"
+            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
+            effect="ringHover"
             size="sm"
             variant="outline"
           >

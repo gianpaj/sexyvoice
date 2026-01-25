@@ -58,7 +58,7 @@
     "latestPosts": "Ultimos Posts",
     "hero": {
       "title": "Voces Expressivas, Sin Censura",
-      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
+      "subtitle": "Generador de Texto a Voz e IA gratis.\nPerfecto para creadores de contenido y narradores. 😉",
       "buttonCTA": "Comienza",
       "noCreditCard": "Sin tarjeta de crédito",
       "signIn": "Iniciar Sesión"
@@ -420,8 +420,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Especial Halloween – Consigue hasta un 35% de créditos extra con tu compra 👻\nOferta por tiempo limitado 🦇",
-      "ctaLoggedIn": "Obtener Créditos",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener créditos",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Halloween",
       "pricing": {
         "bannerText": "🎃 Especial Halloween"
@@ -429,8 +429,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
-      "ctaLoggedIn": "Obtener Oferta",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener oferta",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Black Friday",
       "countdown": {
         "prefix": "La oferta termina en:",
@@ -445,8 +445,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Oferta de Invierno – Consigue hasta un 35% de créditos extra con tu compra ☃️\nOferta por tiempo limitado 🎿",
-      "ctaLoggedIn": "Obtener Oferta",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener oferta",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Oferta de Invierno",
       "pricing": {
         "bannerText": "❄️ Oferta de Invierno"

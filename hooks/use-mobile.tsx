@@ -33,12 +33,14 @@ export function useIsMobileSizes() {
   const [isMobile430, setIsMobile430] = React.useState<boolean | undefined>(
     undefined,
   );
+  const [innerWidth, setInnerWidth] = React.useState<number>(0);
 
   React.useEffect(() => {
     const onResize = () => {
       setIsMobile375(window.innerWidth <= BREAKPOINT_375);
       setIsMobile414(window.innerWidth <= BREAKPOINT_414);
       setIsMobile430(window.innerWidth <= BREAKPOINT_430);
+      setInnerWidth(window.innerWidth);
     };
     window.addEventListener('resize', onResize);
     onResize();
@@ -51,5 +53,6 @@ export function useIsMobileSizes() {
     isMobile375: !!isMobile375,
     isMobile414: !!isMobile414,
     isMobile430: !!isMobile430,
+    innerWidth,
   };
 }

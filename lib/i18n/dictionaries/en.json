@@ -58,7 +58,7 @@
     "latestPosts": "Latest Posts",
     "hero": {
       "title": "Expressive Voices, Uncensored",
-      "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators, developers, and storytellers. 😉",
+      "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators and storytellers. 😉",
       "buttonCTA": "Sign up for Free",
       "noCreditCard": "No credit card required",
       "signIn": "Sign In"
@@ -420,8 +420,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
-      "ctaLoggedIn": "Claim Offer 🎃",
-      "ctaLoggedOut": "Sign Up Now 🎃",
+      "ctaLoggedIn": "Claim offer 🎃",
+      "ctaLoggedOut": "Sign up now 🎃",
       "ariaLabelDismiss": "Dismiss Halloween banner",
       "pricing": {
         "bannerText": "🎃 Halloween Special"
@@ -429,8 +429,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Black Friday Sale – Get up to 35% extra credits!",
-      "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Claim Offer",
+      "ctaLoggedIn": "Claim offer",
+      "ctaLoggedOut": "Claim offer",
       "ariaLabelDismiss": "Dismiss Black Friday banner",
       "countdown": {
         "prefix": "Deal ends in:",
@@ -445,8 +445,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Winter Sale – Get up to 35% extra credits with a purchase ☃️\nLimited time offer 🎿",
-      "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Sign Up Now",
+      "ctaLoggedIn": "Claim offer",
+      "ctaLoggedOut": "Sign up now",
       "ariaLabelDismiss": "Dismiss Winter Sale banner",
       "pricing": {
         "bannerText": "❄️ Winter Sale"

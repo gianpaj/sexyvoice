@@ -36,8 +36,8 @@ Add banner translations to each locale file in `lib/i18n/dictionaries/{lang}.jso
   "promos": {
     "yourPromoBanner": {
       "text": "🎉 Your Promo – Get up to 35% extra credits!\nLimited time offer",
-      "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Sign Up Now",
+      "ctaLoggedIn": "Claim offer",
+      "ctaLoggedOut": "Sign up Now",
       "ariaLabelDismiss": "Dismiss promo banner",
       "countdown": {
         "prefix": "Ends in:",
