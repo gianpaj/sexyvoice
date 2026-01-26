@@ -77,7 +77,7 @@ export function VoiceSelector({
         acc[language].push(voice);
         return acc;
       },
-      {} as Record<string, Voice[]>,
+      {} as Record<string, Tables<'voices'>[]>,
     ),
   ).sort(([langA], [langB]) => {
     if (langA === 'Multilingual 🌍') return -1;

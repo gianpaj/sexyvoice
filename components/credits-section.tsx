@@ -28,7 +28,7 @@ function CreditsSection({
   lang: Locale;
   userId: string;
   dict: (typeof langDict)['creditsSection'];
-  creditTransactions: Pick<CreditTransaction, 'amount'>[] | null;
+  creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[] | null;
   doNotToggleSidebar?: boolean;
   showMinutes?: boolean;
 }) {
@@ -66,7 +66,7 @@ function CreditsSection({
 
     const sendUserAnalyticsData = (
       user: User,
-      creditsData: Pick<Credit, 'amount'> | null | undefined,
+      creditsData: Pick<Tables<'credits'>, 'amount'> | null | undefined,
       userHasPaid: boolean,
     ) => {
       posthog.identify(user.id, {
