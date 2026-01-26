@@ -62,15 +62,25 @@ export function maskUsername(username?: string): string | undefined {
   return maskedUsername;
 }
 
-export const filterByDateRange = <T extends { created_at: string }>(
+export function filterByDateRange<T extends { created_at: string }>(
   items: T[],
   start: Date,
   end: Date,
-) => {
+): T[];
+export function filterByDateRange<
+  K extends string,
+  T extends Record<K, string>,
+>(items: T[], start: Date, end: Date, dateKey: K): T[];
+export function filterByDateRange<T extends Record<string, unknown>>(
+  items: T[],
+  start: Date,
+  end: Date,
+  dateKey = 'created_at',
+): T[] {
   const startTime = start.getTime();
   const endTime = end.getTime();
   return items.filter((item) => {
-    const itemTime = new Date(item.created_at).getTime();
+    const itemTime = new Date(item[dateKey] as string).getTime();
     return itemTime >= startTime && itemTime < endTime;
   });
-};
+}

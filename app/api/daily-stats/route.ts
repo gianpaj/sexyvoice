@@ -188,7 +188,9 @@ export async function GET(request: NextRequest) {
 
   // Call sessions data processing
   const callSessionsWeekData = (callSessionsWeekResult.data ?? []).filter(
-    (item): item is {
+    (
+      item,
+    ): item is {
       id: string;
       started_at: string;
       duration_seconds: number;
@@ -199,21 +201,22 @@ export async function GET(request: NextRequest) {
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
 
   // Filter call sessions by date ranges (using started_at as the date field)
-  const callSessionsYesterdayData = callSessionsWeekData.filter((item) => {
-    const itemTime = new Date(item.started_at).getTime();
-    return itemTime >= previousDay.getTime() && itemTime < today.getTime();
-  });
+  const callSessionsYesterdayData = filterByDateRange(
+    callSessionsWeekData,
+    previousDay,
+    today,
+    'started_at',
+  );
   const callsYesterdayCount = callSessionsYesterdayData.length;
   const callsWeekCount = callSessionsWeekData.length;
-  const callsWeekAvg = callsWeekCount / 7;
 
   // Calculate total duration for yesterday and week
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
-    (sum, call) => sum + (call.duration_seconds || 0),
+    (sum, call) => sum + call.duration_seconds,
     0,
   );
   const callsDurationWeek = callSessionsWeekData.reduce(
-    (sum, call) => sum + (call.duration_seconds || 0),
+    (sum, call) => sum + call.duration_seconds,
     0,
   );
 
@@ -482,8 +485,8 @@ export async function GET(request: NextRequest) {
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
     `  - Top voices: ${topVoiceList}`,
     '',
-    `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekAvg)})`,
-    `  - 7d: ${callsWeekCount} (avg ${callsWeekAvg.toFixed(1)})`,
+    `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
+    `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
     `  - Duration: ${formatDuration(callsDurationYesterday)} | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / 7))})`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
     '',
