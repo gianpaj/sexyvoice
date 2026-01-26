@@ -261,6 +261,7 @@ export function ConfigurationForm() {
                 Language
               </div>
               <Select
+                disabled={connectionState === ConnectionState.Connected}
                 onValueChange={handleLanguageChange}
                 value={pgState.language}
               >

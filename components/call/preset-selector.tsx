@@ -1,7 +1,9 @@
 'use client';
 
+import { useConnectionState } from '@livekit/components-react';
 import { CaretSortIcon, FileIcon } from '@radix-ui/react-icons';
 import type { PopoverProps } from '@radix-ui/react-popover';
+import { ConnectionState } from 'livekit-client';
 import { Check, Trash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -47,6 +49,8 @@ export function PresetSelector(props: PopoverProps) {
   const [presetToDelete, setPresetToDelete] = useState<Preset | null>(null);
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect } = useConnection();
+  const connectionState = useConnectionState();
+  const isConnected = connectionState === ConnectionState.Connected;
 
   const [lastPresetId, setLastPresetId] = useState<string | null>(null);
 
@@ -115,6 +119,7 @@ export function PresetSelector(props: PopoverProps) {
             aria-expanded={open}
             aria-label="Load a preset"
             className="flex-1 justify-between md:max-w-[200px]"
+            disabled={isConnected}
             role="combobox"
             size="sm"
             variant="outline"
