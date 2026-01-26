@@ -33,7 +33,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 
 interface DashboardUIProps {
   children: React.ReactNode;
-  creditTransactions: Pick<CreditTransaction, 'amount'>[];
+  creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
   userId: string;
   lang: Locale;
   dict: typeof langDict;
@@ -136,8 +136,8 @@ export default function DashboardUI({
               creditTransactions={creditTransactions}
               dict={dict.creditsSection}
               lang={lang}
-              userId={userId}
               showMinutes={pathname === `/${lang}/dashboard/call`}
+              userId={userId}
             />
 
             <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
