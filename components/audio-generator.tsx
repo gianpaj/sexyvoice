@@ -36,7 +36,7 @@ import {
 } from './ui/tooltip';
 
 interface AudioGeneratorProps {
-  selectedVoice?: Voice;
+  selectedVoice?: Tables<'voices'>;
   selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];

@@ -47,8 +47,8 @@ export function VoiceSelector({
   setSelectedStyle,
   dict,
 }: {
-  publicVoices: Voice[];
-  selectedVoice?: Voice;
+  publicVoices: Tables<'voices'>[];
+  selectedVoice?: Tables<'voices'>;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
