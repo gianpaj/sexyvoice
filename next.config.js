@@ -27,7 +27,7 @@ let nextConfig = {
   reactCompiler: true,
   experimental: {
     // Enable filesystem caching for `next dev`
-    turbopackFileSystemCacheForDev: true,
+    // turbopackFileSystemCacheForDev: true,
   },
   images: {
     remotePatterns: [

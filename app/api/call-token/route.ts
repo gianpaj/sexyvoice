@@ -136,7 +136,7 @@ export async function POST(request: Request) {
       name: roomName,
       agents: [
         new RoomAgentDispatch({
-          agentName: 'grok-playground',
+          agentName: 'sexycall',
         }),
       ],
     });

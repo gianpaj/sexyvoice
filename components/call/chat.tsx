@@ -46,6 +46,8 @@ export function Chat() {
 
         Sentry.captureMessage('Agent Unavailable');
 
+        console.error('Agent Unavailable');
+
         toast.error('Agent Unavailable');
       }, 5000);
     }
@@ -64,9 +66,9 @@ export function Chat() {
         if (!agent) {
           disconnect();
           setHasSeenAgent(false);
+          toast.info('Disconnected');
+          Sentry.captureMessage('Disconnected');
         }
-
-        toast.info(' Disconnected');
       }, 5000);
     }
 
