@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     // Check if user has credits
     const currentAmount = await getCredits(user.id);
 
-    if (currentAmount <= MINIMUM_CREDITS_FOR_CALL) {
+    if (currentAmount < MINIMUM_CREDITS_FOR_CALL) {
       logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { currentCreditsAmount: currentAmount },

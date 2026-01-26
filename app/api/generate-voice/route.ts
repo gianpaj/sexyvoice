@@ -184,7 +184,7 @@ export async function POST(request: Request) {
     }
 
     let replicateResponse: Prediction | undefined;
-    let genAIResponse: GenerateContentResponse | null;
+    let genAIResponse: GenerateContentResponse | null = null;
     let modelUsed = '';
     let uploadUrl = '';
 

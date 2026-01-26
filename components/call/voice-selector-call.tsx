@@ -70,7 +70,7 @@ function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
     }
-  }, [isPlaying]);
+  }, [voiceId]);
 
   return (
     <Button
