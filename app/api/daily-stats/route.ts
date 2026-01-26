@@ -82,6 +82,9 @@ export async function GET(request: NextRequest) {
     allCreditTransactionsResult,
     activeSubscribersCount,
     nextSubscriptionDueForPayment,
+    // Call sessions - fetch for last 7 days (includes yesterday)
+    callSessionsWeekResult,
+    callSessionsTotalCountResult,
   ] = await Promise.all([
     // (audioYesterdayResult) Audio files yesterday with voice information
     supabase
@@ -140,6 +143,19 @@ export async function GET(request: NextRequest) {
     // Fetch active subscribers count
     countActiveCustomerSubscriptions(),
     findNextSubscriptionDueForPayment(),
+
+    // (callSessionsWeekResult) Call sessions last 7 days with duration info
+    supabase
+      .from('call_sessions')
+      .select('id, started_at, duration_seconds, credits_used, status')
+      .gte('started_at', sevenDaysAgo.toISOString())
+      .lt('started_at', today.toISOString()),
+
+    // (callSessionsTotalCountResult) Total call sessions count
+    supabase
+      .from('call_sessions')
+      .select('id', { count: 'exact', head: true })
+      .lt('started_at', today.toISOString()),
   ]);
 
   if (audioYesterdayResult.error) throw audioYesterdayResult.error;
@@ -150,6 +166,9 @@ export async function GET(request: NextRequest) {
   if (profilesTotalCountResult.error) throw profilesTotalCountResult.error;
   if (allCreditTransactionsResult.error)
     throw allCreditTransactionsResult.error;
+  if (callSessionsWeekResult.error) throw callSessionsWeekResult.error;
+  if (callSessionsTotalCountResult.error)
+    throw callSessionsTotalCountResult.error;
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
   const audioYesterdayCount = audioYesterdayData.length;
@@ -166,6 +185,44 @@ export async function GET(request: NextRequest) {
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
   const creditTransactions = allCreditTransactionsResult.data ?? [];
+
+  // Call sessions data processing
+  const callSessionsWeekData = (callSessionsWeekResult.data ?? []).filter(
+    (item): item is {
+      id: string;
+      started_at: string;
+      duration_seconds: number;
+      credits_used: number;
+      status: string;
+    } => item.started_at !== null,
+  );
+  const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
+
+  // Filter call sessions by date ranges (using started_at as the date field)
+  const callSessionsYesterdayData = callSessionsWeekData.filter((item) => {
+    const itemTime = new Date(item.started_at).getTime();
+    return itemTime >= previousDay.getTime() && itemTime < today.getTime();
+  });
+  const callsYesterdayCount = callSessionsYesterdayData.length;
+  const callsWeekCount = callSessionsWeekData.length;
+  const callsWeekAvg = callsWeekCount / 7;
+
+  // Calculate total duration for yesterday and week
+  const callsDurationYesterday = callSessionsYesterdayData.reduce(
+    (sum, call) => sum + (call.duration_seconds || 0),
+    0,
+  );
+  const callsDurationWeek = callSessionsWeekData.reduce(
+    (sum, call) => sum + (call.duration_seconds || 0),
+    0,
+  );
+
+  // Format duration in minutes
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  };
 
   // Separate refunds from purchases/top-ups
   const refundTransactions = creditTransactions.filter(
@@ -424,6 +481,11 @@ export async function GET(request: NextRequest) {
     `  - Cloned: ${clonePrevCount} (${formatChange(clonePrevCount, cloneWeekCount / 7)}) | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
     `  - Top voices: ${topVoiceList}`,
+    '',
+    `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekAvg)})`,
+    `  - 7d: ${callsWeekCount} (avg ${callsWeekAvg.toFixed(1)})`,
+    `  - Duration: ${formatDuration(callsDurationYesterday)} | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / 7))})`,
+    `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
