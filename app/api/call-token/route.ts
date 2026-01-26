@@ -17,7 +17,6 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST(request: Request) {
   let user: User | null = null;
   try {
-    // Authentication
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     user = data?.user;
@@ -54,6 +53,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const roomName = `ro-${crypto.randomUUID()}`;
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    if (!(apiKey && apiSecret)) {
+      captureException({
+        error: 'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set',
+      });
+      return NextResponse.json(
+        { error: 'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set' },
+        { status: 400 },
+      );
+    }
+
     const {
       instructions,
       language = defaultLanguage,
@@ -73,27 +85,6 @@ export async function POST(request: Request) {
       languageInitialInstructions[selectedLanguage] ||
       languageInitialInstructions[defaultLanguage];
 
-    const xaiAPIKey = process.env.XAI_API_KEY;
-    if (!xaiAPIKey) {
-      captureException({
-        error: 'xAI API key is required',
-      });
-      return NextResponse.json(
-        { error: 'xAI API key is required' },
-        { status: 400 },
-      );
-    }
-
-    const roomName = `ro-${crypto.randomUUID()}`;
-    const apiKey = process.env.LIVEKIT_API_KEY;
-    const apiSecret = process.env.LIVEKIT_API_SECRET;
-    if (!(apiKey && apiSecret)) {
-      captureException({
-        error: 'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set',
-      });
-      throw new Error('LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set');
-    }
-
     const voiceObj = await getVoiceIdByName(voice, false);
 
     if (!voiceObj) {
@@ -109,7 +100,6 @@ export async function POST(request: Request) {
       temperature,
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,
-      xai_api_key: xaiAPIKey,
       language: selectedLanguage,
       initial_instruction: initialInstruction,
       user_id: user.id,
@@ -151,16 +141,16 @@ export async function POST(request: Request) {
       url: process.env.LIVEKIT_URL,
     });
   } catch (error) {
+    console.error('Error generating token:', error);
     captureException({
       error: 'Error generating token',
       user: user ? { id: user.id, email: user.email } : undefined,
       errorData: error,
     });
-    console.error('Token generation error:', error);
     return NextResponse.json(
       {
         error: 'Error generating token',
-        details: error instanceof Error ? error.message : String(error),
+        details: error instanceof Error ? error.message : JSON.stringify(error),
       },
       { status: 500 },
     );

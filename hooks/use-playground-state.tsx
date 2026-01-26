@@ -203,9 +203,7 @@ export const PlaygroundStateProvider = ({
     // Validate and fix invalid model IDs in stored presets
     userPresets = userPresets.map((preset: Preset) => {
       // Check if the preset has an invalid model ID
-      if (
-        !Object.values(ModelId).includes(preset.sessionConfig.model as ModelId)
-      ) {
+      if (!Object.values(ModelId).includes(preset.sessionConfig.model)) {
         return {
           ...preset,
           sessionConfig: {

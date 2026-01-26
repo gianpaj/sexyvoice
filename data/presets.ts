@@ -17,7 +17,7 @@ export interface Preset {
 // biome-ignore lint/style/noEnum: fine
 export enum PresetGroup {
   // FUNCTIONALITY = "Use-Case Demos",
-  PERSONALITY = 'Fun Style & Personality Demos',
+  PERSONALITY = 'Style & Personality',
 }
 
 export const defaultPresets: Preset[] = [

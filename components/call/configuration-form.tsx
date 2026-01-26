@@ -39,8 +39,8 @@ import { PresetSelector } from './preset-selector';
 const RECONNECT_REQUIRED_FIELDS = ['voice', 'grok_image_enabled'];
 
 export const ConfigurationFormSchema = z.object({
-  model: z.nativeEnum(ModelId),
-  voice: z.nativeEnum(VoiceId),
+  model: z.enum(Object.values(ModelId)),
+  voice: z.enum(Object.values(VoiceId)),
   temperature: z.number().min(0.6).max(1.2),
   maxOutputTokens: z.number().nullable(),
   grokImageEnabled: z.boolean(),
