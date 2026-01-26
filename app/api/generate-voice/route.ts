@@ -20,6 +20,7 @@ import {
   getCredits,
   getVoiceIdByName,
   hasUserPaid,
+  insertUsageEvent,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -416,6 +417,26 @@ export async function POST(request: Request) {
         });
         console.error(errorObj);
       }
+
+      // Insert usage event for tracking (non-blocking)
+      await insertUsageEvent({
+        userId: user.id,
+        sourceType: 'tts',
+        sourceId: audioFileDBResult.data?.id,
+        unit: 'chars',
+        quantity: text.length,
+        creditsUsed,
+        metadata: {
+          voiceId: voiceObj.id,
+          voiceName: voice,
+          model: modelUsed,
+          textPreview: text.slice(0, 100),
+          textLength: text.length,
+          isGeminiVoice,
+          userHasPaid,
+          predictionId: replicateResponse?.id ?? null,
+        },
+      });
 
       await sendPosthogEvent({
         userId: user.id,

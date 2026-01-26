@@ -17,7 +17,7 @@ import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
   hasUserPaid,
-  // insertUsageEvent,
+  insertUsageEvent,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -559,6 +559,26 @@ async function runBackgroundTasks(
     });
     console.error(errorObj);
   }
+
+  // Insert usage event for tracking voice cloning (non-blocking)
+  await insertUsageEvent({
+    userId,
+    sourceType: 'voice_cloning',
+    sourceId: audioFileDBResult.data?.id,
+    unit: 'operation',
+    quantity: 1,
+    creditsUsed: estimate,
+    metadata: {
+      model: audioFileData.modelUsed,
+      locale: audioFileData.locale,
+      textPreview: audioFileData.text.slice(0, 100),
+      textLength: audioFileData.text.length,
+      audioDuration: audioFileData.duration,
+      referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
+      requestId: audioFileData.requestId,
+      userHasPaid,
+    },
+  });
 
   const posthog = PostHogClient();
   posthog.capture({

@@ -1,5 +1,6 @@
 # TODO
 
+- add duration to generate audios. if there is a high duration and short text, add warning in `usage` JSON col that the audio may be silent for a long time.
 - fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
 - fix: landing page audios not stopping if another audio is played
 - Add usage page in Dashboard
