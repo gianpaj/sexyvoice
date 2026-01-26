@@ -27,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -167,6 +168,7 @@ function NewVoiceClientInner({
     null,
   );
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
+  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
 
   // Preload FFmpeg when non-English locale is selected
   useEffect(() => {
@@ -285,6 +287,9 @@ function NewVoiceClientInner({
   const abortController = useRef<AbortController | null>(null);
 
   const handleGenerate = useCallback(async () => {
+    if (!legalConsentChecked) {
+      return;
+    }
     if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
@@ -416,6 +421,7 @@ function NewVoiceClientInner({
     selectedLocale,
     clearErrors,
     convertWithFFmpeg,
+    legalConsentChecked,
   ]);
 
   const handleCancel = () => {
@@ -431,7 +437,12 @@ function NewVoiceClientInner({
         event.preventDefault();
 
         // Only trigger if form can be submitted
-        if (status !== 'generating' && text.trim() && hasEnoughCredits) {
+        if (
+          status !== 'generating' &&
+          text.trim() &&
+          hasEnoughCredits &&
+          legalConsentChecked
+        ) {
           handleGenerate();
         }
       }
@@ -444,7 +455,7 @@ function NewVoiceClientInner({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, text, handleGenerate, hasEnoughCredits]);
+  }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
 
   const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
@@ -745,6 +756,22 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                checked={legalConsentChecked}
+                id="legal-consent"
+                onCheckedChange={(checked) =>
+                  setLegalConsentChecked(checked === true)
+                }
+              />
+              <Label
+                className="text-muted-foreground text-sm leading-tight"
+                htmlFor="legal-consent"
+              >
+                {dict.legalConsentCheckbox}
+              </Label>
+            </div>
+
             <Button
               className="w-full"
               disabled={
@@ -752,7 +779,8 @@ function NewVoiceClientInner({
                 status === 'generating' ||
                 !hasEnoughCredits ||
                 convertingMicAudio ||
-                textIsOverLimit
+                textIsOverLimit ||
+                !legalConsentChecked
               }
               onClick={handleGenerate}
             >

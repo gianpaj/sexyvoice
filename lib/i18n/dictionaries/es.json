@@ -136,11 +136,11 @@
             },
             {
               "question": "¿Qué idiomas soportan tus voces de IA?",
-              "answer": "El soporte de idiomas depende de la voz seleccionada al generar voz.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat) soportan 24 idiomas incluyendo:\nÁrabe (Egipcio),\nInglés (EE.UU.),\nFrancés (Francia),\nAlemán (Alemania),\nEspañol (EE.UU.),\nHindi (India),\nIndonesio (Indonesia),\nItaliano (Italia),\nJaponés (Japón),\nCoreano (Corea),\nPortugués (Brasil),\nRuso (Rusia),\nHolandés (Países Bajos),\nPolaco (Polonia),\nTailandés (Tailandia),\nTurco (Turquía),\nVietnamita (Vietnam),\nRumano (Rumania),\nUcraniano (Ucrania),\nBengalí (Bangladesh),\nInglés/Hindi (India),\nMarathi (India),\nTamil (India),\ny Telugu (India).\n\nOtras voces son específicas del idioma:\nDan (Inglés Reino Unido 🇬🇧),\nPietro (Italiano 🇮🇹),\nEmma (Inglés EE.UU. 🇺🇸),\nJavi (Español 🇪🇸),\nJosh (Inglés EE.UU. 🇺🇸),\ny Tara (Inglés EE.UU. 🇺🇸).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
+              "answer": "El soporte de idiomas depende de la voz seleccionada al generar voz.\\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).\\nOtras voces son específicas del idioma:\nPietro (Italiano 🇮🇹),\nJavi (Español 🇪🇸),\nDan (Inglés Reino Unido 🇬🇧),\nEmma (Inglés EE.UU. 🇺🇸),\nJosh (Inglés EE.UU. 🇺🇸),\ny Tara (Inglés EE.UU. 🇺🇸).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
             },
             {
               "question": "¿Qué idiomas soporta la clonación de voz?",
-              "answer": "La clonación de voz soporta los siguientes 23 idiomas:\nÁrabe,\nDanés,\nAlemán,\nGriego,\nInglés,\nEspañol,\nFinlandés,\nFrancés,\nHebreo,\nHindi,\nItaliano,\nJaponés,\nCoreano,\nMalayo,\nHolandés,\nNoruego,\nPolaco,\nPortugués,\nRuso,\nSueco,\nSuajili,\nTurco,\ny Chino Mandarín."
+              "answer": "La clonación de voz soporta los siguientes 23 idiomas:\n\n🇩🇪 Alemán,\n🇸🇦 Árabe,\n🇨🇳 Chino mandarín,\n🇰🇷 Coreano,\n🇩🇰 Danés,\n🇪🇸 Español,\n🇫🇮 Finlandés,\n🇫🇷 Francés,\n🇬🇷 Griego,\n🇮🇱 Hebreo,\n🇮🇳 Hindi,\n🇳🇱 Holandés,\n🇬🇧 Inglés,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇲🇾 Malayo,\n🇳🇴 Noruego,\n🇵🇱 Polaco,\n🇵🇹 Portugués,\n🇷🇺 Ruso,\n🇰🇪 Suajili,\n🇸🇪 Sueco,\ny 🇹🇷 Turco."
             },
             {
               "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
@@ -311,7 +311,7 @@
       "description": "Elige entre las voces disponibles",
       "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
-      "geminiInfo": "Soporta 24 idiomas:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)"
+      "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam)."
     }
   },
   "call": {
@@ -362,7 +362,8 @@
       "title": "Transferencia de Voz Entre Idiomas",
       "description": "Clona una voz en un idioma y hazla hablar con fluidez en cualquiera de los otros 23 idiomas soportados mientras se preservan las características únicas del hablante.",
       "example": "Ejemplo: Sube una muestra de voz de un hablante en inglés → Genera un discurso en francés con su voz"
-    }
+    },
+    "legalConsentCheckbox": "Al usar la clonación de voz, certificas que tienes todos los consentimientos/derechos legales para clonar estas muestras de voz y que no usarás nada de lo generado para fines ilegales o dañinos."
   },
   "profile": {
     "title": "Configuración del Perfil",
@@ -437,8 +438,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Especial Halloween – Consigue hasta un 35% de créditos extra con tu compra 👻\nOferta por tiempo limitado 🦇",
-      "ctaLoggedIn": "Obtener Créditos",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener créditos",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Halloween",
       "pricing": {
         "bannerText": "🎃 Especial Halloween"
@@ -446,8 +447,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
-      "ctaLoggedIn": "Obtener Oferta",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener oferta",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Black Friday",
       "countdown": {
         "prefix": "La oferta termina en:",
@@ -462,8 +463,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Oferta de Invierno – Consigue hasta un 35% de créditos extra con tu compra ☃️\nOferta por tiempo limitado 🎿",
-      "ctaLoggedIn": "Obtener Oferta",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener oferta",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Oferta de Invierno",
       "pricing": {
         "bannerText": "❄️ Oferta de Invierno"

@@ -38,7 +38,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, French, German, Japanese, Korean, and more
+- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, German, French, Italian, Danish, Japanese, Korean, and more
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -59,9 +59,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Frontend
 
-- **[Next.js 15](https://nextjs.org)** - React framework with App Router and TypeScript
+- **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
-- **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
+- **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 
@@ -319,7 +319,7 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Website multi-language support (EN/ES)
+- ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
 - 🚧 API access (coming soon)
 
 ### Supported Languages by these Google Gemini TTS Models

@@ -50,7 +50,6 @@
   - Credits (table headers)
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
-- Translate website to French
 - Translate website to Arabic
 - Translate website to Indian
 - Add option to clean audio using <https://replicate.com/gianpaj/audio_separator> <https://fal.ai/models/fal-ai/deepfilternet3>
@@ -104,9 +103,14 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 - <https://nextra.site>
 
+## Emails
+
+- 'Welcome to SexyVoice!' - Glad to have you on board! – Gianfri
+
 ## Later
 
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- add a 'Remove background noise' checkbox in the Voice cloning upload step. (Extra 500 credits). 'You can download the cleaned audio after too'.
 
 ## Other Voice cloning demos
 

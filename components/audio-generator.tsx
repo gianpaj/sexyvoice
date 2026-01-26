@@ -95,13 +95,13 @@ export function AudioGenerator({
         signal: abortController.current.signal,
       });
 
-      if (!response.ok) {
-        const error: any = await response.json();
+      const data = await response.json();
 
+      if (!response.ok) {
         // Check if we have an error code for translation
-        if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
+        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
           const errorMessage = dict[
-            error.errorCode as keyof typeof dict
+            data.errorCode as keyof typeof dict
           ] as string;
           throw new APIError(
             errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
@@ -110,10 +110,10 @@ export function AudioGenerator({
         }
 
         // Fallback to the default English error message from API
-        throw new APIError(error.error || error.serverMessage, response);
+        throw new APIError(data.error || data.serverMessage, response);
       }
 
-      const { url } = await response.json();
+      const { url } = data;
 
       // FIXME: this doesn't work
       // refetch credits after generating audio

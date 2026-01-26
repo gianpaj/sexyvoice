@@ -164,7 +164,7 @@ See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
 ## Application Structure
 
 ```
-app/[lang]/                    # Internationalized routes (en, es, de)
+app/[lang]/                    # Internationalized routes (en, es, de, da, it, fr)
 ├── (auth)/                    # Public authentication pages
 ├── (dashboard)/               # Protected dashboard routes
 ├── api/
@@ -178,7 +178,7 @@ app/[lang]/                    # Internationalized routes (en, es, de)
 
 lib/
 ├── supabase/                  # Database client, queries, types
-├── i18n/                      # Internationalization (en, es, de)
+├── i18n/                      # Internationalization (en, es, de, da, it, fr)
 ├── stripe/                    # Payment processing
 ├── inngest/                   # Background jobs
 └── utils/                     # Utility functions

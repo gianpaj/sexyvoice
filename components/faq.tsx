@@ -39,7 +39,7 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
       <Accordion
         className="w-full rounded-md border border-gray-500"
         collapsible
-        defaultValue="item-liveCalling"
+        defaultValue="item-voiceCreation"
         type="single"
       >
         {dict.groups.map((group) => {

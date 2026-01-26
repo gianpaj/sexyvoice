@@ -222,7 +222,7 @@ const PostLayout = async (props: {
             itemScope
             itemType="https://schema.org/EducationalAudience"
           >
-            <span itemProp="educationalRole">developers</span>,
+            <span itemProp="educationalRole">storytellers</span>,
             <span itemProp="educationalRole">content creators</span>
           </span>
         </p>

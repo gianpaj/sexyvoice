@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
+      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits ( ͡° ͜ʖ ͡°)",
       "title": "Bereit, Ihre Stimme zu finden?",
       "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
       "action": "Erstellen sie ihre erste stimme"
@@ -135,12 +135,12 @@
               "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
             },
             {
-              "question": "Welche Sprachen unterstützen Ihre KI-Stimmen?",
-              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme bei der Sprachgenerierung ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat) unterstützen 24 Sprachen, darunter:\nArabisch (Ägyptisch),\nEnglisch (US),\nFranzösisch (Frankreich),\nDeutsch (Deutschland),\nSpanisch (US),\nHindi (Indien),\nIndonesisch (Indonesien),\nItalienisch (Italien),\nJapanisch (Japan),\nKoreanisch (Korea),\nPortugiesisch (Brasilien),\nRussisch (Russland),\nNiederländisch (Niederlande),\nPolnisch (Polen),\nThailändisch (Thailand),\nTürkisch (Türkei),\nVietnamesisch (Vietnam),\nRumänisch (Rumänien),\nUkrainisch (Ukraine),\nBengali (Bangladesch),\nEnglisch/Hindi (Indien),\nMarathi (Indien),\nTamil (Indien),\nund Telugu (Indien).\n\nAndere Stimmen sind sprachspezifisch:\nDan (Englisch UK 🇬🇧),\nPietro (Italienisch 🇮🇹),\nEmma (Englisch US 🇺🇸),\nJavi (Spanisch 🇪🇸),\nJosh (Englisch US 🇺🇸),\nund Tara (Englisch US 🇺🇸).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+              "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
+              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam).\nAndere Stimmen sind sprachspezifisch:\n🇮🇹 Pietro (Italienisch),\n🇪🇸 Javi (Spanisch),\n🇬🇧 Dan (Englisch UK),\n🇺🇸 Emma (Englisch US),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
             },
             {
-              "question": "Welche Sprachen unterstützt das Stimmklonen?",
-              "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\nArabisch,\nDänisch,\nDeutsch,\nGriechisch,\nEnglisch,\nSpanisch,\nFinnisch,\nFranzösisch,\nHebräisch,\nHindi,\nItalienisch,\nJapanisch,\nKoreanisch,\nMalaiisch,\nNiederländisch,\nNorwegisch,\nPolnisch,\nPortugiesisch,\nRussisch,\nSchwedisch,\nSuaheli,\nTürkisch,\nund Mandarin-Chinesisch."
+              "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
+              "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
             },
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
@@ -311,7 +311,7 @@
       "description": "Wählen Sie aus verfügbaren Stimmen",
       "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
-      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien)"
+      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)"
     }
   },
   "call": {
@@ -362,7 +362,8 @@
       "title": "Stimmübertragung zwischen Sprachen",
       "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
       "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
-    }
+    },
+    "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden."
   },
   "profile": {
     "title": "Profileinstellungen",
@@ -437,8 +438,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
-      "ctaLoggedIn": "Credits Erhalten",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Credits erhalten",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Halloween-Banner schließen",
       "pricing": {
         "bannerText": "🎃 Halloween-Special"
@@ -446,8 +447,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Black Friday Sale – Erhalten Sie bis zu 50% Extra-Credits bei jedem Kauf!\nZeitlich begrenztes Angebot 🔥",
-      "ctaLoggedIn": "Angebot Sichern",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Black Friday-Banner schließen",
       "countdown": {
         "prefix": "Angebot endet in:",
@@ -462,8 +463,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Winterschlussverkauf – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf ☃️\nZeitlich begrenztes Angebot 🎿",
-      "ctaLoggedIn": "Angebot Sichern",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Winterschlussverkauf-Banner schließen",
       "pricing": {
         "bannerText": "❄️ Winterschlussverkauf"

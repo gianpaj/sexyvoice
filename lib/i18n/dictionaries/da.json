@@ -1,0 +1,496 @@
+{
+  "auth": {
+    "login": {
+      "title": "Velkommen tilbage",
+      "subtitle": "Log ind på din konto",
+      "email": "E-mailadresse",
+      "password": "Adgangskode",
+      "submit": "Log ind",
+      "forgotPassword": "Glemt din adgangskode?",
+      "signInWithGoogle": "Log ind med Google",
+      "noAccount": "Har du ikke en konto?",
+      "signUp": "Opret konto",
+      "error": "Ugyldig e-mail eller adgangskode"
+    },
+    "signup": {
+      "title": "Opret en konto",
+      "subtitle": "Kom i gang med at generere tale",
+      "email": "E-mailadresse",
+      "password": "Adgangskode",
+      "username": "Brugernavn",
+      "fullName": "Fulde navn",
+      "submit": "Opret konto",
+      "hasAccount": "Har du allerede en konto?",
+      "signIn": "Log ind",
+      "error": "Fejl ved oprettelse af konto",
+      "signupSuccess": "Tjek din e-mail-indbakke for bekræftelse"
+    },
+    "resetPassword": {
+      "title": "Nulstil adgangskode",
+      "subtitle": "Indtast din e-mailadresse, og vi sender dig et link til at nulstille din adgangskode",
+      "email": "E-mailadresse",
+      "submit": "Nulstil adgangskode",
+      "error": "Ugyldig e-mailadresse",
+      "loading": "Sender e-mail...",
+      "success": "Tjek din e-mail for et link til nulstilling af adgangskode",
+      "backToLogin": "Tilbage til login",
+      "errors": {
+        "generic": "Kunne ikke nulstille adgangskode",
+        "email_required": "E-mail er påkrævet"
+      }
+    },
+    "updatePassword": {
+      "title": "Opdater adgangskode",
+      "subtitle": "Indtast din nye adgangskode nedenfor",
+      "newPassword": "Ny adgangskode",
+      "confirmPassword": "Bekræft adgangskode",
+      "updatePassword": "Opdater adgangskode",
+      "loading": "Opdaterer...",
+      "errors": {
+        "same_password": "Ny adgangskode skal være anderledes end den gamle adgangskode",
+        "passwords_do_not_match": "Adgangskoderne matcher ikke",
+        "passwords_required": "Adgangskode og bekræftelse af adgangskode er påkrævet",
+        "success": "Adgangskode opdateret"
+      }
+    }
+  },
+  "landing": {
+    "latestPosts": "Seneste indlæg",
+    "hero": {
+      "title": "Udtryksfulde stemmer, ucensureret",
+      "subtitle": "Gratis tekst-til-tale & AI-stemmegenerator. \nPerfekt til indholdsskabere og historiefortællere. 😉",
+      "buttonCTA": "Tilmeld dig gratis",
+      "noCreditCard": "Intet kreditkort påkrævet",
+      "signIn": "Log ind"
+    },
+    "features": {
+      "voiceCloning": {
+        "title": "Naturlige stemmer",
+        "description": "Integrer naturlige følelser — tilføj latter, suk, hoste og mere — for at skabe autentiske, fængslende lydoplevelser."
+      },
+      "multiLanguage": {
+        "title": "Flersproget support",
+        "description": "Vælg mellem 20+ unikke stemmer på flere sprog, perfekt til dine specifikke behov og præferencer."
+      },
+      "security": {
+        "title": "Sikkert & privat",
+        "description": "Dine stemmedata er beskyttet med sikkerhed på virksomhedsniveau. Fuld kontrol over dit privatliv, profil og historik."
+      }
+    },
+    "cta": {
+      "freeCredits": "Start med 10.000 gratis kreditter ( ͡° ͜ʖ ͡°)",
+      "title": "Klar til at finde din stemme?",
+      "subtitle": "Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.",
+      "action": "Opret din første stemme"
+    },
+    "generator": {
+      "title": "Prøv det nu",
+      "subtitle": "Generer din første stemmeprøve",
+      "selectVoice": "Vælg en stemme",
+      "enterText": "Indtast tekst til konvertering",
+      "speed": "Hastighed",
+      "pitch": "Tonehøjde",
+      "generate": "Generer lyd (kommer snart)",
+      "generating": "Genererer...",
+      "play": "Afspil",
+      "pause": "Pause",
+      "reset": "Nulstil",
+      "download": "Download"
+    },
+    "popular": {
+      "title": "Populære lydprøver",
+      "subtitle": "Lyt til hvad andre har skabt",
+      "loading": "Indlæser populære lydklip...",
+      "trySamplesTitle": "Prøv vores stemmeprøver",
+      "trySamplesSubtitle": "Lyt til stemmeprøver skabt med vores avancerede AI-teknologi"
+    },
+    "faq": {
+      "title": "Ofte stillede spørgsmål",
+      "subtitle": "Alt hvad du behøver at vide om SexyVoice.ai",
+      "groups": [
+        {
+          "id": "liveCalling",
+          "category": "Live AI-opkald",
+          "questions": [
+            {
+              "question": "Hvordan fungerer Live AI-opkald?",
+              "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
+            },
+            {
+              "question": "Hvor meget koster det?",
+              "answer": "Live-opkald koster 200 kreditter pr. minut, mens du er forbundet."
+            }
+          ]
+        },
+        {
+          "id": "voiceCreation",
+          "category": "Stemmeoprettelse & stilarter",
+          "questions": [
+            {
+              "question": "Hvordan fungerer stemmekloning?",
+              "answer": "Vores AI analyserer din stemmeprøve (10 sekunder til 5 minutter) for at lære dens unikke mønstre og karakteristika. Med blot få sekunders ren lyd kan du bygge en digital version af din stemme, der lyder naturlig og realistisk."
+            },
+            {
+              "question": "Kan jeg klone min egen stemme?",
+              "answer": "Ja! Med blot få sekunders ren lyd kan den bygge en digital version af din stemme, der lyder naturlig og realistisk."
+            },
+            {
+              "question": "Hvilke sprog understøttes for talesyntese?",
+              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇳🇱 Hollandsk (Holland),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam).\nAndre stemmer er sprogspecifikke:\n🇮🇹 Pietro (Italiensk),\n🇪🇸 Javi (Spansk),\n🇬🇧 Dan (Engelsk UK),\n🇺🇸 Emma (Engelsk US),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+            },
+            {
+              "question": "Hvilke sprog understøttes for stemmekloning?",
+              "answer": "Stemmekloning understøtter følgende 23 sprog:\n\n🇸🇦 Arabisk,\n🇩🇰 Dansk,\n🇬🇧 Engelsk,\n🇫🇮 Finsk,\n🇫🇷 Fransk,\n🇬🇷 Græsk,\n🇮🇱 Hebraisk,\n🇮🇳 Hindi,\n🇳🇱 Hollandsk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇲🇾 Malajisk,\n🇨🇳 Mandarin-kinesisk,\n🇳🇴 Norsk,\n🇵🇱 Polsk,\n🇵🇹 Portugisisk,\n🇷🇺 Russisk,\n🇪🇸 Spansk,\n🇸🇪 Svensk,\n🇰🇪 Swahili,\n🇹🇷 Tyrkisk,\nog 🇩🇪 Tysk."
+            },
+            {
+              "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
+              "answer": "Ja! Vælg en flersproget stemme (f.eks. Zephyr) og skriv den stil, du ønsker — \"britisk accent\", \"piratstemme\", \"forførende tone\" osv. Modellen tilpasser sig øjeblikkeligt, og du kan forfine det med flere instruktioner."
+            }
+          ]
+        },
+        {
+          "id": "trustAndPolicies",
+          "category": "Brug, sikkerhed & politikker",
+          "questions": [
+            {
+              "question": "Er mine stemmedata sikre?",
+              "answer": "Absolut. Alle stemmeoptagelser og genererede filer er krypteret og opbevaret sikkert. Når du kloner en stemme, sletter vi den uploadede stemmeprøve, og ingen andre kan bruge den. Du har fuld kontrol over de genererede lydfiler og kan slette dem, når du vil. Vi deler aldrig stemmedata uden dit samtykke."
+            },
+            {
+              "question": "Hvad kan jeg bruge de genererede stemmer til?",
+              "answer": "Skabere bruger vores stemmer til videoer, podcasts, lydbøger, socialt indhold, spil, e-learning og mere. Det er en nem måde at bevare konsekvent lydkvalitet. Husk bare at vores vilkår forbyder bedrag eller efterligning."
+            },
+            {
+              "question": "Er erotik eller voksenindhold tilladt?",
+              "answer": "Ja, vi tillader voksen- og erotikaindhold på vores platform. Vi tror på kreativ frihed med ansvarlig brug. Dog skal alt indhold overholde vores servicevilkår og gældende love. Vi forbyder indhold, der involverer mindreårige, ikke-samtykkende scenarier eller ulovlige aktiviteter."
+            }
+          ]
+        },
+        {
+          "id": "pricingAndAccess",
+          "category": "Priser & adgang",
+          "questions": [
+            {
+              "question": "Hvor mange kreditter har jeg brug for?",
+              "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 10.000 gratis kreditter (ca. 10 minutters tale). Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
+            },
+            {
+              "question": "Har I en API til udviklere?",
+              "answer": "Den kommer snart! Vores API vil lade udviklere tilføje stemmegenerering og kloning til apps, hjemmesider og spil. Du vil kunne oprette tale on demand og administrere stemmemodeller programmatisk."
+            },
+            {
+              "question": "Hvorfor vælge SexyVoice.ai?",
+              "answer": "Vi kombinerer premium stemmekvalitet med enkle værktøjer og fair priser. Uanset om du er skaber eller virksomhed, får du professionelle resultater uden kontrakter eller komplicerede opsætninger. De gratis kreditter gør det nemt at prøve alt."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "credits": {
+    "pricingPlan": "Priser",
+    "title": "Køb kreditter til skabere og virksomheder i alle størrelser",
+    "description": "Vælg den mængde kreditter, der passer bedst til dine behov",
+    "historyEmpty": "Din kreditforbrugshistorik vises her",
+    "billing": {
+      "forever": "(for evigt)"
+    },
+    "plans": {
+      "popular": "Mest populære",
+      "startFree": "Start gratis",
+      "buyCredits": "Køb kreditter",
+      "x_credits": "__NUM_CREDITS__ kreditter",
+      "free": {
+        "name": "Gratis",
+        "description": "For personer, der vil prøve den mest avancerede AI-lyd.",
+        "creditsWithAudio": "__NUM_CREDITS__ kreditter (~4 min lyd)",
+        "features": [
+          "Generer tale med unikke stemmer",
+          "Klon din stemme med kun 10 sekunders lyd"
+        ]
+      },
+      "starter": {
+        "name": "Starter"
+      },
+      "standard": {
+        "name": "Standard",
+        "description": "For hobbyfolk, der skaber projekter med AI-lyd og tilpassede stemmer.",
+        "creditsWithAudio": "__NUM_CREDITS__ kreditter (~11 min lyd)",
+        "creditsWithPromo": "__NUM_CREDITS__ kreditter",
+        "features": [
+          "Alt i Gratis",
+          "API-adgang (kommer snart)"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For større skabere, der øger deres indholdsproduktion.",
+        "creditsWithAudio": "__NUM_CREDITS__ kreditter (~125 minutters lyd)",
+        "creditsWithPromo": "__NUM_CREDITS__ kreditter",
+        "features": [
+          "Alt i Standard",
+          "Hurtig stil- og stemmeforhåndsvisning af din korte sætning (kommer snart)"
+        ]
+      }
+    },
+    "topup": {
+      "title": "Køb kreditter",
+      "description": "Fyld op på dine kreditter med det samme med et engangskøb",
+      "buyCredits": "Køb kreditter",
+      "onetimePurchase": "Engangskøb",
+      "processing": "Behandler...",
+      "packages": {
+        "starter": {
+          "name": "__NUM_CREDITS__ Kreditter",
+          "description": "Perfekt til at komme i gang"
+        },
+        "standard": {
+          "name": "__NUM_CREDITS__ kreditter",
+          "description": "Mest populære valg",
+          "value": "Bedste værdi"
+        },
+        "pro": {
+          "name": "__NUM_CREDITS__ kreditter",
+          "description": "Til superbrugere",
+          "value": "Pro-pakke"
+        }
+      },
+      "mostPopular": "Mest populære"
+    },
+    "status": {
+      "success": {
+        "title": "Betaling gennemført!",
+        "description": "Dine kreditter er blevet tilføjet til din konto.",
+        "descriptionWithAmount": "Din konto er blevet krediteret med {creditsAmount} kreditter.",
+        "dismiss": "Luk"
+      },
+      "canceled": {
+        "title": "Betaling annulleret",
+        "description": "Din betaling blev annulleret. Der er ikke trukket noget fra din konto.",
+        "dismiss": "Luk"
+      },
+      "error": {
+        "title": "Betaling mislykkedes",
+        "description": "Der opstod et problem med at behandle din betaling. Prøv igen eller kontakt support, hvis problemet fortsætter.",
+        "dismiss": "Luk"
+      },
+      "checkoutError": "Kunne ikke oprette betalingssession"
+    },
+    "history": {
+      "title": "Kredithistorik"
+    }
+  },
+  "creditsSection": {
+    "title": "Kreditter",
+    "topupButton": "Fyld op",
+    "totalCredits": "Total",
+    "remainingCredits": "Resterende"
+  },
+  "generate": {
+    "abortedCloning": "Stemmegenerering afbrudt.",
+    "cancel": "Annuller generering",
+    "ctaButton": "Generer lyd",
+    "downloadAudio": "Download lyd",
+    "error": "Kunne ikke generere lyd",
+    "errorEstimating": "Kunne ikke estimere kreditter",
+    "estimateCreditsButton": "Estimer kreditter",
+    "generating": "Genererer",
+    "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegeneringer som gratis bruger. Prøv venligst en anden stemme eller opgrader din plan for ubegrænset adgang.",
+    "languageLabel": "Sprog",
+    "languageSelectPlaceholder": "Vælg et sprog",
+    "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
+    "playAudio": "Afspil lyd",
+    "resetPlayer": "Nulstil afspiller",
+    "subtitle": "Vælg en stemme og generer lyd fra tekst",
+    "success": "Lyd genereret!",
+    "textAreaPlaceholder": "Indtast den tekst, du vil konvertere til tale...",
+    "title": "Generer lyd",
+    "voiceSelector": {
+      "title": "Vælg stemme",
+      "description": "Vælg blandt tilgængelige stemmer",
+      "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
+      "toolTipEmotionTags": "Understøttede følelsestags:",
+      "geminiInfo": "Understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇳🇱 Hollandsk (Holland),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)"
+    }
+  },
+  "clone": {
+    "audioFileLabel": "Lydfil",
+    "cancelButton": "Annuller",
+    "cloneNotice": "Klon venligst kun stemmer med tilladelse – respekter andre og følg loven.",
+    "cloneNoticeTooltip": "Upload kun optagelser, du har tilladelse til at bruge, og få samtykke, før du kloner eller deler andres stemme.\nDu har eksklusiv adgang til dine klonede stemmer og lydfiler – ingen andre kan få adgang til dem.",
+    "cloneNoticeTooltipLabel": "Åbn sikkerhedsmeddelelse om stemmekloning",
+    "ctaButton": "Generer lyd",
+    "downloadAudio": "Download lyd",
+    "dragDropText": "Træk & slip eller klik for at gennemse",
+    "errorCloning": "Kunne ikke klone stemme",
+    "errorTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
+    "errorTitle": "Fejl",
+    "fileFormatsText": "MP3, WAV, M4A eller OGG (maks. __SIZE__)",
+    "generating": "Genererer",
+    "languageLabel": "Sprog",
+    "languageSelectPlaceholder": "Vælg et sprog",
+    "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
+    "playAudio": "Afspil lyd",
+    "previewTitle": "Forhåndsvisning af genereret stemme",
+    "subtitle": "Upload en lydfil og indtast tekst for at oprette en stemmeklon og generere tale i ét trin",
+    "success": "Lyd genereret!",
+    "tabPreview": "Forhåndsvisning",
+    "tabUpload": "Upload",
+    "textAreaPlaceholder": "Indtast den tekst, du vil konvertere til tale...",
+    "textToConvertLabel": "Indtast tekst for at generere tale",
+    "title": "Klon en stemme",
+    "tryDemo": "Eller prøv med en demo:",
+    "uploadAudioFile": "Upload lydfil",
+    "orUseMicrophone": "eller brug din mikrofon",
+    "errors": {
+      "noAudioFile": "Vælg venligst en lydfil.",
+      "noText": "Indtast venligst noget tekst at konvertere til tale.",
+      "ffmpegLoading": "Lydkonverteren indlæses stadig. Prøv igen om et øjeblik"
+    },
+    "sampleCard": {
+      "sourceAudio": "Kildelyd",
+      "exampleOutput": "Eksempel",
+      "loadSource": "Indlæs kilde"
+    },
+    "crossLanguageInfo": {
+      "title": "Stemmekloning på tværs af sprog",
+      "description": "Klon en stemme på ét sprog og få den til at tale flydende på et af de andre 23 understøttede sprog, mens talerens unikke karakteristika bevares.",
+      "example": "Eksempel: Upload en engelsktalende persons stemmeprøve → Generer fransk tale med deres stemme"
+    },
+    "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål."
+  },
+  "profile": {
+    "title": "Profilindstillinger",
+    "subtitle": "Administrer dine kontoindstillinger og præferencer",
+    "notLoggedIn": "Ikke logget ind",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Sikkerhed"
+    },
+    "personalInfo": {
+      "title": "Personlige oplysninger",
+      "description": "Opdater dine profiloplysninger og avatar"
+    },
+    "security": {
+      "title": "Sikkerhedsindstillinger",
+      "description": "Administrer din e-mail og adgangskode"
+    },
+    "dangerZone": {
+      "title": "Farezone",
+      "deleteAccount": {
+        "button": "Slet konto",
+        "confirmTitle": "Er du helt sikker?",
+        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto og fjerne dine data fra vores servere.",
+        "alertTitle": "Bekræft at du vil slette din konto",
+        "cancel": "Annuller",
+        "continue": "Fortsæt"
+      }
+    }
+  },
+  "pages": {
+    "defaultTitle": "SexyVoice.ai - Gratis tekst-til-tale & AI-stemmegenerator",
+    "description": "Skab naturlige AI-stemmer med følelser på 24 sprog. Gratis tekst-til-tale-generator med stemmekloning. Start med 10.000 gratis kreditter - intet kort påkrævet.",
+    "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
+    "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
+    "/": "",
+    "/login": "Log ind",
+    "/signup": "Tilmeld med e-mail eller Google",
+    "/dashboard/generate": "Generer",
+    "/dashboard/clone": "Klon",
+    "/dashboard/history": "Historik",
+    "/dashboard/credits": "Kreditter",
+    "/tools/audio-converter": "Gratis lydkonverter"
+  },
+  "sidebar": {
+    "profile": "Profil",
+    "signOut": "Log ud"
+  },
+  "header": {
+    "generate": "Generer",
+    "login": "Log ind",
+    "signup": "Tilmeld"
+  },
+  "footer": {
+    "statusPage": "Statusside",
+    "privacyPolicy": "Privatlivspolitik",
+    "termsAndConditions": "Vilkår og betingelser",
+    "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
+    "audioConverter": "Gratis lydkonverter"
+  },
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Halloween-tilbud – Få op til 35% ekstra kreditter ved køb 👻\nTidsbegrænset tilbud 🦇",
+      "ctaLoggedIn": "Få tilbud 🎃",
+      "ctaLoggedOut": "Tilmeld dig nu 🎃",
+      "ariaLabelDismiss": "Luk Halloween-banner",
+      "pricing": {
+        "bannerText": "🎃 Halloween-tilbud"
+      }
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Black Friday-udsalg – Få op til 35% ekstra kreditter!",
+      "ctaLoggedIn": "Få tilbud",
+      "ctaLoggedOut": "Få tilbud",
+      "ariaLabelDismiss": "Luk Black Friday-banner",
+      "countdown": {
+        "prefix": "Tilbud udløber om:",
+        "days": "Dage",
+        "hours": "Timer",
+        "minutes": "Min",
+        "seconds": "Sek"
+      },
+      "pricing": {
+        "bannerText": "Black Friday-udsalg"
+      }
+    },
+    "winterSaleBanner": {
+      "text": "❄️ Vinterudsalg – Få op til 35% ekstra kreditter ved køb ☃️\nTidsbegrænset tilbud 🎿",
+      "ctaLoggedIn": "Få tilbud",
+      "ctaLoggedOut": "Tilmeld dig nu",
+      "ariaLabelDismiss": "Luk vinterudsalgsbanner",
+      "pricing": {
+        "bannerText": "❄️ Vinterudsalg"
+      }
+    }
+  },
+  "audioConverter": {
+    "title": "Gratis lydkonverter",
+    "subtitle": "Konverter lydfiler til MP3, WAV, MP4 og flere formater offline i din browser",
+    "tagline": "– gratis & nemt",
+    "dropZone": {
+      "title": "Slip din lydfil her",
+      "description": "eller klik for at gennemse"
+    },
+    "fileInfo": {
+      "remove": "Fjern fil"
+    },
+    "formatSelector": {
+      "label": "Konverter til",
+      "placeholder": "Vælg outputformat"
+    },
+    "convertButton": {
+      "convert": "Konverter lyd",
+      "converting": "Konverterer",
+      "progress": "Fremskridt"
+    },
+    "downloadSection": {
+      "title": "Konvertering fuldført",
+      "description": "Din fil er blevet konverteret",
+      "download": "Download",
+      "convertAnother": "Konverter en anden fil"
+    },
+    "errors": {
+      "loadingFailed": "Kunne ikke indlæse FFmpeg. Opdater venligst siden.",
+      "conversionFailed": "Konvertering mislykkedes. Prøv igen.",
+      "unsupportedFormat": "Ikke-understøttet filformat",
+      "converterFailedToLoad": "Lydkonverteren kunne ikke indlæses. Opdater venligst siden.",
+      "converterLoadFailed": "Kunne ikke indlæse lydkonverteren. Opdater venligst siden eller prøv en anden browser."
+    },
+    "footer": {
+      "poweredBy": "Drevet af",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Ingen uploads, 100% i browseren",
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve"
+    }
+  }
+}
