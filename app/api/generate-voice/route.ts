@@ -45,6 +45,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let estimatedTokens: number | undefined;
   let user: User | null = null;
   try {
     if (request.body === null) {
@@ -58,6 +59,10 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
+    const estimatedTokensValue = Number(body.estimatedTokens);
+    estimatedTokens = Number.isFinite(estimatedTokensValue)
+      ? estimatedTokensValue
+      : undefined;
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -385,6 +390,14 @@ export async function POST(request: Request) {
         );
       }
 
+      const usageMetadata = {
+        ...(usage ?? {}),
+        ...(Number.isFinite(estimatedTokens ?? Number.NaN)
+          ? { clientEstimatedTokenCount: estimatedTokens }
+          : {}),
+        userHasPaid,
+      };
+
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const audioFileDBResult = await saveAudioFile({
@@ -398,10 +411,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         duration: '-1',
         credits_used: creditsUsed,
-        usage: {
-          ...usage,
-          userHasPaid,
-        },
+        usage: usageMetadata,
       });
 
       if (audioFileDBResult.error) {
