@@ -144,7 +144,9 @@ export function VoiceSelector({
             <div className="flex items-center justify-start gap-2 py-2">
               <AudioPlayerWithContext
                 playAudioTitle={dict.playAudio}
+                showWaveform
                 url={selectedVoice.sample_url}
+                waveformClassName="!h-5"
               />
               <div className="flex items-center gap-3">
                 <p className="text-muted-foreground text-sm">

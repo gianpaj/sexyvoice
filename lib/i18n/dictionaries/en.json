@@ -57,7 +57,7 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Private call with an AI, Talk freely – no judgment",
+      "title": "Private call with an AI, Talk freely –\nno judgment",
       "subtitle": "Experience the connection – try 60 sec free call",
       "buttonCTA": "Sign up for Free",
       "noCreditCard": "No credit card required. You can hang up anytime",
@@ -322,9 +322,6 @@
   "clone": {
     "audioFileLabel": "Audio File",
     "cancelButton": "Cancel",
-    "cloneNotice": "Please only clone voices with permission – respect others and follow the law.",
-    "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.\nYou have exclusive access to your cloned voices and audio files – no one else can access them.",
-    "cloneNoticeTooltipLabel": "Open voice clone safety notice",
     "ctaButton": "Generate Audio",
     "downloadAudio": "Download Audio",
     "dragDropText": "Drag & drop or click to browse",
