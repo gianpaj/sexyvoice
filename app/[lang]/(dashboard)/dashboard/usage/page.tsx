@@ -30,7 +30,7 @@ export default async function UsagePage(props: {
   const dict = await getDictionary(lang, 'usage');
 
   // Get month name for display
-  const currentMonth = new Date().toLocaleDateString('en-US', {
+  const currentMonth = new Date().toLocaleDateString(lang, {
     month: 'long',
     year: 'numeric',
   });
@@ -52,6 +52,7 @@ export default async function UsagePage(props: {
         {/* Monthly Summary */}
         <SummaryCard
           bySourceType={monthlySummary.bySourceType}
+          noDataLabel={dict.summary.noData}
           sourceTypeLabels={sourceTypeLabels}
           subtitle={currentMonth}
           title={dict.summary.title}
@@ -64,6 +65,7 @@ export default async function UsagePage(props: {
         {/* All-time Summary */}
         <SummaryCard
           bySourceType={allTimeSummary.bySourceType}
+          noDataLabel={dict.summary.noData}
           sourceTypeLabels={sourceTypeLabels}
           subtitle={dict.summary.allTime}
           title={dict.summary.totalTitle}

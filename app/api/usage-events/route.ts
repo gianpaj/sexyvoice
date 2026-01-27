@@ -4,11 +4,11 @@ import { NextResponse } from 'next/server';
 
 import { createClient } from '@/lib/supabase/server';
 import {
-  getUsageEventsPaginated,
-  getMonthlyUsageSummary,
   getAllTimeUsageSummary,
-  type UsageSourceType,
+  getMonthlyUsageSummary,
+  getUsageEventsPaginated,
   type PaginatedUsageEventsResponse,
+  type UsageSourceType,
 } from '@/lib/supabase/usage-queries';
 
 export async function GET(request: NextRequest) {
@@ -35,6 +35,15 @@ export async function GET(request: NextRequest) {
       100,
       Math.max(1, Number.parseInt(searchParams.get('pageSize') ?? '20', 10)),
     );
+
+    // Validate parsed numbers to prevent NaN propagation
+    if (!(Number.isFinite(page) && Number.isFinite(pageSize))) {
+      return NextResponse.json(
+        { error: 'Invalid page or pageSize parameter' },
+        { status: 400 },
+      );
+    }
+
     const sourceType = searchParams.get('sourceType') as
       | UsageSourceType
       | undefined;

@@ -67,7 +67,46 @@ export async function getUsageEventsPaginated(
 }
 
 /**
+ * Build a MonthlyUsageSummary from RPC results
+ */
+function buildSummaryFromRpcData(
+  data: Array<{
+    source_type: UsageSourceType;
+    total_credits: number;
+    operation_count: number;
+  }> | null,
+): MonthlyUsageSummary {
+  const summary: MonthlyUsageSummary = {
+    totalCredits: 0,
+    totalOperations: 0,
+    bySourceType: {
+      tts: { credits: 0, count: 0 },
+      voice_cloning: { credits: 0, count: 0 },
+      live_call: { credits: 0, count: 0 },
+      audio_processing: { credits: 0, count: 0 },
+    },
+  };
+
+  for (const row of data ?? []) {
+    const sourceType = row.source_type as UsageSourceType;
+    const credits = Number(row.total_credits);
+    const count = Number(row.operation_count);
+
+    summary.totalCredits += credits;
+    summary.totalOperations += count;
+
+    if (summary.bySourceType[sourceType]) {
+      summary.bySourceType[sourceType].credits = credits;
+      summary.bySourceType[sourceType].count = count;
+    }
+  }
+
+  return summary;
+}
+
+/**
  * Get monthly usage summary for the current calendar month
+ * Uses SQL aggregation via RPC for performance
  */
 export async function getMonthlyUsageSummary(
   client: TypedSupabaseClient,
@@ -76,84 +115,34 @@ export async function getMonthlyUsageSummary(
   // Get start of current month
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfMonthISO = startOfMonth.toISOString();
 
-  const { data, error } = await client
-    .from('usage_events')
-    .select('source_type, credits_used')
-    .eq('user_id', userId)
-    .gte('occurred_at', startOfMonthISO);
+  const { data, error } = await client.rpc('get_usage_summary', {
+    p_user_id: userId,
+    p_start_date: startOfMonth.toISOString(),
+  });
 
   if (error) {
     throw error;
   }
 
-  // Initialize the summary
-  const summary: MonthlyUsageSummary = {
-    totalCredits: 0,
-    totalOperations: 0,
-    bySourceType: {
-      tts: { credits: 0, count: 0 },
-      voice_cloning: { credits: 0, count: 0 },
-      live_call: { credits: 0, count: 0 },
-      audio_processing: { credits: 0, count: 0 },
-    },
-  };
-
-  // Aggregate the data
-  for (const event of data ?? []) {
-    summary.totalCredits += event.credits_used;
-    summary.totalOperations += 1;
-
-    const sourceType = event.source_type as UsageSourceType;
-    if (summary.bySourceType[sourceType]) {
-      summary.bySourceType[sourceType].credits += event.credits_used;
-      summary.bySourceType[sourceType].count += 1;
-    }
-  }
-
-  return summary;
+  return buildSummaryFromRpcData(data);
 }
 
 /**
  * Get all-time usage summary for total summary card
+ * Uses SQL aggregation via RPC for performance
  */
 export async function getAllTimeUsageSummary(
   client: TypedSupabaseClient,
   userId: string,
 ): Promise<MonthlyUsageSummary> {
-  const { data, error } = await client
-    .from('usage_events')
-    .select('source_type, credits_used')
-    .eq('user_id', userId);
+  const { data, error } = await client.rpc('get_usage_summary', {
+    p_user_id: userId,
+  });
 
   if (error) {
     throw error;
   }
 
-  // Initialize the summary
-  const summary: MonthlyUsageSummary = {
-    totalCredits: 0,
-    totalOperations: 0,
-    bySourceType: {
-      tts: { credits: 0, count: 0 },
-      voice_cloning: { credits: 0, count: 0 },
-      live_call: { credits: 0, count: 0 },
-      audio_processing: { credits: 0, count: 0 },
-    },
-  };
-
-  // Aggregate the data
-  for (const event of data ?? []) {
-    summary.totalCredits += event.credits_used;
-    summary.totalOperations += 1;
-
-    const sourceType = event.source_type as UsageSourceType;
-    if (summary.bySourceType[sourceType]) {
-      summary.bySourceType[sourceType].credits += event.credits_used;
-      summary.bySourceType[sourceType].count += 1;
-    }
-  }
-
-  return summary;
+  return buildSummaryFromRpcData(data);
 }

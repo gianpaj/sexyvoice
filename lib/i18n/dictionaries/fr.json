@@ -438,6 +438,7 @@
       "allTime": "Tout le temps",
       "totalCredits": "Crédits totaux utilisés",
       "operations": "Opérations",
+      "noData": "Aucune donnée d'utilisation",
       "byType": {
         "tts": "TTS",
         "voice_cloning": "Clonage vocal",

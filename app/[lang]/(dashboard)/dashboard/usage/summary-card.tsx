@@ -27,6 +27,7 @@ interface SummaryCardProps {
   totalOperationsLabel: string;
   bySourceType: MonthlyUsageSummary['bySourceType'];
   sourceTypeLabels: Record<UsageSourceType, string>;
+  noDataLabel: string;
 }
 
 export function SummaryCard({
@@ -38,6 +39,7 @@ export function SummaryCard({
   totalOperationsLabel,
   bySourceType,
   sourceTypeLabels,
+  noDataLabel,
 }: SummaryCardProps) {
   // Filter out source types with no usage
   const activeSourceTypes = (
@@ -103,7 +105,7 @@ export function SummaryCard({
 
         {activeSourceTypes.length === 0 && (
           <p className="text-center text-muted-foreground text-sm">
-            No usage data
+            {noDataLabel}
           </p>
         )}
       </CardContent>
