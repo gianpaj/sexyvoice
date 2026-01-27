@@ -831,7 +831,10 @@ function NewVoiceClientInner({
                   <AudioPlayerWithContext
                     className="rounded-full"
                     playAudioTitle={dict.playAudio}
+                    progressColor="#8b5cf6"
+                    showWaveform
                     url={generatedAudioUrl}
+                    waveColor="#888888"
                   />
                 )}
               </div>

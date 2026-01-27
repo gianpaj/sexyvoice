@@ -444,7 +444,10 @@ export function AudioGenerator({
                 <AudioPlayerWithContext
                   className="rounded-md"
                   playAudioTitle={dict.playAudio}
+                  progressColor="#8b5cf6"
+                  showWaveform
                   url={audioURL}
+                  waveColor="#888888"
                 />
                 <Button
                   onClick={resetPlayer}
