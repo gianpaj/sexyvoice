@@ -19,6 +19,7 @@ interface AudioPlayerWithContextProps {
   waveformHeight?: number;
   waveColor?: string;
   progressColor?: string;
+  autoPlay?: boolean;
 }
 
 export function AudioPlayerWithContext({
@@ -31,6 +32,7 @@ export function AudioPlayerWithContext({
   waveformHeight = 48,
   waveColor = '#a1a1aa',
   progressColor = '#7c3aed',
+  autoPlay = false,
 }: AudioPlayerWithContextProps) {
   const audio = useAudio();
 
@@ -44,10 +46,16 @@ export function AudioPlayerWithContext({
   // Determine which playing state to use based on mode
   const isPlaying = showWaveform ? isWaveformPlaying : isPlayingFromContext;
 
-  const onReady = useCallback((ws: WaveSurfer) => {
-    setWavesurfer(ws);
-    setIsWaveformPlaying(false);
-  }, []);
+  const onReady = useCallback(
+    (ws: WaveSurfer) => {
+      setWavesurfer(ws);
+      setIsWaveformPlaying(false);
+      if (autoPlay) {
+        ws.play();
+      }
+    },
+    [autoPlay],
+  );
 
   const onPlay = useCallback(() => {
     setIsWaveformPlaying(true);

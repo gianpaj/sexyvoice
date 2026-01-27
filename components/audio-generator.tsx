@@ -125,7 +125,6 @@ export function AudioGenerator({
       // }, 1000);
 
       setAudioURL(url);
-      audio?.setUrlAndPlay(url);
 
       toast.success(dict.success);
     } catch (error) {
@@ -442,6 +441,7 @@ export function AudioGenerator({
             {audioURL && (
               <div className="flex justify-start gap-2 sm:w-full">
                 <AudioPlayerWithContext
+                  autoPlay
                   className="rounded-md"
                   playAudioTitle={dict.playAudio}
                   progressColor="#8b5cf6"

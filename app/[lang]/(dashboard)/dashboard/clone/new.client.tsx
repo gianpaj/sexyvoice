@@ -43,7 +43,7 @@ import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
-import { AudioProvider, useAudio } from './audio-provider';
+import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './clone-sample-card';
 import CloneSampleCard from './clone-sample-card';
 
@@ -138,7 +138,6 @@ function NewVoiceClientInner({
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
-  const audio = useAudio();
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -381,9 +380,6 @@ function NewVoiceClientInner({
 
       setGeneratedAudioUrl(voiceResult.url);
 
-      // Automatically play the audio using the context
-      audio?.setUrlAndPlay(voiceResult.url);
-
       toast.success(dict.success);
 
       setStatus('complete');
@@ -405,7 +401,6 @@ function NewVoiceClientInner({
       setStatus('error');
     }
   }, [
-    audio,
     dict,
     file,
     micBlob,
@@ -757,7 +752,7 @@ function NewVoiceClientInner({
                 }
               />
               <Label
-                className="text-muted-foreground text-sm leading-tight"
+                className="font-normal text-muted-foreground text-sm leading-tight"
                 htmlFor="legal-consent"
               >
                 {dict.legalConsentCheckbox}
@@ -821,6 +816,7 @@ function NewVoiceClientInner({
               <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
                 {generatedAudioUrl && (
                   <AudioPlayerWithContext
+                    autoPlay
                     className="rounded-full"
                     playAudioTitle={dict.playAudio}
                     progressColor="#8b5cf6"
