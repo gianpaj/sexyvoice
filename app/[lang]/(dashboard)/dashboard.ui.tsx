@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  BarChart3,
   CreditCard,
   FileClock,
   Mic2,
@@ -80,6 +81,12 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
+    },
+    {
+      name: dict.pages['/dashboard/usage'],
+      href: `/${lang}/dashboard/usage`,
+      icon: BarChart3,
+      current: pathname === `/${lang}/dashboard/usage`,
     },
   ];
 

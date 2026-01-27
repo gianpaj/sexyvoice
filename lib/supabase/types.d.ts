@@ -269,6 +269,7 @@ declare type Database = {
       usage_events: {
         Row: {
           created_at: string;
+          credit_transaction_id: string | null;
           credits_used: number;
           id: string;
           metadata: Json | null;
@@ -281,6 +282,7 @@ declare type Database = {
         };
         Insert: {
           created_at?: string;
+          credit_transaction_id?: string | null;
           credits_used: number;
           id?: string;
           metadata?: Json | null;
@@ -293,6 +295,7 @@ declare type Database = {
         };
         Update: {
           created_at?: string;
+          credit_transaction_id?: string | null;
           credits_used?: number;
           id?: string;
           metadata?: Json | null;
@@ -303,7 +306,15 @@ declare type Database = {
           unit?: Database['public']['Enums']['usage_unit_type'];
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
+            columns: ['credit_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'credit_transactions';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       voices: {
         Row: {
@@ -363,6 +374,14 @@ declare type Database = {
       decrement_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
+      };
+      get_usage_summary: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };
+        Returns: {
+          operation_count: number;
+          source_type: Database['public']['Enums']['usage_source_type'];
+          total_credits: number;
+        }[];
       };
       increment_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };

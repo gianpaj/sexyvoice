@@ -406,6 +406,7 @@
     "/dashboard/clone": "Cloner",
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
+    "/dashboard/usage": "Utilisation",
     "/tools/audio-converter": "Convertisseur audio gratuit"
   },
   "sidebar": {
@@ -426,6 +427,47 @@
       "columns": "Colonnes",
       "previous": "Précédent",
       "next": "Suivant"
+    }
+  },
+  "usage": {
+    "header": "Historique d'utilisation",
+    "empty": "Aucun événement d'utilisation pour le moment",
+    "summary": {
+      "title": "Utilisation ce mois-ci",
+      "totalTitle": "Utilisation totale",
+      "allTime": "Tout le temps",
+      "totalCredits": "Crédits totaux utilisés",
+      "operations": "Opérations",
+      "noData": "Aucune donnée d'utilisation",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Clonage vocal",
+        "live_call": "Appel en direct",
+        "audio_processing": "Traitement audio"
+      }
+    },
+    "table": {
+      "sourceType": "Type",
+      "quantity": "Quantité",
+      "creditsUsed": "Crédits",
+      "date": "Date",
+      "details": "Détails"
+    },
+    "ui": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page",
+      "of": "sur",
+      "showing": "Affichage",
+      "results": "résultats",
+      "filterByType": "Filtrer par type",
+      "allTypes": "Tous les types"
+    },
+    "units": {
+      "chars": "caractères",
+      "mins": "minutes",
+      "secs": "secondes",
+      "operation": "opération"
     }
   },
   "footer": {

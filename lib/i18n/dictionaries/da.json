@@ -406,6 +406,7 @@
     "/dashboard/clone": "Klon",
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
+    "/dashboard/usage": "Forbrug",
     "/tools/audio-converter": "Gratis lydkonverter"
   },
   "sidebar": {
@@ -426,6 +427,47 @@
       "columns": "Kolonner",
       "previous": "Forrige",
       "next": "Næste"
+    }
+  },
+  "usage": {
+    "header": "Forbrugshistorik",
+    "empty": "Ingen forbrugshændelser endnu",
+    "summary": {
+      "title": "Denne måneds forbrug",
+      "totalTitle": "Samlet forbrug",
+      "allTime": "Altid",
+      "totalCredits": "Samlede kreditter brugt",
+      "operations": "Operationer",
+      "noData": "Ingen forbrugsdata",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Stemmekloning",
+        "live_call": "Live-opkald",
+        "audio_processing": "Lydbehandling"
+      }
+    },
+    "table": {
+      "sourceType": "Type",
+      "quantity": "Mængde",
+      "creditsUsed": "Kreditter",
+      "date": "Dato",
+      "details": "Detaljer"
+    },
+    "ui": {
+      "previous": "Forrige",
+      "next": "Næste",
+      "page": "Side",
+      "of": "af",
+      "showing": "Viser",
+      "results": "resultater",
+      "filterByType": "Filtrer efter type",
+      "allTypes": "Alle typer"
+    },
+    "units": {
+      "chars": "tegn",
+      "mins": "minutter",
+      "secs": "sekunder",
+      "operation": "operation"
     }
   },
   "footer": {

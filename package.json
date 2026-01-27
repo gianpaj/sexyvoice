@@ -27,6 +27,8 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
+    "@effect-ts/otel": "^0.15.1",
+    "@effect-ts/otel-sdk-trace-node": "^0.15.1",
     "@ai-sdk/react": "^1.2.12",
     "@aws-sdk/client-s3": "^3.962.0",
     "@fal-ai/client": "^1.5.0",
@@ -56,7 +58,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@sentry/nextjs": "^10.32.1",
+    "@sentry/nextjs": "^10.36.0",
     "@supabase-cache-helpers/postgrest-react-query": "^1.13.7",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
