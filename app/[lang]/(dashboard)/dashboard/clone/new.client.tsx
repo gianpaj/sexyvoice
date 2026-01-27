@@ -4,7 +4,6 @@ import {
   AlertCircle,
   CircleStop,
   Download,
-  InfoIcon,
   PaperclipIcon,
   UploadIcon,
   XIcon,
@@ -23,7 +22,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -38,12 +36,6 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
@@ -852,28 +844,6 @@ function NewVoiceClientInner({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex items-center justify-between gap-3 border-t pt-6">
-        <p className="text-muted-foreground text-sm">{dict.cloneNotice}</p>
-        <TooltipProvider>
-          <Tooltip supportMobileTap>
-            <TooltipTrigger aria-label={dict.cloneNoticeTooltipLabel} asChild>
-              <button
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                type="button"
-              >
-                <InfoIcon aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              align="end"
-              className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
-              side="left"
-            >
-              {dict.cloneNoticeTooltip}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </CardFooter>
     </Card>
   );
 }

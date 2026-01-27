@@ -322,9 +322,6 @@
   "clone": {
     "audioFileLabel": "Audiodatei",
     "cancelButton": "Abbrechen",
-    "cloneNotice": "Klonen Sie Stimmen nur mit Genehmigung – respektieren Sie andere und halten Sie sich an das Gesetz.",
-    "cloneNoticeTooltip": "Laden Sie nur Aufnahmen hoch, zu deren Verwendung Sie berechtigt sind, und holen Sie die Zustimmung ein, bevor Sie die Stimme einer anderen Person klonen oder weitergeben.\nSie haben exklusiven Zugriff auf Ihre geklonten Stimmen und Audiodateien – niemand sonst kann darauf zugreifen.",
-    "cloneNoticeTooltipLabel": "Sicherheitshinweis zur Stimmklonung öffnen",
     "ctaButton": "Audio generieren",
     "downloadAudio": "Audio herunterladen",
     "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",

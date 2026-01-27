@@ -322,9 +322,6 @@
   "clone": {
     "audioFileLabel": "Lydfil",
     "cancelButton": "Annuller",
-    "cloneNotice": "Klon venligst kun stemmer med tilladelse – respekter andre og følg loven.",
-    "cloneNoticeTooltip": "Upload kun optagelser, du har tilladelse til at bruge, og få samtykke, før du kloner eller deler andres stemme.\nDu har eksklusiv adgang til dine klonede stemmer og lydfiler – ingen andre kan få adgang til dem.",
-    "cloneNoticeTooltipLabel": "Åbn sikkerhedsmeddelelse om stemmekloning",
     "ctaButton": "Generer lyd",
     "downloadAudio": "Download lyd",
     "dragDropText": "Træk & slip eller klik for at gennemse",
