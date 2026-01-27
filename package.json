@@ -28,6 +28,7 @@
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
     "@effect-ts/otel": "^0.15.1",
+    "@effect-ts/otel-sdk-trace-node": "^0.15.1",
     "@ai-sdk/react": "^1.2.12",
     "@aws-sdk/client-s3": "^3.962.0",
     "@fal-ai/client": "^1.5.0",
