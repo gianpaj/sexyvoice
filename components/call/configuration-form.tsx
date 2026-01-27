@@ -134,7 +134,7 @@ export function ConfigurationForm() {
 
       try {
         // Trigger full reconnection
-        disconnect();
+        await disconnect();
         // Small delay to ensure clean disconnect
         await new Promise((resolve) => setTimeout(resolve, 500));
 

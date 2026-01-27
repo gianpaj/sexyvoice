@@ -2,12 +2,17 @@
 
 import WavesurferPlayer from '@wavesurfer/react';
 import { Pause, Play } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+export interface AudioPlayerControls {
+  reset: () => void;
+  stop: () => void;
+}
 
 interface AudioPlayerWithContextProps {
   url: string;
@@ -20,6 +25,7 @@ interface AudioPlayerWithContextProps {
   waveColor?: string;
   progressColor?: string;
   autoPlay?: boolean;
+  onControlsReady?: (controls: AudioPlayerControls) => void;
 }
 
 export function AudioPlayerWithContext({
@@ -33,6 +39,7 @@ export function AudioPlayerWithContext({
   waveColor = '#a1a1aa',
   progressColor = '#7c3aed',
   autoPlay = false,
+  onControlsReady,
 }: AudioPlayerWithContextProps) {
   const audio = useAudio();
 
@@ -45,6 +52,21 @@ export function AudioPlayerWithContext({
 
   // Determine which playing state to use based on mode
   const isPlaying = showWaveform ? isWaveformPlaying : isPlayingFromContext;
+
+  // Expose controls to parent when wavesurfer is ready
+  useEffect(() => {
+    if (showWaveform && wavesurfer && onControlsReady) {
+      onControlsReady({
+        reset: () => {
+          wavesurfer.stop();
+          wavesurfer.seekTo(0);
+        },
+        stop: () => {
+          wavesurfer.stop();
+        },
+      });
+    }
+  }, [showWaveform, wavesurfer, onControlsReady]);
 
   const onReady = useCallback(
     (ws: WaveSurfer) => {
