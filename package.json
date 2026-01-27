@@ -79,7 +79,7 @@
     "music-metadata": "^11.2.3",
     "nanoid": "^5.0.9",
     "negotiator": "^1.0.0",
-    "next": "16.1.1",
+    "next": "16.1.5",
     "next-contentlayer2": "^0.5.8",
     "ogg-opus-decoder": "^1.7.3",
     "posthog-js": "^1.315.1",
