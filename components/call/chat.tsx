@@ -25,7 +25,7 @@ export function Chat() {
   // const { audioTrack, state } = useVoiceAssistant();
   const [isChatRunning, setIsChatRunning] = useState(false);
   const { agent } = useAgent();
-  const { disconnect } = useConnection();
+  const { disconnect, dict } = useConnection();
   // const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const searchParams = useSearchParams();
 
@@ -48,7 +48,7 @@ export function Chat() {
 
         console.error('Agent Unavailable');
 
-        toast.error('Agent Unavailable');
+        toast.error(dict.agentUnavailable);
       }, 5000);
     }
 
@@ -66,7 +66,7 @@ export function Chat() {
         if (!agent) {
           disconnect();
           setHasSeenAgent(false);
-          toast.info('Disconnected');
+          toast.info(dict.disconnected);
           Sentry.captureMessage('Disconnected');
         }
       }, 5000);

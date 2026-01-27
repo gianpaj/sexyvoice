@@ -20,7 +20,7 @@ export default async function Call(props: {
     error,
   } = await supabase.auth.getUser();
   if (!user || error) {
-    return <div>Not logged in</div>;
+    return <div>{dict.profile.notLoggedIn}</div>;
   }
 
   const { data: creditTransactions } = await supabase

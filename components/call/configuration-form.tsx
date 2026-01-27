@@ -53,7 +53,7 @@ export interface ConfigurationFormFieldProps {
 
 export function ConfigurationForm() {
   const { pgState, dispatch, helpers } = usePlaygroundState();
-  const { connect, disconnect } = useConnection();
+  const { connect, disconnect, dict } = useConnection();
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
   const form = useForm<z.infer<typeof ConfigurationFormSchema>>({
@@ -146,9 +146,9 @@ export function ConfigurationForm() {
         // Wait a bit longer for the connection to stabilize and attributes to sync
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        toast.success('Reconnected');
+        toast.success(dict.reconnected);
       } catch {
-        toast.error('Reconnection failed');
+        toast.error(dict.reconnectionFailed);
       } finally {
         // Always reset the reconnecting flag
         isReconnectingRef.current = false;
@@ -167,10 +167,10 @@ export function ConfigurationForm() {
       console.debug('pg.updateConfig', response);
       const responseObj = JSON.parse(response);
       if (responseObj.changed) {
-        toast('Configuration updated');
+        toast(dict.configurationUpdated);
       }
     } catch {
-      toast('Error Updating Configuration');
+      toast(dict.configurationUpdateError);
     }
   }, [
     pgState.sessionConfig,
@@ -181,6 +181,7 @@ export function ConfigurationForm() {
     connect,
     disconnect,
     helpers,
+    dict,
   ]);
 
   // Function to debounce updates when user stops interacting
@@ -246,7 +247,7 @@ export function ConfigurationForm() {
       <Form {...form}>
         <div className="w-full border-separator1 border-b px-4 pt-0 pb-4 md:px-1 md:py-4">
           <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
-            Configuration
+            {dict.configurationTitle}
           </div>
         </div>
         <div className="flex w-full flex-col justify-between gap-2 border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
@@ -258,7 +259,7 @@ export function ConfigurationForm() {
           {displayLanguage && (
             <div className="flex w-full items-center justify-between">
               <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                Language
+                {dict.languageLabel}
               </div>
               <Select
                 disabled={connectionState === ConnectionState.Connected}
@@ -266,7 +267,7 @@ export function ConfigurationForm() {
                 value={pgState.language}
               >
                 <SelectTrigger className="h-9 w-fit text-neutral-200">
-                  <SelectValue placeholder="Choose language" />
+                  <SelectValue placeholder={dict.languagePlaceholder} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
                   {callLanguages.map(({ value, label }) => (

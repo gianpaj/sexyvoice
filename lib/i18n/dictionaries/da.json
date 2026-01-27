@@ -317,7 +317,18 @@
   "call": {
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
-    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__"
+    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__",
+    "configurationTitle": "Konfiguration",
+    "languageLabel": "Sprog",
+    "languagePlaceholder": "Vælg sprog",
+    "startCall": "Start et opkald",
+    "connecting": "Forbinder",
+    "reconnected": "Forbundet igen",
+    "reconnectionFailed": "Genforbindelse mislykkedes",
+    "configurationUpdated": "Konfiguration opdateret",
+    "configurationUpdateError": "Fejl ved opdatering af konfiguration",
+    "agentUnavailable": "Agenten er ikke tilgængelig",
+    "disconnected": "Afbrudt"
   },
   "clone": {
     "audioFileLabel": "Lydfil",

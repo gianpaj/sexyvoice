@@ -20,6 +20,7 @@ interface TokenGeneratorData {
   token: string;
   pgState: PlaygroundState;
   voice: VoiceId;
+  dict: (typeof langDict)['call'];
   disconnect: () => Promise<void>;
   connect: ConnectFn;
 }
@@ -95,6 +96,7 @@ export const ConnectionProvider = ({
         shouldConnect: connectionDetails.shouldConnect,
         voice: connectionDetails.voice,
         pgState,
+        dict,
         connect,
         disconnect,
       }}

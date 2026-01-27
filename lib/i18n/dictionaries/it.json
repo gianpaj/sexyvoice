@@ -317,7 +317,18 @@
   "call": {
     "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
     "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
-    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__"
+    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
+    "configurationTitle": "Configurazione",
+    "languageLabel": "Lingua",
+    "languagePlaceholder": "Scegli la lingua",
+    "startCall": "Avvia una chiamata",
+    "connecting": "Connessione in corso",
+    "reconnected": "Riconnesso",
+    "reconnectionFailed": "Riconnessione non riuscita",
+    "configurationUpdated": "Configurazione aggiornata",
+    "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
+    "agentUnavailable": "Agente non disponibile",
+    "disconnected": "Disconnesso"
   },
   "clone": {
     "audioFileLabel": "File audio",
