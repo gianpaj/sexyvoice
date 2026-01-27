@@ -439,9 +439,9 @@
       "totalCredits": "Créditos Totales Usados",
       "operations": "Operaciones",
       "byType": {
-        "tts": "Texto a Voz",
-        "voice_cloning": "Clonación de Voz",
-        "live_call": "Llamadas en Vivo",
+        "tts": "TTS",
+        "voice_cloning": "Clonación",
+        "live_call": "Llamada",
         "audio_processing": "Procesamiento de Audio"
       }
     },

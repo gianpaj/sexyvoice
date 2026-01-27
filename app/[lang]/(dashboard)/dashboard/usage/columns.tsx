@@ -12,9 +12,23 @@ import type {
   UsageSourceType,
   UsageUnitType,
 } from '@/lib/supabase/usage-queries';
-import { formatDate } from '@/lib/utils';
 
-// Color mapping for source types
+function formatDate(
+  input: string | number | Date,
+  { withTime = false }: { withTime?: boolean } = {},
+): string {
+  const date = new Date(input);
+  return date.toLocaleDateString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+    ...(withTime && {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  });
+}
+
 const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   tts: 'bg-purple-100 text-purple-900 border-purple-200',
   voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
@@ -22,7 +36,9 @@ const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   audio_processing: 'bg-orange-100 text-orange-900 border-orange-200',
 };
 
-// Format quantity with appropriate unit
+/**
+ * Format quantity with appropriate unit
+ */
 function formatQuantity(
   quantity: number,
   unit: UsageUnitType,
@@ -44,8 +60,14 @@ function formatQuantity(
   }
 }
 
-// Details cell component with expandable metadata
-function DetailsCell({ metadata }: { metadata: Json | null }) {
+/**
+ * Details cell component with expandable metadata
+ */
+function DetailsCell({
+  metadata,
+}: {
+  metadata: Tables<'usage_events'>['metadata'];
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!metadata || typeof metadata !== 'object') {
@@ -55,9 +77,8 @@ function DetailsCell({ metadata }: { metadata: Json | null }) {
   const metadataObj = metadata as Record<string, unknown>;
   const voiceName = metadataObj.voiceName as string | undefined;
   const textPreview = metadataObj.textPreview as string | undefined;
-  const model = metadataObj.model as string | undefined;
 
-  const hasDetails = voiceName || textPreview || model;
+  const hasDetails = voiceName || textPreview;
 
   if (!hasDetails) {
     return <span className="text-muted-foreground">-</span>;
@@ -83,7 +104,6 @@ function DetailsCell({ metadata }: { metadata: Json | null }) {
       {isExpanded && (
         <div className="ml-5 space-y-1 text-muted-foreground text-xs">
           {voiceName && <div>Voice: {voiceName}</div>}
-          {model && <div>Model: {model}</div>}
           {textPreview && (
             <div className="max-w-[200px] truncate" title={textPreview}>
               Text: {textPreview}

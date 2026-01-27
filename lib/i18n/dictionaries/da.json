@@ -439,7 +439,7 @@
       "totalCredits": "Samlede kreditter brugt",
       "operations": "Operationer",
       "byType": {
-        "tts": "Tekst-til-tale",
+        "tts": "TTS",
         "voice_cloning": "Stemmekloning",
         "live_call": "Live-opkald",
         "audio_processing": "Lydbehandling"

@@ -6,8 +6,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type {
-  UsageSourceType,
   MonthlyUsageSummary,
+  UsageSourceType,
 } from '@/lib/supabase/usage-queries';
 
 // Color mapping for source types (matching columns.tsx)

@@ -2,11 +2,10 @@ import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import {
-  getMonthlyUsageSummary,
   getAllTimeUsageSummary,
+  getMonthlyUsageSummary,
   type UsageSourceType,
 } from '@/lib/supabase/usage-queries';
-
 import { DataTable } from './data-table';
 import { SummaryCard } from './summary-card';
 

@@ -8,8 +8,8 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { useState, useCallback, useMemo } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,10 +30,9 @@ import {
 } from '@/components/ui/table';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type {
-  PaginatedUsageEventsResponse,
   MonthlyUsageSummary,
+  PaginatedUsageEventsResponse,
 } from '@/lib/supabase/usage-queries';
-
 import { createColumns } from './columns';
 
 interface DataTableProps {
