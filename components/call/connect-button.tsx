@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useConnection } from '@/hooks/use-connection';
 
 export function ConnectButton() {
-  const { connect, disconnect, shouldConnect } = useConnection();
+  const { connect, disconnect, shouldConnect, dict } = useConnection();
   const [connecting, setConnecting] = useState<boolean>(false);
   const [initiateConnectionFlag, setInitiateConnectionFlag] = useState(false);
 
@@ -53,7 +53,7 @@ export function ConnectButton() {
         onClick={handleConnectionToggle}
         size="lg"
       >
-        {connecting || shouldConnect ? 'Connecting' : 'Start a call'}
+        {connecting || shouldConnect ? dict.connecting : dict.startCall}
       </Button>
     </div>
   );

@@ -317,7 +317,18 @@
   "call": {
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
-    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__"
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__",
+    "configurationTitle": "Konfiguration",
+    "languageLabel": "Sprache",
+    "languagePlaceholder": "Sprache wählen",
+    "startCall": "Anruf starten",
+    "connecting": "Verbinden",
+    "reconnected": "Wiederverbunden",
+    "reconnectionFailed": "Wiederverbindung fehlgeschlagen",
+    "configurationUpdated": "Konfiguration aktualisiert",
+    "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
+    "agentUnavailable": "Agent nicht verfügbar",
+    "disconnected": "Getrennt"
   },
   "clone": {
     "audioFileLabel": "Audiodatei",

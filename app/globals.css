@@ -146,7 +146,8 @@
 }
 
 .gradient-bg {
-  background: var(--gradient-background);
+  background-color: hsl(var(--gradient-start));
+  background-image: var(--gradient-background);
 }
 
 /* Added incoming call animation */

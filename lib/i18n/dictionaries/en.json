@@ -317,7 +317,18 @@
   "call": {
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
-    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__"
+    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__",
+    "configurationTitle": "Configuration",
+    "languageLabel": "Language",
+    "languagePlaceholder": "Choose language",
+    "startCall": "Start a call",
+    "connecting": "Connecting",
+    "reconnected": "Reconnected",
+    "reconnectionFailed": "Reconnection failed",
+    "configurationUpdated": "Configuration updated",
+    "configurationUpdateError": "Error updating configuration",
+    "agentUnavailable": "Agent unavailable",
+    "disconnected": "Disconnected"
   },
   "clone": {
     "audioFileLabel": "Audio File",
