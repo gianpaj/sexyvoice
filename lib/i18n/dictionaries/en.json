@@ -58,7 +58,7 @@
     "latestPosts": "Latest Posts",
     "hero": {
       "title": "Private call with an AI, Talk freely –\nno judgment",
-      "subtitle": "Experience the connection – try 60 sec free call",
+      "subtitle": "Experience the connection – try 20 mins free call",
       "buttonCTA": "Sign up for Free",
       "noCreditCard": "No credit card required. You can hang up anytime",
       "signIn": "Sign In"
@@ -402,8 +402,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai - Free Text to Speech & AI Voice Generator",
-    "description": "Create natural AI voices with emotions in 24 languages. Free text-to-speech generator with voice cloning. Start with 10,000 free credits - no card required.",
+    "defaultTitle": "Talk to AI - Private Voice Calls with No Judgment | SexyVoice.ai",
+    "description": "Experience real-time AI voice calls in total privacy. Talk freely with no judgment - your secrets stay safe. Try a 20 min free call now. No credit card required.",
     "descriptionLogin": "Sign in to SexyVoice.ai to access your AI voice projects, manage credits, and generate expressive speech in multiple languages with advanced voice cloning.",
     "descriptionSignup": "Join SexyVoice.ai free - Get 10,000 credits to create realistic AI voices with emotions. Advanced text-to-speech and voice cloning in 24 languages.",
     "/": "",

@@ -34,7 +34,8 @@ export async function generateMetadata(
   // Validate that the language is a supported locale
   if (!i18n.locales.includes(lang as Locale)) {
     return {
-      title: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+      title:
+        'Private AI Companion Calls - AI Voice Calls with No Judgment | SexyVoice.ai',
     };
   }
 
@@ -67,7 +68,8 @@ export async function generateMetadata(
     openGraph: {
       title: {
         template: '%s | SexyVoice.ai',
-        default: 'SexyVoice.ai - Free Text to Speech & AI Voice Generator',
+        default:
+          'Talk to AI - Private Voice Calls with No Judgment | SexyVoice.ai',
       },
       description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),
