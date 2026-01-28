@@ -86,6 +86,80 @@ declare type Database = {
           },
         ];
       };
+      call_sessions: {
+        Row: {
+          billed_minutes: number;
+          created_at: string | null;
+          credits_used: number;
+          duration_seconds: number;
+          end_reason: string | null;
+          ended_at: string | null;
+          free_call: boolean | null;
+          grok_image_enabled: boolean | null;
+          id: string;
+          last_metered_at: string;
+          max_output_tokens: number | null;
+          metadata: Json | null;
+          model: string;
+          started_at: string;
+          status: string;
+          transcript: Json | null;
+          updated_at: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Insert: {
+          billed_minutes?: number;
+          created_at?: string | null;
+          credits_used?: number;
+          duration_seconds?: number;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          free_call?: boolean | null;
+          grok_image_enabled?: boolean | null;
+          id?: string;
+          last_metered_at?: string;
+          max_output_tokens?: number | null;
+          metadata?: Json | null;
+          model: string;
+          started_at?: string;
+          status?: string;
+          transcript?: Json | null;
+          updated_at?: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Update: {
+          billed_minutes?: number;
+          created_at?: string | null;
+          credits_used?: number;
+          duration_seconds?: number;
+          end_reason?: string | null;
+          ended_at?: string | null;
+          free_call?: boolean | null;
+          grok_image_enabled?: boolean | null;
+          id?: string;
+          last_metered_at?: string;
+          max_output_tokens?: number | null;
+          metadata?: Json | null;
+          model?: string;
+          started_at?: string;
+          status?: string;
+          transcript?: Json | null;
+          updated_at?: string | null;
+          user_id?: string;
+          voice_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'call_sessions_voice_id_fkey';
+            columns: ['voice_id'];
+            isOneToOne: false;
+            referencedRelation: 'voices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       credit_transactions: {
         Row: {
           amount: number;
@@ -192,6 +266,56 @@ declare type Database = {
         };
         Relationships: [];
       };
+      usage_events: {
+        Row: {
+          created_at: string;
+          credit_transaction_id: string | null;
+          credits_used: number;
+          id: string;
+          metadata: Json | null;
+          occurred_at: string;
+          quantity: number;
+          source_id: string | null;
+          source_type: Database['public']['Enums']['usage_source_type'];
+          unit: Database['public']['Enums']['usage_unit_type'];
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          credit_transaction_id?: string | null;
+          credits_used: number;
+          id?: string;
+          metadata?: Json | null;
+          occurred_at?: string;
+          quantity: number;
+          source_id?: string | null;
+          source_type: Database['public']['Enums']['usage_source_type'];
+          unit: Database['public']['Enums']['usage_unit_type'];
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          credit_transaction_id?: string | null;
+          credits_used?: number;
+          id?: string;
+          metadata?: Json | null;
+          occurred_at?: string;
+          quantity?: number;
+          source_id?: string | null;
+          source_type?: Database['public']['Enums']['usage_source_type'];
+          unit?: Database['public']['Enums']['usage_unit_type'];
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
+            columns: ['credit_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'credit_transactions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       voices: {
         Row: {
           created_at: string | null;
@@ -212,7 +336,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model?: string;
+          model: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -251,18 +375,27 @@ declare type Database = {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
+      get_usage_summary: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };
+        Returns: {
+          operation_count: number;
+          source_type: Database['public']['Enums']['usage_source_type'];
+          total_credits: number;
+        }[];
+      };
       increment_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
     };
     Enums: {
-      credit_transaction_type:
-        | 'purchase'
-        | 'usage'
-        | 'freemium'
-        | 'topup'
-        | 'refund';
+      credit_transaction_type: 'purchase' | 'freemium' | 'topup' | 'refund';
+      usage_source_type:
+        | 'tts'
+        | 'voice_cloning'
+        | 'live_call'
+        | 'audio_processing';
+      usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -393,13 +526,14 @@ declare type CompositeTypes<
 declare const Constants = {
   public: {
     Enums: {
-      credit_transaction_type: [
-        'purchase',
-        'usage',
-        'freemium',
-        'topup',
-        'refund',
+      credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],
+      usage_source_type: [
+        'tts',
+        'voice_cloning',
+        'live_call',
+        'audio_processing',
       ],
+      usage_unit_type: ['chars', 'mins', 'secs', 'operation'],
     },
   },
 } as const;

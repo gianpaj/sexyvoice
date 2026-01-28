@@ -284,7 +284,8 @@
     "title": "Crediti",
     "topupButton": "Ricarica",
     "totalCredits": "Totale",
-    "remainingCredits": "Rimanenti"
+    "remainingCredits": "Rimanenti",
+    "remainingTime": "Tempo rimanente"
   },
   "generate": {
     "abortedCloning": "Generazione voce interrotta.",
@@ -313,12 +314,25 @@
       "geminiInfo": "Supporta 24 lingue:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇳🇱 Olandese (Paesi Bassi),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇮🇳 Marathi (India),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\n🇻🇳 Vietnamita (Vietnam)"
     }
   },
+  "call": {
+    "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
+    "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
+    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
+    "configurationTitle": "Configurazione",
+    "languageLabel": "Lingua",
+    "languagePlaceholder": "Scegli la lingua",
+    "startCall": "Avvia una chiamata",
+    "connecting": "Connessione in corso",
+    "reconnected": "Riconnesso",
+    "reconnectionFailed": "Riconnessione non riuscita",
+    "configurationUpdated": "Configurazione aggiornata",
+    "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
+    "agentUnavailable": "Agente non disponibile",
+    "disconnected": "Disconnesso"
+  },
   "clone": {
     "audioFileLabel": "File audio",
     "cancelButton": "Annulla",
-    "cloneNotice": "Per favore clona solo voci con permesso – rispetta gli altri e segui la legge.",
-    "cloneNoticeTooltip": "Carica solo registrazioni per cui hai il permesso di utilizzo e ottieni il consenso prima di clonare o condividere la voce di qualcun altro.\nHai accesso esclusivo alle tue voci clonate e ai file audio – nessun altro può accedervi.",
-    "cloneNoticeTooltipLabel": "Apri avviso sicurezza clonazione vocale",
     "ctaButton": "Genera audio",
     "downloadAudio": "Scarica audio",
     "dragDropText": "Trascina e rilascia o clicca per sfogliare",
@@ -395,10 +409,12 @@
     "/": "",
     "/login": "Accedi",
     "/signup": "Registrati con email o Google",
+    "/dashboard/call": "Chiama",
     "/dashboard/generate": "Genera",
     "/dashboard/clone": "Clona",
     "/dashboard/history": "Cronologia",
     "/dashboard/credits": "Crediti",
+    "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore audio gratuito"
   },
   "sidebar": {
@@ -409,6 +425,58 @@
     "generate": "Genera",
     "login": "Accedi",
     "signup": "Registrati"
+  },
+  "history": {
+    "header": "Cronologia generazioni",
+    "empty": "Nessuna cronologia ancora",
+    "ui": {
+      "filterText": "Filtra testo...",
+      "customizeColumns": "Personalizza colonne",
+      "columns": "Colonne",
+      "previous": "Precedente",
+      "next": "Successivo"
+    }
+  },
+  "usage": {
+    "header": "Cronologia utilizzo",
+    "empty": "Nessun evento di utilizzo ancora",
+    "summary": {
+      "title": "Utilizzo di questo mese",
+      "totalTitle": "Utilizzo totale",
+      "allTime": "Sempre",
+      "totalCredits": "Crediti totali utilizzati",
+      "operations": "Operazioni",
+      "noData": "Nessun dato di utilizzo",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Clonazione",
+        "live_call": "Chiamata",
+        "audio_processing": "Elaborazione audio"
+      }
+    },
+    "table": {
+      "sourceType": "Tipo",
+      "quantity": "Quantità",
+      "creditsUsed": "Crediti",
+      "date": "Data",
+      "details": "Dettagli"
+    },
+    "ui": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina",
+      "of": "di",
+      "showing": "Mostrando",
+      "results": "risultati",
+      "filterByType": "Filtra per tipo",
+      "allTypes": "Tutti i tipi"
+    },
+    "units": {
+      "chars": "caratteri",
+      "mins": "minuti",
+      "secs": "secondi",
+      "operation": "operazione"
+    }
   },
   "footer": {
     "statusPage": "Pagina di stato",

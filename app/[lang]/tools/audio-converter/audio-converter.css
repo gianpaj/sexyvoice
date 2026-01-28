@@ -1,7 +1,3 @@
-.gradient-bg {
-  background: var(--gradient-background);
-}
-
 .gradient-text {
   background: var(--gradient-background);
   -webkit-background-clip: text;

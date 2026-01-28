@@ -1,8 +1,24 @@
 'use server';
 
+import * as Sentry from '@sentry/nextjs';
+
 import { createAdminClient } from './admin';
 import { MAX_FREE_GENERATIONS } from './constants';
 import { createClient } from './server';
+
+// Types for usage event tracking
+type UsageSourceType = Database['public']['Enums']['usage_source_type'];
+type UsageUnitType = Database['public']['Enums']['usage_unit_type'];
+
+export interface InsertUsageEventParams {
+  userId: string;
+  sourceType: UsageSourceType;
+  sourceId?: string | null;
+  unit: UsageUnitType;
+  quantity: number;
+  creditsUsed: number;
+  metadata?: Json;
+}
 
 export async function getCredits(userId: string): Promise<number> {
   const supabase = await createClient();
@@ -79,20 +95,77 @@ export async function saveAudioFile({
 }) {
   const supabase = await createClient();
 
-  return supabase.from('audio_files').insert({
-    user_id: userId,
-    storage_key: filename,
-    text_content: text,
-    url,
-    model,
-    prediction_id: predictionId,
-    is_public: isPublic,
-    voice_id: voiceId,
-    duration: Number.parseFloat(duration),
-    credits_used,
-    usage,
-  });
+  return supabase
+    .from('audio_files')
+    .insert({
+      user_id: userId,
+      storage_key: filename,
+      text_content: text,
+      url,
+      model,
+      prediction_id: predictionId,
+      is_public: isPublic,
+      voice_id: voiceId,
+      duration: Number.parseFloat(duration),
+      credits_used,
+      usage,
+    })
+    .select('id')
+    .single();
 }
+
+/**
+ * Insert a usage event record for tracking credit consumption.
+ *
+ * Design Decision: Usage tracking is non-blocking. If this function fails,
+ * it logs the error to Sentry but doesn't throw. This ensures that
+ * billing/tracking issues don't prevent users from using the service.
+ *
+ * @returns The inserted usage event ID, or null on failure
+ */
+export const insertUsageEvent = async (
+  params: InsertUsageEventParams,
+): Promise<string | null> => {
+  const supabase = createAdminClient();
+
+  try {
+    const { data, error } = await supabase
+      .from('usage_events')
+      .insert({
+        user_id: params.userId,
+        source_type: params.sourceType,
+        source_id: params.sourceId ?? null,
+        unit: params.unit,
+        quantity: params.quantity,
+        credits_used: params.creditsUsed,
+        metadata: (params.metadata ?? {}) as Json,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      Sentry.captureException(error, {
+        extra: {
+          params,
+          context: 'insertUsageEvent',
+        },
+      });
+      console.error('Failed to insert usage event:', error);
+      return null;
+    }
+
+    return data?.id ?? null;
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: {
+        params,
+        context: 'insertUsageEvent',
+      },
+    });
+    console.error('Failed to insert usage event:', error);
+    return null;
+  }
+};
 
 export const getUserById = async (userId: string) => {
   const supabase = await createClient();

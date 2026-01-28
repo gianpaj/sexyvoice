@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Expressive Voices, Uncensored",
-      "subtitle": "Free Text to Speech & AI Voice Generator. \nPerfect for content creators and storytellers. 😉",
+      "title": "Private call with an AI, Talk freely –\nno judgment",
+      "subtitle": "Experience the connection – try 60 sec free call",
       "buttonCTA": "Sign up for Free",
-      "noCreditCard": "No credit card required",
+      "noCreditCard": "No credit card required. You can hang up anytime",
       "signIn": "Sign In"
     },
     "features": {
@@ -114,7 +114,7 @@
           "questions": [
             {
               "question": "How does Live AI Calling work?",
-              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or just listen—your call flows like a real conversation."
+              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
               "question": "How much does it cost?",
@@ -154,7 +154,7 @@
           "questions": [
             {
               "question": "Is my voice data secure?",
-              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files and can delete them whenever you want. We never share voice data without your consent."
+              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files, and can delete them whenever you want. We never share voice data without your consent."
             },
             {
               "question": "What can I use the generated voices for?",
@@ -284,7 +284,8 @@
     "title": "Credits",
     "topupButton": "Top-up",
     "totalCredits": "Total",
-    "remainingCredits": "Remaining"
+    "remainingCredits": "Remaining",
+    "remainingTime": "Remaining time"
   },
   "generate": {
     "abortedCloning": "Voice generation aborted.",
@@ -313,12 +314,25 @@
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)"
     }
   },
+  "call": {
+    "notice1": "Explore your deepest desires in total privacy.",
+    "notice2": "End-to-end encrypted, judgment-free conversations.",
+    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__",
+    "configurationTitle": "Configuration",
+    "languageLabel": "Language",
+    "languagePlaceholder": "Choose language",
+    "startCall": "Start a call",
+    "connecting": "Connecting",
+    "reconnected": "Reconnected",
+    "reconnectionFailed": "Reconnection failed",
+    "configurationUpdated": "Configuration updated",
+    "configurationUpdateError": "Error updating configuration",
+    "agentUnavailable": "Agent unavailable",
+    "disconnected": "Disconnected"
+  },
   "clone": {
     "audioFileLabel": "Audio File",
     "cancelButton": "Cancel",
-    "cloneNotice": "Please only clone voices with permission – respect others and follow the law.",
-    "cloneNoticeTooltip": "Only upload recordings you have permission to use and obtain consent before cloning or sharing someone else's voice.\nYou have exclusive access to your cloned voices and audio files – no one else can access them.",
-    "cloneNoticeTooltipLabel": "Open voice clone safety notice",
     "ctaButton": "Generate Audio",
     "downloadAudio": "Download Audio",
     "dragDropText": "Drag & drop or click to browse",
@@ -395,10 +409,12 @@
     "/": "",
     "/login": "Log in",
     "/signup": "Sign up with email or Google",
+    "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
     "/dashboard/credits": "Credits",
+    "/dashboard/usage": "Usage",
     "/tools/audio-converter": "Free Audio Converter"
   },
   "sidebar": {
@@ -409,6 +425,58 @@
     "generate": "Generate",
     "login": "Log in",
     "signup": "Sign up"
+  },
+  "history": {
+    "header": "Generation History",
+    "empty": "No history yet",
+    "ui": {
+      "filterText": "Filter text...",
+      "customizeColumns": "Customize Columns",
+      "columns": "Columns",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "usage": {
+    "header": "Usage History",
+    "empty": "No usage events yet",
+    "summary": {
+      "title": "This Month's Usage",
+      "totalTitle": "Total Usage",
+      "allTime": "All Time",
+      "totalCredits": "Total Credits Used",
+      "operations": "Operations",
+      "noData": "No usage data",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Voice Cloning",
+        "live_call": "Live Call",
+        "audio_processing": "Audio Processing"
+      }
+    },
+    "table": {
+      "sourceType": "Type",
+      "quantity": "Quantity",
+      "creditsUsed": "Credits",
+      "date": "Date",
+      "details": "Details"
+    },
+    "ui": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page",
+      "of": "of",
+      "showing": "Showing",
+      "results": "results",
+      "filterByType": "Filter by type",
+      "allTypes": "All types"
+    },
+    "units": {
+      "chars": "characters",
+      "mins": "minutes",
+      "secs": "seconds",
+      "operation": "operation"
+    }
   },
   "footer": {
     "statusPage": "Status page",
