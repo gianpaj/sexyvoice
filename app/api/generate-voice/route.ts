@@ -297,8 +297,8 @@ export async function POST(request: Request) {
         }
         throw new Error(
           isProhibitedContent
-            ? 'Content generation was prohibited by our provider. Please modify your input and try again.'
-            : `Voice generation failed (reason: ${finishReason || blockReason || 'unknown'}), please retry`,
+            ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
+            : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
           {
             cause: isProhibitedContent
               ? 'PROHIBITED_CONTENT'
@@ -349,8 +349,7 @@ export async function POST(request: Request) {
         });
         console.error(errorObj);
         throw new Error(
-          // @ts-expect-error
-          output.error || 'Voice generation failed, please try again',
+          getErrorMessage('REPLICATE_ERROR', 'voice-generation'),
           {
             cause: 'REPLICATE_ERROR',
           },
