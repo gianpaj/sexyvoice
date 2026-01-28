@@ -257,18 +257,25 @@ export async function POST(request: Request) {
         genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData
           ?.mimeType;
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
+      const blockReason = genAIResponse?.promptFeedback?.blockReason;
+      const isProhibitedContent =
+        finishReason === FinishReason.PROHIBITED_CONTENT ||
+        blockReason === 'PROHIBITED_CONTENT';
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
-        if (FinishReason.PROHIBITED_CONTENT === finishReason) {
+        if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
             user: { id: user.id },
             model: modelUsed,
             text,
+            blockReason,
+            finishReason,
           });
         } else {
           logger.error('Gemini voice generation failed', {
             error: finishReason,
             finishReason,
+            blockReason,
             hasData: !!data,
             mimeType,
             response: genAIResponse,
@@ -278,6 +285,7 @@ export async function POST(request: Request) {
             console.dir(
               {
                 error: finishReason,
+                blockReason,
                 hasData: !!data,
                 mimeType,
                 response: genAIResponse,
@@ -288,14 +296,13 @@ export async function POST(request: Request) {
           }
         }
         throw new Error(
-          finishReason === FinishReason.PROHIBITED_CONTENT
+          isProhibitedContent
             ? 'Content generation was prohibited by our provider. Please modify your input and try again.'
-            : 'Voice generation failed, please retry',
+            : `Voice generation failed (reason: ${finishReason || blockReason || 'unknown'}), please retry`,
           {
-            cause:
-              finishReason === FinishReason.PROHIBITED_CONTENT
-                ? 'PROHIBITED_CONTENT'
-                : 'OTHER_GEMINI_BLOCK',
+            cause: isProhibitedContent
+              ? 'PROHIBITED_CONTENT'
+              : 'OTHER_GEMINI_BLOCK',
           },
         );
       }
@@ -498,9 +505,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         {
-          error:
-            getErrorMessage(error.cause, 'voice-generation') ||
-            'Voice generation failed, please retry',
+          error: error.message || 'Voice generation failed, please retry',
         },
         { status: getErrorStatusCode(error.cause) },
       );
