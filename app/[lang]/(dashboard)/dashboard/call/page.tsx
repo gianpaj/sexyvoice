@@ -42,7 +42,7 @@ export default async function Call(props: {
         />
       </div>
       <div className="my-6 flex w-full px-0 md:px-4">
-        <ConfigurationForm />
+        <ConfigurationForm lang={lang} />
       </div>
       <main className="flex w-full flex-1 flex-col md:p-4 lg:mt-16">
         <div className="mx-auto flex h-full w-full flex-col justify-center gap-5 bg-bg1">

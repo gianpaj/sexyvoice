@@ -8,7 +8,7 @@ import {
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -19,10 +19,11 @@ import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
-import { callLanguages } from '@/data/playground-state';
+import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   Select,
   SelectContent,
@@ -51,7 +52,11 @@ export interface ConfigurationFormFieldProps {
   schema?: typeof ConfigurationFormSchema;
 }
 
-export function ConfigurationForm() {
+interface ConfigurationFormProps {
+  lang: Locale;
+}
+
+export function ConfigurationForm({ lang }: ConfigurationFormProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();
   const connectionState = useConnectionState();
@@ -73,6 +78,18 @@ export function ConfigurationForm() {
   const showInstruction =
     searchParams.get('showInstruction') === '' ||
     searchParams.get('showInstruction') === 'true';
+
+  const translatedLanguages = useMemo(() => {
+    const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
+    return callLanguageCodes
+      .map(({ value }) => ({
+        value,
+        label:
+          `${languageNames.of(value)?.charAt(0).toUpperCase()}${languageNames.of(value)?.slice(1)}` ||
+          value,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, lang));
+  }, [lang]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
   const updateConfig = useCallback(async () => {
@@ -240,8 +257,6 @@ export function ConfigurationForm() {
   };
   const displayLanguage = true;
 
-  callLanguages.sort((a, b) => a.label.localeCompare(b.label));
-
   return (
     <header className="flex w-full flex-col items-stretch justify-stretch">
       <Form {...form}>
@@ -270,7 +285,7 @@ export function ConfigurationForm() {
                   <SelectValue placeholder={dict.languagePlaceholder} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
-                  {callLanguages.map(({ value, label }) => (
+                  {translatedLanguages.map(({ value, label }) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
