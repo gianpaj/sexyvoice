@@ -57,9 +57,6 @@ export async function POST(request: Request) {
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     if (!(apiKey && apiSecret)) {
-      captureException({
-        error: 'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set',
-      });
       return NextResponse.json(
         { error: 'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set' },
         { status: 400 },
@@ -88,7 +85,7 @@ export async function POST(request: Request) {
     const voiceObj = await getVoiceIdByName(voice, false);
 
     if (!voiceObj) {
-      captureException({ error: 'Voice not found', voice });
+      captureException('Voice not found', { extra: { voice } });
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
@@ -142,10 +139,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error generating token:', error);
-    captureException({
-      error: 'Error generating token',
+    captureException(error, {
       user: user ? { id: user.id, email: user.email } : undefined,
-      errorData: error,
     });
     return NextResponse.json(
       {

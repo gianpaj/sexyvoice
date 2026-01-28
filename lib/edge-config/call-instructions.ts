@@ -29,7 +29,7 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
     };
   } catch (error) {
     captureException(error, {
-      data: {
+      extra: {
         message: 'Failed to load "call-instructions" from Edge Config',
       },
     });
