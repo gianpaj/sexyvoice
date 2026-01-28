@@ -1,4 +1,5 @@
 import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
+import remarkGfm from 'remark-gfm';
 
 import { i18n, type Locale } from './lib/i18n/i18n-config';
 
@@ -131,4 +132,7 @@ export default makeSource({
   contentDirPath: '.',
   contentDirInclude: ['posts', 'policies'],
   documentTypes: [Post, PolicyPage],
+  mdx: {
+    rehypePlugins: [remarkGfm],
+  },
 });

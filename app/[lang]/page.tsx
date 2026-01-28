@@ -26,7 +26,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
-  allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
+  allPosts
+    .filter((post) => post.locale === lang && post.image)
+    ?.sort(
+      (postA, postB) =>
+        new Date(postB.date).getTime() - new Date(postA.date).getTime(),
+    )
+    .slice(0, 3);
 
 export const metadata: Metadata = {
   other: {
