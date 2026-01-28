@@ -36,12 +36,7 @@ export function LanguageSelector({
               Language <div>&nbsp;</div> <Languages className="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            alignOffset={-5}
-            className=""
-            side="right"
-          >
+          <DropdownMenuContent align="start" alignOffset={-5} side="right">
             {languages.map((lang) => (
               <DropdownMenuItem asChild key={lang.code}>
                 <Link

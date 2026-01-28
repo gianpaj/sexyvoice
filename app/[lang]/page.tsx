@@ -230,23 +230,6 @@ export default async function LandingPage(props: {
                   </p>
                 </CardContent>
               </Card>
-              {/*<Card className="group shadow-zinc-950/5">
-                <CardHeader className="pb-3">
-                  <CardDecorator>
-                    <Shield aria-hidden className="size-6 text-gray-200" />
-                  </CardDecorator>
-
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
-                    {dict.features.security.title}
-                  </h3>
-                </CardHeader>
-
-                <CardContent>
-                  <p className="text-justify text-sm">
-                    {dict.features.security.description}
-                  </p>
-                </CardContent>
-              </Card>*/}
             </div>
 
             <PricingTable lang={lang} />
