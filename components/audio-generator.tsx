@@ -401,8 +401,8 @@ export function AudioGenerator({
 
         <div
           className={cn(
-            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-2',
-            hasEnoughCredits ? 'items-center' : 'flex flex-col items-start',
+            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-[1fr_2fr]',
+            hasEnoughCredits ? '' : 'flex flex-col items-start',
           )}
         >
           {!hasEnoughCredits && (
@@ -452,9 +452,9 @@ export function AudioGenerator({
             )}
           </div>
 
-          <div>
+          <div className="flex justify-start gap-2 sm:w-full">
             {audioURL && (
-              <div className="flex justify-start gap-2 sm:w-full">
+              <>
                 <AudioPlayerWithContext
                   autoPlay
                   className="rounded-md"
@@ -464,6 +464,7 @@ export function AudioGenerator({
                   showWaveform
                   url={audioURL}
                   waveColor="#888888"
+                  waveformClassName="w-48"
                 />
                 <Button
                   onClick={resetPlayer}
@@ -481,7 +482,7 @@ export function AudioGenerator({
                 >
                   <Download className="size-6" />
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>
