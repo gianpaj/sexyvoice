@@ -13,11 +13,13 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Database**: Supabase PostgreSQL
 - **Storage**: Cloudflare R2 for audio files
 - **Caching**: Upstash Redis for audio URL caching
+- **Real-time Communication**: LiveKit for AI voice calls with WebRTC
 - **Styling**: Tailwind CSS 3, shadcn/ui components, Radix UI primitives
 - **Content**: Contentlayer2 for MDX blog processing
 - **Payments**: Stripe integration with promotional bonus system
 - **Monitoring**: Sentry error tracking and PostHog analytics
 - **AI Services**: Google Generative AI for text enhancement
+- **Configuration**: Vercel Edge Config for dynamic call instructions
 - **Code Quality**: Biome for linting and formatting
 - **Testing**: Vitest for unit/integration tests, MSW for API mocking
 - **Package Manager**: pnpm 10
@@ -41,19 +43,44 @@ app/[lang]/                    # Internationalized routes
 ├── (auth)/                    # Auth-related pages (login, sign up, etc.)
 ├── (dashboard)/               # Protected dashboard routes
 │   └── dashboard/             # Main dashboard with nested routes
+│       ├── call/              # Real-time AI voice call interface
+│       ├── usage/             # Usage statistics dashboard
+│       └── ...                # Other dashboard pages
 ├── actions/                   # Server actions (promos, stripe)
 ├── blog/[slug]/               # Dynamic blog post pages
 └── page.tsx                   # Landing page
 
+app/api/
+├── call-token/                # LiveKit token generation for calls
+├── usage-events/              # Usage tracking API
+├── generate-voice/            # Voice generation endpoint
+├── clone-voice/               # Voice cloning endpoint
+└── webhooks/stripe/           # Stripe payment webhooks
+
 lib/
 ├── supabase/                  # Database client, queries, types
 ├── i18n/                      # Internationalization config and dictionaries
-└── stripe/                    # Payment processing, pricing configuration
+├── stripe/                    # Payment processing, pricing configuration
+└── edge-config/               # Vercel Edge Config for dynamic settings
+
+data/
+├── playground-state.ts        # Call session state management
+├── presets.ts                 # Preset configurations for calls
+├── voices.ts                  # Voice definitions
+└── session-config.ts          # Session configuration
 
 components/
 ├── ui/                        # shadcn/ui components
+├── call/                      # Real-time call components (17 files)
 ├── promo-banner.tsx           # Generic promotion banner
 └── [feature-components]       # App-specific components
+
+hooks/
+├── use-connection.tsx         # LiveKit connection management
+├── use-agent.tsx              # AI agent interaction
+├── use-call-timer.ts          # Call duration tracking
+├── use-playground-state.tsx   # Call state management
+└── ...                        # Other hooks
 
 tests/
 ├── utils/                     # Test utilities and helpers
@@ -68,6 +95,8 @@ Core tables:
 - `audio_files` - Generated audio files with metadata
 - `credits` - User credit balances
 - `credit_transactions` - Credit usage/purchase history
+- `call_sessions` - Real-time voice call sessions with duration and billing
+- `usage_events` - Detailed usage tracking for analytics and billing
 
 ### Voice Generation Flow
 1. User selects voice and enters text in dashboard
@@ -78,6 +107,17 @@ Core tables:
 6. R2 URL is cached in Redis and stored in Supabase with metadata
 7. Analytics sent to PostHog, errors logged in Sentry
 8. Final audio URL returned to client
+
+### Real-time AI Voice Call Flow
+1. User configures call settings (voice, model, temperature, instructions) in `/dashboard/call`
+2. User clicks connect, frontend requests token from `/api/call-token`
+3. API validates user session and checks minimum credit balance
+4. LiveKit access token is generated with room configuration and AI agent dispatch
+5. Client connects to LiveKit room using WebRTC
+6. AI agent joins the room and handles real-time voice conversation
+7. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
+8. Credits are deducted based on call duration
+9. On disconnect, credits are refetched and UI is updated
 
 ## Development Guidelines
 
@@ -270,6 +310,8 @@ Key environment variables include:
 - **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
+- **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
+- **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
 - **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
@@ -303,11 +345,15 @@ Based on TODO.md, current priorities include:
 1. **Data Management**: Account deletion with audio cleanup, branch merges (r2, terms-and-conditions)
 2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
 3. **Internationalization**: Translate dashboard pages and SEO content to German, French, Italian, and Danish; expand voice models to French, German, Korean, Mandarin
-4. **User Experience**: Share pages for audio files, usage statistics, history page with regeneration
+4. **User Experience**: Share pages for audio files, history page with regeneration
 5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
-6. **Analytics**: Add PostHog to auth pages, track paid user status, usage monitoring
+6. **Analytics**: Add PostHog to auth pages, track paid user status
 7. **Testing**: Expand test coverage, Playwright E2E tests with test database
 8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors
+
+### Recently Completed Features
+- **Real-time AI Voice Calls**: LiveKit-based voice calling with configurable AI agents
+- **Usage Statistics Dashboard**: `/dashboard/usage` with detailed usage tracking and analytics
 
 ## Claude-Specific Instructions
 
