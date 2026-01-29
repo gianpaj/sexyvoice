@@ -178,9 +178,9 @@ You can press Enter to accept the suggestion, or enter a custom amount.
 
 ---
 
-## Credit transactions (Supabase)
+## Credit Transactions (Supabase)
 
-### 1. Download only paid transactions
+### 1. Download Only Paid Transactions
 
 - Display 500 rows
 - Export as SQL

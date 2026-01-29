@@ -1,4 +1,6 @@
 /** biome-ignore-all lint/correctness/noUnknownFunction: Tailwind CSS directives like theme() are not standard CSS functions */
+@import 'highlight.js/styles/github-dark.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
