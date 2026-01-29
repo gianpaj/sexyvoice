@@ -314,7 +314,18 @@ const PostLayout = async (props: {
                 itemScope
                 itemType="https://schema.org/Organization"
               >
-                <span itemProp="name">SexyVoice.ai</span>
+                {post.author === 'Gianfranco' ? (
+                  <a
+                    href="https://x.com/gianpaj"
+                    itemProp="name"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {post.author}
+                  </a>
+                ) : (
+                  <span itemProp="name">{post.author || 'SexyVoice.ai'}</span>
+                )}
                 <meta content="https://sexyvoice.ai" itemProp="url" />
                 <meta
                   content="https://sexyvoice.ai/sexyvoice.png"

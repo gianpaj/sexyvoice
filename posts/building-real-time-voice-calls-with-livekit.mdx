@@ -1,0 +1,432 @@
+---
+title: "Building Real-Time Voice Calls with LiveKit and Next.js"
+description: A deep dive into how we built SexyVoice.ai's real-time voice calling feature using LiveKit, Next.js, and a Python AI agent backend. Learn about WebRTC, token authentication, and AI voice agents.
+date: 2026-01-28
+author: Gianfranco
+# image: '/posts/building-real-time-voice-calls-with-livekit.webp'
+---
+
+Real-time voice communication on the web has traditionally been challenging to implement. WebRTC is powerful but notoriously complex. When we set out to build the Call feature for SexyVoice.ai — enabling users to have live, interactive voice conversations with AI—we needed a solution that was both robust and developer-friendly.
+
+Enter **LiveKit**: an open-source WebRTC infrastructure that abstracts away the complexity while giving you full control. In this post, I'll walk through how we built our real-time voice calling feature, from the Next.js frontend to the Python AI agent backend.
+
+## Architecture Overview
+
+Our call feature consists of three main components:
+
+1. **Next.js Frontend** - React components for the call UI, connection management, and state handling
+2. **Next.js API Route** - Token generation and authentication gateway
+3. **LiveKit Cloud + Python Agent** - Real-time audio transport and AI voice processing
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Next.js App   │────▶│  LiveKit Cloud  │◀────│  Python Agent   │
+│   (Frontend)    │     │   (WebRTC SFU)  │     │   (AI Backend)  │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                                                │
+        │              ┌─────────────────┐               │
+        └─────────────▶│   Supabase DB   │◀──────────────┘
+                       │  (Sessions/Auth) │
+                       └─────────────────┘
+```
+
+## The Frontend: React Hooks and LiveKit Components
+
+### Connection Management
+
+The heart of our frontend is the connection management system. We created a custom `useConnection` hook that handles the entire lifecycle of a call:
+
+```typescript
+// hooks/use-connection.tsx
+'use client';
+
+import { useQueryClient } from '@tanstack/react-query';
+import { createContext, useCallback, useContext, useState } from 'react';
+import { toast } from 'sonner';
+
+interface TokenGeneratorData {
+  shouldConnect: boolean;
+  wsUrl: string;
+  token: string;
+  disconnect: () => Promise<void>;
+  connect: () => Promise<void>;
+}
+
+export const ConnectionProvider = ({ children, dict }) => {
+  const [connectionDetails, setConnectionDetails] = useState({
+    wsUrl: '',
+    token: '',
+    shouldConnect: false,
+  });
+
+  const connect = async () => {
+    const response = await fetch('/api/call-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(playgroundState),
+    });
+
+    if (!response.ok) {
+      if (response.status === 402) {
+        toast.error('Insufficient credits for call');
+      }
+      throw new Error('Failed to fetch token');
+    }
+
+    const { accessToken, url } = await response.json();
+    setConnectionDetails({
+      wsUrl: url,
+      token: accessToken,
+      shouldConnect: true,
+    });
+  };
+
+  // ... disconnect logic and context provider
+};
+```
+
+The key insight here is that we don't connect immediately. Instead, we fetch a token from our API and only then set `shouldConnect: true`, which triggers the actual WebRTC connection.
+
+ ### Handling Transcriptions in Real-Time
+
+One of the most complex parts was handling real-time transcriptions. LiveKit sends transcription segments as they're generated, but we needed to merge consecutive segments from the same speaker for a better UX:
+
+```typescript
+// hooks/use-agent.tsx
+useEffect(() => {
+  const sorted = Object.values(rawSegments).sort(
+    (a, b) =>
+      (a.segment.firstReceivedTime ?? 0) - (b.segment.firstReceivedTime ?? 0),
+  );
+
+  const mergedSorted = sorted.reduce((acc, current) => {
+    if (acc.length === 0) return [current];
+
+    const last = acc[acc.length - 1];
+
+    // Merge segments from same participant within 1 second
+    if (
+      last.participant === current.participant &&
+      last.participant?.isAgent &&
+      (current.segment.firstReceivedTime ?? 0) -
+        (last.segment.lastReceivedTime ?? 0) <=
+        1000
+    ) {
+      return [
+        ...acc.slice(0, -1),
+        {
+          ...current,
+          segment: {
+            ...current.segment,
+            text: `${last.segment.text} ${current.segment.text}`,
+            firstReceivedTime: last.segment.firstReceivedTime,
+          },
+        },
+      ];
+    }
+    return [...acc, current];
+  }, []);
+
+  setDisplayTranscriptions(mergedSorted);
+}, [rawSegments]);
+```
+
+### Call Timer Hook
+
+We built a simple but effective timer hook to show users how long they've been on a call:
+
+```typescript
+// hooks/use-call-timer.ts
+export function useCallTimer(connectionState: ConnectionState) {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
+
+  const isConnected = connectionState === ConnectionState.Connected;
+
+  useEffect(() => {
+    if (isConnected) {
+      if (!startTimeRef.current) {
+        startTimeRef.current = Date.now();
+      }
+
+      const interval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current!) / 1000);
+        setElapsedSeconds(elapsed);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      startTimeRef.current = null;
+      setElapsedSeconds(0);
+    }
+  }, [isConnected]);
+
+  const formatTime = (totalSeconds: number): string => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    return hours > 0
+      ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+      : `${pad(minutes)}:${pad(seconds)}`;
+  };
+
+  return { elapsedSeconds, formattedTime: formatTime(elapsedSeconds) };
+}
+```
+
+## The API Layer: Token Generation
+
+The `/api/call-token` route is the gateway between our frontend and LiveKit. It handles:
+
+1. **Authentication** - Verifying the user via Supabase
+2. **Credit checking** - Ensuring users have enough credits
+3. **Token generation** - Creating a secure LiveKit access token
+4. **Agent dispatch** - Configuring which AI agent to connect
+
+```typescript
+// app/api/call-token/route.ts
+import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
+import { AccessToken } from 'livekit-server-sdk';
+
+export async function POST(request: Request) {
+  // 1. Authenticate user
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+
+  if (!data?.user) {
+    return APIErrorResponse('User not found', 401);
+  }
+
+  // 2. Check credits
+  const currentAmount = await getCredits(user.id);
+  if (currentAmount < MINIMUM_CREDITS_FOR_CALL) {
+    return APIErrorResponse('Insufficient credits', 402);
+  }
+
+  // 3. Parse session configuration
+  const playgroundState = await request.json();
+  const roomName = `ro-${crypto.randomUUID()}`;
+
+  // 4. Build metadata for the AI agent
+  const metadata = {
+    instructions: playgroundState.instructions,
+    model: playgroundState.sessionConfig.model,
+    voice: voiceObj.id,
+    temperature: playgroundState.sessionConfig.temperature,
+    language: selectedLanguage,
+    user_id: user.id,
+  };
+
+  // 5. Create access token with room grants
+  const at = new AccessToken(apiKey, apiSecret, {
+    identity: 'human',
+    metadata: JSON.stringify(metadata),
+  });
+
+  at.addGrant({
+    room: roomName,
+    roomJoin: true,
+    canPublish: true,
+    canSubscribe: true,
+  });
+
+  // 6. Configure agent dispatch
+  at.roomConfig = new RoomConfiguration({
+    name: roomName,
+    agents: [new RoomAgentDispatch({ agentName: 'sexycall' })],
+  });
+
+  return NextResponse.json({
+    accessToken: await at.toJwt(),
+    url: process.env.LIVEKIT_URL,
+  });
+}
+```
+
+The `RoomAgentDispatch` is crucial—it tells LiveKit Cloud to automatically spawn our Python agent when a user joins the room.
+
+## The Python Backend: LiveKit Agents Framework
+
+Our AI agent runs on LiveKit Cloud using the [LiveKit Agents Framework](https://docs.livekit.io/agents/). Here's a simplified version of the architecture:
+
+```python
+# agent.py
+from livekit.agents import Agent, JobContext, WorkerOptions, cli
+from livekit.plugins import openai, silero
+
+async def entrypoint(ctx: JobContext):
+    # Parse metadata from the frontend
+    metadata = json.loads(ctx.room.metadata)
+
+    # Initialize voice activity detection
+    vad = silero.VAD.load()
+
+    # Create the voice assistant
+    assistant = VoicePipelineAgent(
+        vad=vad,
+        stt=openai.STT(),  # Speech-to-text
+        llm=openai.LLM(
+            model=metadata['model'],
+            temperature=metadata['temperature'],
+        ),
+        tts=get_voice_tts(metadata['voice']),  # Text-to-speech
+    )
+
+    # Set the system instructions
+    assistant.set_instructions(metadata['instructions'])
+
+    # Start the conversation
+    await assistant.start(ctx.room)
+
+if __name__ == "__main__":
+    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+```
+
+The agent is deployed to LiveKit Cloud via GitHub Actions, making updates seamless:
+
+```yaml
+# .github/workflows/deploy-agent.yml
+name: Deploy LiveKit Agent
+
+on:
+  push:
+    branches: [main]
+    paths: ['agent/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to LiveKit Cloud
+        run: lk agent deploy
+        env:
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+```
+
+## Database Schema: Tracking Call Sessions
+
+We track every call session for billing and analytics in Supabase:
+
+```sql
+CREATE TABLE call_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+
+  -- Session configuration
+  model TEXT NOT NULL,
+  voice_id UUID REFERENCES voices(id) NOT NULL,
+
+  -- Timestamps
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ended_at TIMESTAMPTZ,
+
+  -- Duration and billing
+  duration_seconds INTEGER NOT NULL DEFAULT 0,
+  billed_minutes INTEGER NOT NULL DEFAULT 0,
+  credits_used INTEGER NOT NULL DEFAULT 0,
+
+  -- Status tracking
+  status TEXT NOT NULL DEFAULT 'active',
+  end_reason TEXT,
+
+  -- Transcript storage
+  transcript JSONB DEFAULT '[]'::JSONB
+);
+
+-- RLS for security
+ALTER TABLE call_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own call sessions"
+  ON call_sessions FOR SELECT
+  USING (auth.uid() = user_id);
+```
+
+## Multi-Language Support
+
+Our call feature supports 20 languages. Each language has a localized initial instruction for the AI:
+
+```typescript
+// data/playground-state.ts
+export const languageInitialInstructions: Record<CallLanguage, string> = {
+  en: 'SYSTEM: Say hi to the user in a friendly manner...',
+  es: 'SYSTEM: Saluda al usuario de manera amigable...',
+  fr: "SYSTEM: Salue l'utilisateur de manière amicale...",
+  de: 'SYSTEM: Begrüße den Nutzer auf freundliche Weise...',
+  // ... 16 more languages
+};
+
+export const callLanguages = [
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  // ...
+];
+```
+
+## Key Lessons Learned
+
+### 1. Token-Based Authentication is Essential
+
+Never expose your LiveKit API secret to the frontend. Always generate tokens server-side with appropriate grants and expiration times.
+
+### 2. Handle Connection State Carefully
+
+WebRTC connections can be flaky. We handle multiple connection states:
+
+- `Disconnected` - Initial state, show connect button
+- `Connecting` - Show loading indicator
+- `Connected` - Call is active
+- `Reconnecting` - Network hiccup, show status
+
+### 3. Credit Checking Must Be Server-Side
+
+We validate credits on the server before generating tokens. Relying on client-side validation would be a security hole.
+
+### 4. Merge Transcription Segments for UX
+
+Raw transcription segments are fragmented. Merging them based on timing and speaker creates a much better user experience.
+
+### 5. Use Edge Config for Dynamic Instructions
+
+We use Vercel Edge Config to store and update AI instructions without redeploying:
+
+```typescript
+// lib/edge-config/call-instructions.ts
+import { get } from '@vercel/edge-config';
+
+export async function getCallInstructions(presetId: string) {
+  const instructions = await get(`call-instructions-${presetId}`);
+  return instructions ?? defaultInstructions;
+}
+```
+
+## Performance Optimizations
+
+1. **Lazy load LiveKit components** - The LiveKit SDK is large; we dynamically import it only on the call page
+2. **Use React Query for credits** - Cached credit balance with automatic refetch after calls
+3. **Krisp noise filter** - We integrated `@livekit/krisp-noise-filter` for cleaner audio
+4. **Persistent device selection** - Remember user's preferred microphone across sessions
+
+## What's Next
+
+We're continuing to improve the call feature with:
+
+- **Call history with playback** - Let users replay past conversations
+- **Voice presets** - Save and share AI personality configurations
+
+## Conclusion
+
+Building real-time voice calls with LiveKit was surprisingly straightforward once we understood the architecture. The combination of LiveKit's infrastructure, Next.js's API routes, and Python's LiveKit Agents framework gave us a powerful, scalable solution.
+
+The key is proper separation of concerns: the frontend handles UI and connection state, the API handles authentication and token generation, and the Python agent handles the actual AI conversation logic.
+
+If you're building real-time audio features, I highly recommend exploring LiveKit. It abstracts the painful parts of WebRTC while giving you full control over the experience.
+
+---
+
+*Want to try it out? [Start a call on SexyVoice.ai](https://sexyvoice.ai/dashboard/call) and experience real-time AI voice conversations.*
