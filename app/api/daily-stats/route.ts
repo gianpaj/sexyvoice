@@ -487,7 +487,7 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
     `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / 7))})`,
+    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(Math.round(callsDurationYesterday / callsYesterdayCount) || 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / callsWeekCount) || 0)})`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
