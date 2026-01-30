@@ -1,3 +1,13 @@
+export function formatCompactNumber(num: number): string {
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}k`;
+  }
+  return num.toLocaleString();
+}
+
 export function startOfDay(date: Date): Date {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
@@ -27,7 +37,9 @@ export function formatCurrencyChange(
   previous: number,
 ): string {
   const diff = current - previous;
-  return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
+  const pct = previous !== 0 ? ((diff / previous) * 100).toFixed(0) : 0;
+  const arrow = diff >= 0 ? '↑' : '↓';
+  return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(Number(pct))}%)`;
 }
 
 export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
