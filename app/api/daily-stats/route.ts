@@ -11,6 +11,7 @@ import { getUserByStripeCustomerId } from '@/lib/supabase/queries';
 import {
   filterByDateRange,
   formatChange,
+  formatCompactNumber,
   formatCurrencyChange,
   maskUsername,
   reduceAmountUsd,
@@ -85,6 +86,8 @@ export async function GET(request: NextRequest) {
     // Call sessions - fetch for last 7 days (includes yesterday)
     callSessionsWeekResult,
     callSessionsTotalCountResult,
+    // Usage events for paid user analysis
+    usageEventsWeekResult,
   ] = await Promise.all([
     // (audioYesterdayResult) Audio files yesterday with voice information
     supabase
@@ -156,6 +159,13 @@ export async function GET(request: NextRequest) {
       .from('call_sessions')
       .select('id', { count: 'exact', head: true })
       .lt('started_at', today.toISOString()),
+
+    // (usageEventsWeekResult) Usage events last 7 days for paid user analysis
+    supabase
+      .from('usage_events')
+      .select('id, user_id, source_type, credits_used, occurred_at')
+      .gte('occurred_at', sevenDaysAgo.toISOString())
+      .lt('occurred_at', today.toISOString()),
   ]);
 
   if (audioYesterdayResult.error) throw audioYesterdayResult.error;
@@ -169,6 +179,7 @@ export async function GET(request: NextRequest) {
   if (callSessionsWeekResult.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult.error)
     throw callSessionsTotalCountResult.error;
+  if (usageEventsWeekResult.error) throw usageEventsWeekResult.error;
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
   const audioYesterdayCount = audioYesterdayData.length;
@@ -199,6 +210,7 @@ export async function GET(request: NextRequest) {
     } => item.started_at !== null,
   );
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
+  const usageEventsWeekData = usageEventsWeekResult.data ?? [];
 
   // Filter call sessions by date ranges (using started_at as the date field)
   const callSessionsYesterdayData = filterByDateRange(
@@ -409,17 +421,15 @@ export async function GET(request: NextRequest) {
             if (transactions.length === 1) {
               // Single transaction: "$10.00 - existing topup"
               const t = transactions[0];
-              amountDisplay = `$${t.amount.toFixed(2)} - ${t.type}`;
+              amountDisplay = `$${t.amount} - ${t.type}`;
             } else if (allSameType) {
               // Multiple same-type: "$5+$5 topup"
-              const amounts = transactions
-                .map((t) => `$${t.amount.toFixed(2)}`)
-                .join('+');
+              const amounts = transactions.map((t) => `$${t.amount}`).join('+');
               amountDisplay = `${amounts} ${transactions[0].type}`;
             } else {
               // Mixed types: "$5 topup + $10 sub"
               amountDisplay = transactions
-                .map((t) => `$${t.amount.toFixed(2)} ${t.type}`)
+                .map((t) => `$${t.amount} ${t.type}`)
                 .join(' + ');
             }
 
@@ -476,6 +486,145 @@ export async function GET(request: NextRequest) {
   const creditsTodayCount = purchasePrevDayData.length;
   const refundsTodayCount = refundsPrevDayData.length;
 
+  // Paid user usage analysis
+  // LRCV = Lowest Retail Credit Value
+  const LRCV = 0.0004; // $0.0004 per credit
+  const paidUserIds = new Set(purchaseTransactions.map((t) => t.user_id));
+  const paidUserUsageEvents = usageEventsWeekData.filter((e) =>
+    paidUserIds.has(e.user_id),
+  );
+
+  // Filter by date ranges
+  const paidUserUsageYesterday = filterByDateRange(
+    paidUserUsageEvents,
+    previousDay,
+    today,
+    'occurred_at',
+  );
+
+  // Calculate usage breakdown by source_type
+  type UsageSourceType =
+    | 'tts'
+    | 'voice_cloning'
+    | 'live_call'
+    | 'audio_processing';
+  const sourceTypeLabels: Record<UsageSourceType, string> = {
+    tts: 'TTS',
+    voice_cloning: 'Cloning',
+    live_call: 'Calls',
+    audio_processing: 'Processing',
+  };
+
+  const calculateUsageBreakdown = (
+    events: typeof paidUserUsageEvents,
+  ): Map<UsageSourceType, number> => {
+    const breakdown = new Map<UsageSourceType, number>();
+    for (const event of events) {
+      const current = breakdown.get(event.source_type as UsageSourceType) ?? 0;
+      breakdown.set(
+        event.source_type as UsageSourceType,
+        current + event.credits_used,
+      );
+    }
+    return breakdown;
+  };
+
+  const formatUsageBreakdown = (
+    breakdown: Map<UsageSourceType, number>,
+  ): string => {
+    const total = [...breakdown.values()].reduce((sum, v) => sum + v, 0);
+    if (total === 0) return 'No usage';
+
+    return [...breakdown.entries()]
+      .sort(([, a], [, b]) => b - a)
+      .map(([type, credits]) => {
+        const pct = ((credits / total) * 100).toFixed(0);
+        return `${sourceTypeLabels[type]}: ${formatCompactNumber(credits)} (${pct}%)`;
+      })
+      .join(' | ');
+  };
+
+  const usageYesterdayBreakdown = calculateUsageBreakdown(
+    paidUserUsageYesterday,
+  );
+  const usageWeekBreakdown = calculateUsageBreakdown(paidUserUsageEvents);
+
+  const totalCreditsYesterday = [...usageYesterdayBreakdown.values()].reduce(
+    (sum, v) => sum + v,
+    0,
+  );
+  const totalCreditsWeek = [...usageWeekBreakdown.values()].reduce(
+    (sum, v) => sum + v,
+    0,
+  );
+
+  // Dollar amounts based on LRCV
+  const usageValueYesterday = totalCreditsYesterday * LRCV;
+  const usageValueWeek = totalCreditsWeek * LRCV;
+
+  const uniquePaidUsersYesterday = new Set(
+    paidUserUsageYesterday.map((e) => e.user_id),
+  ).size;
+  const uniquePaidUsersWeek = new Set(paidUserUsageEvents.map((e) => e.user_id))
+    .size;
+
+  // Total active users yesterday (paid + free) from all usage events
+  const usageEventsYesterday = filterByDateRange(
+    usageEventsWeekData,
+    previousDay,
+    today,
+    'occurred_at',
+  );
+  const totalActiveUsersYesterday = new Set(
+    usageEventsYesterday.map((e) => e.user_id),
+  ).size;
+
+  // Active paid user rate: what % of active users yesterday were paid users
+  const paidVsTotalActiveRate =
+    totalActiveUsersYesterday > 0
+      ? ((uniquePaidUsersYesterday / totalActiveUsersYesterday) * 100).toFixed(
+          1,
+        )
+      : '0';
+
+  // Anomaly detection: flag if yesterday is significantly above 7d avg (>2x)
+  const avgCreditsPerDay = totalCreditsWeek / 7;
+  const usageAnomalyRatio =
+    avgCreditsPerDay > 0 ? totalCreditsYesterday / avgCreditsPerDay : 0;
+  const usageAnomalyFlag =
+    usageAnomalyRatio > 2 ? ` ⚠️ ${usageAnomalyRatio.toFixed(1)}x avg` : '';
+
+  // Top 3 paid users by credit consumption (yesterday)
+  const userCreditUsage = new Map<string, number>();
+  for (const event of paidUserUsageYesterday) {
+    const current = userCreditUsage.get(event.user_id) ?? 0;
+    userCreditUsage.set(event.user_id, current + event.credits_used);
+  }
+
+  const topUsageUsers = [...userCreditUsage.entries()]
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3);
+
+  // Get usernames for top usage users from purchaseTransactions
+  const userIdToUsername = new Map<string, string>();
+  for (const t of purchaseTransactions) {
+    if (t.profiles?.username) {
+      userIdToUsername.set(t.user_id, t.profiles.username);
+    }
+  }
+
+  const topUsageUsersList =
+    topUsageUsers.length === 0
+      ? 'No usage'
+      : topUsageUsers
+          .map(([userId, credits]) => {
+            const username = userIdToUsername.get(userId) ?? 'Unknown';
+            const maskedName = maskUsername(username);
+            const dollarValue = (credits * LRCV).toFixed(2);
+            return `${maskedName} (${formatCompactNumber(credits)} ≈ $${dollarValue})`;
+          })
+          .join(', ');
+
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
     '',
@@ -497,15 +646,26 @@ export async function GET(request: NextRequest) {
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
-    `  - Top ${topCustomerProfilesCount} Customers: ${topCustomersList}`,
+    `  - Top ${topCustomerProfilesCount}: ${topCustomersList}`,
     '',
-    `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) ${refundsTodayCount > 0 ? '😢' : ''}`,
-    `  - Total: ${refundsTotalCount} | Amount: $${totalRefundAmountUsd.toFixed(2)} (Today: $${totalRefundAmountUsdToday.toFixed(2)})`,
+    ...(refundsTodayCount > 0
+      ? [
+          `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
+          `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Yesterday: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
+        ]
+      : [
+          `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
+        ]),
+    '',
+    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% paid)${usageAnomalyFlag}`,
+    `  - ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
+    `  - Top 3: ${topUsageUsersList}`,
+    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
     '',
     '💰 Revenue',
-    `  - Today: $${totalAmountUsdToday.toFixed(2)} ($${formatChange(totalAmountUsdToday, avg7dRevenue)})`,
-    `  - All-time: $${totalAmountUsd.toFixed(2)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
-    `  - Prev MTD: $${prevMtdRevenue.toFixed(2)} vs MTD: $${mtdRevenue.toFixed(2)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
+    `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
+    `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
+    `  - Prev MTD: $${prevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
