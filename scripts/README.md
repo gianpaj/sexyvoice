@@ -1,3 +1,75 @@
+# Scripts
+
+Utility scripts for SexyVoice.ai administration, analytics, and data management.
+
+## Table of Contents
+
+- [Analyze Call Sessions Script](#analyze-call-sessions-script) - LLM-powered call transcript analysis
+- [Reset Freeloader Credits Script](#reset-freeloader-credits-script) - Reset credits for users who exploited bugs
+- [Refund Credits Script](#refund-credits-script) - Interactive credit refund processing
+- [Credit Transactions (Supabase)](#credit-transactions-supabase) - Export and manage credit data
+- [Stripe Payments Comparison](#stripe-payments-comparison-and-analysis-scripts) - Compare Stripe and Supabase data
+- [Credit Transaction Analysis Scripts](#credit-transaction-analysis-scripts) - Python analytics and visualizations
+
+---
+
+## Analyze Call Sessions Script
+
+Node.js script to analyze `call_sessions` transcripts using Google Gemini LLM. Extracts insights about conversation patterns, topics, languages, and user engagement.
+
+### Quick Start
+```bash
+# Install dependencies first
+cd scripts && pnpm install
+
+# Show help
+node scripts/analyze-call-sessions.mjs --help
+
+# Test with dry-run flag (no database updates)
+node scripts/analyze-call-sessions.mjs --dry-run
+
+# Analyze last 24 hours (default)
+node scripts/analyze-call-sessions.mjs
+
+# Analyze last 48 hours with limit
+node scripts/analyze-call-sessions.mjs --hours=48 --limit=50
+```
+
+### CLI Options
+- `--dry-run` - Run without updating the database
+- `--hours=N` - Analyze calls from the last N hours (default: 24)
+- `--limit=N` - Limit the number of calls to analyze
+- `-h, --help` - Show help message
+
+### What It Analyzes
+- **Language detection**: Primary language used by the user (ISO 639-1 codes)
+- **Topic categorization**: roleplay_intimate, casual_chat, emotional_support, asmr_relaxation, etc.
+- **Engagement levels**: high, medium, low, minimal
+- **Where conversations die**: Identifies patterns causing disengagement
+- **Peak hours**: Time of day analysis for calls >3 minutes
+- **AI compliance issues**: Detects problems with AI responses (too loud, wrong tone, etc.)
+
+### Output Files
+- `call-analysis-results-TIMESTAMP.csv` - Detailed per-session analysis
+- `call-analysis-results-TIMESTAMP-insights.json` - Aggregated insights
+
+### Database Updates
+- Sets `metadata.analysed = true` on processed call_sessions
+- Optionally saves aggregated insights to `call_session_analytics` table
+
+### Environment Variables Required
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+
+### Cron Job Setup (every 24 hours)
+```bash
+# Add to crontab
+0 0 * * * cd /path/to/sexyvoice.ai && node scripts/analyze-call-sessions.mjs >> /var/log/call-analysis.log 2>&1
+```
+
+---
+
 ## Reset Freeloader Credits Script
 
 Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.

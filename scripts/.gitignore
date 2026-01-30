@@ -1,5 +1,7 @@
 venv
 *.csv
+*.json
+!package.json
 __pycache__
 # Audio downloads for analysis scripts
 audio-downloads/

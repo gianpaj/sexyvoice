@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@google/generative-ai':
+        specifier: ^0.21.0
+        version: 0.21.0
       '@supabase/supabase-js':
         specifier: ^2.86.2
         version: 2.90.1
@@ -16,6 +19,10 @@ importers:
         version: 16.6.1
 
 packages:
+
+  '@google/generative-ai@0.21.0':
+    resolution: {integrity: sha512-7XhUbtnlkSEZK15kN3t+tzIMxsbKm/dSkKBFalj+20NvPKe1kBY7mR2P7vuijEn+f06z5+A8bVGKO0v39cr6Wg==}
+    engines: {node: '>=18.0.0'}
 
   '@supabase/auth-js@2.90.1':
     resolution: {integrity: sha512-vxb66dgo6h3yyPbR06735Ps+dK3hj0JwS8w9fdQPVZQmocSTlKUW5MfxSy99mN0XqCCuLMQ3jCEiIIUU23e9ng==}
@@ -77,6 +84,8 @@ packages:
         optional: true
 
 snapshots:
+
+  '@google/generative-ai@0.21.0': {}
 
   '@supabase/auth-js@2.90.1':
     dependencies:
