@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "prebuild": "pnpm run check-translations && pnpm run build:content",
     "build": "SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 next build",
     "start": "next start",
@@ -28,7 +28,7 @@
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
     "@ai-sdk/react": "^1.2.12",
-    "@aws-sdk/client-s3": "^3.962.0",
+    "@aws-sdk/client-s3": "^3.980.0",
     "@effect-ts/otel": "^0.15.1",
     "@effect-ts/otel-sdk-trace-node": "^0.15.1",
     "@fal-ai/client": "^1.5.0",
@@ -58,11 +58,11 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@sentry/nextjs": "^10.36.0",
+    "@sentry/nextjs": "^10.38.0",
     "@supabase-cache-helpers/postgrest-react-query": "^1.13.7",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
-    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-query": "^5.90.16",
     "@tanstack/react-table": "^8.21.2",
     "@upstash/redis": "^1.36.0",
@@ -133,7 +133,7 @@
     "lint-staged": "^16.2.7",
     "msw": "^2.12.7",
     "postcss": "^8.5.6",
-    "redis-memory-server": "^0.13.0",
+    "redis-memory-server": "^0.16.0",
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
     "ultracite": "6.3.9",
@@ -159,7 +159,8 @@
       "undici@>=4.5.0 <5.28.5": ">=5.28.5",
       "whatwg-url": "^14.0.0",
       "import-in-the-middle": "1.14.2",
-      "require-in-the-middle": "7.5.2"
+      "require-in-the-middle": "7.5.2",
+      "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.4"
     }
   },
   "overrides": {
