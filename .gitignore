@@ -46,3 +46,5 @@ tsconfig.tsbuildinfo
 backups
 
 .edgeconfig.json
+
+.daily-stats-cache.json
