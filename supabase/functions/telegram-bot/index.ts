@@ -569,7 +569,8 @@ async function generateTodayStats(): Promise<string> {
             })
             .join(", ");
     
-    const topCustomerProfilesCount = topCustomers.length > 0 ? topCustomers.length : "";
+    const topCustomerProfilesCount =
+      topCustomers.length > 0 ? topCustomers.length.toString() : "customers";
 
     // Top Usage Users
     const userCreditUsage = new Map<string, number>();
@@ -614,7 +615,7 @@ async function generateTodayStats(): Promise<string> {
       "",
       `📞 Calls: ${callsTodayCount} (${formatChange(callsTodayCount, callsWeekCount / 7)})`,
       `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
-      `  - Duration: ${formatDuration(callsDurationToday)} (avg ${formatDuration(Math.round(callsDurationToday / callsTodayCount) || 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / callsWeekCount) || 0)})`,
+      `  - Duration: ${formatDuration(callsDurationToday)} (avg ${formatDuration(callsTodayCount > 0 ? Math.round(callsDurationToday / callsTodayCount) : 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(callsWeekCount > 0 ? Math.round(callsDurationWeek / callsWeekCount) : 0)})`,
       `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
       "",
       `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
