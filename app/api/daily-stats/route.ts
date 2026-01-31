@@ -1,6 +1,11 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
+// Debug cache file path (temporary for debugging)
+const CACHE_FILE = path.join(process.cwd(), '.daily-stats-cache.json');
 
 import {
   countActiveCustomerSubscriptions,
@@ -54,6 +59,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
+  const useCache = !isProd && fs.existsSync(CACHE_FILE);
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
   const previousDay = subtractDays(today, 1);
@@ -71,115 +77,231 @@ export async function GET(request: NextRequest) {
     Math.min(previousMonthStart.getTime() + duration, monthStart.getTime()),
   );
 
-  // Fetch data in parallel - combine related queries and filter in memory
-  const [
-    // Audio files - fetch for last specific ranges
-    audioYesterdayResult,
-    audioWeekResult,
-    audioTotalCountResult,
-    clonesResult,
-    profilesRecentResult,
-    profilesTotalCountResult,
-    allCreditTransactionsResult,
-    activeSubscribersCount,
-    nextSubscriptionDueForPayment,
-    // Call sessions - fetch for last 7 days (includes yesterday)
-    callSessionsWeekResult,
-    callSessionsTotalCountResult,
-    // Usage events for paid user analysis
-    usageEventsWeekResult,
-  ] = await Promise.all([
-    // (audioYesterdayResult) Audio files yesterday with voice information
-    supabase
-      .from('audio_files')
-      .select('id, created_at, model, voice_id, voices(name)')
-      .gte('created_at', previousDay.toISOString())
-      .lt('created_at', today.toISOString()),
+  // Type definitions for cached data
+  type CreditTransaction = {
+    id: string;
+    user_id: string;
+    created_at: string;
+    type: string;
+    description: string | null;
+    // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
+    metadata: any;
+    profiles: { username: string } | null;
+  };
 
-    // (audioWeekResult) Audio files last 7 days
-    supabase
-      .from('audio_files')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString()),
+  type UsageEvent = {
+    id: string;
+    user_id: string;
+    source_type: string;
+    credits_used: number;
+    occurred_at: string;
+    profiles: { username: string } | null;
+  };
 
-    // (audioTotalCountResult) Total audio files count
-    supabase
-      .from('audio_files')
-      .select('id', { count: 'exact', head: true })
-      .lt('created_at', today.toISOString()),
+  // Load from cache if available (non-prod only)
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let audioYesterdayResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let audioWeekResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let audioTotalCountResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let clonesResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let profilesRecentResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let profilesTotalCountResult: any;
+  let allCreditTransactionsResult: {
+    data: CreditTransaction[] | null;
+    error: unknown;
+  };
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let activeSubscribersCount: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let nextSubscriptionDueForPayment: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let callSessionsWeekResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let callSessionsTotalCountResult: any;
+  let usageEventsWeekResult: { data: UsageEvent[] | null; error: unknown };
 
-    // (clonesResult) Cloned audio files last 7 days (includes yesterday)
-    supabase
-      .from('audio_files')
-      .select('id, created_at')
-      .in('model', [
-        'resemble-ai/chatterbox-multilingual',
-        'resemble-ai/chatterbox',
-      ])
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString()),
+  if (useCache) {
+    console.log('📦 Loading from cache:', CACHE_FILE);
+    const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
+    audioYesterdayResult = cached.audioYesterdayResult;
+    audioWeekResult = cached.audioWeekResult;
+    audioTotalCountResult = cached.audioTotalCountResult;
+    clonesResult = cached.clonesResult;
+    profilesRecentResult = cached.profilesRecentResult;
+    profilesTotalCountResult = cached.profilesTotalCountResult;
+    allCreditTransactionsResult = cached.allCreditTransactionsResult;
+    activeSubscribersCount = cached.activeSubscribersCount;
+    nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
+    callSessionsWeekResult = cached.callSessionsWeekResult;
+    callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
+    usageEventsWeekResult = cached.usageEventsWeekResult;
+  } else {
+    // Fetch data in parallel - combine related queries and filter in memory
+    [
+      // Audio files - fetch for last specific ranges
+      audioYesterdayResult,
+      audioWeekResult,
+      audioTotalCountResult,
+      clonesResult,
+      profilesRecentResult,
+      profilesTotalCountResult,
+      allCreditTransactionsResult,
+      activeSubscribersCount,
+      nextSubscriptionDueForPayment,
+      // Call sessions - fetch for last 7 days (includes yesterday)
+      callSessionsWeekResult,
+      callSessionsTotalCountResult,
+    ] = await Promise.all([
+      // (audioYesterdayResult) Audio files yesterday with voice information
+      supabase
+        .from('audio_files')
+        .select('id, created_at, model, voice_id, voices(name)')
+        .gte('created_at', previousDay.toISOString())
+        .lt('created_at', today.toISOString()),
 
-    // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
-    supabase
-      .from('profiles')
-      .select('id, created_at, username')
-      .gte('created_at', sevenDaysAgo.toISOString())
-      .lt('created_at', today.toISOString()),
+      // (audioWeekResult) Audio files last 7 days
+      supabase
+        .from('audio_files')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .lt('created_at', today.toISOString()),
 
-    // (profilesTotalCountResult) Total profiles count
-    supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .lt('created_at', today.toISOString()),
+      // (audioTotalCountResult) Total audio files count
+      supabase
+        .from('audio_files')
+        .select('id', { count: 'exact', head: true })
+        .lt('created_at', today.toISOString()),
 
-    // (allCreditTransactionsResult) Fetch all credit transactions (small dataset, excluding manual ones) with username join
-    supabase
-      .from('credit_transactions')
-      .select(
-        'id, user_id, created_at, type, description, metadata, profiles(username)',
-      )
-      .in('type', ['purchase', 'topup', 'refund'])
-      .not('description', 'ilike', '%manual%')
-      .lt('created_at', today.toISOString()),
+      // (clonesResult) Cloned audio files last 7 days (includes yesterday)
+      supabase
+        .from('audio_files')
+        .select('id, created_at')
+        .in('model', [
+          'resemble-ai/chatterbox-multilingual',
+          'resemble-ai/chatterbox',
+        ])
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .lt('created_at', today.toISOString()),
 
-    // Fetch active subscribers count
-    countActiveCustomerSubscriptions(),
-    findNextSubscriptionDueForPayment(),
+      // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
+      supabase
+        .from('profiles')
+        .select('id, created_at, username')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .lt('created_at', today.toISOString()),
 
-    // (callSessionsWeekResult) Call sessions last 7 days with duration info
-    supabase
-      .from('call_sessions')
-      .select('id, started_at, duration_seconds, credits_used, status')
-      .gte('started_at', sevenDaysAgo.toISOString())
-      .lt('started_at', today.toISOString()),
+      // (profilesTotalCountResult) Total profiles count
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .lt('created_at', today.toISOString()),
 
-    // (callSessionsTotalCountResult) Total call sessions count
-    supabase
-      .from('call_sessions')
-      .select('id', { count: 'exact', head: true })
-      .lt('started_at', today.toISOString()),
+      // (allCreditTransactionsResult) Fetch all credit transactions (small dataset, excluding manual ones) with username join
+      supabase
+        .from('credit_transactions')
+        .select(
+          'id, user_id, created_at, type, description, metadata, profiles(username)',
+        )
+        .in('type', ['purchase', 'topup', 'refund'])
+        .not('description', 'ilike', '%manual%')
+        .lt('created_at', today.toISOString()),
 
-    // (usageEventsWeekResult) Usage events last 7 days with profile username
-    supabase
-      .from('usage_events')
-      .select(
-        'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
-      )
-      .gte('occurred_at', sevenDaysAgo.toISOString())
-      .lt('occurred_at', today.toISOString()),
-  ]);
+      // Fetch active subscribers count
+      countActiveCustomerSubscriptions(),
+      findNextSubscriptionDueForPayment(),
 
-  if (audioYesterdayResult.error) throw audioYesterdayResult.error;
-  if (audioWeekResult.error) throw audioWeekResult.error;
-  if (audioTotalCountResult.error) throw audioTotalCountResult.error;
-  if (clonesResult.error) throw clonesResult.error;
-  if (profilesRecentResult.error) throw profilesRecentResult.error;
-  if (profilesTotalCountResult.error) throw profilesTotalCountResult.error;
-  if (allCreditTransactionsResult.error)
+      // (callSessionsWeekResult) Call sessions last 7 days with duration info
+      supabase
+        .from('call_sessions')
+        .select('id, started_at, duration_seconds, credits_used, status')
+        .gte('started_at', sevenDaysAgo.toISOString())
+        .lt('started_at', today.toISOString()),
+
+      // (callSessionsTotalCountResult) Total call sessions count
+      supabase
+        .from('call_sessions')
+        .select('id', { count: 'exact', head: true })
+        .lt('started_at', today.toISOString()),
+    ]);
+
+    // Fetch all usage events with pagination (Supabase limits to 1000 per request)
+    const fetchAllUsageEvents = async () => {
+      const allEvents: {
+        id: string;
+        user_id: string;
+        source_type: string;
+        credits_used: number;
+        occurred_at: string;
+        profiles: { username: string } | null;
+      }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('usage_events')
+          .select(
+            'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
+          )
+          .gte('occurred_at', sevenDaysAgo.toISOString())
+          .lt('occurred_at', today.toISOString())
+          .order('occurred_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allEvents.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allEvents;
+    };
+
+    usageEventsWeekResult = {
+      data: await fetchAllUsageEvents(),
+      error: null,
+    };
+
+    // Cache results for faster debugging (non-prod only)
+    const cacheData = {
+      audioYesterdayResult,
+      audioWeekResult,
+      audioTotalCountResult,
+      clonesResult,
+      profilesRecentResult,
+      profilesTotalCountResult,
+      allCreditTransactionsResult,
+      activeSubscribersCount,
+      nextSubscriptionDueForPayment,
+      callSessionsWeekResult,
+      callSessionsTotalCountResult,
+      usageEventsWeekResult,
+    };
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    console.log('📦 Cached API results to', CACHE_FILE);
+  } // end of else (not using cache)
+
+  if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
+  if (audioWeekResult?.error) throw audioWeekResult.error;
+  if (audioTotalCountResult?.error) throw audioTotalCountResult.error;
+  if (clonesResult?.error) throw clonesResult.error;
+  if (profilesRecentResult?.error) throw profilesRecentResult.error;
+  if (profilesTotalCountResult?.error) throw profilesTotalCountResult.error;
+  if (allCreditTransactionsResult?.error)
     throw allCreditTransactionsResult.error;
-  if (callSessionsWeekResult.error) throw callSessionsWeekResult.error;
-  if (callSessionsTotalCountResult.error)
+  if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
+  if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
   if (usageEventsWeekResult.error) throw usageEventsWeekResult.error;
 
@@ -188,49 +310,57 @@ export async function GET(request: NextRequest) {
   const audioWeekCount = audioWeekResult.count ?? 0;
   const audioTotalCount = audioTotalCountResult.count ?? 0;
 
-  const clonesData = (clonesResult.data ?? []).filter(
+  const clonesData = (
+    (clonesResult.data ?? []) as { id: string; created_at: string | null }[]
+  ).filter(
     (item): item is { id: string; created_at: string } =>
       item.created_at !== null,
   );
-  const profilesRecentData = (profilesRecentResult.data ?? []).filter(
+  const profilesRecentData = (
+    (profilesRecentResult.data ?? []) as {
+      id: string;
+      created_at: string | null;
+      username: string;
+    }[]
+  ).filter(
     (item): item is { id: string; created_at: string; username: string } =>
       item.created_at !== null,
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
-  const creditTransactions = allCreditTransactionsResult.data ?? [];
+  const creditTransactions: CreditTransaction[] =
+    allCreditTransactionsResult.data ?? [];
 
   // Call sessions data processing
-  const callSessionsWeekData = (callSessionsWeekResult.data ?? []).filter(
-    (
-      item,
-    ): item is {
-      id: string;
-      started_at: string;
-      duration_seconds: number;
-      credits_used: number;
-      status: string;
-    } => item.started_at !== null,
-  );
+  type CallSession = {
+    id: string;
+    started_at: string;
+    duration_seconds: number;
+    credits_used: number;
+    status: string;
+  };
+  const callSessionsWeekData = (
+    (callSessionsWeekResult.data ?? []) as (CallSession & {
+      started_at: string | null;
+    })[]
+  ).filter((item): item is CallSession => item.started_at !== null);
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
-  const usageEventsWeekData = usageEventsWeekResult.data ?? [];
+  const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
 
   // Filter call sessions by date ranges (using started_at as the date field)
-  const callSessionsYesterdayData = filterByDateRange(
-    callSessionsWeekData,
-    previousDay,
-    today,
+  const callSessionsYesterdayData = filterByDateRange<
     'started_at',
-  );
+    CallSession
+  >(callSessionsWeekData, previousDay, today, 'started_at');
   const callsYesterdayCount = callSessionsYesterdayData.length;
   const callsWeekCount = callSessionsWeekData.length;
 
   // Calculate total duration for yesterday and week
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
-    (sum, call) => sum + call.duration_seconds,
+    (sum: number, call: CallSession) => sum + call.duration_seconds,
     0,
   );
   const callsDurationWeek = callSessionsWeekData.reduce(
-    (sum, call) => sum + call.duration_seconds,
+    (sum: number, call: CallSession) => sum + call.duration_seconds,
     0,
   );
 
@@ -315,17 +445,17 @@ export async function GET(request: NextRequest) {
           .join(', ');
 
   // Filter credit transactions by date ranges (purchases/top-ups only)
-  const purchasePrevDayData = filterByDateRange(
+  const purchasePrevDayData = filterByDateRange<CreditTransaction>(
     purchaseTransactions,
     previousDay,
     today,
   );
-  const creditsWeekCount = filterByDateRange(
+  const creditsWeekCount = filterByDateRange<CreditTransaction>(
     purchaseTransactions,
     sevenDaysAgo,
     today,
   ).length;
-  const creditsMonthCount = filterByDateRange(
+  const creditsMonthCount = filterByDateRange<CreditTransaction>(
     purchaseTransactions,
     thirtyDaysAgo,
     today,
@@ -333,12 +463,12 @@ export async function GET(request: NextRequest) {
   const creditsTotalCount = purchaseTransactions.length;
 
   // Filter refund transactions by date ranges
-  const refundsPrevDayData = filterByDateRange(
+  const refundsPrevDayData = filterByDateRange<CreditTransaction>(
     refundTransactions,
     previousDay,
     today,
   );
-  const refundsPrevCount = filterByDateRange(
+  const refundsPrevCount = filterByDateRange<CreditTransaction>(
     refundTransactions,
     twoDaysAgo,
     previousDay,
@@ -447,7 +577,7 @@ export async function GET(request: NextRequest) {
   // Revenue calculations (incl. refund)
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
 
-  const creditsPrevDayData = filterByDateRange(
+  const creditsPrevDayData = filterByDateRange<CreditTransaction>(
     creditTransactions,
     previousDay,
     today,
@@ -455,7 +585,7 @@ export async function GET(request: NextRequest) {
   const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
 
   // 7-day revenue calculations
-  const credits7dData = filterByDateRange(
+  const credits7dData = filterByDateRange<CreditTransaction>(
     creditTransactions,
     sevenDaysAgo,
     today,
@@ -471,14 +601,14 @@ export async function GET(request: NextRequest) {
   );
 
   // MTD revenue calculations (purchases/top-ups only)
-  const mtdRevenueData = filterByDateRange(
+  const mtdRevenueData = filterByDateRange<CreditTransaction>(
     creditTransactions,
     monthStart,
     today,
   );
   const mtdRevenue = mtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const prevMtdRevenueData = filterByDateRange(
+  const prevMtdRevenueData = filterByDateRange<CreditTransaction>(
     creditTransactions,
     previousMonthStart,
     previousMonthPeriodEnd,
@@ -503,6 +633,77 @@ export async function GET(request: NextRequest) {
     today,
     'occurred_at',
   );
+
+  // DEBUG: Log paid user usage analysis
+  if (!isProd) {
+    // Get unique user IDs from yesterday's usage events
+    const yesterdayUserIds = new Set(
+      filterByDateRange(
+        usageEventsWeekData,
+        previousDay,
+        today,
+        'occurred_at',
+      ).map((e) => e.user_id),
+    );
+
+    // Check overlap between paid users and yesterday's active users
+    const paidUsersActiveYesterday = [...yesterdayUserIds].filter((id) =>
+      paidUserIds.has(id),
+    );
+
+    console.log('\n🔍 DEBUG: Paid User Usage Analysis');
+    console.log(
+      '  - Date range:',
+      previousDay.toISOString(),
+      'to',
+      today.toISOString(),
+    );
+    console.log('  - Total usage events (7d):', usageEventsWeekData.length);
+    console.log('  - Total paid user IDs:', paidUserIds.size);
+    console.log('  - Sample paid user IDs:', [...paidUserIds].slice(0, 3));
+    console.log('  - Active users yesterday:', yesterdayUserIds.size);
+    console.log(
+      '  - Sample yesterday user IDs:',
+      [...yesterdayUserIds].slice(0, 3),
+    );
+    console.log(
+      '  - Paid users active yesterday:',
+      paidUsersActiveYesterday.length,
+    );
+    console.log('  - Paid user usage events (7d):', paidUserUsageEvents.length);
+    console.log(
+      '  - Paid user usage events (yesterday):',
+      paidUserUsageYesterday.length,
+    );
+
+    // Check if any yesterday user IDs match any paid user IDs (partial match check)
+    if (paidUsersActiveYesterday.length === 0 && yesterdayUserIds.size > 0) {
+      console.log('\n  ⚠️ NO OVERLAP between paid users and active users!');
+      console.log('  - Checking ID format...');
+      const samplePaidId = [...paidUserIds][0];
+      const sampleActiveId = [...yesterdayUserIds][0];
+      console.log(
+        '  - Sample paid user ID:',
+        samplePaidId,
+        'length:',
+        samplePaidId?.length,
+      );
+      console.log(
+        '  - Sample active user ID:',
+        sampleActiveId,
+        'length:',
+        sampleActiveId?.length,
+      );
+    }
+
+    // Sample events for inspection
+    if (usageEventsWeekData.length > 0) {
+      console.log(
+        '  - Sample usage event:',
+        JSON.stringify(usageEventsWeekData[0], null, 2),
+      );
+    }
+  }
 
   // Calculate usage breakdown by source_type
   type UsageSourceType =
@@ -596,6 +797,29 @@ export async function GET(request: NextRequest) {
   const usageAnomalyFlag =
     usageAnomalyRatio > 2 ? ` ⚠️ ${usageAnomalyRatio.toFixed(1)}x avg` : '';
 
+  // DEBUG: Credit calculation verification
+  if (!isProd) {
+    console.log('\n💰 DEBUG: Credit Calculation Verification');
+    console.log('  - Paid user usage events (yesterday):', paidUserUsageYesterday.length);
+    console.log('  - Total credits yesterday:', totalCreditsYesterday);
+    console.log('  - Total credits week:', totalCreditsWeek);
+    console.log('  - LRCV:', LRCV);
+    console.log('  - Usage value yesterday: $', usageValueYesterday.toFixed(2));
+    console.log('  - Usage value week: $', usageValueWeek.toFixed(2));
+    console.log('  - Avg credits/day (7d):', avgCreditsPerDay.toFixed(1));
+    console.log('  - Anomaly ratio:', usageAnomalyRatio.toFixed(2));
+    console.log('  - Breakdown yesterday:', Object.fromEntries(usageYesterdayBreakdown));
+    console.log('  - Breakdown week:', Object.fromEntries(usageWeekBreakdown));
+
+    // Verify breakdown sums
+    const breakdownSum = [...usageYesterdayBreakdown.values()].reduce((a, b) => a + b, 0);
+    console.log('  - Breakdown sum (should match total):', breakdownSum);
+
+    // Show raw credits from events
+    const rawCreditsSum = paidUserUsageYesterday.reduce((sum, e) => sum + e.credits_used, 0);
+    console.log('  - Raw credits sum from events:', rawCreditsSum);
+  }
+
   // Top 3 paid users by credit consumption (yesterday)
   const userCreditUsage = new Map<string, number>();
   for (const event of paidUserUsageYesterday) {
@@ -613,6 +837,20 @@ export async function GET(request: NextRequest) {
     if (event.profiles?.username && !userIdToUsername.has(event.user_id)) {
       userIdToUsername.set(event.user_id, event.profiles.username);
     }
+  }
+
+  // DEBUG: Top users verification
+  if (!isProd) {
+    console.log('\n👤 DEBUG: Top Users Verification');
+    console.log('  - Total unique users with credits:', userCreditUsage.size);
+    console.log('  - Top 3 raw data:');
+    for (const [userId, credits] of topUsageUsers) {
+      const username = userIdToUsername.get(userId) ?? 'Unknown';
+      console.log(`    - ${username}: ${credits} credits ($${(credits * LRCV).toFixed(2)})`);
+    }
+    // Sum of top 3
+    const top3Sum = topUsageUsers.reduce((sum, [, c]) => sum + c, 0);
+    console.log('  - Sum of top 3:', top3Sum, `(${((top3Sum / totalCreditsYesterday) * 100).toFixed(1)}% of total)`);
   }
 
   const topUsageUsersList =
