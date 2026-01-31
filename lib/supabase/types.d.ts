@@ -314,6 +314,13 @@ declare type Database = {
             referencedRelation: 'credit_transactions';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'usage_events_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
         ];
       };
       voices: {
@@ -336,7 +343,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model: string;
+          model?: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
