@@ -160,10 +160,12 @@ export async function GET(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .lt('started_at', today.toISOString()),
 
-    // (usageEventsWeekResult) Usage events last 7 days for paid user analysis
+    // (usageEventsWeekResult) Usage events last 7 days with profile username
     supabase
       .from('usage_events')
-      .select('id, user_id, source_type, credits_used, occurred_at')
+      .select(
+        'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
+      )
       .gte('occurred_at', sevenDaysAgo.toISOString())
       .lt('occurred_at', today.toISOString()),
   ]);
@@ -605,11 +607,11 @@ export async function GET(request: NextRequest) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3);
 
-  // Get usernames for top usage users from purchaseTransactions
+  // Get usernames for top usage users from usage events
   const userIdToUsername = new Map<string, string>();
-  for (const t of purchaseTransactions) {
-    if (t.profiles?.username) {
-      userIdToUsername.set(t.user_id, t.profiles.username);
+  for (const event of usageEventsWeekData) {
+    if (event.profiles?.username && !userIdToUsername.has(event.user_id)) {
+      userIdToUsername.set(event.user_id, event.profiles.username);
     }
   }
 
