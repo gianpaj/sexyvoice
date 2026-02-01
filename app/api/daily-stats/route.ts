@@ -77,26 +77,25 @@ export async function GET(request: NextRequest) {
     Math.min(previousMonthStart.getTime() + duration, monthStart.getTime()),
   );
 
-  // Type definitions for cached data
-  type CreditTransaction = {
+  // Partial credit_transactions type matching the selected columns
+  interface CreditTransaction {
     id: string;
     user_id: string;
     created_at: string;
-    type: string;
+    type: 'purchase' | 'freemium' | 'topup' | 'refund';
     description: string | null;
-    // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
-    metadata: any;
+    metadata: Json;
     profiles: { username: string } | null;
-  };
+  }
 
-  type UsageEvent = {
+  interface UsageEvent {
     id: string;
     user_id: string;
     source_type: string;
     credits_used: number;
     occurred_at: string;
     profiles: { username: string } | null;
-  };
+  }
 
   // Load from cache if available (non-prod only)
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -111,10 +110,7 @@ export async function GET(request: NextRequest) {
   let profilesRecentResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let profilesTotalCountResult: any;
-  let allCreditTransactionsResult: {
-    data: CreditTransaction[] | null;
-    error: unknown;
-  };
+  let allCreditTransactions: CreditTransaction[];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -134,7 +130,7 @@ export async function GET(request: NextRequest) {
     clonesResult = cached.clonesResult;
     profilesRecentResult = cached.profilesRecentResult;
     profilesTotalCountResult = cached.profilesTotalCountResult;
-    allCreditTransactionsResult = cached.allCreditTransactionsResult;
+    allCreditTransactions = cached.allCreditTransactions;
     activeSubscribersCount = cached.activeSubscribersCount;
     nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
     callSessionsWeekResult = cached.callSessionsWeekResult;
@@ -150,7 +146,7 @@ export async function GET(request: NextRequest) {
       clonesResult,
       profilesRecentResult,
       profilesTotalCountResult,
-      allCreditTransactionsResult,
+
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
       // Call sessions - fetch for last 7 days (includes yesterday)
@@ -199,16 +195,6 @@ export async function GET(request: NextRequest) {
       supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
-        .lt('created_at', today.toISOString()),
-
-      // (allCreditTransactionsResult) Fetch all credit transactions (small dataset, excluding manual ones) with username join
-      supabase
-        .from('credit_transactions')
-        .select(
-          'id, user_id, created_at, type, description, metadata, profiles(username)',
-        )
-        .in('type', ['purchase', 'topup', 'refund'])
-        .not('description', 'ilike', '%manual%')
         .lt('created_at', today.toISOString()),
 
       // Fetch active subscribers count
@@ -273,6 +259,41 @@ export async function GET(request: NextRequest) {
       error: null,
     };
 
+    // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
+    const fetchAllCreditTransactions = async () => {
+      const allTransactions: CreditTransaction[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('credit_transactions')
+          .select(
+            'id, user_id, created_at, type, description, metadata, profiles(username)',
+          )
+          .in('type', ['purchase', 'topup', 'refund'])
+          .not('description', 'ilike', '%manual%')
+          .lt('created_at', today.toISOString())
+          .order('created_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allTransactions.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allTransactions;
+    };
+
+    allCreditTransactions = await fetchAllCreditTransactions();
+
     // Cache results for faster debugging (non-prod only)
     const cacheData = {
       audioYesterdayResult,
@@ -281,7 +302,7 @@ export async function GET(request: NextRequest) {
       clonesResult,
       profilesRecentResult,
       profilesTotalCountResult,
-      allCreditTransactionsResult,
+      allCreditTransactions,
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
       callSessionsWeekResult,
@@ -298,8 +319,7 @@ export async function GET(request: NextRequest) {
   if (clonesResult?.error) throw clonesResult.error;
   if (profilesRecentResult?.error) throw profilesRecentResult.error;
   if (profilesTotalCountResult?.error) throw profilesTotalCountResult.error;
-  if (allCreditTransactionsResult?.error)
-    throw allCreditTransactionsResult.error;
+
   if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
@@ -327,40 +347,31 @@ export async function GET(request: NextRequest) {
       item.created_at !== null,
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
-  const creditTransactions: CreditTransaction[] =
-    allCreditTransactionsResult.data ?? [];
+  const creditTransactions: CreditTransaction[] = allCreditTransactions;
 
-  // Call sessions data processing
-  type CallSession = {
-    id: string;
-    started_at: string;
-    duration_seconds: number;
-    credits_used: number;
-    status: string;
-  };
   const callSessionsWeekData = (
-    (callSessionsWeekResult.data ?? []) as (CallSession & {
+    (callSessionsWeekResult.data ?? []) as (Tables<'call_sessions'> & {
       started_at: string | null;
     })[]
-  ).filter((item): item is CallSession => item.started_at !== null);
+  ).filter((item): item is Tables<'call_sessions'> => item.started_at !== null);
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
   const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
 
   // Filter call sessions by date ranges (using started_at as the date field)
   const callSessionsYesterdayData = filterByDateRange<
     'started_at',
-    CallSession
+    Tables<'call_sessions'>
   >(callSessionsWeekData, previousDay, today, 'started_at');
   const callsYesterdayCount = callSessionsYesterdayData.length;
   const callsWeekCount = callSessionsWeekData.length;
 
   // Calculate total duration for yesterday and week
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
-    (sum: number, call: CallSession) => sum + call.duration_seconds,
+    (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
   const callsDurationWeek = callSessionsWeekData.reduce(
-    (sum: number, call: CallSession) => sum + call.duration_seconds,
+    (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
 
@@ -445,7 +456,7 @@ export async function GET(request: NextRequest) {
           .join(', ');
 
   // Filter credit transactions by date ranges (purchases/top-ups only)
-  const purchasePrevDayData = filterByDateRange<CreditTransaction>(
+  const purchasePrevDayData = filterByDateRange(
     purchaseTransactions,
     previousDay,
     today,
@@ -800,7 +811,10 @@ export async function GET(request: NextRequest) {
   // DEBUG: Credit calculation verification
   if (!isProd) {
     console.log('\n💰 DEBUG: Credit Calculation Verification');
-    console.log('  - Paid user usage events (yesterday):', paidUserUsageYesterday.length);
+    console.log(
+      '  - Paid user usage events (yesterday):',
+      paidUserUsageYesterday.length,
+    );
     console.log('  - Total credits yesterday:', totalCreditsYesterday);
     console.log('  - Total credits week:', totalCreditsWeek);
     console.log('  - LRCV:', LRCV);
@@ -808,15 +822,24 @@ export async function GET(request: NextRequest) {
     console.log('  - Usage value week: $', usageValueWeek.toFixed(2));
     console.log('  - Avg credits/day (7d):', avgCreditsPerDay.toFixed(1));
     console.log('  - Anomaly ratio:', usageAnomalyRatio.toFixed(2));
-    console.log('  - Breakdown yesterday:', Object.fromEntries(usageYesterdayBreakdown));
+    console.log(
+      '  - Breakdown yesterday:',
+      Object.fromEntries(usageYesterdayBreakdown),
+    );
     console.log('  - Breakdown week:', Object.fromEntries(usageWeekBreakdown));
 
     // Verify breakdown sums
-    const breakdownSum = [...usageYesterdayBreakdown.values()].reduce((a, b) => a + b, 0);
+    const breakdownSum = [...usageYesterdayBreakdown.values()].reduce(
+      (a, b) => a + b,
+      0,
+    );
     console.log('  - Breakdown sum (should match total):', breakdownSum);
 
     // Show raw credits from events
-    const rawCreditsSum = paidUserUsageYesterday.reduce((sum, e) => sum + e.credits_used, 0);
+    const rawCreditsSum = paidUserUsageYesterday.reduce(
+      (sum, e) => sum + e.credits_used,
+      0,
+    );
     console.log('  - Raw credits sum from events:', rawCreditsSum);
   }
 
@@ -846,11 +869,17 @@ export async function GET(request: NextRequest) {
     console.log('  - Top 3 raw data:');
     for (const [userId, credits] of topUsageUsers) {
       const username = userIdToUsername.get(userId) ?? 'Unknown';
-      console.log(`    - ${username}: ${credits} credits ($${(credits * LRCV).toFixed(2)})`);
+      console.log(
+        `    - ${username}: ${credits} credits ($${(credits * LRCV).toFixed(2)})`,
+      );
     }
     // Sum of top 3
     const top3Sum = topUsageUsers.reduce((sum, [, c]) => sum + c, 0);
-    console.log('  - Sum of top 3:', top3Sum, `(${((top3Sum / totalCreditsYesterday) * 100).toFixed(1)}% of total)`);
+    console.log(
+      '  - Sum of top 3:',
+      top3Sum,
+      `(${((top3Sum / totalCreditsYesterday) * 100).toFixed(1)}% of total)`,
+    );
   }
 
   const topUsageUsersList =
