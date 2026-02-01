@@ -19,7 +19,7 @@
     "format": "biome format ./app components hooks lib proxy.ts",
     "check:fix": "biome check ./app components hooks lib proxy.ts --write",
     "preview": "next build && next start",
-    "typecheck": "tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "analyze": "next experimental-analyze",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.mjs",
