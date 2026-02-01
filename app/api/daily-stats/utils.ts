@@ -37,9 +37,16 @@ export function formatCurrencyChange(
   previous: number,
 ): string {
   const diff = current - previous;
-  const pct = previous !== 0 ? ((diff / previous) * 100).toFixed(0) : 0;
+  if (previous === 0) {
+    if (current === 0) {
+      return '→$0.00 (no change)';
+    }
+    return `↑$${current.toFixed(2)} (new)`;
+  }
+  const pct = (diff / previous) * 100;
   const arrow = diff >= 0 ? '↑' : '↓';
-  return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(Number(pct))}%)`;
+
+  return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(pct).toFixed(0)}%)`;
 }
 
 export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
