@@ -124,12 +124,13 @@ Core tables:
 ### Code Quality Standards
 
 #### Essential Commands (Always run before committing)
+
 ```bash
 pnpm run fixall      # Run all fixes: lint, format, and check
 # OR run individually:
 pnpm run lint --write    # Fix linting issues automatically
 pnpm run format --write  # Format code with Biome
-pnpm run typecheck      # Verify TypeScript types
+pnpm run type-check      # Verify TypeScript types
 ```
 
 #### Code Style
@@ -202,15 +203,17 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - `pnpm preview` - Build and start (preview production locally)
 
 ### Code Quality
+
 - `pnpm lint` - Run Biome linting on app/, components/, hooks/, lib/, proxy.ts
 - `pnpm lint:write` / `pnpm lint --write` - Auto-fix linting issues
 - `pnpm format` - Format code with Biome
 - `pnpm format:write` / `pnpm format --write` - Auto-format code
 - `pnpm check:fix` - Run Biome check with fixes
 - `pnpm fixall` - Run all code quality fixes (lint:write + format:write + check:fix)
-- `pnpm typecheck` - Run TypeScript type checking
+- `pnpm type-check` - Run TypeScript type checking
 
 ### Testing
+
 - `pnpm test` - Run all tests with Vitest
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:ui` - Run tests with UI interface
@@ -385,8 +388,10 @@ Based on TODO.md, current priorities include:
 - **Authentication**: Validate Supabase SSR configuration
 
 ### Debug Commands
+
 ```bash
-pnpm run typecheck              # Check TypeScript issues
+
+pnpm run type-check              # Check TypeScript issues
 pnpm run lint                    # Check code quality issues
 pnpm run fixall                  # Fix all code quality issues
 pnpm clean                       # Check for unused dependencies
