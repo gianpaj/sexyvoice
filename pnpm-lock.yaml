@@ -178,7 +178,7 @@ importers:
         version: 0.5.8(acorn@8.15.0)(esbuild@0.25.5)
       crisp-sdk-web:
         specifier: ^1.0.26
-        version: 1.0.26
+        version: 1.0.27
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
@@ -4074,8 +4074,8 @@ packages:
   core-util-is@1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
 
-  crisp-sdk-web@1.0.26:
-    resolution: {integrity: sha512-MBK/+tCNJmt/l9ZYHb0cUUaaF02rCKeqLw1cruY/HU48tPOOnhUM0JdvuPaeq1d5VB2DCILY4rGYE4NeJbXvzg==}
+  crisp-sdk-web@1.0.27:
+    resolution: {integrity: sha512-aNWR3te65YiaVFu/iwdqOo3cyUBZHUheE4d6EtgQu/T18jh/9SpoYXjXF/OzUD3Cqy0pGryoqtuy5gxD8tqX9Q==}
 
   cross-fetch@4.1.0:
     resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
@@ -10995,7 +10995,7 @@ snapshots:
 
   core-util-is@1.0.3: {}
 
-  crisp-sdk-web@1.0.26: {}
+  crisp-sdk-web@1.0.27: {}
 
   cross-fetch@4.1.0:
     dependencies:
