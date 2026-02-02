@@ -136,7 +136,7 @@
     "redis-memory-server": "^0.16.0",
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
-    "ultracite": "6.3.9",
+    "ultracite": "6.5.1",
     "vitest": "4.0.16"
   },
   "browserslist": [
