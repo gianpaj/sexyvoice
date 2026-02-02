@@ -295,22 +295,24 @@ export async function GET(request: NextRequest) {
     allCreditTransactions = await fetchAllCreditTransactions();
 
     // Cache results for faster debugging (non-prod only)
-    const cacheData = {
-      audioYesterdayResult,
-      audioWeekResult,
-      audioTotalCountResult,
-      clonesResult,
-      profilesRecentResult,
-      profilesTotalCountResult,
-      allCreditTransactions,
-      activeSubscribersCount,
-      nextSubscriptionDueForPayment,
-      callSessionsWeekResult,
-      callSessionsTotalCountResult,
-      usageEventsWeekResult,
-    };
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-    console.log('📦 Cached API results to', CACHE_FILE);
+    if (!isProd) {
+      const cacheData = {
+        audioYesterdayResult,
+        audioWeekResult,
+        audioTotalCountResult,
+        clonesResult,
+        profilesRecentResult,
+        profilesTotalCountResult,
+        allCreditTransactions,
+        activeSubscribersCount,
+        nextSubscriptionDueForPayment,
+        callSessionsWeekResult,
+        callSessionsTotalCountResult,
+        usageEventsWeekResult,
+      };
+      fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+      console.log('📦 Cached API results to', CACHE_FILE);
+    }
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
