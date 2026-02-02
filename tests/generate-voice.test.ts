@@ -425,7 +425,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 12,
+        credits_used: 23,
         duration: '-1',
         filename: 'generated-audio-free/poe-ddb72d4b.wav',
         isPublic: false,
@@ -450,7 +450,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         sourceId: 'test-audio-file-id',
         unit: 'chars',
         quantity: text.length,
-        creditsUsed: 12,
+        creditsUsed: 23,
         metadata: {
           voiceId: 'voice-poe-id',
           voiceName: 'poe',
@@ -524,7 +524,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(response.status).toBe(200);
       expect(callCount).toBe(2); // Should have been called twice
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 12,
+        credits_used: 23,
         duration: '-1',
         filename: 'generated-audio-free/poe-9de7f9fe.wav',
         isPublic: false,
