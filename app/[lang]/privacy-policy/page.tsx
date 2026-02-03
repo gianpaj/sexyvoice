@@ -73,7 +73,7 @@ export default async function PrivacyPolicyPage(props: {
   }
 
   return (
-    <main className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+    <main className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <HeaderStatic dict={dictHeader} lang={lang} />
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1>{policy.title}</h1>

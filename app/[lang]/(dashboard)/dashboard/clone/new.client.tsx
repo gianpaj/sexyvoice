@@ -4,7 +4,6 @@ import {
   AlertCircle,
   CircleStop,
   Download,
-  InfoIcon,
   PaperclipIcon,
   UploadIcon,
   XIcon,
@@ -23,7 +22,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -38,12 +36,6 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
@@ -51,9 +43,9 @@ import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
-import { AudioProvider, useAudio } from './audio-provider';
-import type { SampleAudio } from './CloneSampleCard';
-import CloneSampleCard from './CloneSampleCard';
+import { AudioProvider } from './audio-provider';
+import type { SampleAudio } from './clone-sample-card';
+import CloneSampleCard from './clone-sample-card';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
@@ -146,7 +138,6 @@ function NewVoiceClientInner({
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
-  const audio = useAudio();
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -389,9 +380,6 @@ function NewVoiceClientInner({
 
       setGeneratedAudioUrl(voiceResult.url);
 
-      // Automatically play the audio using the context
-      audio?.setUrlAndPlay(voiceResult.url);
-
       toast.success(dict.success);
 
       setStatus('complete');
@@ -413,7 +401,6 @@ function NewVoiceClientInner({
       setStatus('error');
     }
   }, [
-    audio,
     dict,
     file,
     micBlob,
@@ -765,7 +752,7 @@ function NewVoiceClientInner({
                 }
               />
               <Label
-                className="text-muted-foreground text-sm leading-tight"
+                className="font-normal text-muted-foreground text-sm leading-tight"
                 htmlFor="legal-consent"
               >
                 {dict.legalConsentCheckbox}
@@ -829,9 +816,13 @@ function NewVoiceClientInner({
               <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
                 {generatedAudioUrl && (
                   <AudioPlayerWithContext
+                    autoPlay
                     className="rounded-full"
                     playAudioTitle={dict.playAudio}
+                    progressColor="#8b5cf6"
+                    showWaveform
                     url={generatedAudioUrl}
+                    waveColor="#888888"
                   />
                 )}
               </div>
@@ -849,28 +840,6 @@ function NewVoiceClientInner({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex items-center justify-between gap-3 border-t pt-6">
-        <p className="text-muted-foreground text-sm">{dict.cloneNotice}</p>
-        <TooltipProvider>
-          <Tooltip supportMobileTap>
-            <TooltipTrigger aria-label={dict.cloneNoticeTooltipLabel} asChild>
-              <button
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                type="button"
-              >
-                <InfoIcon aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              align="end"
-              className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
-              side="left"
-            >
-              {dict.cloneNoticeTooltip}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </CardFooter>
     </Card>
   );
 }

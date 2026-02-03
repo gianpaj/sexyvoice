@@ -803,6 +803,26 @@ describe('Clone Voice API Route', () => {
           referenceAudioFileMimeType: 'audio/wav',
         },
       });
+
+      // Verify usage event was logged for voice cloning
+      expect(queries.insertUsageEvent).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        sourceType: 'voice_cloning',
+        sourceId: 'test-audio-file-id',
+        unit: 'operation',
+        quantity: 1,
+        creditsUsed: expect.any(Number),
+        metadata: {
+          model: 'fal-ai/chatterbox/text-to-speech',
+          locale: 'en',
+          textPreview: 'Hello world',
+          textLength: 11,
+          audioDuration: 30,
+          referenceAudioFileMimeType: 'audio/wav',
+          requestId: expect.any(String),
+          userHasPaid: false,
+        },
+      });
     });
 
     it('should handle Replicate API errors gracefully', async () => {

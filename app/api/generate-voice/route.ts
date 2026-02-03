@@ -20,6 +20,7 @@ import {
   getCredits,
   getVoiceIdByName,
   hasUserPaid,
+  insertUsageEvent,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
   let voice = '';
   let styleVariant = '';
   let user: User | null = null;
+  let userHasPaid = false;
   try {
     if (request.body === null) {
       logger.error('Request body is empty', {
@@ -137,7 +139,7 @@ export async function POST(request: Request) {
 
     const abortController = new AbortController();
 
-    const userHasPaid = await hasUserPaid(user.id);
+    userHasPaid = await hasUserPaid(user.id);
 
     let folder = 'generated-audio-free';
 
@@ -181,6 +183,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: result }, { status: 200 });
     }
 
+    let replicateResponse: Prediction | undefined;
+    let genAIResponse: GenerateContentResponse | null = null;
+    let modelUsed = '';
+    let uploadUrl = '';
+
     if (isGeminiVoice) {
       // const isOverLimit = await isFreemiumUserOverLimit(user.id);
       // if (!userHasPaid && isOverLimit) {
@@ -191,14 +198,7 @@ export async function POST(request: Request) {
       //     { status: 403 },
       //   );
       // }
-    }
 
-    let replicateResponse: Prediction | undefined;
-    let genAIResponse: GenerateContentResponse | null;
-    let modelUsed = '';
-    let uploadUrl = '';
-
-    if (isGeminiVoice) {
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       });
@@ -257,18 +257,25 @@ export async function POST(request: Request) {
         genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData
           ?.mimeType;
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
+      const blockReason = genAIResponse?.promptFeedback?.blockReason;
+      const isProhibitedContent =
+        finishReason === FinishReason.PROHIBITED_CONTENT ||
+        blockReason === 'PROHIBITED_CONTENT';
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
-        if (FinishReason.PROHIBITED_CONTENT === finishReason) {
+        if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
             user: { id: user.id },
             model: modelUsed,
             text,
+            blockReason,
+            finishReason,
           });
         } else {
           logger.error('Gemini voice generation failed', {
             error: finishReason,
             finishReason,
+            blockReason,
             hasData: !!data,
             mimeType,
             response: genAIResponse,
@@ -278,6 +285,7 @@ export async function POST(request: Request) {
             console.dir(
               {
                 error: finishReason,
+                blockReason,
                 hasData: !!data,
                 mimeType,
                 response: genAIResponse,
@@ -288,14 +296,13 @@ export async function POST(request: Request) {
           }
         }
         throw new Error(
-          finishReason === FinishReason.PROHIBITED_CONTENT
-            ? 'Content generation was prohibited by our provider. Please modify your input and try again.'
-            : 'Voice generation failed, please retry',
+          isProhibitedContent
+            ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
+            : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
           {
-            cause:
-              finishReason === FinishReason.PROHIBITED_CONTENT
-                ? 'PROHIBITED_CONTENT'
-                : 'OTHER_GEMINI_BLOCK',
+            cause: isProhibitedContent
+              ? 'PROHIBITED_CONTENT'
+              : 'OTHER_GEMINI_BLOCK',
           },
         );
       }
@@ -342,8 +349,7 @@ export async function POST(request: Request) {
         });
         console.error(errorObj);
         throw new Error(
-          // @ts-expect-error
-          output.error || 'Voice generation failed, please try again',
+          getErrorMessage('REPLICATE_ERROR', 'voice-generation'),
           {
             cause: 'REPLICATE_ERROR',
           },
@@ -418,6 +424,26 @@ export async function POST(request: Request) {
         console.error(errorObj);
       }
 
+      // Insert usage event for tracking (non-blocking)
+      await insertUsageEvent({
+        userId: user.id,
+        sourceType: 'tts',
+        sourceId: audioFileDBResult.data?.id,
+        unit: 'chars',
+        quantity: text.length,
+        creditsUsed,
+        metadata: {
+          voiceId: voiceObj.id,
+          voiceName: voice,
+          model: modelUsed,
+          textPreview: text.slice(0, 100),
+          textLength: text.length,
+          isGeminiVoice,
+          userHasPaid,
+          predictionId: replicateResponse?.id ?? null,
+        },
+      });
+
       await sendPosthogEvent({
         userId: user.id,
         predictionId: replicateResponse?.id,
@@ -461,7 +487,9 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error: getErrorMessage(
-              ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
+              userHasPaid
+                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
+                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
               'voice-generation',
             ),
           },
@@ -476,9 +504,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         {
-          error:
-            getErrorMessage(error.cause, 'voice-generation') ||
-            'Voice generation failed, please retry',
+          error: error.message || 'Voice generation failed, please retry',
         },
         { status: getErrorStatusCode(error.cause) },
       );

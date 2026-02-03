@@ -19,7 +19,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -45,8 +47,8 @@ export function VoiceSelector({
   setSelectedStyle,
   dict,
 }: {
-  publicVoices: Voice[];
-  selectedVoice?: Voice;
+  publicVoices: Tables<'voices'>[];
+  selectedVoice?: Tables<'voices'>;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
@@ -63,6 +65,25 @@ export function VoiceSelector({
       resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
     }
   }, [selectedStyle]);
+
+  const groupedVoices = Object.entries(
+    publicVoices.reduce(
+      (acc, voice) => {
+        const language =
+          voice.language === 'multiple' ? 'Multilingual 🌍' : voice.language;
+        if (!acc[language]) {
+          acc[language] = [];
+        }
+        acc[language].push(voice);
+        return acc;
+      },
+      {} as Record<string, Tables<'voices'>[]>,
+    ),
+  ).sort(([langA], [langB]) => {
+    if (langA === 'Multilingual 🌍') return -1;
+    if (langB === 'Multilingual 🌍') return 1;
+    return langA.localeCompare(langB);
+  });
 
   return (
     <Card>
@@ -97,28 +118,35 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger>
+          <SelectTrigger className="md:w-1/2">
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
           <SelectContent>
             {publicVoices.length > 0 &&
-              publicVoices.map((voice) => (
-                <SelectItem
-                  className="cursor-pointer py-3"
-                  key={voice.id}
-                  value={voice.name}
-                >
-                  {capitalizeFirstLetter(voice.name)} | {voice.language}
-                </SelectItem>
+              groupedVoices.map(([language, voices]) => (
+                <SelectGroup key={language}>
+                  <SelectLabel className="font-light">{language}</SelectLabel>
+                  {voices.map((voice) => (
+                    <SelectItem
+                      className="cursor-pointer py-3"
+                      key={voice.id}
+                      value={voice.name}
+                    >
+                      {capitalizeFirstLetter(voice.name)}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
           </SelectContent>
         </Select>
         <AudioProvider>
           {selectedVoice?.sample_url && (
-            <div className="flex items-center justify-start gap-2 py-2 lg:w-2/3">
+            <div className="flex items-center justify-start gap-2 py-2">
               <AudioPlayerWithContext
                 playAudioTitle={dict.playAudio}
+                showWaveform
                 url={selectedVoice.sample_url}
+                waveformClassName="!h-5"
               />
               <div className="flex items-center gap-3">
                 <p className="text-muted-foreground text-sm">

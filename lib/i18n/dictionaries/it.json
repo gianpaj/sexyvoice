@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Ultimi post",
     "hero": {
-      "title": "Voci espressive, senza censura",
-      "subtitle": "Generatore gratuito di sintesi vocale e voci AI. \nPerfetto per creatori di contenuti, sviluppatori e narratori. 😉",
+      "title": "Chiamata privata con un'IA, Parla liberamente –\nsenza giudizio",
+      "subtitle": "Vivi l'esperienza – prova 20 minuti di chiamata gratuita",
       "buttonCTA": "Registrati gratis",
-      "noCreditCard": "Nessuna carta di credito richiesta",
+      "noCreditCard": "Nessuna carta di credito richiesta. Puoi riagganciare quando vuoi",
       "signIn": "Accedi"
     },
     "features": {
@@ -118,7 +118,7 @@
             },
             {
               "question": "Quanto costa?",
-              "answer": "Le chiamate live costano 200 crediti al minuto mentre sei connesso."
+              "answer": "Le chiamate live costano 400 crediti al minuto mentre sei connesso."
             }
           ]
         },
@@ -284,7 +284,8 @@
     "title": "Crediti",
     "topupButton": "Ricarica",
     "totalCredits": "Totale",
-    "remainingCredits": "Rimanenti"
+    "remainingCredits": "Rimanenti",
+    "remainingTime": "Tempo rimanente"
   },
   "generate": {
     "abortedCloning": "Generazione voce interrotta.",
@@ -313,12 +314,25 @@
       "geminiInfo": "Supporta 24 lingue:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇳🇱 Olandese (Paesi Bassi),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇮🇳 Marathi (India),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\n🇻🇳 Vietnamita (Vietnam)"
     }
   },
+  "call": {
+    "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
+    "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
+    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
+    "configurationTitle": "Configurazione",
+    "languageLabel": "Lingua",
+    "languagePlaceholder": "Scegli la lingua",
+    "startCall": "Avvia una chiamata",
+    "connecting": "Connessione in corso",
+    "reconnected": "Riconnesso",
+    "reconnectionFailed": "Riconnessione non riuscita",
+    "configurationUpdated": "Configurazione aggiornata",
+    "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
+    "agentUnavailable": "Agente non disponibile",
+    "disconnected": "Disconnesso"
+  },
   "clone": {
     "audioFileLabel": "File audio",
     "cancelButton": "Annulla",
-    "cloneNotice": "Per favore clona solo voci con permesso – rispetta gli altri e segui la legge.",
-    "cloneNoticeTooltip": "Carica solo registrazioni per cui hai il permesso di utilizzo e ottieni il consenso prima di clonare o condividere la voce di qualcun altro.\nHai accesso esclusivo alle tue voci clonate e ai file audio – nessun altro può accedervi.",
-    "cloneNoticeTooltipLabel": "Apri avviso sicurezza clonazione vocale",
     "ctaButton": "Genera audio",
     "downloadAudio": "Scarica audio",
     "dragDropText": "Trascina e rilascia o clicca per sfogliare",
@@ -388,17 +402,19 @@
     }
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai - Sintesi vocale gratuita e generatore di voci AI",
-    "description": "Crea voci AI naturali con emozioni in 24 lingue. Generatore gratuito di sintesi vocale con clonazione vocale. Inizia con 10.000 crediti gratuiti - nessuna carta richiesta.",
+    "defaultTitle": "Parla con l'IA - Chiamate vocali private senza giudizio | SexyVoice.ai",
+    "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 20 min di chiamata gratuita. Nessuna carta di credito richiesta.",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
     "/": "",
     "/login": "Accedi",
     "/signup": "Registrati con email o Google",
+    "/dashboard/call": "Chiama",
     "/dashboard/generate": "Genera",
     "/dashboard/clone": "Clona",
     "/dashboard/history": "Cronologia",
     "/dashboard/credits": "Crediti",
+    "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore audio gratuito"
   },
   "sidebar": {
@@ -409,6 +425,58 @@
     "generate": "Genera",
     "login": "Accedi",
     "signup": "Registrati"
+  },
+  "history": {
+    "header": "Cronologia generazioni",
+    "empty": "Nessuna cronologia ancora",
+    "ui": {
+      "filterText": "Filtra testo...",
+      "customizeColumns": "Personalizza colonne",
+      "columns": "Colonne",
+      "previous": "Precedente",
+      "next": "Successivo"
+    }
+  },
+  "usage": {
+    "header": "Cronologia utilizzo",
+    "empty": "Nessun evento di utilizzo ancora",
+    "summary": {
+      "title": "Utilizzo di questo mese",
+      "totalTitle": "Utilizzo totale",
+      "allTime": "Sempre",
+      "totalCredits": "Crediti totali utilizzati",
+      "operations": "Operazioni",
+      "noData": "Nessun dato di utilizzo",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Clonazione",
+        "live_call": "Chiamata",
+        "audio_processing": "Elaborazione audio"
+      }
+    },
+    "table": {
+      "sourceType": "Tipo",
+      "quantity": "Quantità",
+      "creditsUsed": "Crediti",
+      "date": "Data",
+      "details": "Dettagli"
+    },
+    "ui": {
+      "previous": "Precedente",
+      "next": "Successivo",
+      "page": "Pagina",
+      "of": "di",
+      "showing": "Mostrando",
+      "results": "risultati",
+      "filterByType": "Filtra per tipo",
+      "allTypes": "Tutti i tipi"
+    },
+    "units": {
+      "chars": "caratteri",
+      "mins": "minuti",
+      "secs": "secondi",
+      "operation": "operazione"
+    }
   },
   "footer": {
     "statusPage": "Pagina di stato",
@@ -444,12 +512,12 @@
       }
     },
     "winterSaleBanner": {
-      "text": "❄️ Saldi invernali – Ottieni fino al 35% di crediti extra con un acquisto ☃️\nOfferta a tempo limitato 🎿",
+      "text": "❄️ Saldi invernale – Ottieni fino al 35% di crediti extra con un acquisto ☃️\nOfferta a tempo limitato 🎿",
       "ctaLoggedIn": "Ottieni offerta",
       "ctaLoggedOut": "Registrati ora",
-      "ariaLabelDismiss": "Chiudi banner saldi invernali",
+      "ariaLabelDismiss": "Chiudi banner saldi invernale",
       "pricing": {
-        "bannerText": "❄️ Saldi invernali"
+        "bannerText": "❄️ Saldi invernale"
       }
     }
   },

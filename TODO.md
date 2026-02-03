@@ -1,7 +1,11 @@
 # TODO
 
+- self-host Sentry on Hetzner machine
+- add duration to generate audios. if there is a high duration and short text, add warning in `usage` JSON col that the audio may be silent for a long time.
 - fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
 - fix: landing page audios not stopping if another audio is played
+- Add usage page in Dashboard
+- Update daily-stats API route to include usage and a section for Voice calls. Mins, credits used, Top preset/voice/language and the averages
 - add audio clones demos on landing page
   - Bruce Lee
   - Sophia Loren
@@ -10,6 +14,7 @@
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - share link & page after an audio has been generated
+- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
@@ -41,10 +46,9 @@
   ```
 
 - daily stats:
-  - add num of delete profiles
+  - add num of deleted profiles
 - Translate pages in Dashboard:
-  - Generate
-  - History
+  - History (table headers)
   - Credits (table headers)
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
@@ -60,6 +64,10 @@
 Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può sembrare una persona.
 
 > sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
+
+## Payments
+
+- add nowpayments.io to support Crypto
 
 ## SEO
 
@@ -116,3 +124,8 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 - Winston Churchill
   - We shall go forward together with resolute hearts. Let us face our challenges with the firmness and courage that have always defined our people.
 - Schedule on Grok to research every month top Netflix series which are popular. From those, fine female actress which are 'sex' symbols. Could be in English, Spanish, German, Indian, Arab. From those find video clips of these actress in their series being flirty or seductive.
+
+## Indian TTS
+
+- https://timepay.ai/products/tts - has emotion tags
+- https://sarvam.ai

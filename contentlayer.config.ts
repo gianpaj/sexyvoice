@@ -1,4 +1,7 @@
 import { defineDocumentType, makeSource } from 'contentlayer2/source-files';
+import rehypeHighlight from 'rehype-highlight';
+import rehypeHighlightLines from 'rehype-highlight-code-lines';
+import remarkGfm from 'remark-gfm';
 
 import { i18n, type Locale } from './lib/i18n/i18n-config';
 
@@ -52,6 +55,11 @@ const Post = defineDocumentType(() => ({
       type: 'string',
       description: 'The description of the post',
       required: true,
+    },
+    author: {
+      type: 'string',
+      description: 'The author of the post',
+      required: false,
     },
     keywords: {
       type: 'list',
@@ -131,4 +139,8 @@ export default makeSource({
   contentDirPath: '.',
   contentDirInclude: ['posts', 'policies'],
   documentTypes: [Post, PolicyPage],
+  mdx: {
+    remarkPlugins: [remarkGfm],
+    rehypePlugins: [rehypeHighlight, rehypeHighlightLines],
+  },
 });

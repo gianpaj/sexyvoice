@@ -1,6 +1,13 @@
 'use client';
 
-import { CreditCard, FileClock, Mic2, Wand2 } from 'lucide-react';
+import {
+  BarChart3,
+  CreditCard,
+  FileClock,
+  Mic2,
+  PhoneCallIcon,
+  Wand2,
+} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,7 +34,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 
 interface DashboardUIProps {
   children: React.ReactNode;
-  creditTransactions: Pick<CreditTransaction, 'amount'>[];
+  creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
   userId: string;
   lang: Locale;
   dict: typeof langDict;
@@ -45,6 +52,12 @@ export default function DashboardUI({
   const pathname = usePathname();
 
   const navigation = [
+    {
+      name: dict.pages['/dashboard/call'],
+      href: `/${lang}/dashboard/call`,
+      icon: PhoneCallIcon,
+      current: pathname === `/${lang}/dashboard/call`,
+    },
     {
       name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
@@ -68,6 +81,12 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
+    },
+    {
+      name: dict.pages['/dashboard/usage'],
+      href: `/${lang}/dashboard/usage`,
+      icon: BarChart3,
+      current: pathname === `/${lang}/dashboard/usage`,
     },
   ];
 
@@ -124,6 +143,7 @@ export default function DashboardUI({
               creditTransactions={creditTransactions}
               dict={dict.creditsSection}
               lang={lang}
+              showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />
 

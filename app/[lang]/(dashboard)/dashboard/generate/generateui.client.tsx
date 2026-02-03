@@ -8,7 +8,7 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
 interface GenerateUIProps {
-  publicVoices: Voice[];
+  publicVoices: Tables<'voices'>[];
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
   locale: string;

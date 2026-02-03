@@ -16,8 +16,10 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
 - **fal.ai** – Alternative voice cloning service *(optional)*
 - **Google Generative AI** – Text-to-speech, text enhancement, and automatic emotion tagging
+- **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
 - **Cloudflare R2** – Scalable storage for generated audio files and user-uploaded samples with global CDN delivery
 - **Upstash Redis** – High-performance caching for audio URLs and request deduplication
+- **Vercel Edge Config** – Dynamic configuration for call instructions and presets
 - **Stripe** – Payment processing, credit top-ups, subscription management
 - **Sentry** – Error tracking and performance monitoring
 - **PostHog** – Product analytics and feature flags
@@ -134,6 +136,61 @@ flowchart TD
 - **Duration**: 10 seconds minimum, 5 minutes maximum
 - **Storage**: Input audio temporarily stored, then cleaned up via background job
 
+## Real-time AI Voice Call Flow
+
+API endpoint: `POST /api/call-token`
+
+```mermaid
+flowchart TD
+    A[User: Configure Call Settings] --> B[Click Connect]
+    B --> C[Request Token from /api/call-token]
+    C --> D[Authenticate User]
+    D --> E{Check Minimum Credits}
+    E -->|Insufficient| F[Return 402 Error]
+    E -->|Sufficient| G[Load Call Instructions from Edge Config]
+    G --> H[Resolve Voice by Name]
+    H --> I[Generate LiveKit Access Token]
+    I --> J[Configure Room with AI Agent Dispatch]
+    J --> K[Return Token + WebSocket URL]
+    K --> L[Client Connects to LiveKit Room]
+    L --> M[AI Agent Joins Room]
+    M --> N[Real-time Voice Conversation]
+    N --> O[Track Usage in call_sessions + usage_events]
+    O --> P[Deduct Credits Based on Duration]
+    P --> Q[User Disconnects]
+    Q --> R[Refetch Credits and Update UI]
+```
+
+### Steps
+
+1. **Configure Session**: User selects voice, model, temperature, and custom instructions in `/dashboard/call`
+2. **Request Token**: Frontend calls `/api/call-token` with session configuration
+3. **Authentication**: Verify user session via Supabase Auth
+4. **Credit Check**: Ensure user has minimum credits required for calls
+5. **Load Instructions**: Fetch dynamic call instructions from Vercel Edge Config (with fallback defaults)
+6. **Voice Resolution**: Look up voice ID by name from database
+7. **Token Generation**: Create LiveKit access token with:
+   - Room grants (join, publish, subscribe)
+   - Room configuration with AI agent dispatch (`sexycall` agent)
+   - Metadata containing instructions, model, voice, and user context
+8. **Client Connection**: Return access token and WebSocket URL to client
+9. **Room Join**: Client connects to LiveKit room using WebRTC
+10. **AI Agent**: Agent joins room and handles real-time voice conversation
+11. **Usage Tracking**: Record session in `call_sessions` table, events in `usage_events`
+12. **Billing**: Deduct credits based on call duration
+13. **Disconnect**: On call end, refresh credits and update UI
+
+### Call Configuration Options
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Voice | AI voice for the call | Configurable |
+| Model | LLM model for conversation | gpt-4o-realtime |
+| Temperature | Response creativity (0-1) | 0.8 |
+| Max Output Tokens | Token limit for responses | 4096 |
+| Instructions | System prompt for AI behavior | From Edge Config |
+| Language | Conversation language | English |
+
 ## Database Schema
 
 ### Core Tables
@@ -143,6 +200,8 @@ flowchart TD
 - `audio_files` – Generated audio files with metadata (text, URL, duration, credits used)
 - `credits` – User credit balances
 - `credit_transactions` – Credit usage and purchase history
+- `call_sessions` – Real-time voice call sessions with duration, room ID, and billing info
+- `usage_events` – Granular usage tracking for analytics, billing, and reporting
 
 See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
 
@@ -167,24 +226,50 @@ See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
 app/[lang]/                    # Internationalized routes (en, es, de, da, it, fr)
 ├── (auth)/                    # Public authentication pages
 ├── (dashboard)/               # Protected dashboard routes
-├── api/
-│   ├── generate-voice/        # Voice generation endpoint
-│   ├── clone-voice/           # Voice cloning endpoint
-│   ├── webhooks/stripe/       # Stripe payment webhooks
-│   └── cron/telegram/         # Daily stats notifications
+│   └── dashboard/
+│       ├── call/              # Real-time AI voice call interface
+│       ├── usage/             # Usage statistics dashboard
+│       ├── generate/          # Voice generation
+│       ├── clone/             # Voice cloning
+│       └── history/           # Generated audio history
 ├── actions/                   # Server actions (promos, stripe)
 ├── blog/[slug]/               # MDX blog posts
 └── page.tsx                   # Landing page
+
+app/api/
+├── call-token/                # LiveKit token generation for real-time calls
+├── usage-events/              # Usage tracking API
+├── daily-stats/               # Daily statistics endpoint
+├── generate-voice/            # Voice generation endpoint
+├── clone-voice/               # Voice cloning endpoint
+├── webhooks/stripe/           # Stripe payment webhooks
+└── cron/telegram/             # Daily stats notifications
 
 lib/
 ├── supabase/                  # Database client, queries, types
 ├── i18n/                      # Internationalization (en, es, de, da, it, fr)
 ├── stripe/                    # Payment processing
+├── edge-config/               # Vercel Edge Config for dynamic settings
 ├── inngest/                   # Background jobs
 └── utils/                     # Utility functions
 
+data/
+├── playground-state.ts        # Call session state management
+├── presets.ts                 # Preset configurations for calls
+├── voices.ts                  # Voice definitions for calls
+├── session-config.ts          # Session configuration
+└── default-config.ts          # Default call instructions
+
+hooks/
+├── use-connection.tsx         # LiveKit connection management
+├── use-agent.tsx              # AI agent interaction hook
+├── use-call-timer.ts          # Call duration tracking
+├── use-playground-state.tsx   # Call state management
+└── use-persistent-media-device.ts  # Microphone persistence
+
 components/
 ├── ui/                        # shadcn/ui components
+├── call/                      # Real-time call components (voice selector, chat, controls)
 └── [features]/                # Feature-specific components
 ```
 

@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
@@ -40,9 +41,10 @@ import { columns } from './columns';
 
 interface DataTableProps {
   userId: string;
+  dict: (typeof langDict)['history'];
 }
 
-export function DataTable({ userId }: DataTableProps) {
+export function DataTable({ userId, dict }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -73,15 +75,15 @@ export function DataTable({ userId }: DataTableProps) {
 
   return (
     <>
-      <div className="flex items-center justify-between py-4">
-        <div className="flex flex-1 items-center gap-2">
+      <div className="flex items-start justify-between gap-2 py-4 sm:items-center">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             autoComplete="off"
             className="max-w-sm"
             onChange={(event) =>
               table.getColumn('text')?.setFilterValue(event.target.value)
             }
-            placeholder="Filter text..."
+            placeholder={dict.ui.filterText}
             value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
           />
           <p className="text-left text-muted-foreground text-sm">
@@ -93,8 +95,10 @@ export function DataTable({ userId }: DataTableProps) {
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
                 <ColumnsIcon />
-                <span className="hidden lg:inline">Customize Columns</span>
-                <span className="lg:hidden">Columns</span>
+                <span className="hidden lg:inline">
+                  {dict.ui.customizeColumns}
+                </span>
+                <span className="lg:hidden">{dict.ui.columns}</span>
                 <ChevronDownIcon />
               </Button>
             </DropdownMenuTrigger>
@@ -163,7 +167,7 @@ export function DataTable({ userId }: DataTableProps) {
                   className="h-24 text-center"
                   colSpan={columns.length}
                 >
-                  No results.
+                  {dict.empty}
                 </TableCell>
               </TableRow>
             )}
@@ -177,7 +181,7 @@ export function DataTable({ userId }: DataTableProps) {
           size="sm"
           variant="outline"
         >
-          Previous
+          {dict.ui.previous}
         </Button>
         <Button
           disabled={!table.getCanNextPage()}
@@ -185,7 +189,7 @@ export function DataTable({ userId }: DataTableProps) {
           size="sm"
           variant="outline"
         >
-          Next
+          {dict.ui.next}
         </Button>
       </div>
     </>
