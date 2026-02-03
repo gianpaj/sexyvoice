@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Seneste indlæg",
     "hero": {
-      "title": "Udtryksfulde stemmer, ucensureret",
-      "subtitle": "Gratis tekst-til-tale & AI-stemmegenerator. \nPerfekt til indholdsskabere, udviklere og historiefortællere. 😉",
+      "title": "Privat opkald med en AI, Tal frit –\nuden dom",
+      "subtitle": "Oplev forbindelsen – prøv 20 minutters gratis opkald",
       "buttonCTA": "Tilmeld dig gratis",
-      "noCreditCard": "Intet kreditkort påkrævet",
+      "noCreditCard": "Intet kreditkort påkrævet. Du kan lægge på når som helst",
       "signIn": "Log ind"
     },
     "features": {
@@ -118,7 +118,7 @@
             },
             {
               "question": "Hvor meget koster det?",
-              "answer": "Live-opkald koster 200 kreditter pr. minut, mens du er forbundet."
+              "answer": "Live-opkald koster 400 kreditter pr. minut, mens du er forbundet."
             }
           ]
         },
@@ -284,7 +284,8 @@
     "title": "Kreditter",
     "topupButton": "Fyld op",
     "totalCredits": "Total",
-    "remainingCredits": "Resterende"
+    "remainingCredits": "Resterende",
+    "remainingTime": "Resterende tid"
   },
   "generate": {
     "abortedCloning": "Stemmegenerering afbrudt.",
@@ -316,12 +317,25 @@
       "geminiInfo": "Understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇳🇱 Hollandsk (Holland),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)"
     }
   },
+  "call": {
+    "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
+    "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
+    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__",
+    "configurationTitle": "Konfiguration",
+    "languageLabel": "Sprog",
+    "languagePlaceholder": "Vælg sprog",
+    "startCall": "Start et opkald",
+    "connecting": "Forbinder",
+    "reconnected": "Forbundet igen",
+    "reconnectionFailed": "Genforbindelse mislykkedes",
+    "configurationUpdated": "Konfiguration opdateret",
+    "configurationUpdateError": "Fejl ved opdatering af konfiguration",
+    "agentUnavailable": "Agenten er ikke tilgængelig",
+    "disconnected": "Afbrudt"
+  },
   "clone": {
     "audioFileLabel": "Lydfil",
     "cancelButton": "Annuller",
-    "cloneNotice": "Klon venligst kun stemmer med tilladelse – respekter andre og følg loven.",
-    "cloneNoticeTooltip": "Upload kun optagelser, du har tilladelse til at bruge, og få samtykke, før du kloner eller deler andres stemme.\nDu har eksklusiv adgang til dine klonede stemmer og lydfiler – ingen andre kan få adgang til dem.",
-    "cloneNoticeTooltipLabel": "Åbn sikkerhedsmeddelelse om stemmekloning",
     "ctaButton": "Generer lyd",
     "downloadAudio": "Download lyd",
     "dragDropText": "Træk & slip eller klik for at gennemse",
@@ -391,17 +405,19 @@
     }
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai - Gratis tekst-til-tale & AI-stemmegenerator",
-    "description": "Skab naturlige AI-stemmer med følelser på 24 sprog. Gratis tekst-til-tale-generator med stemmekloning. Start med 10.000 gratis kreditter - intet kort påkrævet.",
+    "defaultTitle": "Tal med AI - Private stemmeopkald uden dom | SexyVoice.ai",
+    "description": "Oplev AI-stemmeopkald i realtid i total privatliv. Tal frit uden dom - dine hemmeligheder er sikre. Prøv 20 min gratis opkald nu. Intet kreditkort påkrævet.",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",
     "/login": "Log ind",
     "/signup": "Tilmeld med e-mail eller Google",
+    "/dashboard/call": "Opkald",
     "/dashboard/generate": "Generer",
     "/dashboard/clone": "Klon",
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
+    "/dashboard/usage": "Forbrug",
     "/tools/audio-converter": "Gratis lydkonverter"
   },
   "sidebar": {
@@ -412,6 +428,58 @@
     "generate": "Generer",
     "login": "Log ind",
     "signup": "Tilmeld"
+  },
+  "history": {
+    "header": "Genereringshistorik",
+    "empty": "Ingen historik endnu",
+    "ui": {
+      "filterText": "Filtrer tekst...",
+      "customizeColumns": "Tilpas kolonner",
+      "columns": "Kolonner",
+      "previous": "Forrige",
+      "next": "Næste"
+    }
+  },
+  "usage": {
+    "header": "Forbrugshistorik",
+    "empty": "Ingen forbrugshændelser endnu",
+    "summary": {
+      "title": "Denne måneds forbrug",
+      "totalTitle": "Samlet forbrug",
+      "allTime": "Altid",
+      "totalCredits": "Samlede kreditter brugt",
+      "operations": "Operationer",
+      "noData": "Ingen forbrugsdata",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Stemmekloning",
+        "live_call": "Live-opkald",
+        "audio_processing": "Lydbehandling"
+      }
+    },
+    "table": {
+      "sourceType": "Type",
+      "quantity": "Mængde",
+      "creditsUsed": "Kreditter",
+      "date": "Dato",
+      "details": "Detaljer"
+    },
+    "ui": {
+      "previous": "Forrige",
+      "next": "Næste",
+      "page": "Side",
+      "of": "af",
+      "showing": "Viser",
+      "results": "resultater",
+      "filterByType": "Filtrer efter type",
+      "allTypes": "Alle typer"
+    },
+    "units": {
+      "chars": "tegn",
+      "mins": "minutter",
+      "secs": "sekunder",
+      "operation": "operation"
+    }
   },
   "footer": {
     "statusPage": "Statusside",

@@ -119,7 +119,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
 
     expect(response.status).toBe(200);
     expect(json.tokens).toBe(2494);
-    expect(json.estimatedCredits).toBe(1247);
+    expect(json.estimatedCredits).toBe(2494);
     expect(mockCountTokens).toHaveBeenCalledOnce();
   });
 

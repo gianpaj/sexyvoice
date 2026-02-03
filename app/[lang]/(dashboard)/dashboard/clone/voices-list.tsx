@@ -31,7 +31,7 @@ export function VoicesList({
   voices,
   lang,
 }: {
-  voices: Voice[];
+  voices: Tables<'voices'>[];
   lang: Locale;
 }) {
   // const [isLoading, setIsLoading] = useState<string | null>(null);

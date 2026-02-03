@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Derniers articles",
     "hero": {
-      "title": "Voix expressives, sans censure",
-      "subtitle": "Générateur gratuit de synthèse vocale et de voix IA. \nParfait pour les créateurs de contenu, développeurs et conteurs. 😉",
-      "buttonCTA": "S'inscrire",
-      "noCreditCard": "Aucune carte de crédit requise",
+      "title": "Appel privé avec une IA, Parlez librement –\nsans jugement",
+      "subtitle": "Vivez l'expérience – essayez 20 minutes d'appel gratuit",
+      "buttonCTA": "S'inscrire gratuitement",
+      "noCreditCard": "Aucune carte de crédit requise. Vous pouvez raccrocher à tout moment",
       "signIn": "Se connecter"
     },
     "features": {
@@ -118,7 +118,7 @@
             },
             {
               "question": "Combien ça coûte ?",
-              "answer": "Les appels en direct coûtent 200 crédits par minute pendant que vous êtes connecté."
+              "answer": "Les appels en direct coûtent 400 crédits par minute pendant que vous êtes connecté."
             }
           ]
         },
@@ -284,7 +284,8 @@
     "title": "Crédits",
     "topupButton": "Recharger",
     "totalCredits": "Total",
-    "remainingCredits": "Restants"
+    "remainingCredits": "Restants",
+    "remainingTime": "Temps restant"
   },
   "generate": {
     "abortedCloning": "Génération vocale annulée.",
@@ -316,12 +317,25 @@
       "geminiInfo": "Soutient 24 langues :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)."
     }
   },
+  "call": {
+    "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
+    "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "configurationTitle": "Configuration",
+    "languageLabel": "Langue",
+    "languagePlaceholder": "Choisir une langue",
+    "startCall": "Démarrer un appel",
+    "connecting": "Connexion en cours",
+    "reconnected": "Reconnecté",
+    "reconnectionFailed": "Échec de la reconnexion",
+    "configurationUpdated": "Configuration mise à jour",
+    "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
+    "agentUnavailable": "Agent indisponible",
+    "disconnected": "Déconnecté"
+  },
   "clone": {
     "audioFileLabel": "Fichier audio",
     "cancelButton": "Annuler",
-    "cloneNotice": "Ne clonez que des voix avec autorisation – respectez les autres et la loi.",
-    "cloneNoticeTooltip": "Ne téléchargez que des enregistrements pour lesquels vous avez l'autorisation d'utilisation et obtenez le consentement avant de cloner ou partager la voix d'une autre personne.\nVous avez un accès exclusif à vos voix clonées et fichiers audio – personne d'autre ne peut y accéder.",
-    "cloneNoticeTooltipLabel": "Ouvrir l'avis de sécurité du clonage vocal",
     "ctaButton": "Générer l'audio",
     "downloadAudio": "Télécharger l'audio",
     "dragDropText": "Glissez-déposez ou cliquez pour parcourir",
@@ -391,17 +405,19 @@
     }
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai - Synthèse vocale gratuite et générateur de voix IA",
-    "description": "Créez des voix IA naturelles avec des émotions dans 24 langues. Générateur gratuit de synthèse vocale avec clonage vocal. Commencez avec 10 000 crédits gratuits - aucune carte requise.",
+    "defaultTitle": "Parlez à l'IA - Appels vocaux privés sans jugement | SexyVoice.ai",
+    "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 20 min d'appel gratuit. Aucune carte de crédit requise.",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
     "/": "",
     "/login": "Connexion",
     "/signup": "Inscription avec e-mail ou Google",
+    "/dashboard/call": "Appeler",
     "/dashboard/generate": "Générer",
     "/dashboard/clone": "Cloner",
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
+    "/dashboard/usage": "Utilisation",
     "/tools/audio-converter": "Convertisseur audio gratuit"
   },
   "sidebar": {
@@ -412,6 +428,58 @@
     "generate": "Générer",
     "login": "Connexion",
     "signup": "Inscription"
+  },
+  "history": {
+    "header": "Historique des générations",
+    "empty": "Aucun historique pour le moment",
+    "ui": {
+      "filterText": "Filtrer le texte...",
+      "customizeColumns": "Personnaliser les colonnes",
+      "columns": "Colonnes",
+      "previous": "Précédent",
+      "next": "Suivant"
+    }
+  },
+  "usage": {
+    "header": "Historique d'utilisation",
+    "empty": "Aucun événement d'utilisation pour le moment",
+    "summary": {
+      "title": "Utilisation ce mois-ci",
+      "totalTitle": "Utilisation totale",
+      "allTime": "Tout le temps",
+      "totalCredits": "Crédits totaux utilisés",
+      "operations": "Opérations",
+      "noData": "Aucune donnée d'utilisation",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Clonage vocal",
+        "live_call": "Appel en direct",
+        "audio_processing": "Traitement audio"
+      }
+    },
+    "table": {
+      "sourceType": "Type",
+      "quantity": "Quantité",
+      "creditsUsed": "Crédits",
+      "date": "Date",
+      "details": "Détails"
+    },
+    "ui": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page",
+      "of": "sur",
+      "showing": "Affichage",
+      "results": "résultats",
+      "filterByType": "Filtrer par type",
+      "allTypes": "Tous les types"
+    },
+    "units": {
+      "chars": "caractères",
+      "mins": "minutes",
+      "secs": "secondes",
+      "operation": "opération"
+    }
   },
   "footer": {
     "statusPage": "Page de statut",

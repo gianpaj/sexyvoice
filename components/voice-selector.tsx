@@ -1,7 +1,14 @@
 'use client';
 
 import { Info, Maximize2, Minimize2, Search, Volume2, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import {
@@ -23,7 +30,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -43,9 +52,9 @@ import { VoiceCard } from './voice-card';
 interface VoiceSelectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  publicVoices: Voice[];
-  selectedVoice?: Voice;
-  onSelectVoice: (voice: Voice) => void;
+  publicVoices: Tables<'voices'>[];
+  selectedVoice?: Tables<'voices'>;
+  onSelectVoice: (voice: Tables<'voices'>) => void;
   dict: (typeof lang)['generate'];
 }
 
@@ -87,7 +96,7 @@ function VoiceSelectorModal({
     [publicVoices, searchQuery, selectedLanguage],
   );
 
-  const handleVoiceSelect = (voice: Voice) => {
+  const handleVoiceSelect = (voice: Tables<'voices'>) => {
     onSelectVoice(voice);
     onOpenChange(false);
   };
@@ -183,15 +192,6 @@ function VoiceSelectorModal({
   );
 }
 
-interface VoiceSelectorProps {
-  publicVoices: Voice[];
-  selectedVoice?: Voice;
-  setSelectedVoice: (voiceName: string) => void;
-  selectedStyle?: string;
-  setSelectedStyle: (style: string | undefined) => void;
-  dict: (typeof lang)['generate'];
-}
-
 export function VoiceSelector({
   publicVoices,
   selectedVoice,
@@ -199,7 +199,14 @@ export function VoiceSelector({
   selectedStyle,
   setSelectedStyle,
   dict,
-}: VoiceSelectorProps) {
+}: {
+  publicVoices: Tables<'voices'>[];
+  selectedVoice?: Tables<'voices'>;
+  setSelectedVoice: Dispatch<SetStateAction<string>>;
+  selectedStyle?: string;
+  setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
+  dict: (typeof lang)['generate'];
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -213,7 +220,7 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  const handleVoiceSelect = (voice: Voice) => {
+  const handleVoiceSelect = (voice: Tables<'voices'>) => {
     setSelectedVoice(voice.name);
   };
 

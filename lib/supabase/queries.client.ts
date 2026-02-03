@@ -1,6 +1,8 @@
 import type { TypedSupabaseClient } from './client';
 
-export type AudioFileAndVoicesRes = AudioFile & { voices: Voice };
+export type AudioFileAndVoicesRes = Tables<'audio_files'> & {
+  voices: Tables<'voices'>;
+};
 
 export function getMyAudioFilesQuery(
   client: TypedSupabaseClient,

@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Ultimos Posts",
     "hero": {
-      "title": "Voces Expressivas, Sin Censura",
-      "subtitle": "Crea impresionantes clones de voz con tecnología AI avanzada. Perfecto para creadores de contenido, desarrolladores y narradores. 😉",
-      "buttonCTA": "Comienza",
-      "noCreditCard": "Sin tarjeta de crédito",
+      "title": "Llamada privada con una IA, Habla libremente sin juzgar",
+      "subtitle": "Experimenta la conexión - prueba una llamada gratuita de 20 minutos",
+      "buttonCTA": "Empezar",
+      "noCreditCard": "Sin tarjeta de crédito. Puedes colgar en cualquier momento",
       "signIn": "Iniciar Sesión"
     },
     "features": {
@@ -118,7 +118,7 @@
             },
             {
               "question": "¿Cuánto cuesta?",
-              "answer": "Las llamadas en vivo cuestan 200 créditos por minuto mientras estás conectado."
+              "answer": "Las llamadas en vivo cuestan 400 créditos por minuto mientras estás conectado."
             }
           ]
         },
@@ -284,7 +284,8 @@
     "title": "Créditos",
     "topupButton": "Recargar",
     "totalCredits": "Total",
-    "remainingCredits": "Restantes"
+    "remainingCredits": "Restantes",
+    "remainingTime": "Tiempo restante"
   },
   "generate": {
     "abortedCloning": "Clonación de voz cancelada",
@@ -316,12 +317,25 @@
       "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam)."
     }
   },
+  "call": {
+    "notice1": "Explora tus deseos más profundos en total privacidad.",
+    "notice2": "Conversaciones cifradas de extremo a extremo, sin juzgar.",
+    "notEnoughCredits": "No tienes suficientes créditos. El mínimo requerido es __COUNT__",
+    "configurationTitle": "Configuración",
+    "languageLabel": "Idioma",
+    "languagePlaceholder": "Elige un idioma",
+    "startCall": "Iniciar una llamada",
+    "connecting": "Conectando",
+    "reconnected": "Reconectado",
+    "reconnectionFailed": "Falló la reconexión",
+    "configurationUpdated": "Configuración actualizada",
+    "configurationUpdateError": "Error al actualizar la configuración",
+    "agentUnavailable": "Agente no disponible",
+    "disconnected": "Desconectado"
+  },
   "clone": {
     "audioFileLabel": "Archivo de Audio",
     "cancelButton": "Cancelar",
-    "cloneNotice": "Por favor, solo clona voces con permiso – respeta a otros y cumple la ley.",
-    "cloneNoticeTooltip": "Solo sube grabaciones que tengas permiso para usar y obten consentimiento antes de clonar o compartir la voz de otra persona.\nTienes acceso exclusivo a tus voces clonadas y archivos de audio – nadie más puede acceder a ellos.",
-    "cloneNoticeTooltipLabel": "Abrir aviso de seguridad de clonación de voz",
     "ctaButton": "Generar audio",
     "downloadAudio": "Descargar Audio",
     "dragDropText": "Arrastra y suelta o haz clic para buscar",
@@ -391,17 +405,19 @@
     }
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai - Generador de Voz con IA y Texto a Voz Gratis",
-    "description": "Crea voces de IA naturales con emociones en 24 idiomas. Generador de texto a voz gratis con clonación de voz. Comienza con 10,000 créditos gratis.",
+    "defaultTitle": "Habla con IA - Llamadas de voz privadas sin juzgar | SexyVoice.ai",
+    "description": "Experimenta llamadas de voz con IA en tiempo real en total privacidad. Habla libremente sin juzgar - tus secretos están seguros. Prueba 20 min de llamada gratis. Sin tarjeta de crédito.",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
+    "/dashboard/call": "Llamada",
     "/dashboard/generate": "Generar",
     "/dashboard/clone": "Clonar",
     "/dashboard/history": "Historial",
     "/dashboard/credits": "Créditos",
+    "/dashboard/usage": "Uso",
     "/tools/audio-converter": "Conversor de Audio Gratuito"
   },
   "sidebar": {
@@ -413,6 +429,58 @@
     "login": "Iniciar sesión",
     "signup": "Registrarse"
   },
+  "history": {
+    "header": "Historial de Generación",
+    "empty": "Sin historial aún",
+    "ui": {
+      "filterText": "Filtrar texto...",
+      "customizeColumns": "Personalizar Columnas",
+      "columns": "Columnas",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
+  },
+  "usage": {
+    "header": "Historial de Uso",
+    "empty": "Sin eventos de uso aún",
+    "summary": {
+      "title": "Uso de Este Mes",
+      "totalTitle": "Uso Total",
+      "allTime": "Todo el Tiempo",
+      "totalCredits": "Créditos Totales Usados",
+      "operations": "Operaciones",
+      "noData": "Sin datos de uso",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Clonación",
+        "live_call": "Llamada",
+        "audio_processing": "Procesamiento de Audio"
+      }
+    },
+    "table": {
+      "sourceType": "Tipo",
+      "quantity": "Cantidad",
+      "creditsUsed": "Créditos",
+      "date": "Fecha",
+      "details": "Detalles"
+    },
+    "ui": {
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "page": "Página",
+      "of": "de",
+      "showing": "Mostrando",
+      "results": "resultados",
+      "filterByType": "Filtrar por tipo",
+      "allTypes": "Todos los tipos"
+    },
+    "units": {
+      "chars": "caracteres",
+      "mins": "minutos",
+      "secs": "segundos",
+      "operation": "operación"
+    }
+  },
   "footer": {
     "statusPage": "Página de estado",
     "privacyPolicy": "Política de privacidad",
@@ -423,8 +491,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Especial Halloween – Consigue hasta un 35% de créditos extra con tu compra 👻\nOferta por tiempo limitado 🦇",
-      "ctaLoggedIn": "Obtener Créditos",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener créditos",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Halloween",
       "pricing": {
         "bannerText": "🎃 Especial Halloween"
@@ -432,8 +500,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Oferta Black Friday – ¡Consigue hasta un 50% de créditos extra con cualquier compra!\nOferta por tiempo limitado 🔥",
-      "ctaLoggedIn": "Obtener Oferta",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener oferta",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Black Friday",
       "countdown": {
         "prefix": "La oferta termina en:",
@@ -448,8 +516,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Oferta de Invierno – Consigue hasta un 35% de créditos extra con tu compra ☃️\nOferta por tiempo limitado 🎿",
-      "ctaLoggedIn": "Obtener Oferta",
-      "ctaLoggedOut": "Regístrate Ahora",
+      "ctaLoggedIn": "Obtener oferta",
+      "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Oferta de Invierno",
       "pricing": {
         "bannerText": "❄️ Oferta de Invierno"

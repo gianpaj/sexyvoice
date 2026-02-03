@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Starke Stimmen, frei",
-      "subtitle": "Kostenlose Text-to-Speech & KI-Stimmengenerator. \nPerfekt für Content-Ersteller, Entwickler und Geschichtenerzähler. 😉",
+      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
+      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 20 Minuten kostenlosen Anruf",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich",
+      "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
       "signIn": "Anmelden"
     },
     "features": {
@@ -118,7 +118,7 @@
             },
             {
               "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 200 Credits pro Minute, solange Sie verbunden sind."
+              "answer": "Live-Anrufe kosten 400 Credits pro Minute, solange Sie verbunden sind."
             }
           ]
         },
@@ -284,7 +284,8 @@
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
-    "remainingCredits": "Verbleibend"
+    "remainingCredits": "Verbleibend",
+    "remainingTime": "Verbleibende Zeit"
   },
   "generate": {
     "abortedCloning": "Sprachgenerierung abgebrochen.",
@@ -316,12 +317,25 @@
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)"
     }
   },
+  "call": {
+    "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
+    "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__",
+    "configurationTitle": "Konfiguration",
+    "languageLabel": "Sprache",
+    "languagePlaceholder": "Sprache wählen",
+    "startCall": "Anruf starten",
+    "connecting": "Verbinden",
+    "reconnected": "Wiederverbunden",
+    "reconnectionFailed": "Wiederverbindung fehlgeschlagen",
+    "configurationUpdated": "Konfiguration aktualisiert",
+    "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
+    "agentUnavailable": "Agent nicht verfügbar",
+    "disconnected": "Getrennt"
+  },
   "clone": {
     "audioFileLabel": "Audiodatei",
     "cancelButton": "Abbrechen",
-    "cloneNotice": "Klonen Sie Stimmen nur mit Genehmigung – respektieren Sie andere und halten Sie sich an das Gesetz.",
-    "cloneNoticeTooltip": "Laden Sie nur Aufnahmen hoch, zu deren Verwendung Sie berechtigt sind, und holen Sie die Zustimmung ein, bevor Sie die Stimme einer anderen Person klonen oder weitergeben.\nSie haben exklusiven Zugriff auf Ihre geklonten Stimmen und Audiodateien – niemand sonst kann darauf zugreifen.",
-    "cloneNoticeTooltipLabel": "Sicherheitshinweis zur Stimmklonung öffnen",
     "ctaButton": "Audio generieren",
     "downloadAudio": "Audio herunterladen",
     "dragDropText": "Ziehen & ablegen oder klicken zum Durchsuchen",
@@ -391,17 +405,19 @@
     }
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai - Kostenloser Text-zu-Sprache & KI-Stimmengenerator",
-    "description": "Erstellen Sie natürliche KI-Stimmen mit Emotionen in 24 Sprachen. Kostenloser Text-zu-Sprache-Generator mit Stimmenklonung. 10.000 Credits gratis.",
+    "defaultTitle": "Mit KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
+    "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 20 Min. kostenlos. Keine Kreditkarte erforderlich.",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
+    "/dashboard/call": "Anruf",
     "/dashboard/generate": "Generieren",
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",
     "/dashboard/credits": "Credits",
+    "/dashboard/usage": "Nutzung",
     "/tools/audio-converter": "Kostenloser Audio-Konverter"
   },
   "sidebar": {
@@ -413,6 +429,58 @@
     "login": "Anmelden",
     "signup": "Registrieren"
   },
+  "history": {
+    "header": "Generierungsverlauf",
+    "empty": "Noch kein Verlauf",
+    "ui": {
+      "filterText": "Text filtern...",
+      "customizeColumns": "Spalten anpassen",
+      "columns": "Spalten",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "usage": {
+    "header": "Nutzungsverlauf",
+    "empty": "Noch keine Nutzungsereignisse",
+    "summary": {
+      "title": "Nutzung dieses Monats",
+      "totalTitle": "Gesamtnutzung",
+      "allTime": "Gesamtzeit",
+      "totalCredits": "Gesamte verbrauchte Credits",
+      "operations": "Operationen",
+      "noData": "Keine Nutzungsdaten",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Stimmklonen",
+        "live_call": "Live-Anruf",
+        "audio_processing": "Audioverarbeitung"
+      }
+    },
+    "table": {
+      "sourceType": "Typ",
+      "quantity": "Menge",
+      "creditsUsed": "Credits",
+      "date": "Datum",
+      "details": "Details"
+    },
+    "ui": {
+      "previous": "Zurück",
+      "next": "Weiter",
+      "page": "Seite",
+      "of": "von",
+      "showing": "Anzeigen",
+      "results": "Ergebnisse",
+      "filterByType": "Nach Typ filtern",
+      "allTypes": "Alle Typen"
+    },
+    "units": {
+      "chars": "Zeichen",
+      "mins": "Minuten",
+      "secs": "Sekunden",
+      "operation": "Operation"
+    }
+  },
   "footer": {
     "statusPage": "Statusseite",
     "privacyPolicy": "Datenschutzrichtlinie",
@@ -423,8 +491,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
-      "ctaLoggedIn": "Credits Erhalten",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Credits erhalten",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Halloween-Banner schließen",
       "pricing": {
         "bannerText": "🎃 Halloween-Special"
@@ -432,8 +500,8 @@
     },
     "blackFridayBanner": {
       "text": "🛍️ Black Friday Sale – Erhalten Sie bis zu 50% Extra-Credits bei jedem Kauf!\nZeitlich begrenztes Angebot 🔥",
-      "ctaLoggedIn": "Angebot Sichern",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Black Friday-Banner schließen",
       "countdown": {
         "prefix": "Angebot endet in:",
@@ -448,8 +516,8 @@
     },
     "winterSaleBanner": {
       "text": "❄️ Winterschlussverkauf – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf ☃️\nZeitlich begrenztes Angebot 🎿",
-      "ctaLoggedIn": "Angebot Sichern",
-      "ctaLoggedOut": "Jetzt Registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Winterschlussverkauf-Banner schließen",
       "pricing": {
         "bannerText": "❄️ Winterschlussverkauf"

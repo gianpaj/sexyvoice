@@ -288,7 +288,9 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
-      const { saveAudioFile } = await import('@/lib/supabase/queries');
+      const { saveAudioFile, insertUsageEvent } = await import(
+        '@/lib/supabase/queries'
+      );
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -343,6 +345,27 @@ describe('Generate Voice API Route', () => {
         voiceId: 'voice-tara-id',
       });
 
+      // Verify usage event was logged
+      expect(insertUsageEvent).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        sourceType: 'tts',
+        sourceId: 'test-audio-file-id',
+        unit: 'chars',
+        quantity: 11, // "Hello world".length
+        creditsUsed: 48,
+        metadata: {
+          voiceId: 'voice-tara-id',
+          voiceName: 'tara',
+          model:
+            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          textPreview: 'Hello world',
+          textLength: 11,
+          isGeminiVoice: false,
+          userHasPaid: false,
+          predictionId: null,
+        },
+      });
+
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
@@ -370,9 +393,8 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Google Gemini', () => {
     it('should successfully generate voice using Google Gemini', async () => {
-      const { reduceCredits, saveAudioFile, getCredits } = await import(
-        '@/lib/supabase/queries'
-      );
+      const { reduceCredits, saveAudioFile, getCredits, insertUsageEvent } =
+        await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(getCredits).mockResolvedValueOnce(3000);
 
@@ -403,7 +425,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 12,
+        credits_used: 23,
         duration: '-1',
         filename: 'generated-audio-free/poe-ddb72d4b.wav',
         isPublic: false,
@@ -419,6 +441,26 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         url: 'https://files.sexyvoice.ai/generated-audio-free/poe-ddb72d4b.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
+      });
+
+      // Verify usage event was logged for Gemini voice
+      expect(insertUsageEvent).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        sourceType: 'tts',
+        sourceId: 'test-audio-file-id',
+        unit: 'chars',
+        quantity: text.length,
+        creditsUsed: 23,
+        metadata: {
+          voiceId: 'voice-poe-id',
+          voiceName: 'poe',
+          model: 'gemini-2.5-pro-preview-tts',
+          textPreview: text.slice(0, 100),
+          textLength: text.length,
+          isGeminiVoice: true,
+          userHasPaid: false,
+          predictionId: null,
+        },
       });
 
       expect(json.url).toContain('files.sexyvoice.ai');
@@ -482,7 +524,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(response.status).toBe(200);
       expect(callCount).toBe(2); // Should have been called twice
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 12,
+        credits_used: 23,
         duration: '-1',
         filename: 'generated-audio-free/poe-9de7f9fe.wav',
         isPublic: false,
@@ -555,7 +597,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
 
       expect(response.status).toBe(500);
       expect(json.error).toContain(
-        getErrorMessage('THIRD_P_QUOTA_EXCEEDED', 'voice-generation'),
+        getErrorMessage('FREE_QUOTA_EXCEEDED', 'voice-generation'),
       );
     });
 

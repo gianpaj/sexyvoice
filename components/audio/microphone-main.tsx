@@ -1,4 +1,3 @@
-import { useMediaDeviceSelect } from '@livekit/components-react';
 import { ChevronDown, Mic, MicOff, XIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useMultibandTrackVolume } from '@/hooks/use-multiband-track-volume';
+import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
 import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
@@ -71,7 +71,11 @@ function AudioPlayer({ blob }: { blob: Blob }) {
 }
 
 function DeviceSelectDropdown() {
-  const deviceSelect = useMediaDeviceSelect({ kind: 'audioinput' });
+  const deviceSelect = usePersistentMediaDevice();
+
+  const handleDeviceChange = (deviceId: string) => {
+    deviceSelect.setActiveMediaDevice(deviceId);
+  };
 
   return (
     <DropdownMenu>
@@ -98,9 +102,7 @@ function DeviceSelectDropdown() {
             checked={device.deviceId === deviceSelect.activeDeviceId}
             className="text-xs"
             key={`device-${index}`}
-            onCheckedChange={() =>
-              deviceSelect.setActiveMediaDevice(device.deviceId)
-            }
+            onCheckedChange={() => handleDeviceChange(device.deviceId)}
           >
             {device.label}
           </DropdownMenuCheckboxItem>

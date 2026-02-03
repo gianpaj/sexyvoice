@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { toast } from '@/components/services/toast';
@@ -25,7 +25,10 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
-import { AudioPlayerWithContext } from './audio-player-with-context';
+import {
+  type AudioPlayerControls,
+  AudioPlayerWithContext,
+} from './audio-player-with-context';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -36,7 +39,7 @@ import {
 } from './ui/tooltip';
 
 interface AudioGeneratorProps {
-  selectedVoice?: Voice;
+  selectedVoice?: Tables<'voices'>;
   selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof lang)['generate'];
@@ -57,6 +60,8 @@ export function AudioGenerator({
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
+  const [playerControls, setPlayerControls] =
+    useState<AudioPlayerControls | null>(null);
 
   const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
@@ -125,7 +130,6 @@ export function AudioGenerator({
       // }, 1000);
 
       setAudioURL(url);
-      audio?.setUrlAndPlay(url);
 
       toast.success(dict.success);
     } catch (error) {
@@ -172,20 +176,26 @@ export function AudioGenerator({
   }, [isGenerating, text, selectedVoice, hasEnoughCredits]);
 
   const resetPlayer = () => {
-    if (!audio) {
+    // Reset wavesurfer player if available (waveform mode)
+    if (playerControls) {
+      playerControls.reset();
       return;
     }
 
-    audio?.reset();
+    // Fallback to audio provider reset (non-waveform mode)
+    if (audio) {
+      audio.reset();
+    }
   };
 
   const downloadAudio = async () => {
+    // Check if there's an audio URL to download
+    if (!audioURL) return;
+
     // Prepare the anchor element once in a closure scope
     const anchorElement = document.createElement('a');
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
-
-    if (!audio?.url) return;
 
     try {
       await downloadUrl(audioURL, anchorElement);
@@ -226,6 +236,10 @@ export function AudioGenerator({
   };
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleControlsReady = useCallback((controls: AudioPlayerControls) => {
+    setPlayerControls(controls);
+  }, []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: needed
   useEffect(() => {
@@ -387,8 +401,8 @@ export function AudioGenerator({
 
         <div
           className={cn(
-            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-2',
-            hasEnoughCredits ? 'items-center' : 'flex flex-col items-start',
+            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-[1fr_2fr]',
+            hasEnoughCredits ? '' : 'flex flex-col items-start',
           )}
         >
           {!hasEnoughCredits && (
@@ -438,13 +452,19 @@ export function AudioGenerator({
             )}
           </div>
 
-          <div>
+          <div className="flex justify-start gap-2 sm:w-full">
             {audioURL && (
-              <div className="flex justify-start gap-2 sm:w-full">
+              <>
                 <AudioPlayerWithContext
+                  autoPlay
                   className="rounded-md"
+                  onControlsReady={handleControlsReady}
                   playAudioTitle={dict.playAudio}
+                  progressColor="#8b5cf6"
+                  showWaveform
                   url={audioURL}
+                  waveColor="#888888"
+                  waveformClassName="w-48"
                 />
                 <Button
                   onClick={resetPlayer}
@@ -462,7 +482,7 @@ export function AudioGenerator({
                 >
                   <Download className="size-6" />
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>
