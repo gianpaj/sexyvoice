@@ -85,24 +85,39 @@ async function fetchAllAudioFiles(
   supabase: ReturnType<typeof createAdminClient>,
 ): Promise<AudioFile[]> {
   const allAudioFiles: AudioFile[] = [];
-  let offset = 0;
+  let cursor: { created_at: string; id: string } | null = null;
   let hasMore = true;
 
   while (hasMore) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('audio_files')
       .select(
         'id, created_at, duration, text_content, model, voice_id, voices(name)',
       )
       .is('deleted_at', null)
-      .range(offset, offset + PAGE_SIZE - 1);
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(PAGE_SIZE);
+
+    if (cursor) {
+      query = query.or(
+        `created_at.gt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.gt.${cursor.id})`,
+      );
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
     if (data && data.length > 0) {
       allAudioFiles.push(...(data as AudioFile[]));
-      offset += PAGE_SIZE;
       hasMore = data.length === PAGE_SIZE;
+      const last = data[data.length - 1];
+      if (last.created_at) {
+        cursor = { created_at: last.created_at, id: last.id };
+      } else {
+        hasMore = false;
+      }
     } else {
       hasMore = false;
     }
@@ -118,21 +133,36 @@ async function fetchAllProfiles(
   supabase: ReturnType<typeof createAdminClient>,
 ): Promise<Profile[]> {
   const allProfiles: Profile[] = [];
-  let offset = 0;
+  let cursor: { created_at: string; id: string } | null = null;
   let hasMore = true;
 
   while (hasMore) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('profiles')
       .select('id, created_at')
-      .range(offset, offset + PAGE_SIZE - 1);
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(PAGE_SIZE);
+
+    if (cursor) {
+      query = query.or(
+        `created_at.gt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.gt.${cursor.id})`,
+      );
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
     if (data && data.length > 0) {
       allProfiles.push(...data);
-      offset += PAGE_SIZE;
       hasMore = data.length === PAGE_SIZE;
+      const last = data[data.length - 1];
+      if (last.created_at) {
+        cursor = { created_at: last.created_at, id: last.id };
+      } else {
+        hasMore = false;
+      }
     } else {
       hasMore = false;
     }
