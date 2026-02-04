@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildUsageEventsCursors,
   getAllTimeUsageSummary,
   getMonthlyUsageSummary,
   getUsageEventsPaginated,
@@ -27,14 +28,20 @@ export async function GET(request: NextRequest) {
 
     // Parse query parameters
     const { searchParams } = request.nextUrl;
-    const page = Math.max(
-      1,
-      Number.parseInt(searchParams.get('page') ?? '1', 10),
-    );
     const pageSize = Math.min(
       100,
       Math.max(1, Number.parseInt(searchParams.get('pageSize') ?? '20', 10)),
     );
+    const page = Math.max(
+      1,
+      Number.parseInt(searchParams.get('page') ?? '1', 10),
+    );
+    const cursor = searchParams.get('cursor');
+    const directionParam = searchParams.get('direction');
+    const direction =
+      directionParam === 'prev' || directionParam === 'next'
+        ? directionParam
+        : 'next';
 
     // Validate parsed numbers to prevent NaN propagation
     if (!(Number.isFinite(page) && Number.isFinite(pageSize))) {
@@ -68,11 +75,14 @@ export async function GET(request: NextRequest) {
       supabase,
       user.id,
       {
-        page,
         pageSize,
         sourceType: sourceType || undefined,
+        cursor: cursor || undefined,
+        direction,
       },
     );
+
+    const { nextCursor, prevCursor } = buildUsageEventsCursors(data);
 
     const response: PaginatedUsageEventsResponse & {
       monthlySummary?: Awaited<ReturnType<typeof getMonthlyUsageSummary>>;
@@ -83,6 +93,8 @@ export async function GET(request: NextRequest) {
       page,
       pageSize,
       totalPages: Math.ceil(totalCount / pageSize),
+      nextCursor,
+      prevCursor,
     };
 
     // Include summary data if requested (typically for first page load)

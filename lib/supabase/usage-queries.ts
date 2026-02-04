@@ -16,6 +16,8 @@ export interface PaginatedUsageEventsResponse {
   page: number;
   pageSize: number;
   totalPages: number;
+  nextCursor?: string | null;
+  prevCursor?: string | null;
 }
 
 export interface MonthlyUsageSummary {
@@ -25,9 +27,49 @@ export interface MonthlyUsageSummary {
 }
 
 export interface GetUsageEventsOptions {
-  page: number;
   pageSize: number;
   sourceType?: UsageSourceType;
+  cursor?: string | null;
+  direction?: 'next' | 'prev';
+}
+
+interface UsageEventsCursor {
+  occurred_at: string;
+  id: string;
+}
+
+function encodeCursor(cursor: UsageEventsCursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64');
+}
+
+function decodeCursor(cursor: string): UsageEventsCursor | null {
+  try {
+    return JSON.parse(Buffer.from(cursor, 'base64').toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+export function buildUsageEventsCursors(
+  data: UsageEvent[],
+): { nextCursor: string | null; prevCursor: string | null } {
+  if (data.length === 0) {
+    return { nextCursor: null, prevCursor: null };
+  }
+
+  const first = data[0];
+  const last = data[data.length - 1];
+
+  return {
+    nextCursor: encodeCursor({
+      occurred_at: last.occurred_at,
+      id: last.id,
+    }),
+    prevCursor: encodeCursor({
+      occurred_at: first.occurred_at,
+      id: first.id,
+    }),
+  };
 }
 
 /**
@@ -38,8 +80,7 @@ export async function getUsageEventsPaginated(
   userId: string,
   options: GetUsageEventsOptions,
 ): Promise<{ data: UsageEvent[]; totalCount: number }> {
-  const { page, pageSize, sourceType } = options;
-  const offset = (page - 1) * pageSize;
+  const { pageSize, sourceType, cursor, direction = 'next' } = options;
 
   // Build the query
   let query = client
@@ -47,7 +88,17 @@ export async function getUsageEventsPaginated(
     .select('*', { count: 'exact' })
     .eq('user_id', userId)
     .order('occurred_at', { ascending: false })
-    .range(offset, offset + pageSize - 1);
+    .order('id', { ascending: false })
+    .limit(pageSize);
+
+  const decodedCursor = cursor ? decodeCursor(cursor) : null;
+  if (decodedCursor) {
+    const { occurred_at, id } = decodedCursor;
+    const operator = direction === 'prev' ? 'gt' : 'lt';
+    query = query.or(
+      `occurred_at.${operator}.${occurred_at},and(occurred_at.eq.${occurred_at},id.${operator}.${id})`,
+    );
+  }
 
   // Apply source type filter if provided
   if (sourceType) {

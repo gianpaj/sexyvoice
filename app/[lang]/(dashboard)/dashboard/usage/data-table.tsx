@@ -49,6 +49,8 @@ async function fetchUsageEvents(
   pageSize: number,
   sourceType?: string,
   includeSummary = false,
+  cursor?: string | null,
+  direction?: 'next' | 'prev',
 ): Promise<UsageEventsApiResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
@@ -61,6 +63,14 @@ async function fetchUsageEvents(
 
   if (includeSummary) {
     params.set('includeSummary', 'true');
+  }
+
+  if (cursor) {
+    params.set('cursor', cursor);
+  }
+
+  if (direction) {
+    params.set('direction', direction);
   }
 
   const response = await fetch(`/api/usage-events?${params.toString()}`);
@@ -84,6 +94,9 @@ export function DataTable({ dict }: DataTableProps) {
     10,
   );
   const currentSourceType = searchParams.get('sourceType') ?? 'all';
+  const currentCursor = searchParams.get('cursor');
+  const currentDirection =
+    searchParams.get('direction') === 'prev' ? 'prev' : 'next';
 
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -105,13 +118,22 @@ export function DataTable({ dict }: DataTableProps) {
 
   // Fetch data with react-query
   const { data, isLoading, error } = useQuery({
-    queryKey: ['usage_events', currentPage, currentPageSize, currentSourceType],
+    queryKey: [
+      'usage_events',
+      currentPage,
+      currentPageSize,
+      currentSourceType,
+      currentCursor,
+      currentDirection,
+    ],
     queryFn: () =>
       fetchUsageEvents(
         currentPage,
         currentPageSize,
         currentSourceType,
         currentPage === 1, // Include summary only on first page
+        currentCursor,
+        currentDirection,
       ),
   });
 
@@ -135,19 +157,24 @@ export function DataTable({ dict }: DataTableProps) {
     },
   });
 
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    updateParams({ page: newPage });
-  };
-
   // Handle page size change
   const handlePageSizeChange = (newPageSize: string) => {
-    updateParams({ page: 1, pageSize: newPageSize });
+    updateParams({
+      page: 1,
+      pageSize: newPageSize,
+      cursor: '',
+      direction: '',
+    });
   };
 
   // Handle source type filter change
   const handleSourceTypeChange = (newSourceType: string) => {
-    updateParams({ page: 1, sourceType: newSourceType });
+    updateParams({
+      page: 1,
+      sourceType: newSourceType,
+      cursor: '',
+      direction: '',
+    });
   };
 
   // Render table content based on state
@@ -275,31 +302,43 @@ export function DataTable({ dict }: DataTableProps) {
         <div className="text-muted-foreground text-sm">
           {data && (
             <>
-              {dict.ui.page} {currentPage} {dict.ui.of} {data.totalPages || 1}
-              {' - '}
-              {data.totalCount} {dict.ui.results}
-            </>
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            disabled={currentPage <= 1 || isLoading}
-            onClick={() => handlePageChange(currentPage - 1)}
-            size="sm"
-            variant="outline"
-          >
-            {dict.ui.previous}
-          </Button>
-          <Button
-            disabled={currentPage >= (data?.totalPages ?? 1) || isLoading}
-            onClick={() => handlePageChange(currentPage + 1)}
-            size="sm"
-            variant="outline"
-          >
-            {dict.ui.next}
-          </Button>
-        </div>
-      </div>
+          {dict.ui.page} {currentPage} {dict.ui.of} {data.totalPages || 1}
+          {' - '}
+          {data.totalCount} {dict.ui.results}
+        </>
+      )}
+    </div>
+    <div className="flex items-center space-x-2">
+      <Button
+        disabled={currentPage <= 1 || isLoading || !data?.prevCursor}
+        onClick={() =>
+          updateParams({
+            page: currentPage - 1,
+            cursor: data?.prevCursor ?? '',
+            direction: 'prev',
+          })
+        }
+        size="sm"
+        variant="outline"
+      >
+        {dict.ui.previous}
+      </Button>
+      <Button
+        disabled={isLoading || !data?.nextCursor}
+        onClick={() =>
+          updateParams({
+            page: currentPage + 1,
+            cursor: data?.nextCursor ?? '',
+            direction: 'next',
+          })
+        }
+        size="sm"
+        variant="outline"
+      >
+        {dict.ui.next}
+      </Button>
+    </div>
+  </div>
     </>
   );
 }
