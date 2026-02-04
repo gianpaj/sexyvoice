@@ -226,11 +226,11 @@ export async function GET(request: NextRequest) {
         profiles: { username: string } | null;
       }[] = [];
       const pageSize = 1000;
-      let offset = 0;
+      let cursor: { occurred_at: string; id: string } | null = null;
       let hasMore = true;
 
       while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
           .from('usage_events')
           .select(
             'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
@@ -238,14 +238,24 @@ export async function GET(request: NextRequest) {
           .gte('occurred_at', sevenDaysAgo.toISOString())
           .lt('occurred_at', today.toISOString())
           .order('occurred_at', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .order('id', { ascending: true })
+          .limit(pageSize);
+
+        if (cursor) {
+          query = query.or(
+            `occurred_at.gt.${cursor.occurred_at},and(occurred_at.eq.${cursor.occurred_at},id.gt.${cursor.id})`,
+          );
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
         if (data && data.length > 0) {
           allEvents.push(...data);
-          offset += pageSize;
           hasMore = data.length === pageSize;
+          const last = data[data.length - 1];
+          cursor = { occurred_at: last.occurred_at, id: last.id };
         } else {
           hasMore = false;
         }
@@ -263,11 +273,11 @@ export async function GET(request: NextRequest) {
     const fetchAllCreditTransactions = async () => {
       const allTransactions: CreditTransaction[] = [];
       const pageSize = 1000;
-      let offset = 0;
+      let cursor: { created_at: string; id: string } | null = null;
       let hasMore = true;
 
       while (hasMore) {
-        const { data, error } = await supabase
+        let query = supabase
           .from('credit_transactions')
           .select(
             'id, user_id, created_at, type, description, metadata, profiles(username)',
@@ -276,14 +286,24 @@ export async function GET(request: NextRequest) {
           .not('description', 'ilike', '%manual%')
           .lt('created_at', today.toISOString())
           .order('created_at', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .order('id', { ascending: true })
+          .limit(pageSize);
+
+        if (cursor) {
+          query = query.or(
+            `created_at.gt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.gt.${cursor.id})`,
+          );
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
         if (data && data.length > 0) {
           allTransactions.push(...data);
-          offset += pageSize;
           hasMore = data.length === pageSize;
+          const last = data[data.length - 1];
+          cursor = { created_at: last.created_at, id: last.id };
         } else {
           hasMore = false;
         }
