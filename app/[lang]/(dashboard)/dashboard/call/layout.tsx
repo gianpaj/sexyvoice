@@ -40,7 +40,6 @@ export default async function CallLayout({
   const dict = await getDictionary(lang, 'call');
 
   return (
-    // <PHProvider>
     <PlaygroundStateProvider
       defaultPresets={defaultPresets}
       initialState={{
