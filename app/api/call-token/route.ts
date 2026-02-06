@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     const metadata = {
       instructions,
       model,
-      voice: voiceObj.id,
+      voice: voiceObj.name,
       temperature,
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,

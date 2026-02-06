@@ -21,30 +21,34 @@ import { usePlaygroundState } from '@/hooks/use-playground-state';
 export function PresetSave() {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const selectedPreset = helpers.getSelectedPreset(pgState);
+  const defaultPresets = helpers.getDefaultPresets();
+  const isDefaultPreset = selectedPreset
+    ? defaultPresets.some((p) => p.id === selectedPreset.id)
+    : false;
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     setName(
-      selectedPreset?.defaultGroup
-        ? `${selectedPreset.name} (copy)`
+      isDefaultPreset
+        ? `${selectedPreset?.name} (copy)`
         : selectedPreset?.name || '',
     );
     setDescription(selectedPreset?.description || '');
-  }, [selectedPreset]);
+  }, [selectedPreset, isDefaultPreset]);
 
   const handleSave = () => {
     const newPreset: Preset = {
       id:
-        selectedPreset && !selectedPreset.defaultGroup
+        selectedPreset && !isDefaultPreset
           ? selectedPreset.id
           : crypto.randomUUID(),
       name,
       description,
       instructions: pgState.instructions,
       sessionConfig: pgState.sessionConfig,
-      defaultGroup: undefined,
     };
 
     dispatch({ type: 'SAVE_USER_PRESET', payload: newPreset });
