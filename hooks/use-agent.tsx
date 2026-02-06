@@ -96,16 +96,36 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
 
       // biome-ignore lint/style/useAtIndex: fine
       const last = acc[acc.length - 1];
-      if (
-        last.participant === current.participant &&
-        last.participant?.isAgent &&
+      const isSameParticipant = last.participant === current.participant;
+      const isWithinTimeWindow =
         (current.segment.firstReceivedTime ?? 0) -
           (last.segment.lastReceivedTime ?? 0) <=
-          1000 &&
+        1000;
+      const isNotStatusSegment =
         !last.segment.id.startsWith('status-') &&
-        !current.segment.id.startsWith('status-')
+        !current.segment.id.startsWith('status-');
+      const isAgent = last.participant?.isAgent;
+
+      // For user segments: deduplicate if the text is the same (LiveKit sends duplicate events)
+      if (
+        isSameParticipant &&
+        !isAgent &&
+        isWithinTimeWindow &&
+        last.segment.text.trim() === current.segment.text.trim()
       ) {
-        // Merge segments from the same participant if they're within 1 second of each other
+        // Skip duplicate user segment with same text
+        return acc;
+      }
+
+      // Only merge and concatenate text for agent segments (they stream partial updates)
+      // User segments are already complete, so we don't merge them
+      if (
+        isSameParticipant &&
+        isWithinTimeWindow &&
+        isNotStatusSegment &&
+        isAgent
+      ) {
+        // Merge segments from the same agent if they're within 1 second of each other
         return [
           ...acc.slice(0, -1),
           {

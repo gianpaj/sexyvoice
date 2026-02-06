@@ -1,19 +1,22 @@
 'use client';
 
 import {
+  BarVisualizer,
   RoomAudioRenderer,
   useConnectionState,
+  useVoiceAssistant,
   // useVoiceAssistant,
 } from '@livekit/components-react';
 import * as Sentry from '@sentry/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Instructions } from '@/components/call/instructions';
 import { SessionControls } from '@/components/call/session-controls';
+import { Transcript } from '@/components/call/transcript';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
 // import { GrokImageFeed } from '@/components/grok-image-feed';
 import { useAgent } from '@/hooks/use-agent';
@@ -22,6 +25,7 @@ import { ConnectButton } from './connect-button';
 
 export function Chat() {
   const connectionState = useConnectionState();
+  const { audioTrack, state } = useVoiceAssistant();
   // const { audioTrack, state } = useVoiceAssistant();
   const [isChatRunning, setIsChatRunning] = useState(false);
   const { agent } = useAgent();
@@ -82,6 +86,10 @@ export function Chat() {
     };
   }, [connectionState, agent, disconnect, hasSeenAgent]);
 
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
+  const scrollButtonRef = useRef<HTMLButtonElement>(null);
+
+
   // const toggleInstructionsEdit = () =>
   //   setIsEditingInstructions(!isEditingInstructions);
 
@@ -111,6 +119,19 @@ export function Chat() {
     </AnimatePresence>
   );
 
+  const renderVisualizer = () => (
+    <div className="flex w-full items-center">
+      <div className="h-[320px] mt-16 md:mt-0 lg:pb-24 w-full">
+        <BarVisualizer
+          state={state}
+          barCount={5}
+          track={audioTrack}
+          className="w-full h-full [--lk-va-bar-width:42px]"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex min-h-24 flex-col overflow-hidden p-0 lg:p-4">
       {/*<ChatControls
@@ -128,10 +149,24 @@ export function Chat() {
               </div>
             )}
 
+            <div className="grow h-full flex items-center justify-center">
+              <div className="w-full ">
+                {isChatRunning && renderVisualizer()}
+              </div>
+            </div>
+
             <div className="flex w-full flex-shrink-0 flex-col items-center justify-center gap-2">
               {renderConnectionControl()}
             </div>
-
+            <div
+              className="flex-grow overflow-y-auto"
+              ref={transcriptContainerRef}
+            >
+              <Transcript
+                scrollContainerRef={transcriptContainerRef}
+                scrollButtonRef={scrollButtonRef}
+              />
+            </div>
             <RoomAudioRenderer />
           </div>
 
