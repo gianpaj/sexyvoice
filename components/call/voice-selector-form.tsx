@@ -54,8 +54,7 @@ export function VoiceSelectorForm({
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
                 <p>
-                  Model: Orpheus-TTS (text-to-speech AI model) - Commercial use
-                  ✔️
+                  Model: text-to-speech AI
                 </p>
               </TooltipContent>
             </Tooltip>

@@ -328,7 +328,20 @@
     "configurationUpdated": "Konfiguration opdateret",
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
-    "disconnected": "Afbrudt"
+    "disconnected": "Afbrudt",
+    "chooseCharacter": "Vælg din karakter",
+    "presetRemoved": "Preset fjernet",
+    "deletePreset": "Slet",
+    "deletePresetConfirm": "Dette kan ikke fortrydes.",
+    "cancel": "Annuller",
+    "availableInputs": "Tilgængelige input",
+    "audioSettings": "Lydindstillinger",
+    "enhancedNoiseFilter": "Forbedret støjfilter",
+    "disconnect": "Afbryd",
+    "instructions": "Instruktioner",
+    "instructionsHelp": "Instruktioner er en systembesked, der sættes foran samtalen, hver gang modellen svarer. Opdateringer vil blive afspejlet i næste samtaletur.",
+    "grokImagineNote": "Bemærk: Grok Imagine tilføjer yderligere instruktioner til billedgenerering.",
+    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet"
   },
   "clone": {
     "audioFileLabel": "Lydfil",

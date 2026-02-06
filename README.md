@@ -263,6 +263,9 @@ seewav your_audio.mp3 --color '0.8,0.0,0.4'
 # -ac 1: Set audio channels to mono (1 channel)
 # output.mp3: Output file
 ffmpeg -i input.wav -acodec libmp3lame -q:a 2 -ar 24000 -ac 1 output.mp3
+
+# For lowest quality MP3 possible
+ffmpeg -i input.wav -acodec libmp3lame -q:a 9 -ar 8000 -ac 1 output-lowest.mp3
 ```
 
 ## 🔒 Security
