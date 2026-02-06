@@ -29,7 +29,7 @@ export function SessionControls() {
   const deviceSelect = usePersistentMediaDevice();
   const connectionState = useConnectionState();
   const { formattedTime } = useCallTimer(connectionState);
-  const { disconnect } = useConnection();
+  const { disconnect, dict } = useConnection();
 
   const [isMuted, setIsMuted] = useState(localParticipant.isMicrophoneEnabled);
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
@@ -91,7 +91,7 @@ export function SessionControls() {
               forceMount
             >
               <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-                Available inputs
+                {dict.availableInputs}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {deviceSelect.devices.map((device, index) => (
@@ -106,7 +106,7 @@ export function SessionControls() {
               ))}
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-                Audio Settings
+                {dict.audioSettings}
               </DropdownMenuLabel>
               <DropdownMenuCheckboxItem
                 checked={isNoiseFilterEnabled}
@@ -116,14 +116,14 @@ export function SessionControls() {
                   setNoiseFilterEnabled(checked);
                 }}
               >
-                Enhanced Noise Filter
+                {dict.enhancedNoiseFilter}
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <Button className="h-9" onClick={disconnect} variant="secondary">
           <PhoneOff className="h-4 w-4" />
-          Disconnect
+          {dict.disconnect}
         </Button>
       </div>
       <div className="font-mono text-muted-foreground text-sm">

@@ -1,10 +1,11 @@
 import { defaultSessionConfig } from '@/data/default-config';
 import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
-import type { PlaygroundState } from '@/data/playground-state';
+import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
 import {
   defaultPresets as baseDefaultPresets,
   type Preset,
 } from '@/data/presets';
+import { getPresetInstructions } from '@/data/preset-instructions';
 import type { SessionConfig } from '@/data/session-config';
 
 export const createPlaygroundStateHelpers = (
@@ -34,7 +35,7 @@ export const createPlaygroundStateHelpers = (
       const selectedPreset = helpers.getSelectedPreset(state);
       if (selectedPreset) {
         params.set('preset', selectedPreset.id);
-        isDefaultPreset = !!selectedPreset.defaultGroup;
+        isDefaultPreset = defaultPresets.some((p) => p.id === selectedPreset.id);
       }
 
       if (!isDefaultPreset) {
@@ -144,9 +145,27 @@ export const createPlaygroundStateHelpers = (
 
     /**
      * Returns a new state object with full instructions (including additional prompt if needed)
+     * and resolves language-specific translations if available.
      */
     getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
-      const fullInstructions = helpers.getFullInstructions(state);
+      // Try to get translated instructions for the selected preset and language
+      let instructions = state.instructions;
+
+      if (state.selectedPresetId && state.language !== 'en') {
+        const translatedInstructions = getPresetInstructions(
+          state.selectedPresetId,
+          state.language as CallLanguage,
+        );
+        if (translatedInstructions) {
+          instructions = translatedInstructions;
+        }
+      }
+
+      const fullInstructions = helpers.getFullInstructions({
+        ...state,
+        instructions,
+      });
+
       return {
         ...state,
         instructions: fullInstructions,

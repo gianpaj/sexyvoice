@@ -5,9 +5,11 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useConnection } from '@/hooks/use-connection';
+import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function ConnectButton() {
   const { connect, disconnect, shouldConnect, dict } = useConnection();
+  const { pgState } = usePlaygroundState();
   const [connecting, setConnecting] = useState<boolean>(false);
   const [initiateConnectionFlag, setInitiateConnectionFlag] = useState(false);
 
@@ -41,7 +43,7 @@ export function ConnectButton() {
     <div className="flex items-center gap-2">
       <Button
         className="gradient-bg"
-        disabled={connecting || shouldConnect}
+        disabled={connecting || shouldConnect || !pgState.selectedPresetId}
         icon={() =>
           connecting || shouldConnect ? (
             <Loader2 className="animate-spin" />

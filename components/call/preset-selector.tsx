@@ -1,14 +1,11 @@
 'use client';
 
 import { useConnectionState } from '@livekit/components-react';
-import { CaretSortIcon, FileIcon } from '@radix-ui/react-icons';
-import type { PopoverProps } from '@radix-ui/react-popover';
 import { ConnectionState } from 'livekit-client';
-import { Check, Trash } from 'lucide-react';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { PresetIcon } from '@/components/call/preset-icons';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -18,41 +15,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '@/components/ui/command';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-import { cn } from '@/lib/utils';
-import { type Preset, PresetGroup } from '../../data/presets';
+import type { Preset } from '../../data/presets';
 
-export function PresetSelector(props: PopoverProps) {
-  const [open, setOpen] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [presetToDelete, setPresetToDelete] = useState<Preset | null>(null);
+export function PresetSelector() {
+  // const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  // const [presetToDelete, setPresetToDelete] = useState<Preset | null>(null);
   const { pgState, dispatch, helpers } = usePlaygroundState();
-  const { disconnect, connect, shouldConnect } = useConnection();
+  const { disconnect, connect, shouldConnect, dict } = useConnection();
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
 
   const [lastPresetId, setLastPresetId] = useState<string | null>(null);
+
+  // Get character presets (those with images)
+  const characterPresets = helpers
+    .getDefaultPresets()
+    .filter((preset) => preset.image);
+
+  const selectedPreset = helpers.getSelectedPreset(pgState);
 
   useEffect(() => {
     if (pgState.selectedPresetId !== lastPresetId) {
@@ -71,206 +53,116 @@ export function PresetSelector(props: PopoverProps) {
     lastPresetId,
   ]);
 
-  const handleDelete = () => {
-    if (presetToDelete) {
-      dispatch({
-        type: 'DELETE_USER_PRESET',
-        payload: presetToDelete.id,
-      });
-      setShowDeleteDialog(false);
-      setPresetToDelete(null);
-      toast.info('Preset removed');
-    }
-  };
+  // const handleDelete = () => {
+  //   if (presetToDelete) {
+  //     dispatch({
+  //       type: 'DELETE_USER_PRESET',
+  //       payload: presetToDelete.id,
+  //     });
+  //     setShowDeleteDialog(false);
+  //     setPresetToDelete(null);
+  //     toast.info('Preset removed');
+  //   }
+  // };
 
   const handlePresetSelect = (presetId: string | null) => {
+    if (isConnected) return;
+
     dispatch({
       type: 'SET_SELECTED_PRESET_ID',
       payload: presetId,
     });
-    setOpen(false);
 
-    // Clear URL for non-default presets
-    const selectedPreset = helpers.getSelectedPreset({
+    // Update URL with preset
+    const params = helpers.encodeToUrlParams({
       ...pgState,
       selectedPresetId: presetId,
     });
-    if (selectedPreset && !selectedPreset.defaultGroup) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (selectedPreset?.defaultGroup) {
-      // Update URL for default presets
-      const params = helpers.encodeToUrlParams({
-        ...pgState,
-        selectedPresetId: presetId,
-      });
-      window.history.replaceState(
-        {},
-        document.title,
-        `${window.location.pathname}${params ? `?${params}` : ''}`,
-      );
-    }
+    window.history.replaceState(
+      {},
+      document.title,
+      `${window.location.pathname}${params ? `?${params}` : ''}`,
+    );
   };
 
   return (
     <>
-      <Popover onOpenChange={setOpen} open={open} {...props}>
-        <PopoverTrigger asChild>
-          <Button
-            aria-expanded={open}
-            aria-label="Load a preset"
-            className="flex-1 justify-between md:max-w-[200px]"
-            disabled={isConnected}
-            role="combobox"
-            size="sm"
-            variant="outline"
-          >
-            <div className="flex items-center">
-              {(() => {
-                const selectedPreset = helpers.getSelectedPreset(pgState);
-                if (selectedPreset?.iconId) {
-                  return (
-                    <PresetIcon
-                      className="mr-2 h-4 w-4"
-                      iconId={selectedPreset.iconId}
-                    />
-                  );
-                }
-                return <FileIcon className="mr-2 h-4 w-4" />;
-              })()}
-              <span>
-                {helpers.getSelectedPreset(pgState)?.name || 'Custom'}
-              </span>
-            </div>
-            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Search…" />
-            <CommandList className="max-h-[320px]">
-              {pgState.userPresets.length > 0 && (
-                <CommandGroup heading="Saved">
-                  {pgState.userPresets.map((preset: Preset) => (
-                    <CommandItem
-                      key={preset.id}
-                      onSelect={() => handlePresetSelect(preset.id)}
-                      value={preset.id}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <HoverCard openDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <div className="pointer-events-none flex items-center">
-                              {preset.iconId && (
-                                <PresetIcon
-                                  className="mr-2 h-4 w-4"
-                                  iconId={preset.iconId}
-                                />
-                              )}
-                              <span>{preset.name}</span>
-                            </div>
-                          </HoverCardTrigger>
-                          <HoverCardContent
-                            align="start"
-                            alignOffset={20}
-                            className="w-100"
-                            side="bottom"
-                          >
-                            <p>{preset.description}</p>
-                          </HoverCardContent>
-                        </HoverCard>
-                        <div className="flex items-center space-x-2">
-                          <Check
-                            className={cn(
-                              'h-4 w-4',
-                              pgState.selectedPresetId === preset.id
-                                ? 'opacity-100'
-                                : 'opacity-0',
-                            )}
-                          />
-                          <Button
-                            className="h-6 w-6 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPresetToDelete(preset);
-                              setShowDeleteDialog(true);
-                            }}
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <Trash className="h-4 w-4 text-red-500 hover:text-red-700" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
+      <div className="w-full">
+        {/* Character Avatar Selection */}
+        <div className="mb-4 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+          {dict.chooseCharacter}
+        </div>
 
-              <CommandSeparator />
-
-              {/*<CommandGroup>
-                <CommandItem
-                  onSelect={() => handlePresetSelect(null)}
-                  value="blank"
+        {/* Avatar Row */}
+        <div className="mb-4 flex justify-between items-start">
+          {characterPresets.map((preset) => {
+            const isSelected = pgState.selectedPresetId === preset.id;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => handlePresetSelect(preset.id)}
+                disabled={isConnected}
+                className="flex flex-col items-center gap-2 group"
+                aria-pressed={isSelected}
+              >
+                {/* Avatar with Instagram-style ring */}
+                <div
+                  className={`relative rounded-full p-[3px] transition-all duration-300 ${
+                    isSelected
+                      ? 'bg-gradient-to-tr from-violet-500 via-purple-500 to-fuchsia-500'
+                      : 'bg-transparent'
+                  } ${!isConnected ? 'group-hover:scale-105' : ''}`}
                 >
-                  <div className="flex items-center">
-                    <FileIcon className="mr-2 h-4 w-4" />
-                    <span>Start from scratch</span>
-                  </div>
-                </CommandItem>
-              </CommandGroup>*/}
-
-              {Object.values(PresetGroup).map((group) => (
-                <CommandGroup heading={group} key={group}>
-                  <CommandEmpty>No examples found.</CommandEmpty>
-                  {helpers
-                    .getDefaultPresets()
-                    .filter((preset) => preset.defaultGroup === group)
-                    .map((preset: Preset) => (
-                      <CommandItem
-                        key={preset.id}
-                        onSelect={() => handlePresetSelect(preset.id)}
-                        value={preset.id}
-                      >
-                        <HoverCard openDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <div className="pointer-events-none flex items-center">
-                              {preset.iconId && (
-                                <PresetIcon
-                                  className="mr-2 h-4 w-4"
-                                  iconId={preset.iconId}
-                                />
-                              )}
-                              <span>{preset.name}</span>
-                            </div>
-                          </HoverCardTrigger>
-                          <HoverCardContent
-                            align="start"
-                            alignOffset={20}
-                            className="w-80"
-                            side="bottom"
-                          >
-                            <p>{preset.description}</p>
-                          </HoverCardContent>
-                        </HoverCard>
-                        <Check
-                          className={cn(
-                            'mr-2 ml-auto h-4 w-4',
-                            pgState.selectedPresetId === preset.id
-                              ? 'opacity-100'
-                              : 'opacity-0',
-                          )}
+                  <div className="rounded-full p-[2px] bg-background">
+                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-neutral-800">
+                      {preset.image && (
+                        <Image
+                          src={`/characters/${preset.image}`}
+                          alt={preset.name}
+                          fill
+                          className={`object-cover transition-all duration-300 ${
+                            isConnected && !isSelected
+                              ? 'opacity-40 grayscale'
+                              : ''
+                          }`}
                         />
-                      </CommandItem>
-                    ))}
-                </CommandGroup>
-              ))}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+                {/* Name */}
+                <span
+                  className={`text-xs font-medium transition-colors ${
+                    isSelected ? 'text-foreground' : 'text-muted-foreground'
+                  } ${isConnected && !isSelected ? 'opacity-40' : ''}`}
+                >
+                  {preset.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Bio Card */}
+        <div
+          className={`bg-muted rounded-xl p-4 transition-all duration-300 ${
+            selectedPreset?.image
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-2 pointer-events-none h-0 p-0 overflow-hidden'
+          }`}
+        >
+          {selectedPreset?.image && (
+            <p className="text-foreground text-sm">
+              <span className="font-semibold">{selectedPreset.name}:</span>{' '}
+              {selectedPreset.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/*<AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -287,7 +179,7 @@ export function PresetSelector(props: PopoverProps) {
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>*/}
     </>
   );
 }

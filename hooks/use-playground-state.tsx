@@ -244,7 +244,6 @@ export const PlaygroundStateProvider = ({
           description: urlData.preset.description,
           instructions: urlData.state.instructions || '',
           sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
-          defaultGroup: undefined,
         };
 
         const updatedUserPresets = [...userPresets, newPreset];

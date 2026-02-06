@@ -328,7 +328,20 @@
     "configurationUpdated": "Configuration updated",
     "configurationUpdateError": "Error updating configuration",
     "agentUnavailable": "Agent unavailable",
-    "disconnected": "Disconnected"
+    "disconnected": "Disconnected",
+    "chooseCharacter": "Choose Your Character",
+    "presetRemoved": "Preset removed",
+    "deletePreset": "Delete",
+    "deletePresetConfirm": "This cannot be undone.",
+    "cancel": "Cancel",
+    "availableInputs": "Available inputs",
+    "audioSettings": "Audio Settings",
+    "enhancedNoiseFilter": "Enhanced Noise Filter",
+    "disconnect": "Disconnect",
+    "instructions": "Instructions",
+    "instructionsHelp": "Instructions are a system message that is prepended to the conversation whenever the model responds. Updates will be reflected on the next conversation turn.",
+    "grokImagineNote": "Note: Grok Imagine adds additional instructions for image generation.",
+    "grokImagineIncluded": "Grok Imagine Instructions Included"
   },
   "clone": {
     "audioFileLabel": "Audio File",

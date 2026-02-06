@@ -265,42 +265,40 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
             {dict.configurationTitle}
           </div>
         </div>
-        <div className="flex w-full flex-col justify-between gap-2 border-separator1 border-b px-4 py-4 md:h-16 md:flex-row md:px-1">
-          {/*<div className="flex-1 flex-col items-center gap-3 space-x-2">*/}
-          {/*<PresetShare />*/}
-          {/*<div className="flex-grow overflow-y-auto py-4 pt-4">
-            <div className="space-y-5">*/}
 
-          {displayLanguage && (
-            <div className="flex w-full items-center justify-between">
-              <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                {dict.languageLabel}
-              </div>
-              <Select
-                disabled={connectionState === ConnectionState.Connected}
-                onValueChange={handleLanguageChange}
-                value={pgState.language}
-              >
-                <SelectTrigger className="h-9 w-fit text-neutral-200">
-                  <SelectValue placeholder={dict.languagePlaceholder} />
-                </SelectTrigger>
-                <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
-                  {translatedLanguages.map(({ value, label }) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Language Selection */}
+        {displayLanguage && (
+          <div className="flex w-full items-center justify-between border-separator1 border-b px-4 py-4 md:px-1">
+            <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+              {dict.languageLabel}
+            </div>
+            <Select
+              disabled={connectionState === ConnectionState.Connected}
+              onValueChange={handleLanguageChange}
+              value={pgState.language}
+            >
+              <SelectTrigger className="h-9 w-fit text-neutral-200">
+                <SelectValue placeholder={dict.languagePlaceholder} />
+              </SelectTrigger>
+              <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
+                {translatedLanguages.map(({ value, label }) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Character Selection */}
+        <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
+          <PresetSelector />
+          {showInstruction && (
+            <div className="mt-4">
+              <PresetSave />
             </div>
           )}
-
-          <SessionConfig form={form} />
-          <div className="flex gap-3">
-            <PresetSelector />
-            {showInstruction && <PresetSave />}
-          </div>
-          {/*</div>*/}
         </div>
 
         <SessionConfig form={form} />
