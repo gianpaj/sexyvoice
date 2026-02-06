@@ -15,16 +15,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import type { Preset } from '../../data/presets';
 
 export function PresetSelector() {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [presetToDelete, setPresetToDelete] = useState<Preset | null>(null);
+  // const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  // const [presetToDelete, setPresetToDelete] = useState<Preset | null>(null);
   const { pgState, dispatch, helpers } = usePlaygroundState();
-  const { disconnect, connect, shouldConnect } = useConnection();
+  const { disconnect, connect, shouldConnect, dict } = useConnection();
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
 
@@ -54,17 +53,17 @@ export function PresetSelector() {
     lastPresetId,
   ]);
 
-  const handleDelete = () => {
-    if (presetToDelete) {
-      dispatch({
-        type: 'DELETE_USER_PRESET',
-        payload: presetToDelete.id,
-      });
-      setShowDeleteDialog(false);
-      setPresetToDelete(null);
-      toast.info('Preset removed');
-    }
-  };
+  // const handleDelete = () => {
+  //   if (presetToDelete) {
+  //     dispatch({
+  //       type: 'DELETE_USER_PRESET',
+  //       payload: presetToDelete.id,
+  //     });
+  //     setShowDeleteDialog(false);
+  //     setPresetToDelete(null);
+  //     toast.info('Preset removed');
+  //   }
+  // };
 
   const handlePresetSelect = (presetId: string | null) => {
     if (isConnected) return;
@@ -91,8 +90,7 @@ export function PresetSelector() {
       <div className="w-full">
         {/* Character Avatar Selection */}
         <div className="mb-4 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-          {/* TODO translate*/}
-          Choose Your Character
+          {dict.chooseCharacter}
         </div>
 
         {/* Avatar Row */}
@@ -106,6 +104,7 @@ export function PresetSelector() {
                 onClick={() => handlePresetSelect(preset.id)}
                 disabled={isConnected}
                 className="flex flex-col items-center gap-2 group"
+                aria-pressed={isSelected}
               >
                 {/* Avatar with Instagram-style ring */}
                 <div
@@ -127,11 +126,6 @@ export function PresetSelector() {
                               ? 'opacity-40 grayscale'
                               : ''
                           }`}
-                          onError={(e) => {
-                            // Hide image if it fails to load
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
                         />
                       )}
                     </div>
@@ -168,7 +162,7 @@ export function PresetSelector() {
         </div>
       </div>
 
-      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+      {/*<AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -185,7 +179,7 @@ export function PresetSelector() {
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>*/}
     </>
   );
 }

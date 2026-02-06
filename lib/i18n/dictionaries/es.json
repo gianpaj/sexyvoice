@@ -328,7 +328,20 @@
     "configurationUpdated": "Configuración actualizada",
     "configurationUpdateError": "Error al actualizar la configuración",
     "agentUnavailable": "Agente no disponible",
-    "disconnected": "Desconectado"
+    "disconnected": "Desconectado",
+    "chooseCharacter": "Elige tu personaje",
+    "presetRemoved": "Preset eliminado",
+    "deletePreset": "Eliminar",
+    "deletePresetConfirm": "Esto no se puede deshacer.",
+    "cancel": "Cancelar",
+    "availableInputs": "Entradas disponibles",
+    "audioSettings": "Configuración de audio",
+    "enhancedNoiseFilter": "Filtro de ruido mejorado",
+    "disconnect": "Desconectar",
+    "instructions": "Instrucciones",
+    "instructionsHelp": "Las instrucciones son un mensaje del sistema que se antepone a la conversación cada vez que el modelo responde. Las actualizaciones se reflejarán en el siguiente turno de conversación.",
+    "grokImagineNote": "Nota: Grok Imagine añade instrucciones adicionales para la generación de imágenes.",
+    "grokImagineIncluded": "Instrucciones de Grok Imagine incluidas"
   },
   "clone": {
     "audioFileLabel": "Archivo de Audio",

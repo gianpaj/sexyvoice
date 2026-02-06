@@ -9,6 +9,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function Instructions() {
@@ -16,6 +17,7 @@ export function Instructions() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const { pgState, helpers } = usePlaygroundState();
+  const { dict } = useConnection();
 
   const immutablePrompt = helpers.getImmutablePrompt(pgState);
 
@@ -24,7 +26,7 @@ export function Instructions() {
       <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center">
           <div className="mr-1 font-semibold text-xs uppercase tracking-widest">
-            INSTRUCTIONS
+            {dict.instructions}
           </div>
           <HoverCard open={isOpen}>
             <HoverCardTrigger asChild>
@@ -38,15 +40,13 @@ export function Instructions() {
               onInteractOutside={() => setIsOpen(false)}
               side="bottom"
             >
-              Instructions are a system message that is prepended to the
-              conversation whenever the model responds. Updates will be
-              reflected on the next conversation turn.
+              {dict.instructionsHelp}
               {immutablePrompt && (
                 <>
                   <br />
                   <br />
-                  <strong>Note:</strong> Grok Imagine adds additional
-                  instructions for image generation.
+                  <strong>{dict.grokImagineNote.split(':')[0]}:</strong>
+                  {dict.grokImagineNote.split(':').slice(1).join(':')}
                 </>
               )}
             </HoverCardContent>
@@ -72,7 +72,7 @@ export function Instructions() {
             ) : (
               <ChevronRight className="h-3 w-3" />
             )}
-            <span>Grok Imagine Instructions Included</span>
+            <span>{dict.grokImagineIncluded}</span>
           </button>
           {isExpanded && (
             <div className="mt-2 whitespace-pre-wrap p-2 font-mono text-neutral-500 text-xs leading-loose">
