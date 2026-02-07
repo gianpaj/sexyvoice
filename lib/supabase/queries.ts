@@ -3,7 +3,7 @@
 import * as Sentry from '@sentry/nextjs';
 
 import { createAdminClient } from './admin';
-import { MAX_FREE_GENERATIONS } from './constants';
+import { MAX_FREE_GENERATIONS, FREE_USER_CALL_LIMIT_SECONDS } from './constants';
 import { createClient } from './server';
 
 // Types for usage event tracking
@@ -378,6 +378,52 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
+};
+
+/**
+ * Get the total call duration in seconds for a user.
+ * This sums up all duration_seconds from their call_sessions.
+ */
+export const getTotalCallDurationSeconds = async (
+  userId: string,
+): Promise<number> => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('call_sessions')
+    .select('duration_seconds')
+    .eq('user_id', userId);
+
+  if (error) {
+    Sentry.captureException(error, {
+      extra: { userId, context: 'getTotalCallDurationSeconds' },
+    });
+    throw error;
+  }
+
+  const totalSeconds = data.reduce(
+    (sum, session) => sum + (session.duration_seconds ?? 0),
+    0,
+  );
+
+  return totalSeconds;
+};
+
+/**
+ * Check if a free user has exceeded the call limit (10 minutes).
+ * Returns true if the user is a free user AND has exceeded the limit.
+ */
+export const isFreeUserOverCallLimit = async (
+  userId: string,
+): Promise<boolean> => {
+  const hasPaid = await hasUserPaid(userId);
+
+  if (hasPaid) {
+    return false;
+  }
+
+  const totalDuration = await getTotalCallDurationSeconds(userId);
+  return totalDuration >= FREE_USER_CALL_LIMIT_SECONDS;
 };
 
 export const isFreemiumUserOverLimit = async (

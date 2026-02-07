@@ -11,7 +11,11 @@ import {
 } from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
-import { getCredits, getVoiceIdByName } from '@/lib/supabase/queries';
+import {
+  getCredits,
+  getVoiceIdByName,
+  isFreeUserOverCallLimit,
+} from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
@@ -37,6 +41,18 @@ export async function POST(request: Request) {
         extra: { currentCreditsAmount: currentAmount },
       });
       return APIErrorResponse('Insufficient credits', 402);
+    }
+
+    // Check if free user has exceeded the 10-minute call limit
+    const isOverCallLimit = await isFreeUserOverCallLimit(user.id);
+    if (isOverCallLimit) {
+      logger.info('Free user exceeded call limit', {
+        user: { id: user.id, email: user.email },
+      });
+      return APIErrorResponse(
+        'Free users are limited to 10 minutes of calls. Please upgrade to continue.',
+        403,
+      );
     }
 
     let playgroundState: PlaygroundState;

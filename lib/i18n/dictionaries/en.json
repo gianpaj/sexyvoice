@@ -58,7 +58,7 @@
     "latestPosts": "Latest Posts",
     "hero": {
       "title": "Private call with an AI, Talk freely –\nno judgment",
-      "subtitle": "Experience the connection – try 20 mins free call",
+      "subtitle": "Experience the connection – try 10 mins free call",
       "buttonCTA": "Sign up for Free",
       "noCreditCard": "No credit card required. You can hang up anytime",
       "signIn": "Sign In"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start with 10,000 free credits ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start with 10,000 free credits (10 min voice call) ( ͡° ͜ʖ ͡°)",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
@@ -210,7 +210,11 @@
         ]
       },
       "starter": {
-        "name": "Starter"
+        "name": "Starter",
+        "description": "For casual users exploring AI audio.",
+        "features": [
+          "Everything in Free"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -318,6 +322,7 @@
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
     "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__",
+    "freeUserCallLimitExceeded": "Free users are limited to 10 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
@@ -416,7 +421,7 @@
   },
   "pages": {
     "defaultTitle": "Talk to AI - Private Voice Calls with No Judgment | SexyVoice.ai",
-    "description": "Experience real-time AI voice calls in total privacy. Talk freely with no judgment - your secrets stay safe. Try a 20 min free call now. No credit card required.",
+    "description": "Experience real-time AI voice calls in total privacy. Talk freely with no judgment - your secrets stay safe. Try a 10 min free call now. No credit card required.",
     "descriptionLogin": "Sign in to SexyVoice.ai to access your AI voice projects, manage credits, and generate expressive speech in multiple languages with advanced voice cloning.",
     "descriptionSignup": "Join SexyVoice.ai free - Get 10,000 credits to create realistic AI voices with emotions. Advanced text-to-speech and voice cloning in 24 languages.",
     "/": "",

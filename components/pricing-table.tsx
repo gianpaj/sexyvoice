@@ -56,7 +56,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       price: TOPUP_PACKAGES.pro.dollarAmount,
 
       pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.333,
+      saveFromPrevPlanPer1kCredits: 0.15,
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',

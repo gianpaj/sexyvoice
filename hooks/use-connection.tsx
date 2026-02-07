@@ -64,6 +64,8 @@ export const ConnectionProvider = ({
             MINIMUM_CREDITS_FOR_CALL.toString(),
           ),
         );
+      } else if (response.status === 403) {
+        toast.error(dict.freeUserCallLimitExceeded);
       }
 
       throw new Error('Failed to fetch token');
