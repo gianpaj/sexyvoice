@@ -81,7 +81,7 @@ export const getTopupPackages = (lang: Locale) => {
         return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.244 : 0.33
       },
       promoBonus: promoBonuses.pro.toLocaleString(lang),
-      dollarAmount: 99, // $99.00
+      dollarAmount: 75, // $75.00
     },
   } as const;
 };

@@ -58,7 +58,7 @@
     "latestPosts": "Ultimi post",
     "hero": {
       "title": "Chiamata privata con un'IA, Parla liberamente –\nsenza giudizio",
-      "subtitle": "Vivi l'esperienza – prova 20 minuti di chiamata gratuita",
+      "subtitle": "Vivi l'esperienza – prova 10 minuti di chiamata gratuita",
       "buttonCTA": "Registrati gratis",
       "noCreditCard": "Nessuna carta di credito richiesta. Puoi riagganciare quando vuoi",
       "signIn": "Accedi"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Inizia con 10.000 crediti gratuiti ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Inizia con 10.000 crediti gratuiti (10 minuti di chiamata) ( ͡° ͜ʖ ͡°)",
       "title": "Pronto a trovare la tua voce?",
       "subtitle": "Unisciti a migliaia di creatori che si affidano alla nostra piattaforma per creare voci realistiche ricche di emozioni.",
       "action": "Crea la tua prima voce"
@@ -210,7 +210,11 @@
         ]
       },
       "starter": {
-        "name": "Starter"
+        "name": "Starter",
+        "description": "Per utenti occasionali che esplorano l'audio IA.",
+        "features": [
+          "Tutto in Gratuito"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -318,6 +322,7 @@
     "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
     "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
     "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
+    "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 10 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
@@ -416,7 +421,7 @@
   },
   "pages": {
     "defaultTitle": "Parla con l'IA - Chiamate vocali private senza giudizio | SexyVoice.ai",
-    "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 20 min di chiamata gratuita. Nessuna carta di credito richiesta.",
+    "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 10 min di chiamata gratuita. Nessuna carta di credito richiesta.",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
     "/": "",

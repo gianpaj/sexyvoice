@@ -58,7 +58,7 @@
     "latestPosts": "Derniers articles",
     "hero": {
       "title": "Appel privé avec une IA, Parlez librement –\nsans jugement",
-      "subtitle": "Vivez l'expérience – essayez 20 minutes d'appel gratuit",
+      "subtitle": "Vivez l'expérience – essayez 10 minutes d'appel gratuit",
       "buttonCTA": "S'inscrire gratuitement",
       "noCreditCard": "Aucune carte de crédit requise. Vous pouvez raccrocher à tout moment",
       "signIn": "Se connecter"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Commencez avec 10 000 crédits gratuits ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Commencez avec 10 000 crédits gratuits (appel vocal de 10 min) ( ͡° ͜ʖ ͡°)",
       "title": "Prêt à trouver votre voix ?",
       "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
       "action": "Créez votre première voix"
@@ -210,7 +210,11 @@
         ]
       },
       "starter": {
-        "name": "Starter"
+        "name": "Starter",
+        "description": "Pour les utilisateurs occasionnels explorant l'audio IA.",
+        "features": [
+          "Tout dans Gratuit"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -318,6 +322,7 @@
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 10 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
@@ -416,7 +421,7 @@
   },
   "pages": {
     "defaultTitle": "Parlez à l'IA - Appels vocaux privés sans jugement | SexyVoice.ai",
-    "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 20 min d'appel gratuit. Aucune carte de crédit requise.",
+    "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 10 min d'appel gratuit. Aucune carte de crédit requise.",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
     "/": "",
