@@ -27,7 +27,7 @@ const sampleAudios: readonly SampleAudio[] = [
   // },
   {
     id: 3,
-    name: 'Kore (Multilingual) 🇩🇪',
+    name: 'Kore (Multilingual) 🇩🇪 - ⚠️🔞',
     prompt:
       '[custom style] uhhh jaaaa komm wir lecken uns in der neunundsechzig. saug mir die fotze aus. ja komm ohhhh uuuhhhhaa mmhhhhhh mhhhhh mmmmm uhhhh ohhhhuh  ohhhhhhhhhhhh',
     audioSrc: 'kore-a9f62355.mp3',
@@ -59,7 +59,7 @@ const sampleAudios: readonly SampleAudio[] = [
     name: 'Sulafat (Multilingual) 🇺🇸',
     prompt:
       "[custom style] Oh, Paris—the City of Light, they call it, but to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight.",
-    audioSrc: 'sulafat.mp3',
+    audioSrc: 'sulafat-2f87b6cb.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
     lang: 'en',
     dir: 'ltr',

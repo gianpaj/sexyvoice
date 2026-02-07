@@ -6,6 +6,8 @@ import React, { useEffect, useState } from 'react';
 
 import { dismissBannerAction } from '@/app/[lang]/actions/promos';
 import { Button } from '@/components/ui/button';
+import { useIsMobileSizes } from '@/hooks/use-mobile';
+import { getCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
 interface PromoBannerProps {
@@ -13,7 +15,7 @@ interface PromoBannerProps {
   text: string;
   ctaLink: string;
   ctaText: string;
-  arialLabelDismiss: string;
+  ariaLabelDismiss: string;
   isEnabled?: boolean;
   countdown?: {
     enabled: boolean;
@@ -66,7 +68,7 @@ export function PromoBanner({
   text,
   ctaLink,
   ctaText,
-  arialLabelDismiss,
+  ariaLabelDismiss,
   isEnabled = false,
   countdown,
 }: PromoBannerProps) {
@@ -80,15 +82,15 @@ export function PromoBanner({
     if (!isEnabled) {
       return;
     }
-    const getCookie = async () => {
-      const promoBannerCookie = await cookieStore.get(PROMO_BANNER_COOKIE);
+    const checkCookie = async () => {
+      const promoBannerCookie = await getCookie(PROMO_BANNER_COOKIE);
 
       if (!promoBannerCookie) {
         setIsVisible(true);
       }
     };
 
-    getCookie();
+    checkCookie();
   }, []);
 
   // Countdown timer effect
@@ -136,22 +138,25 @@ export function PromoBanner({
     await dismissBannerAction();
     setIsVisible(false);
   };
+  const { innerWidth } = useIsMobileSizes();
 
   if (!isVisible) {
     return null;
   }
 
   const isLongText = text.length > 100;
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
 
   return (
     <div
       className={cn('w-full', {
-        'fixed z-50 bg-pink-900/30 backdrop-blur-sm': inDashboard,
+        'fixed z-50 bg-promo-primary-dark/50 backdrop-blur-sm': inDashboard,
       })}
+      data-promo-theme={promoTheme}
     >
       <div
         className={cn(
-          'relative mx-auto flex-inline items-center justify-center gap-32 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-6',
+          'relative mx-auto flex-inline items-center justify-center gap-32 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-8',
           isLongText ? 'sm:h-16' : 'sm:h-8',
         )}
       >
@@ -160,7 +165,7 @@ export function PromoBanner({
             className={cn(
               'truncate whitespace-pre-line text-wrap font-medium text-sm sm:whitespace-normal md:text-base',
               {
-                'sm:text-nowrap': !isLongText,
+                'sm:text-nowrap': !isLongText && innerWidth > 1000,
               },
             )}
           >
@@ -195,10 +200,11 @@ export function PromoBanner({
           )}
         </div>
 
-        <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 sm:absolute sm:mt-0">
+        <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 md:absolute md:mt-0">
           <Button
             asChild
-            className="whitespace-nowrap bg-pink-600/70 font-semibold hover:bg-pink-900"
+            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
+            effect="ringHover"
             size="sm"
             variant="outline"
           >
@@ -206,7 +212,7 @@ export function PromoBanner({
           </Button>
 
           <Button
-            aria-label={arialLabelDismiss}
+            aria-label={ariaLabelDismiss}
             className="absolute right-0 md:relative"
             onClick={handleDismissBanner}
             size="sm"

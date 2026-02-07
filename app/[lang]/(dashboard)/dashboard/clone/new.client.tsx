@@ -4,7 +4,6 @@ import {
   AlertCircle,
   CircleStop,
   Download,
-  InfoIcon,
   PaperclipIcon,
   UploadIcon,
   XIcon,
@@ -23,10 +22,10 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -37,12 +36,6 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
@@ -50,9 +43,9 @@ import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
-import { AudioProvider, useAudio } from './audio-provider';
-import type { SampleAudio } from './CloneSampleCard';
-import CloneSampleCard from './CloneSampleCard';
+import { AudioProvider } from './audio-provider';
+import type { SampleAudio } from './clone-sample-card';
+import CloneSampleCard from './clone-sample-card';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
@@ -145,7 +138,6 @@ function NewVoiceClientInner({
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
-  const audio = useAudio();
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -167,6 +159,7 @@ function NewVoiceClientInner({
     null,
   );
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
+  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
 
   // Preload FFmpeg when non-English locale is selected
   useEffect(() => {
@@ -285,6 +278,9 @@ function NewVoiceClientInner({
   const abortController = useRef<AbortController | null>(null);
 
   const handleGenerate = useCallback(async () => {
+    if (!legalConsentChecked) {
+      return;
+    }
     if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
@@ -384,9 +380,6 @@ function NewVoiceClientInner({
 
       setGeneratedAudioUrl(voiceResult.url);
 
-      // Automatically play the audio using the context
-      audio?.setUrlAndPlay(voiceResult.url);
-
       toast.success(dict.success);
 
       setStatus('complete');
@@ -408,7 +401,6 @@ function NewVoiceClientInner({
       setStatus('error');
     }
   }, [
-    audio,
     dict,
     file,
     micBlob,
@@ -416,6 +408,7 @@ function NewVoiceClientInner({
     selectedLocale,
     clearErrors,
     convertWithFFmpeg,
+    legalConsentChecked,
   ]);
 
   const handleCancel = () => {
@@ -431,7 +424,12 @@ function NewVoiceClientInner({
         event.preventDefault();
 
         // Only trigger if form can be submitted
-        if (status !== 'generating' && text.trim() && hasEnoughCredits) {
+        if (
+          status !== 'generating' &&
+          text.trim() &&
+          hasEnoughCredits &&
+          legalConsentChecked
+        ) {
           handleGenerate();
         }
       }
@@ -444,7 +442,7 @@ function NewVoiceClientInner({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [status, text, handleGenerate, hasEnoughCredits]);
+  }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
 
   const downloadAudio = async () => {
     // Prepare the anchor element once in a closure scope
@@ -745,6 +743,22 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                checked={legalConsentChecked}
+                id="legal-consent"
+                onCheckedChange={(checked) =>
+                  setLegalConsentChecked(checked === true)
+                }
+              />
+              <Label
+                className="font-normal text-muted-foreground text-sm leading-tight"
+                htmlFor="legal-consent"
+              >
+                {dict.legalConsentCheckbox}
+              </Label>
+            </div>
+
             <Button
               className="w-full"
               disabled={
@@ -752,7 +766,8 @@ function NewVoiceClientInner({
                 status === 'generating' ||
                 !hasEnoughCredits ||
                 convertingMicAudio ||
-                textIsOverLimit
+                textIsOverLimit ||
+                !legalConsentChecked
               }
               onClick={handleGenerate}
             >
@@ -801,9 +816,13 @@ function NewVoiceClientInner({
               <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
                 {generatedAudioUrl && (
                   <AudioPlayerWithContext
+                    autoPlay
                     className="rounded-full"
                     playAudioTitle={dict.playAudio}
+                    progressColor="#8b5cf6"
+                    showWaveform
                     url={generatedAudioUrl}
+                    waveColor="#888888"
                   />
                 )}
               </div>
@@ -821,28 +840,6 @@ function NewVoiceClientInner({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex items-center justify-between gap-3 border-t pt-6">
-        <p className="text-muted-foreground text-sm">{dict.cloneNotice}</p>
-        <TooltipProvider>
-          <Tooltip supportMobileTap>
-            <TooltipTrigger aria-label={dict.cloneNoticeTooltipLabel} asChild>
-              <button
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                type="button"
-              >
-                <InfoIcon aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              align="end"
-              className="max-w-[80vw] whitespace-pre text-wrap lg:max-w-[50vw]"
-              side="left"
-            >
-              {dict.cloneNoticeTooltip}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </CardFooter>
     </Card>
   );
 }

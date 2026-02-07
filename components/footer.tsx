@@ -23,6 +23,17 @@ async function Footer({ lang }: { lang: Locale }) {
                 <span className="sr-only">Twitter/X</span>
               </Link>
             </Button>
+            <Button
+              asChild
+              className="rounded-full bg-gray-900"
+              size="icon"
+              variant="outline"
+            >
+              <Link href="https://instagram.com/sexyvoice_ai" target="_blank">
+                <span className="iconify logos--instagram-icon" />
+                <span className="sr-only">Instagram</span>
+              </Link>
+            </Button>
           </div>
           <div className="text-center">
             <p className="text-muted-foreground text-xs">
@@ -46,14 +57,14 @@ async function Footer({ lang }: { lang: Locale }) {
               </a>
               {' - '}
               <Link
-                className="hover:text-primary hover:underline"
+                className="whitespace-nowrap hover:text-primary hover:underline"
                 href={`/${lang}/privacy-policy`}
               >
                 {dict.privacyPolicy}
               </Link>
               {' - '}
               <Link
-                className="hover:text-primary hover:underline"
+                className="whitespace-nowrap hover:text-primary hover:underline"
                 href={`/${lang}/terms`}
               >
                 {dict.termsAndConditions}

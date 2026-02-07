@@ -1,0 +1,582 @@
+{
+  "auth": {
+    "login": {
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous à votre compte",
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "forgotPassword": "Mot de passe oublié ?",
+      "signInWithGoogle": "Se connecter avec Google",
+      "noAccount": "Vous n'avez pas de compte ?",
+      "signUp": "S'inscrire",
+      "error": "E-mail ou mot de passe invalide"
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Commencez à générer des voix",
+      "email": "Adresse e-mail",
+      "password": "Mot de passe",
+      "username": "Nom d'utilisateur",
+      "fullName": "Nom complet",
+      "submit": "S'inscrire",
+      "hasAccount": "Vous avez déjà un compte ?",
+      "signIn": "Se connecter",
+      "error": "Erreur lors de la création du compte",
+      "signupSuccess": "Vérifiez votre boîte e-mail pour la confirmation"
+    },
+    "resetPassword": {
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe",
+      "email": "Adresse e-mail",
+      "submit": "Réinitialiser le mot de passe",
+      "error": "Adresse e-mail invalide",
+      "loading": "Envoi de l'e-mail...",
+      "success": "Vérifiez votre e-mail pour le lien de réinitialisation",
+      "backToLogin": "Retour à la connexion",
+      "errors": {
+        "generic": "Impossible de réinitialiser le mot de passe",
+        "email_required": "L'e-mail est requis"
+      }
+    },
+    "updatePassword": {
+      "title": "Mettre à jour le mot de passe",
+      "subtitle": "Entrez votre nouveau mot de passe ci-dessous",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "updatePassword": "Mettre à jour le mot de passe",
+      "loading": "Mise à jour...",
+      "errors": {
+        "same_password": "Le nouveau mot de passe doit être différent de l'ancien",
+        "passwords_do_not_match": "Les mots de passe ne correspondent pas",
+        "passwords_required": "Le mot de passe et sa confirmation sont requis",
+        "success": "Mot de passe mis à jour"
+      }
+    }
+  },
+  "landing": {
+    "latestPosts": "Derniers articles",
+    "hero": {
+      "title": "Appel privé avec une IA, Parlez librement –\nsans jugement",
+      "subtitle": "Vivez l'expérience – essayez 10 minutes d'appel gratuit",
+      "buttonCTA": "S'inscrire gratuitement",
+      "noCreditCard": "Aucune carte de crédit requise. Vous pouvez raccrocher à tout moment",
+      "signIn": "Se connecter"
+    },
+    "features": {
+      "voiceCloning": {
+        "title": "Voix naturelles",
+        "description": "Intégrez des émotions naturelles — ajoutez des rires, des soupirs, de la toux et plus encore — pour créer des expériences audio authentiques et captivantes."
+      },
+      "multiLanguage": {
+        "title": "Support multilingue",
+        "description": "Choisissez parmi plus de 20 voix uniques dans plusieurs langues, parfaites pour vos besoins et préférences spécifiques."
+      },
+      "security": {
+        "title": "Sécurisé et privé",
+        "description": "Vos données vocales sont protégées par une sécurité de niveau entreprise. Contrôle total sur votre vie privée, votre profil et votre historique."
+      }
+    },
+    "cta": {
+      "freeCredits": "Commencez avec 10 000 crédits gratuits (appel vocal de 10 min) ( ͡° ͜ʖ ͡°)",
+      "title": "Prêt à trouver votre voix ?",
+      "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
+      "action": "Créez votre première voix"
+    },
+    "generator": {
+      "title": "Essayez maintenant",
+      "subtitle": "Générez votre premier échantillon vocal",
+      "selectVoice": "Sélectionnez une voix",
+      "enterText": "Entrez le texte à convertir",
+      "speed": "Vitesse",
+      "pitch": "Tonalité",
+      "generate": "Générer l'audio (bientôt disponible)",
+      "generating": "Génération...",
+      "play": "Lire",
+      "pause": "Pause",
+      "reset": "Réinitialiser",
+      "download": "Télécharger"
+    },
+    "popular": {
+      "title": "Échantillons audio populaires",
+      "subtitle": "Écoutez ce que les autres ont créé",
+      "loading": "Chargement des audios populaires...",
+      "trySamplesTitle": "Essayez nos échantillons vocaux",
+      "trySamplesSubtitle": "Écoutez des échantillons vocaux créés avec notre technologie IA avancée"
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "subtitle": "Tout ce que vous devez savoir sur SexyVoice.ai",
+      "groups": [
+        {
+          "id": "liveCalling",
+          "category": "Appels IA en direct",
+          "questions": [
+            {
+              "question": "Comment fonctionnent les appels IA en direct ?",
+              "answer": "Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation."
+            },
+            {
+              "question": "Combien ça coûte ?",
+              "answer": "Les appels en direct coûtent 400 crédits par minute pendant que vous êtes connecté."
+            }
+          ]
+        },
+        {
+          "id": "voiceCreation",
+          "category": "Création de voix et styles",
+          "questions": [
+            {
+              "question": "Comment fonctionne le clonage vocal ?",
+              "answer": "Notre IA analyse votre échantillon vocal (10 secondes à 5 minutes) pour apprendre ses motifs et caractéristiques uniques. Avec seulement quelques secondes d'audio clair, vous pouvez créer une version numérique de votre voix qui sonne naturelle et réaliste."
+            },
+            {
+              "question": "Puis-je cloner ma propre voix ?",
+              "answer": "Oui ! Avec seulement quelques secondes d'audio clair, il peut créer une version numérique de votre voix qui sonne naturelle et réaliste."
+            },
+            {
+              "question": "Quelles langues sont supportées pour la génération vocale ?",
+              "answer": "Le support linguistique dépend de la voix sélectionnée.\n\nCertaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) supportent 24 langues, notamment :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam).\nD'autres voix sont spécifiques à une langue :\n🇮🇹 Pietro (Italien),\n🇪🇸 Javi (Espagnol),\n🇬🇧 Dan (Anglais UK),\n🇺🇸 Emma (Anglais US),\n🇺🇸 Josh (Anglais US),\n🇺🇸 et Tara (Anglais US).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
+            },
+            {
+              "question": "Quelles langues sont supportées pour le clonage vocal ?",
+              "answer": "Le clonage vocal supporte les 23 langues suivantes :\n\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
+            },
+            {
+              "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
+              "answer": "Oui ! Choisissez une voix multilingue (ex. Zephyr) et tapez le style souhaité — \"accent britannique\", \"voix de pirate\", \"ton séducteur\", etc. Le modèle s'adapte instantanément, et vous pouvez l'affiner avec plus d'instructions."
+            }
+          ]
+        },
+        {
+          "id": "trustAndPolicies",
+          "category": "Utilisation, sécurité et politiques",
+          "questions": [
+            {
+              "question": "Mes données vocales sont-elles sécurisées ?",
+              "answer": "Absolument. Tous les enregistrements vocaux et fichiers générés sont cryptés et stockés en toute sécurité. Lorsque vous clonez une voix, nous supprimons l'échantillon vocal téléchargé et personne d'autre ne peut l'utiliser. Vous avez le contrôle total sur les fichiers audio générés et pouvez les supprimer quand vous le souhaitez. Nous ne partageons jamais les données vocales sans votre consentement."
+            },
+            {
+              "question": "À quoi puis-je utiliser les voix générées ?",
+              "answer": "Les créateurs utilisent nos voix pour des vidéos, podcasts, livres audio, contenus sociaux, jeux, e-learning et plus encore. C'est un moyen simple de maintenir une qualité audio constante. N'oubliez pas que nos conditions interdisent la tromperie ou l'usurpation d'identité."
+            },
+            {
+              "question": "Le contenu érotique ou pour adultes est-il autorisé ?",
+              "answer": "Oui, nous autorisons le contenu pour adultes et érotique sur notre plateforme. Nous croyons en la liberté créative tout en maintenant une utilisation responsable. Cependant, tout contenu doit respecter nos conditions d'utilisation et les lois applicables. Nous interdisons le contenu impliquant des mineurs, des scénarios non consentis ou des activités illégales."
+            }
+          ]
+        },
+        {
+          "id": "pricingAndAccess",
+          "category": "Tarifs et accès",
+          "questions": [
+            {
+              "question": "De combien de crédits ai-je besoin ?",
+              "answer": "Environ 1 000 crédits produisent 1 minute de génération audio. Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits (environ 10 minutes de parole). Notre plan Starter inclut 25 000 crédits mensuels, tandis que Pro offre 300 000 crédits pour les projets plus importants. Choisissez ce qui convient à vos besoins."
+            },
+            {
+              "question": "Avez-vous une API pour les développeurs ?",
+              "answer": "Elle arrive bientôt ! Notre API permettra aux développeurs d'ajouter la génération et le clonage vocal à leurs applications, sites web et jeux. Vous pourrez créer de la parole à la demande et gérer les modèles vocaux de manière programmatique."
+            },
+            {
+              "question": "Pourquoi choisir SexyVoice.ai ?",
+              "answer": "Nous combinons une qualité vocale premium avec des outils simples et des prix équitables. Que vous soyez créateur ou entreprise, vous obtenez des résultats professionnels sans contrats ni configurations compliquées. Les crédits gratuits facilitent l'essai de tout."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "credits": {
+    "pricingPlan": "Tarifs",
+    "title": "Achetez des crédits pour les créateurs et entreprises de toutes tailles",
+    "description": "Choisissez la quantité de crédits qui correspond le mieux à vos besoins",
+    "historyEmpty": "Votre historique d'utilisation des crédits apparaîtra ici",
+    "billing": {
+      "forever": "(pour toujours)"
+    },
+    "plans": {
+      "popular": "Le plus populaire",
+      "startFree": "Commencer gratuitement",
+      "buyCredits": "Acheter des crédits",
+      "x_credits": "__NUM_CREDITS__ crédits",
+      "free": {
+        "name": "Gratuit",
+        "description": "Pour ceux qui veulent essayer l'audio IA le plus avancé.",
+        "creditsWithAudio": "__NUM_CREDITS__ crédits (~4 min d'audio)",
+        "features": [
+          "Générez de la parole avec des voix uniques",
+          "Clonez votre voix avec seulement 10 secondes d'audio"
+        ]
+      },
+      "starter": {
+        "name": "Starter",
+        "description": "Pour les utilisateurs occasionnels explorant l'audio IA.",
+        "features": [
+          "Tout dans Gratuit"
+        ]
+      },
+      "standard": {
+        "name": "Standard",
+        "description": "Pour les amateurs créant des projets avec audio IA et voix personnalisées.",
+        "creditsWithAudio": "__NUM_CREDITS__ crédits (~11 min d'audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ crédits",
+        "features": [
+          "Tout dans Gratuit",
+          "Accès API (bientôt disponible)"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Pour les créateurs plus importants augmentant leur production de contenu.",
+        "creditsWithAudio": "__NUM_CREDITS__ crédits (~125 minutes d'audio)",
+        "creditsWithPromo": "__NUM_CREDITS__ crédits",
+        "features": [
+          "Tout dans Standard",
+          "Aperçu rapide du style et de la voix de votre courte phrase (bientôt disponible)"
+        ]
+      }
+    },
+    "topup": {
+      "title": "Acheter des crédits",
+      "description": "Rechargez vos crédits instantanément avec un achat unique",
+      "buyCredits": "Acheter des crédits",
+      "onetimePurchase": "Achat unique",
+      "processing": "Traitement...",
+      "packages": {
+        "starter": {
+          "name": "__NUM_CREDITS__ Crédits",
+          "description": "Parfait pour commencer"
+        },
+        "standard": {
+          "name": "__NUM_CREDITS__ crédits",
+          "description": "Choix le plus populaire",
+          "value": "Meilleure valeur"
+        },
+        "pro": {
+          "name": "__NUM_CREDITS__ crédits",
+          "description": "Pour les utilisateurs avancés",
+          "value": "Pack Pro"
+        }
+      },
+      "mostPopular": "Le plus populaire"
+    },
+    "status": {
+      "success": {
+        "title": "Paiement réussi !",
+        "description": "Vos crédits ont été ajoutés à votre compte avec succès.",
+        "descriptionWithAmount": "Votre compte a été crédité de {creditsAmount} crédits.",
+        "dismiss": "Fermer"
+      },
+      "canceled": {
+        "title": "Paiement annulé",
+        "description": "Votre paiement a été annulé. Aucun frais n'a été débité de votre compte.",
+        "dismiss": "Fermer"
+      },
+      "error": {
+        "title": "Paiement échoué",
+        "description": "Un problème est survenu lors du traitement de votre paiement. Veuillez réessayer ou contacter le support si le problème persiste.",
+        "dismiss": "Fermer"
+      },
+      "checkoutError": "Impossible de créer la session de paiement"
+    },
+    "history": {
+      "title": "Historique des crédits"
+    }
+  },
+  "creditsSection": {
+    "title": "Crédits",
+    "topupButton": "Recharger",
+    "totalCredits": "Total",
+    "remainingCredits": "Restants",
+    "remainingTime": "Temps restant"
+  },
+  "generate": {
+    "abortedCloning": "Génération vocale annulée.",
+    "cancel": "Annuler la génération",
+    "ctaButton": "Générer l'audio",
+    "downloadAudio": "Télécharger l'audio",
+    "error": "Échec de la génération audio",
+    "errorEstimating": "Échec de l'estimation des crédits",
+    "estimateCreditsButton": "Estimer les crédits",
+    "generating": "Génération",
+    "gproLimitExceeded": "Vous avez dépassé la limite de __COUNT__ générations vocales multilingues en tant qu'utilisateur gratuit. Veuillez essayer une autre voix ou mettre à niveau votre plan pour un accès illimité.",
+    "languageLabel": "Langue",
+    "languageSelectPlaceholder": "Sélectionnez une langue",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
+    "playAudio": "Lire l'audio",
+    "resetPlayer": "Réinitialiser le lecteur",
+    "subtitle": "Sélectionnez une voix et générez de l'audio à partir du texte",
+    "success": "Audio généré avec succès !",
+    "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
+    "title": "Générer l'audio",
+    "voiceSelector": {
+      "title": "Sélectionner la voix",
+      "description": "Choisissez parmi les voix disponibles",
+      "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un murmure dramatique\"",
+      "toolTipEmotionTags": "Tags d'émotion supportés :",
+      "geminiInfo": "Soutient 24 langues :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)."
+    }
+  },
+  "call": {
+    "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
+    "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 10 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
+    "configurationTitle": "Configuration",
+    "languageLabel": "Langue",
+    "languagePlaceholder": "Choisir une langue",
+    "startCall": "Démarrer un appel",
+    "connecting": "Connexion en cours",
+    "reconnected": "Reconnecté",
+    "reconnectionFailed": "Échec de la reconnexion",
+    "configurationUpdated": "Configuration mise à jour",
+    "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
+    "agentUnavailable": "Agent indisponible",
+    "disconnected": "Déconnecté",
+    "chooseCharacter": "Choisissez votre personnage",
+    "presetRemoved": "Preset supprimé",
+    "deletePreset": "Supprimer",
+    "deletePresetConfirm": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "availableInputs": "Entrées disponibles",
+    "audioSettings": "Paramètres audio",
+    "enhancedNoiseFilter": "Filtre anti-bruit amélioré",
+    "disconnect": "Déconnecter",
+    "instructions": "Instructions",
+    "instructionsHelp": "Les instructions sont un message système ajouté au début de la conversation chaque fois que le modèle répond. Les mises à jour seront appliquées au prochain tour de conversation.",
+    "grokImagineNote": "Note : Grok Imagine ajoute des instructions supplémentaires pour la génération d'images.",
+    "grokImagineIncluded": "Instructions Grok Imagine incluses"
+  },
+  "clone": {
+    "audioFileLabel": "Fichier audio",
+    "cancelButton": "Annuler",
+    "ctaButton": "Générer l'audio",
+    "downloadAudio": "Télécharger l'audio",
+    "dragDropText": "Glissez-déposez ou cliquez pour parcourir",
+    "errorCloning": "Échec du clonage vocal",
+    "errorTooLarge": "Fichier trop volumineux. Veuillez utiliser un fichier audio plus petit.",
+    "errorTitle": "Erreur",
+    "fileFormatsText": "MP3, WAV, M4A ou OGG (max. __SIZE__)",
+    "generating": "Génération",
+    "languageLabel": "Langue",
+    "languageSelectPlaceholder": "Sélectionnez une langue",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
+    "playAudio": "Lire l'audio",
+    "previewTitle": "Aperçu de la voix générée",
+    "subtitle": "Téléchargez un fichier audio et entrez du texte pour créer un clone vocal et générer de la parole en une seule étape",
+    "success": "Audio généré avec succès !",
+    "tabPreview": "Aperçu",
+    "tabUpload": "Télécharger",
+    "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
+    "textToConvertLabel": "Entrez du texte pour générer de la parole",
+    "title": "Cloner une voix",
+    "tryDemo": "Ou essayez avec une démo :",
+    "uploadAudioFile": "Télécharger un fichier audio",
+    "orUseMicrophone": "ou utilisez votre microphone",
+    "errors": {
+      "noAudioFile": "Veuillez sélectionner un fichier audio.",
+      "noText": "Veuillez entrer du texte à convertir en parole.",
+      "ffmpegLoading": "Le convertisseur audio est encore en cours de chargement. Veuillez réessayer dans un moment"
+    },
+    "sampleCard": {
+      "sourceAudio": "Audio source",
+      "exampleOutput": "Exemple",
+      "loadSource": "Charger la source"
+    },
+    "crossLanguageInfo": {
+      "title": "Transfert vocal inter-langues",
+      "description": "Clonez une voix dans une langue et faites-la parler couramment dans l'une des 23 autres langues supportées tout en préservant les caractéristiques uniques du locuteur.",
+      "example": "Exemple : Téléchargez un échantillon vocal d'un locuteur anglais → Générez de la parole française avec sa voix"
+    },
+    "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles."
+  },
+  "profile": {
+    "title": "Paramètres du profil",
+    "subtitle": "Gérez les paramètres de votre compte et vos préférences",
+    "notLoggedIn": "Non connecté",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Sécurité"
+    },
+    "personalInfo": {
+      "title": "Informations personnelles",
+      "description": "Mettez à jour vos informations de profil et votre avatar"
+    },
+    "security": {
+      "title": "Paramètres de sécurité",
+      "description": "Gérez votre e-mail et votre mot de passe"
+    },
+    "dangerZone": {
+      "title": "Zone de danger",
+      "deleteAccount": {
+        "button": "Supprimer le compte",
+        "confirmTitle": "Êtes-vous absolument sûr ?",
+        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera vos données de nos serveurs.",
+        "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
+        "cancel": "Annuler",
+        "continue": "Continuer"
+      }
+    }
+  },
+  "pages": {
+    "defaultTitle": "Parlez à l'IA - Appels vocaux privés sans jugement | SexyVoice.ai",
+    "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 10 min d'appel gratuit. Aucune carte de crédit requise.",
+    "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
+    "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
+    "/": "",
+    "/login": "Connexion",
+    "/signup": "Inscription avec e-mail ou Google",
+    "/dashboard/call": "Appeler",
+    "/dashboard/generate": "Générer",
+    "/dashboard/clone": "Cloner",
+    "/dashboard/history": "Historique",
+    "/dashboard/credits": "Crédits",
+    "/dashboard/usage": "Utilisation",
+    "/tools/audio-converter": "Convertisseur audio gratuit"
+  },
+  "sidebar": {
+    "profile": "Profil",
+    "signOut": "Déconnexion"
+  },
+  "header": {
+    "generate": "Générer",
+    "login": "Connexion",
+    "signup": "Inscription"
+  },
+  "history": {
+    "header": "Historique des générations",
+    "empty": "Aucun historique pour le moment",
+    "ui": {
+      "filterText": "Filtrer le texte...",
+      "customizeColumns": "Personnaliser les colonnes",
+      "columns": "Colonnes",
+      "previous": "Précédent",
+      "next": "Suivant"
+    }
+  },
+  "usage": {
+    "header": "Historique d'utilisation",
+    "empty": "Aucun événement d'utilisation pour le moment",
+    "summary": {
+      "title": "Utilisation ce mois-ci",
+      "totalTitle": "Utilisation totale",
+      "allTime": "Tout le temps",
+      "totalCredits": "Crédits totaux utilisés",
+      "operations": "Opérations",
+      "noData": "Aucune donnée d'utilisation",
+      "byType": {
+        "tts": "TTS",
+        "voice_cloning": "Clonage vocal",
+        "live_call": "Appel en direct",
+        "audio_processing": "Traitement audio"
+      }
+    },
+    "table": {
+      "sourceType": "Type",
+      "quantity": "Quantité",
+      "creditsUsed": "Crédits",
+      "date": "Date",
+      "details": "Détails"
+    },
+    "ui": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page",
+      "of": "sur",
+      "showing": "Affichage",
+      "results": "résultats",
+      "filterByType": "Filtrer par type",
+      "allTypes": "Tous les types"
+    },
+    "units": {
+      "chars": "caractères",
+      "mins": "minutes",
+      "secs": "secondes",
+      "operation": "opération"
+    }
+  },
+  "footer": {
+    "statusPage": "Page de statut",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsAndConditions": "Conditions générales",
+    "copyright": "SexyVoice.ai. Tous droits réservés.",
+    "audioConverter": "Convertisseur audio gratuit"
+  },
+  "promos": {
+    "halloweenBanner": {
+      "text": "🎃 Offre Halloween – Obtenez jusqu'à 35% de crédits supplémentaires avec un achat 👻\nOffre à durée limitée 🦇",
+      "ctaLoggedIn": "Obtenir l'offre 🎃",
+      "ctaLoggedOut": "Inscrivez-vous maintenant 🎃",
+      "ariaLabelDismiss": "Fermer la bannière Halloween",
+      "pricing": {
+        "bannerText": "🎃 Offre Halloween"
+      }
+    },
+    "blackFridayBanner": {
+      "text": "🛍️ Black Friday – Obtenez jusqu'à 35% de crédits supplémentaires !",
+      "ctaLoggedIn": "Obtenir l'offre",
+      "ctaLoggedOut": "Obtenir l'offre",
+      "ariaLabelDismiss": "Fermer la bannière Black Friday",
+      "countdown": {
+        "prefix": "L'offre se termine dans :",
+        "days": "Jours",
+        "hours": "Heures",
+        "minutes": "Min",
+        "seconds": "Sec"
+      },
+      "pricing": {
+        "bannerText": "Black Friday"
+      }
+    },
+    "winterSaleBanner": {
+      "text": "❄️ Soldes d'hiver – Obtenez jusqu'à 35% de crédits supplémentaires avec un achat ☃️\nOffre à durée limitée 🎿",
+      "ctaLoggedIn": "Obtenir l'offre",
+      "ctaLoggedOut": "S'inscrire",
+      "ariaLabelDismiss": "Fermer la bannière des soldes d'hiver",
+      "pricing": {
+        "bannerText": "❄️ Soldes d'hiver"
+      }
+    }
+  },
+  "audioConverter": {
+    "title": "Convertisseur audio gratuit",
+    "subtitle": "Convertissez des fichiers audio en MP3, WAV, MP4 et autres formats hors ligne dans votre navigateur",
+    "tagline": "– gratuit et facile",
+    "dropZone": {
+      "title": "Déposez votre fichier audio ici",
+      "description": "ou cliquez pour parcourir"
+    },
+    "fileInfo": {
+      "remove": "Supprimer le fichier"
+    },
+    "formatSelector": {
+      "label": "Convertir en",
+      "placeholder": "Sélectionner le format de sortie"
+    },
+    "convertButton": {
+      "convert": "Convertir l'audio",
+      "converting": "Conversion",
+      "progress": "Progression"
+    },
+    "downloadSection": {
+      "title": "Conversion terminée",
+      "description": "Votre fichier a été converti avec succès",
+      "download": "Télécharger",
+      "convertAnother": "Convertir un autre fichier"
+    },
+    "errors": {
+      "loadingFailed": "Échec du chargement de FFmpeg. Veuillez rafraîchir la page.",
+      "conversionFailed": "Échec de la conversion. Veuillez réessayer.",
+      "unsupportedFormat": "Format de fichier non supporté",
+      "converterFailedToLoad": "Le convertisseur audio n'a pas pu se charger. Veuillez rafraîchir la page.",
+      "converterLoadFailed": "Échec du chargement du convertisseur audio. Veuillez rafraîchir la page ou essayer un autre navigateur."
+    },
+    "footer": {
+      "poweredBy": "Propulsé par",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Aucun téléchargement, 100% dans le navigateur",
+      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
+    }
+  }
+}

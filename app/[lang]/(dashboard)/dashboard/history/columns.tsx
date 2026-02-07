@@ -5,6 +5,7 @@ import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
+import { toast } from '@/components/services/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +13,10 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { downloadUrl } from '@/lib/download';
 import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
 import { DeleteButton } from './delete-button';
-import { downloadUrl } from '@/lib/download';
-import { toast } from '@/components/services/toast';
 
 const downloadFile = async (url: string) => {
   const anchorElement = document.createElement('a');
@@ -33,6 +33,22 @@ const downloadFile = async (url: string) => {
   }
 };
 
+const COLOR_PAIRS = [
+  { bg: 'bg-red-100', text: 'text-red-900' },
+  { bg: 'bg-orange-100', text: 'text-orange-900' },
+  { bg: 'bg-yellow-100', text: 'text-yellow-900' },
+  { bg: 'bg-green-100', text: 'text-green-900' },
+  { bg: 'bg-blue-100', text: 'text-blue-900' },
+  { bg: 'bg-indigo-100', text: 'text-indigo-900' },
+  { bg: 'bg-purple-100', text: 'text-purple-900' },
+  { bg: 'bg-pink-100', text: 'text-pink-900' },
+];
+
+const getBadgeClasses = (name: string) => {
+  const index = name.charCodeAt(0) % COLOR_PAIRS.length;
+  return `${COLOR_PAIRS[index].bg} ${COLOR_PAIRS[index].text}`;
+};
+
 export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
   {
     id: 'file name',
@@ -45,13 +61,20 @@ export const columns: ColumnDef<AudioFileAndVoicesRes>[] = [
     id: 'voice',
     accessorKey: 'voices.name',
     header: 'Voice',
-    cell: ({ row }) => (
-      <div className="w-full lg:w-32">
-        <Badge className="px-1.5 text-muted-foreground" variant="outline">
-          {row.original.voices?.name || 'Unknown'}
-        </Badge>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const voiceName = row.original.voices?.name || 'Unknown';
+
+      return (
+        <div className="w-full lg:w-32">
+          <Badge
+            className={`rounded-lg px-1.5 sm:rounded-full ${getBadgeClasses(voiceName)}`}
+            variant="outline"
+          >
+            {voiceName.charAt(0).toUpperCase() + voiceName.slice(1)}
+          </Badge>
+        </div>
+      );
+    },
   },
   {
     id: 'text',

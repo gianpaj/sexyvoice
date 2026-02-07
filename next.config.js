@@ -8,7 +8,7 @@ const { withContentlayer } = require('next-contentlayer2');
  */
 // DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
 const cspHeader = `
-    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://*.sentry.io https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com;
+    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://*.sentry.io https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://*.livekit.cloud wss://*.livekit.cloud https://livekit.io https://*.livekit.io;
     script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
     img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
@@ -27,7 +27,7 @@ let nextConfig = {
   reactCompiler: true,
   experimental: {
     // Enable filesystem caching for `next dev`
-    turbopackFileSystemCacheForDev: true,
+    // turbopackFileSystemCacheForDev: true,
   },
   images: {
     remotePatterns: [
@@ -56,19 +56,20 @@ let nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/ingest/static/:path*',
+        source: '/seguimiento/static/:path*',
         destination: 'https://eu-assets.i.posthog.com/static/:path*',
       },
       {
-        source: '/ingest/:path*',
+        source: '/seguimiento/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
       {
-        source: '/ingest/decide',
+        source: '/seguimiento/decide',
         destination: 'https://eu.i.posthog.com/decide',
       },
     ];
   },
+  // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
   skipTrailingSlashRedirect: true,
   async headers() {
     return [
@@ -124,7 +125,7 @@ if (process.env.NODE_ENV === 'production') {
 
     // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
     // This can increase your server load as well as your hosting bill.
-    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+    // Note: Check that the configured route will not match with your Next.js proxy, otherwise reporting of client-
     // side errors will fail.
     tunnelRoute: '/monitoring',
   });

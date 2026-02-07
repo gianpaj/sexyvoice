@@ -11,7 +11,7 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -48,6 +48,7 @@
     "node_modules",
     ".next",
     ".contentlayer",
+    "scripts/analyze-text-content.ts",
     "supabase/functions/telegram-bot"
   ]
 }

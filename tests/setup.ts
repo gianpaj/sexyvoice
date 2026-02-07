@@ -171,7 +171,11 @@ vi.mock('@/lib/supabase/queries', async () => {
     }),
     getCredits: vi.fn().mockResolvedValue(1000),
     reduceCredits: vi.fn().mockResolvedValue(true),
-    saveAudioFile: vi.fn().mockResolvedValue({ id: 'test-audio-file-id' }),
+    saveAudioFile: vi.fn().mockResolvedValue({
+      data: { id: 'test-audio-file-id' },
+      error: null,
+    }),
+    insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
     isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
     hasUserPaid: vi.fn().mockResolvedValue(false),
   };

@@ -38,7 +38,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, French, German, Japanese, Korean, and more
+- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, German, French, Italian, Danish, Japanese, Korean, and more
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -59,9 +59,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Frontend
 
-- **[Next.js 15](https://nextjs.org)** - React framework with App Router and TypeScript
+- **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
-- **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
+- **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 
@@ -143,9 +143,30 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
     - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Vercel Edge Config (optional)
+      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-4. **Set up Supabase**
+4. **Set up Vercel Edge Config** (optional, for production)
+
+   Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
+
+   ```json
+   {
+     "call-instructions": {
+       "defaultInstructions": "You are a ...",
+       "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
+       "presetInstructions": {
+         "soft-amanda": "You are a ...",
+         "hard-brandi": "You are a ..."
+       }
+     }
+   }
+   ```
+
+   The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
+
+5. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -153,13 +174,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-5. **Start the development server**
+6. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 🧪 Development
@@ -175,7 +196,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm test:watch`         | Run tests in watch mode                 |
 | `pnpm lint`               | Lint codebase with Biome                |
 | `pnpm lint:fix`           | Fix linting issues automatically        |
-| `pnpm typecheck`          | Run TypeScript type checking            |
+| `pnpm type-check`         | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
 | `pnpm check-translations` | Validate translation files              |
 | `pnpm build:content`      | Build content layer                     |
@@ -242,6 +263,9 @@ seewav your_audio.mp3 --color '0.8,0.0,0.4'
 # -ac 1: Set audio channels to mono (1 channel)
 # output.mp3: Output file
 ffmpeg -i input.wav -acodec libmp3lame -q:a 2 -ar 24000 -ac 1 output.mp3
+
+# For lowest quality MP3 possible
+ffmpeg -i input.wav -acodec libmp3lame -q:a 9 -ar 8000 -ac 1 output-lowest.mp3
 ```
 
 ## 🔒 Security
@@ -265,6 +289,18 @@ We welcome contributions!
 - Submit pull requests
 <!-- - Follow the code of conduct -->
 
+### Setup
+
+Zed with [Cspell](https://github.com/mantou132/zed-cspell/) extension
+
+```bash
+npm install -g cspell @cspell/dict-de-de @cspell/dict-es-es
+asdf reshim nodejs
+cspell link add @cspell/dict-de-de
+cspell link add @cspell/dict-es-es
+# restart Zed language server
+```
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
@@ -273,7 +309,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
-- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*
+<!--- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*-->
 - **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status
@@ -286,7 +322,7 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Website multi-language support (EN/ES)
+- ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
 - 🚧 API access (coming soon)
 
 ### Supported Languages by these Google Gemini TTS Models

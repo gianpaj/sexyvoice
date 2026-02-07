@@ -19,20 +19,23 @@ export default async function NewVoicePage(props: {
     return <div>Not logged in</div>;
   }
 
-  // Get user's credits
-  const { data: creditsData } = (await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', user.id)
-    .single()) || { amount: 0 };
+  // Run independent queries in parallel
+  const [{ data: creditsData }, { data: creditTransactions }] =
+    await Promise.all([
+      supabase
+        .from('credits')
+        .select('amount')
+        .eq('user_id', user.id)
+        .single()
+        .then((res) => res ?? { data: { amount: 0 } }),
+      supabase
+        .from('credit_transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+    ]);
 
   const credits = creditsData || { amount: 0 };
-
-  const { data: creditTransactions } = await supabase
-    .from('credit_transactions')
-    .select('amount')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
 
   const dict = await getDictionary(lang);
 

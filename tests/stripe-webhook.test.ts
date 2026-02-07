@@ -686,7 +686,7 @@ describe('Stripe Webhook Route', () => {
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
         expectedCredits: 300_000,
-        expectedAmount: 99,
+        expectedAmount: 75,
       },
     ];
 
@@ -772,7 +772,7 @@ describe('Stripe Webhook Route', () => {
         name: 'Pro',
         packageId: 'pro',
         credits: 405000,
-        dollarAmount: 99.0,
+        dollarAmount: 75.0,
       },
     ];
 
@@ -871,7 +871,7 @@ describe('Stripe Webhook Route', () => {
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
         expectedCredits: 405000,
-        expectedAmount: 99,
+        expectedAmount: 75,
       },
     ];
 

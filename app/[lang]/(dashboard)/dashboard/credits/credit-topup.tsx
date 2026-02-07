@@ -173,7 +173,7 @@ function PlanCard({
           ) : (
             plan.price > 10 && (
               <Badge
-                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                className="bg-green-900 text-green-100"
                 variant="secondary"
               >
                 20% cheaper
@@ -188,7 +188,7 @@ function PlanCard({
           <div className="mt-1 text-muted-foreground text-xs">
             ${plan.pricePer1kCredits} per 1k credits{' '}
             {plan.saveFromPrevPlanPer1kCredits && (
-              <span className="font-medium text-green-600 dark:text-green-400">
+              <span className="font-medium text-green-400">
                 (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
               </span>
             )}
