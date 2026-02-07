@@ -193,7 +193,11 @@
     "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
     "billing": {
-      "forever": "(für immer)"
+      "forever": "(für immer)",
+      "oneTime": "Einmalig",
+      "monthly": "Monatlich",
+      "monthlyDiscount": "20% sparen",
+      "perMonth": "/Mo"
     },
     "plans": {
       "popular": "Am beliebtesten",
@@ -220,6 +224,14 @@
         "features": [
           "Alles im kostenlosen Plan, plus",
           "API-Zugang (bald verfügbar)"
+        ]
+      },
+      "plus": {
+        "name": "Plus",
+        "description": "Für wachsende Kreative, die ihre Audioproduktion skalieren.",
+        "features": [
+          "Alles im Standard-Plan, plus",
+          "Prioritäts-Support"
         ]
       },
       "pro": {

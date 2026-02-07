@@ -683,6 +683,12 @@ describe('Stripe Webhook Route', () => {
         expectedAmount: 10,
       },
       {
+        name: 'Plus',
+        priceId: process.env.STRIPE_SUBSCRIPTION_29_PRICE_ID,
+        expectedCredits: 100_000,
+        expectedAmount: 29,
+      },
+      {
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
         expectedCredits: 300_000,
@@ -736,6 +742,7 @@ describe('Stripe Webhook Route', () => {
     const originalPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED;
     const originalStarterBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER;
     const originalStandardBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD;
+    const originalPlusBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS;
     const originalProBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_PRO;
 
     beforeEach(() => {
@@ -743,6 +750,7 @@ describe('Stripe Webhook Route', () => {
       process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
       process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = '2000';
       process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = '7500';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS = '35000';
       process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = '105000';
     });
 
@@ -751,6 +759,7 @@ describe('Stripe Webhook Route', () => {
       process.env.NEXT_PUBLIC_PROMO_ENABLED = originalPromoEnabled;
       process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = originalStarterBonus;
       process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = originalStandardBonus;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS = originalPlusBonus;
       process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = originalProBonus;
     });
 
@@ -769,6 +778,12 @@ describe('Stripe Webhook Route', () => {
         dollarAmount: 10.0,
       },
       {
+        name: 'Plus',
+        packageId: 'plus',
+        credits: 135000,
+        dollarAmount: 29.0,
+      },
+      {
         name: 'Pro',
         packageId: 'pro',
         credits: 405000,
@@ -783,7 +798,7 @@ describe('Stripe Webhook Route', () => {
           userId: userId,
           credits: credits.toString(),
           dollarAmount: dollarAmount.toFixed(2),
-          packageId: packageId as 'starter' | 'standard' | 'pro',
+          packageId: packageId as 'starter' | 'standard' | 'plus' | 'pro',
         });
 
         const request = createMockRequest(
@@ -834,6 +849,7 @@ describe('Stripe Webhook Route', () => {
     const originalPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED;
     const originalStarterBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER;
     const originalStandardBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD;
+    const originalPlusBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS;
     const originalProBonus = process.env.NEXT_PUBLIC_PROMO_BONUS_PRO;
 
     beforeEach(() => {
@@ -841,6 +857,7 @@ describe('Stripe Webhook Route', () => {
       process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
       process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = '2000';
       process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = '7500';
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS = '35000';
       process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = '105000';
     });
 
@@ -849,6 +866,7 @@ describe('Stripe Webhook Route', () => {
       process.env.NEXT_PUBLIC_PROMO_ENABLED = originalPromoEnabled;
       process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER = originalStarterBonus;
       process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD = originalStandardBonus;
+      process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS = originalPlusBonus;
       process.env.NEXT_PUBLIC_PROMO_BONUS_PRO = originalProBonus;
     });
 
@@ -866,6 +884,12 @@ describe('Stripe Webhook Route', () => {
         priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
         expectedCredits: 32500,
         expectedAmount: 10,
+      },
+      {
+        name: 'Plus',
+        priceId: process.env.STRIPE_SUBSCRIPTION_29_PRICE_ID,
+        expectedCredits: 135000,
+        expectedAmount: 29,
       },
       {
         name: 'Pro',

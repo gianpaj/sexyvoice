@@ -11,6 +11,9 @@ export const getTopupPackages = (lang: Locale) => {
     standard: isPromoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0', 10)
       : 0,
+    plus: isPromoEnabled
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PLUS || '0', 10)
+      : 0,
     pro: isPromoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0', 10)
       : 0,
@@ -28,7 +31,6 @@ export const getTopupPackages = (lang: Locale) => {
       },
       dollarAmount: 0,
     },
-    // not shown on landing page, only in /credits page
     starter: {
       priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
       baseCredits: 10_000,
@@ -42,7 +44,9 @@ export const getTopupPackages = (lang: Locale) => {
           : this.baseCredits;
       },
       promoBonus: promoBonuses.stater.toLocaleString(lang),
-      // pricePer1kCredits: isPromoEnabled ? 0.4166 : 0.5,
+      get pricePer1kCredits() {
+        return trimTrailingZeros((this.dollarAmount / this.credits) * 1000);
+      },
       dollarAmount: 5, // $5.00
     },
     standard: {
@@ -63,6 +67,24 @@ export const getTopupPackages = (lang: Locale) => {
       },
       promoBonus: promoBonuses.standard.toLocaleString(lang),
       dollarAmount: 10, // $10.00
+    },
+    plus: {
+      priceId: process.env.STRIPE_TOPUP_29_PRICE_ID,
+      baseCredits: 100_000,
+      get baseCreditsLocale() {
+        return Number(this.baseCredits).toLocaleString(lang);
+      },
+      // credits to add
+      get credits() {
+        return isPromoEnabled
+          ? this.baseCredits + promoBonuses.plus
+          : this.baseCredits;
+      },
+      get pricePer1kCredits() {
+        return trimTrailingZeros((this.dollarAmount / this.credits) * 1000);
+      },
+      promoBonus: promoBonuses.plus.toLocaleString(lang),
+      dollarAmount: 29, // $29.00
     },
     pro: {
       priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,

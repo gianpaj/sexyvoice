@@ -193,7 +193,11 @@
     "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
-      "forever": "(forever)"
+      "forever": "(forever)",
+      "oneTime": "One-time",
+      "monthly": "Monthly",
+      "monthlyDiscount": "Save 20%",
+      "perMonth": "/mo"
     },
     "plans": {
       "popular": "Most Popular",
@@ -220,6 +224,14 @@
         "features": [
           "Everything in Free",
           "API access (coming soon)"
+        ]
+      },
+      "plus": {
+        "name": "Plus",
+        "description": "For growing creators scaling their audio production.",
+        "features": [
+          "Everything in Standard",
+          "Priority support"
         ]
       },
       "pro": {

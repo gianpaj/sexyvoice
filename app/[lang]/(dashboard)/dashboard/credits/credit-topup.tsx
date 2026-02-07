@@ -68,11 +68,24 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
       promoBonus: TOPUP_PACKAGES.standard.promoBonus,
     },
     {
+      id: 'plus',
+      name: pPlans.plus.name,
+      price: TOPUP_PACKAGES.plus.dollarAmount,
+      pricePer1kCredits: TOPUP_PACKAGES.plus.pricePer1kCredits,
+      buttonText: pPlans.buyCredits,
+      buttonVariant: 'default',
+      creditsText: pPlans.x_credits.replace(
+        '__NUM_CREDITS__',
+        TOPUP_PACKAGES.plus.baseCreditsLocale,
+      ),
+      promoBonus: TOPUP_PACKAGES.plus.promoBonus,
+    },
+    {
       id: 'pro',
       name: pPlans.pro.name,
       price: TOPUP_PACKAGES.pro.dollarAmount,
       pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.333,
+      saveFromPrevPlanPer1kCredits: 0.15,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
       creditsText: pPlans.x_credits.replace(
@@ -85,7 +98,7 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
 
   return (
     <div
-      className="grid gap-6 md:grid-cols-1 lg:grid-cols-3"
+      className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
       data-promo-theme={promoTheme}
     >
       {plans.map((plan) => (
@@ -131,6 +144,7 @@ function PlanCard({
       const packageId = formData.get('packageId') as
         | 'starter'
         | 'standard'
+        | 'plus'
         | 'pro';
 
       const { url } = await createCheckoutSession(formData, packageId);

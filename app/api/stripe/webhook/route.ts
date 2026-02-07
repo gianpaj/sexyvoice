@@ -263,6 +263,10 @@ async function handleCheckoutSessionCompleted(
           credits = TOPUP_PACKAGES.standard.credits;
           dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
           break;
+        case process.env.STRIPE_SUBSCRIPTION_29_PRICE_ID:
+          credits = TOPUP_PACKAGES.plus.credits;
+          dollarAmount = TOPUP_PACKAGES.plus.dollarAmount;
+          break;
         case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
           credits = TOPUP_PACKAGES.pro.credits;
           dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
@@ -376,6 +380,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
         credits = TOPUP_PACKAGES.standard.credits;
         dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
+        break;
+      case process.env.STRIPE_SUBSCRIPTION_29_PRICE_ID:
+        credits = TOPUP_PACKAGES.plus.credits;
+        dollarAmount = TOPUP_PACKAGES.plus.dollarAmount;
         break;
       case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
         credits = TOPUP_PACKAGES.pro.credits;

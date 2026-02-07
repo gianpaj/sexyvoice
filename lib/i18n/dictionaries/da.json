@@ -193,7 +193,11 @@
     "description": "Vælg den mængde kreditter, der passer bedst til dine behov",
     "historyEmpty": "Din kreditforbrugshistorik vises her",
     "billing": {
-      "forever": "(for evigt)"
+      "forever": "(for evigt)",
+      "oneTime": "Engangskøb",
+      "monthly": "Månedlig",
+      "monthlyDiscount": "Spar 20%",
+      "perMonth": "/md"
     },
     "plans": {
       "popular": "Mest populære",
@@ -220,6 +224,14 @@
         "features": [
           "Alt i Gratis",
           "API-adgang (kommer snart)"
+        ]
+      },
+      "plus": {
+        "name": "Plus",
+        "description": "For voksende skabere, der skalerer deres lydproduktion.",
+        "features": [
+          "Alt i Standard",
+          "Prioriteret support"
         ]
       },
       "pro": {
