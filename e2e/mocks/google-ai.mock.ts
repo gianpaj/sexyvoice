@@ -122,6 +122,7 @@ export async function handleGenerateVoiceError(
   errorMessage = 'Voice generation failed, please retry',
   statusCode = 500
 ) {
+  console.log('[MOCK] generate-voice ERROR handler called - returning', statusCode, errorMessage);
   await route.fulfill({
     status: statusCode,
     contentType: 'application/json',

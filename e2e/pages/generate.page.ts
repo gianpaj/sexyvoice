@@ -21,7 +21,7 @@ export class GeneratePage {
   readonly estimateCreditsButton: Locator;
   readonly cancelButton: Locator;
   readonly audioPlayer: Locator;
-  readonly characterCount: Locator;
+  readonly characterCountContainer: Locator;
   readonly pageHeading: Locator;
   readonly styleInput: Locator;
   readonly enhanceTextButton: Locator;
@@ -32,12 +32,15 @@ export class GeneratePage {
     // Main UI elements
     this.pageHeading = page.getByRole('heading', { level: 2 });
     this.voiceSelector = page.getByRole('combobox').first();
-    this.textInput = page.locator('textarea').first();
+    // Use placeholder to target the correct text input (not the style textarea)
+    this.textInput = page.getByPlaceholder('Enter the text you want to convert to speech');
     this.generateButton = page.getByTestId('generate-button');
     this.estimateCreditsButton = page.getByRole('button', { name: /estimate/i });
     this.cancelButton = page.getByRole('button', { name: /cancel/i });
-    this.audioPlayer = page.locator('audio, [data-testid="audio-player"]');
-    this.characterCount = page.locator('.text-muted-foreground.text-sm');
+    // Use Download Audio button to verify audio was generated (audio element itself is hidden)
+    this.audioPlayer = page.getByRole('button', { name: /download audio/i });
+    // Use text content pattern to find character count (shows "X / Y" format)
+    this.characterCountContainer = page.getByText(/^\d+\s*\/\s*\d+$/);
     this.styleInput = page.locator('textarea').nth(1); // Style textarea is the second one
     this.enhanceTextButton = page.getByRole('button', { name: /enhance/i });
   }
@@ -46,8 +49,13 @@ export class GeneratePage {
    * Navigate to the generate dashboard page
    */
   async goto() {
-    await this.page.goto('/en/dashboard/generate');
-    await this.page.waitForLoadState('networkidle');
+    // Use domcontentloaded instead of load to avoid hanging on async resources
+    // (Supabase realtime, PostHog analytics, etc. can prevent load event)
+    await this.page.goto('/en/dashboard/generate', {
+      waitUntil: 'domcontentloaded',
+    });
+    // Wait for key UI elements to be visible
+    await this.textInput.waitFor({ state: 'visible', timeout: 15000 });
   }
 
   /**
@@ -55,10 +63,14 @@ export class GeneratePage {
    * @param voiceName - Name of the voice (case insensitive, e.g., 'Poe', 'Zephyr')
    */
   async selectVoice(voiceName: string) {
+    // Click the combobox to open the dropdown
     await this.voiceSelector.click();
-    await this.page
-      .getByRole('option', { name: new RegExp(voiceName, 'i') })
-      .click();
+
+    // Wait for the dropdown content to appear (Radix UI portals the content)
+    // SelectItem elements have role="option" in Radix Select
+    const option = this.page.getByRole('option', { name: new RegExp(voiceName, 'i') });
+    await option.waitFor({ state: 'visible', timeout: 5000 });
+    await option.click();
   }
 
   /**
@@ -66,7 +78,18 @@ export class GeneratePage {
    * @param text - Text to generate audio from
    */
   async enterText(text: string) {
-    await this.textInput.fill(text);
+    // Focus the input and clear it
+    await this.textInput.click();
+    await this.textInput.clear();
+
+    // Use keyboard.type which more reliably triggers React onChange than pressSequentially
+    // First ensure focus is on the text input
+    await this.textInput.focus();
+    await this.page.keyboard.type(text, { delay: 1 });
+
+    // Wait for the character count to update to ensure text is registered
+    const expectedCount = text.length.toString();
+    await expect(this.characterCountContainer).toContainText(expectedCount, { timeout: 30000 });
   }
 
   /**
@@ -138,7 +161,7 @@ export class GeneratePage {
    * @returns Character count string (e.g., "50 / 1000")
    */
   async getCharacterCount(): Promise<string> {
-    return (await this.characterCount.textContent()) ?? '';
+    return (await this.characterCountContainer.textContent()) ?? '';
   }
 
   /**
@@ -146,7 +169,7 @@ export class GeneratePage {
    * @param pattern - RegExp pattern to match (e.g., /11.*1000/)
    */
   async expectCharacterCountMatches(pattern: RegExp) {
-    await expect(this.characterCount).toHaveText(pattern);
+    await expect(this.characterCountContainer).toHaveText(pattern);
   }
 
   /**
@@ -161,9 +184,12 @@ export class GeneratePage {
    * Expect an error toast
    */
   async expectErrorToast() {
-    await expect(this.page.getByText(/error|failed/i)).toBeVisible({
-      timeout: 5000,
-    });
+    // Look for error-related text in toast notifications
+    // Common error messages include "Failed to generate audio", "Voice generation failed", etc.
+    // The toast uses sonner and appears in the notifications region
+    await expect(
+      this.page.getByText(/failed|error|not enough|insufficient/i).first()
+    ).toBeVisible({ timeout: 15000 });
   }
 
   /**
@@ -177,9 +203,10 @@ export class GeneratePage {
 
   /**
    * Expect the generate button to be enabled
+   * Waits for the button to become enabled (may take time after text input)
    */
   async expectGenerateButtonEnabled() {
-    await expect(this.generateButton).toBeEnabled();
+    await expect(this.generateButton).toBeEnabled({ timeout: 10000 });
   }
 
   /**

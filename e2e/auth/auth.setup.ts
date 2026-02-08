@@ -36,16 +36,16 @@ setup('authenticate', async ({ page }) => {
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
 
-  // Submit form
-  const loginButton = page.getByRole('button', { name: /log in|submit/i });
+  // Submit form - use exact match to avoid matching "Sign in with Google" button
+  const loginButton = page.getByRole('button', { name: 'Sign in', exact: true });
   await loginButton.click();
 
   // Wait for redirect to dashboard
-  // The login redirects to /{lang}/dashboard/generate after successful login
-  await page.waitForURL('**/dashboard/generate', { timeout: 10000 });
+  // The login redirects to /{lang}/dashboard after successful login
+  await page.waitForURL('**/dashboard/**', { timeout: 10000 });
 
   // Verify we're logged in by checking we're on the dashboard
-  await expect(page).toHaveURL(/dashboard\/generate/);
+  await expect(page).toHaveURL(/dashboard\//);
 
   console.log('Authentication successful!');
 

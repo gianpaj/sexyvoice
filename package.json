@@ -132,6 +132,7 @@
     "@types/react-dom": "19.2.3",
     "@vitest/coverage-v8": "4.0.16",
     "autoprefixer": "^10.4.23",
+    "dotenv": "^17.2.4",
     "husky": "^9.1.7",
     "ioredis": "^5.8.2",
     "knip": "^5.79.0",
