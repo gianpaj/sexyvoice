@@ -12,6 +12,7 @@ const routesPerLocale = (routes: string[]): string[] =>
 
 const publicRoutes = [
   '/api/health',
+  '/auth/signup',
   '/auth/callback',
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];

@@ -578,5 +578,9 @@
       "noUploads": "No uploads, 100% in-browser",
       "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
+    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after _XX_ seconds."
   }
 }
