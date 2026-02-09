@@ -4,20 +4,9 @@ import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
 
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-import type { Preset } from '../../data/presets';
 
 export function PresetSelector() {
   // const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -94,7 +83,7 @@ export function PresetSelector() {
         </div>
 
         {/* Avatar Row */}
-        <div className="mb-4 flex justify-between items-start">
+        <div className="mb-4 flex items-start justify-between">
           {characterPresets.map((preset) => {
             const isSelected = pgState.selectedPresetId === preset.id;
             return (
@@ -103,7 +92,7 @@ export function PresetSelector() {
                 type="button"
                 onClick={() => handlePresetSelect(preset.id)}
                 disabled={isConnected}
-                className="flex flex-col items-center gap-2 group"
+                className="group flex flex-col items-center gap-2"
                 aria-pressed={isSelected}
               >
                 {/* Avatar with Instagram-style ring */}
@@ -112,10 +101,10 @@ export function PresetSelector() {
                     isSelected
                       ? 'bg-gradient-to-tr from-violet-500 via-purple-500 to-fuchsia-500'
                       : 'bg-transparent'
-                  } ${!isConnected ? 'group-hover:scale-105' : ''}`}
+                  } ${isConnected ? '' : 'group-hover:scale-105'}`}
                 >
-                  <div className="rounded-full p-[2px] bg-background">
-                    <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-neutral-800">
+                  <div className="rounded-full bg-background p-[2px]">
+                    <div className="relative h-14 w-14 overflow-hidden rounded-full bg-neutral-800 sm:h-16 sm:w-16">
                       {preset.image && (
                         <Image
                           src={`/characters/${preset.image}`}
@@ -134,7 +123,7 @@ export function PresetSelector() {
 
                 {/* Name */}
                 <span
-                  className={`text-xs font-medium transition-colors ${
+                  className={`font-medium text-xs transition-colors ${
                     isSelected ? 'text-foreground' : 'text-muted-foreground'
                   } ${isConnected && !isSelected ? 'opacity-40' : ''}`}
                 >
@@ -147,10 +136,10 @@ export function PresetSelector() {
 
         {/* Bio Card */}
         <div
-          className={`bg-muted rounded-xl p-4 transition-all duration-300 ${
+          className={`rounded-xl bg-muted p-4 transition-all duration-300 ${
             selectedPreset?.image
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-2 pointer-events-none h-0 p-0 overflow-hidden'
+              ? 'translate-y-0 opacity-100'
+              : 'pointer-events-none h-0 translate-y-2 overflow-hidden p-0 opacity-0'
           }`}
         >
           {selectedPreset?.image && (
