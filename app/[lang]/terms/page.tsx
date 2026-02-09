@@ -75,7 +75,7 @@ export default async function TermsPolicyPage(props: {
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
       <HeaderStatic dict={dictHeader} lang={lang} />
-      <div className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mx-auto max-w-3xl px-4 pt-20 pb-10 md:pt-32">
         <h1>{policy.title}</h1>
         <p className="mt-2 text-muted-foreground text-sm">
           Updated {policy.updated}

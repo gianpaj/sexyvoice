@@ -106,7 +106,7 @@ export default async function LandingPage(props: {
         <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
+            <div className="z-10 space-y-6 pt-24 pb-20 text-center md:pt-32 md:pb-32">
               {/*<LandingHero />*/}
               <h1 className="font-bold text-5xl md:text-6xl">
                 <span className="text-white/90 leading-[3.5rem]">

@@ -17,7 +17,7 @@ export default async function AudioConverterPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <HeaderStatic dict={dictHeader} lang={lang} />
-      <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
+      <div className="container mx-auto max-w-3xl px-4 pt-20 pb-12 md:pt-32 md:pb-20">
         <AudioConverterClient dict={dict} />
         <footer className="mt-12 text-center text-muted-foreground text-sm">
           <p>
