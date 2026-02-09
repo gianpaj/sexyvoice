@@ -126,6 +126,7 @@ Max Refundable = Total Purchased - Total Used - Total Already Refunded
 ```
 
 **Example scenario:**
+
 - User purchased 5000 credits for $50.00
 - User used 1200 credits
 - User previously received a refund of 500 credits

@@ -58,7 +58,7 @@
     "latestPosts": "Neueste Beiträge",
     "hero": {
       "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
-      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 10 Minuten kostenlosen Anruf",
+      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 5 minuten kostenlosen Anruf",
       "buttonCTA": "Kostenlos anmelden",
       "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
       "signIn": "Anmelden"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits (10 Min. Sprachanruf) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits (5 Min. Sprachanruf) ( ͡° ͜ʖ ͡°)",
       "title": "Bereit, Ihre Stimme zu finden?",
       "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
       "action": "Erstellen sie ihre erste stimme"
@@ -118,7 +118,7 @@
             },
             {
               "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 400 Credits pro Minute, solange Sie verbunden sind."
+              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
             }
           ]
         },
@@ -172,7 +172,7 @@
           "questions": [
             {
               "question": "Wie viele Credits benötige ich?",
-              "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 10 Minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
+              "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 5 minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
             },
             {
               "question": "Haben Sie eine API für Entwickler?",
@@ -322,7 +322,7 @@
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__",
-    "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 10 Minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
+    "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
@@ -421,7 +421,7 @@
   },
   "pages": {
     "defaultTitle": "Mit KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
-    "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 10 Min. kostenlos. Keine Kreditkarte erforderlich.",
+    "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 5 Min. kostenlos. Keine Kreditkarte erforderlich.",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",

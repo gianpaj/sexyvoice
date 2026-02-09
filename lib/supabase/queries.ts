@@ -410,7 +410,7 @@ export const getTotalCallDurationSeconds = async (
 };
 
 /**
- * Check if a free user has exceeded the call limit (10 minutes).
+ * Check if a free user has exceeded the call limit (5 minutes).
  * Returns true if the user is a free user AND has exceeded the limit.
  */
 export const isFreeUserOverCallLimit = async (
