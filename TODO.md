@@ -1,6 +1,10 @@
 # TODO
 
 - self-host Sentry on Hetzner machine
+
+## Call
+
+- test and implement text interruptions <https://github.com/livekit/agents-js/pull/998>
 - add duration to generate audios. if there is a high duration and short text, add warning in `usage` JSON col that the audio may be silent for a long time.
 - fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
 - fix: landing page audios not stopping if another audio is played

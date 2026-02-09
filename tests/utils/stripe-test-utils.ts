@@ -107,7 +107,7 @@ export function createMockSubscription(
     customer: 'cus_test123',
     status,
     current_period_start: Math.floor(Date.now() / 1000),
-    current_period_end: Math.floor(Date.now() / 1000) + 2592000, // +30 days
+    current_period_end: Math.floor(Date.now() / 1000) + 2_592_000, // +30 days
     cancel_at_period_end: false,
     items: {
       object: 'list',

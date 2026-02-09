@@ -35,6 +35,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          model: "claude-opus-4-5"
           # Trigger when specific user is assigned to an issue
           assignee_trigger: "claude-bot"
+          claude_args: |
+            --allowedTools "Bash(pnpm install),Bash(pnpm test:*),Bash(pnpm fixall),Bash(pnpm type-check),mcp__github_inline_comment__create_inline_comment"
+            --model "claude-opus-4-6"
