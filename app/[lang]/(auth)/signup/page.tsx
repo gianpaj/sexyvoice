@@ -19,10 +19,10 @@ export default async function SignUpPage(props: {
     <>
       <HeaderStatic dict={dict.header} lang={lang} />
       <main
-        className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+        className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
         id="main-content"
       >
-        <div className="mx-auto my-4 inline-flex items-center rounded-full bg-blue-500/10 px-4 py-2 text-blue-400 dark:bg-blue-600/20">
+        <div className="mx-auto my-4 inline-flex items-center rounded-full bg-blue-500/10 bg-blue-600/20 px-4 py-2 text-blue-400">
           <Sparkles aria-hidden className="mr-2 size-4" />
           <span>{dict.landing.cta.freeCredits}</span>
         </div>

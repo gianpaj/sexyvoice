@@ -100,17 +100,25 @@ export default function CloneSampleCard({
           <div className="flex flex-col text-center">
             <p>{dict.sampleCard.sourceAudio}:</p>
             <AudioPlayerWithContext
-              className="!bg-blue-950 my-4 self-center opacity-60 transition-opacity hover:opacity-100"
+              buttonClassName="bg-blue-950 hover:bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
+              className="my-4 self-center"
               playAudioTitle={dict.playAudio}
+              progressColor="#8b5cf6"
+              showWaveform
               url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
+              waveColor="#888888"
             />
           </div>
           <div className="my-4 flex flex-col justify-center text-center">
             <p>{dict.sampleCard.exampleOutput}:</p>
             <AudioPlayerWithContext
-              className="!bg-purple-950 my-4 self-center opacity-60 transition-opacity hover:opacity-100"
+              buttonClassName="bg-purple-950 hover:bg-purple-950 opacity-60 transition-opacity hover:opacity-100"
+              className="my-4 self-center"
               playAudioTitle={dict.playAudio}
+              progressColor="#8b5cf6"
+              showWaveform
               url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}
+              waveColor="#888888"
             />
           </div>
         </div>
