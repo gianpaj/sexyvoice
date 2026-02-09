@@ -43,14 +43,14 @@ export async function POST(request: Request) {
       return APIErrorResponse('Insufficient credits', 402);
     }
 
-    // Check if free user has exceeded the 10-minute call limit
+    // Check if free user has exceeded the 5-minute call limit
     const isOverCallLimit = await isFreeUserOverCallLimit(user.id);
     if (isOverCallLimit) {
       logger.info('Free user exceeded call limit', {
         user: { id: user.id, email: user.email },
       });
       return APIErrorResponse(
-        'Free users are limited to 10 minutes of calls. Please upgrade to continue.',
+        'Free users are limited to 5 minutes of calls. Please upgrade to continue.',
         403,
       );
     }
