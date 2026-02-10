@@ -80,6 +80,7 @@
     "contentlayer2": "^0.5.7",
     "crisp-sdk-web": "^1.0.26",
     "date-fns": "^3.6.0",
+    "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.23.22",
     "globby": "^14.1.0",
     "highlight.js": "^11.11.1",
