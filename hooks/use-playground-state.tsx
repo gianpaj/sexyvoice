@@ -26,6 +26,7 @@ import {
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
 const LS_CUSTOM_CHARACTERS_KEY = 'PG_CUSTOM_CHARACTERS';
+const LS_LEGACY_USER_PRESETS_KEY = 'PG_USER_PRESETS';
 const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
 const LS_CHARACTER_OVERRIDES_KEY = 'PG_CHARACTER_OVERRIDES';
 
@@ -80,6 +81,7 @@ type Action =
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
 // Create the reducer function
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: reducer handles many action types
 function playgroundStateReducer(
   state: PlaygroundState,
   action: Action,
@@ -123,11 +125,16 @@ function playgroundStateReducer(
         state.characterOverrides;
       // Persist to localStorage
       storageHelper.setStoredCharacterOverrides(remainingCharacterOverrides);
-      // Get the default instructions for this character
+      // Get the language-appropriate instructions for this character
       const preset = [...state.defaultPresets, ...state.customCharacters].find(
-        (p) => p.id === characterId,
+        (p: Preset) => p.id === characterId,
       );
-      const defaultInstructions = preset?.instructions || '';
+      let defaultInstructions = preset?.instructions || '';
+      // Use translated instructions if available for the current language
+      const translated = getPresetInstructions(characterId, state.language);
+      if (translated) {
+        defaultInstructions = translated;
+      }
       return {
         ...state,
         instructions:
@@ -225,9 +232,10 @@ function playgroundStateReducer(
           newInstructions = translatedInstructions;
         } else {
           // Fall back to English instructions from the preset
-          const preset = [...state.defaultPresets, ...state.customCharacters].find(
-            (p) => p.id === state.selectedPresetId,
-          );
+          const preset = [
+            ...state.defaultPresets,
+            ...state.customCharacters,
+          ].find((p) => p.id === state.selectedPresetId);
           newInstructions = preset?.instructions || state.instructions;
         }
       }

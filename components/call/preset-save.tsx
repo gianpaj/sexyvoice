@@ -87,7 +87,7 @@ export function PresetSave() {
     <div className="flex items-center gap-2">
       {/* Save button - for custom characters (non-default presets) */}
       <Button
-        disabled={Boolean(!isDefaultPreset && selectedPreset)}
+        disabled={isDefaultPreset || !selectedPreset}
         onClick={handleSave}
         size="sm"
         variant="secondary"

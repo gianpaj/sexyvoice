@@ -101,6 +101,15 @@ function AvatarButton({
   );
 }
 
+const gridColsClass: Record<number, string> = {
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+  5: 'grid-cols-5',
+  6: 'grid-cols-6',
+};
+
 export function PresetSelector() {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();
@@ -130,7 +139,7 @@ export function PresetSelector() {
   // All characters combined for carousel pages
   const allCharacters = [...defaultCharacters, ...customCharacters];
 
-  // Split into pages of 4 for the carousel
+  // Split into pages of 6 for the carousel
   const pages: (typeof allCharacters)[] = [];
   const PAGE_SIZE = 6;
   for (let i = 0; i < allCharacters.length; i += PAGE_SIZE) {
@@ -215,10 +224,7 @@ export function PresetSelector() {
                     key={`page-${pageIndex}`}
                   >
                     <div
-                      className="grid gap-3"
-                      style={{
-                        gridTemplateColumns: `repeat(${Math.min(page.length, 6)}, minmax(0, 1fr))`,
-                      }}
+                      className={`grid gap-3 ${gridColsClass[Math.min(page.length, 6) as keyof typeof gridColsClass] || 'grid-cols-6'}`}
                     >
                       {page.map((preset) => {
                         const isSelected =
@@ -239,6 +245,7 @@ export function PresetSelector() {
                             {/* Delete button for custom characters */}
                             {isCustom && !isConnected && (
                               <button
+                                aria-label={`Delete ${preset.name}`}
                                 className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
                                 onClick={(e) => {
                                   e.stopPropagation();

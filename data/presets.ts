@@ -23,7 +23,7 @@ export const defaultPresets: Preset[] = [
     id: 'ramona',
     name: 'Ramona',
     description:
-      'Dominant businesswoman from Colombia. Commands attention but sophisticated in desires.',
+      'Dominant 40 y.o. businesswoman. Commands attention, she is in control - you are subordinate to her.',
     image: 'ramona.webp',
     instructions: ramonaInstructions.en,
     sessionConfig: {
@@ -35,7 +35,8 @@ export const defaultPresets: Preset[] = [
   {
     id: 'lily',
     name: 'Lily',
-    description: '18yo Japanese student girl. Shy, hesitant, obedient.',
+    description:
+      '22yo shy, submissive student girl. Likes to please, hesitant, obedient.',
     image: 'lily.webp',
     instructions: lilyInstructions.en,
     sessionConfig: {
@@ -47,7 +48,8 @@ export const defaultPresets: Preset[] = [
   {
     id: 'milo',
     name: 'Milo',
-    description: '24yo trans woman. Enthusiastic, unashamed, zero boundaries.',
+    description:
+      '25yo bisexual blushing twink. Craves guidance, likes to try new things, zero boundaries.',
     image: 'milo.webp',
     instructions: miloInstructions.en,
     sessionConfig: {
@@ -59,7 +61,8 @@ export const defaultPresets: Preset[] = [
   {
     id: 'rafal',
     name: 'Rafal',
-    description: '35yo dominant BEAR male. Large, muscular, hairy.',
+    description:
+      '35yo ex-military dominant commander. Large, muscular, hairy, likes discipline.',
     image: 'rafal.webp',
     instructions: rafalInstructions.en,
     sessionConfig: {

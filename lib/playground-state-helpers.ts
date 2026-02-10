@@ -113,18 +113,7 @@ export const createPlaygroundStateHelpers = (
     },
 
     /**
-     * Checks if the immutable Grok Imagine prompt should be used
-     * Returns true if Grok Imagine is enabled AND the current preset is NOT the creative-artist preset
-     */
-    shouldUseImmutablePrompt: (state: PlaygroundState): boolean => {
-      const { sessionConfig, selectedPresetId } = state;
-      return (
-        sessionConfig.grokImageEnabled && selectedPresetId !== 'creative-artist'
-      );
-    },
-
-    /**
-     * Gets the full instructions with immutable prompt prepended if needed.
+     * Gets the full instructions for the current state.
      * Prioritizes character overrides for the selected character if available.
      */
     getFullInstructions: (state: PlaygroundState): string => {
@@ -141,8 +130,8 @@ export const createPlaygroundStateHelpers = (
     },
 
     /**
-     * Returns a new state object with full instructions (including additional prompt if needed)
-     * and resolves language-specific translations if available.
+     * Returns a new state object with full instructions,
+     * resolving language-specific translations if available.
      */
     getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
       // Try to get translated instructions for the selected preset and language
