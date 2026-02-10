@@ -45,12 +45,12 @@ export function PresetSelector() {
   // const handleDelete = () => {
   //   if (presetToDelete) {
   //     dispatch({
-  //       type: 'DELETE_USER_PRESET',
+  //       type: 'DELETE_CUSTOM_CHARACTER',
   //       payload: presetToDelete.id,
   //     });
   //     setShowDeleteDialog(false);
   //     setPresetToDelete(null);
-  //     toast.info('Preset removed');
+  //     toast.info('Character removed');
   //   }
   // };
 
@@ -88,12 +88,12 @@ export function PresetSelector() {
             const isSelected = pgState.selectedPresetId === preset.id;
             return (
               <button
-                key={preset.id}
-                type="button"
-                onClick={() => handlePresetSelect(preset.id)}
-                disabled={isConnected}
-                className="group flex flex-col items-center gap-2"
                 aria-pressed={isSelected}
+                className="group flex flex-col items-center gap-2"
+                disabled={isConnected}
+                key={preset.id}
+                onClick={() => handlePresetSelect(preset.id)}
+                type="button"
               >
                 {/* Avatar with Instagram-style ring */}
                 <div
@@ -107,14 +107,14 @@ export function PresetSelector() {
                     <div className="relative h-14 w-14 overflow-hidden rounded-full bg-neutral-800 sm:h-16 sm:w-16">
                       {preset.image && (
                         <Image
-                          src={`/characters/${preset.image}`}
                           alt={preset.name}
-                          fill
                           className={`object-cover transition-all duration-300 ${
                             isConnected && !isSelected
                               ? 'opacity-40 grayscale'
                               : ''
                           }`}
+                          fill
+                          src={`/characters/${preset.image}`}
                         />
                       )}
                     </div>

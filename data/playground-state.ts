@@ -74,9 +74,12 @@ export const defaultLanguage: CallLanguage = 'en';
 
 export interface PlaygroundState {
   sessionConfig: SessionConfig;
-  userPresets: Preset[];
+  /** User-created custom characters */
+  customCharacters: Preset[];
   selectedPresetId: string | null;
   instructions: string;
+  /** Per-character instruction overrides keyed by character ID */
+  characterOverrides: Record<string, string>;
   language: CallLanguage;
   initialInstruction: string;
   defaultPresets: Preset[];
@@ -87,9 +90,10 @@ export const initialInstruction = languageInitialInstructions[defaultLanguage];
 // Define the initial state
 export const defaultPlaygroundState: PlaygroundState = {
   sessionConfig: { ...defaultSessionConfig },
-  userPresets: [],
+  customCharacters: [],
   selectedPresetId: null,
   instructions,
+  characterOverrides: {},
   language: defaultLanguage,
   initialInstruction,
   defaultPresets,

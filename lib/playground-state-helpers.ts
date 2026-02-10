@@ -1,11 +1,10 @@
 import { defaultSessionConfig } from '@/data/default-config';
-import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
 import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
+import { getPresetInstructions } from '@/data/preset-instructions';
 import {
   defaultPresets as baseDefaultPresets,
   type Preset,
 } from '@/data/presets';
-import { getPresetInstructions } from '@/data/preset-instructions';
 import type { SessionConfig } from '@/data/session-config';
 
 export const createPlaygroundStateHelpers = (
@@ -13,13 +12,13 @@ export const createPlaygroundStateHelpers = (
 ) => {
   const helpers = {
     getSelectedPreset: (state: PlaygroundState) =>
-      [...defaultPresets, ...state.userPresets].find(
+      [...defaultPresets, ...state.customCharacters].find(
         (preset) => preset.id === state.selectedPresetId,
       ),
     getDefaultPresets: () => defaultPresets,
     getAllPresets: (state: PlaygroundState) => [
       ...defaultPresets,
-      ...state.userPresets,
+      ...state.customCharacters,
     ],
 
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: fine
@@ -35,7 +34,9 @@ export const createPlaygroundStateHelpers = (
       const selectedPreset = helpers.getSelectedPreset(state);
       if (selectedPreset) {
         params.set('preset', selectedPreset.id);
-        isDefaultPreset = defaultPresets.some((p) => p.id === selectedPreset.id);
+        isDefaultPreset = defaultPresets.some(
+          (p) => p.id === selectedPreset.id,
+        );
       }
 
       if (!isDefaultPreset) {
@@ -123,25 +124,21 @@ export const createPlaygroundStateHelpers = (
     },
 
     /**
-     * Gets the full instructions with immutable prompt prepended if needed
+     * Gets the full instructions with immutable prompt prepended if needed.
+     * Prioritizes character overrides for the selected character if available.
      */
     getFullInstructions: (state: PlaygroundState): string => {
-      const shouldUseImmutable = helpers.shouldUseImmutablePrompt(state);
-
-      if (shouldUseImmutable) {
-        return `${IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT}\n\n${state.instructions}`;
+      // Use character overrides if available for the selected character
+      let instructions = state.instructions;
+      if (
+        state.selectedPresetId &&
+        state.characterOverrides[state.selectedPresetId]
+      ) {
+        instructions = state.characterOverrides[state.selectedPresetId];
       }
 
-      return state.instructions;
+      return instructions;
     },
-
-    /**
-     * Gets just the immutable prompt if it should be used
-     */
-    getImmutablePrompt: (state: PlaygroundState): string | null =>
-      helpers.shouldUseImmutablePrompt(state)
-        ? IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT
-        : null,
 
     /**
      * Returns a new state object with full instructions (including additional prompt if needed)

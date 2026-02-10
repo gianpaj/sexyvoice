@@ -40,7 +40,18 @@ export function InstructionsEditor({
   };
 
   const handleBlur = () => {
-    dispatch({ type: 'SET_INSTRUCTIONS', payload: inputValue });
+    // Store character override if a character is selected
+    if (pgState.selectedPresetId) {
+      dispatch({
+        type: 'SET_CHARACTER_OVERRIDE',
+        payload: {
+          characterId: pgState.selectedPresetId,
+          instructions: inputValue,
+        },
+      });
+    } else {
+      dispatch({ type: 'SET_INSTRUCTIONS', payload: inputValue });
+    }
     setDirty(false);
     if (onBlur) {
       onBlur();

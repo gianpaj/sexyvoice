@@ -18,22 +18,24 @@ import {
   languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
+import { getPresetInstructions } from '@/data/preset-instructions';
 import {
   defaultPresets as baseDefaultPresets,
   type Preset,
 } from '@/data/presets';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
-const LS_USER_PRESETS_KEY = 'PG_USER_PRESETS';
+const LS_CUSTOM_CHARACTERS_KEY = 'PG_CUSTOM_CHARACTERS';
 const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
+const LS_CHARACTER_OVERRIDES_KEY = 'PG_CHARACTER_OVERRIDES';
 
-const presetStorageHelper = {
-  getStoredPresets: (): Preset[] => {
-    const storedPresets = localStorage.getItem(LS_USER_PRESETS_KEY);
-    return storedPresets ? JSON.parse(storedPresets) : [];
+const storageHelper = {
+  getStoredCustomCharacters: (): Preset[] => {
+    const stored = localStorage.getItem(LS_CUSTOM_CHARACTERS_KEY);
+    return stored ? JSON.parse(stored) : [];
   },
-  setStoredPresets: (presets: Preset[]): void => {
-    localStorage.setItem(LS_USER_PRESETS_KEY, JSON.stringify(presets));
+  setStoredCustomCharacters: (characters: Preset[]): void => {
+    localStorage.setItem(LS_CUSTOM_CHARACTERS_KEY, JSON.stringify(characters));
   },
   getStoredSelectedPresetId: (): string =>
     localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || baseDefaultPresets[0].id,
@@ -44,6 +46,18 @@ const presetStorageHelper = {
       localStorage.removeItem(LS_SELECTED_PRESET_ID_KEY);
     }
   },
+  getStoredCharacterOverrides: (): Record<string, string> => {
+    const stored = localStorage.getItem(LS_CHARACTER_OVERRIDES_KEY);
+    return stored ? JSON.parse(stored) : {};
+  },
+  setStoredCharacterOverrides: (
+    characterOverrides: Record<string, string>,
+  ): void => {
+    localStorage.setItem(
+      LS_CHARACTER_OVERRIDES_KEY,
+      JSON.stringify(characterOverrides),
+    );
+  },
 };
 
 // Define action types and payloads
@@ -53,10 +67,16 @@ type Action =
       payload: Partial<PlaygroundState['sessionConfig']>;
     }
   | { type: 'SET_INSTRUCTIONS'; payload: string }
-  | { type: 'SET_USER_PRESETS'; payload: Preset[] }
+  | {
+      type: 'SET_CHARACTER_OVERRIDE';
+      payload: { characterId: string; instructions: string };
+    }
+  | { type: 'LOAD_CHARACTER_OVERRIDES'; payload: Record<string, string> }
+  | { type: 'RESET_CHARACTER_OVERRIDE'; payload: string }
+  | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
-  | { type: 'SAVE_USER_PRESET'; payload: Preset }
-  | { type: 'DELETE_USER_PRESET'; payload: string }
+  | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
+  | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
 // Create the reducer function
@@ -78,13 +98,52 @@ function playgroundStateReducer(
         ...state,
         instructions: action.payload,
       };
-    case 'SET_USER_PRESETS':
+    case 'SET_CHARACTER_OVERRIDE': {
+      const { characterId, instructions } = action.payload;
+      const updatedCharacterOverrides = {
+        ...state.characterOverrides,
+        [characterId]: instructions,
+      };
+      // Persist to localStorage
+      storageHelper.setStoredCharacterOverrides(updatedCharacterOverrides);
       return {
         ...state,
-        userPresets: action.payload,
+        instructions,
+        characterOverrides: updatedCharacterOverrides,
+      };
+    }
+    case 'LOAD_CHARACTER_OVERRIDES':
+      return {
+        ...state,
+        characterOverrides: action.payload,
+      };
+    case 'RESET_CHARACTER_OVERRIDE': {
+      const characterId = action.payload;
+      const { [characterId]: _, ...remainingCharacterOverrides } =
+        state.characterOverrides;
+      // Persist to localStorage
+      storageHelper.setStoredCharacterOverrides(remainingCharacterOverrides);
+      // Get the default instructions for this character
+      const preset = [...state.defaultPresets, ...state.customCharacters].find(
+        (p) => p.id === characterId,
+      );
+      const defaultInstructions = preset?.instructions || '';
+      return {
+        ...state,
+        instructions:
+          state.selectedPresetId === characterId
+            ? defaultInstructions
+            : state.instructions,
+        characterOverrides: remainingCharacterOverrides,
+      };
+    }
+    case 'SET_CUSTOM_CHARACTERS':
+      return {
+        ...state,
+        customCharacters: action.payload,
       };
     case 'SET_SELECTED_PRESET_ID': {
-      presetStorageHelper.setStoredSelectedPresetId(action.payload);
+      storageHelper.setStoredSelectedPresetId(action.payload);
 
       const newState = {
         ...state,
@@ -92,46 +151,96 @@ function playgroundStateReducer(
       };
 
       const helpers = createPlaygroundStateHelpers(state.defaultPresets);
-      newState.instructions =
-        helpers.getSelectedPreset(newState)?.instructions || '';
+      const selectedPreset = helpers.getSelectedPreset(newState);
+
+      // Check for character overrides for this preset, otherwise use preset default
+      if (action.payload && state.characterOverrides[action.payload]) {
+        newState.instructions = state.characterOverrides[action.payload];
+      } else if (action.payload) {
+        // Try to get translated instructions for the current language
+        const translatedInstructions = getPresetInstructions(
+          action.payload,
+          state.language,
+        );
+        if (translatedInstructions) {
+          newState.instructions = translatedInstructions;
+        } else {
+          // Fall back to English instructions from the preset
+          newState.instructions = selectedPreset?.instructions || '';
+        }
+      } else {
+        newState.instructions = selectedPreset?.instructions || '';
+      }
+
       newState.sessionConfig =
-        helpers.getSelectedPreset(newState)?.sessionConfig ||
-        defaultSessionConfig;
+        selectedPreset?.sessionConfig || defaultSessionConfig;
       return newState;
     }
-    case 'SAVE_USER_PRESET': {
-      const updatedPresetsAdd = state.userPresets.map((preset) =>
-        preset.id === action.payload.id ? action.payload : preset,
+    case 'SAVE_CUSTOM_CHARACTER': {
+      const updatedCharacters = state.customCharacters.map((character) =>
+        character.id === action.payload.id ? action.payload : character,
       );
       if (
-        !updatedPresetsAdd.some((preset) => preset.id === action.payload.id)
+        !updatedCharacters.some(
+          (character) => character.id === action.payload.id,
+        )
       ) {
-        updatedPresetsAdd.push(action.payload);
+        updatedCharacters.push(action.payload);
       }
-      presetStorageHelper.setStoredPresets(updatedPresetsAdd);
+      storageHelper.setStoredCustomCharacters(updatedCharacters);
       return {
         ...state,
-        userPresets: updatedPresetsAdd,
+        customCharacters: updatedCharacters,
       };
     }
-    case 'DELETE_USER_PRESET': {
-      const updatedPresetsDelete = state.userPresets.filter(
-        (preset: Preset) => preset.id !== action.payload,
+    case 'DELETE_CUSTOM_CHARACTER': {
+      const updatedCharacters = state.customCharacters.filter(
+        (character: Preset) => character.id !== action.payload,
       );
-      presetStorageHelper.setStoredPresets(updatedPresetsDelete);
+      storageHelper.setStoredCustomCharacters(updatedCharacters);
       return {
         ...state,
-        userPresets: updatedPresetsDelete,
+        customCharacters: updatedCharacters,
       };
     }
-    case 'SET_LANGUAGE':
+    case 'SET_LANGUAGE': {
+      const newLanguage = action.payload;
+
+      // Get translated instructions for the selected character
+      let newInstructions = state.instructions;
+
+      // Only update instructions if there are no character overrides for this preset
+      // (character overrides take precedence over translations)
+      if (
+        state.selectedPresetId &&
+        !state.characterOverrides[state.selectedPresetId]
+      ) {
+        // Try to get translated instructions for the selected preset
+        const translatedInstructions = getPresetInstructions(
+          state.selectedPresetId,
+          newLanguage,
+        );
+
+        if (translatedInstructions) {
+          newInstructions = translatedInstructions;
+        } else {
+          // Fall back to English instructions from the preset
+          const preset = [...state.defaultPresets, ...state.customCharacters].find(
+            (p) => p.id === state.selectedPresetId,
+          );
+          newInstructions = preset?.instructions || state.instructions;
+        }
+      }
+
       return {
         ...state,
-        language: action.payload,
+        language: newLanguage,
+        instructions: newInstructions,
         initialInstruction:
-          languageInitialInstructions[action.payload] ||
+          languageInitialInstructions[newLanguage] ||
           languageInitialInstructions.en,
       };
+    }
     default:
       return state;
   }
@@ -196,31 +305,41 @@ export const PlaygroundStateProvider = ({
   );
 
   useEffect(() => {
-    // Load presets from localStorage
-    const storedPresets = localStorage.getItem(LS_USER_PRESETS_KEY);
-    let userPresets = storedPresets ? JSON.parse(storedPresets) : [];
+    // Load custom characters from localStorage
+    const storedCharacters = localStorage.getItem(LS_CUSTOM_CHARACTERS_KEY);
+    let customCharacters = storedCharacters ? JSON.parse(storedCharacters) : [];
 
-    // Validate and fix invalid model IDs in stored presets
-    userPresets = userPresets.map((preset: Preset) => {
-      // Check if the preset has an invalid model ID
-      if (!Object.values(ModelId).includes(preset.sessionConfig.model)) {
+    // Validate and fix invalid model IDs in stored characters
+    customCharacters = customCharacters.map((character: Preset) => {
+      // Check if the character has an invalid model ID
+      if (!Object.values(ModelId).includes(character.sessionConfig.model)) {
         return {
-          ...preset,
+          ...character,
           sessionConfig: {
-            ...preset.sessionConfig,
+            ...character.sessionConfig,
             model: defaultSessionConfig.model,
           },
         };
       }
-      return preset;
+      return character;
     });
 
-    // Save cleaned presets back to storage
-    if (userPresets.length > 0) {
-      presetStorageHelper.setStoredPresets(userPresets);
+    // Save cleaned characters back to storage
+    if (customCharacters.length > 0) {
+      storageHelper.setStoredCustomCharacters(customCharacters);
     }
 
-    dispatch({ type: 'SET_USER_PRESETS', payload: userPresets });
+    dispatch({ type: 'SET_CUSTOM_CHARACTERS', payload: customCharacters });
+
+    // Load character overrides from localStorage
+    const storedCharacterOverrides =
+      storageHelper.getStoredCharacterOverrides();
+    if (Object.keys(storedCharacterOverrides).length > 0) {
+      dispatch({
+        type: 'LOAD_CHARACTER_OVERRIDES',
+        payload: storedCharacterOverrides,
+      });
+    }
 
     // Read the URL
     const urlData = helpers.decodeFromURLParams(window.location.search);
@@ -238,18 +357,24 @@ export const PlaygroundStateProvider = ({
 
       // Handle non-default preset from URL
       if (urlData.preset?.name) {
-        const newPreset: Preset = {
+        const newCharacter: Preset = {
           id: urlData.state.selectedPresetId,
-          name: urlData.preset.name || 'Shared Preset',
+          name: urlData.preset.name || 'Shared Character',
           description: urlData.preset.description,
           instructions: urlData.state.instructions || '',
           sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
         };
 
-        const updatedUserPresets = [...userPresets, newPreset];
-        presetStorageHelper.setStoredPresets(updatedUserPresets);
-        dispatch({ type: 'SET_USER_PRESETS', payload: updatedUserPresets });
-        dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
+        const updatedCustomCharacters = [...customCharacters, newCharacter];
+        storageHelper.setStoredCustomCharacters(updatedCustomCharacters);
+        dispatch({
+          type: 'SET_CUSTOM_CHARACTERS',
+          payload: updatedCustomCharacters,
+        });
+        dispatch({
+          type: 'SET_SELECTED_PRESET_ID',
+          payload: newCharacter.id,
+        });
       }
 
       // Clear the URL for non-default presets
