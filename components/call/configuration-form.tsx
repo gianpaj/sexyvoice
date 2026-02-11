@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
 
@@ -295,7 +296,15 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
           <PresetSelector />
           {showInstruction && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
+              {/* Instructions Editor for custom per-character instructions */}
+              <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
+                <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                  {helpers.getSelectedPreset(pgState)?.name || 'Character'}{' '}
+                  Instructions
+                </div>
+                <InstructionsEditor instructions={pgState.instructions} />
+              </div>
               <PresetSave />
             </div>
           )}
