@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 // import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import type { CallLanguage } from '@/data/playground-state';
 import { defaultPresets as baseDefaultPresets } from '@/data/presets';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
@@ -46,6 +47,7 @@ export default async function CallLayout({
       initialState={{
         instructions: defaultInstructions,
         initialInstruction,
+        language: lang as CallLanguage,
       }}
     >
       <ConnectionProvider dict={dict}>

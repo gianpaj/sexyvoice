@@ -1,8 +1,8 @@
 import type { CallLanguage } from '../playground-state';
-import { lunaInstructions } from './luna';
-import { miyuInstructions } from './miyu';
-import { ramonaInstructions } from './ramona';
+import { lilyInstructions } from './lily';
+import { miloInstructions } from './milo';
 import { rafalInstructions } from './rafal';
+import { ramonaInstructions } from './ramona';
 
 /**
  * Central index for all preset instruction translations.
@@ -20,10 +20,10 @@ export const presetInstructionsMap: Record<
   string,
   Partial<Record<CallLanguage, string>>
 > = {
-  ramona: ramonaInstructions,
-  miyu: miyuInstructions,
-  luna: lunaInstructions,
+  lily: lilyInstructions,
+  milo: miloInstructions,
   rafal: rafalInstructions,
+  ramona: ramonaInstructions,
 };
 
 /**
@@ -32,7 +32,7 @@ export const presetInstructionsMap: Record<
  * Falls back to undefined if the preset or language translation doesn't exist.
  * The caller should use the English instructions from presets.ts as fallback.
  *
- * @param presetId - The ID of the preset (e.g., 'ramona', 'miyu')
+ * @param presetId - The ID of the preset (e.g., 'ramona', 'lily')
  * @param language - The call language code (e.g., 'es', 'de')
  * @returns The translated instructions, or undefined if not found
  */

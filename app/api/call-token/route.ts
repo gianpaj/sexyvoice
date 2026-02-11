@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       max_output_tokens: maxOutputTokens,
       grok_image_enabled: grokImageEnabled,
       language: selectedLanguage,
-      initial_instruction: initialInstruction,
+      initial_instruction: ' ',
       user_id: user.id,
     };
 
