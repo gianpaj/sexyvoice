@@ -78,8 +78,8 @@ export interface PlaygroundState {
   customCharacters: Preset[];
   selectedPresetId: string | null;
   instructions: string;
-  /** Per-character instruction overrides keyed by character ID */
-  characterOverrides: Record<string, string>;
+  /** Per-character instruction overrides keyed by character ID, then by language */
+  characterOverrides: Record<string, Partial<Record<string, string>>>;
   language: CallLanguage;
   initialInstruction: string;
   defaultPresets: Preset[];

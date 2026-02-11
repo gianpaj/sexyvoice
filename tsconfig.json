@@ -23,6 +23,9 @@
       "@/public/*": [
         "./public/*"
       ],
+      "@tests/*": [
+        "./tests/*"
+      ],
       "contentlayer/generated": [
         "./.contentlayer/generated"
       ]

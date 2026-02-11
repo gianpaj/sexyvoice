@@ -13,6 +13,8 @@ export interface Preset {
   name: string;
   description?: string;
   instructions: string;
+  /** Per-language instruction overrides for custom characters */
+  localizedInstructions?: Partial<Record<string, string>>;
   sessionConfig: SessionConfig;
   iconId?: PresetIconId;
   image?: string;

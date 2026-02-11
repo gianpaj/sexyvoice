@@ -26,9 +26,11 @@ import {
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
 const LS_CUSTOM_CHARACTERS_KEY = 'PG_CUSTOM_CHARACTERS';
-const LS_LEGACY_USER_PRESETS_KEY = 'PG_USER_PRESETS';
 const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
 const LS_CHARACTER_OVERRIDES_KEY = 'PG_CHARACTER_OVERRIDES';
+
+/** Per-character, per-language overrides */
+type CharacterOverrides = Record<string, Partial<Record<string, string>>>;
 
 const storageHelper = {
   getStoredCustomCharacters: (): Preset[] => {
@@ -47,12 +49,8 @@ const storageHelper = {
       localStorage.removeItem(LS_SELECTED_PRESET_ID_KEY);
     }
   },
-  getStoredCharacterOverrides: (): Record<string, string> => {
-    const stored = localStorage.getItem(LS_CHARACTER_OVERRIDES_KEY);
-    return stored ? JSON.parse(stored) : {};
-  },
   setStoredCharacterOverrides: (
-    characterOverrides: Record<string, string>,
+    characterOverrides: CharacterOverrides,
   ): void => {
     localStorage.setItem(
       LS_CHARACTER_OVERRIDES_KEY,
@@ -60,6 +58,41 @@ const storageHelper = {
     );
   },
 };
+
+/**
+ * Resolves the best instructions for a given character and language.
+ *
+ * Priority:
+ * 1. Character overrides for the specific language
+ * 2. Custom character localizedInstructions for the specific language
+ * 3. Built-in preset translations (from preset-instructions index)
+ * 4. Preset's default instructions field (English / fallback)
+ */
+function resolveInstructions(
+  characterId: string,
+  language: CallLanguage,
+  overrides: CharacterOverrides,
+  allPresets: Preset[],
+): string {
+  // 1. Per-language character override
+  const langOverride = overrides[characterId]?.[language];
+  if (langOverride) return langOverride;
+
+  // Find the preset
+  const preset = allPresets.find((p) => p.id === characterId);
+
+  // 2. Custom character localizedInstructions
+  if (preset?.localizedInstructions?.[language]) {
+    return preset.localizedInstructions[language] as string;
+  }
+
+  // 3. Built-in preset translations
+  const translated = getPresetInstructions(characterId, language);
+  if (translated) return translated;
+
+  // 4. Fallback to preset's default instructions
+  return preset?.instructions || '';
+}
 
 // Define action types and payloads
 type Action =
@@ -72,7 +105,7 @@ type Action =
       type: 'SET_CHARACTER_OVERRIDE';
       payload: { characterId: string; instructions: string };
     }
-  | { type: 'LOAD_CHARACTER_OVERRIDES'; payload: Record<string, string> }
+  | { type: 'LOAD_CHARACTER_OVERRIDES'; payload: CharacterOverrides }
   | { type: 'RESET_CHARACTER_OVERRIDE'; payload: string }
   | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
@@ -81,7 +114,6 @@ type Action =
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
 // Create the reducer function
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: reducer handles many action types
 function playgroundStateReducer(
   state: PlaygroundState,
   action: Action,
@@ -102,9 +134,14 @@ function playgroundStateReducer(
       };
     case 'SET_CHARACTER_OVERRIDE': {
       const { characterId, instructions } = action.payload;
-      const updatedCharacterOverrides = {
+      const language = state.language;
+      const existingLangs = state.characterOverrides[characterId] || {};
+      const updatedCharacterOverrides: CharacterOverrides = {
         ...state.characterOverrides,
-        [characterId]: instructions,
+        [characterId]: {
+          ...existingLangs,
+          [language]: instructions,
+        },
       };
       // Persist to localStorage
       storageHelper.setStoredCharacterOverrides(updatedCharacterOverrides);
@@ -126,15 +163,13 @@ function playgroundStateReducer(
       // Persist to localStorage
       storageHelper.setStoredCharacterOverrides(remainingCharacterOverrides);
       // Get the language-appropriate instructions for this character
-      const preset = [...state.defaultPresets, ...state.customCharacters].find(
-        (p: Preset) => p.id === characterId,
+      const allPresets = [...state.defaultPresets, ...state.customCharacters];
+      const defaultInstructions = resolveInstructions(
+        characterId,
+        state.language,
+        {}, // empty overrides since we just removed them
+        allPresets,
       );
-      let defaultInstructions = preset?.instructions || '';
-      // Use translated instructions if available for the current language
-      const translated = getPresetInstructions(characterId, state.language);
-      if (translated) {
-        defaultInstructions = translated;
-      }
       return {
         ...state,
         instructions:
@@ -160,21 +195,15 @@ function playgroundStateReducer(
       const helpers = createPlaygroundStateHelpers(state.defaultPresets);
       const selectedPreset = helpers.getSelectedPreset(newState);
 
-      // Check for character overrides for this preset, otherwise use preset default
-      if (action.payload && state.characterOverrides[action.payload]) {
-        newState.instructions = state.characterOverrides[action.payload];
-      } else if (action.payload) {
-        // Try to get translated instructions for the current language
-        const translatedInstructions = getPresetInstructions(
+      if (action.payload) {
+        // Resolve instructions for the selected character in the current language
+        const allPresets = [...state.defaultPresets, ...state.customCharacters];
+        newState.instructions = resolveInstructions(
           action.payload,
           state.language,
+          state.characterOverrides,
+          allPresets,
         );
-        if (translatedInstructions) {
-          newState.instructions = translatedInstructions;
-        } else {
-          // Fall back to English instructions from the preset
-          newState.instructions = selectedPreset?.instructions || '';
-        }
       } else {
         newState.instructions = selectedPreset?.instructions || '';
       }
@@ -184,15 +213,40 @@ function playgroundStateReducer(
       return newState;
     }
     case 'SAVE_CUSTOM_CHARACTER': {
+      const language = state.language;
+      const existingCharacter = state.customCharacters.find(
+        (c) => c.id === action.payload.id,
+      );
+
+      // Build updated localizedInstructions
+      const existingLocalized =
+        existingCharacter?.localizedInstructions ||
+        action.payload.localizedInstructions ||
+        {};
+      const updatedLocalized: Partial<Record<string, string>> = {
+        ...existingLocalized,
+        [language]: action.payload.instructions,
+      };
+
+      // If saving in English, also update the default instructions field
+      const updatedPreset: Preset = {
+        ...action.payload,
+        instructions:
+          language === 'en'
+            ? action.payload.instructions
+            : existingCharacter?.instructions || action.payload.instructions,
+        localizedInstructions: updatedLocalized,
+      };
+
       const updatedCharacters = state.customCharacters.map((character) =>
-        character.id === action.payload.id ? action.payload : character,
+        character.id === updatedPreset.id ? updatedPreset : character,
       );
       if (
         !updatedCharacters.some(
-          (character) => character.id === action.payload.id,
+          (character) => character.id === updatedPreset.id,
         )
       ) {
-        updatedCharacters.push(action.payload);
+        updatedCharacters.push(updatedPreset);
       }
       storageHelper.setStoredCustomCharacters(updatedCharacters);
       return {
@@ -212,32 +266,18 @@ function playgroundStateReducer(
     }
     case 'SET_LANGUAGE': {
       const newLanguage = action.payload;
+      const allPresets = [...state.defaultPresets, ...state.customCharacters];
 
-      // Get translated instructions for the selected character
+      // Resolve instructions for the selected character in the new language
       let newInstructions = state.instructions;
 
-      // Only update instructions if there are no character overrides for this preset
-      // (character overrides take precedence over translations)
-      if (
-        state.selectedPresetId &&
-        !state.characterOverrides[state.selectedPresetId]
-      ) {
-        // Try to get translated instructions for the selected preset
-        const translatedInstructions = getPresetInstructions(
+      if (state.selectedPresetId) {
+        newInstructions = resolveInstructions(
           state.selectedPresetId,
           newLanguage,
+          state.characterOverrides,
+          allPresets,
         );
-
-        if (translatedInstructions) {
-          newInstructions = translatedInstructions;
-        } else {
-          // Fall back to English instructions from the preset
-          const preset = [
-            ...state.defaultPresets,
-            ...state.customCharacters,
-          ].find((p) => p.id === state.selectedPresetId);
-          newInstructions = preset?.instructions || state.instructions;
-        }
       }
 
       return {
@@ -338,16 +378,6 @@ export const PlaygroundStateProvider = ({
     }
 
     dispatch({ type: 'SET_CUSTOM_CHARACTERS', payload: customCharacters });
-
-    // Load character overrides from localStorage
-    const storedCharacterOverrides =
-      storageHelper.getStoredCharacterOverrides();
-    if (Object.keys(storedCharacterOverrides).length > 0) {
-      dispatch({
-        type: 'LOAD_CHARACTER_OVERRIDES',
-        payload: storedCharacterOverrides,
-      });
-    }
 
     // Read the URL
     const urlData = helpers.decodeFromURLParams(window.location.search);

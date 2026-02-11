@@ -30,10 +30,10 @@ export function PresetSave() {
   const [description, setDescription] = useState('');
   const [open, setOpen] = useState(false);
 
-  // Check if there are character overrides for the selected preset
+  // Check if there are character overrides for the selected preset in the current language
   const hasOverrides =
     pgState.selectedPresetId &&
-    pgState.characterOverrides[pgState.selectedPresetId];
+    pgState.characterOverrides[pgState.selectedPresetId]?.[pgState.language];
 
   useEffect(() => {
     setName(
@@ -51,6 +51,7 @@ export function PresetSave() {
       name,
       description,
       instructions: pgState.instructions,
+      localizedInstructions: { [pgState.language]: pgState.instructions },
       sessionConfig: pgState.sessionConfig,
     };
 
@@ -60,17 +61,30 @@ export function PresetSave() {
     setOpen(false);
   };
 
-  // Save/overwrite current custom character (only for non-default presets)
+  // Save current character: override instructions for defaults, or overwrite custom characters
   const handleSave = () => {
-    if (!selectedPreset || isDefaultPreset) return;
+    if (!selectedPreset) return;
 
-    const updatedPreset: Preset = {
-      ...selectedPreset,
-      instructions: pgState.instructions,
-      sessionConfig: pgState.sessionConfig,
-    };
-
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    if (isDefaultPreset) {
+      // For default characters, save as a character override
+      if (pgState.selectedPresetId) {
+        dispatch({
+          type: 'SET_CHARACTER_OVERRIDE',
+          payload: {
+            characterId: pgState.selectedPresetId,
+            instructions: pgState.instructions,
+          },
+        });
+      }
+    } else {
+      // For custom characters, overwrite the full preset
+      const updatedPreset: Preset = {
+        ...selectedPreset,
+        instructions: pgState.instructions,
+        sessionConfig: pgState.sessionConfig,
+      };
+      dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    }
   };
 
   // Reset character instructions to default
@@ -85,15 +99,15 @@ export function PresetSave() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Save button - for custom characters (non-default presets) */}
+      {/* Save button - saves override for default characters, or overwrites custom characters */}
       <Button
-        disabled={isDefaultPreset || !selectedPreset}
+        disabled={!selectedPreset}
         onClick={handleSave}
         size="sm"
         variant="secondary"
       >
         <Save className="h-4 w-4" />
-        <span className="hidden md:ml-2 md:block">Save</span>
+        <span className="ml-2">Save</span>
       </Button>
 
       {/* Save as new button - opens dialog */}
@@ -101,7 +115,7 @@ export function PresetSave() {
         <DialogTrigger asChild>
           <Button size="sm" variant="secondary">
             <SaveAll className="h-4 w-4" />
-            <span className="hidden md:ml-2 md:block">Save as new</span>
+            <span className="ml-2">Save as new</span>
           </Button>
         </DialogTrigger>
         <DialogContent className="bg-background sm:max-w-[475px]">

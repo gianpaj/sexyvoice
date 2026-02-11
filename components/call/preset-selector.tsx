@@ -215,7 +215,7 @@ export function PresetSelector() {
 
         {/* Avatar Row / Carousel */}
         {showInstruction && hasCustomCharacters ? (
-          <div className="relative mb-4 px-10">
+          <div className="relative mb-4 md:px-10">
             <Carousel opts={{ align: 'start', loop: false }}>
               <CarouselContent className="-ml-2">
                 {pages.map((page, pageIndex) => (
