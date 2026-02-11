@@ -17,8 +17,7 @@ export type PresetIconId = 'headphones';
 export interface Preset {
   id: string;
   name: string;
-  description?: string;
-  /** Per-language description overrides (populated for default presets) */
+  /** Per-language descriptions keyed by CallLanguage code */
   localizedDescriptions?: Partial<Record<string, string>>;
   instructions: string;
   /** Per-language instruction overrides for custom characters */
@@ -32,8 +31,6 @@ export const defaultPresets: Preset[] = [
   {
     id: 'ramona',
     name: 'Ramona',
-    description:
-      'Dominant 40 y.o. businesswoman. Commands attention, she is in control - you are subordinate to her.',
     localizedDescriptions: ramonaDescriptions,
     image: 'ramona.webp',
     instructions: ramonaInstructions.en,
@@ -46,8 +43,6 @@ export const defaultPresets: Preset[] = [
   {
     id: 'lily',
     name: 'Lily',
-    description:
-      '22yo shy, submissive student girl. Likes to please, hesitant, obedient.',
     localizedDescriptions: lilyDescriptions,
     image: 'lily.webp',
     instructions: lilyInstructions.en,
@@ -60,8 +55,6 @@ export const defaultPresets: Preset[] = [
   {
     id: 'milo',
     name: 'Milo',
-    description:
-      '25yo bisexual blushing twink. Craves guidance, likes to try new things, zero boundaries.',
     localizedDescriptions: miloDescriptions,
     image: 'milo.webp',
     instructions: miloInstructions.en,
@@ -74,8 +67,6 @@ export const defaultPresets: Preset[] = [
   {
     id: 'rafal',
     name: 'Rafal',
-    description:
-      '35yo ex-military dominant commander. Large, muscular, hairy, likes discipline.',
     localizedDescriptions: rafalDescriptions,
     image: 'rafal.webp',
     instructions: rafalInstructions.en,

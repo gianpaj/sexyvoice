@@ -45,15 +45,19 @@ export function PresetSave() {
         ? `${selectedPreset?.name} (copy)`
         : selectedPreset?.name || '',
     );
-    setDescription(selectedPreset?.description || '');
-  }, [selectedPreset, isDefaultPreset]);
+    setDescription(
+      selectedPreset?.localizedDescriptions?.[pgState.language] ??
+        selectedPreset?.localizedDescriptions?.en ??
+        '',
+    );
+  }, [selectedPreset, isDefaultPreset, pgState.language]);
 
   // Save as new character (opens dialog)
   const handleSaveAsNew = () => {
     const newPreset: Preset = {
       id: crypto.randomUUID(),
       name,
-      description,
+      localizedDescriptions: { [pgState.language]: description },
       instructions: pgState.instructions,
       localizedInstructions: { [pgState.language]: pgState.instructions },
       sessionConfig: pgState.sessionConfig,

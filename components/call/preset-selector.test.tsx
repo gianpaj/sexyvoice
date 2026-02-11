@@ -156,7 +156,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-1',
             name: 'MyChar',
-            description: 'A custom character',
+            localizedDescriptions: { en: 'A custom character' },
           }),
         ],
       });
@@ -177,12 +177,12 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-1',
             name: 'AlphaChar',
-            description: 'Custom character 1',
+            localizedDescriptions: { en: 'Custom character 1' },
           }),
           makePreset({
             id: 'custom-2',
             name: 'BetaChar',
-            description: 'Custom character 2',
+            localizedDescriptions: { en: 'Custom character 2' },
           }),
         ],
       });
@@ -258,7 +258,7 @@ describe('PresetSelector', () => {
         makePreset({
           id: `custom-${i}`,
           name: `Char${i}`,
-          description: `Custom ${i}`,
+          localizedDescriptions: { en: `Custom ${i}` },
         }),
       );
       mockPgStateRef.current = createDefaultPgState({
@@ -280,7 +280,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-1',
             name: 'OnlyOne',
-            description: 'Just one',
+            localizedDescriptions: { en: 'Just one' },
           }),
         ],
       });
@@ -297,7 +297,7 @@ describe('PresetSelector', () => {
         makePreset({
           id: `custom-${i}`,
           name: `Char${i}`,
-          description: `Custom ${i}`,
+          localizedDescriptions: { en: `Custom ${i}` },
         }),
       );
       mockPgStateRef.current = createDefaultPgState({
@@ -321,7 +321,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-del',
             name: 'ToDelete',
-            description: 'Will be deleted',
+            localizedDescriptions: { en: 'Will be deleted' },
           }),
         ],
       });
@@ -380,7 +380,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-del',
             name: 'ToDelete',
-            description: 'Selected & deleted',
+            localizedDescriptions: { en: 'Selected & deleted' },
           }),
         ],
       });
@@ -407,7 +407,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-del',
             name: 'ToDelete',
-            description: 'Not selected',
+            localizedDescriptions: { en: 'Not selected' },
           }),
         ],
       });
@@ -446,7 +446,9 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-bio',
             name: 'Zara',
-            description: 'A mysterious traveler from the desert.',
+            localizedDescriptions: {
+              en: 'A mysterious traveler from the desert.',
+            },
           }),
         ],
       });
@@ -478,7 +480,11 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'John Doe', description: 'Two words' }),
+          makePreset({
+            id: 'c1',
+            name: 'John Doe',
+            localizedDescriptions: { en: 'Two words' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -489,7 +495,11 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'Ava', description: 'One word' }),
+          makePreset({
+            id: 'c1',
+            name: 'Ava',
+            localizedDescriptions: { en: 'One word' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -503,7 +513,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'c1',
             name: 'Anna Belle Catherine',
-            description: 'Three words',
+            localizedDescriptions: { en: 'Three words' },
           }),
         ],
       });
@@ -518,7 +528,11 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'EmptyParam', description: 'test' }),
+          makePreset({
+            id: 'c1',
+            name: 'EmptyParam',
+            localizedDescriptions: { en: 'test' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -530,7 +544,11 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'TrueParam', description: 'test' }),
+          makePreset({
+            id: 'c1',
+            name: 'TrueParam',
+            localizedDescriptions: { en: 'test' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -541,7 +559,11 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=false');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'FalseParam', description: 'test' }),
+          makePreset({
+            id: 'c1',
+            name: 'FalseParam',
+            localizedDescriptions: { en: 'test' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -568,7 +590,7 @@ describe('PresetSelector', () => {
           makePreset({
             id: 'custom-img',
             name: 'WithImage',
-            description: 'Has an image',
+            localizedDescriptions: { en: 'Has an image' },
             image: 'custom-avatar.webp',
           }),
         ],
@@ -583,7 +605,11 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'TestChar', description: 'test' }),
+          makePreset({
+            id: 'c1',
+            name: 'TestChar',
+            localizedDescriptions: { en: 'test' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -603,8 +629,16 @@ describe('PresetSelector', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
-          makePreset({ id: 'c1', name: 'Extra1', description: 'extra' }),
-          makePreset({ id: 'c2', name: 'Extra2', description: 'extra' }),
+          makePreset({
+            id: 'c1',
+            name: 'Extra1',
+            localizedDescriptions: { en: 'extra' },
+          }),
+          makePreset({
+            id: 'c2',
+            name: 'Extra2',
+            localizedDescriptions: { en: 'extra' },
+          }),
         ],
       });
       render(<PresetSelector />);
@@ -620,7 +654,7 @@ describe('PresetSelector', () => {
         makePreset({
           id: `c-${i}`,
           name: `X${i}`,
-          description: `desc ${i}`,
+          localizedDescriptions: { en: `desc ${i}` },
         }),
       );
       mockPgStateRef.current = createDefaultPgState({

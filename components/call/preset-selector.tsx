@@ -310,7 +310,7 @@ export function PresetSelector() {
             <p className="text-foreground text-sm">
               <span className="font-semibold">{selectedPreset.name}:</span>{' '}
               {selectedPreset.localizedDescriptions?.[pgState.language] ??
-                selectedPreset.description}
+                selectedPreset.localizedDescriptions?.en}
             </p>
           )}
         </div>

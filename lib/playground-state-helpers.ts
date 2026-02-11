@@ -46,8 +46,11 @@ export const createPlaygroundStateHelpers = (
 
         if (selectedPreset) {
           params.set('presetName', selectedPreset.name);
-          if (selectedPreset.description) {
-            params.set('presetDescription', selectedPreset.description);
+          const presetDescription =
+            selectedPreset.localizedDescriptions?.[state.language] ??
+            selectedPreset.localizedDescriptions?.en;
+          if (presetDescription) {
+            params.set('presetDescription', presetDescription);
           }
         }
 
@@ -93,10 +96,13 @@ export const createPlaygroundStateHelpers = (
 
       const presetId = params.get('preset');
       if (presetId) {
+        const presetDescription = params.get('presetDescription') || undefined;
         returnValue.preset = {
           id: presetId,
           name: params.get('presetName') || undefined,
-          description: params.get('presetDescription') || undefined,
+          localizedDescriptions: presetDescription
+            ? { en: presetDescription }
+            : undefined,
         };
         returnValue.state.selectedPresetId = presetId;
       }

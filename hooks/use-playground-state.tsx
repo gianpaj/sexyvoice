@@ -398,7 +398,7 @@ export const PlaygroundStateProvider = ({
         const newCharacter: Preset = {
           id: urlData.state.selectedPresetId,
           name: urlData.preset.name || 'Shared Character',
-          description: urlData.preset.description,
+          localizedDescriptions: urlData.preset.localizedDescriptions,
           instructions: urlData.state.instructions || '',
           sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
         };
