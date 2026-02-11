@@ -334,7 +334,7 @@
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "disconnected": "Getrennt",
-    "chooseCharacter": "Wähle deinen Charakter",
+    "chooseCharacter": "Mit wem möchtest du sprechen?",
     "presetRemoved": "Preset entfernt",
     "deletePreset": "Löschen",
     "deletePresetConfirm": "Dies kann nicht rückgängig gemacht werden.",
