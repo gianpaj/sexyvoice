@@ -334,7 +334,7 @@
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
     "disconnected": "Afbrudt",
-    "chooseCharacter": "Vælg din karakter",
+    "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",
     "deletePreset": "Slet",
     "deletePresetConfirm": "Dette kan ikke fortrydes.",
