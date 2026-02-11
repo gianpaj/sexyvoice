@@ -76,13 +76,13 @@ function resolveInstructions(
 ): string {
   // 1. Per-language character override
   const langOverride = overrides[characterId]?.[language];
-  if (langOverride) return langOverride;
+  if (langOverride !== undefined) return langOverride;
 
   // Find the preset
   const preset = allPresets.find((p) => p.id === characterId);
 
   // 2. Custom character localizedInstructions
-  if (preset?.localizedInstructions?.[language]) {
+  if (preset?.localizedInstructions?.[language] !== undefined) {
     return preset.localizedInstructions[language] as string;
   }
 

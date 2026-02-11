@@ -37,7 +37,8 @@ export function PresetSave() {
   // Check if there are character overrides for the selected preset in the current language
   const hasOverrides =
     pgState.selectedPresetId &&
-    pgState.characterOverrides[pgState.selectedPresetId]?.[pgState.language];
+    pgState.characterOverrides[pgState.selectedPresetId]?.[pgState.language] !==
+      undefined;
 
   useEffect(() => {
     setName(

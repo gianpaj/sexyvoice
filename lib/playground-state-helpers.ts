@@ -154,14 +154,14 @@ export const createPlaygroundStateHelpers = (
       // 1. Per-language character override takes highest priority
       const langOverride =
         state.characterOverrides[state.selectedPresetId]?.[state.language];
-      if (langOverride) {
+      if (langOverride !== undefined) {
         return { ...state, instructions: langOverride };
       }
 
       // 2. Custom character localizedInstructions
       const allPresets = [...defaultPresets, ...state.customCharacters];
       const preset = allPresets.find((p) => p.id === state.selectedPresetId);
-      if (preset?.localizedInstructions?.[state.language]) {
+      if (preset?.localizedInstructions?.[state.language] !== undefined) {
         return {
           ...state,
           instructions: preset.localizedInstructions[state.language] as string,
