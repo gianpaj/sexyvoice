@@ -1,5 +1,7 @@
 'use client';
 
+import { useConnectionState } from '@livekit/components-react';
+import { ConnectionState } from 'livekit-client';
 import { RotateCcw, Save, SaveAll } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -19,6 +21,8 @@ import type { Preset } from '@/data/presets';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function PresetSave() {
+  const connectionState = useConnectionState();
+  const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const selectedPreset = helpers.getSelectedPreset(pgState);
   const defaultPresets = helpers.getDefaultPresets();
@@ -101,7 +105,7 @@ export function PresetSave() {
     <div className="flex items-center gap-2">
       {/* Save button - saves override for default characters, or overwrites custom characters */}
       <Button
-        disabled={!selectedPreset}
+        disabled={!selectedPreset || isConnected}
         onClick={handleSave}
         size="sm"
         variant="secondary"
@@ -113,7 +117,7 @@ export function PresetSave() {
       {/* Save as new button - opens dialog */}
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogTrigger asChild>
-          <Button size="sm" variant="secondary">
+          <Button disabled={isConnected} size="sm" variant="secondary">
             <SaveAll className="h-4 w-4" />
             <span className="ml-2">Save as new</span>
           </Button>
@@ -162,6 +166,7 @@ export function PresetSave() {
       {hasOverrides && (
         <Button
           className="text-muted-foreground hover:text-foreground"
+          disabled={isConnected}
           onClick={handleReset}
           size="sm"
           variant="ghost"

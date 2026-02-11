@@ -1,4 +1,10 @@
 import { defaultSessionConfig } from './default-config';
+import {
+  lilyDescriptions,
+  miloDescriptions,
+  rafalDescriptions,
+  ramonaDescriptions,
+} from './preset-descriptions';
 import { lilyInstructions } from './preset-instructions/lily';
 import { miloInstructions } from './preset-instructions/milo';
 import { rafalInstructions } from './preset-instructions/rafal';
@@ -12,6 +18,8 @@ export interface Preset {
   id: string;
   name: string;
   description?: string;
+  /** Per-language description overrides (populated for default presets) */
+  localizedDescriptions?: Partial<Record<string, string>>;
   instructions: string;
   /** Per-language instruction overrides for custom characters */
   localizedInstructions?: Partial<Record<string, string>>;
@@ -26,6 +34,7 @@ export const defaultPresets: Preset[] = [
     name: 'Ramona',
     description:
       'Dominant 40 y.o. businesswoman. Commands attention, she is in control - you are subordinate to her.',
+    localizedDescriptions: ramonaDescriptions,
     image: 'ramona.webp',
     instructions: ramonaInstructions.en,
     sessionConfig: {
@@ -39,6 +48,7 @@ export const defaultPresets: Preset[] = [
     name: 'Lily',
     description:
       '22yo shy, submissive student girl. Likes to please, hesitant, obedient.',
+    localizedDescriptions: lilyDescriptions,
     image: 'lily.webp',
     instructions: lilyInstructions.en,
     sessionConfig: {
@@ -52,6 +62,7 @@ export const defaultPresets: Preset[] = [
     name: 'Milo',
     description:
       '25yo bisexual blushing twink. Craves guidance, likes to try new things, zero boundaries.',
+    localizedDescriptions: miloDescriptions,
     image: 'milo.webp',
     instructions: miloInstructions.en,
     sessionConfig: {
@@ -65,6 +76,7 @@ export const defaultPresets: Preset[] = [
     name: 'Rafal',
     description:
       '35yo ex-military dominant commander. Large, muscular, hairy, likes discipline.',
+    localizedDescriptions: rafalDescriptions,
     image: 'rafal.webp',
     instructions: rafalInstructions.en,
     sessionConfig: {

@@ -20,6 +20,7 @@ export function InstructionsEditor({
   onDirty,
 }: InstructionsEditorProps) {
   const connectionState = useConnectionState();
+  const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch } = usePlaygroundState();
   const [dirty, setDirty] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState(instructions || '');
@@ -68,7 +69,8 @@ export function InstructionsEditor({
 
   return (
     <textarea
-      className="w-full rounded bg-transparent font-mono text-xs leading-loose outline-none"
+      className="w-full rounded bg-transparent font-mono text-xs leading-loose outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      disabled={isConnected}
       onBlur={handleBlur}
       onChange={handleInputChange}
       onFocus={onFocus}
