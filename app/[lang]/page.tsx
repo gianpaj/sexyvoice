@@ -14,7 +14,7 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import { IncomingCallButton } from '@/components/call/incoming-call-button';
+import { DemoCallWidget } from '@/components/demo-call/demo-call-widget';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -129,8 +129,8 @@ export default async function LandingPage(props: {
                 {dictLanding.hero.subtitle}
               </p>
 
-              <div className="mx-auto">
-                <IncomingCallButton animated lang={lang} />
+              <div className="mx-auto max-w-md">
+                <DemoCallWidget lang={lang} />
               </div>
               <div className="mx-auto flex w-fit flex-col gap-2 pt-8">
                 <Button

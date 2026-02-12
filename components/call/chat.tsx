@@ -26,7 +26,6 @@ import { ConnectButton } from './connect-button';
 export function Chat() {
   const connectionState = useConnectionState();
   const { audioTrack, state } = useVoiceAssistant();
-  // const { audioTrack, state } = useVoiceAssistant();
   const [isChatRunning, setIsChatRunning] = useState(false);
   const { agent } = useAgent();
   const { disconnect, dict } = useConnection();
@@ -89,7 +88,6 @@ export function Chat() {
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const scrollButtonRef = useRef<HTMLButtonElement>(null);
 
-
   // const toggleInstructionsEdit = () =>
   //   setIsEditingInstructions(!isEditingInstructions);
 
@@ -121,12 +119,12 @@ export function Chat() {
 
   const renderVisualizer = () => (
     <div className="flex w-full items-center">
-      <div className="h-[320px] mt-16 md:mt-0 lg:pb-24 w-full">
+      <div className="mt-16 h-[320px] w-full md:mt-0 lg:pb-24">
         <BarVisualizer
-          state={state}
           barCount={5}
+          className="h-full w-full [--lk-va-bar-width:42px]"
+          state={state}
           track={audioTrack}
-          className="w-full h-full [--lk-va-bar-width:42px]"
         />
       </div>
     </div>
@@ -149,8 +147,8 @@ export function Chat() {
               </div>
             )}
 
-            <div className="grow h-full flex items-center justify-center">
-              <div className="w-full ">
+            <div className="flex h-full grow items-center justify-center">
+              <div className="w-full">
                 {isChatRunning && renderVisualizer()}
               </div>
             </div>
@@ -163,8 +161,8 @@ export function Chat() {
               ref={transcriptContainerRef}
             >
               <Transcript
-                scrollContainerRef={transcriptContainerRef}
                 scrollButtonRef={scrollButtonRef}
+                scrollContainerRef={transcriptContainerRef}
               />
             </div>
             <RoomAudioRenderer />
