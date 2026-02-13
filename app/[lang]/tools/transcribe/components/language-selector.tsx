@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 
 interface Props {
@@ -65,19 +72,22 @@ export function LanguageSelector({
         >
           {dict.label}
         </label>
-        <select
-          className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-foreground text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+        <Select
           disabled={disabled || isEnglishOnly}
-          id="language-select"
-          onChange={(e) => onChange(e.target.value)}
+          onValueChange={onChange}
           value={isEnglishOnly ? 'en' : value}
         >
-          {WHISPER_LANGUAGES.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full bg-muted/30" id="language-select">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {WHISPER_LANGUAGES.map((lang) => (
+              <SelectItem key={lang.code} value={lang.code}>
+                {lang.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {isEnglishOnly && (
           <p className="text-muted-foreground text-xs">
             {dict.englishOnlyHint}
@@ -92,16 +102,19 @@ export function LanguageSelector({
         >
           {dict.taskLabel}
         </label>
-        <select
-          className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-foreground text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+        <Select
           disabled={disabled || isEnglishOnly}
-          id="subtask-select"
-          onChange={(e) => onSubtaskChange(e.target.value)}
+          onValueChange={onSubtaskChange}
           value={isEnglishOnly ? 'transcribe' : subtask}
         >
-          <option value="transcribe">{dict.transcribe}</option>
-          <option value="translate">{dict.translate}</option>
-        </select>
+          <SelectTrigger className="w-full bg-muted/30" id="subtask-select">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="transcribe">{dict.transcribe}</SelectItem>
+            <SelectItem value="translate">{dict.translate}</SelectItem>
+          </SelectContent>
+        </Select>
         <p className="text-muted-foreground text-xs">{dict.taskHint}</p>
       </div>
     </div>

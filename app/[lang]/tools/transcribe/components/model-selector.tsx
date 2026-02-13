@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 
 interface Props {
@@ -51,19 +58,18 @@ export function ModelSelector({ value, onChange, disabled, dict }: Props) {
       >
         {dict.label}
       </label>
-      <select
-        className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-foreground text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-        disabled={disabled}
-        id="model-select"
-        onChange={(e) => onChange(e.target.value)}
-        value={value}
-      >
-        {WHISPER_MODELS.map((model) => (
-          <option key={model.id} value={model.id}>
-            {model.label}
-          </option>
-        ))}
-      </select>
+      <Select disabled={disabled} onValueChange={onChange} value={value}>
+        <SelectTrigger className="w-full bg-muted/30" id="model-select">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {WHISPER_MODELS.map((model) => (
+            <SelectItem key={model.id} value={model.id}>
+              {model.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <p className="text-muted-foreground text-xs">{dict.hint}</p>
     </div>
   );

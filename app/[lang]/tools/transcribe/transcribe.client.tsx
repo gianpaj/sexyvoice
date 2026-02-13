@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import { AudioInput } from './components/audio-input';
 import { LanguageSelector } from './components/language-selector';
-import { WHISPER_MODELS, ModelSelector } from './components/model-selector';
+import { ModelSelector, WHISPER_MODELS } from './components/model-selector';
 import { ProgressDisplay } from './components/progress-display';
 import { TranscriptDisplay } from './components/transcript-display';
 import { useTranscriber } from './hooks/use-transcriber';
@@ -84,7 +84,7 @@ export default function TranscribeClient({ dict }: Props) {
         </p>
       </header>
 
-      <main className="glass-card animate-fade-in rounded-3xl p-6 md:p-10">
+      <main className="glass-card animate-fade-in rounded-3xl p-0 md:p-10">
         <div className="space-y-6">
           <AudioInput
             dict={dict.audioInput}

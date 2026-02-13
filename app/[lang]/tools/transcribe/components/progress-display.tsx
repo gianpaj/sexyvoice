@@ -2,6 +2,7 @@
 
 import { Loader2 } from 'lucide-react';
 
+import { Progress } from '@/components/ui/progress';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { DownloadProgress } from '../hooks/use-transcriber';
 
@@ -25,7 +26,7 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
     (p) => p.status === 'progress' || p.status === 'initiate',
   );
 
-  if (!isDownloading && !isTranscribing) return null;
+  if (!(isDownloading || isTranscribing)) return null;
 
   return (
     <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
@@ -38,12 +39,7 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
 
       {isDownloading && (
         <>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${Math.min(totalProgress, 100)}%` }}
-            />
-          </div>
+          <Progress value={Math.min(totalProgress, 100)} />
           <p className="text-muted-foreground text-xs">
             {Math.round(totalProgress)}% — {dict.modelCacheHint}
           </p>
