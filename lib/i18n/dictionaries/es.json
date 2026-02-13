@@ -584,7 +584,7 @@
   "transcribe": {
     "title": "Transcripción de Audio Gratuita",
     "subtitle": "Transcribe archivos de audio a texto sin conexión en tu navegador",
-    "tagline": " – gratis y privado",
+    "tagline": " – 100% gratis y privado",
     "loadingModel": "Cargando modelo...",
     "transcribing": "Transcribiendo...",
     "transcribeButton": "Transcribir",
@@ -608,7 +608,7 @@
       "transcribe": "Transcribir",
       "translate": "Traducir al inglés",
       "englishOnlyHint": "Este modelo solo admite inglés. Selecciona un modelo multilingüe para otros idiomas.",
-      "taskHint": "Transcribir mantiene el idioma original. Traducir convierte cualquier idioma al inglés."
+      "taskHint": "Transcribir mantiene el idioma original.\nTraducir convierte cualquier idioma al inglés."
     },
     "progress": {
       "downloading": "Descargando modelo...",

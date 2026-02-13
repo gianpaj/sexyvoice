@@ -584,7 +584,7 @@
   "transcribe": {
     "title": "Transcription audio gratuite",
     "subtitle": "Transcrivez des fichiers audio en texte hors ligne dans votre navigateur",
-    "tagline": " – gratuit et privé",
+    "tagline": " – 100% gratuit et privé",
     "loadingModel": "Chargement du modèle...",
     "transcribing": "Transcription en cours...",
     "transcribeButton": "Transcrire",
@@ -608,7 +608,7 @@
       "transcribe": "Transcrire",
       "translate": "Traduire en anglais",
       "englishOnlyHint": "Ce modèle ne prend en charge que l'anglais. Sélectionnez un modèle multilingue pour d'autres langues.",
-      "taskHint": "Transcrire conserve la langue d'origine. Traduire convertit toute langue en anglais."
+      "taskHint": "Transcrire conserve la langue d'origine.\nTraduire convertit toute langue en anglais."
     },
     "progress": {
       "downloading": "Téléchargement du modèle...",

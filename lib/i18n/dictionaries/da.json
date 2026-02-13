@@ -544,7 +544,7 @@
   "audioConverter": {
     "title": "Gratis lydkonverter",
     "subtitle": "Konverter lydfiler til MP3, WAV, MP4 og flere formater offline i din browser",
-    "tagline": "– gratis & nemt",
+    "tagline": " – 100% gratis & privat",
     "dropZone": {
       "title": "Slip din lydfil her",
       "description": "eller klik for at gennemse"
@@ -584,7 +584,7 @@
   "transcribe": {
     "title": "Gratis lydtransskription",
     "subtitle": "Transskriber lydfiler til tekst offline i din browser",
-    "tagline": " – gratis & privat",
+    "tagline": " – 100% gratis & privat",
     "loadingModel": "Indlæser model...",
     "transcribing": "Transskriberer...",
     "transcribeButton": "Transskriber",
@@ -608,7 +608,7 @@
       "transcribe": "Transskriber",
       "translate": "Oversæt til engelsk",
       "englishOnlyHint": "Denne model understøtter kun engelsk. Vælg en flersproget model for andre sprog.",
-      "taskHint": "Transskriber bevarer originalsproget. Oversæt konverterer ethvert sprog til engelsk."
+      "taskHint": "Transskriber bevarer originalsproget.\nOversæt konverterer ethvert sprog til engelsk."
     },
     "progress": {
       "downloading": "Downloader model...",

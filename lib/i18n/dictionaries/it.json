@@ -584,7 +584,7 @@
   "transcribe": {
     "title": "Trascrizione audio gratuita",
     "subtitle": "Trascrivi file audio in testo offline nel tuo browser",
-    "tagline": " – gratis e privato",
+    "tagline": " – 100% gratis e privato",
     "loadingModel": "Caricamento modello...",
     "transcribing": "Trascrizione in corso...",
     "transcribeButton": "Trascrivi",
@@ -608,7 +608,7 @@
       "transcribe": "Trascrivi",
       "translate": "Traduci in inglese",
       "englishOnlyHint": "Questo modello supporta solo l'inglese. Seleziona un modello multilingue per altre lingue.",
-      "taskHint": "Trascrivi mantiene la lingua originale. Traduci converte qualsiasi lingua in inglese."
+      "taskHint": "Trascrivi mantiene la lingua originale.\nTraduci converte qualsiasi lingua in inglese."
     },
     "progress": {
       "downloading": "Download del modello...",

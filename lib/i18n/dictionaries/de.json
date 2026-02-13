@@ -584,7 +584,7 @@
   "transcribe": {
     "title": "Kostenlose Audio-Transkription",
     "subtitle": "Transkribieren Sie Audiodateien offline in Ihrem Browser zu Text",
-    "tagline": " – kostenlos & privat",
+    "tagline": " – 100% kostenlos & privat",
     "loadingModel": "Modell wird geladen...",
     "transcribing": "Transkription läuft...",
     "transcribeButton": "Transkribieren",
@@ -608,7 +608,7 @@
       "transcribe": "Transkribieren",
       "translate": "Ins Englische übersetzen",
       "englishOnlyHint": "Dieses Modell unterstützt nur Englisch. Wählen Sie ein mehrsprachiges Modell für andere Sprachen.",
-      "taskHint": "Transkribieren behält die Originalsprache bei. Übersetzen konvertiert jede Sprache ins Englische."
+      "taskHint": "Transkribieren behält die Originalsprache bei.\nÜbersetzen konvertiert jede Sprache ins Englische."
     },
     "progress": {
       "downloading": "Modell wird heruntergeladen...",

@@ -6,13 +6,17 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+interface AudioPlayerProps {
+  url: string;
+  className?: string;
+  onTimeUpdate?: (currentTime: number) => void;
+}
+
 export function AudioPlayer({
   url,
   className,
-}: {
-  url: string;
-  className?: string;
-}) {
+  onTimeUpdate,
+}: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -34,7 +38,14 @@ export function AudioPlayer({
       setIsPlaying(false);
     };
 
+    const handleTimeUpdate = () => {
+      if (audioRef.current && onTimeUpdate) {
+        onTimeUpdate(audioRef.current.currentTime);
+      }
+    };
+
     audioRef.current.addEventListener('ended', handleEnded);
+    audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
 
     // Cleanup on unmount
     return () => {
@@ -42,11 +53,12 @@ export function AudioPlayer({
         setIsPlaying(false);
         audioRef.current.pause();
         audioRef.current.removeEventListener('ended', handleEnded);
+        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
         audioRef.current.src = ''; // Release the resource
         audioRef.current = null;
       }
     };
-  }, [url]);
+  }, [url, onTimeUpdate]);
 
   return (
     <Button

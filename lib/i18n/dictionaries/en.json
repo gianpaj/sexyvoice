@@ -584,7 +584,7 @@
   "transcribe": {
     "title": "Free Audio Transcription",
     "subtitle": "Transcribe audio files to text offline in your browser",
-    "tagline": " – free & private",
+    "tagline": " – 100% free & private",
     "loadingModel": "Loading model...",
     "transcribing": "Transcribing...",
     "transcribeButton": "Transcribe",
@@ -608,7 +608,7 @@
       "transcribe": "Transcribe",
       "translate": "Translate to English",
       "englishOnlyHint": "This model only supports English. Select a multilingual model for other languages.",
-      "taskHint": "Transcribe keeps the original language. Translate converts any language to English."
+      "taskHint": "Transcribe keeps the original language.\nTranslate converts any language to English."
     },
     "progress": {
       "downloading": "Downloading model...",

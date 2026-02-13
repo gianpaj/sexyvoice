@@ -1,0 +1,58 @@
+---
+title: "Kostenlose Audio-Transkription — Direkt in Deinem Browser"
+description: Transkribiere Audio zu Text in über 99 Sprachen, komplett offline. Kein Upload, keine Registrierung, keine Kosten. Powered by OpenAI Whisper und Transformers.js.
+date: 2026-02-13
+image: '/sexyvoice.png'
+---
+
+## Transkribiere Audio, Ohne Deinen Browser zu Verlassen
+
+Du hast eine Aufnahme — ein Interview, einen Vortrag, eine Sprachnotiz — und brauchst sie als Text. Die meisten Transkriptionsdienste wollen, dass du die Datei auf ihre Server hochlädst, ein Konto erstellst und eine Kreditkarte hinterlegst.
+
+Dieses Tool verlangt nichts davon. Ziehe eine Audiodatei in deinen Browser und erhalte ein Transkript. Alles läuft auf deinem Gerät. Kein Server berührt jemals dein Audio.
+
+[Transkribiere deine erste Datei kostenlos →](../tools/transcribe)
+
+## Warum Offline Wichtig Ist
+
+Wo landet dein Audio, wenn du es bei einem Transkriptionsdienst hochlädst? Ein entfernter Server verarbeitet es. Ein Unternehmen speichert es. Du hoffst, dass sie deine Aufnahmen — Meetings, medizinische Notizen, persönliche Memos — verantwortungsvoll behandeln.
+
+Unser Tool umgeht dieses Risiko vollständig. Es lädt ein kleines KI-Modell in deinen Browser herunter und verarbeitet alles auf deinem Rechner. Dein Audio verlässt niemals dein Gerät. Sobald das Modell im Cache gespeichert ist, funktioniert das Tool auch ohne Internetverbindung.
+
+Private Aufnahmen bleiben privat.
+
+## So Funktioniert Es
+
+Das Tool führt [OpenAI Whisper](https://openai.com/index/whisper/) direkt in deinem Browser über [Transformers.js](https://huggingface.co/docs/transformers.js) aus. Vier Schritte, kein Konto nötig:
+
+1. **Wähle dein Audio.** Ziehe eine Datei per Drag-and-Drop hinein oder nimm direkt mit deinem Mikrofon auf.
+2. **Wähle ein Modell.** Whisper Tiny (~40 MB) transkribiert schnell. Whisper Small (~250 MB) liefert höhere Genauigkeit.
+3. **Wähle eine Sprache.** Die mehrsprachigen Modelle decken über 99 Sprachen ab — Deutsch, Spanisch, Japanisch, Arabisch, Hindi und viele mehr.
+4. **Klicke auf Transkribieren.** Das Modell wird einmal geladen, im Browser zwischengespeichert und verarbeitet dein Audio in Sekunden.
+
+Du erhältst ein Transkript mit Zeitstempeln, das du mit einem Klick kopieren kannst.
+
+## Transkribieren oder Übersetzen
+
+Jedes mehrsprachige Modell bietet zwei Modi:
+
+- **Transkribieren** behält die Originalsprache bei. Eine japanische Aufnahme ergibt ein japanisches Transkript.
+- **Übersetzen** wandelt jede Sprache ins Englische um. Eine japanische Aufnahme ergibt ein englisches Transkript.
+
+Brauchst du eine originalgetreue Transkription? Nutze Transkribieren. Musst du eine fremdsprachige Aufnahme schnell verstehen? Nutze Übersetzen.
+
+## Was Es Kostet
+
+Nichts. Keine Nutzungslimits, keine Kreditkarte, kein Haken. Wir haben es als öffentliches Werkzeug gebaut — dieselbe Philosophie wie bei unserem [Audio-Formatkonverter](../tools/audio-converter).
+
+## Technische Details
+
+- **Modelle:** Whisper Tiny, Base und Small — optimiert für die Ausführung in deinem Browser
+- **Leistung:** Läuft auf Hintergrund-Threads, sodass die Seite während der Transkription reaktionsfähig bleibt
+- **Caching:** Das Modell wird einmal heruntergeladen und dein Browser speichert es für zukünftige Nutzung
+- **Formate:** MP3, WAV, M4A, OGG, WebM und alles andere, was dein Browser dekodieren kann
+- **Datenschutz:** Null Netzwerkanfragen während der Transkription. Vollständig offline nach dem ersten Modell-Download.
+
+## Leg Los
+
+Öffne das [Transkriptionstool](../tools/transcribe), lade eine Audiodatei hoch und überzeuge dich selbst. Keine Registrierung, kein Warten, keine Bedingungen.

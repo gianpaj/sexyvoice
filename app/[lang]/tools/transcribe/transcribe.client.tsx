@@ -1,8 +1,9 @@
 'use client';
 
 import { Languages } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -24,6 +25,8 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const [language, setLanguage] = useState<string>(lang);
   const [subtask, setSubtask] = useState('transcribe');
   const [hasAudio, setHasAudio] = useState(false);
+  const [audioFileUrl, setAudioFileUrl] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
   const audioRef = useRef<Float32Array | null>(null);
 
   const transcriber = useTranscriber();
@@ -35,6 +38,26 @@ export default function TranscribeClient({ lang, dict }: Props) {
     audioRef.current = audio;
     setHasAudio(true);
   }, []);
+
+  const handleFileSelected = useCallback(
+    (file: File) => {
+      if (audioFileUrl) {
+        URL.revokeObjectURL(audioFileUrl);
+      }
+      setAudioFileUrl(URL.createObjectURL(file));
+      setCurrentTime(null);
+    },
+    [audioFileUrl],
+  );
+
+  // Revoke blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (audioFileUrl) {
+        URL.revokeObjectURL(audioFileUrl);
+      }
+    };
+  }, [audioFileUrl]);
 
   const handleLoadAndTranscribe = useCallback(() => {
     if (!audioRef.current) return;
@@ -68,6 +91,17 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const isProcessing =
     transcriber.state === 'loading' || transcriber.state === 'transcribing';
 
+  const buttonLabel: Record<string, string> = {
+    loading: dict.loadingModel,
+    transcribing: dict.transcribing,
+    ready: dict.transcribeButton,
+    idle: dict.loadAndTranscribe,
+  };
+
+  const handleTimeUpdate = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
+
   return (
     <>
       <header className="mb-12 animate-fade-in text-center">
@@ -92,10 +126,11 @@ export default function TranscribeClient({ lang, dict }: Props) {
             dict={dict.audioInput}
             disabled={isProcessing}
             onAudioReady={handleAudioReady}
+            onFileSelected={handleFileSelected}
           />
 
           {hasAudio && (
-            <div className="animate-fade-in space-y-6">
+            <div className="flex animate-fade-in flex-col gap-8">
               <ModelSelector
                 dict={dict.modelSelector}
                 disabled={isProcessing}
@@ -129,25 +164,20 @@ export default function TranscribeClient({ lang, dict }: Props) {
               )}
 
               <TranscriptDisplay
+                currentTime={currentTime}
                 dict={dict.transcriptDisplay}
                 partialTranscript={transcriber.partialTranscript}
                 transcript={transcriber.transcript}
               />
 
-              <div className="flex gap-3">
+              <div className="flex items-center gap-3">
                 <Button
                   className="flex-1"
                   disabled={isProcessing}
                   onClick={handleLoadAndTranscribe}
                   size="lg"
                 >
-                  {transcriber.state === 'loading'
-                    ? dict.loadingModel
-                    : transcriber.state === 'transcribing'
-                      ? dict.transcribing
-                      : transcriber.state === 'ready'
-                        ? dict.transcribeButton
-                        : dict.loadAndTranscribe}
+                  {buttonLabel[transcriber.state]}
                 </Button>
 
                 {transcriber.transcript && (
@@ -160,6 +190,14 @@ export default function TranscribeClient({ lang, dict }: Props) {
                   </Button>
                 )}
               </div>
+
+              {transcriber.transcript && audioFileUrl && (
+                <AudioPlayer
+                  className="mx-auto w-1/4 md:w-1/6"
+                  onTimeUpdate={handleTimeUpdate}
+                  url={audioFileUrl}
+                />
+              )}
             </div>
           )}
         </div>

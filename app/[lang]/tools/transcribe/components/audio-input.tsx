@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   onAudioReady: (audio: Float32Array) => void;
+  onFileSelected?: (file: File) => void;
   disabled?: boolean;
   dict: (typeof langDict)['transcribe']['audioInput'];
 }
@@ -17,7 +18,7 @@ interface Props {
  * Resample audio to 16kHz mono Float32Array as required by Whisper.
  */
 async function decodeAudioFile(file: File): Promise<Float32Array> {
-  const audioContext = new AudioContext({ sampleRate: 16000 });
+  const audioContext = new AudioContext({ sampleRate: 16_000 });
   const arrayBuffer = await file.arrayBuffer();
   const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   // Take first channel (mono)
@@ -26,7 +27,12 @@ async function decodeAudioFile(file: File): Promise<Float32Array> {
   return audioData;
 }
 
-export function AudioInput({ onAudioReady, disabled = false, dict }: Props) {
+export function AudioInput({
+  onAudioReady,
+  onFileSelected,
+  disabled = false,
+  dict,
+}: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -36,6 +42,7 @@ export function AudioInput({ onAudioReady, disabled = false, dict }: Props) {
   const processFile = useCallback(
     async (file: File) => {
       setAudioFile(file);
+      onFileSelected?.(file);
       try {
         const audioData = await decodeAudioFile(file);
         onAudioReady(audioData);
@@ -43,7 +50,7 @@ export function AudioInput({ onAudioReady, disabled = false, dict }: Props) {
         setAudioFile(null);
       }
     },
-    [onAudioReady],
+    [onAudioReady, onFileSelected],
   );
 
   const handleDrop = useCallback(
@@ -86,7 +93,9 @@ export function AudioInput({ onAudioReady, disabled = false, dict }: Props) {
         const file = new File([blob], 'recording.webm', {
           type: 'audio/webm',
         });
-        stream.getTracks().forEach((track) => track.stop());
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
         await processFile(file);
       };
 
@@ -147,7 +156,9 @@ export function AudioInput({ onAudioReady, disabled = false, dict }: Props) {
             ? 'scale-[1.02] border-primary bg-primary/10 shadow-glow'
             : 'border-border hover:border-primary/50 hover:bg-muted/50',
         )}
-        onClick={() => document.getElementById('transcribe-file-input')?.click()}
+        onClick={() =>
+          document.getElementById('transcribe-file-input')?.click()
+        }
         onDragEnter={(e) => {
           e.preventDefault();
           e.stopPropagation();

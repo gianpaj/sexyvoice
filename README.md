@@ -39,6 +39,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
 - **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, German, French, Italian, Danish, Japanese, Korean, and more
+- **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -54,6 +55,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **International Support**: Full i18n implementation for global accessibility
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
+- **Public Tools**: Free utility tools including audio transcription and format conversion
 
 ## 🛠️ Tech Stack
 
@@ -201,6 +203,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm check-translations` | Validate translation files              |
 | `pnpm build:content`      | Build content layer                     |
 | `pnpm clean`              | Clean unused dependencies with Knip     |
+| `pnpm fixall`             | Run all fixes: lint, format, and check  |
 
 ### Testing
 
@@ -323,6 +326,8 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
 - ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
+- ✅ Audio transcription and translation tool
+- ✅ Real-time AI voice calls with configurable AI agents
 - 🚧 API access (coming soon)
 
 ### Supported Languages by these Google Gemini TTS Models

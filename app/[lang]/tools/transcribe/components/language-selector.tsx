@@ -129,7 +129,9 @@ export function LanguageSelector({
             <SelectItem value="translate">{dict.translate}</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-muted-foreground text-xs">{dict.taskHint}</p>
+        <p className="whitespace-pre text-muted-foreground text-xs">
+          {dict.taskHint}
+        </p>
       </div>
     </div>
   );
