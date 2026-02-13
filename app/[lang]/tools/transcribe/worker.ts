@@ -1,14 +1,19 @@
 import {
   type AutomaticSpeechRecognitionOutput,
+  type PretrainedModelOptions,
   pipeline,
 } from '@huggingface/transformers';
+
+// biome-ignore lint/suspicious/noExplicitAny: pipeline() return type union is too complex for TypeScript to represent
+type PipelineFn = (...args: Parameters<typeof pipeline>) => Promise<any>;
+const createPipeline = pipeline as PipelineFn;
 
 /**
  * Web Worker for running Whisper speech recognition inference
  * using @huggingface/transformers (Transformers.js).
  *
  * Communicates with the main thread via postMessage:
- * - Receives: { type: 'load', model, language, subtask, quantized }
+ * - Receives: { type: 'load', model, quantized }
  * - Receives: { type: 'transcribe', audio: Float32Array, language, subtask }
  * - Sends: { type: 'download', data: progress }
  * - Sends: { type: 'ready' }
@@ -41,19 +46,22 @@ async function loadModel({
   quantized: boolean;
 }) {
   try {
-    transcriber = await pipeline('automatic-speech-recognition', model, {
-      quantized,
-      dtype: 'fp32',
+    const options: PretrainedModelOptions = {
+      dtype: quantized ? 'q8' : 'fp32',
       progress_callback: (data: Record<string, unknown>) => {
         self.postMessage({ type: 'download', data });
       },
-    });
+    };
+    transcriber = await createPipeline(
+      'automatic-speech-recognition',
+      model,
+      options,
+    );
     self.postMessage({ type: 'ready' });
   } catch (error) {
     self.postMessage({
       type: 'error',
-      data:
-        error instanceof Error ? error.message : 'Failed to load the model',
+      data: error instanceof Error ? error.message : 'Failed to load the model',
     });
   }
 }
@@ -82,17 +90,18 @@ async function transcribe({
       chunk_length_s: 30,
       stride_length_s: 5,
       return_timestamps: true,
+      // callback_function is supported at runtime but not included in the
+      // generated type definitions for AutomaticSpeechRecognitionConfig.
       callback_function: (data: AutomaticSpeechRecognitionOutput) => {
         self.postMessage({ type: 'update', data });
       },
-    })) as AutomaticSpeechRecognitionOutput;
+    } as Record<string, unknown>)) as AutomaticSpeechRecognitionOutput;
 
     self.postMessage({ type: 'complete', data: result });
   } catch (error) {
     self.postMessage({
       type: 'error',
-      data:
-        error instanceof Error ? error.message : 'Transcription failed',
+      data: error instanceof Error ? error.message : 'Transcription failed',
     });
   }
 }

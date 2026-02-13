@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import {
   Select,
   SelectContent,
@@ -8,8 +10,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
+import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
 interface Props {
+  lang: Locale;
   value: string;
   onChange: (language: string) => void;
   subtask: string;
@@ -19,42 +24,43 @@ interface Props {
   dict: (typeof langDict)['transcribe']['languageSelector'];
 }
 
-export const WHISPER_LANGUAGES = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'fr', name: 'French' },
-  { code: 'de', name: 'German' },
-  { code: 'it', name: 'Italian' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'nl', name: 'Dutch' },
-  { code: 'da', name: 'Danish' },
-  { code: 'ru', name: 'Russian' },
-  { code: 'zh', name: 'Chinese' },
-  { code: 'ja', name: 'Japanese' },
-  { code: 'ko', name: 'Korean' },
-  { code: 'ar', name: 'Arabic' },
-  { code: 'hi', name: 'Hindi' },
-  { code: 'pl', name: 'Polish' },
-  { code: 'tr', name: 'Turkish' },
-  { code: 'vi', name: 'Vietnamese' },
-  { code: 'th', name: 'Thai' },
-  { code: 'uk', name: 'Ukrainian' },
-  { code: 'sv', name: 'Swedish' },
-  { code: 'fi', name: 'Finnish' },
-  { code: 'no', name: 'Norwegian' },
-  { code: 'el', name: 'Greek' },
-  { code: 'cs', name: 'Czech' },
-  { code: 'ro', name: 'Romanian' },
-  { code: 'hu', name: 'Hungarian' },
-  { code: 'he', name: 'Hebrew' },
-  { code: 'id', name: 'Indonesian' },
-  { code: 'ms', name: 'Malay' },
-  { code: 'ta', name: 'Tamil' },
-  { code: 'te', name: 'Telugu' },
-  { code: 'bn', name: 'Bengali' },
+export const WHISPER_LANGUAGE_CODES = [
+  'en',
+  'es',
+  'fr',
+  'de',
+  'it',
+  'pt',
+  'nl',
+  'da',
+  'ru',
+  'zh',
+  'ja',
+  'ko',
+  'ar',
+  'hi',
+  'pl',
+  'tr',
+  'vi',
+  'th',
+  'uk',
+  'sv',
+  'fi',
+  'no',
+  'el',
+  'cs',
+  'ro',
+  'hu',
+  'he',
+  'id',
+  'ms',
+  'ta',
+  'te',
+  'bn',
 ] as const;
 
 export function LanguageSelector({
+  lang,
   value,
   onChange,
   subtask,
@@ -63,6 +69,13 @@ export function LanguageSelector({
   isEnglishOnly,
   dict,
 }: Props) {
+  const translatedLanguages = useMemo(() => {
+    const all = getTranslatedLanguages(lang, WHISPER_LANGUAGE_CODES);
+    const current = all.find((l) => l.value === lang);
+    const rest = all.filter((l) => l.value !== lang);
+    return current ? [current, ...rest] : all;
+  }, [lang]);
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="space-y-2">
@@ -73,6 +86,7 @@ export function LanguageSelector({
           {dict.label}
         </label>
         <Select
+          defaultValue={lang}
           disabled={disabled || isEnglishOnly}
           onValueChange={onChange}
           value={isEnglishOnly ? 'en' : value}
@@ -81,9 +95,9 @@ export function LanguageSelector({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {WHISPER_LANGUAGES.map((lang) => (
-              <SelectItem key={lang.code} value={lang.code}>
-                {lang.name}
+            {translatedLanguages.map((lang) => (
+              <SelectItem key={lang.value} value={lang.value}>
+                {lang.label}
               </SelectItem>
             ))}
           </SelectContent>

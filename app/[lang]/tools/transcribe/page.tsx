@@ -18,7 +18,7 @@ export default async function TranscribePage({ params }: Props) {
     <div className="min-h-screen bg-background">
       <HeaderStatic dict={dictHeader} lang={lang} />
       <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
-        <TranscribeClient dict={dict} />
+        <TranscribeClient dict={dict} lang={lang} />
         <footer className="mt-12 text-center text-muted-foreground text-sm">
           <p>
             {dict.footer.poweredBy}{' '}

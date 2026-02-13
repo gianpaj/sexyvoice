@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { AudioInput } from './components/audio-input';
 import { LanguageSelector } from './components/language-selector';
 import { ModelSelector, WHISPER_MODELS } from './components/model-selector';
@@ -14,12 +15,13 @@ import { useTranscriber } from './hooks/use-transcriber';
 import './transcribe.css';
 
 interface Props {
+  lang: Locale;
   dict: (typeof langDict)['transcribe'];
 }
 
-export default function TranscribeClient({ dict }: Props) {
+export default function TranscribeClient({ lang, dict }: Props) {
   const [model, setModel] = useState('onnx-community/whisper-tiny');
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState<string>(lang);
   const [subtask, setSubtask] = useState('transcribe');
   const [hasAudio, setHasAudio] = useState(false);
   const audioRef = useRef<Float32Array | null>(null);
@@ -105,6 +107,7 @@ export default function TranscribeClient({ dict }: Props) {
                 dict={dict.languageSelector}
                 disabled={isProcessing}
                 isEnglishOnly={isEnglishOnly}
+                lang={lang}
                 onChange={setLanguage}
                 onSubtaskChange={setSubtask}
                 subtask={subtask}
