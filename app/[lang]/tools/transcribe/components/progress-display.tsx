@@ -1,0 +1,58 @@
+'use client';
+
+import { Loader2 } from 'lucide-react';
+
+import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type { DownloadProgress } from '../hooks/use-transcriber';
+
+interface Props {
+  progress: DownloadProgress[];
+  isTranscribing: boolean;
+  dict: (typeof langDict)['transcribe']['progress'];
+}
+
+export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
+  const downloadingFiles = progress.filter(
+    (p) => p.status === 'progress' && p.progress != null,
+  );
+  const totalProgress =
+    downloadingFiles.length > 0
+      ? downloadingFiles.reduce((sum, p) => sum + (p.progress ?? 0), 0) /
+        downloadingFiles.length
+      : 0;
+
+  const isDownloading = progress.some(
+    (p) => p.status === 'progress' || p.status === 'initiate',
+  );
+
+  if (!isDownloading && !isTranscribing) return null;
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+      <div className="flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        <span className="font-medium text-foreground text-sm">
+          {isTranscribing ? dict.transcribing : dict.downloading}
+        </span>
+      </div>
+
+      {isDownloading && (
+        <>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${Math.min(totalProgress, 100)}%` }}
+            />
+          </div>
+          <p className="text-muted-foreground text-xs">
+            {Math.round(totalProgress)}% — {dict.modelCacheHint}
+          </p>
+        </>
+      )}
+
+      {isTranscribing && (
+        <p className="text-muted-foreground text-xs">{dict.processingHint}</p>
+      )}
+    </div>
+  );
+}

@@ -433,7 +433,8 @@
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
     "/dashboard/usage": "Utilisation",
-    "/tools/audio-converter": "Convertisseur audio gratuit"
+    "/tools/audio-converter": "Convertisseur audio gratuit",
+    "/tools/transcribe": "Transcription audio gratuite"
   },
   "sidebar": {
     "profile": "Profil",
@@ -501,7 +502,8 @@
     "privacyPolicy": "Politique de confidentialité",
     "termsAndConditions": "Conditions générales",
     "copyright": "SexyVoice.ai. Tous droits réservés.",
-    "audioConverter": "Convertisseur audio gratuit"
+    "audioConverter": "Convertisseur audio gratuit",
+    "transcribe": "Transcription audio gratuite"
   },
   "promos": {
     "halloweenBanner": {
@@ -577,6 +579,54 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Aucun téléchargement, 100% dans le navigateur",
       "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
+    }
+  },
+  "transcribe": {
+    "title": "Transcription audio gratuite",
+    "subtitle": "Transcrivez des fichiers audio en texte hors ligne dans votre navigateur",
+    "tagline": " – gratuit et privé",
+    "loadingModel": "Chargement du modèle...",
+    "transcribing": "Transcription en cours...",
+    "transcribeButton": "Transcrire",
+    "loadAndTranscribe": "Charger le modèle et transcrire",
+    "reset": "Réinitialiser",
+    "audioInput": {
+      "dropTitle": "Déposez votre fichier audio ici",
+      "dropDescription": "ou cliquez pour parcourir",
+      "or": "ou",
+      "startRecording": "Enregistrer avec le microphone",
+      "stopRecording": "Arrêter l'enregistrement",
+      "remove": "Supprimer"
+    },
+    "modelSelector": {
+      "label": "Modèle",
+      "hint": "Les modèles plus grands sont plus précis mais prennent plus de temps à télécharger et à exécuter."
+    },
+    "languageSelector": {
+      "label": "Langue",
+      "taskLabel": "Tâche",
+      "transcribe": "Transcrire",
+      "translate": "Traduire en anglais",
+      "englishOnlyHint": "Ce modèle ne prend en charge que l'anglais. Sélectionnez un modèle multilingue pour d'autres langues.",
+      "taskHint": "Transcrire conserve la langue d'origine. Traduire convertit toute langue en anglais."
+    },
+    "progress": {
+      "downloading": "Téléchargement du modèle...",
+      "transcribing": "Transcription de l'audio...",
+      "modelCacheHint": "Le modèle est mis en cache dans votre navigateur pour une utilisation future",
+      "processingHint": "Traitement audio local dans votre navigateur..."
+    },
+    "transcriptDisplay": {
+      "title": "Transcription",
+      "copy": "Copier",
+      "copied": "Copié !"
+    },
+    "footer": {
+      "poweredBy": "Propulsé par",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Aucun téléchargement, 100% dans le navigateur",
+      "madeWith": "Fait avec ♡ par SexyVoice.ai"
     }
   }
 }

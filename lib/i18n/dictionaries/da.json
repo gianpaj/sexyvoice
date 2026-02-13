@@ -433,7 +433,8 @@
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
     "/dashboard/usage": "Forbrug",
-    "/tools/audio-converter": "Gratis lydkonverter"
+    "/tools/audio-converter": "Gratis lydkonverter",
+    "/tools/transcribe": "Gratis lydtransskription"
   },
   "sidebar": {
     "profile": "Profil",
@@ -501,7 +502,8 @@
     "privacyPolicy": "Privatlivspolitik",
     "termsAndConditions": "Vilkår og betingelser",
     "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
-    "audioConverter": "Gratis lydkonverter"
+    "audioConverter": "Gratis lydkonverter",
+    "transcribe": "Gratis lydtransskription"
   },
   "promos": {
     "halloweenBanner": {
@@ -577,6 +579,54 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Ingen uploads, 100% i browseren",
       "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve"
+    }
+  },
+  "transcribe": {
+    "title": "Gratis lydtransskription",
+    "subtitle": "Transskriber lydfiler til tekst offline i din browser",
+    "tagline": " – gratis & privat",
+    "loadingModel": "Indlæser model...",
+    "transcribing": "Transskriberer...",
+    "transcribeButton": "Transskriber",
+    "loadAndTranscribe": "Indlæs model & transskriber",
+    "reset": "Nulstil",
+    "audioInput": {
+      "dropTitle": "Slip din lydfil her",
+      "dropDescription": "eller klik for at gennemse",
+      "or": "eller",
+      "startRecording": "Optag med mikrofon",
+      "stopRecording": "Stop optagelse",
+      "remove": "Fjern"
+    },
+    "modelSelector": {
+      "label": "Model",
+      "hint": "Større modeller er mere nøjagtige, men tager længere tid at downloade og køre."
+    },
+    "languageSelector": {
+      "label": "Sprog",
+      "taskLabel": "Opgave",
+      "transcribe": "Transskriber",
+      "translate": "Oversæt til engelsk",
+      "englishOnlyHint": "Denne model understøtter kun engelsk. Vælg en flersproget model for andre sprog.",
+      "taskHint": "Transskriber bevarer originalsproget. Oversæt konverterer ethvert sprog til engelsk."
+    },
+    "progress": {
+      "downloading": "Downloader model...",
+      "transcribing": "Transskriberer lyd...",
+      "modelCacheHint": "Modellen gemmes i din browser til fremtidig brug",
+      "processingHint": "Behandler lyd lokalt i din browser..."
+    },
+    "transcriptDisplay": {
+      "title": "Transskription",
+      "copy": "Kopiér",
+      "copied": "Kopieret!"
+    },
+    "footer": {
+      "poweredBy": "Drevet af",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Ingen uploads, 100% i browseren",
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai"
     }
   }
 }

@@ -36,6 +36,7 @@
     "@ffmpeg/util": "^0.12.2",
     "@formatjs/intl-localematcher": "^0.5.10",
     "@google/genai": "1.19.0",
+    "@huggingface/transformers": "^3.4.1",
     "@hookform/resolvers": "^5.2.1",
     "@iconify-json/logos": "^1.2.4",
     "@iconify/tailwind": "^1.2.0",
