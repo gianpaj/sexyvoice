@@ -392,9 +392,10 @@
     "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden."
   },
   "profile": {
-    "title": "Profileinstellungen",
+    "title": "Konto",
     "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Präferenzen",
     "notLoggedIn": "Nicht angemeldet",
+    "logOut": "Abmelden",
     "tabs": {
       "profile": "Profil",
       "security": "Sicherheit"
@@ -403,6 +404,33 @@
       "title": "Persönliche Informationen",
       "description": "Aktualisieren Sie Ihre Profilinformationen und Ihren Avatar"
     },
+    "myPlan": {
+      "title": "Mein Plan",
+      "creativeEnergy": "Kreative Energie",
+      "energyReplenish": "Ihre tägliche Energie wird in __HOURS__h aufgeladen.",
+      "freePlan": "Kostenloser Plan",
+      "upgrade": "Upgraden"
+    },
+    "login": {
+      "title": "Anmeldung",
+      "password": "Passwort",
+      "resetPassword": "Passwort zurücksetzen",
+      "reset": "Zurücksetzen",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "Noch nicht verbunden",
+      "connect": "Verbinden",
+      "remove": "Entfernen"
+    },
+    "support": {
+      "title": "Support",
+      "faq": "Häufig gestellte Fragen",
+      "faqDescription": "Brauchen Sie Hilfe? Beginnen Sie hier",
+      "open": "Öffnen",
+      "contactSupport": "Support kontaktieren",
+      "contactDescription": "Kontaktieren Sie das Reve-Team",
+      "contact": "Kontakt"
+    },
     "security": {
       "title": "Sicherheitseinstellungen",
       "description": "Verwalten Sie Ihre E-Mail und Ihr Passwort"
@@ -410,13 +438,18 @@
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
-        "button": "Konto löschen",
+        "button": "Mein Konto löschen",
         "confirmTitle": "Sind Sie sich absolut sicher?",
         "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht und Ihre Daten von unseren Servern entfernt.",
         "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
         "cancel": "Abbrechen",
         "continue": "Weiter"
       }
+    },
+    "links": {
+      "privacyPolicy": "Datenschutzrichtlinie",
+      "termsOfService": "Nutzungsbedingungen",
+      "enableApiAccess": "API-Zugang aktivieren"
     }
   },
   "pages": {

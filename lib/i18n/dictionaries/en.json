@@ -392,9 +392,10 @@
     "legalConsentCheckbox": "By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes."
   },
   "profile": {
-    "title": "Profile Settings",
+    "title": "Account",
     "subtitle": "Manage your account settings and preferences",
     "notLoggedIn": "Not logged in",
+    "logOut": "Log out",
     "tabs": {
       "profile": "Profile",
       "security": "Security"
@@ -403,6 +404,33 @@
       "title": "Personal Information",
       "description": "Update your profile information and avatar"
     },
+    "myPlan": {
+      "title": "My plan",
+      "creativeEnergy": "Creative energy",
+      "energyReplenish": "Your daily energy will replenish in __HOURS__h.",
+      "freePlan": "Free plan",
+      "upgrade": "Upgrade"
+    },
+    "login": {
+      "title": "Login",
+      "password": "Password",
+      "resetPassword": "Reset your password",
+      "reset": "Reset",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "Not yet connected",
+      "connect": "Connect",
+      "remove": "Remove"
+    },
+    "support": {
+      "title": "Support",
+      "faq": "Frequently asked questions",
+      "faqDescription": "Need help? Start here",
+      "open": "Open",
+      "contactSupport": "Contact support",
+      "contactDescription": "Get in touch with the Reve team",
+      "contact": "Contact"
+    },
     "security": {
       "title": "Security Settings",
       "description": "Manage your email and password"
@@ -410,13 +438,18 @@
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
-        "button": "Delete account",
+        "button": "Delete my account",
         "confirmTitle": "Are you absolutely sure?",
         "confirmDescription": "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
         "continue": "Continue"
       }
+    },
+    "links": {
+      "privacyPolicy": "Privacy policy",
+      "termsOfService": "Terms of Service",
+      "enableApiAccess": "Enable API access"
     }
   },
   "pages": {
