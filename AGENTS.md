@@ -46,6 +46,9 @@ app/[lang]/                    # Internationalized routes
 │       ├── call/              # Real-time AI voice call interface
 │       ├── usage/             # Usage statistics dashboard
 │       └── ...                # Other dashboard pages
+├── tools/                     # Public utility tools
+│   ├── audio-converter/       # Audio format conversion tool
+│   └── transcribe/            # Audio transcription & translation tool
 ├── actions/                   # Server actions (promos, stripe)
 ├── blog/[slug]/               # Dynamic blog post pages
 └── page.tsx                   # Landing page
@@ -357,6 +360,7 @@ Based on TODO.md, current priorities include:
 ### Recently Completed Features
 - **Real-time AI Voice Calls**: LiveKit-based voice calling with configurable AI agents
 - **Usage Statistics Dashboard**: `/dashboard/usage` with detailed usage tracking and analytics
+- **Audio Transcription & Translation**: `/tools/transcribe` page for offline audio transcription in 99+ languages with optional translation to English using Whisper AI
 
 ## Claude-Specific Instructions
 

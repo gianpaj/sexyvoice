@@ -23,6 +23,7 @@ import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import { VoiceId } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   Select,
@@ -80,17 +81,14 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
     searchParams.get('showInstruction') === '' ||
     searchParams.get('showInstruction') === 'true';
 
-  const translatedLanguages = useMemo(() => {
-    const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
-    return callLanguageCodes
-      .map(({ value }) => ({
-        value,
-        label:
-          `${languageNames.of(value)?.charAt(0).toUpperCase()}${languageNames.of(value)?.slice(1)}` ||
-          value,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label, lang));
-  }, [lang]);
+  const translatedLanguages = useMemo(
+    () =>
+      getTranslatedLanguages(
+        lang,
+        callLanguageCodes.map(({ value }) => value),
+      ),
+    [lang],
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
   const updateConfig = useCallback(async () => {
