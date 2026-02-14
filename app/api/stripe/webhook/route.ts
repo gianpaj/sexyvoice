@@ -263,6 +263,7 @@ async function handleCheckoutSessionCompleted(
           credits = TOPUP_PACKAGES.standard.credits;
           dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
           break;
+        // TODO: use `pro_monthly` look up key
         case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
           credits = TOPUP_PACKAGES.pro.credits;
           dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
@@ -377,6 +378,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         credits = TOPUP_PACKAGES.standard.credits;
         dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
         break;
+      // FIXME: change env var name to STRIPE_SUBSCRIPTION_PRO_PRICE_ID
       case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
         credits = TOPUP_PACKAGES.pro.credits;
         dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;

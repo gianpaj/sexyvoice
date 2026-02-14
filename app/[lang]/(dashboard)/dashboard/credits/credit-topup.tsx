@@ -72,7 +72,7 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
       name: pPlans.pro.name,
       price: TOPUP_PACKAGES.pro.dollarAmount,
       pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.333,
+      saveFromPrevPlanPer1kCredits: 0.15,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
       creditsText: pPlans.x_credits.replace(
@@ -176,7 +176,7 @@ function PlanCard({
                 className="bg-green-900 text-green-100"
                 variant="secondary"
               >
-                20% cheaper
+                37.5% cheaper
               </Badge>
             )
           )}
