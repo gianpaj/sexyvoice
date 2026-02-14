@@ -28,6 +28,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const [audioFileUrl, setAudioFileUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<number | null>(null);
   const audioRef = useRef<Float32Array | null>(null);
+  const loadedModelRef = useRef<string | null>(null);
 
   const transcriber = useTranscriber();
 
@@ -59,10 +60,16 @@ export default function TranscribeClient({ lang, dict }: Props) {
     };
   }, [audioFileUrl]);
 
+  const handleRemoveAudio = useCallback(() => {
+    audioRef.current = null;
+    setHasAudio(false);
+    transcriber.reset();
+  }, [transcriber]);
+
   const handleLoadAndTranscribe = useCallback(() => {
     if (!audioRef.current) return;
 
-    if (transcriber.state === 'idle') {
+    if (transcriber.state === 'idle' || loadedModelRef.current !== model) {
       transcriber.loadModel(model, true);
     } else if (transcriber.state === 'ready') {
       transcriber.transcribe(
@@ -74,19 +81,20 @@ export default function TranscribeClient({ lang, dict }: Props) {
   }, [transcriber, model, language, subtask, isEnglishOnly]);
 
   // Auto-transcribe when model becomes ready
-  const prevStateRef = useRef(transcriber.state);
-  if (
-    prevStateRef.current === 'loading' &&
-    transcriber.state === 'ready' &&
-    audioRef.current
-  ) {
-    transcriber.transcribe(
-      audioRef.current,
-      isEnglishOnly ? 'en' : language,
-      isEnglishOnly ? 'transcribe' : subtask,
-    );
-  }
-  prevStateRef.current = transcriber.state;
+  useEffect(() => {
+    if (
+      transcriber.state === 'ready' &&
+      audioRef.current &&
+      loadedModelRef.current !== model
+    ) {
+      loadedModelRef.current = model;
+      transcriber.transcribe(
+        audioRef.current,
+        isEnglishOnly ? 'en' : language,
+        isEnglishOnly ? 'transcribe' : subtask,
+      );
+    }
+  }, [transcriber, transcriber.state, model, language, subtask, isEnglishOnly]);
 
   const isProcessing =
     transcriber.state === 'loading' || transcriber.state === 'transcribing';
@@ -127,6 +135,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
             disabled={isProcessing}
             onAudioReady={handleAudioReady}
             onFileSelected={handleFileSelected}
+            onRemove={handleRemoveAudio}
           />
 
           {hasAudio && (

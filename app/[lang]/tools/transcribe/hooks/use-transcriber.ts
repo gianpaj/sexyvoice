@@ -47,10 +47,9 @@ export function useTranscriber(): UseTranscriberReturn {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const worker = new Worker(
-      new URL('../worker.ts', import.meta.url),
-      { type: 'module' },
-    );
+    const worker = new Worker(new URL('../worker.ts', import.meta.url), {
+      type: 'module',
+    });
 
     worker.addEventListener('message', (event) => {
       const { type, data } = event.data;
@@ -84,6 +83,9 @@ export function useTranscriber(): UseTranscriberReturn {
           break;
         case 'error':
           setState('idle');
+          setDownloadProgress([]);
+          setTranscript(null);
+          setPartialTranscript('');
           setError(data);
           break;
       }

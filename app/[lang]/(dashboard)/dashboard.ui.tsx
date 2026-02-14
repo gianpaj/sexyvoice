@@ -151,23 +151,24 @@ export default function DashboardUI({
           </SidebarFooter>
         </Sidebar>
 
-        <PromoBanner
-          ariaLabelDismiss={promoDict.ariaLabelDismiss}
-          countdown={
-            process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-              ? {
-                  enabled: true,
-                  endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                  labels: promoDict.countdown,
-                }
-              : undefined
-          }
-          ctaLink={`/${lang}/dashboard/credits`}
-          ctaText={promoDict.ctaLoggedIn}
-          inDashboard
-          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-          text={promoDict.text}
-        />
+        {promoDict &&
+          <PromoBanner
+            ariaLabelDismiss={promoDict.ariaLabelDismiss}
+            countdown={
+              process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+                ? {
+                    enabled: true,
+                    endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                    labels: promoDict.countdown,
+                  }
+                : undefined
+            }
+            ctaLink={`/${lang}/dashboard/credits`}
+            ctaText={promoDict.ctaLoggedIn}
+            inDashboard
+            isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+            text={promoDict.text}
+        />}
         <div className="flex w-full flex-1 flex-col">
           <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
             <SidebarTrigger className="lg:hidden" />

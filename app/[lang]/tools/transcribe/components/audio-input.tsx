@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 interface Props {
   onAudioReady: (audio: Float32Array) => void;
   onFileSelected?: (file: File) => void;
+  onRemove?: () => void;
   disabled?: boolean;
   dict: (typeof langDict)['transcribe']['audioInput'];
 }
@@ -19,17 +20,21 @@ interface Props {
  */
 async function decodeAudioFile(file: File): Promise<Float32Array> {
   const audioContext = new AudioContext({ sampleRate: 16_000 });
-  const arrayBuffer = await file.arrayBuffer();
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  // Take first channel (mono)
-  const audioData = audioBuffer.getChannelData(0);
-  await audioContext.close();
-  return audioData;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    // Take first channel (mono)
+    const audioData = audioBuffer.getChannelData(0);
+    return audioData;
+  } finally {
+    await audioContext.close();
+  }
 }
 
 export function AudioInput({
   onAudioReady,
   onFileSelected,
+  onRemove,
   disabled = false,
   dict,
 }: Props) {
@@ -46,8 +51,9 @@ export function AudioInput({
       try {
         const audioData = await decodeAudioFile(file);
         onAudioReady(audioData);
-      } catch {
+      } catch (error) {
         setAudioFile(null);
+        console.error('Failed to decode audio file:', error);
       }
     },
     [onAudioReady, onFileSelected],
@@ -101,8 +107,8 @@ export function AudioInput({
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch {
-      // Microphone access denied or not available
+    } catch (error) {
+      console.error('Microphone access denied or not available:', error);
     }
   }, [processFile]);
 
@@ -115,7 +121,8 @@ export function AudioInput({
 
   const handleRemove = useCallback(() => {
     setAudioFile(null);
-  }, []);
+    onRemove?.();
+  }, [onRemove]);
 
   if (audioFile) {
     return (
@@ -156,27 +163,56 @@ export function AudioInput({
             ? 'scale-[1.02] border-primary bg-primary/10 shadow-glow'
             : 'border-border hover:border-primary/50 hover:bg-muted/50',
         )}
-        onClick={() =>
-          document.getElementById('transcribe-file-input')?.click()
-        }
+        onClick={(e) => {
+          if (disabled) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          document.getElementById('transcribe-file-input')?.click();
+        }}
         onDragEnter={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (disabled) {
+            return;
+          }
           if (e.dataTransfer.items?.length) setIsDragging(true);
         }}
         onDragLeave={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (disabled) {
+            return;
+          }
           setIsDragging(false);
         }}
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (disabled) {
+            return;
+          }
         }}
-        onDrop={handleDrop}
-        onKeyDown={() =>
-          document.getElementById('transcribe-file-input')?.click()
-        }
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (disabled) {
+            return;
+          }
+          handleDrop(e);
+        }}
+        onKeyDown={(e) => {
+          if (disabled) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            document.getElementById('transcribe-file-input')?.click();
+          }
+        }}
         role="button"
         tabIndex={0}
       >
