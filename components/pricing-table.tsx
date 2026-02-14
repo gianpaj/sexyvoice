@@ -104,7 +104,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
                       className="bg-green-900 text-green-100"
                       variant="secondary"
                     >
-                      20% cheaper
+                      37.5% cheaper
                     </Badge>
                   )
                 )}
