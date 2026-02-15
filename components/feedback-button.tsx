@@ -1,26 +1,15 @@
 'use client';
 
-import { AlertTriangle, Lightbulb, Upload } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useState, useRef } from 'react';
-import { Crisp } from 'crisp-sdk-web';
 
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
@@ -29,176 +18,183 @@ interface FeedbackButtonProps {
   dict: {
     feedback: {
       button: string;
-      whatWouldYouLikeToShare: string;
-      issue: {
-        title: string;
-        description: string;
-      };
-      idea: {
-        title: string;
-        description: string;
-      };
       modal: {
         title: string;
+        question: string;
         placeholder: string;
-        attachScreenshot: string;
-        technicalIssue: string;
-        support: string;
-        docs: string;
+        uploadHint: string;
         cancel: string;
-        send: string;
+        submit: string;
+        successMessage: string;
+        errorMessage: string;
       };
     };
   };
 }
 
 export default function FeedbackButton({ lang, dict }: FeedbackButtonProps) {
-  const [isIdeaModalOpen, setIsIdeaModalOpen] = useState(false);
-  const [ideaText, setIdeaText] = useState('');
-  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleIssueClick = () => {
-    if (typeof window !== 'undefined') {
-      Crisp.chat.open();
-    }
-  };
-
-  const handleIdeaClick = () => {
-    setIsIdeaModalOpen(true);
-  };
-
-  const handleScreenshotUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshotUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      setScreenshot(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
     }
   };
 
-  const handleSendIdea = () => {
-    // Here you could implement sending the idea via API
-    // For now, we'll just close the modal
-    console.log('Sending idea:', { ideaText, screenshot });
-    setIsIdeaModalOpen(false);
-    setIdeaText('');
-    setScreenshot(null);
+  const removeScreenshot = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  const openSupportChat = () => {
-    if (typeof window !== 'undefined') {
-      Crisp.chat.open();
+  const handleClose = () => {
+    setIsOpen(false);
+    setMessage('');
+    removeScreenshot();
+    setSubmitStatus('idle');
+  };
+
+  const handleSubmit = async () => {
+    if (!message.trim()) return;
+
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message.trim(),
+          type: 'feedback',
+          language: lang,
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setTimeout(() => {
+          handleClose();
+        }, 1500);
+      } else {
+        setSubmitStatus('error');
+      }
+    } catch {
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="text-sm">
-            {dict.feedback.button}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="w-80 p-4 bg-card border-border"
-        >
-          <div className="text-sm font-medium mb-4">
-            {dict.feedback.whatWouldYouLikeToShare}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={handleIssueClick}
-              className="flex flex-col items-center justify-center p-4 rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
-            >
-              <AlertTriangle className="h-8 w-8 text-red-500 mb-2" />
-              <div className="font-medium">{dict.feedback.issue.title}</div>
-              <div className="text-xs text-muted-foreground text-center">
-                {dict.feedback.issue.description}
-              </div>
-            </button>
-            <button
-              onClick={handleIdeaClick}
-              className="flex flex-col items-center justify-center p-4 rounded-lg border border-green-500 bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900 transition-colors"
-            >
-              <Lightbulb className="h-8 w-8 text-yellow-500 mb-2" />
-              <div className="font-medium">{dict.feedback.idea.title}</div>
-              <div className="text-xs text-muted-foreground text-center">
-                {dict.feedback.idea.description}
-              </div>
-            </button>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="outline"
+        className="text-sm"
+        onClick={() => setIsOpen(true)}
+      >
+        {dict.feedback.button}
+      </Button>
 
-      <AlertDialog open={isIdeaModalOpen} onOpenChange={setIsIdeaModalOpen}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{dict.feedback.modal.title}</AlertDialogTitle>
-          </AlertDialogHeader>
-          
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dict.feedback.modal.title}</DialogTitle>
+          </DialogHeader>
+
           <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {dict.feedback.modal.question}
+            </p>
+
             <Textarea
               placeholder={dict.feedback.modal.placeholder}
-              value={ideaText}
-              onChange={(e) => setIdeaText(e.target.value)}
-              className="min-h-[100px]"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="min-h-[120px] resize-none"
             />
-            
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="text-xs"
-              >
-                <Upload className="h-4 w-4 mr-1" />
-                {dict.feedback.modal.attachScreenshot}
-              </Button>
-              {screenshot && (
-                <span className="text-xs text-muted-foreground">
-                  {screenshot.name}
-                </span>
-              )}
+
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                {dict.feedback.modal.uploadHint}
+              </p>
+
+              <div className="flex items-start gap-2">
+                {previewUrl ? (
+                  <div className="relative w-20 h-20 rounded-md border border-border overflow-hidden">
+                    <img
+                      src={previewUrl}
+                      alt="Screenshot preview"
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeScreenshot}
+                      className="absolute top-0.5 right-0.5 bg-background/80 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center justify-center w-20 h-20 rounded-md border border-dashed border-border hover:border-foreground/50 transition-colors"
+                  >
+                    <Plus className="h-6 w-6 text-muted-foreground" />
+                  </button>
+                )}
+              </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleScreenshotUpload}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
-            
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleScreenshotUpload}
-              accept="image/*"
-              className="hidden"
-            />
-            
-            <div className="text-xs text-muted-foreground">
-              {dict.feedback.modal.technicalIssue}
-              <br />
-              <button
-                onClick={openSupportChat}
-                className="text-primary hover:underline"
-              >
-                {dict.feedback.modal.support}
-              </button>
-              {' '}or{' '}
-              <a
-                href="https://sexyvoice.com/docs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                {dict.feedback.modal.docs}
-              </a>
-              .
-            </div>
+
+            {submitStatus === 'success' && (
+              <p className="text-sm text-green-600">
+                {dict.feedback.modal.successMessage}
+              </p>
+            )}
+            {submitStatus === 'error' && (
+              <p className="text-sm text-red-600">
+                {dict.feedback.modal.errorMessage}
+              </p>
+            )}
           </div>
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel>{dict.feedback.modal.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleSendIdea}>
-              {dict.feedback.modal.send}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={handleClose}>
+              {dict.feedback.modal.cancel}
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!message.trim() || isSubmitting}
+            >
+              {dict.feedback.modal.submit}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

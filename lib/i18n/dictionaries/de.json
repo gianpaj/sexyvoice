@@ -308,24 +308,15 @@
   },
   "feedback": {
     "button": "Feedback",
-    "whatWouldYouLikeToShare": "Was möchten Sie teilen?",
-    "issue": {
-      "title": "Problem",
-      "description": "mit meinem Projekt"
-    },
-    "idea": {
-      "title": "Idee",
-      "description": "zur Verbesserung von SexyVoice"
-    },
     "modal": {
-      "title": "Was möchten Sie teilen?",
-      "placeholder": "Beschreiben Sie Ihre Idee oder Ihren Vorschlag...",
-      "attachScreenshot": "Screenshot anhängen",
-      "technicalIssue": "Haben Sie ein technisches Problem?",
-      "support": "Support",
-      "docs": "Dokumentation",
+      "title": "Benutzer-Feedback",
+      "question": "Welche Probleme sind Ihnen bei der Nutzung aufgefallen?",
+      "placeholder": "Wir freuen uns über Ihre Gedanken",
+      "uploadHint": "Sie können auch Bilder hochladen oder einfügen.",
       "cancel": "Abbrechen",
-      "send": "Senden"
+      "submit": "Absenden",
+      "successMessage": "Vielen Dank für Ihr Feedback!",
+      "errorMessage": "Feedback konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
     }
   }
 }

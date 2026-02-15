@@ -154,6 +154,44 @@ declare type Database = {
           },
         ];
       };
+      feedback: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          type: string;
+          message: string;
+          screenshot_url: string | null;
+          language: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          type?: string;
+          message: string;
+          screenshot_url?: string | null;
+          language?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          type?: string;
+          message?: string;
+          screenshot_url?: string | null;
+          language?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'feedback_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -392,3 +430,5 @@ declare type Credit = Database['public']['Tables']['credits']['Row'];
 declare type Profile = Database['public']['Tables']['profiles']['Row'];
 
 declare type Voice = Database['public']['Tables']['voices']['Row'];
+
+declare type Feedback = Database['public']['Tables']['feedback']['Row'];
