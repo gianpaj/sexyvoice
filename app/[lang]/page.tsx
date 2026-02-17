@@ -85,22 +85,24 @@ export default async function LandingPage(props: {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-      <PromoBanner
-        ariaLabelDismiss={promoDict.ariaLabelDismiss}
-        countdown={
-          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-            ? {
-                enabled: true,
-                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: promoDict.countdown,
-              }
-            : undefined
-        }
-        ctaLink={`/${lang}/signup`}
-        ctaText={promoDict.ctaLoggedOut}
-        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={promoDict.text}
-      />
+      {promoDict && (
+        <PromoBanner
+          ariaLabelDismiss={promoDict.ariaLabelDismiss}
+          countdown={
+            process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
+              ? {
+                  enabled: true,
+                  endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+                  labels: promoDict.countdown,
+                }
+              : undefined
+          }
+          ctaLink={`/${lang}/signup`}
+          ctaText={promoDict.ctaLoggedOut}
+          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+          text={promoDict.text}
+        />
+      )}
       <HeaderStatic dict={dictHeader} lang={lang} />
       <main id="main-content">
         <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
