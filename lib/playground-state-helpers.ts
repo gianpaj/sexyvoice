@@ -1,15 +1,10 @@
 import { defaultSessionConfig } from '@/data/default-config';
 import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
 import { getPresetInstructions } from '@/data/preset-instructions';
-import {
-  defaultPresets as baseDefaultPresets,
-  type Preset,
-} from '@/data/presets';
+import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
 
-export const createPlaygroundStateHelpers = (
-  defaultPresets: Preset[] = baseDefaultPresets,
-) => {
+export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
     getSelectedPreset: (state: PlaygroundState) =>
       [...defaultPresets, ...state.customCharacters].find(

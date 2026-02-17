@@ -6,7 +6,6 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
-import { VoiceId } from '@/data/voices';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
@@ -19,7 +18,7 @@ interface TokenGeneratorData {
   wsUrl: string;
   token: string;
   pgState: PlaygroundState;
-  voice: VoiceId;
+  voice: string;
   dict: (typeof langDict)['call'];
   disconnect: () => Promise<void>;
   connect: ConnectFn;
@@ -40,8 +39,9 @@ export const ConnectionProvider = ({
     wsUrl: string;
     token: string;
     shouldConnect: boolean;
-    voice: VoiceId;
-  }>({ wsUrl: '', token: '', shouldConnect: false, voice: VoiceId.ARA });
+    voice: string;
+    // FIXME ? should we use the voiceId?
+  }>({ wsUrl: '', token: '', shouldConnect: false, voice: 'Ara' });
 
   const queryClient = useQueryClient();
   const supabase = useSupabaseBrowser();

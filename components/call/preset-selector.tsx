@@ -2,9 +2,8 @@
 
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -25,8 +24,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { PremiumActionButton } from '@/components/ui/premium-action-button';
+import { defaultSessionConfig } from '@/data/default-config';
+import type { Preset } from '@/data/presets';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+
+const MAX_CUSTOM_CHARACTERS = 10;
 
 function getInitials(name: string): string {
   return name
@@ -51,8 +55,8 @@ function AvatarButton({
 }) {
   return (
     <button
-      aria-pressed={isSelected}
       className="group flex flex-col items-center gap-2"
+      data-selected={isSelected ? 'true' : 'false'}
       disabled={isConnected}
       onClick={onClick}
       type="button"
@@ -110,16 +114,65 @@ const gridColsClass: Record<number, string> = {
   6: 'grid-cols-6',
 };
 
-export function PresetSelector() {
+interface PresetSelectorProps {
+  isPaidUser?: boolean;
+}
+
+function mapApiCharacterToPreset(character: {
+  id: string;
+  name: string;
+  localized_descriptions?: Record<string, string> | null;
+  image?: string | null;
+  session_config?: {
+    model?: string;
+    voice?: string;
+    temperature?: number;
+    maxOutputTokens?: number | null;
+    max_output_tokens?: number | null;
+    grokImageEnabled?: boolean;
+    grok_image_enabled?: boolean;
+  } | null;
+  sort_order?: number;
+  is_public?: boolean;
+  voice_id?: string;
+  voices?: { name?: string | null; sample_url?: string | null } | null;
+  prompt_id?: string;
+  prompts?: {
+    prompt?: string | null;
+    localized_prompts?: Record<string, string> | null;
+  } | null;
+}): Preset {
+  const sessionConfig = character.session_config ?? {};
+
+  return {
+    id: character.id,
+    name: character.name,
+    localizedDescriptions: character.localized_descriptions ?? {},
+    image: character.image ?? undefined,
+    instructions: character.prompts?.prompt ?? '',
+    localizedInstructions: character.prompts?.localized_prompts ?? {},
+    sessionConfig: {
+      model: (sessionConfig.model ?? 'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+      voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
+      temperature: sessionConfig.temperature ?? 0.8,
+      maxOutputTokens:
+        sessionConfig.maxOutputTokens ?? sessionConfig.max_output_tokens ?? null,
+      grokImageEnabled:
+        sessionConfig.grokImageEnabled ?? sessionConfig.grok_image_enabled ?? false,
+    },
+    promptId: character.prompt_id,
+    voiceId: character.voice_id,
+    voiceName: character.voices?.name ?? undefined,
+    voiceSampleUrl: character.voices?.sample_url ?? undefined,
+    isPublic: character.is_public,
+  };
+}
+
+export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
-
-  const searchParams = useSearchParams();
-  const showInstruction =
-    searchParams.get('showInstruction') === '' ||
-    searchParams.get('showInstruction') === 'true';
 
   const [lastPresetId, setLastPresetId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -135,6 +188,7 @@ export function PresetSelector() {
 
   const customCharacters = pgState.customCharacters;
   const hasCustomCharacters = customCharacters.length > 0;
+  const canAddMore = customCharacters.length < MAX_CUSTOM_CHARACTERS;
 
   // All characters combined for carousel pages
   const allCharacters = [...defaultCharacters, ...customCharacters];
@@ -185,14 +239,56 @@ export function PresetSelector() {
     );
   };
 
-  const handleDelete = () => {
+  const handleAddCharacter = async () => {
+    if (!canAddMore || isConnected) return;
+
+    const nextName = `Character ${customCharacters.length + 1}`;
+    const response = await fetch('/api/characters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: nextName,
+        localizedDescriptions: { [pgState.language]: 'A new custom character.' },
+        prompt: '',
+        localizedPrompts: {},
+        sessionConfig: { ...defaultSessionConfig, ...pgState.sessionConfig },
+        voiceName: pgState.sessionConfig.voice,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      toast.error(result.error ?? 'Failed to create character');
+      return;
+    }
+
+    const newPreset = mapApiCharacterToPreset(result);
+
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
+    dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
+    toast.success('Character created');
+  };
+
+  const handleDelete = async () => {
     if (!characterToDelete) {
       return;
     }
-    // If the deleted character is currently selected, select the first default
+
+    const response = await fetch('/api/characters', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: characterToDelete.id }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      toast.error(result.error ?? 'Failed to delete character');
+      return;
+    }
+
     if (pgState.selectedPresetId === characterToDelete.id) {
       handlePresetSelect(defaultCharacters[0]?.id ?? null);
     }
+
     dispatch({
       type: 'DELETE_CUSTOM_CHARACTER',
       payload: characterToDelete.id,
@@ -205,6 +301,25 @@ export function PresetSelector() {
   const isCustomCharacter = (id: string) =>
     customCharacters.some((c) => c.id === id);
 
+  /** The "+" add-character button rendered as an avatar-shaped circle. */
+  const addCharacterButton = canAddMore ? (
+    <div className="flex flex-col items-center gap-2">
+      <PremiumActionButton
+        aria-label="Add custom character"
+        className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
+        disabled={isConnected}
+        isPaidUser={isPaidUser}
+        onClick={handleAddCharacter}
+        premiumTooltip="Upgrade to create custom characters"
+      >
+        <Plus className="h-5 w-5" />
+      </PremiumActionButton>
+      <span className="max-w-16 truncate font-medium text-muted-foreground text-xs sm:max-w-20">
+        Add
+      </span>
+    </div>
+  ) : null;
+
   return (
     <>
       <div className="w-full">
@@ -214,7 +329,7 @@ export function PresetSelector() {
         </div>
 
         {/* Avatar Row / Carousel */}
-        {showInstruction && hasCustomCharacters ? (
+        {hasCustomCharacters ? (
           <div className="relative mb-4 md:px-10">
             <Carousel opts={{ align: 'start', loop: false }}>
               <CarouselContent className="-ml-2">
@@ -224,7 +339,7 @@ export function PresetSelector() {
                     key={`page-${pageIndex}`}
                   >
                     <div
-                      className={`grid gap-3 ${gridColsClass[Math.min(page.length, 6) as keyof typeof gridColsClass] || 'grid-cols-6'}`}
+                      className={`grid gap-3 ${gridColsClass[Math.min(page.length + (pageIndex === pages.length - 1 && addCharacterButton ? 1 : 0), 6) as keyof typeof gridColsClass] || 'grid-cols-6'}`}
                     >
                       {page.map((preset) => {
                         const isSelected =
@@ -264,6 +379,8 @@ export function PresetSelector() {
                           </div>
                         );
                       })}
+                      {/* "+" button on the last page */}
+                      {pageIndex === pages.length - 1 && addCharacterButton}
                     </div>
                   </CarouselItem>
                 ))}
@@ -283,8 +400,8 @@ export function PresetSelector() {
             </Carousel>
           </div>
         ) : (
-          /* Default: simple row of 4 default characters */
-          <div className="mb-4 flex items-start justify-between">
+          /* Default: simple row of default characters + add button */
+          <div className="mb-4 flex items-start justify-between gap-2">
             {defaultCharacters.map((preset) => (
               <AvatarButton
                 image={preset.image}
@@ -295,6 +412,7 @@ export function PresetSelector() {
                 onClick={() => handlePresetSelect(preset.id)}
               />
             ))}
+            {addCharacterButton}
           </div>
         )}
 

@@ -2,8 +2,9 @@
 
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { RotateCcw, Save, SaveAll } from 'lucide-react';
+import { Save, SaveAll } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +21,56 @@ import { Label } from '@/components/ui/label';
 import type { Preset } from '@/data/presets';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
+function mapApiCharacterToPreset(character: {
+  id: string;
+  name: string;
+  localized_descriptions?: Record<string, string> | null;
+  image?: string | null;
+  session_config?: {
+    model?: string;
+    voice?: string;
+    temperature?: number;
+    maxOutputTokens?: number | null;
+    max_output_tokens?: number | null;
+    grokImageEnabled?: boolean;
+    grok_image_enabled?: boolean;
+  } | null;
+  sort_order?: number;
+  is_public?: boolean;
+  voice_id?: string;
+  voices?: { name?: string | null; sample_url?: string | null } | null;
+  prompt_id?: string;
+  prompts?: {
+    prompt?: string | null;
+    localized_prompts?: Record<string, string> | null;
+  } | null;
+}): Preset {
+  const sessionConfig = character.session_config ?? {};
+
+  return {
+    id: character.id,
+    name: character.name,
+    localizedDescriptions: character.localized_descriptions ?? {},
+    image: character.image ?? undefined,
+    instructions: character.prompts?.prompt ?? '',
+    localizedInstructions: character.prompts?.localized_prompts ?? {},
+    sessionConfig: {
+      model: (sessionConfig.model ?? 'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+      voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
+      temperature: sessionConfig.temperature ?? 0.8,
+      maxOutputTokens:
+        sessionConfig.maxOutputTokens ?? sessionConfig.max_output_tokens ?? null,
+      grokImageEnabled:
+        sessionConfig.grokImageEnabled ?? sessionConfig.grok_image_enabled ?? false,
+    },
+    promptId: character.prompt_id,
+    voiceId: character.voice_id,
+    voiceName: character.voices?.name ?? undefined,
+    voiceSampleUrl: character.voices?.sample_url ?? undefined,
+    isPublic: character.is_public,
+  };
+}
+
 export function PresetSave() {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
@@ -29,16 +80,11 @@ export function PresetSave() {
   const isDefaultPreset = selectedPreset
     ? defaultPresets.some((p) => p.id === selectedPreset.id)
     : false;
+  const customCharactersCount = pgState.customCharacters.length;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [open, setOpen] = useState(false);
-
-  // Check if there are character overrides for the selected preset in the current language
-  const hasOverrides =
-    pgState.selectedPresetId &&
-    pgState.characterOverrides[pgState.selectedPresetId]?.[pgState.language] !==
-      undefined;
 
   useEffect(() => {
     setName(
@@ -54,75 +100,88 @@ export function PresetSave() {
   }, [selectedPreset, isDefaultPreset, pgState.language]);
 
   // Save as new character (opens dialog)
-  const handleSaveAsNew = () => {
-    const newPreset: Preset = {
-      id: crypto.randomUUID(),
-      name,
-      localizedDescriptions: { [pgState.language]: description },
-      instructions: pgState.instructions,
-      localizedInstructions: { [pgState.language]: pgState.instructions },
-      sessionConfig: pgState.sessionConfig,
-    };
+  const handleSaveAsNew = async () => {
+    const response = await fetch('/api/characters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        localizedDescriptions: { [pgState.language]: description },
+        prompt: pgState.instructions,
+        localizedPrompts: { [pgState.language]: pgState.instructions },
+        sessionConfig: pgState.sessionConfig,
+        voiceName: pgState.sessionConfig.voice,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      toast.error(result.error ?? 'Failed to create character');
+      return;
+    }
 
+    const newPreset = mapApiCharacterToPreset(result);
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
 
     setOpen(false);
+    toast.success('Character created');
   };
 
-  // Save current character: override instructions for defaults, or overwrite custom characters
-  const handleSave = () => {
-    if (!selectedPreset) return;
+  const handleSave = async () => {
+    if (!selectedPreset || isDefaultPreset) return;
 
-    if (isDefaultPreset) {
-      // For default characters, save as a character override
-      if (pgState.selectedPresetId) {
-        dispatch({
-          type: 'SET_CHARACTER_OVERRIDE',
-          payload: {
-            characterId: pgState.selectedPresetId,
-            instructions: pgState.instructions,
-          },
-        });
-      }
-    } else {
-      // For custom characters, overwrite the full preset
-      const updatedPreset: Preset = {
-        ...selectedPreset,
-        instructions: pgState.instructions,
+    const response = await fetch('/api/characters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: selectedPreset.id,
+        name: selectedPreset.name,
+        localizedDescriptions: {
+          ...(selectedPreset.localizedDescriptions ?? {}),
+          [pgState.language]: description,
+        },
+        prompt: pgState.instructions,
+        localizedPrompts: {
+          ...(selectedPreset.localizedInstructions ?? {}),
+          [pgState.language]: pgState.instructions,
+        },
         sessionConfig: pgState.sessionConfig,
-      };
-      dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+        voiceName: pgState.sessionConfig.voice,
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      toast.error(result.error ?? 'Failed to update character');
+      return;
     }
-  };
 
-  // Reset character instructions to default
-  const handleReset = () => {
-    if (pgState.selectedPresetId) {
-      dispatch({
-        type: 'RESET_CHARACTER_OVERRIDE',
-        payload: pgState.selectedPresetId,
-      });
-    }
+    const updatedPreset = mapApiCharacterToPreset(result);
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    toast.success('Character saved');
   };
 
   return (
     <div className="flex items-center gap-2">
-      {/* Save button - saves override for default characters, or overwrites custom characters */}
-      <Button
-        disabled={!selectedPreset || isConnected}
-        onClick={handleSave}
-        size="sm"
-        variant="secondary"
-      >
-        <Save className="h-4 w-4" />
-        <span className="ml-2">Save</span>
-      </Button>
+      {!isDefaultPreset && (
+        <Button
+          disabled={!selectedPreset || isConnected}
+          onClick={handleSave}
+          size="sm"
+          variant="secondary"
+        >
+          <Save className="h-4 w-4" />
+          <span className="ml-2">Save</span>
+        </Button>
+      )}
 
       {/* Save as new button - opens dialog */}
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogTrigger asChild>
-          <Button disabled={isConnected} size="sm" variant="secondary">
+          <Button
+            disabled={isConnected || customCharactersCount >= 10}
+            size="sm"
+            variant="secondary"
+          >
             <SaveAll className="h-4 w-4" />
             <span className="ml-2">Save as new</span>
           </Button>
@@ -157,6 +216,7 @@ export function PresetSave() {
           <DialogFooter>
             <Button
               className="font-semibold text-sm"
+              disabled={!name.trim()}
               onClick={handleSaveAsNew}
               type="submit"
               variant="secondary"
@@ -166,20 +226,6 @@ export function PresetSave() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Reset button - only shown when there are character overrides */}
-      {hasOverrides && (
-        <Button
-          className="text-muted-foreground hover:text-foreground"
-          disabled={isConnected}
-          onClick={handleReset}
-          size="sm"
-          variant="ghost"
-        >
-          <RotateCcw className="h-4 w-4" />
-          <span className="hidden md:ml-2 md:block">Reset</span>
-        </Button>
-      )}
     </div>
   );
 }

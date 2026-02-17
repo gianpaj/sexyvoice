@@ -151,7 +151,7 @@ export default function DashboardUI({
           </SidebarFooter>
         </Sidebar>
 
-        {promoDict &&
+        {promoDict && (
           <PromoBanner
             ariaLabelDismiss={promoDict.ariaLabelDismiss}
             countdown={
@@ -168,7 +168,8 @@ export default function DashboardUI({
             inDashboard
             isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
             text={promoDict.text}
-        />}
+          />
+        )}
         <div className="flex w-full flex-1 flex-col">
           <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
             <SidebarTrigger className="lg:hidden" />

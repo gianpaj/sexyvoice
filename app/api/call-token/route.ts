@@ -14,10 +14,13 @@ import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
   getCredits,
   getVoiceIdByName,
+  hasUserPaid,
   isFreeUserOverCallLimit,
+  resolveCharacterPrompt,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
   let user: User | null = null;
   try {
@@ -80,8 +83,9 @@ export async function POST(request: Request) {
     }
 
     const {
-      instructions,
+      instructions: clientInstructions,
       language = defaultLanguage,
+      selectedPresetId,
       sessionConfig: {
         model,
         voice,
@@ -94,10 +98,8 @@ export async function POST(request: Request) {
     const selectedLanguage = languageInitialInstructions[language]
       ? language
       : defaultLanguage;
-    const initialInstruction =
-      languageInitialInstructions[selectedLanguage] ||
-      languageInitialInstructions[defaultLanguage];
 
+    // Validate voice exists in DB
     const voiceObj = await getVoiceIdByName(voice, false);
 
     if (!voiceObj) {
@@ -105,9 +107,93 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
+    // ─── Resolve instructions ───
+    // Always resolve selected presets from DB (public and custom).
+    // Only non-preset calls (no selectedPresetId) can use client-sent instructions.
+    let resolvedInstructions = clientInstructions;
+
+    if (selectedPresetId) {
+      try {
+        const character = await resolveCharacterPrompt(selectedPresetId);
+
+        if (!character) {
+          return NextResponse.json(
+            { error: 'Character not found' },
+            { status: 404 },
+          );
+        }
+
+        if (character.is_public) {
+          // ── Predefined character ──
+          // Resolve localized prompt, falling back to English
+          const prompts = character.prompts as {
+            prompt: string;
+            localized_prompts: Record<string, string> | null;
+          } | null;
+
+          if (!prompts?.prompt) {
+            return NextResponse.json(
+              { error: 'Character prompt not found' },
+              { status: 404 },
+            );
+          }
+
+          resolvedInstructions =
+            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
+          // Client-sent instructions are IGNORED for predefined characters
+        } else {
+          // ── Custom character ──
+          // Verify ownership
+          if (character.user_id !== user.id) {
+            return NextResponse.json(
+              { error: 'Character not found' },
+              { status: 404 },
+            );
+          }
+
+          // Verify user has paid (custom characters require paid account)
+          const isPaid = await hasUserPaid(user.id);
+          if (!isPaid) {
+            return NextResponse.json(
+              { error: 'Custom characters require a paid account' },
+              { status: 403 },
+            );
+          }
+
+          // Resolve prompt from DB (not from client)
+          const prompts = character.prompts as {
+            prompt: string;
+            localized_prompts: Record<string, string> | null;
+          } | null;
+
+          if (!prompts?.prompt) {
+            return NextResponse.json(
+              { error: 'Character prompt not found' },
+              { status: 404 },
+            );
+          }
+
+          resolvedInstructions =
+            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
+        }
+      } catch (error) {
+        captureException(error, {
+          extra: {
+            selectedPresetId,
+            userId: user.id,
+            context: 'resolveCharacterPrompt',
+          },
+        });
+        return NextResponse.json(
+          { error: 'Failed to resolve character prompt' },
+          { status: 500 },
+        );
+      }
+    }
+
     // Create metadata for agent to start with
     const metadata = {
-      instructions,
+      instructions: resolvedInstructions,
       model,
       voice: voiceObj.id,
       temperature,
@@ -146,7 +232,7 @@ export async function POST(request: Request) {
 
     logger.info('Generated LiveKit token', {
       user: { id: user.id },
-      extra: { roomName },
+      extra: { roomName, selectedPresetId },
     });
 
     return NextResponse.json({

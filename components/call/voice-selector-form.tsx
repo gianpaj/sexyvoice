@@ -25,16 +25,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { type VoiceId, voicesData } from '@/data/voices';
+import type { DBVoice } from '@/data/voices';
 import { capitalizeFirstLetter } from '@/lib/utils';
+
+interface VoiceSelectorFormProps {
+  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
+  callVoices?: DBVoice[];
+}
 
 export function VoiceSelectorForm({
   form,
-}: {
-  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
-}) {
+  callVoices = [],
+}: VoiceSelectorFormProps) {
   const voice = form.watch('voice');
-  const selectedVoiceData = voicesData[voice];
+  const selectedVoiceData = callVoices.find((v) => v.name === voice);
 
   return (
     <Card>
@@ -53,9 +57,7 @@ export function VoiceSelectorForm({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
-                <p>
-                  Model: text-to-speech AI
-                </p>
+                <p>Model: text-to-speech AI</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -64,20 +66,21 @@ export function VoiceSelectorForm({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select
-          onValueChange={(value) => form.setValue('voice', value as VoiceId)}
+          onValueChange={(value) => form.setValue('voice', value)}
           value={voice}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select a voice" />
           </SelectTrigger>
           <SelectContent>
-            {Object.values(voicesData).map((voiceOption) => (
+            {callVoices.map((voiceOption) => (
               <SelectItem
                 className="cursor-pointer py-3"
                 key={voiceOption.id}
-                value={voiceOption.id}
+                value={voiceOption.name}
               >
-                {capitalizeFirstLetter(voiceOption.name)} | {voiceOption.type}
+                {capitalizeFirstLetter(voiceOption.name)}
+                {voiceOption.type ? ` | ${voiceOption.type}` : ''}
               </SelectItem>
             ))}
           </SelectContent>
@@ -87,9 +90,11 @@ export function VoiceSelectorForm({
             <p className="font-medium text-sm">
               {selectedVoiceData.description}
             </p>
-            <p className="text-muted-foreground text-xs">
-              <strong>Tone:</strong> {selectedVoiceData.tone}
-            </p>
+            {selectedVoiceData.type && (
+              <p className="text-muted-foreground text-xs">
+                <strong>Type:</strong> {selectedVoiceData.type}
+              </p>
+            )}
           </div>
         )}
       </CardContent>

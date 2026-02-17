@@ -95,7 +95,6 @@ vi.mock('embla-carousel-react', () => ({
 
 import { defaultSessionConfig } from '@/data/default-config';
 import type { Preset } from '@/data/presets';
-import { VoiceId } from '@/data/voices';
 
 /**
  * Factory for creating test presets with sensible defaults.
@@ -117,28 +116,28 @@ export const defaultPresetsFixture: Preset[] = [
     name: 'Ramona',
     localizedDescriptions: { en: 'Dominant businesswoman.' },
     image: 'ramona.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.EVE },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Eve' },
   }),
   makePreset({
     id: 'lily',
     name: 'Lily',
     localizedDescriptions: { en: 'Shy student girl.' },
     image: 'lily.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.ARA },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
   }),
   makePreset({
     id: 'milo',
     name: 'Milo',
     localizedDescriptions: { en: 'Bisexual twink.' },
     image: 'milo.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.SAL },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Sal' },
   }),
   makePreset({
     id: 'rafal',
     name: 'Rafal',
     localizedDescriptions: { en: 'Ex-military commander.' },
     image: 'rafal.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.REX },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
   }),
 ];
 

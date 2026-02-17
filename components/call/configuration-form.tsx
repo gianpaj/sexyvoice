@@ -7,7 +7,6 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
@@ -20,7 +19,6 @@ import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
-import { VoiceId } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
@@ -43,7 +41,7 @@ const RECONNECT_REQUIRED_FIELDS = ['voice', 'grok_image_enabled'];
 
 export const ConfigurationFormSchema = z.object({
   model: z.enum(Object.values(ModelId)),
-  voice: z.enum(Object.values(VoiceId)),
+  voice: z.string().min(1),
   temperature: z.number().min(0.6).max(1.2),
   maxOutputTokens: z.number().nullable(),
   grokImageEnabled: z.boolean(),
@@ -56,9 +54,13 @@ export interface ConfigurationFormFieldProps {
 
 interface ConfigurationFormProps {
   lang: Locale;
+  isPaidUser?: boolean;
 }
 
-export function ConfigurationForm({ lang }: ConfigurationFormProps) {
+export function ConfigurationForm({
+  lang,
+  isPaidUser = false,
+}: ConfigurationFormProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();
   const connectionState = useConnectionState();
@@ -74,12 +76,6 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
   const isReconnectingRef = useRef(false); // Track if we're currently reconnecting to prevent loops
   // const { toast } = useToast();
   const { agent } = useVoiceAssistant();
-
-  const searchParams = useSearchParams();
-
-  const showInstruction =
-    searchParams.get('showInstruction') === '' ||
-    searchParams.get('showInstruction') === 'true';
 
   const translatedLanguages = useMemo(
     () =>
@@ -292,20 +288,24 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
-          <PresetSelector />
-          {showInstruction && (
-            <div className="mt-4 space-y-4">
-              {/* Instructions Editor for custom per-character instructions */}
-              <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
-                <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                  {helpers.getSelectedPreset(pgState)?.name || 'Character'}{' '}
-                  Instructions
+          <PresetSelector isPaidUser={isPaidUser} />
+          {isPaidUser &&
+            pgState.selectedPresetId &&
+            !helpers
+              .getDefaultPresets()
+              .some((p) => p.id === pgState.selectedPresetId) && (
+              <div className="mt-4 space-y-4">
+                {/* Instructions Editor for custom per-character instructions */}
+                <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
+                  <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                    {helpers.getSelectedPreset(pgState)?.name || 'Character'}{' '}
+                    Instructions
+                  </div>
+                  <InstructionsEditor instructions={pgState.instructions} />
                 </div>
-                <InstructionsEditor instructions={pgState.instructions} />
+                <PresetSave />
               </div>
-              <PresetSave />
-            </div>
-          )}
+            )}
         </div>
 
         <SessionConfig form={form} />

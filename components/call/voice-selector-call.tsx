@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { type VoiceId, voices, voicesData } from '@/data/voices';
+import type { DBVoice } from '@/data/voices';
 import { Button } from '../ui/button';
 import {
   type ConfigurationFormFieldProps,
@@ -24,18 +24,24 @@ import {
 
 // import { VoicesShowcase } from './voices-showcase';
 
-function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
+function VoicePlayButton({
+  voiceName,
+  sampleUrl,
+}: {
+  voiceName: string;
+  sampleUrl: string | null;
+}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const voice = voicesData[voiceId];
 
   const handlePlay = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
+    if (!sampleUrl) return;
+
     if (!audioRef.current) {
-      audioRef.current = new Audio(voice.audioSampleUrl);
+      audioRef.current = new Audio(sampleUrl);
       audioRef.current.onended = () => setIsPlaying(false);
       audioRef.current.onerror = () => setIsPlaying(false);
     }
@@ -46,7 +52,7 @@ function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
       setIsPlaying(false);
     } else {
       // Update src in case voice changed
-      audioRef.current.src = voice.audioSampleUrl;
+      audioRef.current.src = sampleUrl;
       audioRef.current.play().catch(() => setIsPlaying(false));
       setIsPlaying(true);
     }
@@ -70,7 +76,9 @@ function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
     }
-  }, [voiceId]);
+  }, [voiceName]);
+
+  if (!sampleUrl) return null;
 
   return (
     <Button
@@ -78,7 +86,7 @@ function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
       className="min-h-8 min-w-8"
       onClick={handlePlay}
       size="icon"
-      title={`Preview ${voice.name}'s voice`}
+      title={`Preview ${voiceName}'s voice`}
       variant="outline"
     >
       {isPlaying ? (
@@ -109,7 +117,14 @@ function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
   );
 }
 
-export function VoiceSelector({ form }: ConfigurationFormFieldProps) {
+interface VoiceSelectorProps extends ConfigurationFormFieldProps {
+  callVoices?: DBVoice[];
+}
+
+export function VoiceSelector({ form, callVoices = [] }: VoiceSelectorProps) {
+  const currentVoiceName = form.watch('voice');
+  const selectedVoice = callVoices.find((v) => v.name === currentVoiceName);
+
   return (
     <FormField
       control={form.control}
@@ -122,11 +137,12 @@ export function VoiceSelector({ form }: ConfigurationFormFieldProps) {
             </FormLabel>
             {/*<VoicesShowcase
               currentVoice={field.value}
-              onSelectVoice={(voiceId) => {
+              callVoices={callVoices}
+              onSelectVoice={(voiceName) => {
                 if (
-                  ConfigurationFormSchema.shape.voice.safeParse(voiceId).success
+                  ConfigurationFormSchema.shape.voice.safeParse(voiceName).success
                 ) {
-                  field.onChange(voiceId);
+                  field.onChange(voiceName);
                 }
               }}
             />*/}
@@ -148,17 +164,20 @@ export function VoiceSelector({ form }: ConfigurationFormFieldProps) {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {voices.map((voice) => (
+                {callVoices.map((voice) => (
                   <SelectItem
                     key={`select-item-voice-${voice.id}`}
-                    value={voice.id}
+                    value={voice.name}
                   >
                     {voice.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <VoicePlayButton voiceId={field.value as VoiceId} />
+            <VoicePlayButton
+              sampleUrl={selectedVoice?.sample_url ?? null}
+              voiceName={currentVoiceName}
+            />
           </div>
         </FormItem>
       )}

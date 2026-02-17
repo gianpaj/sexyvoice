@@ -39,11 +39,60 @@ beforeEach(() => {
   replaceStateSpy = vi
     .spyOn(window.history, 'replaceState')
     .mockImplementation(() => undefined);
+
+  // jsdom doesn't provide crypto.randomUUID — stub it so handleAddCharacter works
+  if (!globalThis.crypto.randomUUID) {
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      value: () => '00000000-0000-4000-a000-000000000099',
+      configurable: true,
+    });
+  }
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+    '00000000-0000-4000-a000-000000000099' as `${string}-${string}-${string}-${string}-${string}`,
+  );
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      if (method === 'DELETE') {
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      }
+
+      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      const name = body.name ?? 'Character 1';
+
+      return new Response(
+        JSON.stringify({
+          id: '00000000-0000-4000-a000-000000000099',
+          name,
+          localized_descriptions: { en: 'A new custom character.' },
+          image: null,
+          session_config: {
+            model: 'grok-4-1-fast-non-reasoning',
+            voice: 'Ara',
+            temperature: 0.8,
+            maxOutputTokens: null,
+            grokImageEnabled: false,
+          },
+          sort_order: 0,
+          is_public: false,
+          voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
+          voices: { name: 'Ara', sample_url: null },
+          prompt_id: 'ee000000-0000-4000-a000-000000000099',
+          prompts: { prompt: '', localized_prompts: {} },
+        }),
+        { status: 201 },
+      );
+    }),
+  );
+
   vi.clearAllMocks();
 });
 
 afterEach(() => {
   replaceStateSpy.mockRestore();
+  vi.unstubAllGlobals();
 });
 
 // ---------------------------------------------------------------------------
@@ -113,12 +162,14 @@ describe('PresetSelector', () => {
 
     it('marks the selected character with aria-pressed=true', () => {
       render(<PresetSelector />);
-      expect(
-        screen.getByRole('button', { name: /ramona/i, pressed: true }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /lily/i, pressed: false }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /ramona/i })).toHaveAttribute(
+        'data-selected',
+        'true',
+      );
+      expect(screen.getByRole('button', { name: /lily/i })).toHaveAttribute(
+        'data-selected',
+        'false',
+      );
     });
   });
 
@@ -150,7 +201,7 @@ describe('PresetSelector', () => {
 
   // ---- Custom characters (simple row, no carousel) ----
   describe('custom characters without showInstruction', () => {
-    it('renders only default characters in simple row when showInstruction is not set', () => {
+    it('renders custom characters when they exist', () => {
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -163,8 +214,7 @@ describe('PresetSelector', () => {
       render(<PresetSelector />);
       // Default characters should be visible
       expect(screen.getByText('Ramona')).toBeInTheDocument();
-      // Custom character should NOT be in the simple row (only default characters render there)
-      expect(screen.queryByText('MyChar')).not.toBeInTheDocument();
+      expect(screen.getByText('MyChar')).toBeInTheDocument();
     });
   });
 
@@ -239,8 +289,12 @@ describe('PresetSelector', () => {
     it('can select a custom character', async () => {
       const user = userEvent.setup();
       render(<PresetSelector />);
+      const alphaCharacterButton = screen
+        .getAllByRole('button', { name: /alphachar/i })
+        .find((button) => !button.getAttribute('aria-label')?.startsWith('Delete'));
+      expect(alphaCharacterButton).toBeTruthy();
       await user.click(
-        screen.getByRole('button', { name: /alphachar/i, pressed: false }),
+        alphaCharacterButton as HTMLElement,
       );
 
       expect(mockDispatch).toHaveBeenCalledWith({
@@ -567,8 +621,7 @@ describe('PresetSelector', () => {
         ],
       });
       render(<PresetSelector />);
-      // Not in carousel mode → custom char not rendered (simple row only shows defaults with images)
-      expect(screen.queryByText('FalseParam')).not.toBeInTheDocument();
+      expect(screen.getByText('FalseParam')).toBeInTheDocument();
     });
   });
 
@@ -665,6 +718,169 @@ describe('PresetSelector', () => {
       // 4 defaults + 10 custom = 14 → ceil(14/6) = 3 pages
       const slides = screen.getAllByRole('group');
       expect(slides).toHaveLength(3);
+    });
+  });
+
+  // ---- Add Character button (premium gating) ----
+  describe('add character button', () => {
+    it('renders the "Add" button in simple row mode', () => {
+      render(<PresetSelector />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Add')).toBeInTheDocument();
+    });
+
+    it('renders the "Add" button in carousel mode', () => {
+      mockSearchParams.value = new URLSearchParams('showInstruction=true');
+      mockPgStateRef.current = createDefaultPgState({
+        customCharacters: [
+          makePreset({
+            id: 'c1',
+            name: 'Existing',
+            localizedDescriptions: { en: 'test' },
+          }),
+        ],
+      });
+      render(<PresetSelector />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('is disabled for free users (default isPaidUser=false)', () => {
+      render(<PresetSelector />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeDisabled();
+    });
+
+    it('shows a premium badge (Sparkles icon) for free users', () => {
+      render(<PresetSelector />);
+      expect(screen.getByLabelText('Premium feature')).toBeInTheDocument();
+    });
+
+    it('is enabled for paid users', () => {
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeEnabled();
+    });
+
+    it('does NOT show a premium badge for paid users', () => {
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.queryByLabelText('Premium feature'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('dispatches SAVE_CUSTOM_CHARACTER and SET_SELECTED_PRESET_ID when clicked by a paid user', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector isPaidUser />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      const saveCalls = mockDispatch.mock.calls.filter(
+        (call: any[]) => call[0]?.type === 'SAVE_CUSTOM_CHARACTER',
+      );
+      expect(saveCalls).toHaveLength(1);
+      expect(saveCalls[0][0].payload).toMatchObject({
+        id: '00000000-0000-4000-a000-000000000099',
+        name: 'Character 1',
+        localizedDescriptions: { en: 'A new custom character.' },
+      });
+
+      const selectCalls = mockDispatch.mock.calls.filter(
+        (call: any[]) => call[0]?.type === 'SET_SELECTED_PRESET_ID',
+      );
+      expect(selectCalls).toHaveLength(1);
+      expect(selectCalls[0][0].payload).toBe(
+        '00000000-0000-4000-a000-000000000099',
+      );
+    });
+
+    it('does NOT dispatch when clicked by a free user', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      const saveCalls = mockDispatch.mock.calls.filter(
+        (call: any[]) => call[0]?.type === 'SAVE_CUSTOM_CHARACTER',
+      );
+      expect(saveCalls).toHaveLength(0);
+    });
+
+    it('is disabled when connected (even for paid users)', () => {
+      mockConnectionState.value = 'connected';
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeDisabled();
+    });
+
+    it('is hidden when the user has 10 custom characters (max limit)', () => {
+      const maxCustom: Preset[] = Array.from({ length: 10 }, (_, i) =>
+        makePreset({
+          id: `c-${i}`,
+          name: `Char${i}`,
+          localizedDescriptions: { en: `desc ${i}` },
+        }),
+      );
+      mockPgStateRef.current = createDefaultPgState({
+        customCharacters: maxCustom,
+      });
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.queryByRole('button', { name: /add custom character/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('increments the character name number based on existing custom characters', async () => {
+      const user = userEvent.setup();
+      mockPgStateRef.current = createDefaultPgState({
+        customCharacters: [
+          makePreset({
+            id: 'c1',
+            name: 'Character 1',
+            localizedDescriptions: { en: 'first' },
+          }),
+          makePreset({
+            id: 'c2',
+            name: 'Character 2',
+            localizedDescriptions: { en: 'second' },
+          }),
+        ],
+      });
+      render(<PresetSelector isPaidUser />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      const saveCalls = mockDispatch.mock.calls.filter(
+        (call: any[]) => call[0]?.type === 'SAVE_CUSTOM_CHARACTER',
+      );
+      expect(saveCalls).toHaveLength(1);
+      expect(saveCalls[0][0].payload.name).toBe('Character 3');
+    });
+
+    it('shows the premium tooltip text for free users on hover', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector />);
+      // The tooltip trigger wraps the button in a <span> — hover it to open
+      const trigger = screen
+        .getByRole('button', { name: /add custom character/i })
+        .closest('span[tabindex]');
+      expect(trigger).toBeTruthy();
+      await user.hover(trigger!);
+      // Radix renders the tooltip text both visually and in a hidden
+      // role="tooltip" element for accessibility, so expect ≥ 1 match.
+      const matches = await screen.findAllByText(
+        'Upgrade to create custom characters',
+      );
+      expect(matches.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

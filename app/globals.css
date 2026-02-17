@@ -154,7 +154,6 @@
 
 /* Added incoming call animation */
 @keyframes incoming-call {
-
   0%,
   100% {
     transform: scale(1) rotate(0deg);

@@ -54,7 +54,8 @@ app/[lang]/                    # Internationalized routes
 └── page.tsx                   # Landing page
 
 app/api/
-├── call-token/                # LiveKit token generation for calls
+├── call-token/                # LiveKit token generation for calls (resolves character prompts from DB)
+├── characters/                # Custom character CRUD (POST create/update, DELETE)
 ├── usage-events/              # Usage tracking API
 ├── generate-voice/            # Voice generation endpoint
 ├── clone-voice/               # Voice cloning endpoint
@@ -94,12 +95,17 @@ tests/
 ### Database Schema
 Core tables:
 - `profiles` - User profiles linked to Supabase Auth
-- `voices` - Voice models (can be user-created or system voices)
+- `voices` - Voice models (can be user-created or system voices); includes `feature` column (`feature_type` enum: `'tts'` or `'call'`), `description`, `type`, and `sort_order` for stable ordering
 - `audio_files` - Generated audio files with metadata
 - `credits` - User credit balances
 - `credit_transactions` - Credit usage/purchase history
 - `call_sessions` - Real-time voice call sessions with duration and billing
 - `usage_events` - Detailed usage tracking for analytics and billing
+- `characters` - AI character metadata (name, image, voice FK, session config, localized descriptions); supports both predefined (`is_public = true`) and user-created custom characters (max 10 per user)
+- `prompts` - Prompt content for characters (English text + localized JSONB translations); linked 1:1 from `characters.prompt_id`; predefined prompt text is never exposed to the client
+
+Shared enum types:
+- `feature_type` — `'tts'` | `'call'` — used by both `voices.feature` and `prompts.type` to discriminate which product feature a voice or prompt belongs to
 
 ### Voice Generation Flow
 1. User selects voice and enters text in dashboard
@@ -112,12 +118,13 @@ Core tables:
 8. Final audio URL returned to client
 
 ### Real-time AI Voice Call Flow
-1. User configures call settings (voice, model, temperature, instructions) in `/dashboard/call`
-2. User clicks connect, frontend requests token from `/api/call-token`
-3. API validates user session and checks minimum credit balance
-4. LiveKit access token is generated with room configuration and AI agent dispatch
-5. Client connects to LiveKit room using WebRTC
-6. AI agent joins the room and handles real-time voice conversation
+1. User selects a character (predefined or custom) and configures call settings in `/dashboard/call`
+2. User clicks connect, frontend requests token from `/api/call-token` with `selectedPresetId` (character UUID)
+3. API validates user session, checks minimum credit balance, and resolves the character's prompt from the DB via `resolveCharacterPrompt()` using `createAdminClient()` (bypasses RLS so predefined prompt text never reaches the client)
+4. For custom characters, API verifies ownership and paid status before resolving the prompt
+5. LiveKit access token is generated with room configuration and AI agent dispatch
+6. Client connects to LiveKit room using WebRTC
+7. AI agent joins the room and handles real-time voice conversation
 7. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
 8. Credits are deducted based on call duration
 9. On disconnect, credits are refetched and UI is updated
