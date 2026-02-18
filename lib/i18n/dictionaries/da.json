@@ -333,6 +333,7 @@
     "configurationUpdated": "Konfiguration opdateret",
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
+    "activeCallError": "Du har allerede et aktivt opkald i gang",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",

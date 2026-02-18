@@ -333,6 +333,7 @@
     "configurationUpdated": "Konfiguration aktualisiert",
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
+    "activeCallError": "Du hast bereits einen aktiven Anruf",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",
     "presetRemoved": "Preset entfernt",
