@@ -333,6 +333,7 @@
     "configurationUpdated": "Configurazione aggiornata",
     "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
     "agentUnavailable": "Agente non disponibile",
+    "activeCallError": "Hai già una chiamata attiva in corso",
     "disconnected": "Disconnesso",
     "chooseCharacter": "Con chi vuoi parlare?",
     "presetRemoved": "Preset rimosso",
