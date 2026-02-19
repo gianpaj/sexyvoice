@@ -25,7 +25,15 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PremiumActionButton } from '@/components/ui/premium-action-button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { defaultSessionConfig } from '@/data/default-config';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
@@ -35,6 +43,7 @@ import {
   CreateCharacterDialog,
   type NewCharacterPayload,
 } from './create-character-dialog';
+import { VoicePlayButton } from './voice-play-button';
 
 const MAX_CUSTOM_CHARACTERS = 10;
 
@@ -312,6 +321,50 @@ export function PresetSelector({
   };
 
   // Save name/description updates
+  const handleSaveVoice = async (newVoiceName: string) => {
+    if (!(selectedPreset && isSelectedCustom) || isConnected) return;
+
+    try {
+      const response = await fetch('/api/characters', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedPreset.id,
+          name: selectedPreset.name,
+          localizedDescriptions: selectedPreset.localizedDescriptions,
+          prompt: selectedPreset.instructions,
+          localizedPrompts: selectedPreset.localizedInstructions,
+          sessionConfig: selectedPreset.sessionConfig,
+          voiceName: newVoiceName,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || 'Failed to update voice');
+
+      const updatedVoice = callVoices.find((v) => v.name === newVoiceName);
+      const updatedPreset: Preset = {
+        ...selectedPreset,
+        sessionConfig: {
+          ...selectedPreset.sessionConfig,
+          voice: newVoiceName,
+        },
+        voiceName: newVoiceName,
+        voiceId: updatedVoice?.id,
+        voiceSampleUrl: updatedVoice?.sample_url,
+      };
+
+      dispatch({ type: 'UPDATE_CUSTOM_CHARACTER', payload: updatedPreset });
+      toast.success('Voice updated successfully');
+    } catch (error) {
+      console.error('Failed to update voice:', error);
+      toast.error('Failed to update voice');
+    }
+  };
+
   const handleSaveNameOrDescription = async () => {
     if (!(selectedPreset && isCustomCharacter(selectedPreset.id))) {
       setIsEditingName(false);
@@ -618,6 +671,76 @@ export function PresetSelector({
                       </span>
                       <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
+                  )}
+                </div>
+
+                {/* Voice Selector for Custom Characters */}
+                <div className="space-y-2 border-separator1 border-t pt-3">
+                  <Label
+                    className="text-muted-foreground text-xs"
+                    htmlFor="voice-select"
+                  >
+                    Voice
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      disabled={isConnected}
+                      onValueChange={handleSaveVoice}
+                      value={
+                        selectedPreset.voiceName ||
+                        selectedPreset.sessionConfig.voice
+                      }
+                    >
+                      <SelectTrigger className="flex-1" id="voice-select">
+                        <SelectValue placeholder="Choose a voice" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {callVoices.map((voice) => (
+                          <SelectItem key={voice.id} value={voice.name}>
+                            <span className="flex items-center gap-2">
+                              <span>{voice.name}</span>
+                              {voice.type && (
+                                <span className="text-muted-foreground text-xs">
+                                  — {voice.type}
+                                </span>
+                              )}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <VoicePlayButton
+                      sampleUrl={
+                        callVoices.find(
+                          (v) =>
+                            v.name ===
+                            (selectedPreset.voiceName ||
+                              selectedPreset.sessionConfig.voice),
+                        )?.sample_url ?? null
+                      }
+                      size="md"
+                      voiceName={
+                        selectedPreset.voiceName ||
+                        selectedPreset.sessionConfig.voice
+                      }
+                    />
+                  </div>
+                  {callVoices.find(
+                    (v) =>
+                      v.name ===
+                      (selectedPreset.voiceName ||
+                        selectedPreset.sessionConfig.voice),
+                  )?.description && (
+                    <p className="text-muted-foreground text-xs">
+                      {
+                        callVoices.find(
+                          (v) =>
+                            v.name ===
+                            (selectedPreset.voiceName ||
+                              selectedPreset.sessionConfig.voice),
+                        )?.description
+                      }
+                    </p>
                   )}
                 </div>
               </div>

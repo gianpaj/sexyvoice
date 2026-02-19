@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { DBVoice } from '@/data/voices';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
+import { VoicePlayButton } from './voice-play-button';
 
 export interface NewCharacterPayload {
   name: string;
@@ -38,101 +39,6 @@ interface CreateCharacterDialogProps {
   callVoices: DBVoice[];
   onSave: (character: NewCharacterPayload) => Promise<void>;
   dict: (typeof langDict)['call']['createCharacter'];
-}
-
-function VoicePlayButton({
-  voiceName,
-  sampleUrl,
-  dict,
-}: {
-  voiceName: string;
-  sampleUrl: string | null;
-  dict: (typeof langDict)['call']['createCharacter'];
-}) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const handlePlay = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!sampleUrl) return;
-
-    if (!audioRef.current) {
-      audioRef.current = new Audio(sampleUrl);
-      audioRef.current.onended = () => setIsPlaying(false);
-      audioRef.current.onerror = () => setIsPlaying(false);
-    }
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    } else {
-      audioRef.current.src = sampleUrl;
-      audioRef.current.play().catch(() => setIsPlaying(false));
-      setIsPlaying(true);
-    }
-  };
-
-  useEffect(
-    () => () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    },
-    [],
-  );
-
-  // Stop playing when voice changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we want to stop when voiceName changes, not when isPlaying changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    }
-  }, [voiceName]);
-
-  if (!sampleUrl) return null;
-
-  return (
-    <Button
-      aria-label={isPlaying ? dict.stopVoiceSample : dict.playVoiceSample}
-      className="min-h-9 min-w-9 shrink-0"
-      onClick={handlePlay}
-      size="icon"
-      title={dict.previewVoice.replace('__VOICE__', voiceName)}
-      type="button"
-      variant="outline"
-    >
-      {isPlaying ? (
-        <svg
-          aria-hidden="true"
-          className="text-fg1"
-          fill="currentColor"
-          height="12"
-          viewBox="0 0 14 14"
-          width="12"
-        >
-          <rect height="10" rx="0.5" width="3" x="3" y="2" />
-          <rect height="10" rx="0.5" width="3" x="8" y="2" />
-        </svg>
-      ) : (
-        <svg
-          aria-hidden="true"
-          className="text-fg1"
-          fill="currentColor"
-          height="12"
-          viewBox="0 0 14 14"
-          width="12"
-        >
-          <path d="M3 2.5v9a.5.5 0 00.75.43l7.5-4.5a.5.5 0 000-.86l-7.5-4.5A.5.5 0 003 2.5z" />
-        </svg>
-      )}
-    </Button>
-  );
 }
 
 export function CreateCharacterDialog({
@@ -248,8 +154,14 @@ export function CreateCharacterDialog({
                 </SelectContent>
               </Select>
               <VoicePlayButton
-                dict={dict}
+                ariaLabels={{
+                  play: dict.playVoiceSample,
+                  stop: dict.stopVoiceSample,
+                }}
                 sampleUrl={selectedVoice?.sample_url ?? null}
+                size="lg"
+                title={dict.previewVoice.replace('__VOICE__', voiceName)}
+                variant="button"
                 voiceName={voiceName}
               />
             </div>
