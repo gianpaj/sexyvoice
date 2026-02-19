@@ -85,8 +85,23 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
       async (data: RpcInvocationData) => {
         const { title, description, variant } = JSON.parse(data.payload);
         console.log(title, description, variant);
-        // TODO: display different toast variants
-        toast.info(title);
+
+        const message = description ? `${title}: ${description}` : title;
+
+        switch (variant) {
+          case 'error':
+            toast.error(message);
+            break;
+          case 'warning':
+            toast.warning(message);
+            break;
+          case 'success':
+            toast.success(message);
+            break;
+          default:
+            toast.info(message);
+        }
+
         return JSON.stringify({ shown: true });
       },
     );
