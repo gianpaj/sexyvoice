@@ -3,6 +3,7 @@ import { captureException, logger } from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import {
   defaultLanguage,
@@ -19,6 +20,52 @@ import {
   resolveCharacterPrompt,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+
+// Zod schema for session config
+const sessionConfigSchema = z.object({
+  model: z.string(),
+  voice: z.string(),
+  temperature: z.number().min(0).max(2),
+  maxOutputTokens: z.number().nullable(),
+  grokImageEnabled: z.boolean(),
+});
+
+// Zod schema for playground state
+const playgroundStateSchema = z.object({
+  instructions: z.string(),
+  language: z
+    .enum([
+      'ar',
+      'cs',
+      'da',
+      'de',
+      'en',
+      'es',
+      'fi',
+      'fr',
+      'hi',
+      'it',
+      'ja',
+      'ko',
+      'nl',
+      'no',
+      'pl',
+      'pt',
+      'ru',
+      'sv',
+      'tr',
+      'zh',
+    ] as const)
+    .optional(),
+  selectedPresetId: z.uuid().nullable(),
+  sessionConfig: sessionConfigSchema,
+  customCharacters: z.array(z.any()).optional(),
+  characterOverrides: z
+    .record(z.string(), z.record(z.string(), z.string()))
+    .optional(),
+  initialInstruction: z.string().optional(),
+  defaultPresets: z.array(z.any()).optional(),
+});
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
@@ -61,7 +108,24 @@ export async function POST(request: Request) {
     let playgroundState: PlaygroundState;
 
     try {
-      playgroundState = await request.json();
+      const body = await request.json();
+      const validationResult = playgroundStateSchema.safeParse(body);
+
+      if (!validationResult.success) {
+        const formattedError = z.treeifyError(validationResult.error);
+        logger.error('Invalid request body schema', {
+          error: formattedError,
+        });
+        return NextResponse.json(
+          {
+            error: 'Invalid request body',
+            details: z.prettifyError(validationResult.error),
+          },
+          { status: 400 },
+        );
+      }
+
+      playgroundState = validationResult.data as PlaygroundState;
     } catch (error) {
       logger.error('Invalid JSON in request body', {
         error: error instanceof Error ? error.message : String(error),
@@ -202,6 +266,7 @@ export async function POST(request: Request) {
       language: selectedLanguage,
       initial_instruction: ' ',
       user_id: user.id,
+      character_id: selectedPresetId, // Track which character is being used
     };
 
     // Create access token
@@ -232,7 +297,13 @@ export async function POST(request: Request) {
 
     logger.info('Generated LiveKit token', {
       user: { id: user.id },
-      extra: { roomName, selectedPresetId },
+      extra: {
+        roomName,
+        selectedPresetId,
+        characterId: selectedPresetId,
+        voice,
+        model,
+      },
     });
 
     return NextResponse.json({

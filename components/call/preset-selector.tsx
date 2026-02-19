@@ -2,7 +2,7 @@
 
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -24,11 +24,17 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { Input } from '@/components/ui/input';
 import { PremiumActionButton } from '@/components/ui/premium-action-button';
 import { defaultSessionConfig } from '@/data/default-config';
 import type { Preset } from '@/data/presets';
+import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import {
+  CreateCharacterDialog,
+  type NewCharacterPayload,
+} from './create-character-dialog';
 
 const MAX_CUSTOM_CHARACTERS = 10;
 
@@ -116,6 +122,7 @@ const gridColsClass: Record<number, string> = {
 
 interface PresetSelectorProps {
   isPaidUser?: boolean;
+  callVoices?: DBVoice[];
 }
 
 function mapApiCharacterToPreset(character: {
@@ -152,13 +159,18 @@ function mapApiCharacterToPreset(character: {
     instructions: character.prompts?.prompt ?? '',
     localizedInstructions: character.prompts?.localized_prompts ?? {},
     sessionConfig: {
-      model: (sessionConfig.model ?? 'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+      model: (sessionConfig.model ??
+        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
-        sessionConfig.maxOutputTokens ?? sessionConfig.max_output_tokens ?? null,
+        sessionConfig.maxOutputTokens ??
+        sessionConfig.max_output_tokens ??
+        null,
       grokImageEnabled:
-        sessionConfig.grokImageEnabled ?? sessionConfig.grok_image_enabled ?? false,
+        sessionConfig.grokImageEnabled ??
+        sessionConfig.grok_image_enabled ??
+        false,
     },
     promptId: character.prompt_id,
     voiceId: character.voice_id,
@@ -168,7 +180,10 @@ function mapApiCharacterToPreset(character: {
   };
 }
 
-export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
+export function PresetSelector({
+  isPaidUser = false,
+  callVoices = [],
+}: PresetSelectorProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();
   const connectionState = useConnectionState();
@@ -176,10 +191,17 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
 
   const [lastPresetId, setLastPresetId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [characterToDelete, setCharacterToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+
+  // Editable fields for custom characters
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editableName, setEditableName] = useState('');
+  const [editableDescription, setEditableDescription] = useState('');
 
   // Get default character presets (those with images)
   const defaultCharacters = helpers
@@ -239,27 +261,29 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
     );
   };
 
-  const handleAddCharacter = async () => {
+  const handleOpenCreateDialog = () => {
     if (!canAddMore || isConnected) return;
+    setShowCreateDialog(true);
+  };
 
-    const nextName = `Character ${customCharacters.length + 1}`;
+  const handleCreateCharacter = async (payload: NewCharacterPayload) => {
     const response = await fetch('/api/characters', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: nextName,
-        localizedDescriptions: { [pgState.language]: 'A new custom character.' },
-        prompt: '',
+        name: payload.name,
+        localizedDescriptions: { [pgState.language]: payload.description },
+        prompt: payload.prompt,
         localizedPrompts: {},
         sessionConfig: { ...defaultSessionConfig, ...pgState.sessionConfig },
-        voiceName: pgState.sessionConfig.voice,
+        voiceName: payload.voiceName,
       }),
     });
 
     const result = await response.json();
     if (!response.ok) {
       toast.error(result.error ?? 'Failed to create character');
-      return;
+      throw new Error(result.error ?? 'Failed to create character');
     }
 
     const newPreset = mapApiCharacterToPreset(result);
@@ -267,6 +291,109 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
     toast.success('Character created');
+  };
+
+  // Build updated localizedDescriptions with the new description value
+  const buildUpdatedDescriptions = (
+    existing: Partial<Record<string, string>> | undefined,
+    language: string,
+    newValue: string,
+  ): Record<string, string> => {
+    const result: Record<string, string> = {};
+    if (existing) {
+      for (const [key, value] of Object.entries(existing)) {
+        if (value !== undefined) {
+          result[key] = value;
+        }
+      }
+    }
+    result[language] = newValue;
+    return result;
+  };
+
+  // Save name/description updates
+  const handleSaveNameOrDescription = async () => {
+    if (!(selectedPreset && isCustomCharacter(selectedPreset.id))) {
+      setIsEditingName(false);
+      setIsEditingDescription(false);
+      return;
+    }
+
+    const nameChanged =
+      isEditingName && editableName.trim() !== selectedPreset.name;
+    const currentDesc =
+      selectedPreset.localizedDescriptions?.[pgState.language] ?? '';
+    const descChanged =
+      isEditingDescription && editableDescription.trim() !== currentDesc;
+
+    if (!(nameChanged || descChanged)) {
+      setIsEditingName(false);
+      setIsEditingDescription(false);
+      return;
+    }
+
+    const newName = nameChanged ? editableName.trim() : selectedPreset.name;
+    const newDescriptions = descChanged
+      ? buildUpdatedDescriptions(
+          selectedPreset.localizedDescriptions,
+          pgState.language,
+          editableDescription.trim(),
+        )
+      : selectedPreset.localizedDescriptions;
+
+    const response = await fetch('/api/characters', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: selectedPreset.id,
+        name: newName,
+        localizedDescriptions: newDescriptions,
+        prompt: selectedPreset.instructions,
+        localizedPrompts: selectedPreset.localizedInstructions ?? {},
+        sessionConfig: selectedPreset.sessionConfig,
+        voiceName:
+          selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      toast.error(result.error ?? 'Failed to update character');
+      return;
+    }
+
+    const updatedPreset = mapApiCharacterToPreset(result);
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    toast.success('Character updated');
+
+    setIsEditingName(false);
+    setIsEditingDescription(false);
+  };
+
+  // Start editing name
+  const handleStartEditName = () => {
+    if (selectedPreset && isCustomCharacter(selectedPreset.id)) {
+      setEditableName(selectedPreset.name);
+      setIsEditingName(true);
+    }
+  };
+
+  // Start editing description
+  const handleStartEditDescription = () => {
+    if (selectedPreset && isCustomCharacter(selectedPreset.id)) {
+      setEditableDescription(
+        selectedPreset.localizedDescriptions?.[pgState.language] ??
+          selectedPreset.localizedDescriptions?.en ??
+          '',
+      );
+      setIsEditingDescription(true);
+    }
+  };
+
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+    setIsEditingDescription(false);
   };
 
   const handleDelete = async () => {
@@ -301,6 +428,9 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
   const isCustomCharacter = (id: string) =>
     customCharacters.some((c) => c.id === id);
 
+  const isSelectedCustom =
+    selectedPreset && isCustomCharacter(selectedPreset.id);
+
   /** The "+" add-character button rendered as an avatar-shaped circle. */
   const addCharacterButton = canAddMore ? (
     <div className="flex flex-col items-center gap-2">
@@ -309,7 +439,7 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
         className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
         disabled={isConnected}
         isPaidUser={isPaidUser}
-        onClick={handleAddCharacter}
+        onClick={handleOpenCreateDialog}
         premiumTooltip="Upgrade to create custom characters"
       >
         <Plus className="h-5 w-5" />
@@ -416,7 +546,7 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
           </div>
         )}
 
-        {/* Bio Card */}
+        {/* Bio Card - Editable for custom characters */}
         <div
           className={`rounded-xl bg-muted p-4 transition-all duration-300 ${
             selectedPreset
@@ -424,15 +554,92 @@ export function PresetSelector({ isPaidUser = false }: PresetSelectorProps) {
               : 'pointer-events-none h-0 translate-y-2 overflow-hidden p-0 opacity-0'
           }`}
         >
-          {selectedPreset && (
-            <p className="text-foreground text-sm">
-              <span className="font-semibold">{selectedPreset.name}:</span>{' '}
-              {selectedPreset.localizedDescriptions?.[pgState.language] ??
-                selectedPreset.localizedDescriptions?.en}
-            </p>
-          )}
+          {selectedPreset &&
+            (isSelectedCustom && !isConnected ? (
+              // Editable bio card for custom characters
+              <div className="space-y-3">
+                {/* Editable Name */}
+                <div className="flex items-center gap-2">
+                  {isEditingName ? (
+                    <Input
+                      autoFocus
+                      className="h-8 font-semibold"
+                      maxLength={50}
+                      onBlur={handleSaveNameOrDescription}
+                      onChange={(e) => setEditableName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      value={editableName}
+                    />
+                  ) : (
+                    <button
+                      className="group flex items-center gap-1 text-left"
+                      onClick={handleStartEditName}
+                      type="button"
+                    >
+                      <span className="font-semibold text-foreground">
+                        {selectedPreset.name}
+                      </span>
+                      <Pencil className="h-3 w-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Editable Description */}
+                <div>
+                  {isEditingDescription ? (
+                    <Input
+                      autoFocus
+                      className="h-8 text-sm"
+                      maxLength={200}
+                      onBlur={handleSaveNameOrDescription}
+                      onChange={(e) => setEditableDescription(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                        if (e.key === 'Escape') handleCancelEdit();
+                      }}
+                      placeholder="Add a description..."
+                      value={editableDescription}
+                    />
+                  ) : (
+                    <button
+                      className="group flex w-full items-start gap-1 text-left"
+                      onClick={handleStartEditDescription}
+                      type="button"
+                    >
+                      <span className="text-foreground text-sm">
+                        {selectedPreset.localizedDescriptions?.[
+                          pgState.language
+                        ] ??
+                          selectedPreset.localizedDescriptions?.en ??
+                          'Click to add a description...'}
+                      </span>
+                      <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Read-only bio card for predefined characters
+              <p className="text-foreground text-sm">
+                <span className="font-semibold">{selectedPreset.name}:</span>{' '}
+                {selectedPreset.localizedDescriptions?.[pgState.language] ??
+                  selectedPreset.localizedDescriptions?.en}
+              </p>
+            ))}
         </div>
       </div>
+
+      {/* Create Character Dialog */}
+      <CreateCharacterDialog
+        callVoices={callVoices}
+        dict={dict.createCharacter}
+        onOpenChange={setShowCreateDialog}
+        onSave={handleCreateCharacter}
+        open={showCreateDialog}
+      />
 
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>

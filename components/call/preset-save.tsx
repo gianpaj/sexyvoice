@@ -55,13 +55,18 @@ function mapApiCharacterToPreset(character: {
     instructions: character.prompts?.prompt ?? '',
     localizedInstructions: character.prompts?.localized_prompts ?? {},
     sessionConfig: {
-      model: (sessionConfig.model ?? 'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+      model: (sessionConfig.model ??
+        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
-        sessionConfig.maxOutputTokens ?? sessionConfig.max_output_tokens ?? null,
+        sessionConfig.maxOutputTokens ??
+        sessionConfig.max_output_tokens ??
+        null,
       grokImageEnabled:
-        sessionConfig.grokImageEnabled ?? sessionConfig.grok_image_enabled ?? false,
+        sessionConfig.grokImageEnabled ??
+        sessionConfig.grok_image_enabled ??
+        false,
     },
     promptId: character.prompt_id,
     voiceId: character.voice_id,
@@ -128,7 +133,8 @@ export function PresetSave() {
   };
 
   const handleSave = async () => {
-    if (!selectedPreset || isDefaultPreset) return;
+    if (!selectedPreset || isDefaultPreset || !selectedPreset.name.trim())
+      return;
 
     const response = await fetch('/api/characters', {
       method: 'POST',

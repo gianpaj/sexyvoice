@@ -79,7 +79,33 @@ vi.mock('@/hooks/use-connection', () => ({
     disconnect: mockDisconnect,
     connect: mockConnect,
     shouldConnect: false,
-    dict: { chooseCharacter: 'Choose Character' },
+    dict: {
+      chooseCharacter: 'Choose Character',
+      createCharacter: {
+        dialogTitle: 'Create New Character',
+        dialogDescription:
+          'Create a custom AI character with your own personality and voice.',
+        nameLabel: 'Name',
+        nameRequired: '*',
+        namePlaceholder: 'e.g., Luna, Marcus, Zara...',
+        descriptionLabel: 'Description',
+        descriptionPlaceholder: 'A brief description of your character...',
+        voiceLabel: 'Voice',
+        voicePlaceholder: 'Choose a voice',
+        instructionsLabel: 'Instructions',
+        instructionsPlaceholder:
+          "Describe your character's personality, speech patterns, backstory...",
+        characterCount: '__COUNT__/5000 characters',
+        cancelButton: 'Cancel',
+        createButton: 'Create Character',
+        creatingButton: 'Creating...',
+        errorNameRequired: 'Name is required',
+        errorVoiceRequired: 'Please select a voice',
+        playVoiceSample: 'Play voice sample',
+        stopVoiceSample: 'Stop voice sample',
+        previewVoice: "Preview __VOICE__'s voice",
+      },
+    },
   }),
 }));
 

@@ -3,7 +3,7 @@ import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { hasUserPaid } from '@/lib/supabase/queries';
+import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 // import { PresetShare } from "@/components/preset-share";
 
@@ -24,14 +24,16 @@ export default async function Call(props: {
     return <div>{dict.profile.notLoggedIn}</div>;
   }
 
-  const [{ data: creditTransactions }, isPaidUser] = await Promise.all([
-    supabase
-      .from('credit_transactions')
-      .select('amount')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false }),
-    hasUserPaid(user.id),
-  ]);
+  const [{ data: creditTransactions }, isPaidUser, callVoices] =
+    await Promise.all([
+      supabase
+        .from('credit_transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      hasUserPaid(user.id),
+      getCallVoices(),
+    ]);
 
   return (
     <div className="mx-auto flex w-full flex-col md:max-w-3xl">
@@ -46,7 +48,11 @@ export default async function Call(props: {
         />
       </div>
       <div className="my-6 flex w-full px-0 md:px-4">
-        <ConfigurationForm isPaidUser={isPaidUser} lang={lang} />
+        <ConfigurationForm
+          callVoices={callVoices}
+          isPaidUser={isPaidUser}
+          lang={lang}
+        />
       </div>
       <main className="flex w-full flex-1 flex-col md:p-4 lg:mt-16">
         <div className="mx-auto flex h-full w-full flex-col justify-center gap-5 bg-bg1">

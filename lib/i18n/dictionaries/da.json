@@ -346,7 +346,29 @@
     "instructions": "Instruktioner",
     "instructionsHelp": "Instruktioner er en systembesked, der sættes foran samtalen, hver gang modellen svarer. Opdateringer vil blive afspejlet i næste samtaletur.",
     "grokImagineNote": "Bemærk: Grok Imagine tilføjer yderligere instruktioner til billedgenerering.",
-    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet"
+    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet",
+    "createCharacter": {
+      "dialogTitle": "Opret ny karakter",
+      "dialogDescription": "Opret en brugerdefineret AI-karakter med din egen personlighed og stemme.",
+      "nameLabel": "Navn",
+      "nameRequired": "*",
+      "namePlaceholder": "f.eks. Luna, Marcus, Zara...",
+      "descriptionLabel": "Beskrivelse",
+      "descriptionPlaceholder": "En kort beskrivelse af din karakter...",
+      "voiceLabel": "Stemme",
+      "voicePlaceholder": "Vælg en stemme",
+      "instructionsLabel": "Instruktioner",
+      "instructionsPlaceholder": "Beskriv din karakters personlighed, talemønstre, baggrund...",
+      "characterCount": "__COUNT__/5000 tegn",
+      "cancelButton": "Annuller",
+      "createButton": "Opret karakter",
+      "creatingButton": "Opretter...",
+      "errorNameRequired": "Navn er påkrævet",
+      "errorVoiceRequired": "Vælg venligst en stemme",
+      "playVoiceSample": "Afspil stemmeprøve",
+      "stopVoiceSample": "Stop stemmeprøve",
+      "previewVoice": "Forhåndsvisning af __VOICE__s stemme"
+    }
   },
   "clone": {
     "audioFileLabel": "Lydfil",

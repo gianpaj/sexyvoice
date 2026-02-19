@@ -54,7 +54,7 @@ app/[lang]/                    # Internationalized routes
 └── page.tsx                   # Landing page
 
 app/api/
-├── call-token/                # LiveKit token generation for calls (resolves character prompts from DB)
+├── call-token/                # LiveKit token generation for calls (Zod validation, resolves character prompts from DB, includes character_id in metadata)
 ├── characters/                # Custom character CRUD (POST create/update, DELETE)
 ├── usage-events/              # Usage tracking API
 ├── generate-voice/            # Voice generation endpoint
@@ -120,14 +120,15 @@ Shared enum types:
 ### Real-time AI Voice Call Flow
 1. User selects a character (predefined or custom) and configures call settings in `/dashboard/call`
 2. User clicks connect, frontend requests token from `/api/call-token` with `selectedPresetId` (character UUID)
-3. API validates user session, checks minimum credit balance, and resolves the character's prompt from the DB via `resolveCharacterPrompt()` using `createAdminClient()` (bypasses RLS so predefined prompt text never reaches the client)
-4. For custom characters, API verifies ownership and paid status before resolving the prompt
-5. LiveKit access token is generated with room configuration and AI agent dispatch
-6. Client connects to LiveKit room using WebRTC
-7. AI agent joins the room and handles real-time voice conversation
-7. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
-8. Credits are deducted based on call duration
-9. On disconnect, credits are refetched and UI is updated
+3. API validates request using Zod schema, checks user session and minimum credit balance
+4. API resolves the character's prompt from the DB via `resolveCharacterPrompt()` using `createAdminClient()` (bypasses RLS so predefined prompt text never reaches the client)
+5. For custom characters, API verifies ownership and paid status before resolving the prompt
+6. LiveKit access token is generated with room configuration, AI agent dispatch, and metadata including `character_id` for tracking
+7. Client connects to LiveKit room using WebRTC
+8. AI agent joins the room and handles real-time voice conversation with access to character metadata
+9. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
+10. Credits are deducted based on call duration
+11. On disconnect, credits are refetched and UI is updated
 
 ## Development Guidelines
 

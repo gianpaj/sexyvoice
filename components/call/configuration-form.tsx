@@ -19,6 +19,7 @@ import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
+import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
@@ -55,11 +56,13 @@ export interface ConfigurationFormFieldProps {
 interface ConfigurationFormProps {
   lang: Locale;
   isPaidUser?: boolean;
+  callVoices?: DBVoice[];
 }
 
 export function ConfigurationForm({
   lang,
   isPaidUser = false,
+  callVoices = [],
 }: ConfigurationFormProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();
@@ -288,7 +291,7 @@ export function ConfigurationForm({
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
-          <PresetSelector isPaidUser={isPaidUser} />
+          <PresetSelector callVoices={callVoices} isPaidUser={isPaidUser} />
           {isPaidUser &&
             pgState.selectedPresetId &&
             !helpers

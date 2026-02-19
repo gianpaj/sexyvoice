@@ -8,7 +8,11 @@
     "MAX_LENGTH_MULTILANGUAGE",
     "signup",
     "minmax",
-    "TOPUP"
+    "TOPUP",
+    "sexycall",
+    "LIVEKIT",
+    "treeify",
+    "treeified"
   ],
   "dictionaries": [
     "de-de",

@@ -346,7 +346,29 @@
     "instructions": "Anweisungen",
     "instructionsHelp": "Anweisungen sind eine Systemnachricht, die der Konversation vorangestellt wird, wenn das Modell antwortet. Aktualisierungen werden beim nächsten Gesprächsbeitrag wirksam.",
     "grokImagineNote": "Hinweis: Grok Imagine fügt zusätzliche Anweisungen für die Bildgenerierung hinzu.",
-    "grokImagineIncluded": "Grok Imagine Anweisungen enthalten"
+    "grokImagineIncluded": "Grok Imagine Anweisungen enthalten",
+    "createCharacter": {
+      "dialogTitle": "Neuen Charakter erstellen",
+      "dialogDescription": "Erstellen Sie einen benutzerdefinierten KI-Charakter mit Ihrer eigenen Persönlichkeit und Stimme.",
+      "nameLabel": "Name",
+      "nameRequired": "*",
+      "namePlaceholder": "z.B. Luna, Marcus, Zara...",
+      "descriptionLabel": "Beschreibung",
+      "descriptionPlaceholder": "Eine kurze Beschreibung Ihres Charakters...",
+      "voiceLabel": "Stimme",
+      "voicePlaceholder": "Stimme wählen",
+      "instructionsLabel": "Anweisungen",
+      "instructionsPlaceholder": "Beschreiben Sie die Persönlichkeit, Sprechmuster und Hintergrundgeschichte Ihres Charakters...",
+      "characterCount": "__COUNT__/5000 Zeichen",
+      "cancelButton": "Abbrechen",
+      "createButton": "Charakter erstellen",
+      "creatingButton": "Erstelle...",
+      "errorNameRequired": "Name ist erforderlich",
+      "errorVoiceRequired": "Bitte wählen Sie eine Stimme",
+      "playVoiceSample": "Stimmprobe abspielen",
+      "stopVoiceSample": "Stimmprobe stoppen",
+      "previewVoice": "Vorschau der Stimme von __VOICE__"
+    }
   },
   "clone": {
     "audioFileLabel": "Audiodatei",

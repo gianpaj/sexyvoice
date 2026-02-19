@@ -534,6 +534,7 @@ export async function resolveCharacterPrompt(characterId: string) {
 ```
 
 **Critical design decisions:**
+
 - `getPublicCallCharacters()` never selects prompt text — predefined prompt content stays server-only
 - `getUserCallCharacters()` joins prompts to provide editable prompt text to the UI (allowed by RLS since user owns their prompts)
 - `resolveCharacterPrompt()` uses `createAdminClient()` to bypass RLS — this is the only path that reads predefined prompt text, and it runs entirely server-side in the `call-token` API
@@ -650,16 +651,27 @@ Only needed for **mutations** (create/update/delete custom characters + their pr
 
 ### Changes to `app/api/call-token/route.ts`
 
-```
+**✅ IMPLEMENTED** (with enhancements)
+
+```typescript
 // Client sends:
 //   {
-//     selectedPresetId: string,   // characters.id UUID (predefined or custom)
-//     language: CallLanguage,
-//     sessionConfig: { model, voice, temperature, maxOutputTokens, grokImageEnabled }
+//     instructions: string,       // Required but may be ignored for predefined characters
+//     selectedPresetId: string | null,   // characters.id UUID (predefined or custom)
+//     language?: CallLanguage,    // Optional, defaults to 'en'
+//     sessionConfig: { 
+//       model: string,
+//       voice: string,
+//       temperature: number (0-2),
+//       maxOutputTokens: number | null,
+//       grokImageEnabled: boolean
+//     }
 //   }
 //
-// NOTE: client no longer sends `instructions` field for predefined characters.
-//       For custom characters the prompt is read from DB, not trusted from client.
+// **ZOD VALIDATION** (NEW):
+//    - Full request body schema validation using Zod
+//    - Validates types, ranges (temperature 0-2), and required fields
+//    - Returns detailed error messages on validation failure (400)
 //
 // 1. VOICE VALIDATION (already exists):
 //    getVoiceIdByName(sessionConfig.voice, false) → 404 if voice gone
@@ -682,13 +694,51 @@ Only needed for **mutations** (create/update/delete custom characters + their pr
 //
 //    d. If no selectedPresetId → fall back to default instructions from default-config.ts
 //
-// 3. Rest unchanged (token generation, room config, LiveKit dispatch)
+// 3. CREATE ACCESS TOKEN with metadata including character tracking:
+//    const metadata = {
+//      instructions: resolvedInstructions,
+//      model,
+//      voice: voiceObj.id,
+//      temperature,
+//      max_output_tokens: maxOutputTokens,
+//      grok_image_enabled: grokImageEnabled,
+//      language: selectedLanguage,
+//      initial_instruction: ' ',
+//      user_id: user.id,
+//      character_id: selectedPresetId,  // ← NEW: Track which character is used
+//    };
+//
+// 4. Rest unchanged (token generation, room config, LiveKit dispatch)
 ```
 
+**Zod Schemas Added:**
+
+- `sessionConfigSchema` - Validates session config with proper types and constraints
+- `playgroundStateSchema` - Validates full request body including:
+  - Required fields: `instructions`, `sessionConfig`, `selectedPresetId`
+  - Optional fields: `language` (19 supported codes), `customCharacters`, etc.
+  - UUID validation for `selectedPresetId`
+  - Temperature range validation (0-2)
+
+**Enhanced Logging:**
+
+- Logs `selectedPresetId` / `character_id` for analytics
+- Logs voice and model for better debugging
+- Detailed validation errors for troubleshooting
+
 **Security model:**
+
+- **Zod Validation**: All incoming requests validated against strict schemas before processing
 - `resolveCharacterPrompt()` uses `createAdminClient()` — it can read ALL prompts regardless of RLS
 - The API validates ownership (custom chars) and paid status before using the result
 - Predefined prompt text is resolved server-side and passed to LiveKit — it never touches the client
+- `character_id` in metadata allows agent to track which character is being used without exposing sensitive data
+
+**Test Coverage:**
+
+- 19 comprehensive tests in `tests/call-token.test.ts`
+- Validates all success scenarios, error cases, and edge cases
+- Tests temperature boundaries, UUID validation, language codes, and type checking
 
 ---
 
@@ -719,6 +769,7 @@ call/page.tsx (server component)
 ```
 
 Update `ConfigurationFormProps`:
+
 ```ts
 interface ConfigurationFormProps {
   lang: Locale;
@@ -794,16 +845,69 @@ const isCustomCharacterSelected = pgState.selectedPresetId
 //   )}
 ```
 
-### 6f. `PresetSave` simplification
+### 6f. Custom Character Editing (name, description, voice, prompt all editable)
 
-- **Remove** "Save" button for default characters (no more `SET_CHARACTER_OVERRIDE` on defaults)
-- **Remove** `RESET_CHARACTER_OVERRIDE` logic for defaults
-- "Save" → only for existing custom characters → `POST /api/characters` with `id`
-- "Save as new" → `POST /api/characters` without `id` (create)
-- **Disable** "Save as new" when `customCharacters.length >= 10` with tooltip
-- Add voice dropdown to the save dialog
+When a **custom character is selected**, the UI shows an edit panel where ALL fields are editable:
 
-### 6g. "+" Avatar button for creating new custom character
+| Field | Editable? | Location |
+|-------|-----------|----------|
+| **Name** | ✅ Yes | Inline input or edit dialog |
+| **Description** | ✅ Yes | Inline input or edit dialog |
+| **Voice** | ✅ Yes | Voice dropdown with play button |
+| **Prompt/Instructions** | ✅ Yes | `InstructionsEditor` component |
+
+**UI Options for editing name/description:**
+
+**Option A: Inline editing** — The bio card becomes editable when a custom character is selected:
+
+```tsx
+// When custom character selected, bio card has editable fields:
+<div className="rounded-xl bg-muted p-4">
+  {isCustomCharacter ? (
+    <>
+      <Input
+        value={editableName}
+        onChange={(e) => setEditableName(e.target.value)}
+        className="font-semibold text-lg mb-2"
+        placeholder="Character name"
+      />
+      <Input
+        value={editableDescription}
+        onChange={(e) => setEditableDescription(e.target.value)}
+        placeholder="Character description"
+      />
+    </>
+  ) : (
+    <p className="text-foreground text-sm">
+      <span className="font-semibold">{selectedPreset.name}:</span>{' '}
+      {selectedPreset.localizedDescriptions?.[pgState.language]}
+    </p>
+  )}
+</div>
+```
+
+**Option B: Edit dialog** — Click an "Edit" button to open a dialog similar to the create dialog:
+
+```tsx
+// Edit button appears for custom characters
+{isCustomCharacter && !isConnected && (
+  <Button variant="ghost" size="sm" onClick={() => setShowEditDialog(true)}>
+    <Pencil className="h-4 w-4 mr-1" /> Edit
+  </Button>
+)}
+```
+
+### 6f-2. `PresetSave` simplification
+
+- **Remove** "Save" button for default (predefined) characters — they are immutable
+- **Remove** `SET_CHARACTER_OVERRIDE` / `RESET_CHARACTER_OVERRIDE` logic for default presets
+- "Save" button → only for existing custom characters → `POST /api/characters` with `id`
+  - Saves: name, description, voice, prompt, sessionConfig
+- "Save as new" → `POST /api/characters` without `id` (creates a copy)
+- **Disable** "Save as new" when `customCharacters.length >= 10` with tooltip explaining limit
+- Add voice dropdown to the save panel/dialog
+
+### 6g. "+" Avatar button → opens Create Character Dialog
 
 In `preset-selector.tsx`, after the last character avatar:
 
@@ -826,17 +930,154 @@ function AddCharacterButton({ onClick }: { onClick: () => void }) {
           </div>
         </div>
       </div>
-      <span className="text-muted-foreground text-xs">New</span>
+      <span className="text-muted-foreground text-xs">Add</span>
     </button>
   );
 }
+```
 
-// When clicked → open create dialog with:
-//   - Name input
-//   - Description input
-//   - Voice dropdown (from callVoices prop, with play buttons)
-//   - InstructionsEditor (prompt textarea)
-// On save → POST /api/characters → dispatch optimistic update
+**Important:** Clicking "+" does NOT immediately create a character with default values. Instead it **opens a dialog** where the user fills in all fields before saving:
+
+```tsx
+// Create Character Dialog (new component or part of PresetSelector)
+function CreateCharacterDialog({
+  open,
+  onOpenChange,
+  callVoices,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  callVoices: DBVoice[];
+  onSave: (character: NewCharacterPayload) => Promise<void>;
+}) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [voiceName, setVoiceName] = useState(callVoices[0]?.name ?? '');
+  const [prompt, setPrompt] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const selectedVoice = callVoices.find(v => v.name === voiceName);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+    setIsSaving(true);
+    await onSave({ name, description, voiceName, prompt });
+    setIsSaving(false);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Character</DialogTitle>
+          <DialogDescription>
+            Create a custom AI character with your own personality and voice.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          {/* Name (required, editable) */}
+          <div className="grid gap-2">
+            <Label htmlFor="char-name">Name *</Label>
+            <Input
+              id="char-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Luna, Marcus, Zara..."
+              maxLength={50}
+              autoFocus
+            />
+          </div>
+
+          {/* Description (optional, editable) */}
+          <div className="grid gap-2">
+            <Label htmlFor="char-description">Description</Label>
+            <Input
+              id="char-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="A brief description of your character..."
+              maxLength={200}
+            />
+          </div>
+
+          {/* Voice selection (dropdown + play button) */}
+          <div className="grid gap-2">
+            <Label>Voice</Label>
+            <div className="flex items-center gap-2">
+              <Select value={voiceName} onValueChange={setVoiceName}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Choose a voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {callVoices.map((voice) => (
+                    <SelectItem key={voice.id} value={voice.name}>
+                      {voice.name} — {voice.type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedVoice?.sample_url && (
+                <VoicePlayButton
+                  audioUrl={selectedVoice.sample_url}
+                  voiceName={selectedVoice.name}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Prompt / Instructions (editable textarea) */}
+          <div className="grid gap-2">
+            <Label htmlFor="char-prompt">Instructions</Label>
+            <Textarea
+              id="char-prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe your character's personality, speech patterns, backstory..."
+              rows={6}
+              maxLength={5000}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
+            {isSaving ? 'Creating...' : 'Create Character'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+**Flow:**
+
+1. User clicks "+" avatar button
+2. `CreateCharacterDialog` opens with **empty/default fields**
+3. User fills in: name (required), description (optional), voice (dropdown), prompt/instructions
+4. User clicks "Create Character"
+5. `POST /api/characters` is called with the user-provided values
+6. On success: dispatch `SAVE_CUSTOM_CHARACTER`, select the new character, close dialog
+7. On error: show toast, keep dialog open
+
+**Current bug to fix:** The existing `handleAddCharacter` creates immediately with hardcoded defaults:
+
+```ts
+// BAD (current):
+const nextName = `Character ${customCharacters.length + 1}`;
+localizedDescriptions: { [pgState.language]: 'A new custom character.' },
+
+// GOOD (new behavior):
+// Open dialog, let user fill in name/description/voice/prompt, then save
 ```
 
 ### 6h. `PlaygroundStateProvider` changes
@@ -903,10 +1144,12 @@ The provider receives data from SSR props instead of localStorage:
 ### 8b. `components/call/preset-selector.test.tsx`
 
 **Tests to REMOVE:**
+
 - `describe('custom characters without showInstruction')`
 - `describe('showInstruction query parameter')` (all 3 sub-tests)
 
 **Tests to UPDATE** (change `showInstruction` → `isPaidUser` prop):
+
 - All carousel mode tests
 - All character deletion tests
 - Bio card for custom character
@@ -945,6 +1188,40 @@ The provider receives data from SSR props instead of localStorage:
 
 ### 8d. Update `tests/call-token.test.ts` (if exists) or add tests
 
+**✅ IMPLEMENTED** - `tests/call-token.test.ts`
+
+**Test Coverage: 19 tests, all passing**
+
+**Valid Payloads (4 tests):**
+| Test | Description |
+|------|-------------|
+| Minimal valid payload | Accepts request with required fields only (instructions, selectedPresetId: null, sessionConfig) |
+| Payload with UUID character ID | Accepts request with valid UUID for selectedPresetId |
+| Payload with all optional fields | Accepts request with all optional fields populated (customCharacters, characterOverrides, etc.) |
+| All valid language codes | Accepts all 19 supported language codes: ar, cs, da, de, en, es, fi, fr, hi, it, ja, ko, nl, no, pl, pt, ru, sv, tr, zh |
+
+**Invalid Payloads (9 tests):**
+| Test | Description |
+|------|-------------|
+| Missing instructions | Rejects request without instructions field |
+| Missing sessionConfig | Rejects request without sessionConfig object |
+| Invalid UUID format | Rejects selectedPresetId with malformed UUID string |
+| Invalid language code | Rejects unsupported language codes |
+| Temperature out of range (high) | Rejects temperature > 2.0 |
+| Temperature out of range (negative) | Rejects temperature < 0 |
+| Missing voice in sessionConfig | Rejects sessionConfig without voice field |
+| Wrong type for grokImageEnabled | Rejects non-boolean values for grokImageEnabled |
+| Wrong type for maxOutputTokens | Rejects non-number values (excluding null) for maxOutputTokens |
+
+**Edge Cases (4 tests):**
+| Test | Description |
+|------|-------------|
+| Temperature at minimum boundary | Accepts temperature = 0 |
+| Temperature at maximum boundary | Accepts temperature = 2 |
+| Empty string instructions | Accepts empty string for instructions field |
+| Null selectedPresetId | Accepts null value for selectedPresetId |
+
+**Original planned tests (may still be needed for integration):**
 | Test | Description |
 |------|-------------|
 | Predefined character: reads prompt from DB via admin client, ignores client instructions | Security |
@@ -961,13 +1238,15 @@ After all code changes are complete, update project documentation to reflect the
 
 ### 9a. Update `AGENTS.md`
 
-| Section | Changes |
-|---------|---------|
-| **Key Technologies** | Add `characters` and `prompts` tables to Database mentions |
-| **Database Schema** | Add `characters`, `prompts` tables and the shared `feature_type` enum to the core tables list |
-| **Voice Generation Flow** | No changes (TTS flow unchanged) |
-| **Real-time AI Voice Call Flow** | Update to mention character selection resolves prompt from DB via admin client; note that predefined prompt text never reaches the client |
-| **Key Directory Structure** | Add `app/api/characters/` route description |
+**✅ IMPLEMENTED**
+
+| Section | Changes | Status |
+|---------|---------|--------|
+| **Key Technologies** | Add `characters` and `prompts` tables to Database mentions | ✅ Done |
+| **Database Schema** | Add `characters`, `prompts` tables and the shared `feature_type` enum to the core tables list | ✅ Done |
+| **Voice Generation Flow** | No changes (TTS flow unchanged) | ✅ Done |
+| **Real-time AI Voice Call Flow** | Updated to mention Zod validation, character selection resolves prompt from DB via admin client, `character_id` in metadata; note that predefined prompt text never reaches the client | ✅ Done |
+| **Key Directory Structure** | Updated `app/api/call-token/` description to include Zod validation and character_id tracking | ✅ Done |
 
 ### 9b. Update `ARCHITECTURE.md` (if exists, or create)
 
@@ -1107,6 +1386,8 @@ sequenceDiagram
 9. **`hasUserPaid` computed once in server component** — `call/page.tsx` calls `hasUserPaid(user.id)` and threads the boolean down as a prop. No client-side paid status checks needed.
 
 10. **No `/api/voices` route** — voice data is fetched via SSR Supabase queries at page level since voices change infrequently. Passed down as props.
+
+11. **Zod validation in `call-token` API + character tracking** — The `/api/call-token` route now uses Zod schemas to validate the entire request body at runtime (schema validation for `sessionConfig` and `playgroundStateSchema`). This provides type safety beyond TypeScript compile-time checks, catches invalid data (wrong types, out-of-range values, malformed UUIDs), and returns detailed validation errors. Additionally, the API now includes `character_id: selectedPresetId` in the AccessToken metadata sent to LiveKit, enabling the AI agent to know which character is being used for analytics, logging, and potential character-specific behavior. This enhancement improves security, debugging, and usage tracking.
 
 ---
 

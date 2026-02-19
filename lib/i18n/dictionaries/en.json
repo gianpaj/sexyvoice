@@ -346,7 +346,29 @@
     "instructions": "Instructions",
     "instructionsHelp": "Instructions are a system message that is prepended to the conversation whenever the model responds. Updates will be reflected on the next conversation turn.",
     "grokImagineNote": "Note: Grok Imagine adds additional instructions for image generation.",
-    "grokImagineIncluded": "Grok Imagine Instructions Included"
+    "grokImagineIncluded": "Grok Imagine Instructions Included",
+    "createCharacter": {
+      "dialogTitle": "Create New Character",
+      "dialogDescription": "Create a custom AI character with your own personality and voice.",
+      "nameLabel": "Name",
+      "nameRequired": "*",
+      "namePlaceholder": "e.g., Luna, Marcus, Zara...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "A brief description of your character...",
+      "voiceLabel": "Voice",
+      "voicePlaceholder": "Choose a voice",
+      "instructionsLabel": "Instructions",
+      "instructionsPlaceholder": "Describe your character's personality, speech patterns, backstory...",
+      "characterCount": "__COUNT__/5000 characters",
+      "cancelButton": "Cancel",
+      "createButton": "Create Character",
+      "creatingButton": "Creating...",
+      "errorNameRequired": "Name is required",
+      "errorVoiceRequired": "Please select a voice",
+      "playVoiceSample": "Play voice sample",
+      "stopVoiceSample": "Stop voice sample",
+      "previewVoice": "Preview __VOICE__'s voice"
+    }
   },
   "clone": {
     "audioFileLabel": "Audio File",

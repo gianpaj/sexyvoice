@@ -291,11 +291,11 @@ describe('PresetSelector', () => {
       render(<PresetSelector />);
       const alphaCharacterButton = screen
         .getAllByRole('button', { name: /alphachar/i })
-        .find((button) => !button.getAttribute('aria-label')?.startsWith('Delete'));
+        .find(
+          (button) => !button.getAttribute('aria-label')?.startsWith('Delete'),
+        );
       expect(alphaCharacterButton).toBeTruthy();
-      await user.click(
-        alphaCharacterButton as HTMLElement,
-      );
+      await user.click(alphaCharacterButton as HTMLElement);
 
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'SET_SELECTED_PRESET_ID',
@@ -492,7 +492,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText(/Shy student girl\./)).toBeInTheDocument();
     });
 
-    it('shows the selected custom character bio', () => {
+    it('shows the selected custom character bio with editable name and description', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         selectedPresetId: 'custom-bio',
@@ -506,8 +506,11 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
-      expect(screen.getByText(/Zara:/)).toBeInTheDocument();
+      render(<PresetSelector isPaidUser />);
+      // For custom characters, name and description are separate editable elements
+      // Zara appears twice: once in avatar label, once in bio card name button
+      const zaraElements = screen.getAllByText('Zara');
+      expect(zaraElements.length).toBeGreaterThanOrEqual(2);
       expect(
         screen.getByText(/A mysterious traveler from the desert\./),
       ).toBeInTheDocument();
@@ -774,29 +777,51 @@ describe('PresetSelector', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('dispatches SAVE_CUSTOM_CHARACTER and SET_SELECTED_PRESET_ID when clicked by a paid user', async () => {
+    it('opens create character dialog when clicked by a paid user', async () => {
       const user = userEvent.setup();
       render(<PresetSelector isPaidUser />);
       await user.click(
         screen.getByRole('button', { name: /add custom character/i }),
       );
 
-      const saveCalls = mockDispatch.mock.calls.filter(
-        (call: any[]) => call[0]?.type === 'SAVE_CUSTOM_CHARACTER',
-      );
-      expect(saveCalls).toHaveLength(1);
-      expect(saveCalls[0][0].payload).toMatchObject({
-        id: '00000000-0000-4000-a000-000000000099',
-        name: 'Character 1',
-        localizedDescriptions: { en: 'A new custom character.' },
-      });
+      // Dialog should open with create character form
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('Create New Character')).toBeInTheDocument();
+      expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/instructions/i)).toBeInTheDocument();
+    });
 
-      const selectCalls = mockDispatch.mock.calls.filter(
-        (call: any[]) => call[0]?.type === 'SET_SELECTED_PRESET_ID',
+    it('opens create dialog and can be filled with character details', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector callVoices={[]} isPaidUser />);
+
+      // Open dialog
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
       );
-      expect(selectCalls).toHaveLength(1);
-      expect(selectCalls[0][0].payload).toBe(
-        '00000000-0000-4000-a000-000000000099',
+
+      // Verify dialog opened
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+      // Fill in the form
+      await user.type(screen.getByLabelText(/name/i), 'Test Character');
+      await user.type(
+        screen.getByLabelText(/description/i),
+        'A test description',
+      );
+      await user.type(
+        screen.getByLabelText(/instructions/i),
+        'Test instructions',
+      );
+
+      // Verify values were entered
+      expect(screen.getByLabelText(/name/i)).toHaveValue('Test Character');
+      expect(screen.getByLabelText(/description/i)).toHaveValue(
+        'A test description',
+      );
+      expect(screen.getByLabelText(/instructions/i)).toHaveValue(
+        'Test instructions',
       );
     });
 
@@ -838,7 +863,7 @@ describe('PresetSelector', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('increments the character name number based on existing custom characters', async () => {
+    it('opens dialog with empty name field regardless of existing custom characters', async () => {
       const user = userEvent.setup();
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
@@ -859,11 +884,9 @@ describe('PresetSelector', () => {
         screen.getByRole('button', { name: /add custom character/i }),
       );
 
-      const saveCalls = mockDispatch.mock.calls.filter(
-        (call: any[]) => call[0]?.type === 'SAVE_CUSTOM_CHARACTER',
-      );
-      expect(saveCalls).toHaveLength(1);
-      expect(saveCalls[0][0].payload.name).toBe('Character 3');
+      // Dialog should open with empty name field - user enters their own name
+      const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+      expect(nameInput.value).toBe('');
     });
 
     it('shows the premium tooltip text for free users on hover', async () => {
