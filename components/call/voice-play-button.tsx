@@ -100,11 +100,13 @@ export function VoicePlayButton({
   const defaultAriaLabel = isPlaying
     ? 'Stop voice sample'
     : 'Play voice sample';
-  const ariaLabel = ariaLabels
-    ? isPlaying
-      ? ariaLabels.stop
-      : ariaLabels.play
-    : defaultAriaLabel;
+
+  let ariaLabel: string;
+  if (ariaLabels) {
+    ariaLabel = isPlaying ? ariaLabels.stop : ariaLabels.play;
+  } else {
+    ariaLabel = defaultAriaLabel;
+  }
 
   const defaultTitle = `Preview ${voiceName}'s voice`;
   const buttonTitle = title || defaultTitle;

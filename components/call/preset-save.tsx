@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Preset } from '@/data/presets';
+import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 function mapApiCharacterToPreset(character: {
@@ -80,6 +81,8 @@ export function PresetSave() {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { dict } = useConnection();
+  const t = dict.savePreset;
   const selectedPreset = helpers.getSelectedPreset(pgState);
   const defaultPresets = helpers.getDefaultPresets();
   const isDefaultPreset = selectedPreset
@@ -120,7 +123,7 @@ export function PresetSave() {
     });
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? 'Failed to create character');
+      toast.error(result.error ?? t.failedToCreate);
       return;
     }
 
@@ -129,7 +132,7 @@ export function PresetSave() {
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
 
     setOpen(false);
-    toast.success('Character created');
+    toast.success(t.characterCreated);
   };
 
   const handleSave = async () => {
@@ -151,19 +154,20 @@ export function PresetSave() {
           ...(selectedPreset.localizedInstructions ?? {}),
           [pgState.language]: pgState.instructions,
         },
-        sessionConfig: pgState.sessionConfig,
-        voiceName: pgState.sessionConfig.voice,
+        sessionConfig: selectedPreset.sessionConfig,
+        voiceName:
+          selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
       }),
     });
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? 'Failed to update character');
+      toast.error(result.error ?? t.failedToUpdate);
       return;
     }
 
     const updatedPreset = mapApiCharacterToPreset(result);
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
-    toast.success('Character saved');
+    toast.success(t.characterSaved);
   };
 
   return (
@@ -176,7 +180,7 @@ export function PresetSave() {
           variant="secondary"
         >
           <Save className="h-4 w-4" />
-          <span className="ml-2">Save</span>
+          <span className="ml-2">{t.save}</span>
         </Button>
       )}
 
@@ -189,19 +193,17 @@ export function PresetSave() {
             variant="secondary"
           >
             <SaveAll className="h-4 w-4" />
-            <span className="ml-2">Save as new</span>
+            <span className="ml-2">{t.saveAsNew}</span>
           </Button>
         </DialogTrigger>
         <DialogContent className="bg-background sm:max-w-[475px]">
           <DialogHeader>
-            <DialogTitle>Save as new character</DialogTitle>
-            <DialogDescription>
-              This will create a new custom character with the current settings.
-            </DialogDescription>
+            <DialogTitle>{t.saveAsNewTitle}</DialogTitle>
+            <DialogDescription>{t.saveAsNewDescription}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t.nameLabel}</Label>
               <Input
                 autoComplete="off"
                 autoFocus
@@ -211,7 +213,7 @@ export function PresetSave() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t.descriptionLabel}</Label>
               <Input
                 id="description"
                 onChange={(e) => setDescription(e.target.value)}
@@ -227,7 +229,7 @@ export function PresetSave() {
               type="submit"
               variant="secondary"
             >
-              Save
+              {t.save}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -48,12 +48,13 @@ export const ConnectionProvider = ({
   const { pgState, helpers } = usePlaygroundState();
 
   const connect = async () => {
+    const resolvedState = helpers.getStateWithFullInstructions(pgState);
     const response = await fetch('/api/call-token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(helpers.getStateWithFullInstructions(pgState)),
+      body: JSON.stringify(resolvedState),
     });
 
     if (!response.ok) {
@@ -77,7 +78,7 @@ export const ConnectionProvider = ({
       wsUrl: url,
       token: accessToken,
       shouldConnect: true,
-      voice: pgState.sessionConfig.voice,
+      voice: resolvedState.sessionConfig.voice,
     });
   };
 

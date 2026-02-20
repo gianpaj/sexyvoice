@@ -24,7 +24,7 @@ export async function getCallVoices() {
       'id, name, type, description, sample_url, feature, model, language, sort_order',
     )
     .eq('feature', 'call')
-    .eq('is_public', true)
+    // .eq('is_public', true)
     .order('sort_order');
   if (error) throw error;
   return data;

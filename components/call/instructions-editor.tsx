@@ -4,6 +4,7 @@ import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { useEffect, useState } from 'react';
 
+import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export interface InstructionsEditorProps {
@@ -22,7 +23,7 @@ export function InstructionsEditor({
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch } = usePlaygroundState();
-  const [dirty, setDirty] = useState<boolean>(false);
+  const { dict } = useConnection();
   const [inputValue, setInputValue] = useState(instructions || '');
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -31,12 +32,10 @@ export function InstructionsEditor({
 
     if (
       connectionState === ConnectionState.Connected &&
-      newValue !== pgState.instructions
+      newValue !== pgState.instructions &&
+      onDirty
     ) {
-      setDirty(true);
-      if (onDirty) {
-        onDirty();
-      }
+      onDirty();
     }
   };
 
@@ -53,18 +52,15 @@ export function InstructionsEditor({
     } else {
       dispatch({ type: 'SET_INSTRUCTIONS', payload: inputValue });
     }
-    setDirty(false);
     if (onBlur) {
       onBlur();
     }
   };
 
   useEffect(() => {
-    if (instructions !== undefined && instructions !== inputValue) {
+    if (instructions !== undefined) {
       setInputValue(instructions);
-      setDirty(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [instructions]);
 
   return (
@@ -74,7 +70,7 @@ export function InstructionsEditor({
       onBlur={handleBlur}
       onChange={handleInputChange}
       onFocus={onFocus}
-      placeholder="Enter system instructions"
+      placeholder={dict.instructionsPlaceholder}
       rows={10}
       value={inputValue}
     />

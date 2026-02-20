@@ -212,6 +212,9 @@ export function PresetSelector({
   const [editableName, setEditableName] = useState('');
   const [editableDescription, setEditableDescription] = useState('');
 
+  // Track unsaved voice change — only persisted on Save or call start
+  const [pendingVoiceName, setPendingVoiceName] = useState<string | null>(null);
+
   // Get default character presets (those with images)
   const defaultCharacters = helpers
     .getDefaultPresets()
@@ -291,15 +294,15 @@ export function PresetSelector({
 
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? 'Failed to create character');
-      throw new Error(result.error ?? 'Failed to create character');
+      toast.error(result.error ?? dict.presetSelector.failedToCreate);
+      throw new Error(result.error ?? dict.presetSelector.failedToCreate);
     }
 
     const newPreset = mapApiCharacterToPreset(result);
 
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
-    toast.success('Character created');
+    toast.success(dict.presetSelector.characterCreated);
   };
 
   // Build updated localizedDescriptions with the new description value
@@ -320,16 +323,42 @@ export function PresetSelector({
     return result;
   };
 
-  // Save name/description updates
-  const handleSaveVoice = async (newVoiceName: string) => {
+  // Handle voice dropdown change — update local state only, no API call
+  const handleVoiceChange = (newVoiceName: string) => {
     if (!(selectedPreset && isSelectedCustom) || isConnected) return;
+
+    const currentVoice =
+      selectedPreset.voiceName || selectedPreset.sessionConfig.voice;
+    if (newVoiceName === currentVoice) {
+      setPendingVoiceName(null);
+      return;
+    }
+
+    setPendingVoiceName(newVoiceName);
+
+    // Update in-memory state so sessionConfig.voice is correct if a call starts
+    const updatedVoice = callVoices.find((v) => v.name === newVoiceName);
+    const updatedPreset: Preset = {
+      ...selectedPreset,
+      sessionConfig: {
+        ...selectedPreset.sessionConfig,
+        voice: newVoiceName,
+      },
+      voiceName: newVoiceName,
+      voiceId: updatedVoice?.id,
+      voiceSampleUrl: updatedVoice?.sample_url ?? undefined,
+    };
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+  };
+
+  // Persist pending voice change to DB
+  const saveVoiceToDb = async () => {
+    if (!(pendingVoiceName && selectedPreset && isSelectedCustom)) return;
 
     try {
       const response = await fetch('/api/characters', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedPreset.id,
           name: selectedPreset.name,
@@ -337,7 +366,7 @@ export function PresetSelector({
           prompt: selectedPreset.instructions,
           localizedPrompts: selectedPreset.localizedInstructions,
           sessionConfig: selectedPreset.sessionConfig,
-          voiceName: newVoiceName,
+          voiceName: pendingVoiceName,
         }),
       });
 
@@ -345,25 +374,27 @@ export function PresetSelector({
       if (!response.ok)
         throw new Error(result.error || 'Failed to update voice');
 
-      const updatedVoice = callVoices.find((v) => v.name === newVoiceName);
-      const updatedPreset: Preset = {
-        ...selectedPreset,
-        sessionConfig: {
-          ...selectedPreset.sessionConfig,
-          voice: newVoiceName,
-        },
-        voiceName: newVoiceName,
-        voiceId: updatedVoice?.id,
-        voiceSampleUrl: updatedVoice?.sample_url,
-      };
-
-      dispatch({ type: 'UPDATE_CUSTOM_CHARACTER', payload: updatedPreset });
-      toast.success('Voice updated successfully');
+      setPendingVoiceName(null);
+      toast.success(dict.presetSelector.voiceUpdated);
     } catch (error) {
-      console.error('Failed to update voice:', error);
-      toast.error('Failed to update voice');
+      console.error('Failed to save voice:', error);
+      toast.error(dict.presetSelector.failedToSaveVoice);
     }
   };
+
+  // Save pending voice to DB when a call starts
+  // biome-ignore lint/correctness/useExhaustiveDependencies: save when shouldConnect transitions to true
+  useEffect(() => {
+    if (shouldConnect && pendingVoiceName) {
+      saveVoiceToDb();
+    }
+  }, [shouldConnect]);
+
+  // Clear pending voice when switching characters
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset pending voice when selected preset changes
+  useEffect(() => {
+    setPendingVoiceName(null);
+  }, [pgState.selectedPresetId]);
 
   const handleSaveNameOrDescription = async () => {
     if (!(selectedPreset && isCustomCharacter(selectedPreset.id))) {
@@ -411,13 +442,13 @@ export function PresetSelector({
 
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? 'Failed to update character');
+      toast.error(result.error ?? dict.presetSelector.failedToUpdate);
       return;
     }
 
     const updatedPreset = mapApiCharacterToPreset(result);
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
-    toast.success('Character updated');
+    toast.success(dict.presetSelector.characterUpdated);
 
     setIsEditingName(false);
     setIsEditingDescription(false);
@@ -461,7 +492,7 @@ export function PresetSelector({
     });
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? 'Failed to delete character');
+      toast.error(result.error ?? dict.presetSelector.failedToDelete);
       return;
     }
 
@@ -475,7 +506,7 @@ export function PresetSelector({
     });
     setShowDeleteDialog(false);
     setCharacterToDelete(null);
-    toast.info('Character removed');
+    toast.info(dict.presetSelector.characterRemoved);
   };
 
   const isCustomCharacter = (id: string) =>
@@ -484,16 +515,26 @@ export function PresetSelector({
   const isSelectedCustom =
     selectedPreset && isCustomCharacter(selectedPreset.id);
 
+  // Resolved voice for the selected custom character (used by voice selector + play button)
+  const resolvedVoiceName = isSelectedCustom
+    ? pendingVoiceName ||
+      selectedPreset.voiceName ||
+      selectedPreset.sessionConfig.voice
+    : '';
+  const resolvedVoice = resolvedVoiceName
+    ? callVoices.find((v) => v.name === resolvedVoiceName)
+    : undefined;
+
   /** The "+" add-character button rendered as an avatar-shaped circle. */
   const addCharacterButton = canAddMore ? (
     <div className="flex flex-col items-center gap-2">
       <PremiumActionButton
-        aria-label="Add custom character"
+        aria-label={dict.addCustomCharacter}
         className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
         disabled={isConnected}
         isPaidUser={isPaidUser}
         onClick={handleOpenCreateDialog}
-        premiumTooltip="Upgrade to create custom characters"
+        premiumTooltip={dict.upgradePremiumTooltip}
       >
         <Plus className="h-5 w-5" />
       </PremiumActionButton>
@@ -543,7 +584,10 @@ export function PresetSelector({
                             {/* Delete button for custom characters */}
                             {isCustom && !isConnected && (
                               <button
-                                aria-label={`Delete ${preset.name}`}
+                                aria-label={dict.deleteCharacterAriaLabel.replace(
+                                  '__NAME__',
+                                  preset.name,
+                                )}
                                 className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -553,7 +597,10 @@ export function PresetSelector({
                                   });
                                   setShowDeleteDialog(true);
                                 }}
-                                title={`Delete ${preset.name}`}
+                                title={dict.deleteCharacterAriaLabel.replace(
+                                  '__NAME__',
+                                  preset.name,
+                                )}
                                 type="button"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -653,7 +700,7 @@ export function PresetSelector({
                         if (e.key === 'Enter') handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
-                      placeholder="Add a description..."
+                      placeholder={dict.addDescriptionPlaceholder}
                       value={editableDescription}
                     />
                   ) : (
@@ -667,7 +714,7 @@ export function PresetSelector({
                           pgState.language
                         ] ??
                           selectedPreset.localizedDescriptions?.en ??
-                          'Click to add a description...'}
+                          dict.clickToAddDescription}
                       </span>
                       <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
@@ -680,19 +727,16 @@ export function PresetSelector({
                     className="text-muted-foreground text-xs"
                     htmlFor="voice-select"
                   >
-                    Voice
+                    {dict.voiceLabel}
                   </Label>
                   <div className="flex items-center gap-2">
                     <Select
                       disabled={isConnected}
-                      onValueChange={handleSaveVoice}
-                      value={
-                        selectedPreset.voiceName ||
-                        selectedPreset.sessionConfig.voice
-                      }
+                      onValueChange={handleVoiceChange}
+                      value={resolvedVoiceName}
                     >
                       <SelectTrigger className="flex-1" id="voice-select">
-                        <SelectValue placeholder="Choose a voice" />
+                        <SelectValue placeholder={dict.voicePlaceholder} />
                       </SelectTrigger>
                       <SelectContent>
                         {callVoices.map((voice) => (
@@ -710,36 +754,14 @@ export function PresetSelector({
                       </SelectContent>
                     </Select>
                     <VoicePlayButton
-                      sampleUrl={
-                        callVoices.find(
-                          (v) =>
-                            v.name ===
-                            (selectedPreset.voiceName ||
-                              selectedPreset.sessionConfig.voice),
-                        )?.sample_url ?? null
-                      }
+                      sampleUrl={resolvedVoice?.sample_url ?? null}
                       size="md"
-                      voiceName={
-                        selectedPreset.voiceName ||
-                        selectedPreset.sessionConfig.voice
-                      }
+                      voiceName={resolvedVoiceName}
                     />
                   </div>
-                  {callVoices.find(
-                    (v) =>
-                      v.name ===
-                      (selectedPreset.voiceName ||
-                        selectedPreset.sessionConfig.voice),
-                  )?.description && (
+                  {resolvedVoice?.description && (
                     <p className="text-muted-foreground text-xs">
-                      {
-                        callVoices.find(
-                          (v) =>
-                            v.name ===
-                            (selectedPreset.voiceName ||
-                              selectedPreset.sessionConfig.voice),
-                        )?.description
-                      }
+                      {resolvedVoice.description}
                     </p>
                   )}
                 </div>

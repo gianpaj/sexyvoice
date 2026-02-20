@@ -410,10 +410,10 @@ describe('call-token API validation', () => {
         expect(treeified.properties).toHaveProperty('sessionConfig');
 
         // Should have error messages
-        expect(treeified.properties.instructions.errors).toBeDefined();
-        expect(treeified.properties.instructions.errors.length).toBeGreaterThan(
-          0,
-        );
+        expect(treeified.properties!.instructions.errors).toBeDefined();
+        expect(
+          treeified.properties!.instructions.errors.length,
+        ).toBeGreaterThan(0);
       }
     });
 
@@ -437,11 +437,13 @@ describe('call-token API validation', () => {
         const treeified = getTreeifiedError(result.error);
 
         // Should have nested sessionConfig properties
-        expect(treeified.properties.sessionConfig).toHaveProperty('properties');
-        expect(treeified.properties.sessionConfig.properties).toHaveProperty(
+        expect(treeified.properties!.sessionConfig).toHaveProperty(
+          'properties',
+        );
+        expect(treeified.properties!.sessionConfig.properties).toHaveProperty(
           'temperature',
         );
-        expect(treeified.properties.sessionConfig.properties).toHaveProperty(
+        expect(treeified.properties!.sessionConfig.properties).toHaveProperty(
           'maxOutputTokens',
         );
       }

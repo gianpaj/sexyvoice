@@ -301,8 +301,11 @@ export function ConfigurationForm({
                 {/* Instructions Editor for custom per-character instructions */}
                 <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
                   <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                    {helpers.getSelectedPreset(pgState)?.name || 'Character'}{' '}
-                    Instructions
+                    {dict.characterInstructions.replace(
+                      '__NAME__',
+                      helpers.getSelectedPreset(pgState)?.name ||
+                        dict.characterFallbackName,
+                    )}
                   </div>
                   <InstructionsEditor instructions={pgState.instructions} />
                 </div>
