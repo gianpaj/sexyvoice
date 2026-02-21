@@ -8,11 +8,9 @@ import {
 import * as Sentry from '@sentry/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
-import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Instructions } from '@/components/call/instructions';
 import { SessionControls } from '@/components/call/session-controls';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
 // import { GrokImageFeed } from '@/components/grok-image-feed';
@@ -27,11 +25,6 @@ export function Chat() {
   const { agent } = useAgent();
   const { disconnect, dict } = useConnection();
   // const [isEditingInstructions, setIsEditingInstructions] = useState(false);
-  const searchParams = useSearchParams();
-
-  const showInstruction =
-    searchParams.get('showInstruction') === '' ||
-    searchParams.get('showInstruction') === 'true';
 
   const [hasSeenAgent, setHasSeenAgent] = useState(false);
 
@@ -120,14 +113,8 @@ export function Chat() {
       />*/}
       <div className="chat-container flex min-w-0 flex-col items-center">
         <div className="flex w-full flex-col gap-4">
-          {/* Show instructions and visualizer stacked */}
+          {/* Show visualizer stacked */}
           <div className="flex w-full flex-col gap-4">
-            {showInstruction && (
-              <div className="flex w-full items-center justify-center">
-                <Instructions />
-              </div>
-            )}
-
             <div className="flex w-full flex-shrink-0 flex-col items-center justify-center gap-2">
               {renderConnectionControl()}
             </div>

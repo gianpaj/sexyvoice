@@ -1,0 +1,58 @@
+---
+title: "Gratis Lydtransskription — Direkte i Din Browser"
+description: Transskriber lyd til tekst på over 99 sprog, helt offline. Ingen uploads, ingen tilmelding, ingen omkostninger. Drevet af OpenAI Whisper og Transformers.js.
+date: 2026-02-13
+image: '/posts/free-audio-transcription-tool-landscape.webp'
+---
+
+## Transskriber Lyd Uden at Forlade Din Browser
+
+Du har en optagelse — et interview, et foredrag, en talebesked — og du har brug for den som tekst. De fleste transskriptionstjenester vil have dig til at uploade filen til deres servere, oprette en konto og indtaste et kreditkort.
+
+Dette værktøj kræver intet af det. Slip en lydfil ind i din browser og få en transskription. Alt kører på din enhed. Ingen server rører nogensinde din lyd.
+
+[Transskriber Din Første Fil Gratis →](../tools/transcribe)
+
+## Hvorfor Offline Er Vigtigt
+
+Hvor ender din lyd, når du uploader den til en transskriptionstjeneste? En fjernserver behandler den. En virksomhed gemmer den. Du håber, de håndterer dine optagelser — møder, lægelige noter, personlige beskeder — ansvarligt.
+
+Vores værktøj omgår den risiko helt. Det downloader en lille AI-model til din browser og behandler alt på din maskine. Din lyd forlader aldrig din enhed. Når modellen er gemt i cachen, fungerer værktøjet uden internetforbindelse.
+
+Private optagelser forbliver private.
+
+## Sådan Fungerer Det
+
+Værktøjet kører [OpenAI Whisper](https://openai.com/index/whisper/) direkte i din browser via [Transformers.js](https://huggingface.co/docs/transformers.js). Fire trin, ingen konto nødvendig:
+
+1. **Vælg din lyd.** Træk og slip en fil, eller optag direkte med din mikrofon.
+2. **Vælg en model.** Whisper Tiny (~40 MB) transskriberer hurtigt. Whisper Small (~250 MB) leverer højere nøjagtighed.
+3. **Vælg et sprog.** De flersprogede modeller dækker over 99 sprog — dansk, tysk, japansk, arabisk, hindi og mange flere.
+4. **Tryk på transskriber.** Modellen indlæses én gang, gemmes i browserens cache og behandler din lyd på sekunder.
+
+Du får en transskription med tidsstempler, som du kan kopiere med ét klik.
+
+## Transskriber eller Oversæt
+
+Hver flersproget model tilbyder to tilstande:
+
+- **Transskriber** bevarer originalsproget. En japansk optagelse giver en japansk transskription.
+- **Oversæt** konverterer ethvert sprog til engelsk. En japansk optagelse giver en engelsk transskription.
+
+Har du brug for en tro transskription? Brug transskriber. Skal du hurtigt forstå en fremmedsproget optagelse? Brug oversæt.
+
+## Hvad Det Koster
+
+Intet. Ingen brugsbegrænsninger, intet kreditkort, ingen hage. Vi byggede det som et offentligt værktøj — samme filosofi som bag vores [lydformatkonverter](../tools/audio-converter).
+
+## Tekniske Detaljer
+
+- **Modeller:** Whisper Tiny, Base og Small — optimeret til at køre i din browser
+- **Ydeevne:** Kører på baggrundstråde, så siden forbliver responsiv under transskription
+- **Caching:** Modellen downloades én gang, og din browser gemmer den til fremtidig brug
+- **Formater:** MP3, WAV, M4A, OGG, WebM og alt andet din browser kan afkode
+- **Privatliv:** Nul netværksforespørgsler under transskription. Helt offline efter den første modeldownload.
+
+## Kom i Gang
+
+Åbn [transskriptionsværktøjet](../tools/transcribe), slip en lydfil og se selv. Ingen tilmelding, ingen ventetid, ingen forpligtelser.

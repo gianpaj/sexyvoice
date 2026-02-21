@@ -6,10 +6,10 @@ const { withContentlayer } = require('next-contentlayer2');
  * Content Security Policy Header - Without Nonce
  * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
  */
-// DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
+// TODO DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
 const cspHeader = `
-    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://*.sentry.io https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://*.livekit.cloud wss://*.livekit.cloud https://livekit.io https://*.livekit.io;
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live;
+    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://*.sentry.io https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://*.livekit.cloud wss://*.livekit.cloud https://livekit.io https://*.livekit.io https://huggingface.co https://*.hf.co;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live https://cdn.jsdelivr.net;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
     img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
     font-src 'self' https://client.crisp.chat;

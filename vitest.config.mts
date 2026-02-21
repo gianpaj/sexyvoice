@@ -27,7 +27,12 @@ export default defineConfig({
       return true;
     },
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/*.test.ts'],
+    include: [
+      'tests/*.test.ts',
+      'tests/*.test.tsx',
+      'tests/**/*.test.tsx',
+      'components/**/*.test.tsx',
+    ],
     coverage: {
       provider: 'v8',
       include: [
@@ -41,6 +46,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './'),
+      '@tests': resolve(__dirname, './tests'),
     },
   },
 });

@@ -15,13 +15,15 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"
       ],
       "@/public/*": [
         "./public/*"
+      ],
+      "@tests/*": [
+        "./tests/*"
       ],
       "contentlayer/generated": [
         "./.contentlayer/generated"

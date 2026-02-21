@@ -1,8 +1,11 @@
+# Scripts
+
 ## Reset Freeloader Credits Script
 
 Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.
 
 ### Quick Start
+
 ```bash
 # Show help
 pnpm tsx scripts/reset-freeloader-credits.ts --help
@@ -18,17 +21,20 @@ pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
 ```
 
 ### CLI Options
+
 - `--dryrun` - Run in dry-run mode (no database changes)
 - `-l, --limit <number>` - Limit number of records to process
 - `-h, --help` - Show help message
 
 ### CSV Format
+
 ```csv
 id,username,created_at,total_credits_received,total_credits_used,current_credits,usage_percentage
 26fb4371-...,user@email.com,2025-11-26 16:11:36.930227+00,10000,11856,2464,118.56
 ```
 
 ### Features
+
 - **Batch processing**: Fetches credit balances in batches of 10 (10x faster!)
 - **CLI options**: `--dryrun`, `--limit`, `--help` flags
 - Dry-run mode for safe testing
@@ -47,6 +53,48 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 - [RESET_CREDITS_GUIDE.md](./RESET_CREDITS_GUIDE.md) - Complete guide with examples
 - [QUICKREF.md](./QUICKREF.md) - Quick reference card
 - [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
+
+---
+
+## Backfill Free Call Script
+
+Retroactively sets the `free_call` column on `call_sessions` by checking whether the
+user had a paid transaction (`purchase` or `topup`) before the call started.
+
+### Quick Start
+
+```bash
+# Show help
+pnpm tsx scripts/backfill-free-call.mts --help
+
+# Dry-run to preview changes
+pnpm tsx scripts/backfill-free-call.mts --dryrun
+
+# Dry-run first 50 records
+pnpm tsx scripts/backfill-free-call.mts --dryrun --limit 50
+
+# Apply changes (prompts for confirmation)
+pnpm tsx scripts/backfill-free-call.mts
+```
+
+### CLI Options
+
+- `--dryrun` - Run in dry-run mode (no database changes)
+- `-l, --limit <number>` - Limit number of call sessions to process
+- `-h, --help` - Show help message
+
+### What it does
+
+- Fetches `call_sessions` in batches of 1000
+- Fetches paid credit transactions in batches of 50 users
+- Sets `free_call = true` if the user had **no** paid transaction before the call
+- Sets `free_call = false` if the user **had** paid before the call
+- Applies updates in batches of 100
+
+### Notes
+
+- Requires `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- Output timestamps are normalized to second precision
 
 ---
 
@@ -126,6 +174,7 @@ Max Refundable = Total Purchased - Total Used - Total Already Refunded
 ```
 
 **Example scenario:**
+
 - User purchased 5000 credits for $50.00
 - User used 1200 credits
 - User previously received a refund of 500 credits
@@ -262,16 +311,19 @@ This will:
 Python scripts for analyzing credit transaction data from SexyVoice.ai to extract insights about user purchasing behavior and patterns.
 
 ### Basic Analysis
+
 ```bash
 python analyze-credit-transactions.py path/to/credit_transactions.csv
 ```
 
 ### Create Visualizations
+
 ```bash
 python visualize-transactions.py path/to/credit_transactions.csv
 ```
 
 ### Clean Data First (Optional)
+
 ```bash
 python clean-transactions.py path/to/raw_transactions.csv
 python analyze-credit-transactions.py path/to/raw_transactions_cleaned.csv

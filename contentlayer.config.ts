@@ -76,6 +76,11 @@ const Post = defineDocumentType(() => ({
       type: 'string',
       description: 'The image URL of the post',
     },
+    displayImageCover: {
+      type: 'boolean',
+      description: 'Whether to display the image cover',
+      required: false,
+    },
   },
   computedFields: {
     locale: {

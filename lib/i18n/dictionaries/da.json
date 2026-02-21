@@ -58,7 +58,7 @@
     "latestPosts": "Seneste indlæg",
     "hero": {
       "title": "Privat opkald med en AI, Tal frit –\nuden dom",
-      "subtitle": "Oplev forbindelsen – prøv 10 minutters gratis opkald",
+      "subtitle": "Oplev forbindelsen – prøv 5 minutters gratis opkald",
       "buttonCTA": "Tilmeld dig gratis",
       "noCreditCard": "Intet kreditkort påkrævet. Du kan lægge på når som helst",
       "signIn": "Log ind"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start med 10.000 gratis kreditter (10 min stemmeopkald) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start med 10.000 gratis kreditter (5 min stemmeopkald) ( ͡° ͜ʖ ͡°)",
       "title": "Klar til at finde din stemme?",
       "subtitle": "Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.",
       "action": "Opret din første stemme"
@@ -118,7 +118,7 @@
             },
             {
               "question": "Hvor meget koster det?",
-              "answer": "Live-opkald koster 400 kreditter pr. minut, mens du er forbundet."
+              "answer": "Live-opkald koster 2000 kreditter pr. minut, mens du er forbundet."
             }
           ]
         },
@@ -172,7 +172,7 @@
           "questions": [
             {
               "question": "Hvor mange kreditter har jeg brug for?",
-              "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 10.000 gratis kreditter (ca. 10 minutters tale). Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
+              "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 10.000 gratis kreditter (ca. 5 minutters tale). Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
             },
             {
               "question": "Har I en API til udviklere?",
@@ -322,7 +322,7 @@
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
     "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__",
-    "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 10 minutters opkald. Opgrader venligst for at fortsætte.",
+    "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
@@ -333,8 +333,9 @@
     "configurationUpdated": "Konfiguration opdateret",
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
+    "activeCallError": "Du har allerede et aktivt opkald i gang",
     "disconnected": "Afbrudt",
-    "chooseCharacter": "Vælg din karakter",
+    "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",
     "deletePreset": "Slet",
     "deletePresetConfirm": "Dette kan ikke fortrydes.",
@@ -346,7 +347,64 @@
     "instructions": "Instruktioner",
     "instructionsHelp": "Instruktioner er en systembesked, der sættes foran samtalen, hver gang modellen svarer. Opdateringer vil blive afspejlet i næste samtaletur.",
     "grokImagineNote": "Bemærk: Grok Imagine tilføjer yderligere instruktioner til billedgenerering.",
-    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet"
+    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet",
+    "addCustomCharacter": "Tilføj brugerdefineret karakter",
+    "addCharacterLabel": "Tilføj",
+    "upgradePremiumTooltip": "Opgrader for at oprette brugerdefinerede karakterer",
+    "addDescriptionPlaceholder": "Tilføj en beskrivelse...",
+    "clickToAddDescription": "Klik for at tilføje en beskrivelse...",
+    "characterInstructions": "__NAME__-instruktioner",
+    "characterFallbackName": "Karakter",
+    "instructionsPlaceholder": "Indtast systeminstruktioner",
+    "voiceLabel": "Stemme",
+    "voicePlaceholder": "Vælg en stemme",
+    "voiceSelectorLabel": "Stemme",
+    "voiceSelectorPlaceholder": "Vælg stemme",
+    "deleteCharacterAriaLabel": "Slet __NAME__",
+    "savePreset": {
+      "save": "Gem",
+      "saveAsNew": "Gem som ny",
+      "saveAsNewTitle": "Gem som ny karakter",
+      "saveAsNewDescription": "Dette opretter en ny brugerdefineret karakter med de aktuelle indstillinger.",
+      "nameLabel": "Navn",
+      "descriptionLabel": "Beskrivelse",
+      "characterCreated": "Karakter oprettet",
+      "characterSaved": "Karakter gemt",
+      "failedToCreate": "Kunne ikke oprette karakter",
+      "failedToUpdate": "Kunne ikke opdatere karakter"
+    },
+    "presetSelector": {
+      "characterCreated": "Karakter oprettet",
+      "characterUpdated": "Karakter opdateret",
+      "characterRemoved": "Karakter fjernet",
+      "voiceUpdated": "Stemme opdateret",
+      "failedToCreate": "Kunne ikke oprette karakter",
+      "failedToUpdate": "Kunne ikke opdatere karakter",
+      "failedToDelete": "Kunne ikke slette karakter",
+      "failedToSaveVoice": "Kunne ikke gemme stemme"
+    },
+    "createCharacter": {
+      "dialogTitle": "Opret ny karakter",
+      "dialogDescription": "Opret en brugerdefineret AI-karakter med din egen personlighed og stemme.",
+      "nameLabel": "Navn",
+      "nameRequired": "*",
+      "namePlaceholder": "f.eks. Luna, Marcus, Zara...",
+      "descriptionLabel": "Beskrivelse",
+      "descriptionPlaceholder": "En kort beskrivelse af din karakter...",
+      "voiceLabel": "Stemme",
+      "voicePlaceholder": "Vælg en stemme",
+      "instructionsLabel": "Instruktioner",
+      "instructionsPlaceholder": "Beskriv din karakters personlighed, talemønstre, baggrund...",
+      "characterCount": "__COUNT__/5000 tegn",
+      "cancelButton": "Annuller",
+      "createButton": "Opret karakter",
+      "creatingButton": "Opretter...",
+      "errorNameRequired": "Navn er påkrævet",
+      "errorVoiceRequired": "Vælg venligst en stemme",
+      "playVoiceSample": "Afspil stemmeprøve",
+      "stopVoiceSample": "Stop stemmeprøve",
+      "previewVoice": "Forhåndsvisning af __VOICE__s stemme"
+    }
   },
   "clone": {
     "audioFileLabel": "Lydfil",
@@ -420,8 +478,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Tal med AI - Private stemmeopkald uden dom | SexyVoice.ai",
-    "description": "Oplev AI-stemmeopkald i realtid i total privatliv. Tal frit uden dom - dine hemmeligheder er sikre. Prøv 10 min gratis opkald nu. Intet kreditkort påkrævet.",
+    "defaultTitle": "Tal med din AI - Private stemmeopkald uden dom | SexyVoice.ai",
+    "description": "Oplev AI-stemmeopkald i realtid i total privatliv. Tal frit uden dom - dine hemmeligheder er sikre. Prøv 5 min gratis opkald nu. Intet kreditkort påkrævet.",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",
@@ -433,7 +491,8 @@
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
     "/dashboard/usage": "Forbrug",
-    "/tools/audio-converter": "Gratis lydkonverter"
+    "/tools/audio-converter": "Gratis lydkonverter",
+    "/tools/transcribe": "Gratis lydtransskription"
   },
   "sidebar": {
     "profile": "Profil",
@@ -501,7 +560,8 @@
     "privacyPolicy": "Privatlivspolitik",
     "termsAndConditions": "Vilkår og betingelser",
     "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
-    "audioConverter": "Gratis lydkonverter"
+    "audioConverter": "Gratis lydkonverter",
+    "transcribe": "Gratis lydtransskription"
   },
   "promos": {
     "halloweenBanner": {
@@ -542,7 +602,7 @@
   "audioConverter": {
     "title": "Gratis lydkonverter",
     "subtitle": "Konverter lydfiler til MP3, WAV, MP4 og flere formater offline i din browser",
-    "tagline": "– gratis & nemt",
+    "tagline": " – 100% gratis & privat",
     "dropZone": {
       "title": "Slip din lydfil her",
       "description": "eller klik for at gennemse"
@@ -577,6 +637,56 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Ingen uploads, 100% i browseren",
       "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve"
+    }
+  },
+  "transcribe": {
+    "title": "Gratis lydtransskription",
+    "subtitle": "Transskriber lydfiler til tekst offline i din browser",
+    "tagline": " – 100% gratis & privat",
+    "loadingModel": "Indlæser model...",
+    "transcribing": "Transskriberer...",
+    "transcribeButton": "Transskriber",
+    "loadAndTranscribe": "Indlæs model & transskriber",
+    "reset": "Nulstil",
+    "audioInput": {
+      "dropTitle": "Slip din lydfil her",
+      "dropDescription": "eller klik for at gennemse",
+      "or": "eller",
+      "startRecording": "Optag med mikrofon",
+      "stopRecording": "Stop optagelse",
+      "remove": "Fjern",
+      "decodeError": "Kunne ikke afkode lydfilen. Prøv venligst et andet format.",
+      "microphoneError": "Mikrofonadgang nægtet eller ikke tilgængelig."
+    },
+    "modelSelector": {
+      "label": "Model",
+      "hint": "Større modeller er mere nøjagtige, men tager længere tid at downloade og køre."
+    },
+    "languageSelector": {
+      "label": "Sprog",
+      "taskLabel": "Opgave",
+      "transcribe": "Transskriber",
+      "translate": "Oversæt til engelsk",
+      "englishOnlyHint": "Denne model understøtter kun engelsk. Vælg en flersproget model for andre sprog.",
+      "taskHint": "Transskriber bevarer originalsproget.\nOversæt konverterer ethvert sprog til engelsk."
+    },
+    "progress": {
+      "downloading": "Downloader model...",
+      "transcribing": "Transskriberer lyd...",
+      "modelCacheHint": "Modellen gemmes i din browser til fremtidig brug",
+      "processingHint": "Behandler lyd lokalt i din browser..."
+    },
+    "transcriptDisplay": {
+      "title": "Transskription",
+      "copy": "Kopiér",
+      "copied": "Kopieret!"
+    },
+    "footer": {
+      "poweredBy": "Drevet af",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Ingen uploads, 100% i browseren",
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai"
     }
   }
 }

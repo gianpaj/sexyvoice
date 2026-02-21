@@ -1,7 +1,10 @@
 'use client';
 
-import { Save } from 'lucide-react';
+import { useConnectionState } from '@livekit/components-react';
+import { ConnectionState } from 'livekit-client';
+import { Save, SaveAll } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,16 +18,22 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Preset } from '@/data/presets';
+import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { buildSaveCharacterPayload, saveCharacter } from '@/lib/characters';
 
 export function PresetSave() {
+  const connectionState = useConnectionState();
+  const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { dict } = useConnection();
+  const t = dict.savePreset;
   const selectedPreset = helpers.getSelectedPreset(pgState);
   const defaultPresets = helpers.getDefaultPresets();
   const isDefaultPreset = selectedPreset
     ? defaultPresets.some((p) => p.id === selectedPreset.id)
     : false;
+  const customCharactersCount = pgState.customCharacters.length;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -36,76 +45,125 @@ export function PresetSave() {
         ? `${selectedPreset?.name} (copy)`
         : selectedPreset?.name || '',
     );
-    setDescription(selectedPreset?.description || '');
-  }, [selectedPreset, isDefaultPreset]);
+    setDescription(
+      selectedPreset?.localizedDescriptions?.[pgState.language] ??
+        selectedPreset?.localizedDescriptions?.en ??
+        '',
+    );
+  }, [selectedPreset, isDefaultPreset, pgState.language]);
 
-  const handleSave = () => {
-    const newPreset: Preset = {
-      id:
-        selectedPreset && !isDefaultPreset
-          ? selectedPreset.id
-          : crypto.randomUUID(),
+  // Save as new character (opens dialog)
+  const handleSaveAsNew = async () => {
+    const result = await saveCharacter({
+      id: '',
       name,
-      description,
-      instructions: pgState.instructions,
+      localizedDescriptions: { [pgState.language]: description },
+      prompt: pgState.instructions,
+      localizedPrompts: { [pgState.language]: pgState.instructions },
       sessionConfig: pgState.sessionConfig,
-    };
-
-    dispatch({ type: 'SAVE_USER_PRESET', payload: newPreset });
-    if (selectedPreset?.id !== newPreset.id) {
-      dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
+      voiceName: pgState.sessionConfig.voice,
+    });
+    if (!result.ok) {
+      toast.error(result.error ?? t.failedToCreate);
+      return;
     }
 
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
+    dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: result.preset.id });
     setOpen(false);
+    toast.success(t.characterCreated);
+  };
+
+  const handleSave = async () => {
+    if (!selectedPreset || isDefaultPreset || !selectedPreset.name.trim())
+      return;
+
+    const instructions = helpers.getFullInstructions(pgState);
+    const payload = buildSaveCharacterPayload(
+      {
+        ...selectedPreset,
+        localizedDescriptions: {
+          ...(selectedPreset.localizedDescriptions ?? {}),
+          [pgState.language]: description,
+        },
+      },
+      pgState.language,
+      instructions,
+    );
+    const result = await saveCharacter(payload);
+    if (!result.ok) {
+      toast.error(result.error ?? t.failedToUpdate);
+      return;
+    }
+
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
+    toast.success(t.characterSaved);
   };
 
   return (
-    <Dialog onOpenChange={setOpen} open={open}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
+    <div className="flex items-center gap-2">
+      {!isDefaultPreset && (
+        <Button
+          disabled={!selectedPreset || isConnected}
+          onClick={handleSave}
+          size="sm"
+          variant="secondary"
+        >
           <Save className="h-4 w-4" />
-          <span className="hidden md:ml-2 md:block">Save</span>
+          <span className="ml-2">{t.save}</span>
         </Button>
-      </DialogTrigger>
-      <DialogContent className="bg-background sm:max-w-[475px]">
-        <DialogHeader>
-          <DialogTitle>Save preset</DialogTitle>
-          <DialogDescription>
-            This will save the current playground settings so you can access it
-            later.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              autoComplete="off"
-              autoFocus
-              id="name"
-              onChange={(e) => setName(e.target.value)}
-              value={name}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
-              onChange={(e) => setDescription(e.target.value)}
-              value={description}
-            />
-          </div>
-        </div>
-        <DialogFooter>
+      )}
+
+      {/* Save as new button - opens dialog */}
+      <Dialog onOpenChange={setOpen} open={open}>
+        <DialogTrigger asChild>
           <Button
-            className="font-semibold text-sm"
-            onClick={handleSave}
-            type="submit"
+            disabled={isConnected || customCharactersCount >= 10}
+            size="sm"
             variant="secondary"
           >
-            Save
+            <SaveAll className="h-4 w-4" />
+            <span className="ml-2">{t.saveAsNew}</span>
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogTrigger>
+        <DialogContent className="bg-background sm:max-w-[475px]">
+          <DialogHeader>
+            <DialogTitle>{t.saveAsNewTitle}</DialogTitle>
+            <DialogDescription>{t.saveAsNewDescription}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">{t.nameLabel}</Label>
+              <Input
+                autoComplete="off"
+                autoFocus
+                id="name"
+                onChange={(e) => setName(e.target.value)}
+                value={name}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">{t.descriptionLabel}</Label>
+              <Input
+                id="description"
+                onChange={(e) => setDescription(e.target.value)}
+                value={description}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              className="font-semibold text-sm"
+              disabled={!name.trim()}
+              onClick={handleSaveAsNew}
+              type="submit"
+              variant="secondary"
+            >
+              {t.save}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

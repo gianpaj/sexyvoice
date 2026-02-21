@@ -1,25 +1,19 @@
 import { defaultSessionConfig } from '@/data/default-config';
-import { IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT } from '@/data/immutable-prompt';
 import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
-import {
-  defaultPresets as baseDefaultPresets,
-  type Preset,
-} from '@/data/presets';
 import { getPresetInstructions } from '@/data/preset-instructions';
+import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
 
-export const createPlaygroundStateHelpers = (
-  defaultPresets: Preset[] = baseDefaultPresets,
-) => {
+export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
     getSelectedPreset: (state: PlaygroundState) =>
-      [...defaultPresets, ...state.userPresets].find(
+      [...defaultPresets, ...state.customCharacters].find(
         (preset) => preset.id === state.selectedPresetId,
       ),
     getDefaultPresets: () => defaultPresets,
     getAllPresets: (state: PlaygroundState) => [
       ...defaultPresets,
-      ...state.userPresets,
+      ...state.customCharacters,
     ],
 
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: fine
@@ -35,7 +29,9 @@ export const createPlaygroundStateHelpers = (
       const selectedPreset = helpers.getSelectedPreset(state);
       if (selectedPreset) {
         params.set('preset', selectedPreset.id);
-        isDefaultPreset = defaultPresets.some((p) => p.id === selectedPreset.id);
+        isDefaultPreset = defaultPresets.some(
+          (p) => p.id === selectedPreset.id,
+        );
       }
 
       if (!isDefaultPreset) {
@@ -45,8 +41,11 @@ export const createPlaygroundStateHelpers = (
 
         if (selectedPreset) {
           params.set('presetName', selectedPreset.name);
-          if (selectedPreset.description) {
-            params.set('presetDescription', selectedPreset.description);
+          const presetDescription =
+            selectedPreset.localizedDescriptions?.[state.language] ??
+            selectedPreset.localizedDescriptions?.en;
+          if (presetDescription) {
+            params.set('presetDescription', presetDescription);
           }
         }
 
@@ -92,10 +91,13 @@ export const createPlaygroundStateHelpers = (
 
       const presetId = params.get('preset');
       if (presetId) {
+        const presetDescription = params.get('presetDescription') || undefined;
         returnValue.preset = {
           id: presetId,
           name: params.get('presetName') || undefined,
-          description: params.get('presetDescription') || undefined,
+          localizedDescriptions: presetDescription
+            ? { en: presetDescription }
+            : undefined,
         };
         returnValue.state.selectedPresetId = presetId;
       }
@@ -112,64 +114,86 @@ export const createPlaygroundStateHelpers = (
     },
 
     /**
-     * Checks if the immutable Grok Imagine prompt should be used
-     * Returns true if Grok Imagine is enabled AND the current preset is NOT the creative-artist preset
-     */
-    shouldUseImmutablePrompt: (state: PlaygroundState): boolean => {
-      const { sessionConfig, selectedPresetId } = state;
-      return (
-        sessionConfig.grokImageEnabled && selectedPresetId !== 'creative-artist'
-      );
-    },
-
-    /**
-     * Gets the full instructions with immutable prompt prepended if needed
+     * Gets the full instructions for the current state.
+     * Prioritizes per-language character overrides for the selected character.
      */
     getFullInstructions: (state: PlaygroundState): string => {
-      const shouldUseImmutable = helpers.shouldUseImmutablePrompt(state);
-
-      if (shouldUseImmutable) {
-        return `${IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT}\n\n${state.instructions}`;
-      }
-
-      return state.instructions;
-    },
-
-    /**
-     * Gets just the immutable prompt if it should be used
-     */
-    getImmutablePrompt: (state: PlaygroundState): string | null =>
-      helpers.shouldUseImmutablePrompt(state)
-        ? IMMUTABLE_GROK_IMAGE_GENERATION_PROMPT
-        : null,
-
-    /**
-     * Returns a new state object with full instructions (including additional prompt if needed)
-     * and resolves language-specific translations if available.
-     */
-    getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
-      // Try to get translated instructions for the selected preset and language
+      // Use per-language character overrides if available for the selected character
       let instructions = state.instructions;
-
-      if (state.selectedPresetId && state.language !== 'en') {
-        const translatedInstructions = getPresetInstructions(
-          state.selectedPresetId,
-          state.language as CallLanguage,
-        );
-        if (translatedInstructions) {
-          instructions = translatedInstructions;
+      if (state.selectedPresetId) {
+        const langOverride =
+          state.characterOverrides[state.selectedPresetId]?.[state.language];
+        if (langOverride) {
+          instructions = langOverride;
         }
       }
 
-      const fullInstructions = helpers.getFullInstructions({
-        ...state,
-        instructions,
-      });
+      return instructions;
+    },
 
-      return {
-        ...state,
-        instructions: fullInstructions,
-      };
+    /**
+     * Returns a new state object with full instructions,
+     * resolving language-specific translations if available.
+     *
+     * Priority for instruction resolution:
+     * 1. Per-language character override
+     * 2. Custom character localizedInstructions for the language
+     * 3. Built-in preset translations (from preset-instructions index)
+     * 4. Preset's default instructions field (English / fallback)
+     */
+    getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
+      if (!state.selectedPresetId) {
+        return state;
+      }
+
+      // Resolve the selected preset so we can sync sessionConfig
+      const allPresets = [...defaultPresets, ...state.customCharacters];
+      const preset = allPresets.find((p) => p.id === state.selectedPresetId);
+
+      // Sync sessionConfig from the selected preset so the correct voice
+      // (and other settings) are sent to the call-token API.
+      // Voice changes on custom characters only update the preset inside
+      // customCharacters, not the top-level sessionConfig.
+      const baseState = preset
+        ? { ...state, sessionConfig: preset.sessionConfig }
+        : state;
+
+      // 1. Per-language character override takes highest priority
+      const langOverride =
+        baseState.characterOverrides[baseState.selectedPresetId!]?.[
+          baseState.language
+        ];
+      if (langOverride !== undefined) {
+        return { ...baseState, instructions: langOverride };
+      }
+
+      // 2. Custom character localizedInstructions
+      if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
+        return {
+          ...baseState,
+          instructions: preset.localizedInstructions[
+            baseState.language
+          ] as string,
+        };
+      }
+
+      // 3. Built-in preset translations
+      if (baseState.language !== 'en') {
+        const translatedInstructions = getPresetInstructions(
+          baseState.selectedPresetId!,
+          baseState.language as CallLanguage,
+        );
+        if (translatedInstructions) {
+          return { ...baseState, instructions: translatedInstructions };
+        }
+      }
+
+      // 4. Fallback to preset's default instructions
+      if (preset) {
+        return { ...baseState, instructions: preset.instructions };
+      }
+
+      return baseState;
     },
   };
 

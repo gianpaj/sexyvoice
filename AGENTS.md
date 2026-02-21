@@ -1,5 +1,7 @@
 # Claude Assistant Guidelines for SexyVoice.ai
 
+- Search: Always run `ck --help` first and use `ck` for codebase search. Prefer `ck --regex` for exact text, `ck --sem`/`--hybrid` for conceptual matches, and `--jsonl` for tooling.
+
 This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
 
 ## Project Overview
@@ -46,22 +48,42 @@ app/[lang]/                    # Internationalized routes
 │       ├── call/              # Real-time AI voice call interface
 │       ├── usage/             # Usage statistics dashboard
 │       └── ...                # Other dashboard pages
+├── tools/                     # Public utility tools
+│   ├── audio-converter/       # Audio format conversion tool
+│   └── transcribe/            # Audio transcription & translation tool
 ├── actions/                   # Server actions (promos, stripe)
 ├── blog/[slug]/               # Dynamic blog post pages
 └── page.tsx                   # Landing page
 
 app/api/
-├── call-token/                # LiveKit token generation for calls
-├── usage-events/              # Usage tracking API
-├── generate-voice/            # Voice generation endpoint
+├── call-token/                # LiveKit token generation for calls (Zod validation, resolves character prompts from DB, includes character_id in metadata)
+├── characters/                # Custom character CRUD (POST create/update, DELETE)
 ├── clone-voice/               # Voice cloning endpoint
-└── webhooks/stripe/           # Stripe payment webhooks
+├── daily-stats/               # Daily statistics
+├── estimate-credits/          # Credit cost estimation
+├── generate-text/             # Text enhancement with AI
+├── generate-voice/            # Voice generation endpoint
+├── health/                    # Health check
+├── inngest/                   # Background jobs
+├── popular-audios/            # Popular audio listing (not being used)
+├── stripe/
+│   ├── transactions/          # Stripe transaction history
+│   └── webhook/               # Stripe payment webhooks
+├── usage-events/              # Usage tracking API
+└── wrapped/platform/          # Platform analytics (only updated once a year)
 
 lib/
-├── supabase/                  # Database client, queries, types
+├── api/                       # API utilities
+├── edge-config/               # Vercel Edge Config for dynamic settings
 ├── i18n/                      # Internationalization config and dictionaries
+├── inngest/                   # Background job definitions (not being used)
+├── redis/                     # Upstash Redis client and helpers
+├── storage/                   # Cloudflare R2 upload/delete operations
 ├── stripe/                    # Payment processing, pricing configuration
-└── edge-config/               # Vercel Edge Config for dynamic settings
+├── supabase/                  # Database client, queries, types
+├── ai.ts                      # Google Generative AI integration
+├── banlist.ts                 # Blocked email domains
+└── utils.ts                   # Shared utilities
 
 data/
 ├── playground-state.ts        # Call session state management
@@ -91,12 +113,17 @@ tests/
 ### Database Schema
 Core tables:
 - `profiles` - User profiles linked to Supabase Auth
-- `voices` - Voice models (can be user-created or system voices)
+- `voices` - Voice models (can be user-created or system voices); includes `feature` column (`feature_type` enum: `'tts'` or `'call'`), `description`, `type`, and `sort_order` for stable ordering
 - `audio_files` - Generated audio files with metadata
 - `credits` - User credit balances
 - `credit_transactions` - Credit usage/purchase history
 - `call_sessions` - Real-time voice call sessions with duration and billing
 - `usage_events` - Detailed usage tracking for analytics and billing
+- `characters` - AI character metadata (name, image, voice FK, session config, localized descriptions); supports both predefined (`is_public = true`) and user-created custom characters (max 10 per user)
+- `prompts` - Prompt content for characters (English text + localized JSONB translations); linked 1:1 from `characters.prompt_id`; predefined prompt text is never exposed to the client
+
+Shared enum types:
+- `feature_type` — `'tts'` | `'call'` — used by both `voices.feature` and `prompts.type` to discriminate which product feature a voice or prompt belongs to
 
 ### Voice Generation Flow
 1. User selects voice and enters text in dashboard
@@ -109,15 +136,17 @@ Core tables:
 8. Final audio URL returned to client
 
 ### Real-time AI Voice Call Flow
-1. User configures call settings (voice, model, temperature, instructions) in `/dashboard/call`
-2. User clicks connect, frontend requests token from `/api/call-token`
-3. API validates user session and checks minimum credit balance
-4. LiveKit access token is generated with room configuration and AI agent dispatch
-5. Client connects to LiveKit room using WebRTC
-6. AI agent joins the room and handles real-time voice conversation
-7. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
-8. Credits are deducted based on call duration
-9. On disconnect, credits are refetched and UI is updated
+1. User selects a character (predefined or custom) and configures call settings in `/dashboard/call`
+2. User clicks connect, frontend requests token from `/api/call-token` with `selectedPresetId` (character UUID)
+3. API validates request using Zod schema, checks user session and minimum credit balance
+4. API resolves the character's prompt from the DB via `resolveCharacterPrompt()` using `createAdminClient()` (bypasses RLS so predefined prompt text never reaches the client)
+5. For custom characters, API verifies ownership and paid status before resolving the prompt
+6. LiveKit access token is generated with room configuration, AI agent dispatch, and metadata including `character_id` for tracking
+7. Client connects to LiveKit room using WebRTC
+8. AI agent joins the room and handles real-time voice conversation with access to character metadata
+9. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
+10. Credits are deducted based on call duration
+11. On disconnect, credits are refetched and UI is updated
 
 ## Development Guidelines
 
@@ -357,6 +386,7 @@ Based on TODO.md, current priorities include:
 ### Recently Completed Features
 - **Real-time AI Voice Calls**: LiveKit-based voice calling with configurable AI agents
 - **Usage Statistics Dashboard**: `/dashboard/usage` with detailed usage tracking and analytics
+- **Audio Transcription & Translation**: `/tools/transcribe` page for offline audio transcription in 99+ languages with optional translation to English using Whisper AI
 
 ## Claude-Specific Instructions
 

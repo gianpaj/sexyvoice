@@ -58,7 +58,7 @@
     "latestPosts": "Ultimi post",
     "hero": {
       "title": "Chiamata privata con un'IA, Parla liberamente –\nsenza giudizio",
-      "subtitle": "Vivi l'esperienza – prova 10 minuti di chiamata gratuita",
+      "subtitle": "Vivi l'esperienza – prova 5 minuti di chiamata gratuita",
       "buttonCTA": "Registrati gratis",
       "noCreditCard": "Nessuna carta di credito richiesta. Puoi riagganciare quando vuoi",
       "signIn": "Accedi"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Inizia con 10.000 crediti gratuiti (10 minuti di chiamata) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Inizia con 10.000 crediti gratuiti (5 minuti di chiamata) ( ͡° ͜ʖ ͡°)",
       "title": "Pronto a trovare la tua voce?",
       "subtitle": "Unisciti a migliaia di creatori che si affidano alla nostra piattaforma per creare voci realistiche ricche di emozioni.",
       "action": "Crea la tua prima voce"
@@ -118,7 +118,7 @@
             },
             {
               "question": "Quanto costa?",
-              "answer": "Le chiamate live costano 400 crediti al minuto mentre sei connesso."
+              "answer": "Le chiamate live costano 2000 crediti al minuto mentre sei connesso."
             }
           ]
         },
@@ -172,7 +172,7 @@
           "questions": [
             {
               "question": "Di quanti crediti ho bisogno?",
-              "answer": "Circa 1.000 crediti producono 1 minuto di generazione audio. I nuovi utenti ricevono 10.000 crediti gratuiti (circa 10 minuti di parlato). Il nostro piano Starter include 25.000 crediti mensili, mentre Pro offre 300.000 crediti per progetti più grandi. Scegli quello che funziona per le tue esigenze."
+              "answer": "Circa 1.000 crediti producono 1 minuto di generazione audio. I nuovi utenti ricevono 10.000 crediti gratuiti (circa 5 minuti di parlato). Il nostro piano Starter include 25.000 crediti mensili, mentre Pro offre 300.000 crediti per progetti più grandi. Scegli quello che funziona per le tue esigenze."
             },
             {
               "question": "Avete un'API per sviluppatori?",
@@ -322,7 +322,7 @@
     "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
     "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
     "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
-    "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 10 minuti di chiamate. Effettua l'upgrade per continuare.",
+    "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
@@ -333,8 +333,9 @@
     "configurationUpdated": "Configurazione aggiornata",
     "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
     "agentUnavailable": "Agente non disponibile",
+    "activeCallError": "Hai già una chiamata attiva in corso",
     "disconnected": "Disconnesso",
-    "chooseCharacter": "Scegli il tuo personaggio",
+    "chooseCharacter": "Con chi vuoi parlare?",
     "presetRemoved": "Preset rimosso",
     "deletePreset": "Elimina",
     "deletePresetConfirm": "Questa azione non può essere annullata.",
@@ -346,7 +347,64 @@
     "instructions": "Istruzioni",
     "instructionsHelp": "Le istruzioni sono un messaggio di sistema che viene anteposto alla conversazione ogni volta che il modello risponde. Gli aggiornamenti saranno applicati al prossimo turno di conversazione.",
     "grokImagineNote": "Nota: Grok Imagine aggiunge istruzioni aggiuntive per la generazione di immagini.",
-    "grokImagineIncluded": "Istruzioni Grok Imagine incluse"
+    "grokImagineIncluded": "Istruzioni di Grok Imagine incluse",
+    "addCustomCharacter": "Aggiungi personaggio personalizzato",
+    "addCharacterLabel": "Aggiungi",
+    "upgradePremiumTooltip": "Aggiorna per creare personaggi personalizzati",
+    "addDescriptionPlaceholder": "Aggiungi una descrizione...",
+    "clickToAddDescription": "Clicca per aggiungere una descrizione...",
+    "characterInstructions": "Istruzioni di __NAME__",
+    "characterFallbackName": "Personaggio",
+    "instructionsPlaceholder": "Inserisci istruzioni di sistema",
+    "voiceLabel": "Voce",
+    "voicePlaceholder": "Scegli una voce",
+    "voiceSelectorLabel": "Voce",
+    "voiceSelectorPlaceholder": "Scegli voce",
+    "deleteCharacterAriaLabel": "Elimina __NAME__",
+    "savePreset": {
+      "save": "Salva",
+      "saveAsNew": "Salva come nuovo",
+      "saveAsNewTitle": "Salva come nuovo personaggio",
+      "saveAsNewDescription": "Questo creerà un nuovo personaggio personalizzato con le impostazioni attuali.",
+      "nameLabel": "Nome",
+      "descriptionLabel": "Descrizione",
+      "characterCreated": "Personaggio creato",
+      "characterSaved": "Personaggio salvato",
+      "failedToCreate": "Impossibile creare il personaggio",
+      "failedToUpdate": "Impossibile aggiornare il personaggio"
+    },
+    "presetSelector": {
+      "characterCreated": "Personaggio creato",
+      "characterUpdated": "Personaggio aggiornato",
+      "characterRemoved": "Personaggio rimosso",
+      "voiceUpdated": "Voce aggiornata",
+      "failedToCreate": "Impossibile creare il personaggio",
+      "failedToUpdate": "Impossibile aggiornare il personaggio",
+      "failedToDelete": "Impossibile eliminare il personaggio",
+      "failedToSaveVoice": "Impossibile salvare la voce"
+    },
+    "createCharacter": {
+      "dialogTitle": "Crea nuovo personaggio",
+      "dialogDescription": "Crea un personaggio AI personalizzato con la tua personalità e voce.",
+      "nameLabel": "Nome",
+      "nameRequired": "*",
+      "namePlaceholder": "es. Luna, Marcus, Zara...",
+      "descriptionLabel": "Descrizione",
+      "descriptionPlaceholder": "Una breve descrizione del tuo personaggio...",
+      "voiceLabel": "Voce",
+      "voicePlaceholder": "Scegli una voce",
+      "instructionsLabel": "Istruzioni",
+      "instructionsPlaceholder": "Descrivi la personalità del tuo personaggio, modelli di discorso, storia...",
+      "characterCount": "__COUNT__/5000 caratteri",
+      "cancelButton": "Annulla",
+      "createButton": "Crea personaggio",
+      "creatingButton": "Creazione...",
+      "errorNameRequired": "Il nome è obbligatorio",
+      "errorVoiceRequired": "Seleziona una voce",
+      "playVoiceSample": "Riproduci campione vocale",
+      "stopVoiceSample": "Ferma campione vocale",
+      "previewVoice": "Anteprima della voce di __VOICE__"
+    }
   },
   "clone": {
     "audioFileLabel": "File audio",
@@ -420,8 +478,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Parla con l'IA - Chiamate vocali private senza giudizio | SexyVoice.ai",
-    "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 10 min di chiamata gratuita. Nessuna carta di credito richiesta.",
+    "defaultTitle": "Parla con la tua IA - Chiamate vocali private senza giudizio | SexyVoice.ai",
+    "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 5 min di chiamata gratuita. Nessuna carta di credito richiesta.",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
     "/": "",
@@ -433,7 +491,8 @@
     "/dashboard/history": "Cronologia",
     "/dashboard/credits": "Crediti",
     "/dashboard/usage": "Utilizzo",
-    "/tools/audio-converter": "Convertitore audio gratuito"
+    "/tools/audio-converter": "Convertitore audio gratuito",
+    "/tools/transcribe": "Trascrizione audio gratuita"
   },
   "sidebar": {
     "profile": "Profilo",
@@ -501,7 +560,8 @@
     "privacyPolicy": "Informativa sulla privacy",
     "termsAndConditions": "Termini e condizioni",
     "copyright": "SexyVoice.ai. Tutti i diritti riservati.",
-    "audioConverter": "Convertitore audio gratuito"
+    "audioConverter": "Convertitore audio gratuito",
+    "transcribe": "Trascrizione audio gratuita"
   },
   "promos": {
     "halloweenBanner": {
@@ -577,6 +637,56 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Nessun upload, 100% nel browser",
       "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio AI gratuito da provare"
+    }
+  },
+  "transcribe": {
+    "title": "Trascrizione audio gratuita",
+    "subtitle": "Trascrivi file audio in testo offline nel tuo browser",
+    "tagline": " – 100% gratis e privato",
+    "loadingModel": "Caricamento modello...",
+    "transcribing": "Trascrizione in corso...",
+    "transcribeButton": "Trascrivi",
+    "loadAndTranscribe": "Carica modello e trascrivi",
+    "reset": "Ripristina",
+    "audioInput": {
+      "dropTitle": "Trascina qui il tuo file audio",
+      "dropDescription": "o clicca per sfogliare",
+      "or": "o",
+      "startRecording": "Registra con microfono",
+      "stopRecording": "Ferma registrazione",
+      "remove": "Rimuovi",
+      "decodeError": "Impossibile decodificare il file audio. Prova un formato diverso.",
+      "microphoneError": "Accesso al microfono negato o non disponibile."
+    },
+    "modelSelector": {
+      "label": "Modello",
+      "hint": "I modelli più grandi sono più precisi ma richiedono più tempo per il download e l'esecuzione."
+    },
+    "languageSelector": {
+      "label": "Lingua",
+      "taskLabel": "Attività",
+      "transcribe": "Trascrivi",
+      "translate": "Traduci in inglese",
+      "englishOnlyHint": "Questo modello supporta solo l'inglese. Seleziona un modello multilingue per altre lingue.",
+      "taskHint": "Trascrivi mantiene la lingua originale.\nTraduci converte qualsiasi lingua in inglese."
+    },
+    "progress": {
+      "downloading": "Download del modello...",
+      "transcribing": "Trascrizione audio...",
+      "modelCacheHint": "Il modello viene memorizzato nel browser per un uso futuro",
+      "processingHint": "Elaborazione audio locale nel tuo browser..."
+    },
+    "transcriptDisplay": {
+      "title": "Trascrizione",
+      "copy": "Copia",
+      "copied": "Copiato!"
+    },
+    "footer": {
+      "poweredBy": "Realizzato con",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Nessun upload, 100% nel browser",
+      "madeWith": "Fatto con ♡ da SexyVoice.ai"
     }
   }
 }

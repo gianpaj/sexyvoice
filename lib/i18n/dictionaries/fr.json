@@ -58,7 +58,7 @@
     "latestPosts": "Derniers articles",
     "hero": {
       "title": "Appel privé avec une IA, Parlez librement –\nsans jugement",
-      "subtitle": "Vivez l'expérience – essayez 10 minutes d'appel gratuit",
+      "subtitle": "Vivez l'expérience – essayez 5 minutes d'appel gratuit",
       "buttonCTA": "S'inscrire gratuitement",
       "noCreditCard": "Aucune carte de crédit requise. Vous pouvez raccrocher à tout moment",
       "signIn": "Se connecter"
@@ -78,7 +78,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Commencez avec 10 000 crédits gratuits (appel vocal de 10 min) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Commencez avec 10 000 crédits gratuits (appel vocal de 5 min) ( ͡° ͜ʖ ͡°)",
       "title": "Prêt à trouver votre voix ?",
       "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
       "action": "Créez votre première voix"
@@ -118,7 +118,7 @@
             },
             {
               "question": "Combien ça coûte ?",
-              "answer": "Les appels en direct coûtent 400 crédits par minute pendant que vous êtes connecté."
+              "answer": "Les appels en direct coûtent 2000 crédits par minute pendant que vous êtes connecté."
             }
           ]
         },
@@ -172,7 +172,7 @@
           "questions": [
             {
               "question": "De combien de crédits ai-je besoin ?",
-              "answer": "Environ 1 000 crédits produisent 1 minute de génération audio. Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits (environ 10 minutes de parole). Notre plan Starter inclut 25 000 crédits mensuels, tandis que Pro offre 300 000 crédits pour les projets plus importants. Choisissez ce qui convient à vos besoins."
+              "answer": "Environ 1 000 crédits produisent 1 minute de génération audio. Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits (environ 5 minutes de parole). Notre plan Starter inclut 25 000 crédits mensuels, tandis que Pro offre 300 000 crédits pour les projets plus importants. Choisissez ce qui convient à vos besoins."
             },
             {
               "question": "Avez-vous une API pour les développeurs ?",
@@ -322,7 +322,7 @@
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
-    "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 10 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
+    "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 5 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
@@ -333,8 +333,9 @@
     "configurationUpdated": "Configuration mise à jour",
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
+    "activeCallError": "Vous avez déjà un appel actif en cours",
     "disconnected": "Déconnecté",
-    "chooseCharacter": "Choisissez votre personnage",
+    "chooseCharacter": "À qui voulez-vous parler ?",
     "presetRemoved": "Preset supprimé",
     "deletePreset": "Supprimer",
     "deletePresetConfirm": "Cette action est irréversible.",
@@ -344,9 +345,66 @@
     "enhancedNoiseFilter": "Filtre anti-bruit amélioré",
     "disconnect": "Déconnecter",
     "instructions": "Instructions",
-    "instructionsHelp": "Les instructions sont un message système ajouté au début de la conversation chaque fois que le modèle répond. Les mises à jour seront appliquées au prochain tour de conversation.",
-    "grokImagineNote": "Note : Grok Imagine ajoute des instructions supplémentaires pour la génération d'images.",
-    "grokImagineIncluded": "Instructions Grok Imagine incluses"
+    "instructionsHelp": "Les instructions sont un message système qui est ajouté au début de la conversation chaque fois que le modèle répond. Les mises à jour seront reflétées au prochain tour de conversation.",
+    "grokImagineNote": "Remarque : Grok Imagine ajoute des instructions supplémentaires pour la génération d'images.",
+    "grokImagineIncluded": "Instructions de Grok Imagine incluses",
+    "addCustomCharacter": "Ajouter un personnage personnalisé",
+    "addCharacterLabel": "Ajouter",
+    "upgradePremiumTooltip": "Passez à la version premium pour créer des personnages personnalisés",
+    "addDescriptionPlaceholder": "Ajouter une description...",
+    "clickToAddDescription": "Cliquez pour ajouter une description...",
+    "characterInstructions": "Instructions de __NAME__",
+    "characterFallbackName": "Personnage",
+    "instructionsPlaceholder": "Entrez les instructions système",
+    "voiceLabel": "Voix",
+    "voicePlaceholder": "Choisir une voix",
+    "voiceSelectorLabel": "Voix",
+    "voiceSelectorPlaceholder": "Choisir une voix",
+    "deleteCharacterAriaLabel": "Supprimer __NAME__",
+    "savePreset": {
+      "save": "Enregistrer",
+      "saveAsNew": "Enregistrer comme nouveau",
+      "saveAsNewTitle": "Enregistrer comme nouveau personnage",
+      "saveAsNewDescription": "Cela créera un nouveau personnage personnalisé avec les paramètres actuels.",
+      "nameLabel": "Nom",
+      "descriptionLabel": "Description",
+      "characterCreated": "Personnage créé",
+      "characterSaved": "Personnage enregistré",
+      "failedToCreate": "Échec de la création du personnage",
+      "failedToUpdate": "Échec de la mise à jour du personnage"
+    },
+    "presetSelector": {
+      "characterCreated": "Personnage créé",
+      "characterUpdated": "Personnage mis à jour",
+      "characterRemoved": "Personnage supprimé",
+      "voiceUpdated": "Voix mise à jour",
+      "failedToCreate": "Échec de la création du personnage",
+      "failedToUpdate": "Échec de la mise à jour du personnage",
+      "failedToDelete": "Échec de la suppression du personnage",
+      "failedToSaveVoice": "Échec de l'enregistrement de la voix"
+    },
+    "createCharacter": {
+      "dialogTitle": "Créer un nouveau personnage",
+      "dialogDescription": "Créez un personnage IA personnalisé avec votre propre personnalité et voix.",
+      "nameLabel": "Nom",
+      "nameRequired": "*",
+      "namePlaceholder": "ex. Luna, Marcus, Zara...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Une brève description de votre personnage...",
+      "voiceLabel": "Voix",
+      "voicePlaceholder": "Choisir une voix",
+      "instructionsLabel": "Instructions",
+      "instructionsPlaceholder": "Décrivez la personnalité de votre personnage, les modèles de parole, l'histoire...",
+      "characterCount": "__COUNT__/5000 caractères",
+      "cancelButton": "Annuler",
+      "createButton": "Créer le personnage",
+      "creatingButton": "Création...",
+      "errorNameRequired": "Le nom est obligatoire",
+      "errorVoiceRequired": "Veuillez sélectionner une voix",
+      "playVoiceSample": "Lire l'échantillon vocal",
+      "stopVoiceSample": "Arrêter l'échantillon vocal",
+      "previewVoice": "Aperçu de la voix de __VOICE__"
+    }
   },
   "clone": {
     "audioFileLabel": "Fichier audio",
@@ -420,8 +478,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Parlez à l'IA - Appels vocaux privés sans jugement | SexyVoice.ai",
-    "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 10 min d'appel gratuit. Aucune carte de crédit requise.",
+    "defaultTitle": "Parlez à votre IA - Appels vocaux privés sans jugement | SexyVoice.ai",
+    "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 5 min d'appel gratuit. Aucune carte de crédit requise.",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
     "/": "",
@@ -433,7 +491,8 @@
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
     "/dashboard/usage": "Utilisation",
-    "/tools/audio-converter": "Convertisseur audio gratuit"
+    "/tools/audio-converter": "Convertisseur audio gratuit",
+    "/tools/transcribe": "Transcription audio gratuite"
   },
   "sidebar": {
     "profile": "Profil",
@@ -501,7 +560,8 @@
     "privacyPolicy": "Politique de confidentialité",
     "termsAndConditions": "Conditions générales",
     "copyright": "SexyVoice.ai. Tous droits réservés.",
-    "audioConverter": "Convertisseur audio gratuit"
+    "audioConverter": "Convertisseur audio gratuit",
+    "transcribe": "Transcription audio gratuite"
   },
   "promos": {
     "halloweenBanner": {
@@ -577,6 +637,56 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Aucun téléchargement, 100% dans le navigateur",
       "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
+    }
+  },
+  "transcribe": {
+    "title": "Transcription audio gratuite",
+    "subtitle": "Transcrivez des fichiers audio en texte hors ligne dans votre navigateur",
+    "tagline": " – 100% gratuit et privé",
+    "loadingModel": "Chargement du modèle...",
+    "transcribing": "Transcription en cours...",
+    "transcribeButton": "Transcrire",
+    "loadAndTranscribe": "Charger le modèle et transcrire",
+    "reset": "Réinitialiser",
+    "audioInput": {
+      "dropTitle": "Déposez votre fichier audio ici",
+      "dropDescription": "ou cliquez pour parcourir",
+      "or": "ou",
+      "startRecording": "Enregistrer avec le microphone",
+      "stopRecording": "Arrêter l'enregistrement",
+      "remove": "Supprimer",
+      "decodeError": "Impossible de décoder le fichier audio. Veuillez essayer un autre format.",
+      "microphoneError": "Accès au microphone refusé ou non disponible."
+    },
+    "modelSelector": {
+      "label": "Modèle",
+      "hint": "Les modèles plus grands sont plus précis mais prennent plus de temps à télécharger et à exécuter."
+    },
+    "languageSelector": {
+      "label": "Langue",
+      "taskLabel": "Tâche",
+      "transcribe": "Transcrire",
+      "translate": "Traduire en anglais",
+      "englishOnlyHint": "Ce modèle ne prend en charge que l'anglais. Sélectionnez un modèle multilingue pour d'autres langues.",
+      "taskHint": "Transcrire conserve la langue d'origine.\nTraduire convertit toute langue en anglais."
+    },
+    "progress": {
+      "downloading": "Téléchargement du modèle...",
+      "transcribing": "Transcription de l'audio...",
+      "modelCacheHint": "Le modèle est mis en cache dans votre navigateur pour une utilisation future",
+      "processingHint": "Traitement audio local dans votre navigateur..."
+    },
+    "transcriptDisplay": {
+      "title": "Transcription",
+      "copy": "Copier",
+      "copied": "Copié !"
+    },
+    "footer": {
+      "poweredBy": "Propulsé par",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Aucun téléchargement, 100% dans le navigateur",
+      "madeWith": "Fait avec ♡ par SexyVoice.ai"
     }
   }
 }

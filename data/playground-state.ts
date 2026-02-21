@@ -1,5 +1,5 @@
 import { defaultSessionConfig, instructions } from './default-config';
-import { defaultPresets, type Preset } from './presets';
+import type { Preset } from './presets';
 import type { SessionConfig } from './session-config';
 
 export type CallLanguage =
@@ -74,9 +74,12 @@ export const defaultLanguage: CallLanguage = 'en';
 
 export interface PlaygroundState {
   sessionConfig: SessionConfig;
-  userPresets: Preset[];
+  /** User-created custom characters */
+  customCharacters: Preset[];
   selectedPresetId: string | null;
   instructions: string;
+  /** Per-character instruction overrides keyed by character ID, then by language */
+  characterOverrides: Record<string, Partial<Record<string, string>>>;
   language: CallLanguage;
   initialInstruction: string;
   defaultPresets: Preset[];
@@ -87,10 +90,11 @@ export const initialInstruction = languageInitialInstructions[defaultLanguage];
 // Define the initial state
 export const defaultPlaygroundState: PlaygroundState = {
   sessionConfig: { ...defaultSessionConfig },
-  userPresets: [],
+  customCharacters: [],
   selectedPresetId: null,
   instructions,
+  characterOverrides: {},
   language: defaultLanguage,
   initialInstruction,
-  defaultPresets,
+  defaultPresets: [], // Now populated from DB via SSR props
 };
