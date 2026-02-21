@@ -367,7 +367,7 @@ const PostLayout = async (props: {
             />
           </header>
 
-          {post.image && (
+          {post.image && post.displayImageCover !== false && (
             <figure className="mb-8">
               <Image
                 alt={post.title}

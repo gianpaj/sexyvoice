@@ -3,12 +3,119 @@
 import * as Sentry from '@sentry/nextjs';
 
 import { createAdminClient } from './admin';
-import { MAX_FREE_GENERATIONS, FREE_USER_CALL_LIMIT_SECONDS } from './constants';
+import {
+  FREE_USER_CALL_LIMIT_SECONDS,
+  MAX_FREE_GENERATIONS,
+} from './constants';
 import { createClient } from './server';
 
 // Types for usage event tracking
 type UsageSourceType = Database['public']['Enums']['usage_source_type'];
 type UsageUnitType = Database['public']['Enums']['usage_unit_type'];
+
+// ─── Voices ───
+
+/** Get call voices (feature = 'call') for SSR */
+export async function getCallVoices() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select(
+      'id, name, type, description, sample_url, feature, model, language, sort_order',
+    )
+    .eq('feature', 'call')
+    // .eq('is_public', true)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+// ─── Characters ───
+
+/**
+ * Get public (predefined) call characters for SSR.
+ * Joins with voices to get voice name + sample_url.
+ * Does NOT include prompt text — predefined prompts never reach the client.
+ */
+export async function getPublicCallCharacters() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select(
+      `
+      id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      voice_id,
+      voices ( name, sample_url ),
+      prompt_id,
+      prompts ( type )
+    `,
+    )
+    // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
+    // Only prompt metadata (type) is joined. Public prompts are readable via RLS (is_public=true).
+    .eq('is_public', true)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Get user's custom call characters for SSR.
+ * Joins with prompts (to get editable prompt text) and voices.
+ */
+export async function getUserCallCharacters(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select(
+      `
+      id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      voice_id,
+      voices ( name, sample_url ),
+      prompt_id,
+      prompts ( prompt, localized_prompts )
+    `,
+    )
+    .eq('is_public', false)
+    .eq('user_id', userId)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/** Count user's custom call characters (for 10-limit check) */
+export async function countUserCallCharacters(userId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('characters')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_public', false)
+    .eq('user_id', userId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+// ─── Prompts (admin — for call-token resolution) ───
+
+/**
+ * Resolve the prompt for a character by character ID.
+ * Uses admin client to bypass RLS (reads predefined prompt text server-side).
+ */
+export async function resolveCharacterPrompt(characterId: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('characters')
+    .select(
+      `
+      id, is_public, user_id, voice_id,
+      voices ( id, name ),
+      prompts ( prompt, localized_prompts )
+    `,
+    )
+    .eq('id', characterId)
+    .single();
+  if (error) throw error;
+  return data;
+}
 
 export interface InsertUsageEventParams {
   userId: string;

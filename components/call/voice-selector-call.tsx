@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-
 import {
   FormControl,
   FormField,
@@ -15,101 +13,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { type VoiceId, voices, voicesData } from '@/data/voices';
-import { Button } from '../ui/button';
+import type { DBVoice } from '@/data/voices';
+import { useConnection } from '@/hooks/use-connection';
 import {
   type ConfigurationFormFieldProps,
   ConfigurationFormSchema,
 } from './configuration-form';
+import { VoicePlayButton } from './voice-play-button';
 
 // import { VoicesShowcase } from './voices-showcase';
 
-function VoicePlayButton({ voiceId }: { voiceId: VoiceId }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const voice = voicesData[voiceId];
-
-  const handlePlay = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!audioRef.current) {
-      audioRef.current = new Audio(voice.audioSampleUrl);
-      audioRef.current.onended = () => setIsPlaying(false);
-      audioRef.current.onerror = () => setIsPlaying(false);
-    }
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    } else {
-      // Update src in case voice changed
-      audioRef.current.src = voice.audioSampleUrl;
-      audioRef.current.play().catch(() => setIsPlaying(false));
-      setIsPlaying(true);
-    }
-  };
-
-  // Cleanup on unmount or voice change
-  useEffect(
-    () => () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    },
-    [],
-  );
-
-  // Stop playing when voice changes
-  useEffect(() => {
-    if (audioRef.current && isPlaying) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    }
-  }, [voiceId]);
-
-  return (
-    <Button
-      aria-label={isPlaying ? 'Stop voice sample' : 'Play voice sample'}
-      className="min-h-8 min-w-8"
-      onClick={handlePlay}
-      size="icon"
-      title={`Preview ${voice.name}'s voice`}
-      variant="outline"
-    >
-      {isPlaying ? (
-        <svg
-          aria-hidden="true"
-          className="text-fg1"
-          fill="currentColor"
-          height="12"
-          viewBox="0 0 14 14"
-          width="12"
-        >
-          <rect height="10" rx="0.5" width="3" x="3" y="2" />
-          <rect height="10" rx="0.5" width="3" x="8" y="2" />
-        </svg>
-      ) : (
-        <svg
-          aria-hidden="true"
-          className="text-fg1"
-          fill="currentColor"
-          height="12"
-          viewBox="0 0 14 14"
-          width="12"
-        >
-          <path d="M3 2.5v9a.5.5 0 00.75.43l7.5-4.5a.5.5 0 000-.86l-7.5-4.5A.5.5 0 003 2.5z" />
-        </svg>
-      )}
-    </Button>
-  );
+interface VoiceSelectorProps extends ConfigurationFormFieldProps {
+  callVoices?: DBVoice[];
 }
 
-export function VoiceSelector({ form }: ConfigurationFormFieldProps) {
+export function VoiceSelector({ form, callVoices = [] }: VoiceSelectorProps) {
+  const { dict } = useConnection();
+  const currentVoiceName = form.watch('voice');
+  const selectedVoice = callVoices.find((v) => v.name === currentVoiceName);
+
   return (
     <FormField
       control={form.control}
@@ -118,22 +40,23 @@ export function VoiceSelector({ form }: ConfigurationFormFieldProps) {
         <FormItem className="flex flex-row items-center justify-between space-y-0 px-1">
           <div className="flex items-center gap-2">
             <FormLabel className="font-medium text-fg1 text-sm">
-              Voice
+              {dict.voiceSelectorLabel}
             </FormLabel>
             {/*<VoicesShowcase
               currentVoice={field.value}
-              onSelectVoice={(voiceId) => {
+              callVoices={callVoices}
+              onSelectVoice={(voiceName) => {
                 if (
-                  ConfigurationFormSchema.shape.voice.safeParse(voiceId).success
+                  ConfigurationFormSchema.shape.voice.safeParse(voiceName).success
                 ) {
-                  field.onChange(voiceId);
+                  field.onChange(voiceName);
                 }
               }}
             />*/}
           </div>
           <div className="flex items-center gap-2">
             <Select
-              aria-label="Voice"
+              aria-label={dict.voiceSelectorLabel}
               defaultValue={form.formState.defaultValues!.voice!}
               onValueChange={(v) => {
                 if (ConfigurationFormSchema.shape.voice.safeParse(v).success) {
@@ -144,21 +67,26 @@ export function VoiceSelector({ form }: ConfigurationFormFieldProps) {
             >
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose voice" />
+                  <SelectValue placeholder={dict.voiceSelectorPlaceholder} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {voices.map((voice) => (
+                {callVoices.map((voice) => (
                   <SelectItem
                     key={`select-item-voice-${voice.id}`}
-                    value={voice.id}
+                    value={voice.name}
                   >
                     {voice.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <VoicePlayButton voiceId={field.value as VoiceId} />
+            <VoicePlayButton
+              sampleUrl={selectedVoice?.sample_url ?? null}
+              size="sm"
+              variant="button"
+              voiceName={currentVoiceName}
+            />
           </div>
         </FormItem>
       )}

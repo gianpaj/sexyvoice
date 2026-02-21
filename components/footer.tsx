@@ -47,6 +47,13 @@ async function Footer({ lang }: { lang: Locale }) {
                 {dict.audioConverter}
               </Link>
               {' - '}
+              <Link
+                className="hover:text-primary hover:underline"
+                href={`/${lang}/tools/transcribe`}
+              >
+                {dict.transcribe}
+              </Link>
+              {' - '}
               <a
                 className="hover:text-primary hover:underline"
                 href="https://sexyvoice.checkly-dashboards.com/"

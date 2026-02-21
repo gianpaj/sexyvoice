@@ -347,7 +347,64 @@
     "instructions": "Anweisungen",
     "instructionsHelp": "Anweisungen sind eine Systemnachricht, die der Konversation vorangestellt wird, wenn das Modell antwortet. Aktualisierungen werden beim nächsten Gesprächsbeitrag wirksam.",
     "grokImagineNote": "Hinweis: Grok Imagine fügt zusätzliche Anweisungen für die Bildgenerierung hinzu.",
-    "grokImagineIncluded": "Grok Imagine Anweisungen enthalten"
+    "grokImagineIncluded": "Grok Imagine-Anweisungen enthalten",
+    "addCustomCharacter": "Eigenen Charakter hinzufügen",
+    "addCharacterLabel": "Hinzufügen",
+    "upgradePremiumTooltip": "Upgrade, um eigene Charaktere zu erstellen",
+    "addDescriptionPlaceholder": "Beschreibung hinzufügen...",
+    "clickToAddDescription": "Klicke, um eine Beschreibung hinzuzufügen...",
+    "characterInstructions": "__NAME__-Anweisungen",
+    "characterFallbackName": "Charakter",
+    "instructionsPlaceholder": "Systemanweisungen eingeben",
+    "voiceLabel": "Stimme",
+    "voicePlaceholder": "Stimme wählen",
+    "voiceSelectorLabel": "Stimme",
+    "voiceSelectorPlaceholder": "Stimme wählen",
+    "deleteCharacterAriaLabel": "__NAME__ löschen",
+    "savePreset": {
+      "save": "Speichern",
+      "saveAsNew": "Als neu speichern",
+      "saveAsNewTitle": "Als neuen Charakter speichern",
+      "saveAsNewDescription": "Dies erstellt einen neuen eigenen Charakter mit den aktuellen Einstellungen.",
+      "nameLabel": "Name",
+      "descriptionLabel": "Beschreibung",
+      "characterCreated": "Charakter erstellt",
+      "characterSaved": "Charakter gespeichert",
+      "failedToCreate": "Charakter konnte nicht erstellt werden",
+      "failedToUpdate": "Charakter konnte nicht aktualisiert werden"
+    },
+    "presetSelector": {
+      "characterCreated": "Charakter erstellt",
+      "characterUpdated": "Charakter aktualisiert",
+      "characterRemoved": "Charakter entfernt",
+      "voiceUpdated": "Stimme aktualisiert",
+      "failedToCreate": "Charakter konnte nicht erstellt werden",
+      "failedToUpdate": "Charakter konnte nicht aktualisiert werden",
+      "failedToDelete": "Charakter konnte nicht gelöscht werden",
+      "failedToSaveVoice": "Stimme konnte nicht gespeichert werden"
+    },
+    "createCharacter": {
+      "dialogTitle": "Neuen Charakter erstellen",
+      "dialogDescription": "Erstellen Sie einen benutzerdefinierten KI-Charakter mit Ihrer eigenen Persönlichkeit und Stimme.",
+      "nameLabel": "Name",
+      "nameRequired": "*",
+      "namePlaceholder": "z.B. Luna, Marcus, Zara...",
+      "descriptionLabel": "Beschreibung",
+      "descriptionPlaceholder": "Eine kurze Beschreibung Ihres Charakters...",
+      "voiceLabel": "Stimme",
+      "voicePlaceholder": "Stimme wählen",
+      "instructionsLabel": "Anweisungen",
+      "instructionsPlaceholder": "Beschreiben Sie die Persönlichkeit, Sprechmuster und Hintergrundgeschichte Ihres Charakters...",
+      "characterCount": "__COUNT__/5000 Zeichen",
+      "cancelButton": "Abbrechen",
+      "createButton": "Charakter erstellen",
+      "creatingButton": "Erstelle...",
+      "errorNameRequired": "Name ist erforderlich",
+      "errorVoiceRequired": "Bitte wählen Sie eine Stimme",
+      "playVoiceSample": "Stimmprobe abspielen",
+      "stopVoiceSample": "Stimmprobe stoppen",
+      "previewVoice": "Vorschau der Stimme von __VOICE__"
+    }
   },
   "clone": {
     "audioFileLabel": "Audiodatei",
@@ -421,7 +478,7 @@
     }
   },
   "pages": {
-    "defaultTitle": "Mit KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
+    "defaultTitle": "Mit deiner KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
     "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 5 Min. kostenlos. Keine Kreditkarte erforderlich.",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
@@ -434,7 +491,8 @@
     "/dashboard/history": "Verlauf",
     "/dashboard/credits": "Credits",
     "/dashboard/usage": "Nutzung",
-    "/tools/audio-converter": "Kostenloser Audio-Konverter"
+    "/tools/audio-converter": "Kostenloser Audio-Konverter",
+    "/tools/transcribe": "Kostenlose Audio-Transkription"
   },
   "sidebar": {
     "profile": "Profil",
@@ -502,7 +560,8 @@
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
-    "audioConverter": "Kostenloser Audio-Konverter"
+    "audioConverter": "Kostenloser Audio-Konverter",
+    "transcribe": "Kostenlose Audio-Transkription"
   },
   "promos": {
     "halloweenBanner": {
@@ -578,6 +637,56 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Keine Uploads, 100% im Browser",
       "madeWith": "Mit ♡ von SexyVoice.ai - Kostenloser KI-Audio-Generator zum Ausprobieren"
+    }
+  },
+  "transcribe": {
+    "title": "Kostenlose Audio-Transkription",
+    "subtitle": "Transkribieren Sie Audiodateien offline in Ihrem Browser zu Text",
+    "tagline": " – 100% kostenlos & privat",
+    "loadingModel": "Modell wird geladen...",
+    "transcribing": "Transkription läuft...",
+    "transcribeButton": "Transkribieren",
+    "loadAndTranscribe": "Modell laden & transkribieren",
+    "reset": "Zurücksetzen",
+    "audioInput": {
+      "dropTitle": "Legen Sie Ihre Audiodatei hier ab",
+      "dropDescription": "oder klicken Sie zum Durchsuchen",
+      "or": "oder",
+      "startRecording": "Mit Mikrofon aufnehmen",
+      "stopRecording": "Aufnahme stoppen",
+      "remove": "Entfernen",
+      "decodeError": "Audiodatei konnte nicht dekodiert werden. Bitte versuchen Sie ein anderes Format.",
+      "microphoneError": "Mikrofonzugriff verweigert oder nicht verfügbar."
+    },
+    "modelSelector": {
+      "label": "Modell",
+      "hint": "Größere Modelle sind genauer, brauchen aber länger zum Herunterladen und Ausführen."
+    },
+    "languageSelector": {
+      "label": "Sprache",
+      "taskLabel": "Aufgabe",
+      "transcribe": "Transkribieren",
+      "translate": "Ins Englische übersetzen",
+      "englishOnlyHint": "Dieses Modell unterstützt nur Englisch. Wählen Sie ein mehrsprachiges Modell für andere Sprachen.",
+      "taskHint": "Transkribieren behält die Originalsprache bei.\nÜbersetzen konvertiert jede Sprache ins Englische."
+    },
+    "progress": {
+      "downloading": "Modell wird heruntergeladen...",
+      "transcribing": "Audio wird transkribiert...",
+      "modelCacheHint": "Das Modell wird in Ihrem Browser für die zukünftige Nutzung zwischengespeichert",
+      "processingHint": "Audio wird lokal in Ihrem Browser verarbeitet..."
+    },
+    "transcriptDisplay": {
+      "title": "Transkript",
+      "copy": "Kopieren",
+      "copied": "Kopiert!"
+    },
+    "footer": {
+      "poweredBy": "Bereitgestellt von",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Keine Uploads, 100% im Browser",
+      "madeWith": "Mit ♡ von SexyVoice.ai"
     }
   }
 }
