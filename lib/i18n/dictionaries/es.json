@@ -408,6 +408,20 @@
       "title": "Configuración de Seguridad",
       "description": "Gestiona tu correo electrónico y contraseña"
     },
+    "securityForm": {
+      "description": "Ingresa tu contraseña actual y una nueva contraseña para actualizar tus credenciales",
+      "emailLabel": "Dirección de correo electrónico",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "updating": "Actualizando...",
+      "updatePassword": "Actualizar contraseña",
+      "success": "Contraseña actualizada correctamente",
+      "errors": {
+        "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden",
+        "updateFailed": "Error al actualizar la contraseña"
+      }
+    },
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {

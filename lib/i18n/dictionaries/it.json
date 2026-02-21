@@ -408,6 +408,20 @@
       "title": "Impostazioni sicurezza",
       "description": "Gestisci la tua email e password"
     },
+    "securityForm": {
+      "description": "Inserisci la password attuale e una nuova password per aggiornare le tue credenziali",
+      "emailLabel": "Indirizzo email",
+      "currentPassword": "Password attuale",
+      "newPassword": "Nuova password",
+      "confirmPassword": "Conferma nuova password",
+      "updating": "Aggiornamento...",
+      "updatePassword": "Aggiorna password",
+      "success": "Password aggiornata con successo",
+      "errors": {
+        "passwordsDoNotMatch": "Le nuove password non corrispondono",
+        "updateFailed": "Impossibile aggiornare la password"
+      }
+    },
     "dangerZone": {
       "title": "Zona pericolosa",
       "deleteAccount": {

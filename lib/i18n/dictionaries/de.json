@@ -408,6 +408,20 @@
       "title": "Sicherheitseinstellungen",
       "description": "Verwalten Sie Ihre E-Mail und Ihr Passwort"
     },
+    "securityForm": {
+      "description": "Geben Sie Ihr aktuelles Passwort und ein neues Passwort ein, um Ihre Anmeldedaten zu aktualisieren",
+      "emailLabel": "E-Mail-Adresse",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Neues Passwort bestätigen",
+      "updating": "Wird aktualisiert...",
+      "updatePassword": "Passwort aktualisieren",
+      "success": "Passwort erfolgreich aktualisiert",
+      "errors": {
+        "passwordsDoNotMatch": "Neue Passwörter stimmen nicht überein",
+        "updateFailed": "Passwort konnte nicht aktualisiert werden"
+      }
+    },
     "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {

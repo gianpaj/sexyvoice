@@ -408,6 +408,20 @@
       "title": "Paramètres de sécurité",
       "description": "Gérez votre e-mail et votre mot de passe"
     },
+    "securityForm": {
+      "description": "Entrez votre mot de passe actuel et un nouveau mot de passe pour mettre à jour vos identifiants",
+      "emailLabel": "Adresse e-mail",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "updating": "Mise à jour...",
+      "updatePassword": "Mettre à jour le mot de passe",
+      "success": "Mot de passe mis à jour avec succès",
+      "errors": {
+        "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas",
+        "updateFailed": "Échec de la mise à jour du mot de passe"
+      }
+    },
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {

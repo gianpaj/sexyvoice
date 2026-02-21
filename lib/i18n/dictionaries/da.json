@@ -408,6 +408,20 @@
       "title": "Sikkerhedsindstillinger",
       "description": "Administrer din e-mail og adgangskode"
     },
+    "securityForm": {
+      "description": "Indtast din nuværende adgangskode og en ny adgangskode for at opdatere dine loginoplysninger",
+      "emailLabel": "E-mailadresse",
+      "currentPassword": "Nuværende adgangskode",
+      "newPassword": "Ny adgangskode",
+      "confirmPassword": "Bekræft ny adgangskode",
+      "updating": "Opdaterer...",
+      "updatePassword": "Opdater adgangskode",
+      "success": "Adgangskode opdateret",
+      "errors": {
+        "passwordsDoNotMatch": "Nye adgangskoder stemmer ikke overens",
+        "updateFailed": "Kunne ikke opdatere adgangskode"
+      }
+    },
     "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {

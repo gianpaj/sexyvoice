@@ -408,6 +408,20 @@
       "title": "Security Settings",
       "description": "Manage your email and password"
     },
+    "securityForm": {
+      "description": "Enter your current password and a new password to update your credentials",
+      "emailLabel": "Email Address",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "updating": "Updating...",
+      "updatePassword": "Update Password",
+      "success": "Password updated successfully",
+      "errors": {
+        "passwordsDoNotMatch": "New passwords do not match",
+        "updateFailed": "Failed to update password"
+      }
+    },
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
