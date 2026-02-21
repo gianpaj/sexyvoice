@@ -304,10 +304,7 @@ export async function GET() {
       // All profiles (paginated)
       fetchAllProfiles(supabase),
       // All cloned voices (non-public) - unlikely to exceed 1000
-      supabase
-        .from('voices')
-        .select('id')
-        .eq('is_public', false),
+      supabase.from('voices').select('id').eq('is_public', false),
       // Users with payment transactions
       supabase
         .from('credit_transactions')

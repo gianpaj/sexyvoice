@@ -1,5 +1,5 @@
 import { defaultSessionConfig, instructions } from './default-config';
-import { defaultPresets, type Preset } from './presets';
+import type { Preset } from './presets';
 import type { SessionConfig } from './session-config';
 
 export type CallLanguage =
@@ -96,5 +96,5 @@ export const defaultPlaygroundState: PlaygroundState = {
   characterOverrides: {},
   language: defaultLanguage,
   initialInstruction,
-  defaultPresets,
+  defaultPresets: [], // Now populated from DB via SSR props
 };

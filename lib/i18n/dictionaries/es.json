@@ -326,7 +326,7 @@
     "configurationTitle": "Configuración",
     "languageLabel": "Idioma",
     "languagePlaceholder": "Elige un idioma",
-    "startCall": "Iniciar una llamada",
+    "startCall": "Llama",
     "connecting": "Conectando",
     "reconnected": "Reconectado",
     "reconnectionFailed": "Falló la reconexión",
@@ -347,7 +347,64 @@
     "instructions": "Instrucciones",
     "instructionsHelp": "Las instrucciones son un mensaje del sistema que se antepone a la conversación cada vez que el modelo responde. Las actualizaciones se reflejarán en el siguiente turno de conversación.",
     "grokImagineNote": "Nota: Grok Imagine añade instrucciones adicionales para la generación de imágenes.",
-    "grokImagineIncluded": "Instrucciones de Grok Imagine incluidas"
+    "grokImagineIncluded": "Instrucciones de Grok Imagine incluidas",
+    "addCustomCharacter": "Agregar personaje personalizado",
+    "addCharacterLabel": "Agregar",
+    "upgradePremiumTooltip": "Actualiza para crear personajes personalizados",
+    "addDescriptionPlaceholder": "Agregar una descripción...",
+    "clickToAddDescription": "Haz clic para agregar una descripción...",
+    "characterInstructions": "Instrucciones de __NAME__",
+    "characterFallbackName": "Personaje",
+    "instructionsPlaceholder": "Ingresa instrucciones del sistema",
+    "voiceLabel": "Voz",
+    "voicePlaceholder": "Elige una voz",
+    "voiceSelectorLabel": "Voz",
+    "voiceSelectorPlaceholder": "Elige una voz",
+    "deleteCharacterAriaLabel": "Eliminar __NAME__",
+    "savePreset": {
+      "save": "Guardar",
+      "saveAsNew": "Guardar como nuevo",
+      "saveAsNewTitle": "Guardar como nuevo personaje",
+      "saveAsNewDescription": "Esto creará un nuevo personaje personalizado con la configuración actual.",
+      "nameLabel": "Nombre",
+      "descriptionLabel": "Descripción",
+      "characterCreated": "Personaje creado",
+      "characterSaved": "Personaje guardado",
+      "failedToCreate": "Error al crear personaje",
+      "failedToUpdate": "Error al actualizar personaje"
+    },
+    "presetSelector": {
+      "characterCreated": "Personaje creado",
+      "characterUpdated": "Personaje actualizado",
+      "characterRemoved": "Personaje eliminado",
+      "voiceUpdated": "Voz actualizada",
+      "failedToCreate": "Error al crear personaje",
+      "failedToUpdate": "Error al actualizar personaje",
+      "failedToDelete": "Error al eliminar personaje",
+      "failedToSaveVoice": "Error al guardar voz"
+    },
+    "createCharacter": {
+      "dialogTitle": "Crear Nuevo Personaje",
+      "dialogDescription": "Crea un personaje de IA personalizado con tu propia personalidad y voz.",
+      "nameLabel": "Nombre",
+      "nameRequired": "*",
+      "namePlaceholder": "ej., Luna, Marcus, Zara...",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Una breve descripción de tu personaje...",
+      "voiceLabel": "Voz",
+      "voicePlaceholder": "Elige una voz",
+      "instructionsLabel": "Instrucciones",
+      "instructionsPlaceholder": "Describe la personalidad de tu personaje, patrones de habla, historia...",
+      "characterCount": "__COUNT__/5000 caracteres",
+      "cancelButton": "Cancelar",
+      "createButton": "Crear Personaje",
+      "creatingButton": "Creando...",
+      "errorNameRequired": "El nombre es obligatorio",
+      "errorVoiceRequired": "Por favor selecciona una voz",
+      "playVoiceSample": "Reproducir muestra de voz",
+      "stopVoiceSample": "Detener muestra de voz",
+      "previewVoice": "Vista previa de la voz de __VOICE__"
+    }
   },
   "clone": {
     "audioFileLabel": "Archivo de Audio",
@@ -435,20 +492,21 @@
     }
   },
   "pages": {
-    "defaultTitle": "Habla con IA - Llamadas de voz privadas sin juzgar | SexyVoice.ai",
+    "defaultTitle": "Habla con tu IA - Llamadas de voz privadas sin juzgar | SexyVoice.ai",
     "description": "Experimenta llamadas de voz con IA en tiempo real en total privacidad. Habla libremente sin juzgar - tus secretos están seguros. Prueba 5 min de llamada gratis. Sin tarjeta de crédito.",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
-    "/dashboard/call": "Llamada",
+    "/dashboard/call": "Llama",
     "/dashboard/generate": "Generar",
     "/dashboard/clone": "Clonar",
     "/dashboard/history": "Historial",
     "/dashboard/credits": "Créditos",
     "/dashboard/usage": "Uso",
-    "/tools/audio-converter": "Conversor de Audio Gratuito"
+    "/tools/audio-converter": "Conversor de Audio Gratuito",
+    "/tools/transcribe": "Transcripción de Audio Gratuita"
   },
   "sidebar": {
     "profile": "Perfil",
@@ -483,7 +541,7 @@
       "byType": {
         "tts": "TTS",
         "voice_cloning": "Clonación",
-        "live_call": "Llamada",
+        "live_call": "Llama",
         "audio_processing": "Procesamiento de Audio"
       }
     },
@@ -516,7 +574,8 @@
     "privacyPolicy": "Política de privacidad",
     "termsAndConditions": "Términos y condiciones",
     "copyright": "SexyVoice.ai. Todos los derechos reservados.",
-    "audioConverter": "Conversor de Audio Gratuito"
+    "audioConverter": "Conversor de Audio Gratuito",
+    "transcribe": "Transcripción de Audio Gratuita"
   },
   "promos": {
     "halloweenBanner": {
@@ -592,6 +651,56 @@
       "ffmpeg": "FFmpeg",
       "noUploads": "Sin cargas, 100% en el navegador",
       "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar"
+    }
+  },
+  "transcribe": {
+    "title": "Transcripción de Audio Gratuita",
+    "subtitle": "Transcribe archivos de audio a texto sin conexión en tu navegador",
+    "tagline": " – 100% gratis y privado",
+    "loadingModel": "Cargando modelo...",
+    "transcribing": "Transcribiendo...",
+    "transcribeButton": "Transcribir",
+    "loadAndTranscribe": "Cargar Modelo y Transcribir",
+    "reset": "Reiniciar",
+    "audioInput": {
+      "dropTitle": "Suelta tu archivo de audio aquí",
+      "dropDescription": "o haz clic para explorar",
+      "or": "o",
+      "startRecording": "Grabar con micrófono",
+      "stopRecording": "Detener grabación",
+      "remove": "Eliminar",
+      "decodeError": "Error al decodificar el archivo de audio. Por favor, prueba con un formato diferente.",
+      "microphoneError": "Acceso al micrófono denegado o no disponible."
+    },
+    "modelSelector": {
+      "label": "Modelo",
+      "hint": "Los modelos más grandes son más precisos pero tardan más en descargarse y ejecutarse."
+    },
+    "languageSelector": {
+      "label": "Idioma",
+      "taskLabel": "Tarea",
+      "transcribe": "Transcribir",
+      "translate": "Traducir al inglés",
+      "englishOnlyHint": "Este modelo solo admite inglés. Selecciona un modelo multilingüe para otros idiomas.",
+      "taskHint": "Transcribir mantiene el idioma original.\nTraducir convierte cualquier idioma al inglés."
+    },
+    "progress": {
+      "downloading": "Descargando modelo...",
+      "transcribing": "Transcribiendo audio...",
+      "modelCacheHint": "El modelo se almacena en caché en tu navegador para uso futuro",
+      "processingHint": "Procesando audio localmente en tu navegador..."
+    },
+    "transcriptDisplay": {
+      "title": "Transcripción",
+      "copy": "Copiar",
+      "copied": "¡Copiado!"
+    },
+    "footer": {
+      "poweredBy": "Desarrollado con",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Sin cargas, 100% en el navegador",
+      "madeWith": "Hecho con ♡ desde SexyVoice.ai"
     }
   }
 }
