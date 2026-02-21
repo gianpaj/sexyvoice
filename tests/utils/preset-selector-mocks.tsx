@@ -79,7 +79,72 @@ vi.mock('@/hooks/use-connection', () => ({
     disconnect: mockDisconnect,
     connect: mockConnect,
     shouldConnect: false,
-    dict: { chooseCharacter: 'Choose Character' },
+    dict: {
+      chooseCharacter: 'Choose Character',
+      addCustomCharacter: 'Add custom character',
+      addCharacterLabel: 'Add',
+      upgradePremiumTooltip: 'Upgrade to create custom characters',
+      addDescriptionPlaceholder: 'Add a description...',
+      clickToAddDescription: 'Click to add a description...',
+      characterInstructions: '__NAME__ Instructions',
+      characterFallbackName: 'Character',
+      instructionsPlaceholder: 'Enter system instructions',
+      voiceLabel: 'Voice',
+      voicePlaceholder: 'Choose a voice',
+      voiceSelectorLabel: 'Voice',
+      voiceSelectorPlaceholder: 'Choose voice',
+      deleteCharacterAriaLabel: 'Delete __NAME__',
+      deletePreset: 'Delete',
+      deletePresetConfirm: 'This cannot be undone.',
+      cancel: 'Cancel',
+      presetSelector: {
+        characterCreated: 'Character created',
+        characterUpdated: 'Character updated',
+        characterRemoved: 'Character removed',
+        voiceUpdated: 'Voice updated',
+        failedToCreate: 'Failed to create character',
+        failedToUpdate: 'Failed to update character',
+        failedToDelete: 'Failed to delete character',
+        failedToSaveVoice: 'Failed to save voice',
+      },
+      savePreset: {
+        save: 'Save',
+        saveAsNew: 'Save as new',
+        saveAsNewTitle: 'Save as new character',
+        saveAsNewDescription:
+          'This will create a new custom character with the current settings.',
+        nameLabel: 'Name',
+        descriptionLabel: 'Description',
+        characterCreated: 'Character created',
+        characterSaved: 'Character saved',
+        failedToCreate: 'Failed to create character',
+        failedToUpdate: 'Failed to update character',
+      },
+      createCharacter: {
+        dialogTitle: 'Create New Character',
+        dialogDescription:
+          'Create a custom AI character with your own personality and voice.',
+        nameLabel: 'Name',
+        nameRequired: '*',
+        namePlaceholder: 'e.g., Luna, Marcus, Zara...',
+        descriptionLabel: 'Description',
+        descriptionPlaceholder: 'A brief description of your character...',
+        voiceLabel: 'Voice',
+        voicePlaceholder: 'Choose a voice',
+        instructionsLabel: 'Instructions',
+        instructionsPlaceholder:
+          "Describe your character's personality, speech patterns, backstory...",
+        characterCount: '__COUNT__/5000 characters',
+        cancelButton: 'Cancel',
+        createButton: 'Create Character',
+        creatingButton: 'Creating...',
+        errorNameRequired: 'Name is required',
+        errorVoiceRequired: 'Please select a voice',
+        playVoiceSample: 'Play voice sample',
+        stopVoiceSample: 'Stop voice sample',
+        previewVoice: "Preview __VOICE__'s voice",
+      },
+    },
   }),
 }));
 
@@ -95,7 +160,6 @@ vi.mock('embla-carousel-react', () => ({
 
 import { defaultSessionConfig } from '@/data/default-config';
 import type { Preset } from '@/data/presets';
-import { VoiceId } from '@/data/voices';
 
 /**
  * Factory for creating test presets with sensible defaults.
@@ -117,28 +181,28 @@ export const defaultPresetsFixture: Preset[] = [
     name: 'Ramona',
     localizedDescriptions: { en: 'Dominant businesswoman.' },
     image: 'ramona.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.EVE },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Eve' },
   }),
   makePreset({
     id: 'lily',
     name: 'Lily',
     localizedDescriptions: { en: 'Shy student girl.' },
     image: 'lily.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.ARA },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
   }),
   makePreset({
     id: 'milo',
     name: 'Milo',
     localizedDescriptions: { en: 'Bisexual twink.' },
     image: 'milo.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.SAL },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Sal' },
   }),
   makePreset({
     id: 'rafal',
     name: 'Rafal',
     localizedDescriptions: { en: 'Ex-military commander.' },
     image: 'rafal.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: VoiceId.REX },
+    sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
   }),
 ];
 

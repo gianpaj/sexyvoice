@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/useConsistentTypeDefinitions: <explanation> */
 declare type Json =
   | string
   | number
@@ -160,6 +161,66 @@ declare type Database = {
           },
         ];
       };
+      characters: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          image: string | null;
+          is_public: boolean;
+          localized_descriptions: Json | null;
+          name: string;
+          prompt_id: string;
+          session_config: Json;
+          sort_order: number;
+          updated_at: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          image?: string | null;
+          is_public?: boolean;
+          localized_descriptions?: Json | null;
+          name: string;
+          prompt_id: string;
+          session_config?: Json;
+          sort_order?: number;
+          updated_at?: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          image?: string | null;
+          is_public?: boolean;
+          localized_descriptions?: Json | null;
+          name?: string;
+          prompt_id?: string;
+          session_config?: Json;
+          sort_order?: number;
+          updated_at?: string | null;
+          user_id?: string;
+          voice_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'characters_prompt_id_fkey';
+            columns: ['prompt_id'];
+            isOneToOne: false;
+            referencedRelation: 'prompts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'characters_voice_id_fkey';
+            columns: ['voice_id'];
+            isOneToOne: false;
+            referencedRelation: 'voices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       credit_transactions: {
         Row: {
           amount: number;
@@ -266,10 +327,42 @@ declare type Database = {
         };
         Relationships: [];
       };
+      prompts: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          is_public: boolean;
+          localized_prompts: Json | null;
+          prompt: string;
+          type: Database['public']['Enums']['feature_type'];
+          updated_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          is_public?: boolean;
+          localized_prompts?: Json | null;
+          prompt?: string;
+          type: Database['public']['Enums']['feature_type'];
+          updated_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          is_public?: boolean;
+          localized_prompts?: Json | null;
+          prompt?: string;
+          type?: Database['public']['Enums']['feature_type'];
+          updated_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       usage_events: {
         Row: {
           created_at: string;
-          credit_transaction_id: string | null;
           credits_used: number;
           id: string;
           metadata: Json | null;
@@ -282,7 +375,6 @@ declare type Database = {
         };
         Insert: {
           created_at?: string;
-          credit_transaction_id?: string | null;
           credits_used: number;
           id?: string;
           metadata?: Json | null;
@@ -295,7 +387,6 @@ declare type Database = {
         };
         Update: {
           created_at?: string;
-          credit_transaction_id?: string | null;
           credits_used?: number;
           id?: string;
           metadata?: Json | null;
@@ -308,13 +399,6 @@ declare type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
-            columns: ['credit_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'credit_transactions';
-            referencedColumns: ['id'];
-          },
-          {
             foreignKeyName: 'usage_events_user_id_fkey';
             columns: ['user_id'];
             isOneToOne: false;
@@ -326,6 +410,8 @@ declare type Database = {
       voices: {
         Row: {
           created_at: string | null;
+          description: string | null;
+          feature: Database['public']['Enums']['feature_type'];
           id: string;
           is_nsfw: boolean | null;
           is_public: boolean | null;
@@ -334,24 +420,32 @@ declare type Database = {
           name: string;
           sample_prompt: string | null;
           sample_url: string | null;
+          sort_order: number;
+          type: string | null;
           updated_at: string | null;
           user_id: string;
         };
         Insert: {
           created_at?: string | null;
+          description?: string | null;
+          feature?: Database['public']['Enums']['feature_type'];
           id?: string;
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model?: string;
+          model: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
+          sort_order?: number;
+          type?: string | null;
           updated_at?: string | null;
           user_id: string;
         };
         Update: {
           created_at?: string | null;
+          description?: string | null;
+          feature?: Database['public']['Enums']['feature_type'];
           id?: string;
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
@@ -360,6 +454,8 @@ declare type Database = {
           name?: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
+          sort_order?: number;
+          type?: string | null;
           updated_at?: string | null;
           user_id?: string;
         };
@@ -397,6 +493,7 @@ declare type Database = {
     };
     Enums: {
       credit_transaction_type: 'purchase' | 'freemium' | 'topup' | 'refund';
+      feature_type: 'tts' | 'call';
       usage_source_type:
         | 'tts'
         | 'voice_cloning'
@@ -531,9 +628,13 @@ declare type CompositeTypes<
     : never;
 
 declare const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],
+      feature_type: ['tts', 'call'],
       usage_source_type: [
         'tts',
         'voice_cloning',

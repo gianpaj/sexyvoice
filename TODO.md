@@ -2,6 +2,10 @@
 
 - self-host Sentry on Hetzner machine
 
+## Agents
+
+- create CLI for API auth <https://github.com/helius-labs/helius-cli>
+
 ## Call
 
 - test and implement text interruptions <https://github.com/livekit/agents-js/pull/998>

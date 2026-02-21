@@ -13,12 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { type VoiceId, voices } from '@/data/voices';
+import type { DBVoice } from '@/data/voices';
 import { cn } from '@/lib/utils';
 
 interface VoicesShowcaseProps {
-  onSelectVoice?: (voiceId: VoiceId) => void;
-  currentVoice?: VoiceId;
+  callVoices?: DBVoice[];
+  onSelectVoice?: (voiceName: string) => void;
+  currentVoice?: string;
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -98,6 +99,7 @@ function VoiceCardPlayButton({
 }
 
 export function VoicesShowcase({
+  callVoices = [],
   onSelectVoice,
   currentVoice,
   onOpenChange,
@@ -128,7 +130,7 @@ export function VoicesShowcase({
               Available Voices
             </DialogTitle>
             <DialogDescription className="mt-2 text-base text-fg1">
-              Choose from {voices.length} unique voice options for your AI
+              Choose from {callVoices.length} unique voice options for your AI
               agent.
             </DialogDescription>
           </DialogHeader>
@@ -136,8 +138,8 @@ export function VoicesShowcase({
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {voices.map((voice) => {
-              const isSelected = currentVoice === voice.id;
+            {callVoices.map((voice) => {
+              const isSelected = currentVoice === voice.name;
               return (
                 <button
                   className={cn(
@@ -148,7 +150,7 @@ export function VoicesShowcase({
                   )}
                   key={voice.id}
                   onClick={() => {
-                    onSelectVoice?.(voice.id);
+                    onSelectVoice?.(voice.name);
                     setOpen(false);
                   }}
                   type="button"
@@ -164,16 +166,19 @@ export function VoicesShowcase({
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className="text-xs" variant="secondary">
-                          {voice.type}
-                        </Badge>
-                        <span className="text-fg2 text-xs">{voice.tone}</span>
+                        {voice.type && (
+                          <Badge className="text-xs" variant="secondary">
+                            {voice.type}
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                    <VoiceCardPlayButton
-                      audioUrl={voice.audioSampleUrl}
-                      voiceName={voice.name}
-                    />
+                    {voice.sample_url && (
+                      <VoiceCardPlayButton
+                        audioUrl={voice.sample_url}
+                        voiceName={voice.name}
+                      />
+                    )}
                   </div>
                   <p className="text-fg1 text-sm">{voice.description}</p>
                 </button>

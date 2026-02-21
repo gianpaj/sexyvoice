@@ -7,7 +7,6 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
@@ -20,9 +19,10 @@ import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
-import { VoiceId } from '@/data/voices';
+import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   Select,
@@ -42,7 +42,7 @@ const RECONNECT_REQUIRED_FIELDS = ['voice', 'grok_image_enabled'];
 
 export const ConfigurationFormSchema = z.object({
   model: z.enum(Object.values(ModelId)),
-  voice: z.enum(Object.values(VoiceId)),
+  voice: z.string().min(1),
   temperature: z.number().min(0.6).max(1.2),
   maxOutputTokens: z.number().nullable(),
   grokImageEnabled: z.boolean(),
@@ -55,9 +55,15 @@ export interface ConfigurationFormFieldProps {
 
 interface ConfigurationFormProps {
   lang: Locale;
+  isPaidUser?: boolean;
+  callVoices?: DBVoice[];
 }
 
-export function ConfigurationForm({ lang }: ConfigurationFormProps) {
+export function ConfigurationForm({
+  lang,
+  isPaidUser = false,
+  callVoices = [],
+}: ConfigurationFormProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();
   const connectionState = useConnectionState();
@@ -74,23 +80,14 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
   // const { toast } = useToast();
   const { agent } = useVoiceAssistant();
 
-  const searchParams = useSearchParams();
-
-  const showInstruction =
-    searchParams.get('showInstruction') === '' ||
-    searchParams.get('showInstruction') === 'true';
-
-  const translatedLanguages = useMemo(() => {
-    const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
-    return callLanguageCodes
-      .map(({ value }) => ({
-        value,
-        label:
-          `${languageNames.of(value)?.charAt(0).toUpperCase()}${languageNames.of(value)?.slice(1)}` ||
-          value,
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label, lang));
-  }, [lang]);
+  const translatedLanguages = useMemo(
+    () =>
+      getTranslatedLanguages(
+        lang,
+        callLanguageCodes.map(({ value }) => value),
+      ),
+    [lang],
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
   const updateConfig = useCallback(async () => {
@@ -294,20 +291,27 @@ export function ConfigurationForm({ lang }: ConfigurationFormProps) {
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
-          <PresetSelector />
-          {showInstruction && (
-            <div className="mt-4 space-y-4">
-              {/* Instructions Editor for custom per-character instructions */}
-              <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
-                <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                  {helpers.getSelectedPreset(pgState)?.name || 'Character'}{' '}
-                  Instructions
+          <PresetSelector callVoices={callVoices} isPaidUser={isPaidUser} />
+          {isPaidUser &&
+            pgState.selectedPresetId &&
+            !helpers
+              .getDefaultPresets()
+              .some((p) => p.id === pgState.selectedPresetId) && (
+              <div className="mt-4 space-y-4">
+                {/* Instructions Editor for custom per-character instructions */}
+                <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
+                  <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                    {dict.characterInstructions.replace(
+                      '__NAME__',
+                      helpers.getSelectedPreset(pgState)?.name ||
+                        dict.characterFallbackName,
+                    )}
+                  </div>
+                  <InstructionsEditor instructions={pgState.instructions} />
                 </div>
-                <InstructionsEditor instructions={pgState.instructions} />
+                <PresetSave />
               </div>
-              <PresetSave />
-            </div>
-          )}
+            )}
         </div>
 
         <SessionConfig form={form} />

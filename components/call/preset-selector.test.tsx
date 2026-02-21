@@ -39,11 +39,60 @@ beforeEach(() => {
   replaceStateSpy = vi
     .spyOn(window.history, 'replaceState')
     .mockImplementation(() => undefined);
+
+  // jsdom doesn't provide crypto.randomUUID — stub it so handleAddCharacter works
+  if (!globalThis.crypto.randomUUID) {
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      value: () => '00000000-0000-4000-a000-000000000099',
+      configurable: true,
+    });
+  }
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+    '00000000-0000-4000-a000-000000000099' as `${string}-${string}-${string}-${string}-${string}`,
+  );
+
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      if (method === 'DELETE') {
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      }
+
+      const body = init?.body ? JSON.parse(String(init.body)) : {};
+      const name = body.name ?? 'Character 1';
+
+      return new Response(
+        JSON.stringify({
+          id: '00000000-0000-4000-a000-000000000099',
+          name,
+          localized_descriptions: { en: 'A new custom character.' },
+          image: null,
+          session_config: {
+            model: 'grok-4-1-fast-non-reasoning',
+            voice: 'Ara',
+            temperature: 0.8,
+            maxOutputTokens: null,
+            grokImageEnabled: false,
+          },
+          sort_order: 0,
+          is_public: false,
+          voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
+          voices: { name: 'Ara', sample_url: null },
+          prompt_id: 'ee000000-0000-4000-a000-000000000099',
+          prompts: { prompt: '', localized_prompts: {} },
+        }),
+        { status: 201 },
+      );
+    }),
+  );
+
   vi.clearAllMocks();
 });
 
 afterEach(() => {
   replaceStateSpy.mockRestore();
+  vi.unstubAllGlobals();
 });
 
 // ---------------------------------------------------------------------------
@@ -113,12 +162,14 @@ describe('PresetSelector', () => {
 
     it('marks the selected character with aria-pressed=true', () => {
       render(<PresetSelector />);
-      expect(
-        screen.getByRole('button', { name: /ramona/i, pressed: true }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole('button', { name: /lily/i, pressed: false }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /ramona/i })).toHaveAttribute(
+        'data-selected',
+        'true',
+      );
+      expect(screen.getByRole('button', { name: /lily/i })).toHaveAttribute(
+        'data-selected',
+        'false',
+      );
     });
   });
 
@@ -148,9 +199,9 @@ describe('PresetSelector', () => {
     });
   });
 
-  // ---- Custom characters (simple row, no carousel) ----
-  describe('custom characters without showInstruction', () => {
-    it('renders only default characters in simple row when showInstruction is not set', () => {
+  // ---- Custom characters ----
+  describe('custom characters', () => {
+    it('renders custom characters alongside defaults', () => {
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -163,13 +214,9 @@ describe('PresetSelector', () => {
       render(<PresetSelector />);
       // Default characters should be visible
       expect(screen.getByText('Ramona')).toBeInTheDocument();
-      // Custom character should NOT be in the simple row (only default characters render there)
-      expect(screen.queryByText('MyChar')).not.toBeInTheDocument();
+      expect(screen.getByText('MyChar')).toBeInTheDocument();
     });
-  });
 
-  // ---- Custom characters (carousel mode) ----
-  describe('carousel mode (showInstruction + custom characters)', () => {
     beforeEach(() => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
@@ -188,7 +235,7 @@ describe('PresetSelector', () => {
       });
     });
 
-    it('renders both default and custom characters in carousel mode', () => {
+    it('renders both default and custom characters', () => {
       render(<PresetSelector />);
       // All defaults
       for (const preset of defaultPresetsFixture) {
@@ -197,13 +244,6 @@ describe('PresetSelector', () => {
       // Custom characters
       expect(screen.getByText('AlphaChar')).toBeInTheDocument();
       expect(screen.getByText('BetaChar')).toBeInTheDocument();
-    });
-
-    it('renders the carousel region element', () => {
-      render(<PresetSelector />);
-      expect(
-        screen.getByRole('region', { name: /carousel/i }),
-      ).toBeInTheDocument();
     });
 
     it('renders initials for custom characters without images', () => {
@@ -239,76 +279,18 @@ describe('PresetSelector', () => {
     it('can select a custom character', async () => {
       const user = userEvent.setup();
       render(<PresetSelector />);
-      await user.click(
-        screen.getByRole('button', { name: /alphachar/i, pressed: false }),
-      );
+      const alphaCharacterButton = screen
+        .getAllByRole('button', { name: /alphachar/i })
+        .find(
+          (button) => !button.getAttribute('aria-label')?.startsWith('Delete'),
+        );
+      expect(alphaCharacterButton).toBeTruthy();
+      await user.click(alphaCharacterButton as HTMLElement);
 
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'SET_SELECTED_PRESET_ID',
         payload: 'custom-1',
       });
-    });
-  });
-
-  // ---- Carousel pagination ----
-  describe('carousel pagination', () => {
-    it('creates multiple carousel pages when total characters exceed 6', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      const manyCustom: Preset[] = Array.from({ length: 5 }, (_, i) =>
-        makePreset({
-          id: `custom-${i}`,
-          name: `Char${i}`,
-          localizedDescriptions: { en: `Custom ${i}` },
-        }),
-      );
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: manyCustom,
-      });
-
-      render(<PresetSelector />);
-
-      // 4 defaults + 5 custom = 9 characters → 2 pages (ceil(9/6))
-      // Each page is an aria-roledescription="slide" element
-      const slides = screen.getAllByRole('group');
-      expect(slides).toHaveLength(2);
-    });
-
-    it('does not show navigation arrows when all characters fit on one page', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'custom-1',
-            name: 'OnlyOne',
-            localizedDescriptions: { en: 'Just one' },
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-
-      // 4 defaults + 1 custom = 5, fits in one page of 6
-      expect(screen.queryByText('Previous slide')).not.toBeInTheDocument();
-      expect(screen.queryByText('Next slide')).not.toBeInTheDocument();
-    });
-
-    it('shows navigation arrows when characters span multiple pages', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      const manyCustom: Preset[] = Array.from({ length: 5 }, (_, i) =>
-        makePreset({
-          id: `custom-${i}`,
-          name: `Char${i}`,
-          localizedDescriptions: { en: `Custom ${i}` },
-        }),
-      );
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: manyCustom,
-      });
-
-      render(<PresetSelector />);
-
-      // "Previous slide" and "Next slide" are sr-only spans inside the carousel buttons
-      expect(screen.getByText('Previous slide')).toBeInTheDocument();
-      expect(screen.getByText('Next slide')).toBeInTheDocument();
     });
   });
 
@@ -438,7 +420,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText(/Shy student girl\./)).toBeInTheDocument();
     });
 
-    it('shows the selected custom character bio', () => {
+    it('shows the selected custom character bio with editable name and description', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         selectedPresetId: 'custom-bio',
@@ -452,8 +434,11 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
-      expect(screen.getByText(/Zara:/)).toBeInTheDocument();
+      render(<PresetSelector isPaidUser />);
+      // For custom characters, name and description are separate editable elements
+      // Zara appears twice: once in avatar label, once in bio card name button
+      const zaraElements = screen.getAllByText('Zara');
+      expect(zaraElements.length).toBeGreaterThanOrEqual(2);
       expect(
         screen.getByText(/A mysterious traveler from the desert\./),
       ).toBeInTheDocument();
@@ -536,7 +521,7 @@ describe('PresetSelector', () => {
         ],
       });
       render(<PresetSelector />);
-      // Should be in carousel mode → custom char visible
+      // Custom char should be visible
       expect(screen.getByText('EmptyParam')).toBeInTheDocument();
     });
 
@@ -555,7 +540,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('TrueParam')).toBeInTheDocument();
     });
 
-    it('treats showInstruction=false as false (simple row)', () => {
+    it('treats showInstruction=false as false', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=false');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
@@ -567,8 +552,7 @@ describe('PresetSelector', () => {
         ],
       });
       render(<PresetSelector />);
-      // Not in carousel mode → custom char not rendered (simple row only shows defaults with images)
-      expect(screen.queryByText('FalseParam')).not.toBeInTheDocument();
+      expect(screen.getByText('FalseParam')).toBeInTheDocument();
     });
   });
 
@@ -583,7 +567,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('Choose Character')).toBeInTheDocument();
     });
 
-    it('renders custom character with image in carousel mode', () => {
+    it('renders custom character with image', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
@@ -624,47 +608,179 @@ describe('PresetSelector', () => {
       );
       expect(deleteCalls).toHaveLength(0);
     });
+  });
 
-    it('renders exactly one page when there are 6 or fewer characters', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
+  // ---- Add Character button (premium gating) ----
+  describe('add character button', () => {
+    it('renders the "Add" button', () => {
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'Extra1',
-            localizedDescriptions: { en: 'extra' },
-          }),
-          makePreset({
-            id: 'c2',
-            name: 'Extra2',
-            localizedDescriptions: { en: 'extra' },
+            name: 'Existing',
+            localizedDescriptions: { en: 'test' },
           }),
         ],
       });
       render(<PresetSelector />);
-
-      // 4 defaults + 2 custom = 6 → exactly 1 page
-      const slides = screen.getAllByRole('group');
-      expect(slides).toHaveLength(1);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeInTheDocument();
     });
 
-    it('renders three pages when there are 13–18 characters', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      const customChars: Preset[] = Array.from({ length: 10 }, (_, i) =>
+    it('is disabled for free users (default isPaidUser=false)', () => {
+      render(<PresetSelector />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeDisabled();
+    });
+
+    it('shows a premium badge (Sparkles icon) for free users', () => {
+      render(<PresetSelector />);
+      expect(screen.getByLabelText('Premium feature')).toBeInTheDocument();
+    });
+
+    it('is enabled for paid users', () => {
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeEnabled();
+    });
+
+    it('does NOT show a premium badge for paid users', () => {
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.queryByLabelText('Premium feature'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('opens create character dialog when clicked by a paid user', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector isPaidUser />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      // Dialog should open with create character form
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByText('Create New Character')).toBeInTheDocument();
+      expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/instructions/i)).toBeInTheDocument();
+    });
+
+    it('opens create dialog and can be filled with character details', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector callVoices={[]} isPaidUser />);
+
+      // Open dialog
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      // Verify dialog opened
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+      // Fill in the form
+      await user.type(screen.getByLabelText(/name/i), 'Test Character');
+      await user.type(
+        screen.getByLabelText(/description/i),
+        'A test description',
+      );
+      await user.type(
+        screen.getByLabelText(/instructions/i),
+        'Test instructions',
+      );
+
+      // Verify values were entered
+      expect(screen.getByLabelText(/name/i)).toHaveValue('Test Character');
+      expect(screen.getByLabelText(/description/i)).toHaveValue(
+        'A test description',
+      );
+      expect(screen.getByLabelText(/instructions/i)).toHaveValue(
+        'Test instructions',
+      );
+    });
+
+    it('does NOT dispatch when clicked by a free user', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      const saveCalls = mockDispatch.mock.calls.filter(
+        (call: any[]) => call[0]?.type === 'SAVE_CUSTOM_CHARACTER',
+      );
+      expect(saveCalls).toHaveLength(0);
+    });
+
+    it('is disabled when connected (even for paid users)', () => {
+      mockConnectionState.value = 'connected';
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.getByRole('button', { name: /add custom character/i }),
+      ).toBeDisabled();
+    });
+
+    it('is hidden when the user has 10 custom characters (max limit)', () => {
+      const maxCustom: Preset[] = Array.from({ length: 10 }, (_, i) =>
         makePreset({
           id: `c-${i}`,
-          name: `X${i}`,
+          name: `Char${i}`,
           localizedDescriptions: { en: `desc ${i}` },
         }),
       );
       mockPgStateRef.current = createDefaultPgState({
-        customCharacters: customChars,
+        customCharacters: maxCustom,
       });
-      render(<PresetSelector />);
+      render(<PresetSelector isPaidUser />);
+      expect(
+        screen.queryByRole('button', { name: /add custom character/i }),
+      ).not.toBeInTheDocument();
+    });
 
-      // 4 defaults + 10 custom = 14 → ceil(14/6) = 3 pages
-      const slides = screen.getAllByRole('group');
-      expect(slides).toHaveLength(3);
+    it('opens dialog with empty name field regardless of existing custom characters', async () => {
+      const user = userEvent.setup();
+      mockPgStateRef.current = createDefaultPgState({
+        customCharacters: [
+          makePreset({
+            id: 'c1',
+            name: 'Character 1',
+            localizedDescriptions: { en: 'first' },
+          }),
+          makePreset({
+            id: 'c2',
+            name: 'Character 2',
+            localizedDescriptions: { en: 'second' },
+          }),
+        ],
+      });
+      render(<PresetSelector isPaidUser />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+
+      // Dialog should open with empty name field - user enters their own name
+      const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
+      expect(nameInput.value).toBe('');
+    });
+
+    it('shows the premium tooltip text for free users on hover', async () => {
+      const user = userEvent.setup();
+      render(<PresetSelector />);
+      // The tooltip trigger wraps the button in a <span> — hover it to open
+      const trigger = screen
+        .getByRole('button', { name: /add custom character/i })
+        .closest('span[tabindex]');
+      expect(trigger).toBeTruthy();
+      await user.hover(trigger!);
+      // Radix renders the tooltip text both visually and in a hidden
+      // role="tooltip" element for accessibility, so expect ≥ 1 match.
+      const matches = await screen.findAllByText(
+        'Upgrade to create custom characters',
+      );
+      expect(matches.length).toBeGreaterThanOrEqual(1);
     });
   });
 });

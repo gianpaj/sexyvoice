@@ -46,6 +46,7 @@ export default async function GeneratePage(props: {
   const { data: publicVoices } = await supabase
     .from('voices')
     .select('*')
+    .eq('feature', 'tts')
     .eq('is_public', true);
 
   if (!publicVoices) {

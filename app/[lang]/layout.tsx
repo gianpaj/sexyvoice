@@ -69,7 +69,7 @@ export async function generateMetadata(
       title: {
         template: '%s | SexyVoice.ai',
         default:
-          'Talk to AI - Private Voice Calls with No Judgment | SexyVoice.ai',
+          'Talk to your AI - Private Voice Calls with No Judgment | SexyVoice.ai',
       },
       description,
       ...(openGraph?.url ? { url: openGraph.url } : {}),

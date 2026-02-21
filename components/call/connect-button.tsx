@@ -9,9 +9,15 @@ import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function ConnectButton() {
   const { connect, disconnect, shouldConnect, dict } = useConnection();
-  const { pgState } = usePlaygroundState();
+  const { pgState, helpers } = usePlaygroundState();
   const [connecting, setConnecting] = useState<boolean>(false);
   const [initiateConnectionFlag, setInitiateConnectionFlag] = useState(false);
+
+  // Check if selected character is custom and has empty instructions
+  const selectedPreset = helpers.getSelectedPreset(pgState);
+  const isCustomCharacter = selectedPreset && !selectedPreset.isPublic;
+  const fullInstructions = helpers.getFullInstructions(pgState);
+  const hasEmptyInstructions = isCustomCharacter && !fullInstructions.trim();
 
   const handleConnectionToggle = async () => {
     if (shouldConnect) {
@@ -43,7 +49,12 @@ export function ConnectButton() {
     <div className="flex items-center gap-2">
       <Button
         className="gradient-bg"
-        disabled={connecting || shouldConnect || !pgState.selectedPresetId}
+        disabled={
+          connecting ||
+          shouldConnect ||
+          !pgState.selectedPresetId ||
+          hasEmptyInstructions
+        }
         icon={() =>
           connecting || shouldConnect ? (
             <Loader2 className="animate-spin" />

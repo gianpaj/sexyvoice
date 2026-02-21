@@ -11,7 +11,6 @@ import {
 } from 'react';
 
 import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
 import {
   type CallLanguage,
   defaultPlaygroundState,
@@ -19,13 +18,9 @@ import {
   type PlaygroundState,
 } from '@/data/playground-state';
 import { getPresetInstructions } from '@/data/preset-instructions';
-import {
-  defaultPresets as baseDefaultPresets,
-  type Preset,
-} from '@/data/presets';
+import type { Preset } from '@/data/presets';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
-const LS_CUSTOM_CHARACTERS_KEY = 'PG_CUSTOM_CHARACTERS';
 const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
 const LS_CHARACTER_OVERRIDES_KEY = 'PG_CHARACTER_OVERRIDES';
 
@@ -33,15 +28,8 @@ const LS_CHARACTER_OVERRIDES_KEY = 'PG_CHARACTER_OVERRIDES';
 type CharacterOverrides = Record<string, Partial<Record<string, string>>>;
 
 const storageHelper = {
-  getStoredCustomCharacters: (): Preset[] => {
-    const stored = localStorage.getItem(LS_CUSTOM_CHARACTERS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  },
-  setStoredCustomCharacters: (characters: Preset[]): void => {
-    localStorage.setItem(LS_CUSTOM_CHARACTERS_KEY, JSON.stringify(characters));
-  },
   getStoredSelectedPresetId: (): string =>
-    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || baseDefaultPresets[0].id,
+    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || '',
   setStoredSelectedPresetId: (presetId: string | null): void => {
     if (presetId !== null) {
       localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
@@ -248,7 +236,6 @@ function playgroundStateReducer(
       ) {
         updatedCharacters.push(updatedPreset);
       }
-      storageHelper.setStoredCustomCharacters(updatedCharacters);
       return {
         ...state,
         customCharacters: updatedCharacters,
@@ -258,7 +245,6 @@ function playgroundStateReducer(
       const updatedCharacters = state.customCharacters.filter(
         (character: Preset) => character.id !== action.payload,
       );
-      storageHelper.setStoredCustomCharacters(updatedCharacters);
       return {
         ...state,
         customCharacters: updatedCharacters,
@@ -321,15 +307,17 @@ export const usePlaygroundState = (): PlaygroundStateContextProps => {
 interface PlaygroundStateProviderProps {
   children: ReactNode;
   defaultPresets?: Preset[];
+  initialCustomCharacters?: Preset[];
   initialState?: Partial<PlaygroundState>;
 }
 
 export const PlaygroundStateProvider = ({
   children,
   defaultPresets: defaultPresetsProp,
+  initialCustomCharacters = [],
   initialState,
 }: PlaygroundStateProviderProps) => {
-  const mergedDefaultPresets = defaultPresetsProp ?? baseDefaultPresets;
+  const mergedDefaultPresets = defaultPresetsProp ?? [];
   const helpers = useMemo(
     () => createPlaygroundStateHelpers(mergedDefaultPresets),
     [mergedDefaultPresets],
@@ -338,13 +326,14 @@ export const PlaygroundStateProvider = ({
     () => ({
       ...defaultPlaygroundState,
       defaultPresets: mergedDefaultPresets,
+      customCharacters: initialCustomCharacters,
       ...initialState,
       sessionConfig: {
         ...defaultPlaygroundState.sessionConfig,
         ...(initialState?.sessionConfig ?? {}),
       },
     }),
-    [initialState, mergedDefaultPresets],
+    [initialState, mergedDefaultPresets, initialCustomCharacters],
   );
 
   const [state, dispatch] = useReducer(
@@ -353,32 +342,6 @@ export const PlaygroundStateProvider = ({
   );
 
   useEffect(() => {
-    // Load custom characters from localStorage
-    const storedCharacters = localStorage.getItem(LS_CUSTOM_CHARACTERS_KEY);
-    let customCharacters = storedCharacters ? JSON.parse(storedCharacters) : [];
-
-    // Validate and fix invalid model IDs in stored characters
-    customCharacters = customCharacters.map((character: Preset) => {
-      // Check if the character has an invalid model ID
-      if (!Object.values(ModelId).includes(character.sessionConfig.model)) {
-        return {
-          ...character,
-          sessionConfig: {
-            ...character.sessionConfig,
-            model: defaultSessionConfig.model,
-          },
-        };
-      }
-      return character;
-    });
-
-    // Save cleaned characters back to storage
-    if (customCharacters.length > 0) {
-      storageHelper.setStoredCustomCharacters(customCharacters);
-    }
-
-    dispatch({ type: 'SET_CUSTOM_CHARACTERS', payload: customCharacters });
-
     // Read the URL
     const urlData = helpers.decodeFromURLParams(window.location.search);
 
@@ -403,8 +366,10 @@ export const PlaygroundStateProvider = ({
           sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
         };
 
-        const updatedCustomCharacters = [...customCharacters, newCharacter];
-        storageHelper.setStoredCustomCharacters(updatedCustomCharacters);
+        const updatedCustomCharacters = [
+          ...initialCustomCharacters,
+          newCharacter,
+        ];
         dispatch({
           type: 'SET_CUSTOM_CHARACTERS',
           payload: updatedCustomCharacters,
@@ -418,7 +383,7 @@ export const PlaygroundStateProvider = ({
       // Clear the URL for non-default presets
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [helpers]);
+  }, [helpers, initialCustomCharacters]);
 
   return (
     <PlaygroundStateContext.Provider
