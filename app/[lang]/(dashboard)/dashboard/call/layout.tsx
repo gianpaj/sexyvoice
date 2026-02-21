@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 
-// import { NavLogo } from "@/components/custom/nav-logo";
-// import { ThemeToggle } from "@/components/custom/theme-toggle";
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { CallLanguage } from '@/data/playground-state';
@@ -83,9 +81,10 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
     localized_prompts?: Record<string, string> | null;
     type?: 'tts' | 'call' | null;
   }>(character.prompts);
-  const voice = asSingleRelation<{ name?: string | null; sample_url?: string | null }>(
-    character.voices,
-  );
+  const voice = asSingleRelation<{
+    name?: string | null;
+    sample_url?: string | null;
+  }>(character.voices);
   const sessionConfig = toSessionConfig(character.session_config);
 
   return {
@@ -95,13 +94,18 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
     instructions: prompts?.prompt ?? '',
     localizedInstructions: prompts?.localized_prompts ?? {},
     sessionConfig: {
-      model: (sessionConfig.model ?? 'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+      model: (sessionConfig.model ??
+        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
       voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
-        sessionConfig.maxOutputTokens ?? sessionConfig.max_output_tokens ?? null,
+        sessionConfig.maxOutputTokens ??
+        sessionConfig.max_output_tokens ??
+        null,
       grokImageEnabled:
-        sessionConfig.grokImageEnabled ?? sessionConfig.grok_image_enabled ?? false,
+        sessionConfig.grokImageEnabled ??
+        sessionConfig.grok_image_enabled ??
+        false,
     },
     image: character.image ?? undefined,
     promptId: character.prompt_id ?? undefined,
@@ -132,10 +136,11 @@ export default async function CallLayout({
     getPublicCallCharacters(),
     user ? hasUserPaid(user.id) : Promise.resolve(false),
   ]);
-  const userCharacters = user && isPaidUser ? await getUserCallCharacters(user.id) : [];
+  const userCharacters =
+    user && isPaidUser ? await getUserCallCharacters(user.id) : [];
 
-  const baseDefaultPresets: Preset[] = (publicCharacters ?? []).map((character) =>
-    mapCharacterToPreset(character as CharacterRow),
+  const baseDefaultPresets: Preset[] = (publicCharacters ?? []).map(
+    (character) => mapCharacterToPreset(character as CharacterRow),
   );
   const defaultPresets = applyPresetInstructionOverrides(
     baseDefaultPresets,

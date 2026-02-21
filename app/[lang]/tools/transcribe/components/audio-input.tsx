@@ -1,7 +1,8 @@
 'use client';
 
 import { FileAudio, Mic, Square, Upload } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
@@ -13,6 +14,10 @@ interface Props {
   onRemove?: () => void;
   disabled?: boolean;
   dict: (typeof langDict)['transcribe']['audioInput'];
+  errorMessages?: {
+    decodeError?: string;
+    microphoneError?: string;
+  };
 }
 
 /**
@@ -37,6 +42,7 @@ export function AudioInput({
   onRemove,
   disabled = false,
   dict,
+  errorMessages,
 }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -54,9 +60,13 @@ export function AudioInput({
       } catch (error) {
         setAudioFile(null);
         console.error('Failed to decode audio file:', error);
+        toast.error(
+          errorMessages?.decodeError ||
+            'Failed to decode audio file. Please try a different format.',
+        );
       }
     },
-    [onAudioReady, onFileSelected],
+    [onAudioReady, onFileSelected, errorMessages],
   );
 
   const handleDrop = useCallback(
@@ -109,8 +119,21 @@ export function AudioInput({
       setIsRecording(true);
     } catch (error) {
       console.error('Microphone access denied or not available:', error);
+      toast.error(
+        errorMessages?.microphoneError ||
+          'Microphone access denied or not available.',
+      );
     }
-  }, [processFile]);
+  }, [processFile, errorMessages]);
+
+  // Cleanup MediaRecorder on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, []);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === 'recording') {

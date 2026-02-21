@@ -366,7 +366,10 @@ export const PlaygroundStateProvider = ({
           sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
         };
 
-        const updatedCustomCharacters = [...initialCustomCharacters, newCharacter];
+        const updatedCustomCharacters = [
+          ...initialCustomCharacters,
+          newCharacter,
+        ];
         dispatch({
           type: 'SET_CUSTOM_CHARACTERS',
           payload: updatedCustomCharacters,

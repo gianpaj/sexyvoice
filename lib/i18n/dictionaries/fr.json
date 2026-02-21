@@ -654,7 +654,9 @@
       "or": "ou",
       "startRecording": "Enregistrer avec le microphone",
       "stopRecording": "Arrêter l'enregistrement",
-      "remove": "Supprimer"
+      "remove": "Supprimer",
+      "decodeError": "Impossible de décoder le fichier audio. Veuillez essayer un autre format.",
+      "microphoneError": "Accès au microphone refusé ou non disponible."
     },
     "modelSelector": {
       "label": "Modèle",

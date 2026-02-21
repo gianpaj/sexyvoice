@@ -654,7 +654,9 @@
       "or": "oder",
       "startRecording": "Mit Mikrofon aufnehmen",
       "stopRecording": "Aufnahme stoppen",
-      "remove": "Entfernen"
+      "remove": "Entfernen",
+      "decodeError": "Audiodatei konnte nicht dekodiert werden. Bitte versuchen Sie ein anderes Format.",
+      "microphoneError": "Mikrofonzugriff verweigert oder nicht verfügbar."
     },
     "modelSelector": {
       "label": "Modell",

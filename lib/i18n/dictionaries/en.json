@@ -654,7 +654,9 @@
       "or": "or",
       "startRecording": "Record with microphone",
       "stopRecording": "Stop recording",
-      "remove": "Remove"
+      "remove": "Remove",
+      "decodeError": "Failed to decode audio file. Please try a different format.",
+      "microphoneError": "Microphone access denied or not available."
     },
     "modelSelector": {
       "label": "Model",

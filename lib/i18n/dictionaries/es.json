@@ -654,7 +654,9 @@
       "or": "o",
       "startRecording": "Grabar con micrófono",
       "stopRecording": "Detener grabación",
-      "remove": "Eliminar"
+      "remove": "Eliminar",
+      "decodeError": "Error al decodificar el archivo de audio. Por favor, prueba con un formato diferente.",
+      "microphoneError": "Acceso al micrófono denegado o no disponible."
     },
     "modelSelector": {
       "label": "Modelo",

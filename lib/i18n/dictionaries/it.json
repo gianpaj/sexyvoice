@@ -654,7 +654,9 @@
       "or": "o",
       "startRecording": "Registra con microfono",
       "stopRecording": "Ferma registrazione",
-      "remove": "Rimuovi"
+      "remove": "Rimuovi",
+      "decodeError": "Impossibile decodificare il file audio. Prova un formato diverso.",
+      "microphoneError": "Accesso al microfono negato o non disponibile."
     },
     "modelSelector": {
       "label": "Modello",

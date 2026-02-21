@@ -29,7 +29,10 @@ const createOrUpdateSchema = z.object({
     .string()
     .trim()
     .min(1, 'Name is required')
-    .max(MAX_NAME_LENGTH, `Name must be ${MAX_NAME_LENGTH} characters or fewer`),
+    .max(
+      MAX_NAME_LENGTH,
+      `Name must be ${MAX_NAME_LENGTH} characters or fewer`,
+    ),
   localizedDescriptions: z.record(z.string(), z.string()).optional(),
   prompt: z
     .string({ message: 'Prompt is required' })

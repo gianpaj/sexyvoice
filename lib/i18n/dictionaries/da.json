@@ -654,7 +654,9 @@
       "or": "eller",
       "startRecording": "Optag med mikrofon",
       "stopRecording": "Stop optagelse",
-      "remove": "Fjern"
+      "remove": "Fjern",
+      "decodeError": "Kunne ikke afkode lydfilen. Prøv venligst et andet format.",
+      "microphoneError": "Mikrofonadgang nægtet eller ikke tilgængelig."
     },
     "modelSelector": {
       "label": "Model",
