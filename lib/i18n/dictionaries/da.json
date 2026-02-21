@@ -687,6 +687,20 @@
       "whisper": "OpenAI Whisper",
       "noUploads": "Ingen uploads, 100% i browseren",
       "madeWith": "Lavet med ♡ fra SexyVoice.ai"
+    },
+    "metadata": {
+      "title": "Gratis Lydtranskription – Tale til Tekst Online",
+      "description": "Transskriber lydfiler til tekst øjeblikkeligt, 100% gratis og privat. Ingen uploads – kører fuldt ud i din browser med OpenAI Whisper. Understøtter 99+ sprog.",
+      "keywords": [
+        "lydtranskription",
+        "tale til tekst",
+        "transskribere lyd online",
+        "gratis transkription",
+        "offline transkription",
+        "lyd til tekst",
+        "talegenkendelse",
+        "browser-transkription"
+      ]
     }
   }
 }
