@@ -63,6 +63,11 @@
       "noCreditCard": "Nessuna carta di credito richiesta. Puoi riagganciare quando vuoi",
       "signIn": "Accedi"
     },
+    "demoCall": {
+      "playButton": "Riproduci Demo",
+      "stopButton": "Stop",
+      "pickCharacter": "Scegli un personaggio"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voci naturali",

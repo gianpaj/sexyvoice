@@ -63,6 +63,11 @@
       "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
       "signIn": "Anmelden"
     },
+    "demoCall": {
+      "playButton": "Demo abspielen",
+      "stopButton": "Stopp",
+      "pickCharacter": "Wähle einen Charakter"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natürliche Stimmen",

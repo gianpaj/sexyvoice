@@ -63,6 +63,11 @@
       "noCreditCard": "Intet kreditkort påkrævet. Du kan lægge på når som helst",
       "signIn": "Log ind"
     },
+    "demoCall": {
+      "playButton": "Afspil demo",
+      "stopButton": "Stop",
+      "pickCharacter": "Vælg en karakter"
+    },
     "features": {
       "voiceCloning": {
         "title": "Naturlige stemmer",

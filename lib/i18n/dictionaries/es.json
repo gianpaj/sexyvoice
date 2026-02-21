@@ -63,6 +63,11 @@
       "noCreditCard": "Sin tarjeta de crédito. Puedes colgar en cualquier momento",
       "signIn": "Iniciar Sesión"
     },
+    "demoCall": {
+      "playButton": "Reproducir Demo",
+      "stopButton": "Detener",
+      "pickCharacter": "Elige un personaje"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voz Naturales",

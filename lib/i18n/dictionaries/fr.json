@@ -63,6 +63,11 @@
       "noCreditCard": "Aucune carte de crédit requise. Vous pouvez raccrocher à tout moment",
       "signIn": "Se connecter"
     },
+    "demoCall": {
+      "playButton": "Écouter la démo",
+      "stopButton": "Arrêter",
+      "pickCharacter": "Choisissez un personnage"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voix naturelles",

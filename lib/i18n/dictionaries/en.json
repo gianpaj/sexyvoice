@@ -63,6 +63,11 @@
       "noCreditCard": "No credit card required. You can hang up anytime",
       "signIn": "Sign In"
     },
+    "demoCall": {
+      "playButton": "Play Demo",
+      "stopButton": "Stop",
+      "pickCharacter": "Pick a character"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natural Voices",
