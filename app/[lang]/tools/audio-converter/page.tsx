@@ -1,12 +1,69 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { HeaderStatic } from '@/components/header-static';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import AudioConverterClient from './audio-converter.client';
 
 interface Props {
   params: Promise<{ lang: Locale }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params;
+  const dict = await getDictionary(lang, 'pages');
+  const dictAudioConverter = await getDictionary(lang, 'audioConverter');
+
+  const title = dict.titleAudioConverter || dictAudioConverter.title;
+  const description =
+    dict.descriptionAudioConverter || dictAudioConverter.subtitle;
+  const keywords = dict.keywordsAudioConverter || '';
+  const keywordsArray = keywords
+    ? keywords.split(',').map((k: string) => k.trim())
+    : [
+        'free audio converter',
+        'convert mp3',
+        'convert wav',
+        'convert flac',
+        'online audio converter',
+        'browser audio converter',
+        'offline audio converter',
+        'ffmpeg online',
+        'no upload audio converter',
+        'private audio converter',
+      ];
+
+  const url = `https://sexyvoice.ai/${lang}/tools/audio-converter`;
+
+  return {
+    title,
+    description,
+    keywords: keywordsArray,
+    authors: [{ name: 'SexyVoice.ai' }],
+    openGraph: {
+      title: `${title} | SexyVoice.ai`,
+      description,
+      url,
+      siteName: 'SexyVoice.ai',
+      type: 'website',
+      locale: lang,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | SexyVoice.ai`,
+      description,
+    },
+    alternates: {
+      canonical: url,
+      languages: Object.fromEntries(
+        i18n.locales.map((locale) => [
+          locale,
+          `https://sexyvoice.ai/${locale}/tools/audio-converter`,
+        ]),
+      ),
+    },
+  };
 }
 
 export default async function AudioConverterPage({ params }: Props) {
@@ -25,7 +82,16 @@ export default async function AudioConverterPage({ params }: Props) {
             <span className="font-semibold text-foreground">
               {dict.footer.ffmpeg}
             </span>{' '}
-            • {dict.footer.noUploads}
+            &bull; {dict.footer.noUploads}
+          </p>
+          <p className="mt-4">
+            {dict.footer.alsoTry}{' '}
+            <Link
+              className="font-semibold text-foreground transition-colors hover:text-primary"
+              href={`/${lang}/tools/transcribe`}
+            >
+              {dict.footer.transcribeLink}
+            </Link>
           </p>
           <p className="mt-2 opacity-70">
             <Link

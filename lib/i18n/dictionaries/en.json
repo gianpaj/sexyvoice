@@ -484,7 +484,7 @@
       "deleteAccount": {
         "button": "Delete account",
         "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
         "continue": "Continue"
@@ -493,24 +493,32 @@
   },
   "pages": {
     "defaultTitle": "Talk to your AI - Private Voice Calls with No Judgment | SexyVoice.ai",
-    "description": "Experience real-time AI voice calls in total privacy. Talk freely with no judgment - your secrets stay safe. Try a 5 min free call now. No credit card required.",
-    "descriptionLogin": "Sign in to SexyVoice.ai to access your AI voice projects, manage credits, and generate expressive speech in multiple languages with advanced voice cloning.",
-    "descriptionSignup": "Join SexyVoice.ai free - Get 10,000 credits to create realistic AI voices with emotions. Advanced text-to-speech and voice cloning in 24 languages.",
+    "description": "Experience private AI voice calls with zero judgment. Your secrets stay safe. Try a free 5-min call now – no credit card required. 20+ voices, 24+ languages.",
+    "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
+    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & make private calls in 24+ languages.",
+    "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
+    "titleTranscribe": "Free Audio Transcription – 99+ Languages",
+    "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
+    "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
+    "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
+    "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
+    "keywordsLanding": "AI voice calls, private AI companion, talk to AI, AI voice chat, AI phone call, voice AI, AI conversation, private voice chat, AI voice generator, text to speech, voice cloning, no judgment AI calls",
     "/": "",
-    "/login": "Log in",
-    "/signup": "Sign up with email or Google",
+    "/login": "Sign In",
+    "/signup": "Sign Up Free – 10,000 Credits",
     "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
     "/dashboard/credits": "Credits",
     "/dashboard/usage": "Usage",
-    "/tools/audio-converter": "Free Audio Converter",
-    "/tools/transcribe": "Free Audio Transcription"
+    "/tools/audio-converter": "Audio Converter",
+    "/tools/transcribe": "Audio Transcription"
   },
   "sidebar": {
     "profile": "Profile",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "freeTools": "Free Tools"
   },
   "header": {
     "generate": "Generate",
@@ -650,7 +658,9 @@
       "poweredBy": "Powered by",
       "ffmpeg": "FFmpeg",
       "noUploads": "No uploads, 100% in-browser",
-      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator",
+      "alsoTry": "Also try our",
+      "transcribeLink": "Free Audio Transcription Tool"
     }
   },
   "transcribe": {
@@ -700,7 +710,9 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "No uploads, 100% in-browser",
-      "madeWith": "Made with ♡ from SexyVoice.ai"
+      "madeWith": "Made with ♡ from SexyVoice.ai",
+      "alsoTry": "Also try our",
+      "audioConverterLink": "Free Audio Converter Tool"
     }
   }
 }
