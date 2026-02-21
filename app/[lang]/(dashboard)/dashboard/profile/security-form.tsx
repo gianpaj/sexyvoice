@@ -8,9 +8,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export function SecurityForm({ email }: { email?: string }) {
+export function SecurityForm({
+  email,
+  dict,
+}: {
+  email?: string;
+  dict: (typeof langDict)['profile']['securityForm'];
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -20,7 +27,7 @@ export function SecurityForm({ email }: { email?: string }) {
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error(dict.errors.passwordsDoNotMatch);
       return;
     }
 
@@ -31,12 +38,12 @@ export function SecurityForm({ email }: { email?: string }) {
     });
 
     if (error) {
-      toast.error('Failed to update password');
+      toast.error(dict.errors.updateFailed);
       setIsLoading(false);
       return;
     }
 
-    toast.success('Password updated successfully');
+    toast.success(dict.success);
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -48,18 +55,15 @@ export function SecurityForm({ email }: { email?: string }) {
       <div className="grid gap-4">
         <Alert className="p-4">
           <AlertCircle className="size-4" />
-          <AlertDescription>
-            Enter your current password and a new password to update your
-            credentials
-          </AlertDescription>
+          <AlertDescription>{dict.description}</AlertDescription>
         </Alert>
-        <Label>Email Address</Label>
+        <Label>{dict.emailLabel}</Label>
         <Input className="bg-muted" disabled type="email" value={email} />
       </div>
 
       <form className="grid grid-cols-1 gap-4" onSubmit={handlePasswordUpdate}>
         <div className="space-y-2">
-          <Label htmlFor="currentPassword">Current Password</Label>
+          <Label htmlFor="currentPassword">{dict.currentPassword}</Label>
           <Input
             id="currentPassword"
             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -70,7 +74,7 @@ export function SecurityForm({ email }: { email?: string }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="newPassword">New Password</Label>
+          <Label htmlFor="newPassword">{dict.newPassword}</Label>
           <Input
             id="newPassword"
             onChange={(e) => setNewPassword(e.target.value)}
@@ -81,7 +85,7 @@ export function SecurityForm({ email }: { email?: string }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm New Password</Label>
+          <Label htmlFor="confirmPassword">{dict.confirmPassword}</Label>
           <Input
             id="confirmPassword"
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -93,7 +97,7 @@ export function SecurityForm({ email }: { email?: string }) {
 
         <div className="flex justify-end">
           <Button disabled={isLoading} type="submit">
-            {isLoading ? 'Updating...' : 'Update Password'}
+            {isLoading ? dict.updating : dict.updatePassword}
           </Button>
         </div>
       </form>
