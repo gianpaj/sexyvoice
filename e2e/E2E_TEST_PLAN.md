@@ -1,6 +1,6 @@
 # E2E Test Plan — Remaining Dashboard Pages
 
-> **Status**: Draft
+> **Status**: ✅ Complete
 > **Last Updated**: 2025-07-14
 > **Author**: Claude
 > **Existing Coverage**: `/dashboard/generate` (✅ `generate-dashboard.spec.ts`)
@@ -19,14 +19,14 @@ This document outlines the plan for adding Playwright E2E tests to cover the rem
 
 ### Pages to Cover
 
-| # | Page | Route | Spec File | Priority |
-|---|------|-------|-----------|----------|
-| 1 | Call | `/dashboard/call` | `call-dashboard.spec.ts` | High |
-| 2 | Clone | `/dashboard/clone` | `clone-dashboard.spec.ts` | High |
-| 3 | Credits | `/dashboard/credits` | `credits-dashboard.spec.ts` | Medium |
-| 4 | History | `/dashboard/history` | `history-dashboard.spec.ts` | Medium |
-| 5 | Usage | `/dashboard/usage` | `usage-dashboard.spec.ts` | Medium |
-| 6 | Profile | `/dashboard/profile` | `profile-dashboard.spec.ts` | Low |
+| # | Page | Route | Spec File | Priority | Status |
+|---|------|-------|-----------|----------|--------|
+| 1 | Call | `/dashboard/call` | `call-dashboard.spec.ts` | High | ✅ Done |
+| 2 | Clone | `/dashboard/clone` | `clone-dashboard.spec.ts` | High | ✅ Done |
+| 3 | Credits | `/dashboard/credits` | `credits-dashboard.spec.ts` | Medium | ✅ Done |
+| 4 | History | `/dashboard/history` | `history-dashboard.spec.ts` | Medium | ✅ Done |
+| 5 | Usage | `/dashboard/usage` | `usage-dashboard.spec.ts` | Medium | ✅ Done |
+| 6 | Profile | `/dashboard/profile` | `profile-dashboard.spec.ts` | Low | ✅ Done |
 
 ---
 
@@ -318,14 +318,14 @@ e2e/
 
 ---
 
-## Implementation Order
+## Implementation Order (Completed)
 
-1. **Profile** (simplest page, pure form/UI testing, no API mocks)
-2. **Credits** (medium complexity, URL param-driven alerts, package cards)
-3. **History** (data table with filters, pagination)
-4. **Usage** (data table with API-driven data, summary cards)
-5. **Clone** (file upload, microphone, language selection — complex UI)
-6. **Call** (LiveKit integration — most complex, focused on UI presence only)
+1. ✅ **Profile** (simplest page, pure form/UI testing, no API mocks)
+2. ✅ **Credits** (medium complexity, URL param-driven alerts, package cards)
+3. ✅ **History** (data table with filters, pagination)
+4. ✅ **Usage** (data table with API-driven data, summary cards)
+5. ✅ **Clone** (file upload, microphone, language selection — complex UI)
+6. ✅ **Call** (LiveKit integration — most complex, focused on UI presence only)
 
 ---
 
