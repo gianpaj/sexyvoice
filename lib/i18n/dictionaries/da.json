@@ -476,7 +476,8 @@
       "success": "Adgangskode opdateret",
       "errors": {
         "passwordsDoNotMatch": "Nye adgangskoder stemmer ikke overens",
-        "updateFailed": "Kunne ikke opdatere adgangskode"
+        "updateFailed": "Kunne ikke opdatere adgangskode",
+        "currentPasswordIncorrect": "Nuværende adgangskode er forkert"
       }
     },
     "dangerZone": {

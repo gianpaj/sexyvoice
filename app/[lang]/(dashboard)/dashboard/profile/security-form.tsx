@@ -31,7 +31,24 @@ export function SecurityForm({
       return;
     }
 
+    if (!email) {
+      toast.error(dict.errors.updateFailed);
+      return;
+    }
+
     setIsLoading(true);
+
+    // Verify current password before allowing the update
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+
+    if (signInError) {
+      toast.error(dict.errors.currentPasswordIncorrect);
+      setIsLoading(false);
+      return;
+    }
 
     const { error } = await supabase.auth.updateUser({
       password: newPassword,

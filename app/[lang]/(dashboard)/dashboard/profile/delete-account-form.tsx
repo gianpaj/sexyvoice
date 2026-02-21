@@ -1,3 +1,5 @@
+'use client';
+
 import { AlertCircle, OctagonAlert } from 'lucide-react';
 
 import { handleDeleteAccountAction } from '@/app/actions';

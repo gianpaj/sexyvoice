@@ -476,7 +476,8 @@
       "success": "Mot de passe mis à jour avec succès",
       "errors": {
         "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas",
-        "updateFailed": "Échec de la mise à jour du mot de passe"
+        "updateFailed": "Échec de la mise à jour du mot de passe",
+        "currentPasswordIncorrect": "Le mot de passe actuel est incorrect"
       }
     },
     "dangerZone": {

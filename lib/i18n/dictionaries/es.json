@@ -476,7 +476,8 @@
       "success": "Contraseña actualizada correctamente",
       "errors": {
         "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden",
-        "updateFailed": "Error al actualizar la contraseña"
+        "updateFailed": "Error al actualizar la contraseña",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta"
       }
     },
     "dangerZone": {

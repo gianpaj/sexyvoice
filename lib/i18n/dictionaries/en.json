@@ -476,7 +476,8 @@
       "success": "Password updated successfully",
       "errors": {
         "passwordsDoNotMatch": "New passwords do not match",
-        "updateFailed": "Failed to update password"
+        "updateFailed": "Failed to update password",
+        "currentPasswordIncorrect": "Current password is incorrect"
       }
     },
     "dangerZone": {
