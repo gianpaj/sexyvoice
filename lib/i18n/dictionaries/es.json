@@ -326,7 +326,7 @@
     "configurationTitle": "Configuración",
     "languageLabel": "Idioma",
     "languagePlaceholder": "Elige un idioma",
-    "startCall": "Iniciar una llamada",
+    "startCall": "Llama",
     "connecting": "Conectando",
     "reconnected": "Reconectado",
     "reconnectionFailed": "Falló la reconexión",
@@ -348,6 +348,7 @@
     "grokImagineNote": "Nota: Grok Imagine añade instrucciones adicionales para la generación de imágenes.",
     "grokImagineIncluded": "Instrucciones de Grok Imagine incluidas",
     "addCustomCharacter": "Agregar personaje personalizado",
+    "addCharacterLabel": "Agregar",
     "upgradePremiumTooltip": "Actualiza para crear personajes personalizados",
     "addDescriptionPlaceholder": "Agregar una descripción...",
     "clickToAddDescription": "Haz clic para agregar una descripción...",
@@ -483,7 +484,7 @@
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
-    "/dashboard/call": "Llamada",
+    "/dashboard/call": "Llama",
     "/dashboard/generate": "Generar",
     "/dashboard/clone": "Clonar",
     "/dashboard/history": "Historial",
@@ -525,7 +526,7 @@
       "byType": {
         "tts": "TTS",
         "voice_cloning": "Clonación",
-        "live_call": "Llamada",
+        "live_call": "Llama",
         "audio_processing": "Procesamiento de Audio"
       }
     },

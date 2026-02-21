@@ -6,12 +6,17 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
+import {
+  buildSaveCharacterPayload,
+  isInstructionsDirty,
+  saveCharacter,
+} from '@/lib/characters';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { usePlaygroundState } from './use-playground-state';
 
-export type ConnectFn = () => Promise<void>;
+export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
 
 interface TokenGeneratorData {
   shouldConnect: boolean;
@@ -40,20 +45,67 @@ export const ConnectionProvider = ({
     token: string;
     shouldConnect: boolean;
     voice: string;
-    // FIXME ? should we use the voiceId?
   }>({ wsUrl: '', token: '', shouldConnect: false, voice: 'Ara' });
 
   const queryClient = useQueryClient();
   const supabase = useSupabaseBrowser();
-  const { pgState, helpers } = usePlaygroundState();
+  const { pgState, dispatch, helpers } = usePlaygroundState();
 
-  const connect = async () => {
+  /**
+   * If the selected custom character has unsaved instruction or voice changes,
+   * persist them before connecting so the call uses the latest version.
+   * Throws if the save fails (aborting the connection attempt).
+   */
+  const saveCharacterIfDirty = async (pendingVoiceName?: string | null) => {
+    const selectedPreset = helpers.getSelectedPreset(pgState);
+    if (!selectedPreset || selectedPreset.isPublic) return;
+
+    const currentInstructions = helpers.getFullInstructions(pgState);
+    const instructionsDirty = isInstructionsDirty(
+      selectedPreset,
+      pgState.language,
+      currentInstructions,
+    );
+    const voiceDirty = Boolean(
+      pendingVoiceName && pendingVoiceName !== selectedPreset.voiceName,
+    );
+
+    if (!(instructionsDirty || voiceDirty)) return;
+
+    const presetToSave =
+      voiceDirty && pendingVoiceName
+        ? {
+            ...selectedPreset,
+            voiceName: pendingVoiceName,
+            sessionConfig: {
+              ...selectedPreset.sessionConfig,
+              voice: pendingVoiceName,
+            },
+          }
+        : selectedPreset;
+
+    const payload = buildSaveCharacterPayload(
+      presetToSave,
+      pgState.language,
+      currentInstructions,
+    );
+
+    const result = await saveCharacter(payload);
+    if (!result.ok) {
+      toast.error(result.error);
+      throw new Error(result.error);
+    }
+
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
+  };
+
+  const connect: ConnectFn = async (pendingVoiceName) => {
+    await saveCharacterIfDirty(pendingVoiceName);
+
     const resolvedState = helpers.getStateWithFullInstructions(pgState);
     const response = await fetch('/api/call-token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(resolvedState),
     });
 
@@ -68,7 +120,6 @@ export const ConnectionProvider = ({
       } else if (response.status === 403) {
         toast.error(dict.freeUserCallLimitExceeded);
       }
-
       throw new Error('Failed to fetch token');
     }
 

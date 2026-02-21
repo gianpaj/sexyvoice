@@ -156,7 +156,11 @@
     "ios >0 and last 2.5 years"
   ],
   "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "pnpm": {
+    "minimumReleaseAge": 2880,
     "overrides": {
       "@babel/runtime@<7.26.10": ">=7.26.10",
       "@types/react": "19.2.7",

@@ -82,6 +82,7 @@ vi.mock('@/hooks/use-connection', () => ({
     dict: {
       chooseCharacter: 'Choose Character',
       addCustomCharacter: 'Add custom character',
+      addCharacterLabel: 'Add',
       upgradePremiumTooltip: 'Upgrade to create custom characters',
       addDescriptionPlaceholder: 'Add a description...',
       clickToAddDescription: 'Click to add a description...',

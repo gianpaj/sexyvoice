@@ -199,9 +199,9 @@ describe('PresetSelector', () => {
     });
   });
 
-  // ---- Custom characters (simple row, no carousel) ----
-  describe('custom characters without showInstruction', () => {
-    it('renders custom characters when they exist', () => {
+  // ---- Custom characters ----
+  describe('custom characters', () => {
+    it('renders custom characters alongside defaults', () => {
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -216,10 +216,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('Ramona')).toBeInTheDocument();
       expect(screen.getByText('MyChar')).toBeInTheDocument();
     });
-  });
 
-  // ---- Custom characters (carousel mode) ----
-  describe('carousel mode (showInstruction + custom characters)', () => {
     beforeEach(() => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
@@ -238,7 +235,7 @@ describe('PresetSelector', () => {
       });
     });
 
-    it('renders both default and custom characters in carousel mode', () => {
+    it('renders both default and custom characters', () => {
       render(<PresetSelector />);
       // All defaults
       for (const preset of defaultPresetsFixture) {
@@ -247,13 +244,6 @@ describe('PresetSelector', () => {
       // Custom characters
       expect(screen.getByText('AlphaChar')).toBeInTheDocument();
       expect(screen.getByText('BetaChar')).toBeInTheDocument();
-    });
-
-    it('renders the carousel region element', () => {
-      render(<PresetSelector />);
-      expect(
-        screen.getByRole('region', { name: /carousel/i }),
-      ).toBeInTheDocument();
     });
 
     it('renders initials for custom characters without images', () => {
@@ -301,68 +291,6 @@ describe('PresetSelector', () => {
         type: 'SET_SELECTED_PRESET_ID',
         payload: 'custom-1',
       });
-    });
-  });
-
-  // ---- Carousel pagination ----
-  describe('carousel pagination', () => {
-    it('creates multiple carousel pages when total characters exceed 6', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      const manyCustom: Preset[] = Array.from({ length: 5 }, (_, i) =>
-        makePreset({
-          id: `custom-${i}`,
-          name: `Char${i}`,
-          localizedDescriptions: { en: `Custom ${i}` },
-        }),
-      );
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: manyCustom,
-      });
-
-      render(<PresetSelector />);
-
-      // 4 defaults + 5 custom = 9 characters → 2 pages (ceil(9/6))
-      // Each page is an aria-roledescription="slide" element
-      const slides = screen.getAllByRole('group');
-      expect(slides).toHaveLength(2);
-    });
-
-    it('does not show navigation arrows when all characters fit on one page', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'custom-1',
-            name: 'OnlyOne',
-            localizedDescriptions: { en: 'Just one' },
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-
-      // 4 defaults + 1 custom = 5, fits in one page of 6
-      expect(screen.queryByText('Previous slide')).not.toBeInTheDocument();
-      expect(screen.queryByText('Next slide')).not.toBeInTheDocument();
-    });
-
-    it('shows navigation arrows when characters span multiple pages', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      const manyCustom: Preset[] = Array.from({ length: 5 }, (_, i) =>
-        makePreset({
-          id: `custom-${i}`,
-          name: `Char${i}`,
-          localizedDescriptions: { en: `Custom ${i}` },
-        }),
-      );
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: manyCustom,
-      });
-
-      render(<PresetSelector />);
-
-      // "Previous slide" and "Next slide" are sr-only spans inside the carousel buttons
-      expect(screen.getByText('Previous slide')).toBeInTheDocument();
-      expect(screen.getByText('Next slide')).toBeInTheDocument();
     });
   });
 
@@ -593,7 +521,7 @@ describe('PresetSelector', () => {
         ],
       });
       render(<PresetSelector />);
-      // Should be in carousel mode → custom char visible
+      // Custom char should be visible
       expect(screen.getByText('EmptyParam')).toBeInTheDocument();
     });
 
@@ -612,7 +540,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('TrueParam')).toBeInTheDocument();
     });
 
-    it('treats showInstruction=false as false (simple row)', () => {
+    it('treats showInstruction=false as false', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=false');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
@@ -639,7 +567,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('Choose Character')).toBeInTheDocument();
     });
 
-    it('renders custom character with image in carousel mode', () => {
+    it('renders custom character with image', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
@@ -680,62 +608,11 @@ describe('PresetSelector', () => {
       );
       expect(deleteCalls).toHaveLength(0);
     });
-
-    it('renders exactly one page when there are 6 or fewer characters', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            name: 'Extra1',
-            localizedDescriptions: { en: 'extra' },
-          }),
-          makePreset({
-            id: 'c2',
-            name: 'Extra2',
-            localizedDescriptions: { en: 'extra' },
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-
-      // 4 defaults + 2 custom = 6 → exactly 1 page
-      const slides = screen.getAllByRole('group');
-      expect(slides).toHaveLength(1);
-    });
-
-    it('renders three pages when there are 13–18 characters', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      const customChars: Preset[] = Array.from({ length: 10 }, (_, i) =>
-        makePreset({
-          id: `c-${i}`,
-          name: `X${i}`,
-          localizedDescriptions: { en: `desc ${i}` },
-        }),
-      );
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: customChars,
-      });
-      render(<PresetSelector />);
-
-      // 4 defaults + 10 custom = 14 → ceil(14/6) = 3 pages
-      const slides = screen.getAllByRole('group');
-      expect(slides).toHaveLength(3);
-    });
   });
 
   // ---- Add Character button (premium gating) ----
   describe('add character button', () => {
-    it('renders the "Add" button in simple row mode', () => {
-      render(<PresetSelector />);
-      expect(
-        screen.getByRole('button', { name: /add custom character/i }),
-      ).toBeInTheDocument();
-      expect(screen.getByText('Add')).toBeInTheDocument();
-    });
-
-    it('renders the "Add" button in carousel mode', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
+    it('renders the "Add" button', () => {
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({

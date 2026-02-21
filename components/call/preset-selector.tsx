@@ -39,6 +39,7 @@ import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { mapApiCharacterToPreset, saveCharacter } from '@/lib/characters';
 import {
   CreateCharacterDialog,
   type NewCharacterPayload,
@@ -120,73 +121,9 @@ function AvatarButton({
   );
 }
 
-const gridColsClass: Record<number, string> = {
-  1: 'grid-cols-1',
-  2: 'grid-cols-2',
-  3: 'grid-cols-3',
-  4: 'grid-cols-4',
-  5: 'grid-cols-5',
-  6: 'grid-cols-6',
-};
-
 interface PresetSelectorProps {
   isPaidUser?: boolean;
   callVoices?: DBVoice[];
-}
-
-function mapApiCharacterToPreset(character: {
-  id: string;
-  name: string;
-  localized_descriptions?: Record<string, string> | null;
-  image?: string | null;
-  session_config?: {
-    model?: string;
-    voice?: string;
-    temperature?: number;
-    maxOutputTokens?: number | null;
-    max_output_tokens?: number | null;
-    grokImageEnabled?: boolean;
-    grok_image_enabled?: boolean;
-  } | null;
-  sort_order?: number;
-  is_public?: boolean;
-  voice_id?: string;
-  voices?: { name?: string | null; sample_url?: string | null } | null;
-  prompt_id?: string;
-  prompts?: {
-    prompt?: string | null;
-    localized_prompts?: Record<string, string> | null;
-  } | null;
-}): Preset {
-  const sessionConfig = character.session_config ?? {};
-
-  return {
-    id: character.id,
-    name: character.name,
-    localizedDescriptions: character.localized_descriptions ?? {},
-    image: character.image ?? undefined,
-    instructions: character.prompts?.prompt ?? '',
-    localizedInstructions: character.prompts?.localized_prompts ?? {},
-    sessionConfig: {
-      model: (sessionConfig.model ??
-        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
-      voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
-      temperature: sessionConfig.temperature ?? 0.8,
-      maxOutputTokens:
-        sessionConfig.maxOutputTokens ??
-        sessionConfig.max_output_tokens ??
-        null,
-      grokImageEnabled:
-        sessionConfig.grokImageEnabled ??
-        sessionConfig.grok_image_enabled ??
-        false,
-    },
-    promptId: character.prompt_id,
-    voiceId: character.voice_id,
-    voiceName: character.voices?.name ?? undefined,
-    voiceSampleUrl: character.voices?.sample_url ?? undefined,
-    isPublic: character.is_public,
-  };
 }
 
 export function PresetSelector({
@@ -221,18 +158,10 @@ export function PresetSelector({
     .filter((preset) => preset.image);
 
   const customCharacters = pgState.customCharacters;
-  const hasCustomCharacters = customCharacters.length > 0;
   const canAddMore = customCharacters.length < MAX_CUSTOM_CHARACTERS;
 
-  // All characters combined for carousel pages
+  // All characters combined — each is its own carousel slide
   const allCharacters = [...defaultCharacters, ...customCharacters];
-
-  // Split into pages of 6 for the carousel
-  const pages: (typeof allCharacters)[] = [];
-  const PAGE_SIZE = 6;
-  for (let i = 0; i < allCharacters.length; i += PAGE_SIZE) {
-    pages.push(allCharacters.slice(i, i + PAGE_SIZE));
-  }
 
   const selectedPreset = helpers.getSelectedPreset(pgState);
 
@@ -241,7 +170,7 @@ export function PresetSelector({
       setLastPresetId(pgState.selectedPresetId);
       if (shouldConnect) {
         disconnect().then(() => {
-          connect();
+          connect(pendingVoiceName);
         });
       }
     }
@@ -251,6 +180,7 @@ export function PresetSelector({
     disconnect,
     connect,
     lastPresetId,
+    pendingVoiceName,
   ]);
 
   const handlePresetSelect = (presetId: string | null) => {
@@ -299,7 +229,6 @@ export function PresetSelector({
     }
 
     const newPreset = mapApiCharacterToPreset(result);
-
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
     toast.success(dict.presetSelector.characterCreated);
@@ -323,7 +252,9 @@ export function PresetSelector({
     return result;
   };
 
-  // Handle voice dropdown change — update local state only, no API call
+  // Handle voice dropdown change — updates in-memory state only.
+  // The pending voice name is passed to connect() so use-connection
+  // can persist it (along with any instruction changes) in one API call.
   const handleVoiceChange = (newVoiceName: string) => {
     if (!(selectedPreset && isSelectedCustom) || isConnected) return;
 
@@ -350,45 +281,6 @@ export function PresetSelector({
     };
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
   };
-
-  // Persist pending voice change to DB
-  const saveVoiceToDb = async () => {
-    if (!(pendingVoiceName && selectedPreset && isSelectedCustom)) return;
-
-    try {
-      const response = await fetch('/api/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: selectedPreset.id,
-          name: selectedPreset.name,
-          localizedDescriptions: selectedPreset.localizedDescriptions,
-          prompt: selectedPreset.instructions,
-          localizedPrompts: selectedPreset.localizedInstructions,
-          sessionConfig: selectedPreset.sessionConfig,
-          voiceName: pendingVoiceName,
-        }),
-      });
-
-      const result = await response.json();
-      if (!response.ok)
-        throw new Error(result.error || 'Failed to update voice');
-
-      setPendingVoiceName(null);
-      toast.success(dict.presetSelector.voiceUpdated);
-    } catch (error) {
-      console.error('Failed to save voice:', error);
-      toast.error(dict.presetSelector.failedToSaveVoice);
-    }
-  };
-
-  // Save pending voice to DB when a call starts
-  // biome-ignore lint/correctness/useExhaustiveDependencies: save when shouldConnect transitions to true
-  useEffect(() => {
-    if (shouldConnect && pendingVoiceName) {
-      saveVoiceToDb();
-    }
-  }, [shouldConnect]);
 
   // Clear pending voice when switching characters
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset pending voice when selected preset changes
@@ -425,29 +317,21 @@ export function PresetSelector({
         )
       : selectedPreset.localizedDescriptions;
 
-    const response = await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: selectedPreset.id,
-        name: newName,
-        localizedDescriptions: newDescriptions,
-        prompt: selectedPreset.instructions,
-        localizedPrompts: selectedPreset.localizedInstructions ?? {},
-        sessionConfig: selectedPreset.sessionConfig,
-        voiceName:
-          selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
-      }),
+    const saveResult = await saveCharacter({
+      id: selectedPreset.id,
+      name: newName,
+      localizedDescriptions: newDescriptions ?? {},
+      prompt: selectedPreset.instructions,
+      localizedPrompts: selectedPreset.localizedInstructions ?? {},
+      sessionConfig: selectedPreset.sessionConfig,
+      voiceName: selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
     });
-
-    const result = await response.json();
-    if (!response.ok) {
-      toast.error(result.error ?? dict.presetSelector.failedToUpdate);
+    if (!saveResult.ok) {
+      toast.error(saveResult.error ?? dict.presetSelector.failedToUpdate);
       return;
     }
 
-    const updatedPreset = mapApiCharacterToPreset(result);
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: saveResult.preset });
     toast.success(dict.presetSelector.characterUpdated);
 
     setIsEditingName(false);
@@ -527,19 +411,24 @@ export function PresetSelector({
 
   /** The "+" add-character button rendered as an avatar-shaped circle. */
   const addCharacterButton = canAddMore ? (
-    <div className="flex flex-col items-center gap-2">
-      <PremiumActionButton
-        aria-label={dict.addCustomCharacter}
-        className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
-        disabled={isConnected}
-        isPaidUser={isPaidUser}
-        onClick={handleOpenCreateDialog}
-        premiumTooltip={dict.upgradePremiumTooltip}
-      >
-        <Plus className="h-5 w-5" />
-      </PremiumActionButton>
+    <div className="group/card relative flex flex-col items-center gap-2">
+      {/* Wrapper matching AvatarButton ring structure for vertical alignment */}
+      <div className="rounded-full p-[3px]">
+        <div className="rounded-full p-[2px]">
+          <PremiumActionButton
+            aria-label={dict.addCustomCharacter}
+            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
+            disabled={isConnected}
+            isPaidUser={isPaidUser}
+            onClick={handleOpenCreateDialog}
+            premiumTooltip={dict.upgradePremiumTooltip}
+          >
+            <Plus className="h-5 w-5" />
+          </PremiumActionButton>
+        </div>
+      </div>
       <span className="max-w-16 truncate font-medium text-muted-foreground text-xs sm:max-w-20">
-        Add
+        {dict.addCharacterLabel}
       </span>
     </div>
   ) : null;
@@ -552,99 +441,76 @@ export function PresetSelector({
           {dict.chooseCharacter}
         </div>
 
-        {/* Avatar Row / Carousel */}
-        {hasCustomCharacters ? (
-          <div className="relative mb-4 md:px-10">
-            <Carousel opts={{ align: 'start', loop: false }}>
-              <CarouselContent className="-ml-2">
-                {pages.map((page, pageIndex) => (
+        {/* Avatar Row — Carousel: each avatar is its own slide, 5 visible on mobile / 6 on desktop */}
+        <div className="relative mb-4 md:px-10">
+          <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
+            <CarouselContent className="-ml-2">
+              {allCharacters.map((preset) => {
+                const isSelected = pgState.selectedPresetId === preset.id;
+                const isCustom = isCustomCharacter(preset.id);
+                return (
                   <CarouselItem
-                    className="basis-full pl-2"
-                    key={`page-${pageIndex}`}
+                    className="basis-1/5 pl-2 sm:basis-1/6"
+                    key={preset.id}
                   >
-                    <div
-                      className={`grid gap-3 ${gridColsClass[Math.min(page.length + (pageIndex === pages.length - 1 && addCharacterButton ? 1 : 0), 6) as keyof typeof gridColsClass] || 'grid-cols-6'}`}
-                    >
-                      {page.map((preset) => {
-                        const isSelected =
-                          pgState.selectedPresetId === preset.id;
-                        const isCustom = isCustomCharacter(preset.id);
-                        return (
-                          <div
-                            className="group/card relative flex flex-col items-center"
-                            key={preset.id}
-                          >
-                            <AvatarButton
-                              image={preset.image}
-                              isConnected={isConnected}
-                              isSelected={isSelected}
-                              name={preset.name}
-                              onClick={() => handlePresetSelect(preset.id)}
-                            />
-                            {/* Delete button for custom characters */}
-                            {isCustom && !isConnected && (
-                              <button
-                                aria-label={dict.deleteCharacterAriaLabel.replace(
-                                  '__NAME__',
-                                  preset.name,
-                                )}
-                                className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCharacterToDelete({
-                                    id: preset.id,
-                                    name: preset.name,
-                                  });
-                                  setShowDeleteDialog(true);
-                                }}
-                                title={dict.deleteCharacterAriaLabel.replace(
-                                  '__NAME__',
-                                  preset.name,
-                                )}
-                                type="button"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {/* "+" button on the last page */}
-                      {pageIndex === pages.length - 1 && addCharacterButton}
+                    <div className="group/card relative flex flex-col items-center">
+                      <AvatarButton
+                        image={preset.image}
+                        isConnected={isConnected}
+                        isSelected={isSelected}
+                        name={preset.name}
+                        onClick={() => handlePresetSelect(preset.id)}
+                      />
+                      {/* Delete button for custom characters */}
+                      {isCustom && !isConnected && (
+                        <button
+                          aria-label={dict.deleteCharacterAriaLabel.replace(
+                            '__NAME__',
+                            preset.name,
+                          )}
+                          className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCharacterToDelete({
+                              id: preset.id,
+                              name: preset.name,
+                            });
+                            setShowDeleteDialog(true);
+                          }}
+                          title={dict.deleteCharacterAriaLabel.replace(
+                            '__NAME__',
+                            preset.name,
+                          )}
+                          type="button"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   </CarouselItem>
-                ))}
-              </CarouselContent>
-              {pages.length > 1 && (
-                <>
-                  <CarouselPrevious
-                    className="-left-2 h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80"
-                    variant="outline"
-                  />
-                  <CarouselNext
-                    className="-right-2 h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80"
-                    variant="outline"
-                  />
-                </>
+                );
+              })}
+              {/* "+" add button as its own slide */}
+              {addCharacterButton && (
+                <CarouselItem className="basis-1/5 pl-2 sm:basis-1/6">
+                  {addCharacterButton}
+                </CarouselItem>
               )}
-            </Carousel>
-          </div>
-        ) : (
-          /* Default: simple row of default characters + add button */
-          <div className="mb-4 flex items-start justify-between gap-2">
-            {defaultCharacters.map((preset) => (
-              <AvatarButton
-                image={preset.image}
-                isConnected={isConnected}
-                isSelected={pgState.selectedPresetId === preset.id}
-                key={preset.id}
-                name={preset.name}
-                onClick={() => handlePresetSelect(preset.id)}
-              />
-            ))}
-            {addCharacterButton}
-          </div>
-        )}
+            </CarouselContent>
+            {allCharacters.length + (addCharacterButton ? 1 : 0) > 5 && (
+              <>
+                <CarouselPrevious
+                  className="-left-2 h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80"
+                  variant="outline"
+                />
+                <CarouselNext
+                  className="-right-2 h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80"
+                  variant="outline"
+                />
+              </>
+            )}
+          </Carousel>
+        </div>
 
         {/* Bio Card - Editable for custom characters */}
         <div

@@ -348,6 +348,7 @@
     "grokImagineNote": "Note: Grok Imagine adds additional instructions for image generation.",
     "grokImagineIncluded": "Grok Imagine Instructions Included",
     "addCustomCharacter": "Add custom character",
+    "addCharacterLabel": "Add",
     "upgradePremiumTooltip": "Upgrade to create custom characters",
     "addDescriptionPlaceholder": "Add a description...",
     "clickToAddDescription": "Click to add a description...",

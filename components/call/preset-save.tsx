@@ -18,64 +18,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { Preset } from '@/data/presets';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-
-function mapApiCharacterToPreset(character: {
-  id: string;
-  name: string;
-  localized_descriptions?: Record<string, string> | null;
-  image?: string | null;
-  session_config?: {
-    model?: string;
-    voice?: string;
-    temperature?: number;
-    maxOutputTokens?: number | null;
-    max_output_tokens?: number | null;
-    grokImageEnabled?: boolean;
-    grok_image_enabled?: boolean;
-  } | null;
-  sort_order?: number;
-  is_public?: boolean;
-  voice_id?: string;
-  voices?: { name?: string | null; sample_url?: string | null } | null;
-  prompt_id?: string;
-  prompts?: {
-    prompt?: string | null;
-    localized_prompts?: Record<string, string> | null;
-  } | null;
-}): Preset {
-  const sessionConfig = character.session_config ?? {};
-
-  return {
-    id: character.id,
-    name: character.name,
-    localizedDescriptions: character.localized_descriptions ?? {},
-    image: character.image ?? undefined,
-    instructions: character.prompts?.prompt ?? '',
-    localizedInstructions: character.prompts?.localized_prompts ?? {},
-    sessionConfig: {
-      model: (sessionConfig.model ??
-        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
-      voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
-      temperature: sessionConfig.temperature ?? 0.8,
-      maxOutputTokens:
-        sessionConfig.maxOutputTokens ??
-        sessionConfig.max_output_tokens ??
-        null,
-      grokImageEnabled:
-        sessionConfig.grokImageEnabled ??
-        sessionConfig.grok_image_enabled ??
-        false,
-    },
-    promptId: character.prompt_id,
-    voiceId: character.voice_id,
-    voiceName: character.voices?.name ?? undefined,
-    voiceSampleUrl: character.voices?.sample_url ?? undefined,
-    isPublic: character.is_public,
-  };
-}
+import { buildSaveCharacterPayload, saveCharacter } from '@/lib/characters';
 
 export function PresetSave() {
   const connectionState = useConnectionState();
@@ -109,28 +54,22 @@ export function PresetSave() {
 
   // Save as new character (opens dialog)
   const handleSaveAsNew = async () => {
-    const response = await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        localizedDescriptions: { [pgState.language]: description },
-        prompt: pgState.instructions,
-        localizedPrompts: { [pgState.language]: pgState.instructions },
-        sessionConfig: pgState.sessionConfig,
-        voiceName: pgState.sessionConfig.voice,
-      }),
+    const result = await saveCharacter({
+      id: '',
+      name,
+      localizedDescriptions: { [pgState.language]: description },
+      prompt: pgState.instructions,
+      localizedPrompts: { [pgState.language]: pgState.instructions },
+      sessionConfig: pgState.sessionConfig,
+      voiceName: pgState.sessionConfig.voice,
     });
-    const result = await response.json();
-    if (!response.ok) {
+    if (!result.ok) {
       toast.error(result.error ?? t.failedToCreate);
       return;
     }
 
-    const newPreset = mapApiCharacterToPreset(result);
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
-    dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
-
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
+    dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: result.preset.id });
     setOpen(false);
     toast.success(t.characterCreated);
   };
@@ -139,34 +78,25 @@ export function PresetSave() {
     if (!selectedPreset || isDefaultPreset || !selectedPreset.name.trim())
       return;
 
-    const response = await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: selectedPreset.id,
-        name: selectedPreset.name,
+    const instructions = helpers.getFullInstructions(pgState);
+    const payload = buildSaveCharacterPayload(
+      {
+        ...selectedPreset,
         localizedDescriptions: {
           ...(selectedPreset.localizedDescriptions ?? {}),
           [pgState.language]: description,
         },
-        prompt: pgState.instructions,
-        localizedPrompts: {
-          ...(selectedPreset.localizedInstructions ?? {}),
-          [pgState.language]: pgState.instructions,
-        },
-        sessionConfig: selectedPreset.sessionConfig,
-        voiceName:
-          selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
-      }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
+      },
+      pgState.language,
+      instructions,
+    );
+    const result = await saveCharacter(payload);
+    if (!result.ok) {
       toast.error(result.error ?? t.failedToUpdate);
       return;
     }
 
-    const updatedPreset = mapApiCharacterToPreset(result);
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
     toast.success(t.characterSaved);
   };
 
