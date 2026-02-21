@@ -19,7 +19,7 @@
     "format": "biome format ./app components hooks lib proxy.ts",
     "check:fix": "biome check ./app components hooks lib proxy.ts --write",
     "preview": "next build && next start",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsgo --noEmit",
     "analyze": "next experimental-analyze",
     "clean": "knip",
     "check-translations": "node scripts/check-translations.mjs",
@@ -124,6 +124,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.14",
+    "@typescript/native-preview": "7.0.0-dev.20260220.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

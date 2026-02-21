@@ -40,7 +40,7 @@ const AgentContext = createContext<AgentContextType | undefined>(undefined);
 
 export function AgentProvider({ children }: { children: React.ReactNode }) {
   const room = useMaybeRoomContext();
-  const { shouldConnect } = useConnection();
+  const { shouldConnect, dict, disconnect } = useConnection();
   const { agent } = useVoiceAssistant();
   const { localParticipant } = useLocalParticipant();
   const [rawSegments, setRawSegments] = useState<{
@@ -85,12 +85,48 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
       async (data: RpcInvocationData) => {
         const { title, description, variant } = JSON.parse(data.payload);
         console.log(title, description, variant);
-        // TODO: display different toast variants
-        toast.info(title);
+
+        const message = description ? `${title}: ${description}` : title;
+
+        switch (variant) {
+          case 'error':
+            toast.error(message);
+            break;
+          case 'warning':
+            toast.warning(message);
+            break;
+          case 'success':
+            toast.success(message);
+            break;
+          default:
+            toast.info(message);
+        }
+
         return JSON.stringify({ shown: true });
       },
     );
-  }, [localParticipant]);
+
+    // Handle agent errors (e.g., active call, insufficient credits)
+    localParticipant.registerRpcMethod(
+      'pg.error',
+      // biome-ignore lint/suspicious/useAwait: fine
+      async (data: RpcInvocationData) => {
+        const errorData = JSON.parse(data.payload);
+        console.error('Agent error received:', errorData);
+
+        if (errorData.error === 'active_call') {
+          toast.error(dict.activeCallError);
+        } else if (errorData.error === 'insufficient_credits') {
+          toast.error(dict.notEnoughCredits.replace('__COUNT__', '2000'));
+        } else {
+          toast.error(errorData.message || 'An error occurred');
+        }
+
+        disconnect();
+        return JSON.stringify({ handled: true });
+      },
+    );
+  }, [localParticipant, dict, disconnect]);
 
   // Register byte stream handler for images
   useEffect(() => {

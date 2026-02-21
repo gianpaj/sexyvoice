@@ -48,3 +48,5 @@ backups
 .edgeconfig.json
 
 .daily-stats-cache.json
+
+.ck

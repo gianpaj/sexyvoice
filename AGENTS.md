@@ -1,5 +1,7 @@
 # Claude Assistant Guidelines for SexyVoice.ai
 
+- Search: Always run `ck --help` first and use `ck` for codebase search. Prefer `ck --regex` for exact text, `ck --sem`/`--hybrid` for conceptual matches, and `--jsonl` for tooling.
+
 This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
 
 ## Project Overview
@@ -56,16 +58,32 @@ app/[lang]/                    # Internationalized routes
 app/api/
 ├── call-token/                # LiveKit token generation for calls (Zod validation, resolves character prompts from DB, includes character_id in metadata)
 ├── characters/                # Custom character CRUD (POST create/update, DELETE)
-├── usage-events/              # Usage tracking API
-├── generate-voice/            # Voice generation endpoint
 ├── clone-voice/               # Voice cloning endpoint
-└── webhooks/stripe/           # Stripe payment webhooks
+├── daily-stats/               # Daily statistics
+├── estimate-credits/          # Credit cost estimation
+├── generate-text/             # Text enhancement with AI
+├── generate-voice/            # Voice generation endpoint
+├── health/                    # Health check
+├── inngest/                   # Background jobs
+├── popular-audios/            # Popular audio listing (not being used)
+├── stripe/
+│   ├── transactions/          # Stripe transaction history
+│   └── webhook/               # Stripe payment webhooks
+├── usage-events/              # Usage tracking API
+└── wrapped/platform/          # Platform analytics (only updated once a year)
 
 lib/
-├── supabase/                  # Database client, queries, types
+├── api/                       # API utilities
+├── edge-config/               # Vercel Edge Config for dynamic settings
 ├── i18n/                      # Internationalization config and dictionaries
+├── inngest/                   # Background job definitions (not being used)
+├── redis/                     # Upstash Redis client and helpers
+├── storage/                   # Cloudflare R2 upload/delete operations
 ├── stripe/                    # Payment processing, pricing configuration
-└── edge-config/               # Vercel Edge Config for dynamic settings
+├── supabase/                  # Database client, queries, types
+├── ai.ts                      # Google Generative AI integration
+├── banlist.ts                 # Blocked email domains
+└── utils.ts                   # Shared utilities
 
 data/
 ├── playground-state.ts        # Call session state management
