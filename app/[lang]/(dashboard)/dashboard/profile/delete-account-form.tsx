@@ -32,54 +32,56 @@ export function DeleteAccountForm({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4">
-        <Alert className="p-4" variant="destructive">
+      {/*<div className="grid gap-4">*/}
+      <Alert variant="destructive">
+        <div className="flex items-center gap-3">
           <AlertCircle className="size-4" />
           <AlertDescription>
             {dict.dangerZone.deleteAccount.alertTitle}
           </AlertDescription>
-        </Alert>
-      </div>
+        </div>
+      </Alert>
+      {/*</div>*/}
 
-      <div className="grid grid-cols-1 gap-4">
-        {/* <div className="space-y-2">
+      {/*<div className="grid grid-cols-1 gap-4">*/}
+      {/* <div className="space-y-2">
           <Label htmlFor="currentPassword">Confirm</Label>
         </div> */}
 
-        <AlertDialog>
+      <AlertDialog>
+        <div className="flex justify-end">
           <AlertDialogTrigger asChild>
-            <div className="flex justify-end">
-              <Button variant="destructive">
-                {dict.dangerZone.deleteAccount.button}
-              </Button>
-            </div>
+            <Button variant="destructive">
+              {dict.dangerZone.deleteAccount.button}
+            </Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader className="items-center">
-              <AlertDialogTitle>
-                <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
-                  <OctagonAlert className="h-7 w-7 text-destructive" />
-                </div>
-                {dict.dangerZone.deleteAccount.confirmTitle}
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-center text-[15px]">
-                {dict.dangerZone.deleteAccount.confirmDescription}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-2 sm:justify-center">
-              <AlertDialogCancel>
-                {dict.dangerZone.deleteAccount.cancel}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                className={buttonVariants({ variant: 'destructive' })}
-                onClick={handleDeleteAccount}
-              >
-                {dict.dangerZone.deleteAccount.continue}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+        </div>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center">
+            <AlertDialogTitle>
+              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+                <OctagonAlert className="h-7 w-7 text-destructive" />
+              </div>
+              {dict.dangerZone.deleteAccount.confirmTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="whitespace-pre-line text-left">
+              {dict.dangerZone.deleteAccount.confirmDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 sm:justify-center">
+            <AlertDialogCancel>
+              {dict.dangerZone.deleteAccount.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: 'destructive' })}
+              onClick={handleDeleteAccount}
+            >
+              {dict.dangerZone.deleteAccount.continue}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/*</div>*/}
     </div>
   );
 }

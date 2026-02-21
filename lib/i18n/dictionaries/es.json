@@ -465,12 +465,27 @@
       "title": "Configuración de Seguridad",
       "description": "Gestiona tu correo electrónico y contraseña"
     },
+    "securityForm": {
+      "description": "Ingresa tu contraseña actual y una nueva contraseña para actualizar tus credenciales",
+      "emailLabel": "Dirección de correo electrónico",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "updating": "Actualizando...",
+      "updatePassword": "Actualizar contraseña",
+      "success": "Contraseña actualizada correctamente",
+      "errors": {
+        "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden",
+        "updateFailed": "Error al actualizar la contraseña",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta"
+      }
+    },
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
         "button": "Eliminar cuenta",
         "confirmTitle": "¿Estás absolutamente seguro?",
-        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y removerá tus datos de nuestros servidores.",
+        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Datos asociados",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar"
@@ -491,12 +506,20 @@
     "/dashboard/history": "Historial",
     "/dashboard/credits": "Créditos",
     "/dashboard/usage": "Uso",
-    "/tools/audio-converter": "Conversor de Audio Gratuito",
-    "/tools/transcribe": "Transcripción de Audio Gratuita"
+    "/tools/audio-converter": "Conversor de Audio",
+    "/tools/transcribe": "Transcripción de Audio",
+    "titleAudioConverter": "Conversor de Audio Online Gratuito – MP3, WAV, FLAC y Más",
+    "titleTranscribe": "Transcripción de Audio Online Gratuita – Voz a Texto en 99+ Idiomas",
+    "descriptionAudioConverter": "Conversor de audio online gratuito – Convierte MP3, WAV, FLAC, OGG, AAC, MP4 y más formatos directamente en tu navegador. Sin subir archivos, 100% privado y offline. Desarrollado con FFmpeg.",
+    "descriptionTranscribe": "Transcripción de audio online gratuita – Transcribe archivos de audio y vídeo a texto en más de 99 idiomas con OpenAI Whisper. 100% privado, se ejecuta en tu navegador. Sin subir archivos.",
+    "keywordsAudioConverter": "conversor de audio gratis, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, conversor de audio online, conversor de audio en navegador, conversor de audio offline, mp3 a wav, wav a mp3, convertidor de formato de audio, ffmpeg online, conversor de audio sin subir archivos, conversor de audio privado",
+    "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción 99 idiomas, transcripción privada",
+    "keywordsLanding": "llamadas de voz IA, compañero IA privado, hablar con IA, chat de voz IA, llamada telefónica IA, voz IA, conversación IA, chat de voz privado, generador de voz IA, texto a voz, clonación de voz, llamadas IA sin juzgar"
   },
   "sidebar": {
     "profile": "Perfil",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "freeTools": "Herramientas Gratuitas"
   },
   "header": {
     "generate": "Generar",
@@ -636,7 +659,9 @@
       "poweredBy": "Desarrollado con",
       "ffmpeg": "FFmpeg",
       "noUploads": "Sin cargas, 100% en el navegador",
-      "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar"
+      "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar",
+      "alsoTry": "También prueba nuestra",
+      "transcribeLink": "Transcripción de Audio Gratuita"
     }
   },
   "transcribe": {
@@ -686,7 +711,9 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Sin cargas, 100% en el navegador",
-      "madeWith": "Hecho con ♡ desde SexyVoice.ai"
+      "madeWith": "Hecho con ♡ desde SexyVoice.ai",
+      "alsoTry": "También prueba nuestro",
+      "audioConverterLink": "Conversor de Audio Gratuito"
     }
   }
 }

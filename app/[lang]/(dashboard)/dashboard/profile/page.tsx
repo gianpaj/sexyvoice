@@ -65,7 +65,7 @@ export default async function ProfilePage(props: {
           <CardDescription>{dict.security.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <SecurityForm email={user.email} />
+          <SecurityForm dict={dict.securityForm} email={user.email} />
         </CardContent>
       </Card>
       <Card>

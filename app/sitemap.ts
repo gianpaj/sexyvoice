@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/complexity/noForEach: fine */
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { allPosts } from 'contentlayer/generated';
 import { globby } from 'globby';
@@ -25,6 +25,43 @@ function checkPostExists(slug: string, locale: string): boolean {
   }
   // For other locales, check if file exists with locale suffix
   return existsSync(join(basePath, `${slug}.${locale}.mdx`));
+}
+
+/**
+ * Get the file modification time for a page source file.
+ * Falls back to a fixed date if the file cannot be read.
+ */
+function getFileLastModified(filePath: string): string {
+  try {
+    const fullPath = join(process.cwd(), filePath);
+    const stat = statSync(fullPath);
+    return stat.mtime.toISOString();
+  } catch {
+    // Fallback: use a reasonable fixed date rather than "now"
+    return '2025-01-01T00:00:00.000Z';
+  }
+}
+
+/**
+ * Assign a priority based on the URL path pattern.
+ *
+ * - Homepage: 1.0
+ * - Tools pages: 0.8 (high-value free tools that drive organic traffic)
+ * - Blog posts: 0.7 (content marketing)
+ * - Policy pages: 0.3
+ * - Auth pages (login/signup): 0.4
+ * - Everything else: 0.5
+ */
+function getPriority(url: string): number {
+  // Homepage — ends with /{lang} or /{lang}/
+  if (/\/[a-z]{2}\/?$/.test(url)) return 1.0;
+
+  if (url.includes('/tools/')) return 0.8;
+  if (url.includes('/blog/')) return 0.7;
+  if (url.includes('/login') || url.includes('/signup')) return 0.4;
+  if (url.includes('/privacy') || url.includes('/terms')) return 0.3;
+
+  return 0.5;
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -53,9 +90,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url = url.replace('(auth)/', '');
       url = url.replace('(dashboard)/', '');
 
+      const fullUrl = `${BASE_URL}${url}`;
+      const lastModified = getFileLastModified(page);
+      const priority = getPriority(fullUrl);
+
       if (lang === i18n.defaultLocale && pageHasLangPath) {
         routes.push({
-          url: `${BASE_URL}${url}`,
+          url: fullUrl,
+          lastModified,
+          priority,
           alternates: {
             languages: Object.fromEntries(
               i18n.locales
@@ -68,7 +111,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           },
         });
       } else {
-        routes.push({ url: `${BASE_URL}${url}` });
+        routes.push({
+          url: fullUrl,
+          lastModified,
+          priority,
+        });
       }
     });
 
@@ -78,6 +125,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .forEach((post) => {
         const slug = post.slugAsParams;
         const locale = post.locale;
+        const postUrl = `${BASE_URL}/${locale}/blog/${slug}`;
+        // Use the post's frontmatter date as lastModified
+        const lastModified = new Date(post.date).toISOString();
 
         if (lang === i18n.defaultLocale) {
           // Build alternates only for locales where the post actually exists
@@ -90,7 +140,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           });
 
           routes.push({
-            url: `${BASE_URL}/${locale}/blog/${slug}`,
+            url: postUrl,
+            lastModified,
+            priority: getPriority(postUrl),
             ...(Object.keys(alternates).length > 0 && {
               alternates: {
                 languages: alternates,
@@ -99,7 +151,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           });
         } else {
           routes.push({
-            url: `${BASE_URL}/${locale}/blog/${slug}`,
+            url: postUrl,
+            lastModified,
+            priority: getPriority(postUrl),
           });
         }
       });
@@ -110,11 +164,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       index === self.findIndex((t) => t.url === route.url),
   );
 
-  return [
-    ...Array.from(removedDuplicates).map((route, index) => ({
-      ...route,
-      lastModified: new Date().toISOString(),
-      priority: index === 0 ? 1 : 0.5,
-    })),
-  ];
+  return removedDuplicates;
 }
