@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
 import type { ReactNode } from 'react';
-import type { FAQPage, WithContext } from 'schema-dts';
+import type { Graph } from 'schema-dts';
 
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
@@ -68,17 +68,63 @@ export default async function LandingPage(props: {
     (group) => group.questions,
   );
 
-  const jsonLd: WithContext<FAQPage> = {
+  const siteUrl = `https://sexyvoice.ai/${lang}`;
+
+  const jsonLd: Graph = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqQuestions.map((q) => ({
-      '@type': 'Question',
-      name: q.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: q.answer,
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://sexyvoice.ai/#organization',
+        name: 'SexyVoice.ai',
+        url: 'https://sexyvoice.ai',
+        logo: 'https://sexyvoice.ai/icon-192x192.png',
+        sameAs: [
+          'https://x.com/sexyvoice_ai',
+          'https://instagram.com/sexyvoice.ai',
+        ],
       },
-    })),
+      {
+        '@type': 'WebSite',
+        '@id': 'https://sexyvoice.ai/#website',
+        url: 'https://sexyvoice.ai',
+        name: 'SexyVoice.ai',
+        description: dict.pages.description,
+        publisher: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${siteUrl}/#webpage`,
+        url: siteUrl,
+        name: dict.pages.defaultTitle,
+        description: dict.pages.description,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        about: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${siteUrl}/#faq`,
+        isPartOf: {
+          '@id': `${siteUrl}/#webpage`,
+        },
+        mainEntity: faqQuestions.map((q) => ({
+          '@type': 'Question' as const,
+          name: q.question,
+          acceptedAnswer: {
+            '@type': 'Answer' as const,
+            text: q.answer,
+          },
+        })),
+      },
+    ],
   };
 
   return (

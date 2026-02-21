@@ -465,12 +465,27 @@
       "title": "Paramètres de sécurité",
       "description": "Gérez votre e-mail et votre mot de passe"
     },
+    "securityForm": {
+      "description": "Entrez votre mot de passe actuel et un nouveau mot de passe pour mettre à jour vos identifiants",
+      "emailLabel": "Adresse e-mail",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "updating": "Mise à jour...",
+      "updatePassword": "Mettre à jour le mot de passe",
+      "success": "Mot de passe mis à jour avec succès",
+      "errors": {
+        "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas",
+        "updateFailed": "Échec de la mise à jour du mot de passe",
+        "currentPasswordIncorrect": "Le mot de passe actuel est incorrect"
+      }
+    },
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
         "button": "Supprimer le compte",
         "confirmTitle": "Êtes-vous absolument sûr ?",
-        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera vos données de nos serveurs.",
+        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• Toutes les données associées de nos serveurs",
         "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
         "cancel": "Annuler",
         "continue": "Continuer"
@@ -491,12 +506,20 @@
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
     "/dashboard/usage": "Utilisation",
-    "/tools/audio-converter": "Convertisseur audio gratuit",
-    "/tools/transcribe": "Transcription audio gratuite"
+    "/tools/audio-converter": "Convertisseur Audio",
+    "/tools/transcribe": "Transcription Audio",
+    "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",
+    "titleTranscribe": "Transcription Audio Gratuite en Ligne – 99+ Langues avec Whisper AI",
+    "descriptionAudioConverter": "Convertisseur audio en ligne gratuit – Convertissez MP3, WAV, FLAC, OGG, AAC, MP4 et d'autres formats directement dans votre navigateur. Aucun téléversement requis, 100% privé et hors ligne. Propulsé par FFmpeg.",
+    "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 99 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
+    "keywordsAudioConverter": "convertisseur audio gratuit, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, convertisseur audio en ligne, convertisseur audio navigateur, convertisseur audio hors ligne, mp3 en wav, wav en mp3, convertisseur format audio, ffmpeg en ligne, convertisseur audio sans téléversement, convertisseur audio privé",
+    "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription 99 langues, transcription privée",
+    "keywordsLanding": "appels vocaux IA, compagnon IA privé, parler avec IA, chat vocal IA, appel téléphonique IA, voix IA, conversation IA, chat vocal privé, générateur de voix IA, synthèse vocale, clonage de voix, appels IA sans jugement"
   },
   "sidebar": {
     "profile": "Profil",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "freeTools": "Outils gratuits"
   },
   "header": {
     "generate": "Générer",
@@ -636,7 +659,9 @@
       "poweredBy": "Propulsé par",
       "ffmpeg": "FFmpeg",
       "noUploads": "Aucun téléchargement, 100% dans le navigateur",
-      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
+      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer",
+      "alsoTry": "Essayez aussi notre",
+      "transcribeLink": "Transcription audio gratuite"
     }
   },
   "transcribe": {
@@ -686,7 +711,9 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Aucun téléchargement, 100% dans le navigateur",
-      "madeWith": "Fait avec ♡ par SexyVoice.ai"
+      "madeWith": "Fait avec ♡ par SexyVoice.ai",
+      "alsoTry": "Essayez aussi notre",
+      "audioConverterLink": "Convertisseur audio gratuit"
     }
   }
 }

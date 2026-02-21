@@ -465,12 +465,27 @@
       "title": "Sikkerhedsindstillinger",
       "description": "Administrer din e-mail og adgangskode"
     },
+    "securityForm": {
+      "description": "Indtast din nuværende adgangskode og en ny adgangskode for at opdatere dine loginoplysninger",
+      "emailLabel": "E-mailadresse",
+      "currentPassword": "Nuværende adgangskode",
+      "newPassword": "Ny adgangskode",
+      "confirmPassword": "Bekræft ny adgangskode",
+      "updating": "Opdaterer...",
+      "updatePassword": "Opdater adgangskode",
+      "success": "Adgangskode opdateret",
+      "errors": {
+        "passwordsDoNotMatch": "Nye adgangskoder stemmer ikke overens",
+        "updateFailed": "Kunne ikke opdatere adgangskode",
+        "currentPasswordIncorrect": "Nuværende adgangskode er forkert"
+      }
+    },
     "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {
         "button": "Slet konto",
         "confirmTitle": "Er du helt sikker?",
-        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto og fjerne dine data fra vores servere.",
+        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• Alle tilknyttede data fra vores servere",
         "alertTitle": "Bekræft at du vil slette din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt"
@@ -491,12 +506,20 @@
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
     "/dashboard/usage": "Forbrug",
-    "/tools/audio-converter": "Gratis lydkonverter",
-    "/tools/transcribe": "Gratis lydtransskription"
+    "/tools/audio-converter": "Lydkonverter",
+    "/tools/transcribe": "Lydtransskription",
+    "titleAudioConverter": "Gratis Online Lydkonverter – MP3, WAV, FLAC & Mere",
+    "titleTranscribe": "Gratis Online Lydtransskription – Tale til Tekst på 99+ Sprog",
+    "descriptionAudioConverter": "Gratis online lydkonverter – Konverter MP3, WAV, FLAC, OGG, AAC, MP4 og flere formater direkte i din browser. Ingen upload påkrævet, 100% privat og offline. Drevet af FFmpeg.",
+    "descriptionTranscribe": "Gratis online lydtransskription – Transskriber lyd- og videofiler til tekst på 99+ sprog med OpenAI Whisper. 100% privat, kører direkte i din browser. Ingen upload påkrævet.",
+    "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
+    "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
+    "keywordsLanding": "AI stemmeopkald, privat AI samtale, tal med AI, AI stemmechat, AI telefonopkald, stemme AI, AI samtale, privat stemmechat, AI stemmegenerator, tekst til tale, stemmekloning, AI opkald uden dom"
   },
   "sidebar": {
     "profile": "Profil",
-    "signOut": "Log ud"
+    "signOut": "Log ud",
+    "freeTools": "Gratis værktøjer"
   },
   "header": {
     "generate": "Generer",
@@ -636,7 +659,9 @@
       "poweredBy": "Drevet af",
       "ffmpeg": "FFmpeg",
       "noUploads": "Ingen uploads, 100% i browseren",
-      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve"
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve",
+      "alsoTry": "Prøv også vores",
+      "transcribeLink": "Gratis lydtransskription"
     }
   },
   "transcribe": {
@@ -686,7 +711,9 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Ingen uploads, 100% i browseren",
-      "madeWith": "Lavet med ♡ fra SexyVoice.ai"
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai",
+      "alsoTry": "Prøv også vores",
+      "audioConverterLink": "Gratis lydkonverter"
     }
   }
 }

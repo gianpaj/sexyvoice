@@ -3,7 +3,9 @@
 import {
   BarChart3,
   CreditCard,
+  FileAudio,
   FileClock,
+  FileText,
   Mic2,
   PhoneCallIcon,
   Wand2,
@@ -22,6 +24,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -90,6 +93,19 @@ export default function DashboardUI({
     },
   ];
 
+  const freeTools = [
+    {
+      name: dict.pages['/tools/audio-converter'],
+      href: `/${lang}/tools/audio-converter`,
+      icon: FileAudio,
+    },
+    {
+      name: dict.pages['/tools/transcribe'],
+      href: `/${lang}/tools/transcribe`,
+      icon: FileText,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen>
@@ -126,6 +142,23 @@ export default function DashboardUI({
                         isActive={item.current}
                         tooltip={item.name}
                       >
+                        <Link href={item.href}>
+                          <item.icon className="mr-3 size-5" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>{dict.sidebar.freeTools}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {freeTools.map((item) => (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton asChild tooltip={item.name}>
                         <Link href={item.href}>
                           <item.icon className="mr-3 size-5" />
                           <span>{item.name}</span>
