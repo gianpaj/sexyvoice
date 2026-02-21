@@ -643,6 +643,11 @@
     "title": "Free Audio Transcription",
     "subtitle": "Transcribe audio files to text offline in your browser",
     "tagline": " – 100% free & private",
+    "metadata": {
+      "title": "Free Audio Transcription – Speech to Text Online",
+      "description": "Transcribe audio files to text instantly, 100% free and private. No uploads required – runs entirely in your browser using OpenAI Whisper. Supports 99+ languages.",
+      "keywords": ["audio transcription", "speech to text", "transcribe audio online", "free audio transcription", "whisper transcription", "offline transcription", "browser speech to text", "audio to text converter", "voice transcription", "free speech recognition"]
+    },
     "loadingModel": "Loading model...",
     "transcribing": "Transcribing...",
     "transcribeButton": "Transcribe",

@@ -687,6 +687,20 @@
       "whisper": "OpenAI Whisper",
       "noUploads": "Nessun upload, 100% nel browser",
       "madeWith": "Fatto con ♡ da SexyVoice.ai"
+    },
+    "metadata": {
+      "title": "Trascrizione Audio Gratuita – Da Voce a Testo Online",
+      "description": "Trascrivi file audio in testo all'istante, 100% gratuito e privato. Nessun upload – funziona interamente nel tuo browser con OpenAI Whisper. Supporta 99+ lingue.",
+      "keywords": [
+        "trascrizione audio",
+        "voce in testo",
+        "trascrivere audio online",
+        "trascrizione gratuita",
+        "trascrizione offline",
+        "audio in testo",
+        "riconoscimento vocale",
+        "convertire audio in testo"
+      ]
     }
   }
 }
