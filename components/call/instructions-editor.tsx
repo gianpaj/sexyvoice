@@ -23,17 +23,7 @@ export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
     setInputValue(newValue);
 
     // Dispatch immediately so the connect button reacts without waiting for blur
-    if (pgState.selectedPresetId) {
-      dispatch({
-        type: 'SET_CHARACTER_OVERRIDE',
-        payload: {
-          characterId: pgState.selectedPresetId,
-          instructions: newValue,
-        },
-      });
-    } else {
-      dispatch({ type: 'SET_INSTRUCTIONS', payload: newValue });
-    }
+    dispatch({ type: 'SET_INSTRUCTIONS', payload: newValue });
   };
 
   useEffect(() => {

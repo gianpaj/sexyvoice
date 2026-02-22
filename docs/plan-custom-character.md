@@ -900,7 +900,6 @@ When a **custom character is selected**, the UI shows an edit panel where ALL fi
 ### 6f-2. `PresetSave` simplification
 
 - **Remove** "Save" button for default (predefined) characters — they are immutable
-- **Remove** `SET_CHARACTER_OVERRIDE` / `RESET_CHARACTER_OVERRIDE` logic for default presets
 - "Save" button → only for existing custom characters → `POST /api/characters` with `id`
   - Saves: name, description, voice, prompt, sessionConfig
 - "Save as new" → `POST /api/characters` without `id` (creates a copy)
@@ -1197,7 +1196,7 @@ The provider receives data from SSR props instead of localStorage:
 |------|-------------|
 | Minimal valid payload | Accepts request with required fields only (instructions, selectedPresetId: null, sessionConfig) |
 | Payload with UUID character ID | Accepts request with valid UUID for selectedPresetId |
-| Payload with all optional fields | Accepts request with all optional fields populated (customCharacters, characterOverrides, etc.) |
+| Payload with all optional fields | Accepts request with all optional fields populated (customCharacters, etc.) |
 | All valid language codes | Accepts all 19 supported language codes: ar, cs, da, de, en, es, fi, fr, hi, it, ja, ko, nl, no, pl, pt, ru, sv, tr, zh |
 
 **Invalid Payloads (9 tests):**
