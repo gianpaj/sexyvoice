@@ -260,7 +260,7 @@ export class CreditsPage {
    */
   async expectSuccessAlertWithAmount(amount: number) {
     await expect(
-      this.page.getByText(new RegExp(amount.toLocaleString())),
+      this.successAlert.getByText(new RegExp(amount.toLocaleString())),
     ).toBeVisible({ timeout: 5000 });
   }
 
@@ -291,16 +291,33 @@ export class CreditsPage {
    * Verify the alert was dismissed (hidden)
    */
   async expectAlertDismissed() {
-    // After dismissal, alerts should be hidden
-    await expect(this.page.getByRole('alert')).toBeHidden({ timeout: 5000 });
+    // After dismissal, status alerts should be hidden
+    await expect(this.successAlert).toBeHidden({ timeout: 5000 });
+    await expect(this.canceledAlert).toBeHidden({ timeout: 5000 });
+    await expect(this.errorAlert).toBeHidden({ timeout: 5000 });
   }
 
   /**
    * Verify each package card displays credits text
    */
   async expectPackageCreditsTextVisible() {
-    await expect(this.starterCard.getByText(/credits/i)).toBeVisible();
-    await expect(this.standardCard.getByText(/credits/i)).toBeVisible();
-    await expect(this.proCard.getByText(/credits/i)).toBeVisible();
+    await expect(
+      this.starterCard
+        .locator('div')
+        .filter({ hasText: /credits/i })
+        .first(),
+    ).toBeVisible();
+    await expect(
+      this.standardCard
+        .locator('div')
+        .filter({ hasText: /credits/i })
+        .first(),
+    ).toBeVisible();
+    await expect(
+      this.proCard
+        .locator('div')
+        .filter({ hasText: /credits/i })
+        .first(),
+    ).toBeVisible();
   }
 }

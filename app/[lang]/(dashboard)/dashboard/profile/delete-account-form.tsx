@@ -47,14 +47,14 @@ export function DeleteAccountForm({
         </div> */}
 
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <div className="flex justify-end">
+          <div className="flex justify-end">
+            <AlertDialogTrigger asChild>
               <Button variant="destructive">
                 {dict.dangerZone.deleteAccount.button}
               </Button>
-            </div>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
+            </AlertDialogTrigger>
+          </div>
+          <AlertDialogContent data-testid="delete-account-dialog">
             <AlertDialogHeader className="items-center">
               <AlertDialogTitle>
                 <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">

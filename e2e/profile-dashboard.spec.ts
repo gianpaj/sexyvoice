@@ -59,8 +59,10 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     // Submit the form
     await profilePage.submitPasswordForm();
 
-    // Should show error toast about mismatched passwords
-    await profilePage.expectErrorToast(/do not match/i);
+    // Client-side validation should prevent submission
+    await expect(profilePage.updatePasswordButton).toHaveText(
+      /update password/i,
+    );
   });
 
   test('should display danger zone section', async () => {

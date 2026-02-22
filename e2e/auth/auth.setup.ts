@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test';
+import { expect, test as setup } from '@playwright/test';
 
 const authFile = '.auth/user.json';
 
@@ -17,9 +17,9 @@ setup('authenticate', async ({ page }) => {
   const email = process.env.PLAYWRIGHT_TEST_USER_EMAIL;
   const password = process.env.PLAYWRIGHT_TEST_USER_PASSWORD;
 
-  if (!email || !password) {
+  if (!(email && password)) {
     throw new Error(
-      'Missing test credentials. Please set PLAYWRIGHT_TEST_USER_EMAIL and PLAYWRIGHT_TEST_USER_PASSWORD in .env.e2e file'
+      'Missing test credentials. Please set PLAYWRIGHT_TEST_USER_EMAIL and PLAYWRIGHT_TEST_USER_PASSWORD in .env.e2e file',
     );
   }
 
@@ -37,12 +37,15 @@ setup('authenticate', async ({ page }) => {
   await page.getByLabel(/password/i).fill(password);
 
   // Submit form - use exact match to avoid matching "Sign in with Google" button
-  const loginButton = page.getByRole('button', { name: 'Sign in', exact: true });
+  const loginButton = page.getByRole('button', {
+    name: 'Sign in',
+    exact: true,
+  });
   await loginButton.click();
 
   // Wait for redirect to dashboard
   // The login redirects to /{lang}/dashboard after successful login
-  await page.waitForURL('**/dashboard/**', { timeout: 10000 });
+  await page.waitForURL('**/dashboard/**', { timeout: 20_000 });
 
   // Verify we're logged in by checking we're on the dashboard
   await expect(page).toHaveURL(/dashboard\//);

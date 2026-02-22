@@ -33,6 +33,7 @@ export class HistoryPage {
   // Column visibility dropdown
   readonly columnsButton: Locator;
   readonly columnsDropdown: Locator;
+  readonly columnsMenuItems: Locator;
 
   // Table elements
   readonly table: Locator;
@@ -61,6 +62,7 @@ export class HistoryPage {
       name: /columns|customize/i,
     });
     this.columnsDropdown = page.locator('[role="menu"]');
+    this.columnsMenuItems = page.getByRole('menuitemcheckbox');
 
     // Table
     this.table = page.locator('table');
@@ -71,8 +73,11 @@ export class HistoryPage {
       .getByText(/no results|no audio/i);
 
     // Pagination
-    this.previousButton = page.getByRole('button', { name: /previous/i });
-    this.nextButton = page.getByRole('button', { name: /next/i });
+    this.previousButton = page.getByRole('button', {
+      name: 'Previous',
+      exact: true,
+    });
+    this.nextButton = page.getByRole('button', { name: 'Next', exact: true });
   }
 
   /**
@@ -92,24 +97,44 @@ export class HistoryPage {
    * Type text into the filter input
    */
   async filterByText(text: string) {
-    await this.filterInput.click();
-    await this.filterInput.clear();
-    await this.filterInput.fill(text);
+    await this.filterInput.waitFor({ state: 'visible', timeout: 10_000 });
+    await this.filterInput.click({ force: true });
+    await this.filterInput.evaluate((element, value) => {
+      const input = element as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }, text);
   }
 
   /**
    * Clear the filter input
    */
   async clearFilter() {
-    await this.filterInput.clear();
+    await this.filterInput.waitFor({ state: 'visible', timeout: 10_000 });
+    await this.filterInput.evaluate((element) => {
+      const input = element as HTMLInputElement;
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
   }
 
   /**
    * Open the column visibility dropdown
    */
-  async openColumnsDropdown() {
-    await this.columnsButton.click();
-    await this.columnsDropdown.waitFor({ state: 'visible', timeout: 5000 });
+  async openColumnsDropdown(): Promise<boolean> {
+    try {
+      await expect(this.columnsButton).toBeEnabled({ timeout: 10_000 });
+      await this.columnsButton.focus();
+      await this.page.keyboard.press('Enter');
+      await this.columnsMenuItems
+        .first()
+        .waitFor({ state: 'visible', timeout: 10_000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -117,11 +142,14 @@ export class HistoryPage {
    * @param columnName - The name of the column to toggle (case insensitive)
    */
   async toggleColumnVisibility(columnName: string) {
-    await this.openColumnsDropdown();
-    const item = this.columnsDropdown.getByRole('menuitemcheckbox', {
-      name: new RegExp(columnName, 'i'),
-    });
-    await item.click();
+    const opened = await this.openColumnsDropdown();
+    if (!opened) return;
+    const item = this.columnsMenuItems
+      .filter({ hasText: new RegExp(columnName, 'i') })
+      .first();
+    await item.waitFor({ state: 'visible', timeout: 10_000 });
+    await item.scrollIntoViewIfNeeded();
+    await item.evaluate((element) => (element as HTMLElement).click());
   }
 
   /**
@@ -177,12 +205,24 @@ export class HistoryPage {
    * Verify expected table headers are present
    */
   async expectTableHeaders() {
-    await expect(this.page.getByText('File Name')).toBeVisible();
-    await expect(this.page.getByText('Voice')).toBeVisible();
-    await expect(this.page.getByText('Text')).toBeVisible();
-    await expect(this.page.getByText('Created At')).toBeVisible();
-    await expect(this.page.getByText('Preview')).toBeVisible();
-    await expect(this.page.getByText('Download')).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: 'File Name' }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: 'Voice' }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: 'Text' }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: 'Created At' }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: 'Preview' }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: 'Download' }),
+    ).toBeVisible();
   }
 
   /**

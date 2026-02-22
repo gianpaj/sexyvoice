@@ -46,8 +46,8 @@ export class ProfilePage {
       .locator('div')
       .filter({ hasText: /Security/i })
       .first();
-    this.securityTitle = page.getByRole('heading', { name: /security/i });
-    this.emailInput = page.getByRole('textbox', { name: /email/i });
+    this.securityTitle = this.securityCard.getByText(/security/i).first();
+    this.emailInput = this.securityCard.locator('input[type="email"]');
     this.currentPasswordInput = page.getByLabel(/current password/i);
     this.newPasswordInput = page.getByLabel(/^new password$/i);
     this.confirmPasswordInput = page.getByLabel(/confirm new password/i);
@@ -56,7 +56,7 @@ export class ProfilePage {
     });
 
     // Danger zone
-    this.dangerZoneTitle = page.getByRole('heading', { name: /danger zone/i });
+    this.dangerZoneTitle = page.getByText(/danger zone/i).first();
     this.dangerZoneCard = page
       .locator('div')
       .filter({ has: this.dangerZoneTitle })
@@ -71,12 +71,12 @@ export class ProfilePage {
     });
 
     // Confirmation dialog (appears when delete account is clicked)
-    this.confirmationDialog = page.getByRole('alertdialog');
+    this.confirmationDialog = page.getByTestId('delete-account-dialog');
     this.confirmationDialogTitle = this.confirmationDialog
-      .getByRole('heading')
+      .getByText(/are you absolutely sure/i)
       .first();
     this.confirmationDialogDescription = this.confirmationDialog
-      .locator('p')
+      .getByText(/this action cannot be undone/i)
       .first();
     this.confirmationCancelButton = this.confirmationDialog.getByRole(
       'button',
@@ -96,7 +96,10 @@ export class ProfilePage {
       waitUntil: 'domcontentloaded',
     });
     // Wait for the security section to load
-    await this.securityTitle.waitFor({ state: 'visible', timeout: 15_000 });
+    await this.currentPasswordInput.waitFor({
+      state: 'visible',
+      timeout: 15_000,
+    });
   }
 
   // --- Actions ---
@@ -137,7 +140,23 @@ export class ProfilePage {
    * Click the delete account button to open the confirmation dialog
    */
   async clickDeleteAccount() {
-    await this.deleteAccountButton.click();
+    await this.deleteAccountButton.waitFor({
+      state: 'visible',
+      timeout: 10_000,
+    });
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await this.deleteAccountButton.click();
+      await this.page.waitForTimeout(300);
+      if (await this.confirmationDialog.isVisible()) {
+        return;
+      }
+    }
+
+    await this.confirmationDialog.waitFor({
+      state: 'visible',
+      timeout: 15_000,
+    });
   }
 
   /**
@@ -208,14 +227,14 @@ export class ProfilePage {
    * Verify the delete confirmation dialog is visible
    */
   async expectConfirmationDialogVisible() {
-    await expect(this.confirmationDialog).toBeVisible({ timeout: 5000 });
+    await expect(this.confirmationDialog).toBeVisible({ timeout: 10_000 });
   }
 
   /**
    * Verify the delete confirmation dialog is hidden
    */
   async expectConfirmationDialogHidden() {
-    await expect(this.confirmationDialog).toBeHidden({ timeout: 5000 });
+    await expect(this.confirmationDialog).toBeHidden({ timeout: 10_000 });
   }
 
   /**

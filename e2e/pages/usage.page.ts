@@ -96,8 +96,11 @@ export class UsagePage {
     this.pageSizeSelector = page.locator('[role="listbox"]');
 
     // Pagination
-    this.previousButton = page.getByRole('button', { name: /previous/i });
-    this.nextButton = page.getByRole('button', { name: /next/i });
+    this.previousButton = page.getByRole('button', {
+      name: 'Previous',
+      exact: true,
+    });
+    this.nextButton = page.getByRole('button', { name: 'Next', exact: true });
     this.pageInfo = page.getByText(/page\s+\d+/i);
 
     // Error state
@@ -208,13 +211,22 @@ export class UsagePage {
    */
   async expectTableHeaders() {
     // The usage table should have these columns (from columns.tsx)
-    // Source Type, Quantity, Credits Used, Date, Details
-    const headerRow = this.page.locator('table thead');
-    await expect(headerRow).toContainText(/source type/i);
-    await expect(headerRow).toContainText(/quantity/i);
-    await expect(headerRow).toContainText(/credits/i);
-    await expect(headerRow).toContainText(/date/i);
-    await expect(headerRow).toContainText(/details/i);
+    // Type, Quantity, Credits, Date, Details
+    await expect(
+      this.page.getByRole('columnheader', { name: /type/i }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: /quantity/i }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: /credits/i }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: /date/i }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole('columnheader', { name: /details/i }),
+    ).toBeVisible();
   }
 
   /**
