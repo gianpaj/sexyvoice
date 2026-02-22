@@ -128,7 +128,7 @@
           "questions": [
             {
               "question": "How does voice cloning work?",
-              "answer": "Our AI analyzes your voice sample (10 seconds to 5 mins) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
+              "answer": "Our AI analyzes your voice sample (min 10 seconds) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
             },
             {
               "question": "Can I clone my own voice?",
