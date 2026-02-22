@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ crediti",
       "free": {
         "name": "Gratuito",
-        "description": "Per chi vuole provare l'audio AI più avanzato.",
+        "description": "Per chi vuole provare la generazione audio AI più avanzata.",
         "creditsWithAudio": "__NUM_CREDITS__ crediti (~4 min di audio)",
         "features": [
-          "Genera parlato con voci uniche",
+          "Genera parlato con suoni di gemiti realistici",
           "Clona la tua voce con soli 10 secondi di audio"
         ]
       },
@@ -223,17 +223,17 @@
         "creditsWithPromo": "__NUM_CREDITS__ crediti",
         "features": [
           "Tutto in Gratuito",
-          "Accesso API (prossimamente)"
+          "Chiamata vocale: Personaggi personalizzati"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "Per creatori più grandi che aumentano la produzione di contenuti.",
+        "description": "Per esigenze creative più grandi e contenuti più audaci.",
         "creditsWithAudio": "__NUM_CREDITS__ crediti (~125 minuti di audio)",
         "creditsWithPromo": "__NUM_CREDITS__ crediti",
         "features": [
-          "Tutto in Standard",
-          "Anteprima rapida di stile e voce della tua breve frase (prossimamente)"
+          "Tutto in Gratuito",
+          "Chiamata vocale: Personaggi personalizzati"
         ]
       }
     },
@@ -711,9 +711,38 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Nessun upload, 100% nel browser",
-      "madeWith": "Fatto con ♡ da SexyVoice.ai",
+      "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio AI gratuito da provare",
       "alsoTry": "Prova anche il nostro",
       "audioConverterLink": "Convertitore Audio Gratuito"
+    },
+    "faq": {
+      "title": "Domande frequenti",
+      "items": [
+        {
+          "question": "Questo strumento di trascrizione audio è davvero gratuito?",
+          "answer": "Sì. Nessun account, nessuna carta di credito, nessun limite di utilizzo — mai. Lo abbiamo sviluppato come strumento pubblico gratuito."
+        },
+        {
+          "question": "Il mio audio viene caricato su un server?",
+          "answer": "No. La trascrizione viene eseguita interamente nel tuo browser tramite WebAssembly. Il tuo audio non lascia mai il tuo dispositivo."
+        },
+        {
+          "question": "Quali lingue sono supportate?",
+          "answer": "I modelli Whisper multilingue supportano oltre 99 lingue, tra cui spagnolo, francese, tedesco, giapponese, arabo, hindi, portoghese, russo, cinese, coreano e molte altre."
+        },
+        {
+          "question": "Quali formati audio sono supportati?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC e WebM — qualsiasi cosa il tuo browser possa decodificare. Anche i file video funzionano."
+        },
+        {
+          "question": "Quanto è accurata la trascrizione?",
+          "answer": "Lo strumento utilizza OpenAI Whisper, uno dei modelli di riconoscimento vocale open source più accurati. Scegli Whisper Small (~250 MB) per la massima precisione, o Whisper Tiny (~40 MB) per la velocità."
+        },
+        {
+          "question": "Funziona senza connessione Internet?",
+          "answer": "Dopo che il modello è stato scaricato una volta, sì. Il modello viene memorizzato nella cache del browser, quindi le trascrizioni future funzionano completamente offline."
+        }
+      ]
     }
   }
 }

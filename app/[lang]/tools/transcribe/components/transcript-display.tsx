@@ -95,34 +95,36 @@ export function TranscriptDisplay({
         </Button>
       </div>
 
-      <div className="max-h-96 overflow-y-auto rounded-xl border border-border bg-muted/20 p-2 md:p-4">
+      <div className="max-h-96 overflow-y-auto rounded-xl border border-border bg-muted/20 p-3 md:p-5">
         {transcript?.chunks?.length ? (
-          <div className="space-y-1">
+          <div className="space-y-[2px]">
             {transcript.chunks.map((chunk, index) => {
               const isActive = index === activeChunkIndex;
               return (
                 <div
                   className={cn(
-                    'flex items-center gap-3 rounded-md px-2 py-1 transition-colors duration-200',
-                    isActive && 'bg-primary/30',
+                    'flex items-start gap-3 rounded-lg px-3 py-2 transition-colors duration-200',
+                    isActive ? 'bg-primary/20' : 'hover:bg-muted/40',
                   )}
                   key={chunk.timestamp[0]}
                   ref={isActive ? activeChunkRef : null}
                 >
                   <span
                     className={cn(
-                      'shrink-0 font-mono text-xs',
-                      isActive ? 'text-primary' : 'text-muted-foreground',
+                      'mt-0.5 shrink-0 font-mono text-xs tabular-nums',
+                      isActive
+                        ? 'text-primary'
+                        : 'text-muted-foreground/60',
                     )}
                   >
                     {formatTimestamp(chunk.timestamp[0])}
                   </span>
                   <p
                     className={cn(
-                      'text-sm transition-colors duration-200',
+                      'text-sm leading-relaxed transition-colors duration-200',
                       isActive
                         ? 'font-medium text-foreground'
-                        : 'text-foreground',
+                        : 'text-foreground/80',
                     )}
                   >
                     {chunk.text.trim()}
@@ -132,7 +134,7 @@ export function TranscriptDisplay({
             })}
           </div>
         ) : (
-          <p className="whitespace-pre-wrap text-foreground text-sm">
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {displayText}
           </p>
         )}

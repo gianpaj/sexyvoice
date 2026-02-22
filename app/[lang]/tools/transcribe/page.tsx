@@ -49,11 +49,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: 'SexyVoice.ai',
       type: 'website',
       locale: lang,
+      images: [
+        {
+          url: 'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${title} | SexyVoice.ai`,
       description,
+      images: ['https://sexyvoice.ai/posts/free-audio-transcription-tool.webp'],
     },
     alternates: {
       canonical: url,
@@ -87,9 +96,14 @@ export default async function TranscribePage({ params }: Props) {
         description,
         url,
         applicationCategory: 'MultimediaApplication',
+        applicationSubCategory: 'Audio Transcription',
         operatingSystem: 'Any',
         browserRequirements:
           'Requires a modern browser with WebAssembly support',
+        featureList:
+          'Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English',
+        screenshot:
+          'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
         offers: {
           '@type': 'Offer',
           price: '0',
@@ -100,6 +114,71 @@ export default async function TranscribePage({ params }: Props) {
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+      },
+      {
+        '@type': 'HowTo',
+        '@id': `${url}/#howto`,
+        name: title,
+        description,
+        inLanguage: lang,
+        totalTime: 'PT2M',
+        step: [
+          {
+            '@type': 'HowToStep',
+            position: 1,
+            name: 'Open the transcription tool',
+            text: 'Navigate to the free audio transcription tool on SexyVoice.ai.',
+            url,
+          },
+          {
+            '@type': 'HowToStep',
+            position: 2,
+            name: 'Add your audio',
+            text: 'Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.',
+            url,
+          },
+          {
+            '@type': 'HowToStep',
+            position: 3,
+            name: 'Choose a Whisper model',
+            text: 'Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.',
+            url,
+          },
+          {
+            '@type': 'HowToStep',
+            position: 4,
+            name: 'Select language and task',
+            text: 'Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.',
+            url,
+          },
+          {
+            '@type': 'HowToStep',
+            position: 5,
+            name: 'Transcribe',
+            text: 'Click "Load Model & Transcribe". The model downloads once and is cached for future use.',
+            url,
+          },
+          {
+            '@type': 'HowToStep',
+            position: 6,
+            name: 'Copy your transcript',
+            text: 'Your timestamped transcript appears instantly. Copy it with one click.',
+            url,
+          },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${url}/#faq`,
+        inLanguage: lang,
+        mainEntity: dict.faq.items.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
       },
       {
         '@type': 'BreadcrumbList',
@@ -128,6 +207,33 @@ export default async function TranscribePage({ params }: Props) {
         <HeaderStatic dict={dictHeader} lang={lang} />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
           <TranscribeClient dict={dict} lang={lang} />
+
+          {/* Server-rendered FAQ — crawlable without JavaScript */}
+          <section
+            aria-labelledby="faq-heading"
+            className="mt-16 border-t border-border/50 pt-12"
+            id="faq"
+          >
+            <h2
+              className="mb-8 font-semibold text-foreground text-xl"
+              id="faq-heading"
+            >
+              {dict.faq.title}
+            </h2>
+            <dl className="space-y-6">
+              {dict.faq.items.map((item) => (
+                <div key={item.question}>
+                  <dt className="mb-1.5 font-medium text-foreground text-sm">
+                    {item.question}
+                  </dt>
+                  <dd className="text-muted-foreground text-sm leading-relaxed">
+                    {item.answer}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
           <footer className="mt-12 text-center text-muted-foreground text-sm">
             <p>
               {dict.footer.poweredBy}{' '}
