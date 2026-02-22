@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ kreditter",
       "free": {
         "name": "Gratis",
-        "description": "For personer, der vil prøve den mest avancerede AI-lyd.",
+        "description": "For personer, der vil prøve den mest avancerede AI-lydgenerering.",
         "creditsWithAudio": "__NUM_CREDITS__ kreditter (~4 min lyd)",
         "features": [
-          "Generer tale med unikke stemmer",
+          "Generer tale med realistiske stønlyde",
           "Klon din stemme med kun 10 sekunders lyd"
         ]
       },
@@ -223,17 +223,17 @@
         "creditsWithPromo": "__NUM_CREDITS__ kreditter",
         "features": [
           "Alt i Gratis",
-          "API-adgang (kommer snart)"
+          "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "For større skabere, der øger deres indholdsproduktion.",
+        "description": "For større kreative behov og dristigere indhold.",
         "creditsWithAudio": "__NUM_CREDITS__ kreditter (~125 minutters lyd)",
         "creditsWithPromo": "__NUM_CREDITS__ kreditter",
         "features": [
-          "Alt i Standard",
-          "Hurtig stil- og stemmeforhåndsvisning af din korte sætning (kommer snart)"
+          "Alt i Gratis",
+          "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       }
     },
@@ -711,9 +711,38 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Ingen uploads, 100% i browseren",
-      "madeWith": "Lavet med ♡ fra SexyVoice.ai",
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve",
       "alsoTry": "Prøv også vores",
       "audioConverterLink": "Gratis lydkonverter"
+    },
+    "faq": {
+      "title": "Ofte stillede spørgsmål",
+      "items": [
+        {
+          "question": "Er dette lydtransskriptionsværktøj virkelig gratis?",
+          "answer": "Ja. Ingen konto, intet kreditkort, ingen brugsbegrænsninger — nogensinde. Vi bygede det som et gratis offentligt værktøj."
+        },
+        {
+          "question": "Uploades min lyd til en server?",
+          "answer": "Nej. Transskriptionen kører helt i din browser via WebAssembly. Din lyd forlader aldrig din enhed."
+        },
+        {
+          "question": "Hvilke sprog understøttes?",
+          "answer": "De flersprogede Whisper-modeller understøtter over 99 sprog, herunder spansk, fransk, tysk, japansk, arabisk, hindi, portugisisk, italiensk, russisk, kinesisk, koreansk og mange flere."
+        },
+        {
+          "question": "Hvilke lydformater understøttes?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC og WebM — alt hvad din browser kan afkode. Videofiler virker også."
+        },
+        {
+          "question": "Hvor nøjagtig er transskriptionen?",
+          "answer": "Værktøjet bruger OpenAI Whisper, en af de mest nøjagtige open source-talegenkendelsesmodeller. Vælg Whisper Small (~250 MB) for den bedste nøjagtighed, eller Whisper Tiny (~40 MB) for hastighed."
+        },
+        {
+          "question": "Virker det uden internetforbindelse?",
+          "answer": "Når modellen er downloadet én gang, ja. Modellen caches i din browser, så fremtidige transskriptioner fungerer helt offline."
+        }
+      ]
     }
   }
 }

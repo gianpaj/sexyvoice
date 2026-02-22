@@ -300,9 +300,8 @@ export function AudioInput({
       <div className="flex justify-center">
         <Button
           className={cn(
-            'gap-2',
-            isRecording &&
-              'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+            'gap-2 transition-shadow',
+            isRecording && 'recording-pulse',
           )}
           disabled={disabled}
           onClick={isRecording ? stopRecording : startRecording}
