@@ -45,6 +45,13 @@ tsconfig.tsbuildinfo
 
 backups
 
+# Playwright
+.auth/
+playwright-report/
+test-results/
+playwright/.cache/
+.env.e2e
+
 .edgeconfig.json
 
 .daily-stats-cache.json

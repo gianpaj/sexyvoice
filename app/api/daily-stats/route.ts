@@ -377,6 +377,12 @@ export async function GET(request: NextRequest) {
     0,
   );
 
+  // Call costs at $0.05 per minute
+  const CALL_COST_PER_MINUTE = 0.05;
+  const callCostYesterday =
+    (callsDurationYesterday / 60) * CALL_COST_PER_MINUTE;
+  const callCostWeek = (callsDurationWeek / 60) * CALL_COST_PER_MINUTE;
+
   // Format duration in minutes
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -908,6 +914,7 @@ export async function GET(request: NextRequest) {
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
     `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
     `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(Math.round(callsDurationYesterday / callsYesterdayCount) || 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / callsWeekCount) || 0)})`,
+    `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | 7d: $${callCostWeek.toFixed(2)} (avg $${(callCostWeek / 7).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,

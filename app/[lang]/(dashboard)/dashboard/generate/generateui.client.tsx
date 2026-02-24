@@ -23,7 +23,11 @@ export function GenerateUI({
   dict,
   locale,
 }: GenerateUIProps) {
-  const [selectedVoice, setSelectedVoice] = useState('zephyr');
+  const [selectedVoice, setSelectedVoice] = useState(
+    publicVoices.find((voice) => voice.name === 'zephyr')?.name ??
+      publicVoices[0]?.name ??
+      '',
+  );
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
   const selectedVoiceSample = publicVoices.find(
     (file) => file.name === selectedVoice,

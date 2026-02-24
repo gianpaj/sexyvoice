@@ -185,6 +185,7 @@ export function VoiceSelector({
           <div className="relative">
             <Textarea
               className="textarea-1 pr-16 transition-[height] duration-200 ease-in-out"
+              data-testid="generate-style-textarea"
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
               ref={textareaRef}
