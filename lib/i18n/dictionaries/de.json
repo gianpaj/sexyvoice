@@ -334,6 +334,7 @@
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
+    "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",
     "presetRemoved": "Preset entfernt",

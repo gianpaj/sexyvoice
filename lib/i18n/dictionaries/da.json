@@ -334,6 +334,7 @@
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
     "activeCallError": "Du har allerede et aktivt opkald i gang",
+    "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",
