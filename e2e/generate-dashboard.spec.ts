@@ -250,10 +250,14 @@ test.describe('Generate Dashboard - Error Scenarios', () => {
   });
 
   test('should handle network timeout gracefully', async ({ page }) => {
-    // Mock a timeout by delaying indefinitely
+    // Mock a timeout by aborting after a short delay.
+    // Never calling route.fulfill/abort/continue would leave the request
+    // pending forever and the 60 s timer would stall the suite after the
+    // test completes (even though the page closes, the Promise keeps the
+    // event loop busy). Aborting explicitly is clean and fast.
     await page.route('**/api/generate-voice', async (route) => {
-      // Don't fulfill - let it timeout
-      await new Promise((resolve) => setTimeout(resolve, 60_000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await route.abort('timedout');
     });
     await page.route('**/api/estimate-credits', async (route) => {
       await route.fulfill({

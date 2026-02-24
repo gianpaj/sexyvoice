@@ -23,13 +23,15 @@ setup('authenticate', async ({ page }) => {
     );
   }
 
-  console.log(`Authenticating as ${email}...`);
+  console.log('Authenticating test user...');
 
   // Navigate to login page
   await page.goto('/en/login');
 
-  // Wait for page to load
-  await page.waitForLoadState('networkidle');
+  // Wait for the email input to be visible — more reliable than 'networkidle'
+  // which can hang indefinitely with Supabase realtime, PostHog, or other
+  // long-lived background connections.
+  await page.getByLabel(/email/i).waitFor({ state: 'visible' });
 
   // Fill in credentials
   // Using getByLabel for better accessibility testing

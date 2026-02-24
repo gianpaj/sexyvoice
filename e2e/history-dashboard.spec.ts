@@ -109,7 +109,10 @@ test.describe('History Dashboard - Authenticated User', () => {
       const firstRowText = await firstRow.textContent();
 
       // Skip if this is the empty state row
-      if (firstRowText && !/no results|no audio/i.test(firstRowText)) {
+      if (
+        firstRowText &&
+        !/no results|no audio|no history/i.test(firstRowText)
+      ) {
         await expect(
           firstRow.getByRole('button', { name: /download/i }),
         ).toBeVisible();
@@ -124,7 +127,10 @@ test.describe('History Dashboard - Authenticated User', () => {
       const firstRowText = await firstRow.textContent();
 
       // Skip if this is the empty state row
-      if (firstRowText && !/no results|no audio/i.test(firstRowText)) {
+      if (
+        firstRowText &&
+        !/no results|no audio|no history/i.test(firstRowText)
+      ) {
         await expect(
           firstRow.getByRole('button', { name: /open menu/i }),
         ).toBeVisible();

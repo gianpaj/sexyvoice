@@ -109,7 +109,7 @@ export const mockUsageEventsResponse = {
   data: mockUsageEvents,
   totalCount: mockUsageEvents.length,
   totalPages: 1,
-  currentPage: 1,
+  page: 1,
   pageSize: 20,
   monthlySummary: mockMonthlySummary,
   allTimeSummary: mockAllTimeSummary,
@@ -156,7 +156,7 @@ export async function handleUsageEvents(route: Route) {
     data: paginatedEvents,
     totalCount: filteredEvents.length,
     totalPages: Math.max(1, Math.ceil(filteredEvents.length / pageSize)),
-    currentPage: page,
+    page,
     pageSize,
   };
 
@@ -178,36 +178,36 @@ export async function handleUsageEvents(route: Route) {
 export async function handleUsageEventsEmpty(route: Route) {
   console.log('[MOCK] usage-events EMPTY handler called');
 
+  const url = new URL(route.request().url());
+  const includeSummary = url.searchParams.get('includeSummary') === 'true';
+
+  const responseBody: Record<string, unknown> = {
+    data: [],
+    totalCount: 0,
+    totalPages: 0,
+    page: 1,
+    pageSize: 20,
+  };
+
+  if (includeSummary) {
+    const emptySummary = {
+      totalCredits: 0,
+      totalOperations: 0,
+      bySourceType: {
+        tts: { credits: 0, count: 0 },
+        voice_cloning: { credits: 0, count: 0 },
+        live_call: { credits: 0, count: 0 },
+        audio_processing: { credits: 0, count: 0 },
+      },
+    };
+    responseBody.monthlySummary = emptySummary;
+    responseBody.allTimeSummary = emptySummary;
+  }
+
   await route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify({
-      data: [],
-      totalCount: 0,
-      totalPages: 0,
-      currentPage: 1,
-      pageSize: 20,
-      monthlySummary: {
-        totalCredits: 0,
-        totalOperations: 0,
-        bySourceType: {
-          tts: { credits: 0, count: 0 },
-          voice_cloning: { credits: 0, count: 0 },
-          live_call: { credits: 0, count: 0 },
-          audio_processing: { credits: 0, count: 0 },
-        },
-      },
-      allTimeSummary: {
-        totalCredits: 0,
-        totalOperations: 0,
-        bySourceType: {
-          tts: { credits: 0, count: 0 },
-          voice_cloning: { credits: 0, count: 0 },
-          live_call: { credits: 0, count: 0 },
-          audio_processing: { credits: 0, count: 0 },
-        },
-      },
-    }),
+    body: JSON.stringify(responseBody),
   });
 }
 

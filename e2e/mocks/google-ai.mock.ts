@@ -1,4 +1,4 @@
-import type { Route } from '@playwright/test';
+import type { Page, Route } from '@playwright/test';
 
 /**
  * Google AI Mock Handlers
@@ -41,7 +41,8 @@ export const mockEstimateCreditsResponse = {
  * Mock enhanced text response (with emotion tags)
  * This simulates the AI text enhancement feature
  */
-export const mockEnhancedText = '<happy>Enhanced text with emotion tags</happy>';
+export const mockEnhancedText =
+  '<happy>Enhanced text with emotion tags</happy>';
 
 /**
  * Handler for POST /api/generate-voice
@@ -120,9 +121,13 @@ export async function handleGenerateText(route: Route) {
 export async function handleGenerateVoiceError(
   route: Route,
   errorMessage = 'Voice generation failed, please retry',
-  statusCode = 500
+  statusCode = 500,
 ) {
-  console.log('[MOCK] generate-voice ERROR handler called - returning', statusCode, errorMessage);
+  console.log(
+    '[MOCK] generate-voice ERROR handler called - returning',
+    statusCode,
+    errorMessage,
+  );
   await route.fulfill({
     status: statusCode,
     contentType: 'application/json',
@@ -180,7 +185,7 @@ export async function handleProhibitedContentError(route: Route) {
  * Usage in tests:
  * await setupDefaultMocks(page);
  */
-export async function setupDefaultMocks(page: any) {
+export async function setupDefaultMocks(page: Page) {
   await page.route('**/api/generate-voice', handleGenerateVoice);
   await page.route('**/api/estimate-credits', handleEstimateCredits);
   await page.route('**/api/generate-text', handleGenerateText);

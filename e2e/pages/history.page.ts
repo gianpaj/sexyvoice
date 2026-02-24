@@ -70,7 +70,7 @@ export class HistoryPage {
     this.tableRows = page.locator('table tbody tr');
     this.emptyState = page
       .locator('table tbody')
-      .getByText(/no results|no audio/i);
+      .getByText(/no results|no audio|no history/i);
 
     // Pagination
     this.previousButton = page.getByRole('button', {
@@ -283,7 +283,10 @@ export class HistoryPage {
     if (rowCount === 1) {
       // Could be a single data row or the "no results" empty state row
       const firstRowText = await this.tableRows.first().textContent();
-      if (firstRowText && /no results|no audio/i.test(firstRowText)) {
+      if (
+        firstRowText &&
+        /no results|no audio|no history/i.test(firstRowText)
+      ) {
         // Empty state
         await expect(this.emptyState).toBeVisible();
         return;
