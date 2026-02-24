@@ -24,7 +24,6 @@ jobs:
   e2e:
     # Skip if PR is a draft
     if: github.event.pull_request.draft == false || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    environment: Production # GH Actions Env
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
