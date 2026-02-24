@@ -90,12 +90,16 @@ export default function CloneSampleCard({
   return (
     <AccordionItem
       className="border-input border-b"
+      data-testid={`clone-sample-item-${sample.id}`}
       value={sample.id.toString()}
     >
-      <AccordionTrigger className="py-5 text-left text-white hover:no-underline md:hover:text-blue-400">
+      <AccordionTrigger
+        className="py-5 text-left text-white hover:no-underline md:hover:text-blue-400"
+        data-testid={`clone-sample-trigger-${sample.id}`}
+      >
         {sample.name}
       </AccordionTrigger>
-      <AccordionContent>
+      <AccordionContent data-testid={`clone-sample-content-${sample.id}`}>
         <div className="center my-2 flex items-baseline justify-center gap-32">
           <div className="flex flex-col text-center">
             <p>{dict.sampleCard.sourceAudio}:</p>

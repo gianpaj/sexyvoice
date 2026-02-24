@@ -67,7 +67,7 @@ test.describe('Credits Dashboard - Authenticated User', () => {
 test.describe('Credits Dashboard - TopupStatus Alerts', () => {
   let creditsPage: CreditsPage;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(({ page }) => {
     creditsPage = new CreditsPage(page);
   });
 

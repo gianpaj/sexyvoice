@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ crediti",
       "free": {
         "name": "Gratuito",
-        "description": "Per chi vuole provare l'audio AI più avanzato.",
+        "description": "Per chi vuole provare la generazione audio AI più avanzata.",
         "creditsWithAudio": "__NUM_CREDITS__ crediti (~4 min di audio)",
         "features": [
-          "Genera parlato con voci uniche",
+          "Genera parlato con suoni di gemiti realistici",
           "Clona la tua voce con soli 10 secondi di audio"
         ]
       },
@@ -223,17 +223,17 @@
         "creditsWithPromo": "__NUM_CREDITS__ crediti",
         "features": [
           "Tutto in Gratuito",
-          "Accesso API (prossimamente)"
+          "Chiamata vocale: Personaggi personalizzati"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "Per creatori più grandi che aumentano la produzione di contenuti.",
+        "description": "Per esigenze creative più grandi e contenuti più audaci.",
         "creditsWithAudio": "__NUM_CREDITS__ crediti (~125 minuti di audio)",
         "creditsWithPromo": "__NUM_CREDITS__ crediti",
         "features": [
-          "Tutto in Standard",
-          "Anteprima rapida di stile e voce della tua breve frase (prossimamente)"
+          "Tutto in Gratuito",
+          "Chiamata vocale: Personaggi personalizzati"
         ]
       }
     },
@@ -465,12 +465,27 @@
       "title": "Impostazioni sicurezza",
       "description": "Gestisci la tua email e password"
     },
+    "securityForm": {
+      "description": "Inserisci la password attuale e una nuova password per aggiornare le tue credenziali",
+      "emailLabel": "Indirizzo email",
+      "currentPassword": "Password attuale",
+      "newPassword": "Nuova password",
+      "confirmPassword": "Conferma nuova password",
+      "updating": "Aggiornamento...",
+      "updatePassword": "Aggiorna password",
+      "success": "Password aggiornata con successo",
+      "errors": {
+        "passwordsDoNotMatch": "Le nuove password non corrispondono",
+        "updateFailed": "Impossibile aggiornare la password",
+        "currentPasswordIncorrect": "La password attuale non è corretta"
+      }
+    },
     "dangerZone": {
       "title": "Zona pericolosa",
       "deleteAccount": {
         "button": "Elimina account",
         "confirmTitle": "Sei assolutamente sicuro?",
-        "confirmDescription": "Questa azione non può essere annullata. Eliminerà permanentemente il tuo account e rimuoverà i tuoi dati dai nostri server.",
+        "confirmDescription": "Questa azione non può essere annullata. Eliminerà permanentemente il tuo account, inclusi:\n• Tutti i file audio generati\n• Voci clonate\n• Dati associati dai nostri server",
         "alertTitle": "Conferma di voler eliminare il tuo account",
         "cancel": "Annulla",
         "continue": "Continua"
@@ -482,6 +497,13 @@
     "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 5 min di chiamata gratuita. Nessuna carta di credito richiesta.",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
+    "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",
+    "titleTranscribe": "Trascrizione Audio Online Gratuita – Da Voce a Testo in 99+ Lingue",
+    "descriptionAudioConverter": "Convertitore audio online gratuito – Converti MP3, WAV, FLAC, OGG, AAC, M4A e altri formati direttamente nel tuo browser. Nessun upload richiesto, 100% privato e offline. Basato su FFmpeg.",
+    "descriptionTranscribe": "Trascrizione audio online gratuita – Trascrivi file audio e video in testo in oltre 99 lingue con OpenAI Whisper. 100% privato, funziona interamente nel tuo browser. Nessun upload richiesto.",
+    "keywordsAudioConverter": "convertitore audio gratuito, convertire mp3, convertire wav, convertire flac, convertire ogg, convertire aac, convertitore audio online, convertitore audio browser, convertitore audio offline, mp3 in wav, wav in mp3, convertitore formato audio, ffmpeg online, convertitore audio senza upload, convertitore audio privato",
+    "keywordsTranscribe": "trascrizione audio gratuita, trascrivere audio, riconoscimento vocale, audio in testo, trascrizione whisper, openai whisper, trascrizione offline, trascrizione nel browser, voce in testo, riconoscimento vocale gratuito, trascrizione audio online, trascrivere video, trascrizione 99 lingue, trascrizione privata",
+    "keywordsLanding": "chiamate vocali IA, compagno IA privato, parlare con IA, chat vocale IA, telefonata IA, voce IA, conversazione IA, chat vocale privata, generatore di voci IA, sintesi vocale, clonazione vocale, chiamate IA senza giudizio",
     "/": "",
     "/login": "Accedi",
     "/signup": "Registrati con email o Google",
@@ -491,12 +513,13 @@
     "/dashboard/history": "Cronologia",
     "/dashboard/credits": "Crediti",
     "/dashboard/usage": "Utilizzo",
-    "/tools/audio-converter": "Convertitore audio gratuito",
-    "/tools/transcribe": "Trascrizione audio gratuita"
+    "/tools/audio-converter": "Convertitore Audio",
+    "/tools/transcribe": "Trascrizione Audio"
   },
   "sidebar": {
     "profile": "Profilo",
-    "signOut": "Esci"
+    "signOut": "Esci",
+    "freeTools": "Strumenti Gratuiti"
   },
   "header": {
     "generate": "Genera",
@@ -636,7 +659,9 @@
       "poweredBy": "Realizzato da",
       "ffmpeg": "FFmpeg",
       "noUploads": "Nessun upload, 100% nel browser",
-      "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio AI gratuito da provare"
+      "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio AI gratuito da provare",
+      "alsoTry": "Prova anche il nostro",
+      "transcribeLink": "Trascrizione Audio Gratuita"
     }
   },
   "transcribe": {
@@ -686,7 +711,38 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Nessun upload, 100% nel browser",
-      "madeWith": "Fatto con ♡ da SexyVoice.ai"
+      "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio AI gratuito da provare",
+      "alsoTry": "Prova anche il nostro",
+      "audioConverterLink": "Convertitore Audio Gratuito"
+    },
+    "faq": {
+      "title": "Domande frequenti",
+      "items": [
+        {
+          "question": "Questo strumento di trascrizione audio è davvero gratuito?",
+          "answer": "Sì. Nessun account, nessuna carta di credito, nessun limite di utilizzo — mai. Lo abbiamo sviluppato come strumento pubblico gratuito."
+        },
+        {
+          "question": "Il mio audio viene caricato su un server?",
+          "answer": "No. La trascrizione viene eseguita interamente nel tuo browser tramite WebAssembly. Il tuo audio non lascia mai il tuo dispositivo."
+        },
+        {
+          "question": "Quali lingue sono supportate?",
+          "answer": "I modelli Whisper multilingue supportano oltre 99 lingue, tra cui spagnolo, francese, tedesco, giapponese, arabo, hindi, portoghese, russo, cinese, coreano e molte altre."
+        },
+        {
+          "question": "Quali formati audio sono supportati?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC e WebM — qualsiasi cosa il tuo browser possa decodificare. Anche i file video funzionano."
+        },
+        {
+          "question": "Quanto è accurata la trascrizione?",
+          "answer": "Lo strumento utilizza OpenAI Whisper, uno dei modelli di riconoscimento vocale open source più accurati. Scegli Whisper Small (~250 MB) per la massima precisione, o Whisper Tiny (~40 MB) per la velocità."
+        },
+        {
+          "question": "Funziona senza connessione Internet?",
+          "answer": "Dopo che il modello è stato scaricato una volta, sì. Il modello viene memorizzato nella cache del browser, quindi le trascrizioni future funzionano completamente offline."
+        }
+      ]
     }
   }
 }

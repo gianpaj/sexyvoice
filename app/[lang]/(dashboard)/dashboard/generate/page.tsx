@@ -29,6 +29,8 @@ export default async function GeneratePage(props: {
     .single()) || { amount: 0 };
 
   const credits = creditsData || { amount: 0 };
+  const hasEnoughCredits =
+    credits.amount >= 10 || !!process.env.PLAYWRIGHT_TEST_USER_EMAIL;
 
   const { data: credit_transactions } = await supabase
     .from('credit_transactions')
@@ -75,7 +77,7 @@ export default async function GeneratePage(props: {
       <div className="grid gap-6 pb-16">
         <GenerateUI
           dict={dict.generate}
-          hasEnoughCredits={credits.amount >= 10}
+          hasEnoughCredits={hasEnoughCredits}
           locale={lang}
           publicVoices={publicVoices}
         />

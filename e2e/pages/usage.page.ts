@@ -293,7 +293,9 @@ export class UsagePage {
    * Verify the error message is visible
    */
   async expectErrorVisible() {
-    await expect(this.errorMessage).toBeVisible({ timeout: 10_000 });
+    // retry: 0 on the useQuery means errors surface immediately — no need for
+    // the old 10 s timeout that was absorbing 3× React Query exponential backoff.
+    await expect(this.errorMessage).toBeVisible({ timeout: 3000 });
   }
 
   /**

@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ créditos",
       "free": {
         "name": "Gratis",
-        "description": "Para particulares que quieran probar el audio de IA más avanzado.",
+        "description": "Para particulares que quieran probar la generación de audio de IA más avanzada.",
         "creditsWithAudio": "__NUM_CREDITS__ créditos (~4 min de audio)",
         "features": [
-          "Genera voz con voces únicas",
+          "Genera voz con sonidos de gemidos realistas",
           "Clona tu voz con tan solo 10 segundos de audio"
         ]
       },
@@ -222,18 +222,18 @@
         "creditsWithAudio": "__NUM_CREDITS__ créditos (~11 min de audio)",
         "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
-          "Todo lo incluido en el plan Gratis, además",
-          "Acceso a la API (próximamente)"
+          "Todo lo incluido en el plan Gratis",
+          "Llamada de voz: Personajes personalizados"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "Para creadores más grandes que incrementan su producción de contenido.",
+        "description": "Para necesidades creativas más grandes y contenido más atrevido.",
         "creditsWithAudio": "__NUM_CREDITS__ créditos (~125 min de audio)",
         "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
-          "Todo lo incluido en el plan Standard, además",
-          "Más funciones próximamente"
+          "Todo lo incluido en el plan Gratis",
+          "Llamada de voz: Personajes personalizados"
         ]
       }
     },
@@ -465,12 +465,27 @@
       "title": "Configuración de Seguridad",
       "description": "Gestiona tu correo electrónico y contraseña"
     },
+    "securityForm": {
+      "description": "Ingresa tu contraseña actual y una nueva contraseña para actualizar tus credenciales",
+      "emailLabel": "Dirección de correo electrónico",
+      "currentPassword": "Contraseña actual",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar nueva contraseña",
+      "updating": "Actualizando...",
+      "updatePassword": "Actualizar contraseña",
+      "success": "Contraseña actualizada correctamente",
+      "errors": {
+        "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden",
+        "updateFailed": "Error al actualizar la contraseña",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta"
+      }
+    },
     "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
         "button": "Eliminar cuenta",
         "confirmTitle": "¿Estás absolutamente seguro?",
-        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta y removerá tus datos de nuestros servidores.",
+        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Datos asociados",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar"
@@ -491,12 +506,20 @@
     "/dashboard/history": "Historial",
     "/dashboard/credits": "Créditos",
     "/dashboard/usage": "Uso",
-    "/tools/audio-converter": "Conversor de Audio Gratuito",
-    "/tools/transcribe": "Transcripción de Audio Gratuita"
+    "/tools/audio-converter": "Conversor de Audio",
+    "/tools/transcribe": "Transcripción de Audio",
+    "titleAudioConverter": "Conversor de Audio Online Gratuito – MP3, WAV, FLAC y Más",
+    "titleTranscribe": "Transcripción de Audio Online Gratuita – Voz a Texto en 99+ Idiomas",
+    "descriptionAudioConverter": "Conversor de audio online gratuito – Convierte MP3, WAV, FLAC, OGG, AAC, MP4 y más formatos directamente en tu navegador. Sin subir archivos, 100% privado y offline. Desarrollado con FFmpeg.",
+    "descriptionTranscribe": "Transcripción de audio online gratuita – Transcribe archivos de audio y vídeo a texto en más de 99 idiomas con OpenAI Whisper. 100% privado, se ejecuta en tu navegador. Sin subir archivos.",
+    "keywordsAudioConverter": "conversor de audio gratis, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, conversor de audio online, conversor de audio en navegador, conversor de audio offline, mp3 a wav, wav a mp3, convertidor de formato de audio, ffmpeg online, conversor de audio sin subir archivos, conversor de audio privado",
+    "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción 99 idiomas, transcripción privada",
+    "keywordsLanding": "llamadas de voz IA, compañero IA privado, hablar con IA, chat de voz IA, llamada telefónica IA, voz IA, conversación IA, chat de voz privado, generador de voz IA, texto a voz, clonación de voz, llamadas IA sin juzgar"
   },
   "sidebar": {
     "profile": "Perfil",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "freeTools": "Herramientas Gratuitas"
   },
   "header": {
     "generate": "Generar",
@@ -636,7 +659,9 @@
       "poweredBy": "Desarrollado con",
       "ffmpeg": "FFmpeg",
       "noUploads": "Sin cargas, 100% en el navegador",
-      "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar"
+      "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar",
+      "alsoTry": "También prueba nuestra",
+      "transcribeLink": "Transcripción de Audio Gratuita"
     }
   },
   "transcribe": {
@@ -686,7 +711,38 @@
       "transformersJs": "Transformers.js",
       "whisper": "OpenAI Whisper",
       "noUploads": "Sin cargas, 100% en el navegador",
-      "madeWith": "Hecho con ♡ desde SexyVoice.ai"
+      "madeWith": "Hecho con ♡ desde SexyVoice.ai - Generador de audio IA gratuito para probar",
+      "alsoTry": "También prueba nuestro",
+      "audioConverterLink": "Conversor de Audio Gratuito"
+    },
+    "faq": {
+      "title": "Preguntas frecuentes",
+      "items": [
+        {
+          "question": "¿Esta herramienta de transcripción de audio es realmente gratuita?",
+          "answer": "Sí. Sin cuenta, sin tarjeta de crédito, sin límites de uso — nunca. La creamos como una utilidad pública gratuita."
+        },
+        {
+          "question": "¿Mi audio se sube a un servidor?",
+          "answer": "No. La transcripción se ejecuta completamente en tu navegador usando WebAssembly. Tu audio nunca sale de tu dispositivo."
+        },
+        {
+          "question": "¿Qué idiomas admite?",
+          "answer": "Los modelos Whisper multilingües admiten más de 99 idiomas, incluyendo inglés, francés, alemán, japonés, árabe, hindi, portugués, italiano, ruso, chino, coreano y muchos más."
+        },
+        {
+          "question": "¿Qué formatos de audio se admiten?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC y WebM — cualquier cosa que tu navegador pueda decodificar. Los archivos de vídeo también funcionan."
+        },
+        {
+          "question": "¿Qué tan precisa es la transcripción?",
+          "answer": "La herramienta usa OpenAI Whisper, uno de los modelos de reconocimiento de voz de código abierto más precisos. Elige Whisper Small (~250 MB) para mayor precisión, o Whisper Tiny (~40 MB) para mayor velocidad."
+        },
+        {
+          "question": "¿Funciona sin conexión a Internet?",
+          "answer": "Después de descargar el modelo una vez, sí. El modelo se almacena en caché en tu navegador, por lo que las transcripciones futuras funcionan completamente sin conexión."
+        }
+      ]
     }
   }
 }

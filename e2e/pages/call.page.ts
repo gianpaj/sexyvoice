@@ -20,7 +20,7 @@ export class CallPage {
   readonly page: Page;
 
   // Configuration form elements
-  readonly configurationTitle: Locator;
+  readonly configurationForm: Locator;
   readonly languageSelectorTrigger: Locator;
   readonly languageSelector: Locator;
 
@@ -39,8 +39,8 @@ export class CallPage {
   constructor(page: Page) {
     this.page = page;
 
-    // Configuration form — has a title like "Configuration"
-    this.configurationTitle = page.getByText(/configuration/i);
+    // Configuration form container
+    this.configurationForm = page.getByTestId('call-configuration-form');
 
     // Language selector — a Select component in the configuration form
     this.languageSelectorTrigger = page.locator('[role="combobox"]').first();
@@ -61,10 +61,7 @@ export class CallPage {
     this.creditsSection = page.getByText(/credits/i).first();
 
     // Notice text at the bottom of the page
-    this.noticeText = page
-      .locator('p')
-      .filter({ hasText: /AI|generated|experimental|notice/i })
-      .first();
+    this.noticeText = page.getByTestId('call-notice-text');
   }
 
   /**
@@ -74,8 +71,8 @@ export class CallPage {
     await this.page.goto('/en/dashboard/call', {
       waitUntil: 'domcontentloaded',
     });
-    // Wait for the configuration form title to appear
-    await this.configurationTitle.waitFor({
+    // Wait for the configuration form to appear
+    await this.configurationForm.waitFor({
       state: 'visible',
       timeout: 15_000,
     });
@@ -117,14 +114,14 @@ export class CallPage {
    * Verify the call page is visible with the configuration form
    */
   async expectPageVisible() {
-    await expect(this.configurationTitle).toBeVisible();
+    await expect(this.configurationForm).toBeVisible();
   }
 
   /**
    * Verify the configuration form section is visible
    */
   async expectConfigurationFormVisible() {
-    await expect(this.configurationTitle).toBeVisible();
+    await expect(this.configurationForm).toBeVisible();
   }
 
   /**
@@ -198,7 +195,6 @@ export class CallPage {
    * Verify the page contains a form element for configuration
    */
   async expectFormPresent() {
-    const form = this.page.locator('form').first();
-    await expect(form).toBeVisible();
+    await expect(this.configurationForm).toBeVisible();
   }
 }

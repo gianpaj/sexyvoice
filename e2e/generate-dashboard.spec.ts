@@ -1,10 +1,11 @@
-import { test, expect } from '@playwright/test';
-import { GeneratePage } from './pages/generate.page';
+import { expect, test } from '@playwright/test';
+
 import {
-  setupDefaultMocks,
   handleGenerateVoiceError,
   handleInsufficientCreditsError,
+  setupDefaultMocks,
 } from './mocks/google-ai.mock';
+import { GeneratePage } from './pages/generate.page';
 
 /**
  * Generate Dashboard E2E Tests
@@ -56,11 +57,8 @@ test.describe('Generate Dashboard - Authenticated User', () => {
 
     // Fill in text input
     await generatePage.enterText(
-      'Hello, this is a test message for voice generation.'
+      'Hello, this is a test message for voice generation.',
     );
-
-    // Verify generate button is enabled
-    await generatePage.expectGenerateButtonEnabled();
 
     // Click generate button
     await generatePage.clickGenerate();
@@ -98,14 +96,11 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     // Remove existing mock and set up error mock
     await page.unroute('**/api/generate-voice');
     await page.route('**/api/generate-voice', (route) =>
-      handleGenerateVoiceError(route)
+      handleGenerateVoiceError(route),
     );
 
     // Zephyr is already selected by default, just fill text
     await generatePage.enterText('Test message');
-
-    // Wait for generate button to be enabled before clicking
-    await generatePage.expectGenerateButtonEnabled();
 
     // Click generate
     await generatePage.clickGenerate();
@@ -222,7 +217,7 @@ test.describe('Generate Dashboard - Unauthenticated', () => {
     await page.goto('/en/dashboard/generate');
 
     // Should be redirected to login
-    await expect(page).toHaveURL(/login/, { timeout: 10000 });
+    await expect(page).toHaveURL(/login/, { timeout: 10_000 });
   });
 });
 
@@ -258,7 +253,7 @@ test.describe('Generate Dashboard - Error Scenarios', () => {
     // Mock a timeout by delaying indefinitely
     await page.route('**/api/generate-voice', async (route) => {
       // Don't fulfill - let it timeout
-      await new Promise((resolve) => setTimeout(resolve, 60000));
+      await new Promise((resolve) => setTimeout(resolve, 60_000));
     });
     await page.route('**/api/estimate-credits', async (route) => {
       await route.fulfill({

@@ -89,6 +89,30 @@ export class HistoryPage {
     });
     // Wait for the heading to appear
     await this.heading.waitFor({ state: 'visible', timeout: 15_000 });
+    // Wait for React 19 hydration to complete before interacting.
+    //
+    // domcontentloaded fires as soon as SSR HTML is parsed — the filter input
+    // is already in the HTML, so waitFor({ state: 'visible' }) returns
+    // immediately. But React hasn't attached its synthetic event listeners yet.
+    // If fill() fires at this point, the input event has nobody listening on
+    // the React side, so onChange is never called and state stays empty.
+    //
+    // React writes __react* properties onto DOM nodes only after hydration.
+    // We target the filter input specifically (not just any input[placeholder])
+    // so we don't accidentally fire on an unrelated element that hydrates first
+    // (e.g. a search box in the navigation sidebar).
+    await this.page.waitForFunction(
+      () => {
+        // The DataTable filter input has autocomplete="off" — use that
+        // combination as a precise selector so we wait for the right element.
+        const el = document.querySelector(
+          'input[autocomplete="off"][placeholder]',
+        );
+        if (!el) return false;
+        return Object.keys(el).some((key) => key.startsWith('__react'));
+      },
+      { timeout: 15_000 },
+    );
   }
 
   // --- Actions ---
@@ -98,13 +122,27 @@ export class HistoryPage {
    */
   async filterByText(text: string) {
     await this.filterInput.waitFor({ state: 'visible', timeout: 10_000 });
-    await this.filterInput.click({ force: true });
-    await this.filterInput.evaluate((element, value) => {
-      const input = element as HTMLInputElement;
-      input.value = value;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
+    // The history filter input can fail Playwright's hit-test actionability
+    // check (another element is returned by elementFromPoint), so fill() stalls.
+    // Instead, use evaluate() with the native HTMLInput setter which:
+    //   1. bypasses actionability checks entirely (runs JS directly), and
+    //   2. properly updates React's internal value tracker so onChange fires.
+    // Setting element.value directly (without the native setter) is NOT enough
+    // because React overrides the value property and ignores the event.
+    await this.filterInput.evaluate((el, value) => {
+      const nativeValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      if (nativeValueSetter) {
+        nativeValueSetter.call(el, value);
+      } else {
+        (el as HTMLInputElement).value = value;
+      }
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
     }, text);
+    await expect(this.filterInput).toHaveValue(text);
   }
 
   /**
@@ -112,12 +150,24 @@ export class HistoryPage {
    */
   async clearFilter() {
     await this.filterInput.waitFor({ state: 'visible', timeout: 10_000 });
-    await this.filterInput.evaluate((element) => {
-      const input = element as HTMLInputElement;
-      input.value = '';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
+    // Avoid fill('') here: after a re-render triggered by filterByText, the
+    // input can briefly enter a non-editable state and fill() will stall on
+    // Playwright's actionability check. Using the native HTMLInput setter +
+    // dispatching events bypasses that check while still updating React state.
+    await this.filterInput.evaluate((el) => {
+      const nativeValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set;
+      if (nativeValueSetter) {
+        nativeValueSetter.call(el, '');
+      } else {
+        (el as HTMLInputElement).value = '';
+      }
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    await expect(this.filterInput).toHaveValue('');
   }
 
   /**

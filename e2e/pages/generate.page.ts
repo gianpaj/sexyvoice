@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Page Object Model for Generate Dashboard
@@ -17,6 +17,7 @@ export class GeneratePage {
   readonly page: Page;
   readonly voiceSelector: Locator;
   readonly textInput: Locator;
+  readonly audioGeneratorCard: Locator;
   readonly generateButton: Locator;
   readonly estimateCreditsButton: Locator;
   readonly cancelButton: Locator;
@@ -32,17 +33,31 @@ export class GeneratePage {
     // Main UI elements
     this.pageHeading = page.getByRole('heading', { level: 2 });
     this.voiceSelector = page.getByRole('combobox').first();
-    // Use placeholder to target the correct text input (not the style textarea)
-    this.textInput = page.getByPlaceholder('Enter the text you want to convert to speech');
-    this.generateButton = page.getByTestId('generate-button');
-    this.estimateCreditsButton = page.getByRole('button', { name: /estimate/i });
-    this.cancelButton = page.getByRole('button', { name: /cancel/i });
+    this.audioGeneratorCard = page
+      .locator('[data-testid="audio-generator-card"]:visible')
+      .first();
+    // Target the main textarea inside the visible card
+    this.textInput = this.audioGeneratorCard.getByTestId('generate-textarea');
+    this.generateButton =
+      this.audioGeneratorCard.getByTestId('generate-button');
+    this.estimateCreditsButton = this.audioGeneratorCard.getByRole('button', {
+      name: /estimate/i,
+    });
+    this.cancelButton = this.audioGeneratorCard.getByRole('button', {
+      name: /cancel/i,
+    });
     // Use Download Audio button to verify audio was generated (audio element itself is hidden)
-    this.audioPlayer = page.getByRole('button', { name: /download audio/i });
-    // Use text content pattern to find character count (shows "X / Y" format)
-    this.characterCountContainer = page.getByText(/^\d+\s*\/\s*\d+$/);
-    this.styleInput = page.locator('textarea').nth(1); // Style textarea is the second one
-    this.enhanceTextButton = page.getByRole('button', { name: /enhance/i });
+    this.audioPlayer = this.audioGeneratorCard.getByRole('button', {
+      name: /download audio/i,
+    });
+    // Use stable test id for character count (shows "X / Y" format)
+    this.characterCountContainer = this.audioGeneratorCard.getByTestId(
+      'generate-character-count',
+    );
+    this.styleInput = this.page.getByTestId('generate-style-textarea');
+    this.enhanceTextButton = this.audioGeneratorCard.getByRole('button', {
+      name: /enhance/i,
+    });
   }
 
   /**
@@ -55,7 +70,27 @@ export class GeneratePage {
       waitUntil: 'domcontentloaded',
     });
     // Wait for key UI elements to be visible
-    await this.textInput.waitFor({ state: 'visible', timeout: 15000 });
+    await this.textInput.waitFor({ state: 'visible', timeout: 15_000 });
+    // Wait for React 19 hydration to complete before interacting.
+    //
+    // Background: domcontentloaded fires as soon as SSR HTML is parsed — the
+    // textarea is already visible in the HTML, so waitFor({ state: 'visible' })
+    // returns immediately. But React hasn't attached its synthetic event
+    // listeners yet. If fill() fires at this point, the input event has nobody
+    // listening on the React side, so onChange is never called, text state stays
+    // '', and the character count/generate-button remain in their empty state.
+    //
+    // React writes __react* properties (fiber, props, events) onto DOM nodes
+    // only after the hydration pass completes. Waiting for that property gives
+    // us a reliable signal that React's event delegation is wired up.
+    await this.page.waitForFunction(
+      () => {
+        const el = document.querySelector('[data-testid="generate-textarea"]');
+        if (!el) return false;
+        return Object.keys(el).some((key) => key.startsWith('__react'));
+      },
+      { timeout: 15_000 },
+    );
   }
 
   /**
@@ -68,7 +103,9 @@ export class GeneratePage {
 
     // Wait for the dropdown content to appear (Radix UI portals the content)
     // SelectItem elements have role="option" in Radix Select
-    const option = this.page.getByRole('option', { name: new RegExp(voiceName, 'i') });
+    const option = this.page.getByRole('option', {
+      name: new RegExp(voiceName, 'i'),
+    });
     await option.waitFor({ state: 'visible', timeout: 5000 });
     await option.click();
   }
@@ -78,24 +115,24 @@ export class GeneratePage {
    * @param text - Text to generate audio from
    */
   async enterText(text: string) {
-    // Focus the input and clear it
-    await this.textInput.click();
-    await this.textInput.clear();
-
-    // Use keyboard.type which more reliably triggers React onChange than pressSequentially
-    // First ensure focus is on the text input
-    await this.textInput.focus();
-    await this.page.keyboard.type(text, { delay: 1 });
-
-    // Wait for the character count to update to ensure text is registered
-    const expectedCount = text.length.toString();
-    await expect(this.characterCountContainer).toContainText(expectedCount, { timeout: 30000 });
+    // Use fill() instead of evaluate()+dispatch — Playwright's fill() simulates
+    // real keyboard input that triggers React's synthetic onChange handler.
+    // Setting element.value directly + dispatching a native Event bypasses
+    // React's internal value tracker, so React never calls onChange and state
+    // stays empty even though the DOM shows the value.
+    await this.textInput.fill(text);
+    await expect(this.textInput).toHaveValue(text);
+    // Wait for React state to propagate to the character count display
+    if (text.length > 0) {
+      await expect(this.characterCountContainer).not.toHaveText(/^0 \//);
+    }
   }
 
   /**
    * Click the generate audio button
    */
   async clickGenerate() {
+    await expect(this.generateButton).toBeEnabled({ timeout: 10_000 });
     await this.generateButton.click();
   }
 
@@ -103,6 +140,7 @@ export class GeneratePage {
    * Click the estimate credits button (only available for Gemini voices)
    */
   async clickEstimateCredits() {
+    await expect(this.estimateCreditsButton).toBeEnabled({ timeout: 10_000 });
     await this.estimateCreditsButton.click();
   }
 
@@ -132,7 +170,7 @@ export class GeneratePage {
    * Wait for audio generation to complete
    * Watches the generate button state change from "Generating..." back to "Generate"
    */
-  async waitForGenerationComplete(timeout = 15000) {
+  async waitForGenerationComplete(timeout = 15_000) {
     // Wait for generating state
     await expect(this.generateButton).toContainText(/generating/i, {
       timeout: 5000,
@@ -188,8 +226,8 @@ export class GeneratePage {
     // Common error messages include "Failed to generate audio", "Voice generation failed", etc.
     // The toast uses sonner and appears in the notifications region
     await expect(
-      this.page.getByText(/failed|error|not enough|insufficient/i).first()
-    ).toBeVisible({ timeout: 15000 });
+      this.page.getByText(/failed|error|not enough|insufficient/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
   }
 
   /**
@@ -206,7 +244,7 @@ export class GeneratePage {
    * Waits for the button to become enabled (may take time after text input)
    */
   async expectGenerateButtonEnabled() {
-    await expect(this.generateButton).toBeEnabled({ timeout: 10000 });
+    await expect(this.generateButton).toBeEnabled({ timeout: 10_000 });
   }
 
   /**
@@ -229,7 +267,7 @@ export class GeneratePage {
    */
   async expectInsufficientCreditsAlert() {
     await expect(
-      this.page.getByText(/don't have enough credits/i)
+      this.page.getByText(/don't have enough credits/i),
     ).toBeVisible();
   }
 }

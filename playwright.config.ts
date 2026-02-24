@@ -1,11 +1,12 @@
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
-
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
 import dotenv from 'dotenv';
-import path from 'path';
+
+// biome-ignore lint/correctness/noGlobalDirnameFilename: bug
 dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 
 /**
@@ -19,8 +20,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Use single worker to avoid race conditions with React state updates */
-  workers: 1,
+  // Each test runs in its own browser context/page, so React state is fully
+  // isolated between workers — no race conditions possible.
+  // Use more workers in CI (production server handles concurrency well) and
+  // a conservative count locally (dev server is single-threaded for compiles).
+  workers: process.env.CI ? 4 : 2,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

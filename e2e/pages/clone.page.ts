@@ -67,7 +67,7 @@ export class ClonePage {
     this.page = page;
 
     // Card heading and description
-    this.cardTitle = page.getByRole('heading', { name: /clone/i });
+    this.cardTitle = page.getByTestId('clone-page-title');
     this.cardDescription = page.getByText(
       /upload.*audio|record.*voice|clone.*voice/i,
     );
@@ -84,31 +84,27 @@ export class ClonePage {
     this.fileInput = page.locator('input[aria-label="Upload audio file"]');
 
     // Language selector — the combobox for language selection
-    this.languageSelector = page.getByRole('combobox').first();
+    this.languageSelector = page.getByTestId('clone-language-select');
 
     // Text input (textarea with placeholder)
-    this.textInput = page.getByRole('textbox', {
-      name: /text to convert/i,
-    });
+    this.textInput = page.getByTestId('clone-text-input');
     // Character count (e.g., "0 / 500")
-    this.characterCount = page.getByText(/^\d+\s*\/\s*500$/);
+    this.characterCount = page.getByTestId('clone-character-count');
 
     // Legal consent checkbox
-    this.legalConsentCheckbox = page.getByRole('checkbox', {
-      name: /legal|consent|permission|rights/i,
-    });
-    this.legalConsentLabel = page
-      .locator('label[for="legal-consent"]')
-      .or(page.getByText(/I confirm|I have the right|permission/i));
+    this.legalConsentCheckbox = page.getByTestId('clone-legal-consent');
+    this.legalConsentLabel = page.getByTestId('clone-legal-consent-label');
 
     // Generate/Clone button — the main CTA button
-    this.generateButton = page
-      .getByRole('button', { name: /clone|generate/i })
-      .first();
+    // Use the stable data-testid for O(1) lookup instead of a regex role scan
+    // across the entire DOM (which is expensive on this complex page).
+    this.generateButton = page.getByTestId('clone-generate-button');
     this.cancelButton = page.getByRole('button', { name: /cancel/i });
 
     // Sample audio accordion items
-    this.sampleAccordionItems = page.locator('[data-radix-collection-item]');
+    this.sampleAccordionItems = page.locator(
+      '[data-testid^="clone-sample-trigger-"]',
+    );
 
     // Error alerts
     this.errorAlert = page.locator('[role="alert"]').filter({
@@ -151,18 +147,24 @@ export class ClonePage {
    * @param text - Text to type into the textarea
    */
   async enterText(text: string) {
-    await this.textInput.click();
-    await this.textInput.clear();
     await this.textInput.fill(text);
+    await expect(this.textInput).toHaveValue(text);
+    await this.textInput.blur();
   }
 
   /**
    * Check the legal consent checkbox
    */
   async checkLegalConsent() {
-    const isChecked = await this.legalConsentCheckbox.isChecked();
-    if (!isChecked) {
-      await this.legalConsentCheckbox.click({ force: true });
+    const state = await this.legalConsentCheckbox.getAttribute('data-state');
+    if (state !== 'checked') {
+      await this.legalConsentCheckbox.evaluate((el) =>
+        (el as HTMLElement).click(),
+      );
+      await expect(this.legalConsentCheckbox).toHaveAttribute(
+        'data-state',
+        'checked',
+      );
     }
   }
 
@@ -170,9 +172,15 @@ export class ClonePage {
    * Uncheck the legal consent checkbox
    */
   async uncheckLegalConsent() {
-    const isChecked = await this.legalConsentCheckbox.isChecked();
-    if (isChecked) {
-      await this.legalConsentCheckbox.click({ force: true });
+    const state = await this.legalConsentCheckbox.getAttribute('data-state');
+    if (state === 'checked') {
+      await this.legalConsentCheckbox.evaluate((el) =>
+        (el as HTMLElement).click(),
+      );
+      await expect(this.legalConsentCheckbox).toHaveAttribute(
+        'data-state',
+        'unchecked',
+      );
     }
   }
 
@@ -196,10 +204,15 @@ export class ClonePage {
    */
   async selectLanguage(languageName: string) {
     await this.languageSelector.click();
+    const options = this.page.getByRole('option');
+    if ((await options.count()) === 0) {
+      await this.languageSelector.click();
+    }
+    await options.first().waitFor({ state: 'visible', timeout: 5000 });
     const option = this.page.getByRole('option', {
       name: new RegExp(languageName, 'i'),
     });
-    await option.waitFor({ state: 'visible', timeout: 5000 });
+    await expect(option).toBeVisible();
     await option.click();
   }
 
@@ -270,14 +283,20 @@ export class ClonePage {
    * Verify the legal consent checkbox is unchecked
    */
   async expectLegalConsentUnchecked() {
-    await expect(this.legalConsentCheckbox).not.toBeChecked();
+    await expect(this.legalConsentCheckbox).toHaveAttribute(
+      'data-state',
+      'unchecked',
+    );
   }
 
   /**
    * Verify the legal consent checkbox is checked
    */
   async expectLegalConsentChecked() {
-    await expect(this.legalConsentCheckbox).toBeChecked();
+    await expect(this.legalConsentCheckbox).toHaveAttribute(
+      'data-state',
+      'checked',
+    );
   }
 
   /**
@@ -325,8 +344,8 @@ export class ClonePage {
    */
   async expectSampleAudioExpanded() {
     await expect(
-      this.page.getByText(/source audio|example output/i).first(),
-    ).toBeVisible({ timeout: 5000 });
+      this.page.locator('[data-testid^="clone-sample-content-"]').first(),
+    ).toHaveAttribute('data-state', 'open', { timeout: 5000 });
   }
 
   /**
