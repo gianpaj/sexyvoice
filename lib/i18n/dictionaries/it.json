@@ -334,6 +334,7 @@
     "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
     "agentUnavailable": "Agente non disponibile",
     "activeCallError": "Hai già una chiamata attiva in corso",
+    "microphonePermissionDenied": "Accesso al microfono negato. Consenti l'accesso al microfono e riprova.",
     "disconnected": "Disconnesso",
     "chooseCharacter": "Con chi vuoi parlare?",
     "presetRemoved": "Preset rimosso",
