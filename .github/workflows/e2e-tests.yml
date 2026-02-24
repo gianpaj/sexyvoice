@@ -58,9 +58,15 @@ jobs:
       - name: Build application
         run: pnpm run build
         env:
-          # Minimal env vars needed for build
+          # Supabase
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Stripe
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          # Analytics (stubbed)
           NEXT_PUBLIC_POSTHOG_KEY: "phc_test"
           NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com"
           SKIP_ENV_VALIDATION: true
