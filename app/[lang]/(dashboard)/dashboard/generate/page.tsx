@@ -30,7 +30,7 @@ export default async function GeneratePage(props: {
 
   const credits = creditsData || { amount: 0 };
   const hasEnoughCredits =
-    credits.amount >= 10 || !!process.env.PLAYWRIGHT_TEST_USER_EMAIL;
+    credits.amount >= 10 || (!!process.env.PLAYWRIGHT_TEST_USER_EMAIL && user?.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL);
 
   const { data: credit_transactions } = await supabase
     .from('credit_transactions')
