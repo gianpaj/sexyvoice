@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
-      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 5 minuten kostenlosen Anruf",
+      "title": "Starke Stimmen, frei",
+      "subtitle": "Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene.\nPerfekt für Content-Ersteller und Geschichtenerzähler. 😉",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
+      "noCreditCard": "Keine Kreditkarte erforderlich",
       "signIn": "Anmelden"
     },
     "features": {
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Mit deiner KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
-    "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 5 Min. kostenlos. Keine Kreditkarte erforderlich.",
+    "defaultTitle": "SexyVoice.ai – Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene",
+    "description": "Generieren Sie ausdrucksstarke KI-Stimmen mit Emotionen für Erwachseneninhalte in 24+ Sprachen. Kostenlose Text-zu-Sprache mit Stimmenklonung und NSFW-Support. Mit kostenlosen Credits starten – keine Kreditkarte nötig.",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",

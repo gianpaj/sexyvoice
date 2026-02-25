@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Seneste indlæg",
     "hero": {
-      "title": "Privat opkald med en AI, Tal frit –\nuden dom",
-      "subtitle": "Oplev forbindelsen – prøv 5 minutters gratis opkald",
+      "title": "Udtryksfulde stemmer, ucensureret",
+      "subtitle": "Gratis AI tekst-til-tale & stemmegenerator til voksne.\nPerfekt til indholdsskabere og historiefortællere. 😉",
       "buttonCTA": "Tilmeld dig gratis",
-      "noCreditCard": "Intet kreditkort påkrævet. Du kan lægge på når som helst",
+      "noCreditCard": "Intet kreditkort påkrævet",
       "signIn": "Log ind"
     },
     "features": {
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Tal med din AI - Private stemmeopkald uden dom | SexyVoice.ai",
-    "description": "Oplev AI-stemmeopkald i realtid i total privatliv. Tal frit uden dom - dine hemmeligheder er sikre. Prøv 5 min gratis opkald nu. Intet kreditkort påkrævet.",
+    "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator til voksne",
+    "description": "Generer udtryksfulde AI-stemmer med følelser til voksenindhold på 24+ sprog. Gratis tekst-til-tale med stemmekloning og NSFW-support. Start med gratis credits – intet kort påkrævet.",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",

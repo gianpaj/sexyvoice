@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Private call with an AI, Talk freely –\nno judgment",
-      "subtitle": "Experience the connection – try 5 mins free call",
+      "title": "Expressive Voices, Uncensored",
+      "subtitle": "Free AI Text-to-Speech & Voice Generator for Adults.\nPerfect for content creators and storytellers. 😉",
       "buttonCTA": "Sign up for Free",
-      "noCreditCard": "No credit card required. You can hang up anytime",
+      "noCreditCard": "No credit card required",
       "signIn": "Sign In"
     },
     "features": {
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Talk to your AI - Private Voice Calls with No Judgment | SexyVoice.ai",
-    "description": "Experience private AI voice calls with zero judgment. Your secrets stay safe. Try a free 5-min call now – no credit card required. 20+ voices, 24+ languages.",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults",
+    "description": "Generate expressive AI voices with emotions for adult content in 24+ languages. Free text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & make private calls in 24+ languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
@@ -504,7 +504,7 @@
     "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
     "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
-    "keywordsLanding": "AI voice calls, private AI companion, talk to AI, AI voice chat, AI phone call, voice AI, AI conversation, private voice chat, AI voice generator, text to speech, voice cloning, no judgment AI calls",
+    "keywordsLanding": "text to speech, AI voice generator, voice cloning, adult text to speech, NSFW text to speech, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis, adult content AI, AI voice adult",
     "/": "",
     "/login": "Sign In",
     "/signup": "Sign Up Free – 10,000 Credits",

@@ -35,7 +35,7 @@ export async function generateMetadata(
   if (!i18n.locales.includes(lang as Locale)) {
     return {
       title:
-        'Private AI Companion Calls - AI Voice Calls with No Judgment | SexyVoice.ai',
+        'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults',
     };
   }
 

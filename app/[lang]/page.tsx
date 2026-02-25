@@ -1,5 +1,5 @@
 import { allPosts } from 'contentlayer/generated';
-import { ArrowRightIcon, Globe2, LockIcon, Mic2, Sparkles } from 'lucide-react';
+import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +14,6 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import { IncomingCallButton } from '@/components/call/incoming-call-button';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -177,10 +176,7 @@ export default async function LandingPage(props: {
                 {dictLanding.hero.subtitle}
               </p>
 
-              <div className="mx-auto">
-                <IncomingCallButton animated lang={lang} />
-              </div>
-              <div className="mx-auto flex w-fit flex-col gap-2 pt-8">
+              <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
                   className="w-fit self-center"
@@ -236,16 +232,16 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <LockIcon aria-hidden className="size-6 text-gray-200" />
+                    <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
-                    No humans involved - your secrets are safe here
+                    {dictLanding.features.security.title}
                   </h3>
                 </CardHeader>
                 <CardContent>
                   <p className="text-justify text-sm">
-                    {dict.call.notice1} - {dict.call.notice2}
+                    {dictLanding.features.security.description}
                   </p>
                 </CardContent>
               </Card>

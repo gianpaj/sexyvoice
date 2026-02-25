@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Ultimos Posts",
     "hero": {
-      "title": "Llamada privada con una IA, Habla libremente sin juzgar",
-      "subtitle": "Experimenta la conexión - prueba una llamada gratuita de 5 minutos",
+      "title": "Voces Expresivas, Sin Censura",
+      "subtitle": "Generador de IA texto a voz gratis para adultos.\nPerfecto para creadores de contenido y narradores. 😉",
       "buttonCTA": "Empezar",
-      "noCreditCard": "Sin tarjeta de crédito. Puedes colgar en cualquier momento",
+      "noCreditCard": "Sin tarjeta de crédito",
       "signIn": "Iniciar Sesión"
     },
     "features": {
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Habla con tu IA - Llamadas de voz privadas sin juzgar | SexyVoice.ai",
-    "description": "Experimenta llamadas de voz con IA en tiempo real en total privacidad. Habla libremente sin juzgar - tus secretos están seguros. Prueba 5 min de llamada gratis. Sin tarjeta de crédito.",
+    "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis para adultos & texto a voz",
+    "description": "Genera voces IA expresivas con emociones para contenido adulto en 24+ idiomas. Texto a voz gratis con clonación de voz y soporte NSFW. Empieza con créditos gratis – sin tarjeta requerida.",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
