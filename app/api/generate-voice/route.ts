@@ -240,7 +240,7 @@ export async function POST(request: Request) {
         logger.warn(
           `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
           {
-            error: Error.isError(error) ? error.message : String(error),
+            error: error instanceof Error ? error.message : String(error),
             originalModel: modelUsed,
           },
         );
@@ -480,7 +480,7 @@ export async function POST(request: Request) {
     console.error('Voice generation error:', error);
 
     // if Gemini error
-    if (Error.isError(error) && error.message.includes('googleapis')) {
+    if (error instanceof Error && error.message.includes('googleapis')) {
       const message = JSON.parse(error.message);
       // You exceeded your current quota
       if (message.error.code === 429) {
@@ -499,7 +499,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     if (
-      Error.isError(error) &&
+      error instanceof Error &&
       Object.keys(ERROR_CODES).includes(String(error.cause))
     ) {
       return NextResponse.json(

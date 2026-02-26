@@ -114,7 +114,7 @@ export async function createCheckoutSession(
       extra: {
         packageId,
         ui_mode: data.get('uiMode'),
-        error_message: Error.isError(error) ? error.message : 'Unknown error',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
       },
     });
     throw error;

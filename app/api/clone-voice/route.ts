@@ -775,7 +775,7 @@ export async function POST(request: Request) {
       extra: errorObj,
     });
 
-    if (Error.isError(error) && 'body' in error) {
+    if (error instanceof Error && 'body' in error) {
       console.error(
         'Validation error details:',
         JSON.stringify(error.body, null, 2),
@@ -785,7 +785,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: Error.isError(error) ? error.message : 'Failed to clone voice' },
+      { error: error instanceof Error ? error.message : 'Failed to clone voice' },
       { status: 500 },
     );
   }

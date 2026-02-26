@@ -321,7 +321,7 @@ function NewVoiceClientInner({
             console.error('WebM to WAV conversion error:', convertError);
             // TODO send logs to Sentry
             setErrorMessage(
-              Error.isError(convertError)
+              convertError instanceof Error
                 ? `Audio conversion failed: ${convertError.message}`
                 : 'Audio conversion failed. Please try recording again.',
             );
@@ -389,7 +389,7 @@ function NewVoiceClientInner({
       setActiveTab('preview');
     } catch (err) {
       if (
-        Error.isError(err) &&
+        err instanceof Error &&
         err.message === 'signal is aborted without reason'
       ) {
         return;
@@ -397,7 +397,7 @@ function NewVoiceClientInner({
       let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
-      } else if (Error.isError(err)) {
+      } else if (err instanceof Error) {
         errorMsg = err.message;
       }
       setErrorMessage(errorMsg || 'Unexpected error occurred');

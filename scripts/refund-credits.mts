@@ -649,7 +649,7 @@ async function main() {
   } catch (error) {
     console.error(
       '\n❌ Error:',
-      Error.isError(error) ? error.message : error,
+      error instanceof Error ? error.message : error,
       '\n',
     );
     process.exit(1);

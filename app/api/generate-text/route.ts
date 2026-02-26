@@ -78,7 +78,7 @@ Rules:
       extra: { prompt },
     });
 
-    if (Error.isError(error)) {
+    if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
