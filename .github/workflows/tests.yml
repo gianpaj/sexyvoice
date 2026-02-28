@@ -28,7 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [24.9.0]
 
     steps:
       - name: Checkout code
@@ -38,6 +38,8 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
