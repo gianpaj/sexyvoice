@@ -84,19 +84,23 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
   ];
 
   return (
-    <div
-      className="grid gap-6 md:grid-cols-1 lg:grid-cols-3"
-      data-promo-theme={promoTheme}
-    >
-      {plans.map((plan) => (
-        <PlanCard
-          bannerTranslations={bannerTranslations}
-          dict={dict.credits}
-          isPromoEnabled={isPromoEnabled}
-          key={plan.id}
-          plan={plan}
-        />
-      ))}
+    <div className="space-y-3" data-promo-theme={promoTheme}>
+      {isPromoEnabled && (
+        <p className="text-center text-muted-foreground text-sm">
+          {dict.credits.promoNotice}
+        </p>
+      )}
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+        {plans.map((plan) => (
+          <PlanCard
+            bannerTranslations={bannerTranslations}
+            dict={dict.credits}
+            isPromoEnabled={isPromoEnabled}
+            key={plan.id}
+            plan={plan}
+          />
+        ))}
+      </div>
     </div>
   );
 }

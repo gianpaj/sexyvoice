@@ -191,6 +191,7 @@
     "pricingPlan": "Preispläne",
     "title": "Credits für Kreative und Unternehmen jeder Größe kaufen",
     "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
+    "promoNotice": "Bonusguthaben werden angewendet, solange die Aktion aktiv ist.",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
     "billing": {
       "forever": "(für immer)"

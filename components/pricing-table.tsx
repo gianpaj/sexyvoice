@@ -76,9 +76,14 @@ async function PricingTable({ lang }: { lang: Locale }) {
       className="flex flex-col gap-6 py-16 xl:px-28"
       data-promo-theme={promoTheme}
     >
-      <h2 className="mx-auto mb-4 font-semibold text-2xl">
+      <h2 className="mx-auto font-semibold text-2xl">
         {credits.pricingPlan}
       </h2>
+      {isPromoEnabled && (
+        <p className="mx-auto max-w-2xl text-center text-muted-foreground text-sm">
+          {credits.promoNotice}
+        </p>
+      )}
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card

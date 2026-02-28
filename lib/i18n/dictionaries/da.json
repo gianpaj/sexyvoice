@@ -191,6 +191,7 @@
     "pricingPlan": "Priser",
     "title": "Køb kreditter til skabere og virksomheder i alle størrelser",
     "description": "Vælg den mængde kreditter, der passer bedst til dine behov",
+    "promoNotice": "Bonuscredits anvendes, mens kampagnen er aktiv.",
     "historyEmpty": "Din kreditforbrugshistorik vises her",
     "billing": {
       "forever": "(for evigt)"

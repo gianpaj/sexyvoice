@@ -191,6 +191,7 @@
     "pricingPlan": "Prezzi",
     "title": "Acquista crediti per creatori e aziende di tutte le dimensioni",
     "description": "Scegli la quantità di crediti più adatta alle tue esigenze",
+    "promoNotice": "I crediti bonus si applicano mentre la promozione è attiva.",
     "historyEmpty": "La cronologia del tuo utilizzo crediti apparirà qui",
     "billing": {
       "forever": "(per sempre)"
