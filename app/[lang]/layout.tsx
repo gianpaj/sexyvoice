@@ -54,6 +54,12 @@ export async function generateMetadata(
     description = dict.descriptionSignup || dict.description;
   }
 
+  // Add keywords for the landing page
+  const keywords =
+    pagePath === '/' && dict.keywordsLanding
+      ? dict.keywordsLanding.split(',').map((k: string) => k.trim())
+      : undefined;
+
   return {
     metadataBase: new URL(
       process.env.NODE_ENV === 'production'
@@ -65,16 +71,24 @@ export async function generateMetadata(
       default: title,
     },
     description,
+    ...(keywords ? { keywords } : {}),
     openGraph: {
       title: {
         template: '%s | SexyVoice.ai',
-        default:
-          'Talk to AI - Private Voice Calls with No Judgment | SexyVoice.ai',
+        default: defaultTitle,
       },
       description,
+      siteName: 'SexyVoice.ai',
       ...(openGraph?.url ? { url: openGraph.url } : {}),
       ...(openGraph?.images ? { images: openGraph.images } : {}),
-      ...(openGraph?.siteName ? { siteName: openGraph.siteName } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: {
+        template: '%s | SexyVoice.ai',
+        default: defaultTitle,
+      },
+      description,
     },
     alternates: {
       canonical: './',

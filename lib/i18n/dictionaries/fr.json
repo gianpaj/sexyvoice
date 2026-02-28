@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ crédits",
       "free": {
         "name": "Gratuit",
-        "description": "Pour ceux qui veulent essayer l'audio IA le plus avancé.",
+        "description": "Pour ceux qui veulent essayer la génération audio IA la plus avancée.",
         "creditsWithAudio": "__NUM_CREDITS__ crédits (~4 min d'audio)",
         "features": [
-          "Générez de la parole avec des voix uniques",
+          "Générez de la parole avec des gémissements réalistes",
           "Clonez votre voix avec seulement 10 secondes d'audio"
         ]
       },
@@ -223,17 +223,17 @@
         "creditsWithPromo": "__NUM_CREDITS__ crédits",
         "features": [
           "Tout dans Gratuit",
-          "Accès API (bientôt disponible)"
+          "Appel vocal : Personnages personnalisés"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "Pour les créateurs plus importants augmentant leur production de contenu.",
+        "description": "Pour des besoins créatifs plus importants et du contenu plus audacieux.",
         "creditsWithAudio": "__NUM_CREDITS__ crédits (~125 minutes d'audio)",
         "creditsWithPromo": "__NUM_CREDITS__ crédits",
         "features": [
-          "Tout dans Standard",
-          "Aperçu rapide du style et de la voix de votre courte phrase (bientôt disponible)"
+          "Tout dans Gratuit",
+          "Appel vocal : Personnages personnalisés"
         ]
       }
     },
@@ -334,6 +334,7 @@
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
     "activeCallError": "Vous avez déjà un appel actif en cours",
+    "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "disconnected": "Déconnecté",
     "chooseCharacter": "À qui voulez-vous parler ?",
     "presetRemoved": "Preset supprimé",
@@ -345,9 +346,66 @@
     "enhancedNoiseFilter": "Filtre anti-bruit amélioré",
     "disconnect": "Déconnecter",
     "instructions": "Instructions",
-    "instructionsHelp": "Les instructions sont un message système ajouté au début de la conversation chaque fois que le modèle répond. Les mises à jour seront appliquées au prochain tour de conversation.",
-    "grokImagineNote": "Note : Grok Imagine ajoute des instructions supplémentaires pour la génération d'images.",
-    "grokImagineIncluded": "Instructions Grok Imagine incluses"
+    "instructionsHelp": "Les instructions sont un message système qui est ajouté au début de la conversation chaque fois que le modèle répond. Les mises à jour seront reflétées au prochain tour de conversation.",
+    "grokImagineNote": "Remarque : Grok Imagine ajoute des instructions supplémentaires pour la génération d'images.",
+    "grokImagineIncluded": "Instructions de Grok Imagine incluses",
+    "addCustomCharacter": "Ajouter un personnage personnalisé",
+    "addCharacterLabel": "Ajouter",
+    "upgradePremiumTooltip": "Passez à la version premium pour créer des personnages personnalisés",
+    "addDescriptionPlaceholder": "Ajouter une description...",
+    "clickToAddDescription": "Cliquez pour ajouter une description...",
+    "characterInstructions": "Instructions de __NAME__",
+    "characterFallbackName": "Personnage",
+    "instructionsPlaceholder": "Entrez les instructions système",
+    "voiceLabel": "Voix",
+    "voicePlaceholder": "Choisir une voix",
+    "voiceSelectorLabel": "Voix",
+    "voiceSelectorPlaceholder": "Choisir une voix",
+    "deleteCharacterAriaLabel": "Supprimer __NAME__",
+    "savePreset": {
+      "save": "Enregistrer",
+      "saveAsNew": "Enregistrer comme nouveau",
+      "saveAsNewTitle": "Enregistrer comme nouveau personnage",
+      "saveAsNewDescription": "Cela créera un nouveau personnage personnalisé avec les paramètres actuels.",
+      "nameLabel": "Nom",
+      "descriptionLabel": "Description",
+      "characterCreated": "Personnage créé",
+      "characterSaved": "Personnage enregistré",
+      "failedToCreate": "Échec de la création du personnage",
+      "failedToUpdate": "Échec de la mise à jour du personnage"
+    },
+    "presetSelector": {
+      "characterCreated": "Personnage créé",
+      "characterUpdated": "Personnage mis à jour",
+      "characterRemoved": "Personnage supprimé",
+      "voiceUpdated": "Voix mise à jour",
+      "failedToCreate": "Échec de la création du personnage",
+      "failedToUpdate": "Échec de la mise à jour du personnage",
+      "failedToDelete": "Échec de la suppression du personnage",
+      "failedToSaveVoice": "Échec de l'enregistrement de la voix"
+    },
+    "createCharacter": {
+      "dialogTitle": "Créer un nouveau personnage",
+      "dialogDescription": "Créez un personnage IA personnalisé avec votre propre personnalité et voix.",
+      "nameLabel": "Nom",
+      "nameRequired": "*",
+      "namePlaceholder": "ex. Luna, Marcus, Zara...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Une brève description de votre personnage...",
+      "voiceLabel": "Voix",
+      "voicePlaceholder": "Choisir une voix",
+      "instructionsLabel": "Instructions",
+      "instructionsPlaceholder": "Décrivez la personnalité de votre personnage, les modèles de parole, l'histoire...",
+      "characterCount": "__COUNT__/5000 caractères",
+      "cancelButton": "Annuler",
+      "createButton": "Créer le personnage",
+      "creatingButton": "Création...",
+      "errorNameRequired": "Le nom est obligatoire",
+      "errorVoiceRequired": "Veuillez sélectionner une voix",
+      "playVoiceSample": "Lire l'échantillon vocal",
+      "stopVoiceSample": "Arrêter l'échantillon vocal",
+      "previewVoice": "Aperçu de la voix de __VOICE__"
+    }
   },
   "clone": {
     "audioFileLabel": "Fichier audio",
@@ -408,12 +466,27 @@
       "title": "Paramètres de sécurité",
       "description": "Gérez votre e-mail et votre mot de passe"
     },
+    "securityForm": {
+      "description": "Entrez votre mot de passe actuel et un nouveau mot de passe pour mettre à jour vos identifiants",
+      "emailLabel": "Adresse e-mail",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "updating": "Mise à jour...",
+      "updatePassword": "Mettre à jour le mot de passe",
+      "success": "Mot de passe mis à jour avec succès",
+      "errors": {
+        "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas",
+        "updateFailed": "Échec de la mise à jour du mot de passe",
+        "currentPasswordIncorrect": "Le mot de passe actuel est incorrect"
+      }
+    },
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
         "button": "Supprimer le compte",
         "confirmTitle": "Êtes-vous absolument sûr ?",
-        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte et supprimera vos données de nos serveurs.",
+        "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• Toutes les données associées de nos serveurs",
         "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
         "cancel": "Annuler",
         "continue": "Continuer"
@@ -421,7 +494,7 @@
     }
   },
   "pages": {
-    "defaultTitle": "Parlez à l'IA - Appels vocaux privés sans jugement | SexyVoice.ai",
+    "defaultTitle": "Parlez à votre IA - Appels vocaux privés sans jugement | SexyVoice.ai",
     "description": "Vivez des appels vocaux IA en temps réel en toute confidentialité. Parlez librement sans jugement - vos secrets restent en sécurité. Essayez 5 min d'appel gratuit. Aucune carte de crédit requise.",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
@@ -434,11 +507,20 @@
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
     "/dashboard/usage": "Utilisation",
-    "/tools/audio-converter": "Convertisseur audio gratuit"
+    "/tools/audio-converter": "Convertisseur Audio",
+    "/tools/transcribe": "Transcription Audio",
+    "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",
+    "titleTranscribe": "Transcription Audio Gratuite en Ligne – 99+ Langues avec Whisper AI",
+    "descriptionAudioConverter": "Convertisseur audio en ligne gratuit – Convertissez MP3, WAV, FLAC, OGG, AAC, MP4 et d'autres formats directement dans votre navigateur. Aucun téléversement requis, 100% privé et hors ligne. Propulsé par FFmpeg.",
+    "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 99 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
+    "keywordsAudioConverter": "convertisseur audio gratuit, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, convertisseur audio en ligne, convertisseur audio navigateur, convertisseur audio hors ligne, mp3 en wav, wav en mp3, convertisseur format audio, ffmpeg en ligne, convertisseur audio sans téléversement, convertisseur audio privé",
+    "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription 99 langues, transcription privée",
+    "keywordsLanding": "appels vocaux IA, compagnon IA privé, parler avec IA, chat vocal IA, appel téléphonique IA, voix IA, conversation IA, chat vocal privé, générateur de voix IA, synthèse vocale, clonage de voix, appels IA sans jugement"
   },
   "sidebar": {
     "profile": "Profil",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "freeTools": "Outils gratuits"
   },
   "header": {
     "generate": "Générer",
@@ -502,7 +584,8 @@
     "privacyPolicy": "Politique de confidentialité",
     "termsAndConditions": "Conditions générales",
     "copyright": "SexyVoice.ai. Tous droits réservés.",
-    "audioConverter": "Convertisseur audio gratuit"
+    "audioConverter": "Convertisseur audio gratuit",
+    "transcribe": "Transcription audio gratuite"
   },
   "promos": {
     "halloweenBanner": {
@@ -577,7 +660,90 @@
       "poweredBy": "Propulsé par",
       "ffmpeg": "FFmpeg",
       "noUploads": "Aucun téléchargement, 100% dans le navigateur",
-      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
+      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer",
+      "alsoTry": "Essayez aussi notre",
+      "transcribeLink": "Transcription audio gratuite"
+    }
+  },
+  "transcribe": {
+    "title": "Transcription audio gratuite",
+    "subtitle": "Transcrivez des fichiers audio en texte hors ligne dans votre navigateur",
+    "tagline": " – 100% gratuit et privé",
+    "loadingModel": "Chargement du modèle...",
+    "transcribing": "Transcription en cours...",
+    "transcribeButton": "Transcrire",
+    "loadAndTranscribe": "Charger le modèle et transcrire",
+    "reset": "Réinitialiser",
+    "audioInput": {
+      "dropTitle": "Déposez votre fichier audio ici",
+      "dropDescription": "ou cliquez pour parcourir",
+      "or": "ou",
+      "startRecording": "Enregistrer avec le microphone",
+      "stopRecording": "Arrêter l'enregistrement",
+      "remove": "Supprimer",
+      "decodeError": "Impossible de décoder le fichier audio. Veuillez essayer un autre format.",
+      "microphoneError": "Accès au microphone refusé ou non disponible."
+    },
+    "modelSelector": {
+      "label": "Modèle",
+      "hint": "Les modèles plus grands sont plus précis mais prennent plus de temps à télécharger et à exécuter."
+    },
+    "languageSelector": {
+      "label": "Langue",
+      "taskLabel": "Tâche",
+      "transcribe": "Transcrire",
+      "translate": "Traduire en anglais",
+      "englishOnlyHint": "Ce modèle ne prend en charge que l'anglais. Sélectionnez un modèle multilingue pour d'autres langues.",
+      "taskHint": "Transcrire conserve la langue d'origine.\nTraduire convertit toute langue en anglais."
+    },
+    "progress": {
+      "downloading": "Téléchargement du modèle...",
+      "transcribing": "Transcription de l'audio...",
+      "modelCacheHint": "Le modèle est mis en cache dans votre navigateur pour une utilisation future",
+      "processingHint": "Traitement audio local dans votre navigateur..."
+    },
+    "transcriptDisplay": {
+      "title": "Transcription",
+      "copy": "Copier",
+      "copied": "Copié !"
+    },
+    "footer": {
+      "poweredBy": "Propulsé par",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Aucun téléchargement, 100% dans le navigateur",
+      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer",
+      "alsoTry": "Essayez aussi notre",
+      "audioConverterLink": "Convertisseur audio gratuit"
+    },
+    "faq": {
+      "title": "Questions fréquemment posées",
+      "items": [
+        {
+          "question": "Cet outil de transcription audio est-il vraiment gratuit ?",
+          "answer": "Oui. Aucun compte, aucune carte bancaire, aucune limite d'utilisation — jamais. Nous l'avons conçu comme un outil public gratuit."
+        },
+        {
+          "question": "Mon audio est-il envoyé sur un serveur ?",
+          "answer": "Non. La transcription s'exécute entièrement dans votre navigateur via WebAssembly. Votre audio ne quitte jamais votre appareil."
+        },
+        {
+          "question": "Quelles langues sont prises en charge ?",
+          "answer": "Les modèles Whisper multilingues prennent en charge plus de 99 langues, notamment l'espagnol, l'allemand, le japonais, l'arabe, l'hindi, le portugais, l'italien, le russe, le chinois, le coréen et bien d'autres."
+        },
+        {
+          "question": "Quels formats audio sont pris en charge ?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC et WebM — tout ce que votre navigateur peut décoder. Les fichiers vidéo fonctionnent également."
+        },
+        {
+          "question": "Quelle est la précision de la transcription ?",
+          "answer": "L'outil utilise OpenAI Whisper, l'un des modèles de reconnaissance vocale open source les plus précis. Choisissez Whisper Small (~250 Mo) pour la meilleure précision, ou Whisper Tiny (~40 Mo) pour la vitesse."
+        },
+        {
+          "question": "Fonctionne-t-il sans connexion Internet ?",
+          "answer": "Après le premier téléchargement du modèle, oui. Le modèle est mis en cache dans votre navigateur, de sorte que les transcriptions futures fonctionnent entièrement hors ligne."
+        }
+      ]
     }
   }
 }

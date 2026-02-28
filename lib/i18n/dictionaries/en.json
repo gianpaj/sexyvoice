@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ credits",
       "free": {
         "name": "Free",
-        "description": "For individuals who want to try out the most advanced AI audio.",
+        "description": "For individuals who want to try out the most advanced AI audio generation.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
         "features": [
-          "Generate speech in unique voices",
+          "Generate speech with realistic moaning sounds",
           "Clone your voice with as little as 10 seconds of audio"
         ]
       },
@@ -223,17 +223,17 @@
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
           "Everything in Free",
-          "API access (coming soon)"
+          "Voice Call: Custom Characters"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "For larger creators ramping up their content production.",
+        "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
-          "Everything in Standard",
-          "Quick style and voice preview of your short sentence (coming soon)"
+          "Everything in Free",
+          "Voice Call: Custom Characters"
         ]
       }
     },
@@ -326,7 +326,7 @@
     "configurationTitle": "Configuration",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
-    "startCall": "Start a call",
+    "startCall": "Start call",
     "connecting": "Connecting",
     "reconnected": "Reconnected",
     "reconnectionFailed": "Reconnection failed",
@@ -334,6 +334,7 @@
     "configurationUpdateError": "Error updating configuration",
     "agentUnavailable": "Agent unavailable",
     "activeCallError": "You already have an active call in progress",
+    "microphonePermissionDenied": "Microphone access denied. Please allow microphone access and try again.",
     "disconnected": "Disconnected",
     "chooseCharacter": "Who do you want to talk to?",
     "presetRemoved": "Preset removed",
@@ -347,7 +348,64 @@
     "instructions": "Instructions",
     "instructionsHelp": "Instructions are a system message that is prepended to the conversation whenever the model responds. Updates will be reflected on the next conversation turn.",
     "grokImagineNote": "Note: Grok Imagine adds additional instructions for image generation.",
-    "grokImagineIncluded": "Grok Imagine Instructions Included"
+    "grokImagineIncluded": "Grok Imagine Instructions Included",
+    "addCustomCharacter": "Add custom character",
+    "addCharacterLabel": "Add",
+    "upgradePremiumTooltip": "Upgrade to create custom characters",
+    "addDescriptionPlaceholder": "Add a description...",
+    "clickToAddDescription": "Click to add a description...",
+    "characterInstructions": "__NAME__ Instructions",
+    "characterFallbackName": "Character",
+    "instructionsPlaceholder": "Enter system instructions",
+    "voiceLabel": "Voice",
+    "voicePlaceholder": "Choose a voice",
+    "voiceSelectorLabel": "Voice",
+    "voiceSelectorPlaceholder": "Choose voice",
+    "deleteCharacterAriaLabel": "Delete __NAME__",
+    "savePreset": {
+      "save": "Save",
+      "saveAsNew": "Save as new",
+      "saveAsNewTitle": "Save as new character",
+      "saveAsNewDescription": "This will create a new custom character with the current settings.",
+      "nameLabel": "Name",
+      "descriptionLabel": "Description",
+      "characterCreated": "Character created",
+      "characterSaved": "Character saved",
+      "failedToCreate": "Failed to create character",
+      "failedToUpdate": "Failed to update character"
+    },
+    "presetSelector": {
+      "characterCreated": "Character created",
+      "characterUpdated": "Character updated",
+      "characterRemoved": "Character removed",
+      "voiceUpdated": "Voice updated",
+      "failedToCreate": "Failed to create character",
+      "failedToUpdate": "Failed to update character",
+      "failedToDelete": "Failed to delete character",
+      "failedToSaveVoice": "Failed to save voice"
+    },
+    "createCharacter": {
+      "dialogTitle": "Create New Character",
+      "dialogDescription": "Create a custom AI character with your own personality and voice.",
+      "nameLabel": "Name",
+      "nameRequired": "*",
+      "namePlaceholder": "e.g., Luna, Marcus, Zara...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "A brief description of your character...",
+      "voiceLabel": "Voice",
+      "voicePlaceholder": "Choose a voice",
+      "instructionsLabel": "Instructions",
+      "instructionsPlaceholder": "Describe your character's personality, speech patterns, backstory...",
+      "characterCount": "__COUNT__/5000 characters",
+      "cancelButton": "Cancel",
+      "createButton": "Create Character",
+      "creatingButton": "Creating...",
+      "errorNameRequired": "Name is required",
+      "errorVoiceRequired": "Please select a voice",
+      "playVoiceSample": "Play voice sample",
+      "stopVoiceSample": "Stop voice sample",
+      "previewVoice": "Preview __VOICE__'s voice"
+    }
   },
   "clone": {
     "audioFileLabel": "Audio File",
@@ -408,12 +466,27 @@
       "title": "Security Settings",
       "description": "Manage your email and password"
     },
+    "securityForm": {
+      "description": "Enter your current password and a new password to update your credentials",
+      "emailLabel": "Email Address",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "updating": "Updating...",
+      "updatePassword": "Update Password",
+      "success": "Password updated successfully",
+      "errors": {
+        "passwordsDoNotMatch": "New passwords do not match",
+        "updateFailed": "Failed to update password",
+        "currentPasswordIncorrect": "Current password is incorrect"
+      }
+    },
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
         "button": "Delete account",
         "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
         "continue": "Continue"
@@ -421,24 +494,33 @@
     }
   },
   "pages": {
-    "defaultTitle": "Talk to AI - Private Voice Calls with No Judgment | SexyVoice.ai",
-    "description": "Experience real-time AI voice calls in total privacy. Talk freely with no judgment - your secrets stay safe. Try a 5 min free call now. No credit card required.",
-    "descriptionLogin": "Sign in to SexyVoice.ai to access your AI voice projects, manage credits, and generate expressive speech in multiple languages with advanced voice cloning.",
-    "descriptionSignup": "Join SexyVoice.ai free - Get 10,000 credits to create realistic AI voices with emotions. Advanced text-to-speech and voice cloning in 24 languages.",
+    "defaultTitle": "Talk to your AI - Private Voice Calls with No Judgment | SexyVoice.ai",
+    "description": "Experience private AI voice calls with zero judgment. Your secrets stay safe. Try a free 5-min call now – no credit card required. 20+ voices, 24+ languages.",
+    "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
+    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & make private calls in 24+ languages.",
+    "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
+    "titleTranscribe": "Free Audio Transcription – 99+ Languages",
+    "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
+    "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
+    "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
+    "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
+    "keywordsLanding": "AI voice calls, private AI companion, talk to AI, AI voice chat, AI phone call, voice AI, AI conversation, private voice chat, AI voice generator, text to speech, voice cloning, no judgment AI calls",
     "/": "",
-    "/login": "Log in",
-    "/signup": "Sign up with email or Google",
+    "/login": "Sign In",
+    "/signup": "Sign Up Free – 10,000 Credits",
     "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
     "/dashboard/credits": "Credits",
     "/dashboard/usage": "Usage",
-    "/tools/audio-converter": "Free Audio Converter"
+    "/tools/audio-converter": "Audio Converter",
+    "/tools/transcribe": "Audio Transcription"
   },
   "sidebar": {
     "profile": "Profile",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "freeTools": "Free Tools"
   },
   "header": {
     "generate": "Generate",
@@ -502,7 +584,8 @@
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved.",
-    "audioConverter": "Free Audio Converter"
+    "audioConverter": "Free Audio Converter",
+    "transcribe": "Free Audio Transcription"
   },
   "promos": {
     "halloweenBanner": {
@@ -577,7 +660,90 @@
       "poweredBy": "Powered by",
       "ffmpeg": "FFmpeg",
       "noUploads": "No uploads, 100% in-browser",
-      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator",
+      "alsoTry": "Also try our",
+      "transcribeLink": "Free Audio Transcription Tool"
+    }
+  },
+  "transcribe": {
+    "title": "Free Audio Transcription",
+    "subtitle": "Transcribe audio files to text offline in your browser",
+    "tagline": " – 100% free & private",
+    "loadingModel": "Loading model...",
+    "transcribing": "Transcribing...",
+    "transcribeButton": "Transcribe",
+    "loadAndTranscribe": "Load Model & Transcribe",
+    "reset": "Reset",
+    "audioInput": {
+      "dropTitle": "Drop your audio file here",
+      "dropDescription": "or click to browse",
+      "or": "or",
+      "startRecording": "Record with microphone",
+      "stopRecording": "Stop recording",
+      "remove": "Remove",
+      "decodeError": "Failed to decode audio file. Please try a different format.",
+      "microphoneError": "Microphone access denied or not available."
+    },
+    "modelSelector": {
+      "label": "Model",
+      "hint": "Larger models are more accurate but take longer to download and run."
+    },
+    "languageSelector": {
+      "label": "Language",
+      "taskLabel": "Task",
+      "transcribe": "Transcribe",
+      "translate": "Translate to English",
+      "englishOnlyHint": "This model only supports English. Select a multilingual model for other languages.",
+      "taskHint": "Transcribe keeps the original language.\nTranslate converts any language to English."
+    },
+    "progress": {
+      "downloading": "Downloading model...",
+      "transcribing": "Transcribing audio...",
+      "modelCacheHint": "The model is cached in your browser for future use",
+      "processingHint": "Processing audio locally in your browser..."
+    },
+    "transcriptDisplay": {
+      "title": "Transcript",
+      "copy": "Copy",
+      "copied": "Copied!"
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "No uploads, 100% in-browser",
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator",
+      "alsoTry": "Also try our",
+      "audioConverterLink": "Free Audio Converter Tool"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": [
+        {
+          "question": "Is this audio transcription tool really free?",
+          "answer": "Yes. No account, no credit card, no usage limits — ever. We built it as a free public utility."
+        },
+        {
+          "question": "Does my audio get uploaded to a server?",
+          "answer": "No. The transcription runs entirely in your browser using WebAssembly. Your audio never leaves your device."
+        },
+        {
+          "question": "What languages does it support?",
+          "answer": "The multilingual Whisper models support 99+ languages including Spanish, French, German, Japanese, Arabic, Hindi, Portuguese, Italian, Russian, Chinese, Korean, and many more."
+        },
+        {
+          "question": "What audio formats are supported?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC, and WebM — anything your browser can decode. Video files work too."
+        },
+        {
+          "question": "How accurate is the transcription?",
+          "answer": "The tool uses OpenAI Whisper, one of the most accurate open-source speech recognition models. Choose Whisper Small (~250 MB) for the best accuracy, or Whisper Tiny (~40 MB) for speed."
+        },
+        {
+          "question": "Does it work without an internet connection?",
+          "answer": "After the model downloads once, yes. The model is cached in your browser, so future transcriptions work fully offline."
+        }
+      ]
     }
   }
 }

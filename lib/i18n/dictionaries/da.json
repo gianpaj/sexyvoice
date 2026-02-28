@@ -202,10 +202,10 @@
       "x_credits": "__NUM_CREDITS__ kreditter",
       "free": {
         "name": "Gratis",
-        "description": "For personer, der vil prøve den mest avancerede AI-lyd.",
+        "description": "For personer, der vil prøve den mest avancerede AI-lydgenerering.",
         "creditsWithAudio": "__NUM_CREDITS__ kreditter (~4 min lyd)",
         "features": [
-          "Generer tale med unikke stemmer",
+          "Generer tale med realistiske stønlyde",
           "Klon din stemme med kun 10 sekunders lyd"
         ]
       },
@@ -223,17 +223,17 @@
         "creditsWithPromo": "__NUM_CREDITS__ kreditter",
         "features": [
           "Alt i Gratis",
-          "API-adgang (kommer snart)"
+          "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       },
       "pro": {
         "name": "Pro",
-        "description": "For større skabere, der øger deres indholdsproduktion.",
+        "description": "For større kreative behov og dristigere indhold.",
         "creditsWithAudio": "__NUM_CREDITS__ kreditter (~125 minutters lyd)",
         "creditsWithPromo": "__NUM_CREDITS__ kreditter",
         "features": [
-          "Alt i Standard",
-          "Hurtig stil- og stemmeforhåndsvisning af din korte sætning (kommer snart)"
+          "Alt i Gratis",
+          "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       }
     },
@@ -334,6 +334,7 @@
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
     "activeCallError": "Du har allerede et aktivt opkald i gang",
+    "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",
@@ -347,7 +348,64 @@
     "instructions": "Instruktioner",
     "instructionsHelp": "Instruktioner er en systembesked, der sættes foran samtalen, hver gang modellen svarer. Opdateringer vil blive afspejlet i næste samtaletur.",
     "grokImagineNote": "Bemærk: Grok Imagine tilføjer yderligere instruktioner til billedgenerering.",
-    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet"
+    "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet",
+    "addCustomCharacter": "Tilføj brugerdefineret karakter",
+    "addCharacterLabel": "Tilføj",
+    "upgradePremiumTooltip": "Opgrader for at oprette brugerdefinerede karakterer",
+    "addDescriptionPlaceholder": "Tilføj en beskrivelse...",
+    "clickToAddDescription": "Klik for at tilføje en beskrivelse...",
+    "characterInstructions": "__NAME__-instruktioner",
+    "characterFallbackName": "Karakter",
+    "instructionsPlaceholder": "Indtast systeminstruktioner",
+    "voiceLabel": "Stemme",
+    "voicePlaceholder": "Vælg en stemme",
+    "voiceSelectorLabel": "Stemme",
+    "voiceSelectorPlaceholder": "Vælg stemme",
+    "deleteCharacterAriaLabel": "Slet __NAME__",
+    "savePreset": {
+      "save": "Gem",
+      "saveAsNew": "Gem som ny",
+      "saveAsNewTitle": "Gem som ny karakter",
+      "saveAsNewDescription": "Dette opretter en ny brugerdefineret karakter med de aktuelle indstillinger.",
+      "nameLabel": "Navn",
+      "descriptionLabel": "Beskrivelse",
+      "characterCreated": "Karakter oprettet",
+      "characterSaved": "Karakter gemt",
+      "failedToCreate": "Kunne ikke oprette karakter",
+      "failedToUpdate": "Kunne ikke opdatere karakter"
+    },
+    "presetSelector": {
+      "characterCreated": "Karakter oprettet",
+      "characterUpdated": "Karakter opdateret",
+      "characterRemoved": "Karakter fjernet",
+      "voiceUpdated": "Stemme opdateret",
+      "failedToCreate": "Kunne ikke oprette karakter",
+      "failedToUpdate": "Kunne ikke opdatere karakter",
+      "failedToDelete": "Kunne ikke slette karakter",
+      "failedToSaveVoice": "Kunne ikke gemme stemme"
+    },
+    "createCharacter": {
+      "dialogTitle": "Opret ny karakter",
+      "dialogDescription": "Opret en brugerdefineret AI-karakter med din egen personlighed og stemme.",
+      "nameLabel": "Navn",
+      "nameRequired": "*",
+      "namePlaceholder": "f.eks. Luna, Marcus, Zara...",
+      "descriptionLabel": "Beskrivelse",
+      "descriptionPlaceholder": "En kort beskrivelse af din karakter...",
+      "voiceLabel": "Stemme",
+      "voicePlaceholder": "Vælg en stemme",
+      "instructionsLabel": "Instruktioner",
+      "instructionsPlaceholder": "Beskriv din karakters personlighed, talemønstre, baggrund...",
+      "characterCount": "__COUNT__/5000 tegn",
+      "cancelButton": "Annuller",
+      "createButton": "Opret karakter",
+      "creatingButton": "Opretter...",
+      "errorNameRequired": "Navn er påkrævet",
+      "errorVoiceRequired": "Vælg venligst en stemme",
+      "playVoiceSample": "Afspil stemmeprøve",
+      "stopVoiceSample": "Stop stemmeprøve",
+      "previewVoice": "Forhåndsvisning af __VOICE__s stemme"
+    }
   },
   "clone": {
     "audioFileLabel": "Lydfil",
@@ -408,12 +466,27 @@
       "title": "Sikkerhedsindstillinger",
       "description": "Administrer din e-mail og adgangskode"
     },
+    "securityForm": {
+      "description": "Indtast din nuværende adgangskode og en ny adgangskode for at opdatere dine loginoplysninger",
+      "emailLabel": "E-mailadresse",
+      "currentPassword": "Nuværende adgangskode",
+      "newPassword": "Ny adgangskode",
+      "confirmPassword": "Bekræft ny adgangskode",
+      "updating": "Opdaterer...",
+      "updatePassword": "Opdater adgangskode",
+      "success": "Adgangskode opdateret",
+      "errors": {
+        "passwordsDoNotMatch": "Nye adgangskoder stemmer ikke overens",
+        "updateFailed": "Kunne ikke opdatere adgangskode",
+        "currentPasswordIncorrect": "Nuværende adgangskode er forkert"
+      }
+    },
     "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {
         "button": "Slet konto",
         "confirmTitle": "Er du helt sikker?",
-        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto og fjerne dine data fra vores servere.",
+        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• Alle tilknyttede data fra vores servere",
         "alertTitle": "Bekræft at du vil slette din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt"
@@ -421,7 +494,7 @@
     }
   },
   "pages": {
-    "defaultTitle": "Tal med AI - Private stemmeopkald uden dom | SexyVoice.ai",
+    "defaultTitle": "Tal med din AI - Private stemmeopkald uden dom | SexyVoice.ai",
     "description": "Oplev AI-stemmeopkald i realtid i total privatliv. Tal frit uden dom - dine hemmeligheder er sikre. Prøv 5 min gratis opkald nu. Intet kreditkort påkrævet.",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
@@ -434,11 +507,20 @@
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
     "/dashboard/usage": "Forbrug",
-    "/tools/audio-converter": "Gratis lydkonverter"
+    "/tools/audio-converter": "Lydkonverter",
+    "/tools/transcribe": "Lydtransskription",
+    "titleAudioConverter": "Gratis Online Lydkonverter – MP3, WAV, FLAC & Mere",
+    "titleTranscribe": "Gratis Online Lydtransskription – Tale til Tekst på 99+ Sprog",
+    "descriptionAudioConverter": "Gratis online lydkonverter – Konverter MP3, WAV, FLAC, OGG, AAC, MP4 og flere formater direkte i din browser. Ingen upload påkrævet, 100% privat og offline. Drevet af FFmpeg.",
+    "descriptionTranscribe": "Gratis online lydtransskription – Transskriber lyd- og videofiler til tekst på 99+ sprog med OpenAI Whisper. 100% privat, kører direkte i din browser. Ingen upload påkrævet.",
+    "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
+    "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
+    "keywordsLanding": "AI stemmeopkald, privat AI samtale, tal med AI, AI stemmechat, AI telefonopkald, stemme AI, AI samtale, privat stemmechat, AI stemmegenerator, tekst til tale, stemmekloning, AI opkald uden dom"
   },
   "sidebar": {
     "profile": "Profil",
-    "signOut": "Log ud"
+    "signOut": "Log ud",
+    "freeTools": "Gratis værktøjer"
   },
   "header": {
     "generate": "Generer",
@@ -502,7 +584,8 @@
     "privacyPolicy": "Privatlivspolitik",
     "termsAndConditions": "Vilkår og betingelser",
     "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
-    "audioConverter": "Gratis lydkonverter"
+    "audioConverter": "Gratis lydkonverter",
+    "transcribe": "Gratis lydtransskription"
   },
   "promos": {
     "halloweenBanner": {
@@ -543,7 +626,7 @@
   "audioConverter": {
     "title": "Gratis lydkonverter",
     "subtitle": "Konverter lydfiler til MP3, WAV, MP4 og flere formater offline i din browser",
-    "tagline": "– gratis & nemt",
+    "tagline": " – 100% gratis & privat",
     "dropZone": {
       "title": "Slip din lydfil her",
       "description": "eller klik for at gennemse"
@@ -577,7 +660,90 @@
       "poweredBy": "Drevet af",
       "ffmpeg": "FFmpeg",
       "noUploads": "Ingen uploads, 100% i browseren",
-      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve"
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve",
+      "alsoTry": "Prøv også vores",
+      "transcribeLink": "Gratis lydtransskription"
+    }
+  },
+  "transcribe": {
+    "title": "Gratis lydtransskription",
+    "subtitle": "Transskriber lydfiler til tekst offline i din browser",
+    "tagline": " – 100% gratis & privat",
+    "loadingModel": "Indlæser model...",
+    "transcribing": "Transskriberer...",
+    "transcribeButton": "Transskriber",
+    "loadAndTranscribe": "Indlæs model & transskriber",
+    "reset": "Nulstil",
+    "audioInput": {
+      "dropTitle": "Slip din lydfil her",
+      "dropDescription": "eller klik for at gennemse",
+      "or": "eller",
+      "startRecording": "Optag med mikrofon",
+      "stopRecording": "Stop optagelse",
+      "remove": "Fjern",
+      "decodeError": "Kunne ikke afkode lydfilen. Prøv venligst et andet format.",
+      "microphoneError": "Mikrofonadgang nægtet eller ikke tilgængelig."
+    },
+    "modelSelector": {
+      "label": "Model",
+      "hint": "Større modeller er mere nøjagtige, men tager længere tid at downloade og køre."
+    },
+    "languageSelector": {
+      "label": "Sprog",
+      "taskLabel": "Opgave",
+      "transcribe": "Transskriber",
+      "translate": "Oversæt til engelsk",
+      "englishOnlyHint": "Denne model understøtter kun engelsk. Vælg en flersproget model for andre sprog.",
+      "taskHint": "Transskriber bevarer originalsproget.\nOversæt konverterer ethvert sprog til engelsk."
+    },
+    "progress": {
+      "downloading": "Downloader model...",
+      "transcribing": "Transskriberer lyd...",
+      "modelCacheHint": "Modellen gemmes i din browser til fremtidig brug",
+      "processingHint": "Behandler lyd lokalt i din browser..."
+    },
+    "transcriptDisplay": {
+      "title": "Transskription",
+      "copy": "Kopiér",
+      "copied": "Kopieret!"
+    },
+    "footer": {
+      "poweredBy": "Drevet af",
+      "transformersJs": "Transformers.js",
+      "whisper": "OpenAI Whisper",
+      "noUploads": "Ingen uploads, 100% i browseren",
+      "madeWith": "Lavet med ♡ fra SexyVoice.ai - Gratis AI-lydgenerator at prøve",
+      "alsoTry": "Prøv også vores",
+      "audioConverterLink": "Gratis lydkonverter"
+    },
+    "faq": {
+      "title": "Ofte stillede spørgsmål",
+      "items": [
+        {
+          "question": "Er dette lydtransskriptionsværktøj virkelig gratis?",
+          "answer": "Ja. Ingen konto, intet kreditkort, ingen brugsbegrænsninger — nogensinde. Vi bygede det som et gratis offentligt værktøj."
+        },
+        {
+          "question": "Uploades min lyd til en server?",
+          "answer": "Nej. Transskriptionen kører helt i din browser via WebAssembly. Din lyd forlader aldrig din enhed."
+        },
+        {
+          "question": "Hvilke sprog understøttes?",
+          "answer": "De flersprogede Whisper-modeller understøtter over 99 sprog, herunder spansk, fransk, tysk, japansk, arabisk, hindi, portugisisk, italiensk, russisk, kinesisk, koreansk og mange flere."
+        },
+        {
+          "question": "Hvilke lydformater understøttes?",
+          "answer": "MP3, WAV, M4A, OGG, FLAC og WebM — alt hvad din browser kan afkode. Videofiler virker også."
+        },
+        {
+          "question": "Hvor nøjagtig er transskriptionen?",
+          "answer": "Værktøjet bruger OpenAI Whisper, en af de mest nøjagtige open source-talegenkendelsesmodeller. Vælg Whisper Small (~250 MB) for den bedste nøjagtighed, eller Whisper Tiny (~40 MB) for hastighed."
+        },
+        {
+          "question": "Virker det uden internetforbindelse?",
+          "answer": "Når modellen er downloadet én gang, ja. Modellen caches i din browser, så fremtidige transskriptioner fungerer helt offline."
+        }
+      ]
     }
   }
 }

@@ -1,79 +1,23 @@
-import { defaultSessionConfig } from './default-config';
-import {
-  lilyDescriptions,
-  miloDescriptions,
-  rafalDescriptions,
-  ramonaDescriptions,
-} from './preset-descriptions';
-import { lilyInstructions } from './preset-instructions/lily';
-import { miloInstructions } from './preset-instructions/milo';
-import { rafalInstructions } from './preset-instructions/rafal';
-import { ramonaInstructions } from './preset-instructions/ramona';
 import type { SessionConfig } from './session-config';
-import { VoiceId } from './voices';
+import type { FeatureType } from './voices';
 
 export type PresetIconId = 'headphones';
 
 export interface Preset {
-  id: string;
+  id: string; // characters.id UUID
   name: string;
-  /** Per-language descriptions keyed by CallLanguage code */
   localizedDescriptions?: Partial<Record<string, string>>;
-  instructions: string;
-  /** Per-language instruction overrides for custom characters */
-  localizedInstructions?: Partial<Record<string, string>>;
+  instructions: string; // maps to prompts.prompt (via characters.prompt_id)
+  localizedInstructions?: Partial<Record<string, string>>; // maps to prompts.localized_prompts
   sessionConfig: SessionConfig;
   iconId?: PresetIconId;
   image?: string;
+  promptId?: string; // FK to prompts table
+  promptType?: FeatureType; // mirrors prompts.type (shared feature_type enum)
+  voiceId?: string; // FK to voices table (UUID)
+  voiceName?: string; // resolved voice name for display
+  voiceSampleUrl?: string; // for play button
+  isPublic?: boolean; // true for predefined characters
 }
 
-export const defaultPresets: Preset[] = [
-  {
-    id: 'ramona',
-    name: 'Ramona',
-    localizedDescriptions: ramonaDescriptions,
-    image: 'ramona.webp',
-    instructions: ramonaInstructions.en,
-    sessionConfig: {
-      ...defaultSessionConfig,
-      voice: VoiceId.EVE,
-    },
-    iconId: 'headphones',
-  },
-  {
-    id: 'lily',
-    name: 'Lily',
-    localizedDescriptions: lilyDescriptions,
-    image: 'lily.webp',
-    instructions: lilyInstructions.en,
-    sessionConfig: {
-      ...defaultSessionConfig,
-      voice: VoiceId.ARA,
-    },
-    iconId: 'headphones',
-  },
-  {
-    id: 'milo',
-    name: 'Milo',
-    localizedDescriptions: miloDescriptions,
-    image: 'milo.webp',
-    instructions: miloInstructions.en,
-    sessionConfig: {
-      ...defaultSessionConfig,
-      voice: VoiceId.SAL,
-    },
-    iconId: 'headphones',
-  },
-  {
-    id: 'rafal',
-    name: 'Rafal',
-    localizedDescriptions: rafalDescriptions,
-    image: 'rafal.webp',
-    instructions: rafalInstructions.en,
-    sessionConfig: {
-      ...defaultSessionConfig,
-      voice: VoiceId.REX,
-    },
-    iconId: 'headphones',
-  },
-];
+// REMOVED: defaultPresets array — now fetched from DB (characters + prompts tables)
