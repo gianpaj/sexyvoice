@@ -13,7 +13,7 @@ import {
 } from '@/lib/characters';
 import type langDict from '@/lib/i18n/dictionaries/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
-import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
+import { MIN_CREDITS_TO_START_CALL } from '@/lib/supabase/constants';
 import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
@@ -22,7 +22,7 @@ interface TokenGeneratorData {
   shouldConnect: boolean;
   wsUrl: string;
   token: string;
-  pgState: PlaygroundState;
+  playgroundState: PlaygroundState;
   voice: string;
   dict: (typeof langDict)['call'];
   disconnect: () => Promise<void>;
@@ -49,7 +49,7 @@ export const ConnectionProvider = ({
 
   const queryClient = useQueryClient();
   const supabase = useSupabaseBrowser();
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { playgroundState, dispatch, helpers } = usePlaygroundState();
 
   /**
    * If the selected custom character has unsaved instruction or voice changes,
@@ -57,13 +57,13 @@ export const ConnectionProvider = ({
    * Throws if the save fails (aborting the connection attempt).
    */
   const saveCharacterIfDirty = async (pendingVoiceName?: string | null) => {
-    const selectedPreset = helpers.getSelectedPreset(pgState);
+    const selectedPreset = helpers.getSelectedPreset(playgroundState);
     if (!selectedPreset || selectedPreset.isPublic) return;
 
-    const currentInstructions = helpers.getFullInstructions(pgState);
+    const currentInstructions = helpers.resolveActiveInstructions(playgroundState);
     const instructionsDirty = isInstructionsDirty(
       selectedPreset,
-      pgState.language,
+      playgroundState.language,
       currentInstructions,
     );
     const voiceDirty = Boolean(
@@ -86,7 +86,7 @@ export const ConnectionProvider = ({
 
     const payload = buildSaveCharacterPayload(
       presetToSave,
-      pgState.language,
+      playgroundState.language,
       currentInstructions,
     );
 
@@ -102,7 +102,7 @@ export const ConnectionProvider = ({
   const connect: ConnectFn = async (pendingVoiceName) => {
     await saveCharacterIfDirty(pendingVoiceName);
 
-    const resolvedState = helpers.getStateWithFullInstructions(pgState);
+    const resolvedState = helpers.buildStateWithResolvedInstructions(playgroundState);
     const response = await fetch('/api/call-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -114,7 +114,7 @@ export const ConnectionProvider = ({
         toast.error(
           dict.notEnoughCredits.replace(
             '__COUNT__',
-            MINIMUM_CREDITS_FOR_CALL.toString(),
+            MIN_CREDITS_TO_START_CALL.toString(),
           ),
         );
       } else if (response.status === 403) {
@@ -149,7 +149,7 @@ export const ConnectionProvider = ({
         token: connectionDetails.token,
         shouldConnect: connectionDetails.shouldConnect,
         voice: connectionDetails.voice,
-        pgState,
+        playgroundState,
         dict,
         connect,
         disconnect,

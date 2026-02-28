@@ -100,7 +100,7 @@ export async function countUserCallCharacters(userId: string): Promise<number> {
  * Resolve the prompt for a character by character ID.
  * Uses admin client to bypass RLS (reads predefined prompt text server-side).
  */
-export async function resolveCharacterPrompt(characterId: string) {
+export async function fetchCharacterDetails(characterId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('characters')

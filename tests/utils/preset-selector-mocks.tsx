@@ -229,7 +229,7 @@ export function createDefaultPgState(
 /* ---- use-playground-state ---- */
 vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
-    pgState: mockPgStateRef.current,
+    playgroundState: mockPgStateRef.current,
     dispatch: mockDispatch,
     helpers: {
       getDefaultPresets: () => defaultPresetsFixture,
