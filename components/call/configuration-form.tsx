@@ -64,7 +64,7 @@ export function ConfigurationForm({
   isPaidUser = false,
   callVoices = [],
 }: ConfigurationFormProps) {
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { playgroundState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
@@ -97,8 +97,8 @@ export function ConfigurationForm({
       return;
     }
 
-    const values = pgState.sessionConfig;
-    const fullInstructions = helpers.getFullInstructions(pgState);
+    const values = playgroundState.sessionConfig;
+    const fullInstructions = helpers.resolveActiveInstructions(playgroundState);
     const attributes: { [key: string]: string | number | boolean } = {
       instructions: fullInstructions,
       model: values.model,
@@ -188,8 +188,8 @@ export function ConfigurationForm({
       toast(dict.configurationUpdateError);
     }
   }, [
-    pgState.sessionConfig,
-    pgState.instructions,
+    playgroundState.sessionConfig,
+    playgroundState.instructions,
     localParticipant,
     toast,
     agent?.identity,
@@ -231,8 +231,8 @@ export function ConfigurationForm({
 
   // Reset form when preset changes
   useEffect(() => {
-    form.reset(pgState.sessionConfig);
-  }, [pgState.sessionConfig, form]);
+    form.reset(playgroundState.sessionConfig);
+  }, [playgroundState.sessionConfig, form]);
 
   // Push config updates to LiveKit agent when user stops interacting with the form
   useEffect(() => {
@@ -273,7 +273,7 @@ export function ConfigurationForm({
             <Select
               disabled={connectionState === ConnectionState.Connected}
               onValueChange={handleLanguageChange}
-              value={pgState.language}
+              value={playgroundState.language}
             >
               <SelectTrigger className="h-9 w-fit text-neutral-200">
                 <SelectValue placeholder={dict.languagePlaceholder} />
@@ -293,21 +293,21 @@ export function ConfigurationForm({
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
           <PresetSelector callVoices={callVoices} isPaidUser={isPaidUser} />
           {isPaidUser &&
-            pgState.selectedPresetId &&
+            playgroundState.selectedPresetId &&
             !helpers
               .getDefaultPresets()
-              .some((p) => p.id === pgState.selectedPresetId) && (
+              .some((p) => p.id === playgroundState.selectedPresetId) && (
               <div className="mt-4 space-y-4">
                 {/* Instructions Editor for custom per-character instructions */}
                 <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
                   <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
                     {dict.characterInstructions.replace(
                       '__NAME__',
-                      helpers.getSelectedPreset(pgState)?.name ||
+                      helpers.getSelectedPreset(playgroundState)?.name ||
                         dict.characterFallbackName,
                     )}
                   </div>
-                  <InstructionsEditor instructions={pgState.instructions} />
+                  <InstructionsEditor instructions={playgroundState.instructions} />
                 </div>
                 <PresetSave />
               </div>

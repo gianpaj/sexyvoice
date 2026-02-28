@@ -14,7 +14,7 @@ export interface InstructionsEditorProps {
 export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
-  const { pgState, dispatch } = usePlaygroundState();
+  const { playgroundState, dispatch } = usePlaygroundState();
   const { dict } = useConnection();
   const [inputValue, setInputValue] = useState(instructions || '');
 
@@ -23,11 +23,11 @@ export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
     setInputValue(newValue);
 
     // Dispatch immediately so the connect button reacts without waiting for blur
-    if (pgState.selectedPresetId) {
+    if (playgroundState.selectedPresetId) {
       dispatch({
         type: 'SET_CHARACTER_OVERRIDE',
         payload: {
-          characterId: pgState.selectedPresetId,
+          characterId: playgroundState.selectedPresetId,
           instructions: newValue,
         },
       });

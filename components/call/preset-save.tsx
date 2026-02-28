@@ -25,15 +25,15 @@ import { buildSaveCharacterPayload, saveCharacter } from '@/lib/characters';
 export function PresetSave() {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { playgroundState, dispatch, helpers } = usePlaygroundState();
   const { dict } = useConnection();
   const t = dict.savePreset;
-  const selectedPreset = helpers.getSelectedPreset(pgState);
+  const selectedPreset = helpers.getSelectedPreset(playgroundState);
   const defaultPresets = helpers.getDefaultPresets();
   const isDefaultPreset = selectedPreset
     ? defaultPresets.some((p) => p.id === selectedPreset.id)
     : false;
-  const customCharactersCount = pgState.customCharacters.length;
+  const customCharactersCount = playgroundState.customCharacters.length;
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -46,22 +46,22 @@ export function PresetSave() {
         : selectedPreset?.name || '',
     );
     setDescription(
-      selectedPreset?.localizedDescriptions?.[pgState.language] ??
+      selectedPreset?.localizedDescriptions?.[playgroundState.language] ??
         selectedPreset?.localizedDescriptions?.en ??
         '',
     );
-  }, [selectedPreset, isDefaultPreset, pgState.language]);
+  }, [selectedPreset, isDefaultPreset, playgroundState.language]);
 
   // Save as new character (opens dialog)
   const handleSaveAsNew = async () => {
     const result = await saveCharacter({
       id: '',
       name,
-      localizedDescriptions: { [pgState.language]: description },
-      prompt: pgState.instructions,
-      localizedPrompts: { [pgState.language]: pgState.instructions },
-      sessionConfig: pgState.sessionConfig,
-      voiceName: pgState.sessionConfig.voice,
+      localizedDescriptions: { [playgroundState.language]: description },
+      prompt: playgroundState.instructions,
+      localizedPrompts: { [playgroundState.language]: playgroundState.instructions },
+      sessionConfig: playgroundState.sessionConfig,
+      voiceName: playgroundState.sessionConfig.voice,
     });
     if (!result.ok) {
       toast.error(result.error ?? t.failedToCreate);
@@ -78,16 +78,16 @@ export function PresetSave() {
     if (!selectedPreset || isDefaultPreset || !selectedPreset.name.trim())
       return;
 
-    const instructions = helpers.getFullInstructions(pgState);
+    const instructions = helpers.resolveActiveInstructions(playgroundState);
     const payload = buildSaveCharacterPayload(
       {
         ...selectedPreset,
         localizedDescriptions: {
           ...(selectedPreset.localizedDescriptions ?? {}),
-          [pgState.language]: description,
+          [playgroundState.language]: description,
         },
       },
-      pgState.language,
+      playgroundState.language,
       instructions,
     );
     const result = await saveCharacter(payload);

@@ -114,10 +114,10 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
     },
 
     /**
-     * Gets the full instructions for the current state.
+     * Returns the active instructions string for the current state.
      * Prioritizes per-language character overrides for the selected character.
      */
-    getFullInstructions: (state: PlaygroundState): string => {
+    resolveActiveInstructions: (state: PlaygroundState): string => {
       // Use per-language character overrides if available for the selected character
       let instructions = state.instructions;
       if (state.selectedPresetId) {
@@ -132,8 +132,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
     },
 
     /**
-     * Returns a new state object with full instructions,
-     * resolving language-specific translations if available.
+     * Returns a new state object with instructions resolved for the current language.
      *
      * Priority for instruction resolution:
      * 1. Per-language character override
@@ -141,7 +140,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
      * 3. Built-in preset translations (from preset-instructions index)
      * 4. Preset's default instructions field (English / fallback)
      */
-    getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
+    buildStateWithResolvedInstructions: (state: PlaygroundState): PlaygroundState => {
       if (!state.selectedPresetId) {
         return state;
       }
@@ -154,46 +153,46 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       // (and other settings) are sent to the call-token API.
       // Voice changes on custom characters only update the preset inside
       // customCharacters, not the top-level sessionConfig.
-      const baseState = preset
+      const stateWithPresetConfig = preset
         ? { ...state, sessionConfig: preset.sessionConfig }
         : state;
 
       // 1. Per-language character override takes highest priority
       const langOverride =
-        baseState.characterOverrides[baseState.selectedPresetId!]?.[
-          baseState.language
+        stateWithPresetConfig.characterOverrides[stateWithPresetConfig.selectedPresetId!]?.[
+          stateWithPresetConfig.language
         ];
       if (langOverride !== undefined) {
-        return { ...baseState, instructions: langOverride };
+        return { ...stateWithPresetConfig, instructions: langOverride };
       }
 
       // 2. Custom character localizedInstructions
-      if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
+      if (preset?.localizedInstructions?.[stateWithPresetConfig.language] !== undefined) {
         return {
-          ...baseState,
+          ...stateWithPresetConfig,
           instructions: preset.localizedInstructions[
-            baseState.language
+            stateWithPresetConfig.language
           ] as string,
         };
       }
 
       // 3. Built-in preset translations
-      if (baseState.language !== 'en') {
+      if (stateWithPresetConfig.language !== 'en') {
         const translatedInstructions = getPresetInstructions(
-          baseState.selectedPresetId!,
-          baseState.language as CallLanguage,
+          stateWithPresetConfig.selectedPresetId!,
+          stateWithPresetConfig.language as CallLanguage,
         );
         if (translatedInstructions) {
-          return { ...baseState, instructions: translatedInstructions };
+          return { ...stateWithPresetConfig, instructions: translatedInstructions };
         }
       }
 
       // 4. Fallback to preset's default instructions
       if (preset) {
-        return { ...baseState, instructions: preset.instructions };
+        return { ...stateWithPresetConfig, instructions: preset.instructions };
       }
 
-      return baseState;
+      return stateWithPresetConfig;
     },
   };
 
