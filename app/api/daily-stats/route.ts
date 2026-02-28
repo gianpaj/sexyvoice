@@ -69,12 +69,30 @@ export async function GET(request: NextRequest) {
   // Use previousDay for MTD calculations since we're reporting on that day's month
   const monthStart = startOfMonth(previousDay);
   const previousMonthStart = startOfPreviousMonth(previousDay);
+  const twoMonthsAgoStart = new Date(
+    Date.UTC(previousDay.getUTCFullYear(), previousDay.getUTCMonth() - 2, 1),
+  );
+  const threeMonthsAgoStart = new Date(
+    Date.UTC(previousDay.getUTCFullYear(), previousDay.getUTCMonth() - 3, 1),
+  );
 
-  // Calculate previous month period end for comparison
-  // Cap at monthStart to avoid bleeding into the current month when prev month has fewer days
+  // Calculate previous month period ends for comparison
+  // Cap at each month's start to avoid bleeding into the next month when a prior month has fewer days
   const duration = today.getTime() - monthStart.getTime();
   const previousMonthPeriodEnd = new Date(
     Math.min(previousMonthStart.getTime() + duration, monthStart.getTime()),
+  );
+  const twoMonthsAgoPeriodEnd = new Date(
+    Math.min(
+      twoMonthsAgoStart.getTime() + duration,
+      previousMonthStart.getTime(),
+    ),
+  );
+  const threeMonthsAgoPeriodEnd = new Date(
+    Math.min(
+      threeMonthsAgoStart.getTime() + duration,
+      twoMonthsAgoStart.getTime(),
+    ),
   );
 
   // Partial credit_transactions type matching the selected columns
@@ -628,6 +646,22 @@ export async function GET(request: NextRequest) {
   );
   const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
+  const twoMonthsAgoMtdRevenue = filterByDateRange<CreditTransaction>(
+    creditTransactions,
+    twoMonthsAgoStart,
+    twoMonthsAgoPeriodEnd,
+  ).reduce(reduceAmountUsd, 0);
+
+  const threeMonthsAgoMtdRevenue = filterByDateRange<CreditTransaction>(
+    creditTransactions,
+    threeMonthsAgoStart,
+    threeMonthsAgoPeriodEnd,
+  ).reduce(reduceAmountUsd, 0);
+
+  // Mean of the last 3 months' MTD revenue for comparison
+  const avgPrevMtdRevenue =
+    (prevMtdRevenue + twoMonthsAgoMtdRevenue + threeMonthsAgoMtdRevenue) / 3;
+
   const creditsTodayCount = purchasePrevDayData.length;
   const refundsTodayCount = refundsPrevDayData.length;
 
@@ -936,7 +970,7 @@ export async function GET(request: NextRequest) {
     '💰 Revenue',
     `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
     `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
-    `  - Prev MTD: $${prevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
+    `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
     `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
