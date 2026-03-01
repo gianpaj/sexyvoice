@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Seneste indlæg",
     "hero": {
-      "title": "Privat opkald med en AI, Tal frit –\nuden dom",
-      "subtitle": "Oplev forbindelsen – prøv 5 minutters gratis opkald",
+      "title": "Udtryksfulde stemmer, ucensureret",
+      "subtitle": "Gratis AI tekst-til-tale & stemmegenerator til voksne.\nPerfekt til indholdsskabere og historiefortællere. 😉",
       "buttonCTA": "Tilmeld dig gratis",
-      "noCreditCard": "Intet kreditkort påkrævet. Du kan lægge på når som helst",
+      "noCreditCard": "Intet kreditkort påkrævet",
       "signIn": "Log ind"
     },
     "features": {
@@ -109,20 +109,6 @@
       "subtitle": "Alt hvad du behøver at vide om SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live AI-opkald",
-          "questions": [
-            {
-              "question": "Hvordan fungerer Live AI-opkald?",
-              "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
-            },
-            {
-              "question": "Hvor meget koster det?",
-              "answer": "Live-opkald koster 2000 kreditter pr. minut, mens du er forbundet."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Stemmeoprettelse & stilarter",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
               "answer": "Ja! Vælg en flersproget stemme (f.eks. Zephyr) og skriv den stil, du ønsker — \"britisk accent\", \"piratstemme\", \"forførende tone\" osv. Modellen tilpasser sig øjeblikkeligt, og du kan forfine det med flere instruktioner."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live AI-opkald",
+          "questions": [
+            {
+              "question": "Hvordan fungerer Live AI-opkald?",
+              "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
+            },
+            {
+              "question": "Hvor meget koster det?",
+              "answer": "Live-opkald koster 2000 kreditter pr. minut, mens du er forbundet."
             }
           ]
         },
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Tal med din AI - Private stemmeopkald uden dom | SexyVoice.ai",
-    "description": "Oplev AI-stemmeopkald i realtid i total privatliv. Tal frit uden dom - dine hemmeligheder er sikre. Prøv 5 min gratis opkald nu. Intet kreditkort påkrævet.",
+    "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator til voksne",
+    "description": "Generer udtryksfulde AI-stemmer med følelser til voksenindhold på 24+ sprog. Gratis tekst-til-tale med stemmekloning og NSFW-support. Start med gratis credits – intet kort påkrævet.",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",
@@ -515,7 +515,7 @@
     "descriptionTranscribe": "Gratis online lydtransskription – Transskriber lyd- og videofiler til tekst på 99+ sprog med OpenAI Whisper. 100% privat, kører direkte i din browser. Ingen upload påkrævet.",
     "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
     "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
-    "keywordsLanding": "AI stemmeopkald, privat AI samtale, tal med AI, AI stemmechat, AI telefonopkald, stemme AI, AI samtale, privat stemmechat, AI stemmegenerator, tekst til tale, stemmekloning, AI opkald uden dom"
+    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI"
   },
   "sidebar": {
     "profile": "Profil",
