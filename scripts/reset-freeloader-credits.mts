@@ -112,7 +112,7 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
     return records;
   } catch (error) {
     throw new Error(
-      `Failed to parse CSV file: ${error instanceof Error ? error.message : error}`,
+      `Failed to parse CSV file: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
