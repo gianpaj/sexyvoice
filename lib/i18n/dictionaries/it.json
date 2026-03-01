@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Ultimi post",
     "hero": {
-      "title": "Chiamata privata con un'IA, Parla liberamente –\nsenza giudizio",
-      "subtitle": "Vivi l'esperienza – prova 5 minuti di chiamata gratuita",
+      "title": "Voci espressive, senza censura",
+      "subtitle": "Generatore IA di sintesi vocale gratuito per adulti.\nPerfetto per creatori di contenuti e narratori. 😉",
       "buttonCTA": "Registrati gratis",
-      "noCreditCard": "Nessuna carta di credito richiesta. Puoi riagganciare quando vuoi",
+      "noCreditCard": "Nessuna carta di credito richiesta",
       "signIn": "Accedi"
     },
     "features": {
@@ -109,20 +109,6 @@
       "subtitle": "Tutto quello che devi sapere su SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Chiamate AI live",
-          "questions": [
-            {
-              "question": "Come funzionano le chiamate AI live?",
-              "answer": "Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione."
-            },
-            {
-              "question": "Quanto costa?",
-              "answer": "Le chiamate live costano 2000 crediti al minuto mentre sei connesso."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Creazione voci e stili",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Posso far parlare una voce con un accento o uno stile specifico, come britannico o pirata🏴‍☠️?",
               "answer": "Sì! Scegli una voce multilingua (es. Zephyr) e scrivi lo stile che desideri — \"accento britannico\", \"voce da pirata\", \"tono seducente\", ecc. Il modello si adatta istantaneamente e puoi perfezionarlo con ulteriori istruzioni."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Chiamate AI live",
+          "questions": [
+            {
+              "question": "Come funzionano le chiamate AI live?",
+              "answer": "Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione."
+            },
+            {
+              "question": "Quanto costa?",
+              "answer": "Le chiamate live costano 2000 crediti al minuto mentre sei connesso."
             }
           ]
         },
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Parla con la tua IA - Chiamate vocali private senza giudizio | SexyVoice.ai",
-    "description": "Vivi chiamate vocali AI in tempo reale in totale privacy. Parla liberamente senza giudizio - i tuoi segreti sono al sicuro. Prova 5 min di chiamata gratuita. Nessuna carta di credito richiesta.",
+    "defaultTitle": "SexyVoice.ai – Sintesi vocale IA gratuita & generatore di voci per adulti",
+    "description": "Genera voci IA espressive con emozioni per contenuti per adulti in 24+ lingue. Sintesi vocale gratuita con clonazione vocale e supporto NSFW. Inizia con crediti gratuiti – nessuna carta richiesta.",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
     "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",
@@ -504,7 +504,7 @@
     "descriptionTranscribe": "Trascrizione audio online gratuita – Trascrivi file audio e video in testo in oltre 99 lingue con OpenAI Whisper. 100% privato, funziona interamente nel tuo browser. Nessun upload richiesto.",
     "keywordsAudioConverter": "convertitore audio gratuito, convertire mp3, convertire wav, convertire flac, convertire ogg, convertire aac, convertitore audio online, convertitore audio browser, convertitore audio offline, mp3 in wav, wav in mp3, convertitore formato audio, ffmpeg online, convertitore audio senza upload, convertitore audio privato",
     "keywordsTranscribe": "trascrizione audio gratuita, trascrivere audio, riconoscimento vocale, audio in testo, trascrizione whisper, openai whisper, trascrizione offline, trascrizione nel browser, voce in testo, riconoscimento vocale gratuito, trascrizione audio online, trascrivere video, trascrizione 99 lingue, trascrizione privata",
-    "keywordsLanding": "chiamate vocali IA, compagno IA privato, parlare con IA, chat vocale IA, telefonata IA, voce IA, conversazione IA, chat vocale privata, generatore di voci IA, sintesi vocale, clonazione vocale, chiamate IA senza giudizio",
+    "keywordsLanding": "sintesi vocale, generatore di voci IA, clonazione vocale, sintesi vocale per adulti, NSFW sintesi vocale, sintesi vocale IA, generazione vocale, TTS gratuito, voci IA espressive, clone vocale IA, text to speech, contenuti adulti IA, voce IA adulti",
     "/": "",
     "/login": "Accedi",
     "/signup": "Registrati con email o Google",

@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
-      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 5 minuten kostenlosen Anruf",
+      "title": "Starke Stimmen, frei",
+      "subtitle": "Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene.\nPerfekt für Content-Ersteller und Geschichtenerzähler. 😉",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
+      "noCreditCard": "Keine Kreditkarte erforderlich",
       "signIn": "Anmelden"
     },
     "features": {
@@ -109,20 +109,6 @@
       "subtitle": "Alles, was Sie über SexyVoice.ai wissen müssen",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live-KI-Anrufe",
-          "questions": [
-            {
-              "question": "Wie funktionieren Live-KI-Anrufe?",
-              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
-            },
-            {
-              "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Stimmerstellung und Stile",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
               "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live-KI-Anrufe",
+          "questions": [
+            {
+              "question": "Wie funktionieren Live-KI-Anrufe?",
+              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
+            },
+            {
+              "question": "Was kostet das?",
+              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
             }
           ]
         },
@@ -494,8 +494,8 @@
     }
   },
   "pages": {
-    "defaultTitle": "Mit deiner KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
-    "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 5 Min. kostenlos. Keine Kreditkarte erforderlich.",
+    "defaultTitle": "SexyVoice.ai – Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene",
+    "description": "Generieren Sie ausdrucksstarke KI-Stimmen mit Emotionen für Erwachseneninhalte in 24+ Sprachen. Kostenlose Text-zu-Sprache mit Stimmenklonung und NSFW-Support. Mit kostenlosen Credits starten – keine Kreditkarte nötig.",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",
@@ -515,7 +515,7 @@
     "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
     "keywordsAudioConverter": "kostenloser Audio-Konverter, MP3 konvertieren, WAV konvertieren, FLAC konvertieren, OGG konvertieren, AAC konvertieren, Online-Audio-Konverter, Browser Audio-Konverter, Offline Audio-Konverter, MP3 zu WAV, WAV zu MP3, Audio-Format-Konverter, FFmpeg online, Audio-Konverter ohne Upload, privater Audio-Konverter",
     "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, 99 Sprachen Transkription, private Transkription",
-    "keywordsLanding": "KI Sprachanrufe, privater KI Begleiter, mit KI sprechen, KI Sprachchat, KI Telefonanruf, Sprach-KI, KI Gespräch, privater Sprachchat, KI Stimmengenerator, Text zu Sprache, Stimmklonen, KI Anrufe ohne Vorurteile"
+    "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, Text-zu-Sprache für Erwachsene, NSFW Text-zu-Sprache, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese, KI für Erwachseneninhalte, KI Stimme Erwachsene"
   },
   "sidebar": {
     "profile": "Profil",
