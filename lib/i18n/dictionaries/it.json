@@ -109,20 +109,6 @@
       "subtitle": "Tutto quello che devi sapere su SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Chiamate AI live",
-          "questions": [
-            {
-              "question": "Come funzionano le chiamate AI live?",
-              "answer": "Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione."
-            },
-            {
-              "question": "Quanto costa?",
-              "answer": "Le chiamate live costano 2000 crediti al minuto mentre sei connesso."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Creazione voci e stili",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Posso far parlare una voce con un accento o uno stile specifico, come britannico o pirata🏴‍☠️?",
               "answer": "Sì! Scegli una voce multilingua (es. Zephyr) e scrivi lo stile che desideri — \"accento britannico\", \"voce da pirata\", \"tono seducente\", ecc. Il modello si adatta istantaneamente e puoi perfezionarlo con ulteriori istruzioni."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Chiamate AI live",
+          "questions": [
+            {
+              "question": "Come funzionano le chiamate AI live?",
+              "answer": "Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione."
+            },
+            {
+              "question": "Quanto costa?",
+              "answer": "Le chiamate live costano 2000 crediti al minuto mentre sei connesso."
             }
           ]
         },

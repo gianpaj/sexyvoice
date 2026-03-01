@@ -109,20 +109,6 @@
       "subtitle": "Everything you need to know about SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live AI Calling",
-          "questions": [
-            {
-              "question": "How does Live AI Calling work?",
-              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
-            },
-            {
-              "question": "How much does it cost?",
-              "answer": "Live calling costs 2000 credits per minute while you’re connected."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Voice creation & styles",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
               "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live AI Calling",
+          "questions": [
+            {
+              "question": "How does Live AI Calling work?",
+              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
+            },
+            {
+              "question": "How much does it cost?",
+              "answer": "Live calling costs 2000 credits per minute while you’re connected."
             }
           ]
         },

@@ -109,20 +109,6 @@
       "subtitle": "Alles, was Sie über SexyVoice.ai wissen müssen",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live-KI-Anrufe",
-          "questions": [
-            {
-              "question": "Wie funktionieren Live-KI-Anrufe?",
-              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
-            },
-            {
-              "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Stimmerstellung und Stile",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
               "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live-KI-Anrufe",
+          "questions": [
+            {
+              "question": "Wie funktionieren Live-KI-Anrufe?",
+              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
+            },
+            {
+              "question": "Was kostet das?",
+              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
             }
           ]
         },

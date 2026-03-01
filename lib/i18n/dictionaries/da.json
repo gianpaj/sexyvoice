@@ -109,20 +109,6 @@
       "subtitle": "Alt hvad du behøver at vide om SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live AI-opkald",
-          "questions": [
-            {
-              "question": "Hvordan fungerer Live AI-opkald?",
-              "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
-            },
-            {
-              "question": "Hvor meget koster det?",
-              "answer": "Live-opkald koster 2000 kreditter pr. minut, mens du er forbundet."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Stemmeoprettelse & stilarter",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
               "answer": "Ja! Vælg en flersproget stemme (f.eks. Zephyr) og skriv den stil, du ønsker — \"britisk accent\", \"piratstemme\", \"forførende tone\" osv. Modellen tilpasser sig øjeblikkeligt, og du kan forfine det med flere instruktioner."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live AI-opkald",
+          "questions": [
+            {
+              "question": "Hvordan fungerer Live AI-opkald?",
+              "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
+            },
+            {
+              "question": "Hvor meget koster det?",
+              "answer": "Live-opkald koster 2000 kreditter pr. minut, mens du er forbundet."
             }
           ]
         },

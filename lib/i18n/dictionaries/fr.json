@@ -109,20 +109,6 @@
       "subtitle": "Tout ce que vous devez savoir sur SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Appels IA en direct",
-          "questions": [
-            {
-              "question": "Comment fonctionnent les appels IA en direct ?",
-              "answer": "Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation."
-            },
-            {
-              "question": "Combien ça coûte ?",
-              "answer": "Les appels en direct coûtent 2000 crédits par minute pendant que vous êtes connecté."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Création de voix et styles",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
               "answer": "Oui ! Choisissez une voix multilingue (ex. Zephyr) et tapez le style souhaité — \"accent britannique\", \"voix de pirate\", \"ton séducteur\", etc. Le modèle s'adapte instantanément, et vous pouvez l'affiner avec plus d'instructions."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Appels IA en direct",
+          "questions": [
+            {
+              "question": "Comment fonctionnent les appels IA en direct ?",
+              "answer": "Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation."
+            },
+            {
+              "question": "Combien ça coûte ?",
+              "answer": "Les appels en direct coûtent 2000 crédits par minute pendant que vous êtes connecté."
             }
           ]
         },

@@ -109,20 +109,6 @@
       "subtitle": "Todo lo que necesitas saber sobre SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Llamadas de IA en vivo",
-          "questions": [
-            {
-              "question": "¿Cómo funcionan las llamadas de IA en vivo?",
-              "answer": "Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real."
-            },
-            {
-              "question": "¿Cuánto cuesta?",
-              "answer": "Las llamadas en vivo cuestan 2000 créditos por minuto mientras estás conectado."
-            }
-          ]
-        },
-        {
           "id": "voiceCreation",
           "category": "Creación de voz y estilos",
           "questions": [
@@ -145,6 +131,20 @@
             {
               "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
               "answer": "¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) e ingresa el estilo que deseas—\"acento británico\", \"voz de pirata\", \"tono seductor\", etc. El modelo se adapta al instante, y puedes refinarlo con más instrucciones."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Llamadas de IA en vivo",
+          "questions": [
+            {
+              "question": "¿Cómo funcionan las llamadas de IA en vivo?",
+              "answer": "Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real."
+            },
+            {
+              "question": "¿Cuánto cuesta?",
+              "answer": "Las llamadas en vivo cuestan 2000 créditos por minuto mientras estás conectado."
             }
           ]
         },
