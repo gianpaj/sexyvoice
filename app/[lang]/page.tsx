@@ -17,6 +17,7 @@ import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
+import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { PromoBanner } from '@/components/promo-banner';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
@@ -154,7 +155,7 @@ export default async function LandingPage(props: {
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
-              {/*<LandingHero />*/}
+              <LandingHero />
               <h1 className="font-bold text-5xl md:text-6xl">
                 <span className="text-white/90 leading-[3.5rem]">
                   {firstPart}
