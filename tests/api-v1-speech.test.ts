@@ -10,6 +10,7 @@ import { estimateCredits } from '@/lib/utils';
 import {
   mockRatelimitLimit,
   mockRedisGet,
+  mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
   setMockGoogleGenAIFactory,
 } from './setup';
@@ -288,6 +289,12 @@ describe('/api/v1/speech', () => {
         'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
       ),
     });
+    expect(mockUploadFileToR2).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(Buffer),
+      'audio/mpeg',
+      'test-speech-bucket',
+    );
   });
 
   it('returns 400 for malformed JSON payloads', async () => {

@@ -33,9 +33,10 @@ export const uploadFileToR2 = async (
   filename: string,
   buffer: PutObjectCommandInput['Body'],
   contentType: string,
+  bucketName: string = R2_BUCKET_NAME,
 ) => {
   const params: PutObjectCommandInput = {
-    Bucket: R2_BUCKET_NAME,
+    Bucket: bucketName,
     Key: filename,
     Body: buffer,
     ACL: 'public-read',

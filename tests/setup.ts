@@ -73,6 +73,7 @@ process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
 process.env.R2_SECRET_ACCESS_KEY = 'test-r2-secret-key';
 process.env.R2_BUCKET_NAME = 'test-bucket';
+process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 
 // Mock Next.js modules that aren't available in test environment

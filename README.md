@@ -129,6 +129,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `R2_ACCESS_KEY_ID`
       - `R2_SECRET_ACCESS_KEY`
       - `R2_BUCKET_NAME`
+      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
       - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
    - AI 3rd party services
       - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation

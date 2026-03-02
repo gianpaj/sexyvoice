@@ -207,6 +207,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
+    if (!speechApiBucket) {
+      return respond(
+        createApiError({
+          message: 'R2_SPEECH_API_BUCKET_NAME is not configured',
+          type: 'server_error',
+          code: 'server_error',
+        }),
+        { status: 500 },
+      );
+    }
+
     const isGeminiVoice = voiceObj.model === 'gpro';
     const provider = isGeminiVoice ? 'google' : 'replicate';
     let modelUsed = voiceObj.model;
@@ -282,7 +294,12 @@ export async function POST(request: Request) {
       }
 
       const audioBuffer = convertToWav(data, mimeType);
-      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
+      uploadUrl = await uploadFileToR2(
+        filename,
+        audioBuffer,
+        'audio/wav',
+        speechApiBucket,
+      );
     } else {
       const replicate = new Replicate();
       const output = (await replicate.run(
@@ -316,7 +333,12 @@ export async function POST(request: Request) {
         }
       }
       const audioBuffer = Buffer.concat(chunks);
-      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
+      uploadUrl = await uploadFileToR2(
+        filename,
+        audioBuffer,
+        'audio/mpeg',
+        speechApiBucket,
+      );
     }
 
     await redis.set(filename, uploadUrl);
