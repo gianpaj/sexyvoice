@@ -222,14 +222,33 @@ const mockRedisInstance = {
   ttl: mockRedisTtl,
 };
 
+const mockRatelimitLimit = vi.fn().mockResolvedValue({
+  success: true,
+  limit: 60,
+  remaining: 59,
+  reset: Date.now() + 60_000,
+});
+
 vi.mock('@upstash/redis', () => ({
   Redis: {
     fromEnv: vi.fn(() => mockRedisInstance),
   },
 }));
 
+vi.mock('@upstash/ratelimit', () => ({
+  Ratelimit: class MockRatelimit {
+    static tokenBucket = vi.fn(() => 'token_bucket_limiter');
+    // biome-ignore lint/correctness/noUnusedFunctionParameters: Mirrors SDK constructor shape for tests.
+    constructor(_config: unknown) {}
+    limit(identifier: string) {
+      return mockRatelimitLimit(identifier);
+    }
+  },
+}));
+
 // Export mocks for test access
 export {
+  mockRatelimitLimit,
   mockRedisDel,
   mockRedisExpire,
   mockRedisGet,

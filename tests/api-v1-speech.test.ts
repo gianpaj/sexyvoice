@@ -8,8 +8,8 @@ import {
 } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import {
+  mockRatelimitLimit,
   mockRedisGet,
-  mockRedisIncr,
   resetMockGoogleGenAIFactory,
   setMockGoogleGenAIFactory,
 } from './setup';
@@ -185,8 +185,13 @@ describe('/api/v1/speech', () => {
     expect(json.error.code).toBe('insufficient_credits');
   });
 
-  it('returns 429 when Redis rate limit is exceeded', async () => {
-    mockRedisIncr.mockResolvedValueOnce(61);
+  it('returns 429 when rate limit is exceeded', async () => {
+    mockRatelimitLimit.mockResolvedValueOnce({
+      success: false,
+      limit: 60,
+      remaining: 0,
+      reset: Date.now() + 60_000,
+    });
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
