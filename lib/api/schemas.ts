@@ -22,7 +22,7 @@ export const ErrorResponseSchema = z.object({
   }),
 });
 
-export const VoiceGenerationRequestSchema = z.object({
+export const VoiceGenerationRequestSchema = z.strictObject({
   model: z.enum(['gpro', 'kokoro']).describe('The voice model to use'),
   input: z
     .string()
@@ -39,17 +39,17 @@ export const VoiceGenerationRequestSchema = z.object({
     .enum(['wav', 'mp3'])
     .optional()
     .describe('Audio format. Default depends on model'),
-  speed: z
-    .number()
-    .min(0.5)
-    .max(2.0)
-    .optional()
-    .default(1.0)
-    .describe('Speech speed multiplier. Range: [0.5, 2.0]'),
   style: z
     .string()
     .optional()
     .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
+  seed: z
+    .number()
+    .int()
+    .optional()
+    .describe(
+      'Optional deterministic seed for providers that support it (e.g. Gemini)',
+    ),
 });
 
 export const VoiceGenerationResponseSchema = z.object({

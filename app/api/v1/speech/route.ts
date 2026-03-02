@@ -91,21 +91,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { model, input, voice, response_format, speed, style } = parsed.data;
+    const { model, input, voice, response_format, style, seed } = parsed.data;
     const finalText = style ? `${style}: ${input}` : input;
-
-    if (speed !== 1) {
-      return jsonWithRateLimitHeaders(
-        createApiError({
-          message: 'Only speed=1.0 is currently supported',
-          type: 'invalid_request_error',
-          code: 'speed_not_supported',
-          param: 'speed',
-        }),
-        { status: 400 },
-        rateLimit,
-      );
-    }
 
     const userId = authResult.userId;
 
@@ -185,7 +172,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const hash = await generateHash(`${finalText}-${voice}`);
+    const hash = await generateHash(`${finalText}-${voice}-${seed ?? 'none'}`);
     const userHasPaid = await hasUserPaid(userId);
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
     const extension = defaultFormat;
@@ -208,6 +195,7 @@ export async function POST(request: Request) {
           voiceName: voice,
           model,
           textLength: finalText.length,
+          ...(seed !== undefined ? { seed } : {}),
           cached: true,
           endpoint: '/api/v1/speech',
         },
@@ -241,6 +229,7 @@ export async function POST(request: Request) {
       });
       const config: GenerateContentConfig = {
         responseModalities: ['AUDIO'],
+        ...(seed !== undefined ? { seed } : {}),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -379,6 +368,7 @@ export async function POST(request: Request) {
         apiKeyId: authResult.apiKeyId,
         sourceType: 'api_tts',
         dollarAmount,
+        ...(seed !== undefined ? { seed } : {}),
       },
     });
 
@@ -400,6 +390,7 @@ export async function POST(request: Request) {
         model: modelUsed,
         textPreview: finalText.slice(0, 100),
         textLength: finalText.length,
+        ...(seed !== undefined ? { seed } : {}),
         isGeminiVoice,
         userHasPaid,
         predictionId: replicateResponse?.id ?? null,

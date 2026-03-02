@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/v1/speech/route';
 import { getCredits, reduceCredits } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
-import { mockRedisGet, mockRedisIncr } from './setup';
+import {
+  mockRedisGet,
+  mockRedisIncr,
+  resetMockGoogleGenAIFactory,
+  setMockGoogleGenAIFactory,
+} from './setup';
 
 const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
 const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
@@ -11,6 +16,7 @@ const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 describe('/api/v1/speech', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetMockGoogleGenAIFactory();
   });
 
   it('returns 401 when API key is missing', async () => {
@@ -71,8 +77,8 @@ describe('/api/v1/speech', () => {
     const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(json.error.code).toBe('speed_not_supported');
-    expect(json.error.param).toBe('speed');
+    expect(json.error.code).toBe('invalid_request');
+    expect(json.error.message).toBe('Unrecognized key: "speed"');
   });
 
   it('returns 400 when voice model does not match requested model', async () => {
@@ -261,5 +267,92 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(400);
     expect(json.error.code).toBe('invalid_request');
     expect(json.error.message).toBe('Invalid JSON payload');
+  });
+
+  it('passes optional seed to Gemini provider config', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+        totalTokenCount: 23,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: {
+        countTokens: vi.fn(),
+        generateContent,
+      },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'Hello world',
+        voice: 'poe',
+        seed: 1234,
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalled();
+    expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
+  });
+
+  it('uses seed in hash input to avoid cache key collisions', async () => {
+    const unseededRequest = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'kokoro',
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const seededRequest = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'kokoro',
+        input: 'Hello world',
+        voice: 'tara',
+        seed: 999,
+      }),
+    });
+
+    await POST(unseededRequest);
+    await POST(seededRequest);
+
+    expect(mockRedisGet).toHaveBeenCalledTimes(2);
+    const firstKey = mockRedisGet.mock.calls[0][0];
+    const secondKey = mockRedisGet.mock.calls[1][0];
+    expect(firstKey).not.toBe(secondKey);
   });
 });
