@@ -18,10 +18,10 @@ export function createExternalApiOpenApiDocument() {
     },
     components: {
       securitySchemes: {
-        ApiKeyAuth: {
-          type: 'apiKey',
-          in: 'header',
-          name: 'X-API-Key',
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'API Key',
         },
       },
       schemas: {
@@ -35,7 +35,7 @@ export function createExternalApiOpenApiDocument() {
     paths: {
       '/api/v1/speech': {
         post: {
-          security: [{ ApiKeyAuth: [] }],
+          security: [{ BearerAuth: [] }],
           summary: 'Generate speech audio',
           requestBody: {
             required: true,
@@ -142,7 +142,7 @@ export function createExternalApiOpenApiDocument() {
       },
       '/api/v1/voices': {
         get: {
-          security: [{ ApiKeyAuth: [] }],
+          security: [{ BearerAuth: [] }],
           summary: 'List available voices',
           responses: {
             200: {
@@ -158,7 +158,7 @@ export function createExternalApiOpenApiDocument() {
       },
       '/api/v1/models': {
         get: {
-          security: [{ ApiKeyAuth: [] }],
+          security: [{ BearerAuth: [] }],
           summary: 'List available models',
           responses: {
             200: {

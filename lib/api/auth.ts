@@ -1,76 +1,91 @@
-import { createApiError } from '@/lib/api/errors';
+import { createHash, randomBytes } from 'node:crypto';
 
-function parseConfiguredApiKeys() {
-  const configured =
-    process.env.EXTERNAL_API_KEYS || process.env.EXTERNAL_API_KEY;
-  if (!configured) {
-    return [];
+import { createAdminClient } from '@/lib/supabase/admin';
+
+const API_KEY_PREFIX = 'sk_live_';
+const API_KEY_RANDOM_LENGTH = 32;
+const API_KEY_PREFIX_LENGTH = 12;
+const API_KEY_REGEX = /^sk_live_[A-Za-z0-9]{32}$/;
+
+function createRandomAlphaNumeric(length: number): string {
+  const alphabet =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = randomBytes(length);
+  let output = '';
+  for (const value of bytes) {
+    output += alphabet[value % alphabet.length];
   }
-  return configured
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
+  return output;
 }
 
-function extractApiKey(request: Request) {
-  const xApiKey = request.headers.get('x-api-key');
-  if (xApiKey) {
-    return xApiKey.trim();
-  }
+export function hashApiKey(key: string): string {
+  return createHash('sha256').update(key).digest('hex');
+}
 
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    return null;
-  }
+export function generateApiKey(): {
+  key: string;
+  hash: string;
+  prefix: string;
+} {
+  const key = `${API_KEY_PREFIX}${createRandomAlphaNumeric(API_KEY_RANDOM_LENGTH)}`;
+  return {
+    key,
+    hash: hashApiKey(key),
+    prefix: key.slice(0, API_KEY_PREFIX_LENGTH),
+  };
+}
 
+function extractBearerToken(authHeader: string): string | null {
   const [scheme, token] = authHeader.split(' ');
   if (scheme?.toLowerCase() !== 'bearer' || !token) {
     return null;
   }
-
   return token.trim();
 }
 
-export function validateApiKey(request: Request) {
-  const configuredKeys = parseConfiguredApiKeys();
-  if (configuredKeys.length === 0) {
-    return {
-      ok: false,
-      status: 500,
-      body: createApiError({
-        message: 'External API key is not configured on the server environment',
-        type: 'server_error',
-        code: 'server_error',
-      }),
-    } as const;
+export async function validateApiKey(authHeader: string): Promise<{
+  userId: string;
+  apiKeyId: string;
+  keyHash: string;
+} | null> {
+  const token = extractBearerToken(authHeader);
+  if (!(token && API_KEY_REGEX.test(token))) {
+    return null;
   }
 
-  const incomingKey = extractApiKey(request);
-  if (!incomingKey) {
-    return {
-      ok: false,
-      status: 401,
-      body: createApiError({
-        message: 'Missing API key',
-        type: 'authentication_error',
-        param: 'x-api-key',
-        code: 'invalid_api_key',
-      }),
-    } as const;
+  const keyHash = hashApiKey(token);
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('api_keys')
+    .select('id, user_id, key_hash, is_active, expires_at')
+    .eq('key_hash', keyHash)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
   }
 
-  if (!configuredKeys.includes(incomingKey)) {
-    return {
-      ok: false,
-      status: 401,
-      body: createApiError({
-        message: 'Invalid API key',
-        type: 'authentication_error',
-        param: 'x-api-key',
-        code: 'invalid_api_key',
-      }),
-    } as const;
+  if (data.expires_at && new Date(data.expires_at).getTime() <= Date.now()) {
+    return null;
   }
 
-  return { ok: true } as const;
+  return {
+    userId: data.user_id,
+    apiKeyId: data.id,
+    keyHash,
+  };
+}
+
+export async function updateApiKeyLastUsed(keyHash: string): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('update_api_key_last_used', {
+    p_key_hash: keyHash,
+  });
+  if (error) {
+    console.warn('Failed to update api key last_used_at', {
+      code: error.code,
+      message: error.message,
+    });
+  }
 }

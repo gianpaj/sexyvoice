@@ -87,6 +87,48 @@ declare type Database = {
           },
         ];
       };
+      api_keys: {
+        Row: {
+          created_at: string;
+          expires_at: string | null;
+          id: string;
+          is_active: boolean;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at: string | null;
+          metadata: Json;
+          name: string;
+          permissions: Json;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at?: string | null;
+          metadata?: Json;
+          name: string;
+          permissions?: Json;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          key_hash?: string;
+          key_prefix?: string;
+          last_used_at?: string | null;
+          metadata?: Json;
+          name?: string;
+          permissions?: Json;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       call_sessions: {
         Row: {
           billed_minutes: number;
@@ -488,6 +530,10 @@ declare type Database = {
       };
       increment_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
+        Returns: undefined;
+      };
+      update_api_key_last_used: {
+        Args: { p_key_hash: string };
         Returns: undefined;
       };
     };

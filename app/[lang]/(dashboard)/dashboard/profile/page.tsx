@@ -9,6 +9,7 @@ import {
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
+import { ApiKeys } from './api-keys';
 import { DeleteAccountForm } from './delete-account-form';
 import { SecurityForm } from './security-form';
 
@@ -30,7 +31,7 @@ export default async function ProfilePage(props: {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8">
       {/* <div>
         <h2 className="text-3xl font-bold tracking-tight">Profile Settings</h2>
         <p className="text-muted-foreground">
@@ -76,6 +77,7 @@ export default async function ProfilePage(props: {
           <DeleteAccountForm dict={dict} lang={lang} />
         </CardContent>
       </Card>
+      <ApiKeys />
       {/* </TabsContent> */}
       {/* </Tabs> */}
     </div>

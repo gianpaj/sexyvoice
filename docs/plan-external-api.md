@@ -292,3 +292,66 @@ The current plan has a `zodToOpenAPI()` helper that's described as "simplified."
 | 10 | Use `zod-openapi` library | Medium | Reliable schema conversion |
 
 The current plan is well-structured. These changes refine it by incorporating the best patterns from both OpenAI and MiniMax while avoiding the complexity that doesn't apply to SexyVoice's current capabilities.
+
+---
+
+## Additional Requirements for User-Facing External API
+
+To make the external API production-ready for end users, add API key lifecycle
+management in DB, backend auth, and dashboard UI.
+
+### 1. Database: `api_keys` table + migration
+
+- Create migration:
+  `supabase/migrations/20260108170000_create_api_keys_table.sql`
+- Table columns:
+  - `id` UUID primary key
+  - `user_id` UUID references `auth.users(id)` with `ON DELETE CASCADE`
+  - `key_hash` TEXT UNIQUE (SHA-256 hash only, never store raw key)
+  - `key_prefix` VARCHAR(12) (display identifier, e.g. `sk_live_abc1`)
+  - `name` TEXT (user-provided description)
+  - `created_at` TIMESTAMPTZ
+  - `last_used_at` TIMESTAMPTZ nullable
+  - `expires_at` TIMESTAMPTZ nullable
+  - `is_active` BOOLEAN default true
+  - `permissions` JSONB (future scopes)
+  - `metadata` JSONB (future extensibility)
+
+### 2. RLS + function
+
+- Enable RLS for `api_keys`.
+- Add policies so authenticated users can only `SELECT/INSERT/UPDATE/DELETE`
+  their own keys (`auth.uid() = user_id`).
+- Add function:
+  `update_api_key_last_used(p_key_hash TEXT)` to update `last_used_at` for valid
+  keys.
+- Restrict function execution to `service_role`.
+
+### 3. API key auth implementation (`lib/api/auth.ts`)
+
+- Implement:
+  - `generateApiKey(): { key; hash; prefix }`
+  - `hashApiKey(key: string): string`
+  - `validateApiKey(authHeader: string)` returning
+    `{ userId; apiKeyId; keyHash } | null`
+  - `updateApiKeyLastUsed(keyHash: string): Promise<void>`
+- Key format:
+  - `sk_live_` + 32 alphanumeric chars
+  - Prefix storage: first 12 chars
+  - Store only hash in DB
+
+### 4. Dashboard UI
+
+- Add key management UI at:
+  `app/[lang]/(dashboard)/dashboard/profile/api-keys.tsx`
+- Allow users to:
+  - list keys
+  - create key (show raw key once)
+  - revoke/deactivate key
+
+### 5. External API updates
+
+- Update `/api/v1/*` routes to authenticate via bearer API key from DB (not env).
+- Apply Redis-backed rate limiting per API key hash.
+- Return rate-limit headers from live limiter state.
+- Update external API tests for bearer auth + DB key validation + Redis limiter.

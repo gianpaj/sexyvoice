@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
 import { getCredits } from '@/lib/supabase/queries';
-import { mockRedisGet } from './setup';
+import { mockRedisGet, mockRedisIncr } from './setup';
+
+const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 
 describe('/api/v1/speech', () => {
   beforeEach(() => {
@@ -32,7 +35,7 @@ describe('/api/v1/speech', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': 'test-external-api-key',
+        authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
         input: 'Hello world',
@@ -53,7 +56,7 @@ describe('/api/v1/speech', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': 'test-external-api-key',
+        authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
         model: 'kokoro',
@@ -76,7 +79,7 @@ describe('/api/v1/speech', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': 'test-external-api-key',
+        authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
         model: 'gpro',
@@ -98,7 +101,7 @@ describe('/api/v1/speech', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': 'test-external-api-key',
+        authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
         model: 'kokoro',
@@ -125,7 +128,7 @@ describe('/api/v1/speech', () => {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': 'test-external-api-key',
+        authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
         model: 'kokoro',
@@ -139,5 +142,27 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(402);
     expect(json.error.code).toBe('insufficient_credits');
+  });
+
+  it('returns 429 when Redis rate limit is exceeded', async () => {
+    mockRedisIncr.mockResolvedValueOnce(61);
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'kokoro',
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(json.error.code).toBe('rate_limit_exceeded');
   });
 });

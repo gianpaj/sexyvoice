@@ -5,11 +5,14 @@ import { GET as getOpenApi } from '@/app/api/v1/openapi/route';
 import { GET as getVoices } from '@/app/api/v1/voices/route';
 import { createClient } from '@/lib/supabase/server';
 
+const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
+
 describe('/api/v1 metadata endpoints', () => {
   it('returns model catalog', async () => {
     const request = new Request('http://localhost/api/v1/models', {
       method: 'GET',
-      headers: { 'x-api-key': 'test-external-api-key' },
+      headers: { authorization: TEST_AUTH_HEADER },
     });
 
     const response = await getModels(request);
@@ -53,7 +56,7 @@ describe('/api/v1 metadata endpoints', () => {
 
     const request = new Request('http://localhost/api/v1/voices', {
       method: 'GET',
-      headers: { 'x-api-key': 'test-external-api-key' },
+      headers: { authorization: TEST_AUTH_HEADER },
     });
 
     const response = await getVoices(request);
@@ -68,7 +71,7 @@ describe('/api/v1 metadata endpoints', () => {
   it('returns OpenAPI 3.1.0 document with speech path', async () => {
     const request = new Request('http://localhost/api/v1/openapi', {
       method: 'GET',
-      headers: { 'x-api-key': 'test-external-api-key' },
+      headers: { authorization: TEST_AUTH_HEADER },
     });
 
     const response = await getOpenApi(request);

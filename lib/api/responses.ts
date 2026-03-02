@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server';
 
-import { createRateLimitHeaders } from '@/lib/api/rate-limit';
+import {
+  createDefaultRateLimitState,
+  createRateLimitHeaders,
+  type RateLimitState,
+} from '@/lib/api/rate-limit';
 
 export function jsonWithRateLimitHeaders(
   body: unknown,
   init: ResponseInit = {},
+  rateLimit?: RateLimitState,
 ): NextResponse {
   const response = NextResponse.json(body, init);
-  const rateHeaders = createRateLimitHeaders();
+  const rateHeaders = createRateLimitHeaders(
+    rateLimit ?? createDefaultRateLimitState(),
+  );
   for (const [key, value] of rateHeaders.entries()) {
     response.headers.set(key, value);
   }

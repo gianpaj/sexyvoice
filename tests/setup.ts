@@ -68,7 +68,6 @@ process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
-process.env.EXTERNAL_API_KEY = 'test-external-api-key';
 // R2 environment variables
 process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
@@ -143,6 +142,28 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }));
 
+const mockAdminFrom = vi.fn(() => ({
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  maybeSingle: vi.fn().mockResolvedValue({
+    data: {
+      id: 'test-api-key-id',
+      user_id: 'test-user-id',
+      key_hash: 'test-key-hash',
+      is_active: true,
+      expires_at: null,
+    },
+    error: null,
+  }),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(() => ({
+    from: mockAdminFrom,
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+  })),
+}));
+
 // Mock Supabase queries specifically
 vi.mock('@/lib/supabase/queries', async () => {
   const actual = await vi.importActual<typeof import('@/lib/supabase/queries')>(
@@ -187,12 +208,18 @@ const mockRedisGet = vi.fn().mockResolvedValue(null);
 const mockRedisSet = vi.fn().mockResolvedValue('OK');
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockRedisKeys = vi.fn().mockResolvedValue([]);
+const mockRedisIncr = vi.fn().mockResolvedValue(1);
+const mockRedisExpire = vi.fn().mockResolvedValue(1);
+const mockRedisTtl = vi.fn().mockResolvedValue(60);
 
 const mockRedisInstance = {
   get: mockRedisGet,
   set: mockRedisSet,
   del: mockRedisDel,
   keys: mockRedisKeys,
+  incr: mockRedisIncr,
+  expire: mockRedisExpire,
+  ttl: mockRedisTtl,
 };
 
 vi.mock('@upstash/redis', () => ({
@@ -202,7 +229,15 @@ vi.mock('@upstash/redis', () => ({
 }));
 
 // Export mocks for test access
-export { mockRedisGet, mockRedisSet, mockRedisDel, mockRedisKeys };
+export {
+  mockRedisDel,
+  mockRedisExpire,
+  mockRedisGet,
+  mockRedisIncr,
+  mockRedisKeys,
+  mockRedisSet,
+  mockRedisTtl,
+};
 
 // Mock Vercel Blob
 const mockBlobPut = vi.fn().mockImplementation((filename: string) =>

@@ -10,9 +10,10 @@ import { Redis } from '@upstash/redis';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
-import { validateApiKey } from '@/lib/api/auth';
+import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
 import { getDefaultFormat, resolveExternalModelId } from '@/lib/api/model';
+import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { convertToWav, generateHash } from '@/lib/audio';
@@ -25,7 +26,6 @@ import {
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
-import { createClient } from '@/lib/supabase/server';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -38,20 +38,56 @@ const redis = Redis.fromEnv();
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
-  const authResult = validateApiKey(request);
-  if (!authResult.ok) {
-    return jsonWithRateLimitHeaders(authResult.body, {
-      status: authResult.status,
-    });
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader) {
+    return jsonWithRateLimitHeaders(
+      createApiError({
+        message: 'Missing Authorization header',
+        type: 'authentication_error',
+        code: 'invalid_api_key',
+        param: 'authorization',
+      }),
+      { status: 401 },
+    );
+  }
+
+  const authResult = await validateApiKey(authHeader);
+  if (!authResult) {
+    return jsonWithRateLimitHeaders(
+      createApiError({
+        message: 'Invalid API key',
+        type: 'authentication_error',
+        code: 'invalid_api_key',
+        param: 'authorization',
+      }),
+      { status: 401 },
+    );
+  }
+
+  const rateLimit = await consumeRateLimit(authResult.keyHash);
+  if (!rateLimit.allowed) {
+    return jsonWithRateLimitHeaders(
+      createApiError({
+        message: 'Rate limit exceeded',
+        type: 'rate_limit_error',
+        code: 'rate_limit_exceeded',
+      }),
+      { status: 429 },
+      rateLimit,
+    );
   }
 
   try {
     const payload = await request.json();
     const parsed = VoiceGenerationRequestSchema.safeParse(payload);
     if (!parsed.success) {
-      return jsonWithRateLimitHeaders(zodErrorToApiError(parsed.error), {
-        status: 400,
-      });
+      return jsonWithRateLimitHeaders(
+        zodErrorToApiError(parsed.error),
+        {
+          status: 400,
+        },
+        rateLimit,
+      );
     }
 
     const { model, input, voice, response_format, speed, style } = parsed.data;
@@ -65,24 +101,11 @@ export async function POST(request: Request) {
           param: 'speed',
         }),
         { status: 400 },
+        rateLimit,
       );
     }
 
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
-    const userId = user?.id ?? process.env.EXTERNAL_API_DEFAULT_USER_ID ?? null;
-
-    if (!userId) {
-      return jsonWithRateLimitHeaders(
-        createApiError({
-          message: 'No billing account available for this API key',
-          type: 'permission_error',
-          code: 'api_key_inactive',
-        }),
-        { status: 403 },
-      );
-    }
+    const userId = authResult.userId;
 
     let voiceObj: Awaited<ReturnType<typeof getVoiceIdByName>> | null = null;
     try {
@@ -100,6 +123,7 @@ export async function POST(request: Request) {
           param: 'voice',
         }),
         { status: 404 },
+        rateLimit,
       );
     }
 
@@ -113,6 +137,7 @@ export async function POST(request: Request) {
           param: 'model',
         }),
         { status: 400 },
+        rateLimit,
       );
     }
 
@@ -126,6 +151,7 @@ export async function POST(request: Request) {
           param: 'input',
         }),
         { status: 400 },
+        rateLimit,
       );
     }
 
@@ -139,6 +165,7 @@ export async function POST(request: Request) {
           param: 'response_format',
         }),
         { status: 400 },
+        rateLimit,
       );
     }
 
@@ -152,6 +179,7 @@ export async function POST(request: Request) {
           code: 'insufficient_credits',
         }),
         { status: 402 },
+        rateLimit,
       );
     }
 
@@ -176,6 +204,7 @@ export async function POST(request: Request) {
           },
         },
         { status: 200 },
+        rateLimit,
       );
     }
 
@@ -248,6 +277,7 @@ export async function POST(request: Request) {
             param: isProhibitedContent ? 'input' : null,
           }),
           { status: isProhibitedContent ? 422 : 500 },
+          rateLimit,
         );
       }
 
@@ -271,6 +301,7 @@ export async function POST(request: Request) {
             code: 'server_error',
           }),
           { status: 500 },
+          rateLimit,
         );
       }
 
@@ -352,6 +383,7 @@ export async function POST(request: Request) {
         },
       },
       { status: 200 },
+      rateLimit,
     );
   } catch (error) {
     if (
@@ -367,6 +399,7 @@ export async function POST(request: Request) {
           code: isPolicy ? 'content_policy_violation' : 'server_error',
         }),
         { status: isPolicy ? 422 : 500 },
+        rateLimit,
       );
     }
 
@@ -381,6 +414,7 @@ export async function POST(request: Request) {
           code: 'invalid_request',
         }),
         { status: 400 },
+        rateLimit,
       );
     }
 
@@ -392,7 +426,10 @@ export async function POST(request: Request) {
         code: 'server_error',
       }),
       { status: 500 },
+      rateLimit,
     );
+  } finally {
+    await updateApiKeyLastUsed(authResult.keyHash);
   }
 }
 
