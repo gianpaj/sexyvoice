@@ -29,6 +29,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const [currentTime, setCurrentTime] = useState<number | null>(null);
   const audioRef = useRef<Float32Array | null>(null);
   const loadedModelRef = useRef<string | null>(null);
+  const prevStateRef = useRef<string>('idle');
 
   const transcriber = useTranscriber();
 
@@ -80,13 +81,13 @@ export default function TranscribeClient({ lang, dict }: Props) {
     }
   }, [transcriber, model, language, subtask, isEnglishOnly]);
 
-  // Auto-transcribe when model becomes ready
+  // Auto-transcribe when model finishes loading (loading → ready transition)
   useEffect(() => {
-    if (
-      transcriber.state === 'ready' &&
-      audioRef.current &&
-      loadedModelRef.current !== model
-    ) {
+    const justLoaded =
+      prevStateRef.current === 'loading' && transcriber.state === 'ready';
+    prevStateRef.current = transcriber.state;
+
+    if (justLoaded && audioRef.current) {
       loadedModelRef.current = model;
       transcriber.transcribe(
         audioRef.current,
