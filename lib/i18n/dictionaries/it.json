@@ -729,7 +729,7 @@
         },
         {
           "question": "Quali lingue sono supportate?",
-          "answer": "I modelli Whisper multilingue supportano oltre 99 lingue, tra cui spagnolo, francese, tedesco, giapponese, arabo, hindi, portoghese, russo, cinese, coreano e molte altre."
+          "answer": "I modelli Whisper multilingue supportano 32 lingue: arabo, bengalese, ceco, cinese, coreano, danese, ebraico, finlandese, francese, giapponese, greco, hindi, indonesiano, inglese, italiano, malese, norvegese, olandese, polacco, portoghese, rumeno, russo, spagnolo, svedese, tamil, telugu, thailandese, turco, ucraino, ungherese e vietnamita."
         },
         {
           "question": "Quali formati audio sono supportati?",

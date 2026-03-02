@@ -729,7 +729,7 @@
         },
         {
           "question": "Hvilke sprog understøttes?",
-          "answer": "De flersprogede Whisper-modeller understøtter over 99 sprog, herunder spansk, fransk, tysk, japansk, arabisk, hindi, portugisisk, italiensk, russisk, kinesisk, koreansk og mange flere."
+          "answer": "De flersprogede Whisper-modeller understøtter 32 sprog: arabisk, bengali, dansk, engelsk, finsk, fransk, græsk, hebraisk, hindi, hollandsk, indonesisk, italiensk, japansk, kinesisk, koreansk, malaysisk, norsk, polsk, portugisisk, rumænsk, russisk, spansk, svensk, tjekkisk, thai, tamil, telugu, tyrkisk, tysk, ukrainsk, ungarsk og vietnamesisk."
         },
         {
           "question": "Hvilke lydformater understøttes?",

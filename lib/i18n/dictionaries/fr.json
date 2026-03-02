@@ -729,7 +729,7 @@
         },
         {
           "question": "Quelles langues sont prises en charge ?",
-          "answer": "Les modèles Whisper multilingues prennent en charge plus de 99 langues, notamment l'espagnol, l'allemand, le japonais, l'arabe, l'hindi, le portugais, l'italien, le russe, le chinois, le coréen et bien d'autres."
+          "answer": "Les modèles Whisper multilingues prennent en charge 32 langues : allemand, anglais, arabe, bengali, chinois, coréen, danois, espagnol, finnois, français, grec, hébreu, hindi, hongrois, indonésien, italien, japonais, malais, néerlandais, norvégien, polonais, portugais, roumain, russe, suédois, tamoul, tchèque, thaï, télougou, turc, ukrainien et vietnamien."
         },
         {
           "question": "Quels formats audio sont pris en charge ?",
