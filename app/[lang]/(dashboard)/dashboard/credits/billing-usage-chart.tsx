@@ -3,7 +3,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
-import { Bar, BarChart, CartesianGrid, Line, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import {
   type ChartConfig,
@@ -70,6 +77,15 @@ function isoDate(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
+function addDaysToIsoDate(value: string, days: number): string {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return isoDate(parsed);
+}
+
 export function BillingUsageChart() {
   const router = useRouter();
   const pathname = usePathname();
@@ -86,7 +102,7 @@ export function BillingUsageChart() {
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     params.set('starting_on', startingOn);
-    params.set('ending_before', endingBefore);
+    params.set('ending_before', addDaysToIsoDate(endingBefore, 1));
     params.set('group_by', groupBy);
     params.set('bucket_width', bucketWidth);
     if (sourceType !== 'all') {
@@ -110,26 +126,27 @@ export function BillingUsageChart() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const bucketTotals = (data?.data ?? []).map((bucket) => {
-    const totalRequests = bucket.results.reduce(
-      (sum, result) => sum + result.requests,
-      0,
-    );
-    const totalCost = bucket.results.reduce(
-      (sum, result) => sum + result.total_dollar_amount,
-      0,
-    );
-    const totalCredits = bucket.results.reduce(
-      (sum, result) => sum + result.total_credits_used,
-      0,
-    );
-    return {
-      date: bucket.start_time_iso.slice(0, 10),
-      requests: totalRequests,
-      cost: totalCost,
-      credits: totalCredits,
-    };
-  });
+  const bucketTotals = useMemo(
+    () =>
+      (data?.data ?? []).map((bucket) => {
+        const totals = bucket.results.reduce(
+          (accumulator, result) => {
+            accumulator.requests += result.requests;
+            accumulator.cost += result.total_dollar_amount;
+            accumulator.credits += result.total_credits_used;
+            return accumulator;
+          },
+          { requests: 0, cost: 0, credits: 0 },
+        );
+        return {
+          date: bucket.start_time_iso.slice(0, 10),
+          requests: totals.requests,
+          cost: totals.cost,
+          credits: totals.credits,
+        };
+      }),
+    [data],
+  );
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
@@ -212,7 +229,7 @@ export function BillingUsageChart() {
 
       {!(isLoading || error) && bucketTotals.length > 0 ? (
         <ChartContainer className="h-[320px] w-full" config={chartConfig}>
-          <BarChart accessibilityLayer data={bucketTotals}>
+          <ComposedChart accessibilityLayer data={bucketTotals}>
             <CartesianGrid vertical={false} />
             <XAxis
               axisLine={false}
@@ -258,7 +275,7 @@ export function BillingUsageChart() {
               strokeWidth={2}
               yAxisId="right"
             />
-          </BarChart>
+          </ComposedChart>
         </ChartContainer>
       ) : null}
     </div>

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
-import { getCredits } from '@/lib/supabase/queries';
+import { getCredits, reduceCredits } from '@/lib/supabase/queries';
+import { estimateCredits } from '@/lib/utils';
 import { mockRedisGet, mockRedisIncr } from './setup';
 
 const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
@@ -164,5 +165,101 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(429);
     expect(json.error.code).toBe('rate_limit_exceeded');
+  });
+
+  it('returns unsupported_response_format code for unsupported format', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'kokoro',
+        input: 'Hello world',
+        voice: 'tara',
+        response_format: 'wav',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('unsupported_response_format');
+    expect(json.error.param).toBe('response_format');
+  });
+
+  it('validates max length against styled text', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'kokoro',
+        input: 'x'.repeat(498),
+        style: 'aa',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('input_too_long');
+  });
+
+  it('charges credits based on full styled text length', async () => {
+    const input = 'hello';
+    const style = 'calm and slow';
+    const finalText = `${style}: ${input}`;
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'kokoro',
+        input,
+        style,
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.usage.input_characters).toBe(finalText.length);
+    expect(vi.mocked(reduceCredits)).toHaveBeenCalledWith({
+      userId: 'test-user-id',
+      amount: estimateCredits(
+        finalText,
+        'tara',
+        'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+      ),
+    });
+  });
+
+  it('returns 400 for malformed JSON payloads', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: '{bad-json',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('invalid_request');
+    expect(json.error.message).toBe('Invalid JSON payload');
   });
 });

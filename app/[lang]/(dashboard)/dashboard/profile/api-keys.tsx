@@ -185,6 +185,14 @@ export function ApiKeys() {
               >
                 <Copy className="h-4 w-4" />
               </Button>
+              <Button
+                onClick={() => setNewApiKeyValue(null)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                Dismiss
+              </Button>
             </div>
           </div>
         ) : null}

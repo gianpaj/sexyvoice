@@ -92,6 +92,7 @@ export async function POST(request: Request) {
     }
 
     const { model, input, voice, response_format, speed, style } = parsed.data;
+    const finalText = style ? `${style}: ${input}` : input;
 
     if (speed !== 1) {
       return jsonWithRateLimitHeaders(
@@ -143,10 +144,10 @@ export async function POST(request: Request) {
     }
 
     const maxLength = getCharactersLimit(voiceObj.model);
-    if (input.length > maxLength) {
+    if (finalText.length > maxLength) {
       return jsonWithRateLimitHeaders(
         createApiError({
-          message: `The input text exceeds the maximum length of ${maxLength} characters`,
+          message: `The input text exceeds the maximum length of ${maxLength} characters after applying style`,
           type: 'invalid_request_error',
           code: 'input_too_long',
           param: 'input',
@@ -162,7 +163,7 @@ export async function POST(request: Request) {
         createApiError({
           message: `Model "${model}" only supports "${defaultFormat}" output`,
           type: 'invalid_request_error',
-          code: 'invalid_request_error',
+          code: 'unsupported_response_format',
           param: 'response_format',
         }),
         { status: 400 },
@@ -171,7 +172,7 @@ export async function POST(request: Request) {
     }
 
     const currentCredits = await getCredits(userId);
-    const estimatedCredits = estimateCredits(input, voice, voiceObj.model);
+    const estimatedCredits = estimateCredits(finalText, voice, voiceObj.model);
     if (currentCredits < estimatedCredits) {
       return jsonWithRateLimitHeaders(
         createApiError({
@@ -184,7 +185,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText = style ? `${style}: ${input}` : input;
     const hash = await generateHash(`${finalText}-${voice}`);
     const userHasPaid = await hasUserPaid(userId);
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
@@ -198,16 +198,16 @@ export async function POST(request: Request) {
         sourceType: 'api_tts',
         apiKeyId: authResult.apiKeyId,
         model,
-        inputChars: input.length,
+        inputChars: finalText.length,
         dollarAmount: 0,
         unit: 'chars',
-        quantity: input.length,
+        quantity: finalText.length,
         creditsUsed: 0,
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
           model,
-          textLength: input.length,
+          textLength: finalText.length,
           cached: true,
           endpoint: '/api/v1/speech',
         },
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
           credits_remaining: currentCredits,
           cached: true,
           usage: {
-            input_characters: input.length,
+            input_characters: finalText.length,
             model,
           },
         },
@@ -360,7 +360,7 @@ export async function POST(request: Request) {
       sourceType: 'api_tts',
       provider,
       model,
-      inputChars: input.length,
+      inputChars: finalText.length,
     });
     const audioFileResult = await saveAudioFile({
       userId,
@@ -388,7 +388,7 @@ export async function POST(request: Request) {
       sourceId: audioFileResult.data?.id ?? null,
       apiKeyId: authResult.apiKeyId,
       model: modelUsed,
-      inputChars: input.length,
+      inputChars: finalText.length,
       durationSeconds: null,
       dollarAmount,
       unit: 'chars',
@@ -413,7 +413,7 @@ export async function POST(request: Request) {
         credits_remaining: Math.max(0, currentCredits - creditsUsed),
         cached: false,
         usage: {
-          input_characters: input.length,
+          input_characters: finalText.length,
           model,
         },
       },
@@ -438,10 +438,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      Error.isError(error) &&
-      error.message.includes('Unexpected end of JSON input')
-    ) {
+    if (error instanceof SyntaxError) {
       return jsonWithRateLimitHeaders(
         createApiError({
           message: 'Invalid JSON payload',

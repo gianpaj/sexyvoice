@@ -49,6 +49,19 @@ const getBadgeClasses = (name: string) => {
   return `${COLOR_PAIRS[index].bg} ${COLOR_PAIRS[index].text}`;
 };
 
+interface AudioUsageData {
+  sourceType?: string;
+  apiKeyId?: string;
+  dollarAmount?: number;
+}
+
+function getUsageData(value: unknown): AudioUsageData | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+  return value as AudioUsageData;
+}
+
 export function createColumns({
   showApiColumns,
 }: {
@@ -182,7 +195,7 @@ export function createColumns({
       id: 'api source',
       header: 'API Source',
       cell: ({ row }) => {
-        const usage = row.original.usage as Record<string, unknown> | null;
+        const usage = getUsageData(row.original.usage);
         const sourceType = usage?.sourceType;
         if (sourceType !== 'api_tts') {
           return <span className="text-muted-foreground">-</span>;
@@ -194,7 +207,7 @@ export function createColumns({
       id: 'api key',
       header: 'API Key',
       cell: ({ row }) => {
-        const usage = row.original.usage as Record<string, unknown> | null;
+        const usage = getUsageData(row.original.usage);
         const apiKeyId = usage?.apiKeyId;
         if (!apiKeyId || typeof apiKeyId !== 'string') {
           return <span className="text-muted-foreground">-</span>;
@@ -211,7 +224,7 @@ export function createColumns({
       id: 'api cost',
       header: 'API Cost',
       cell: ({ row }) => {
-        const usage = row.original.usage as Record<string, unknown> | null;
+        const usage = getUsageData(row.original.usage);
         const dollarAmount = usage?.dollarAmount;
         if (typeof dollarAmount !== 'number') {
           return <span className="text-muted-foreground">-</span>;

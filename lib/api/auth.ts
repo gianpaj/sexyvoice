@@ -10,10 +10,21 @@ const API_KEY_REGEX = /^sk_live_[A-Za-z0-9]{32}$/;
 function createRandomAlphaNumeric(length: number): string {
   const alphabet =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const bytes = randomBytes(length);
   let output = '';
-  for (const value of bytes) {
-    output += alphabet[value % alphabet.length];
+  const alphabetLength = alphabet.length;
+  const maxUnbiasedValue = Math.floor(256 / alphabetLength) * alphabetLength;
+
+  while (output.length < length) {
+    const bytes = randomBytes(length);
+    for (const value of bytes) {
+      if (value >= maxUnbiasedValue) {
+        continue;
+      }
+      output += alphabet[value % alphabetLength];
+      if (output.length === length) {
+        break;
+      }
+    }
   }
   return output;
 }

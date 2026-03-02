@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { generateApiKey } from '@/lib/api/auth';
 import { createClient } from '@/lib/supabase/server';
 
+const MAX_ACTIVE_API_KEYS = 10;
+
 const CreateApiKeySchema = z.object({
   name: z.string().min(1).max(100),
   expires_at: z.iso.datetime().optional().nullable(),
@@ -71,9 +73,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if ((count ?? 0) >= 10) {
+  if ((count ?? 0) >= MAX_ACTIVE_API_KEYS) {
     return NextResponse.json(
-      { error: 'Maximum of 10 active API keys allowed' },
+      { error: `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed` },
       { status: 400 },
     );
   }
