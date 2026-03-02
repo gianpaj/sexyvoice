@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 
 const CreateApiKeySchema = z.object({
   name: z.string().min(1).max(100),
-  expires_at: z.string().datetime().optional().nullable(),
+  expires_at: z.iso.datetime().optional().nullable(),
 });
 
 export async function GET() {

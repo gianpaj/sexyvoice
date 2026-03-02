@@ -13,6 +13,7 @@ import { getCharactersLimit } from '@/lib/ai';
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
 import { getDefaultFormat, resolveExternalModelId } from '@/lib/api/model';
+import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
@@ -192,6 +193,25 @@ export async function POST(request: Request) {
 
     const cachedUrl = await redis.get<string>(filename);
     if (cachedUrl) {
+      await insertUsageEvent({
+        userId,
+        sourceType: 'api_tts',
+        apiKeyId: authResult.apiKeyId,
+        model,
+        inputChars: input.length,
+        dollarAmount: 0,
+        unit: 'chars',
+        quantity: input.length,
+        creditsUsed: 0,
+        metadata: {
+          voiceId: voiceObj.id,
+          voiceName: voice,
+          model,
+          textLength: input.length,
+          cached: true,
+          endpoint: '/api/v1/speech',
+        },
+      });
       return jsonWithRateLimitHeaders(
         {
           url: cachedUrl,
@@ -209,6 +229,7 @@ export async function POST(request: Request) {
     }
 
     const isGeminiVoice = voiceObj.model === 'gpro';
+    const provider = isGeminiVoice ? 'google' : 'replicate';
     let modelUsed = voiceObj.model;
     let uploadUrl = '';
     let replicateResponse: Prediction | undefined;
@@ -335,6 +356,12 @@ export async function POST(request: Request) {
     }
 
     await reduceCredits({ userId, amount: creditsUsed });
+    const dollarAmount = calculateExternalApiDollarAmount({
+      sourceType: 'api_tts',
+      provider,
+      model,
+      inputChars: input.length,
+    });
     const audioFileResult = await saveAudioFile({
       userId,
       filename,
@@ -349,13 +376,21 @@ export async function POST(request: Request) {
       usage: {
         ...(usageMetadata ?? {}),
         userHasPaid,
+        apiKeyId: authResult.apiKeyId,
+        sourceType: 'api_tts',
+        dollarAmount,
       },
     });
 
     await insertUsageEvent({
       userId,
-      sourceType: 'tts',
+      sourceType: 'api_tts',
       sourceId: audioFileResult.data?.id ?? null,
+      apiKeyId: authResult.apiKeyId,
+      model: modelUsed,
+      inputChars: input.length,
+      durationSeconds: null,
+      dollarAmount,
       unit: 'chars',
       quantity: finalText.length,
       creditsUsed,

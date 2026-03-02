@@ -105,6 +105,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.62.0",
+    "recharts": "2.15.4",
     "rehype-highlight": "^7.0.2",
     "rehype-highlight-code-lines": "^1.2.1",
     "rehype-parse": "^9.0.1",

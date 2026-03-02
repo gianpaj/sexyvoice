@@ -34,6 +34,8 @@ const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
   live_call: 'bg-green-100 text-green-900 border-green-200',
   audio_processing: 'bg-orange-100 text-orange-900 border-orange-200',
+  api_tts: 'bg-indigo-100 text-indigo-900 border-indigo-200',
+  api_voice_cloning: 'bg-rose-100 text-rose-900 border-rose-200',
 };
 
 /**
@@ -125,7 +127,8 @@ export function createColumns(
       header: dict.table.sourceType,
       cell: ({ row }) => {
         const sourceType = row.original.source_type as UsageSourceType;
-        const label = dict.summary.byType[sourceType] || sourceType;
+        const labels = dict.summary.byType as Record<string, string>;
+        const label = labels[sourceType] || sourceType;
         return (
           <Badge
             className={`${SOURCE_TYPE_COLORS[sourceType]} border`}

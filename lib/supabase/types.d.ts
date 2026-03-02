@@ -404,11 +404,17 @@ declare type Database = {
       };
       usage_events: {
         Row: {
+          api_key_id: string | null;
           created_at: string;
           credits_used: number;
+          dollar_amount: number | null;
+          duration_seconds: number | null;
           id: string;
+          input_chars: number | null;
           metadata: Json | null;
+          model: string | null;
           occurred_at: string;
+          output_chars: number | null;
           quantity: number;
           source_id: string | null;
           source_type: Database['public']['Enums']['usage_source_type'];
@@ -416,11 +422,17 @@ declare type Database = {
           user_id: string;
         };
         Insert: {
+          api_key_id?: string | null;
           created_at?: string;
           credits_used: number;
+          dollar_amount?: number | null;
+          duration_seconds?: number | null;
           id?: string;
+          input_chars?: number | null;
           metadata?: Json | null;
+          model?: string | null;
           occurred_at?: string;
+          output_chars?: number | null;
           quantity: number;
           source_id?: string | null;
           source_type: Database['public']['Enums']['usage_source_type'];
@@ -428,11 +440,17 @@ declare type Database = {
           user_id: string;
         };
         Update: {
+          api_key_id?: string | null;
           created_at?: string;
           credits_used?: number;
+          dollar_amount?: number | null;
+          duration_seconds?: number | null;
           id?: string;
+          input_chars?: number | null;
           metadata?: Json | null;
+          model?: string | null;
           occurred_at?: string;
+          output_chars?: number | null;
           quantity?: number;
           source_id?: string | null;
           source_type?: Database['public']['Enums']['usage_source_type'];
@@ -440,6 +458,13 @@ declare type Database = {
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'usage_events_api_key_id_fkey';
+            columns: ['api_key_id'];
+            isOneToOne: false;
+            referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'usage_events_user_id_fkey';
             columns: ['user_id'];
@@ -513,7 +538,37 @@ declare type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      api_usage_daily: {
+        Row: {
+          api_key_id: string | null;
+          model: string | null;
+          requests: number | null;
+          source_type: Database['public']['Enums']['usage_source_type'] | null;
+          total_credits_used: number | null;
+          total_dollar_amount: number | null;
+          total_duration_seconds: number | null;
+          total_input_chars: number | null;
+          total_output_chars: number | null;
+          usage_date: string | null;
+          user_id: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'usage_events_api_key_id_fkey';
+            columns: ['api_key_id'];
+            isOneToOne: false;
+            referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'usage_events_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Functions: {
       decrement_user_credits: {
@@ -544,7 +599,9 @@ declare type Database = {
         | 'tts'
         | 'voice_cloning'
         | 'live_call'
-        | 'audio_processing';
+        | 'audio_processing'
+        | 'api_tts'
+        | 'api_voice_cloning';
       usage_unit_type: 'chars' | 'mins' | 'secs' | 'operation';
     };
     CompositeTypes: {

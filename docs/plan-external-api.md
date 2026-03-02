@@ -355,3 +355,27 @@ management in DB, backend auth, and dashboard UI.
 - Apply Redis-backed rate limiting per API key hash.
 - Return rate-limit headers from live limiter state.
 - Update external API tests for bearer auth + DB key validation + Redis limiter.
+
+### 6. Billing usage analytics
+
+- Extend `usage_events` to track API usage dimensions:
+  - `api_key_id`, `model`, `input_chars`, `output_chars`,
+    `duration_seconds`, `dollar_amount`
+- Add a server-side pricing function (hardcoded map for now) to compute
+  `dollar_amount` by `source_type + provider + model`.
+- Future step: move pricing map to DB table for versioned pricing changes.
+- Add external API-specific source types:
+  - `api_tts`
+  - `api_voice_cloning` (future external cloning endpoint)
+- Emit usage events from all `/api/v1/*` routes with these new source types.
+- Add daily aggregate view:
+  - `public.api_usage_daily`
+- Add billing query route:
+  - `GET /api/billing/usage`
+  - Supports:
+    - `starting_on`
+    - `ending_before`
+    - `bucket_width` (`1d`, `7d`)
+    - `group_by` (`source_type`, `api_key_id`, `model`)
+    - optional filters (`source_type`, `api_key_id`)
+- Sync billing date/group params with page search params in dashboard UI.
