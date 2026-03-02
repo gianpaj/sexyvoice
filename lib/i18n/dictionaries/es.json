@@ -729,7 +729,7 @@
         },
         {
           "question": "¿Qué idiomas admite?",
-          "answer": "Los modelos Whisper multilingües admiten más de 99 idiomas, incluyendo inglés, francés, alemán, japonés, árabe, hindi, portugués, italiano, ruso, chino, coreano y muchos más."
+          "answer": "Los modelos Whisper multilingües admiten 32 idiomas: alemán, árabe, bengalí, checo, chino, coreano, danés, español, finés, francés, griego, hebreo, hindi, húngaro, indonesio, inglés, italiano, japonés, malayo, neerlandés, noruego, polaco, portugués, rumano, ruso, sueco, tailandés, tamil, telugu, turco, ucraniano y vietnamita."
         },
         {
           "question": "¿Qué formatos de audio se admiten?",

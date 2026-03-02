@@ -729,11 +729,11 @@
         },
         {
           "question": "What languages does it support?",
-          "answer": "The multilingual Whisper models support 99+ languages including Spanish, French, German, Japanese, Arabic, Hindi, Portuguese, Italian, Russian, Chinese, Korean, and many more."
+          "answer": "The multilingual Whisper models support 32 languages: Arabic, Bengali, Chinese, Czech, Danish, Dutch, English, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian, Indonesian, Italian, Japanese, Korean, Malay, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Tamil, Telugu, Thai, Turkish, Ukrainian, and Vietnamese."
         },
         {
           "question": "What audio formats are supported?",
-          "answer": "MP3, WAV, M4A, OGG, FLAC, and WebM — anything your browser can decode. Video files work too."
+          "answer": "MP3, WAV, M4A, OGG (WhatsApp), FLAC, and WebM — anything your browser can decode. Video files work too."
         },
         {
           "question": "How accurate is the transcription?",

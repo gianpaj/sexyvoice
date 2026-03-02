@@ -729,7 +729,7 @@
         },
         {
           "question": "Welche Sprachen werden unterstützt?",
-          "answer": "Die mehrsprachigen Whisper-Modelle unterstützen über 99 Sprachen, darunter Englisch, Französisch, Japanisch, Arabisch, Hindi, Portugiesisch, Russisch, Chinesisch, Koreanisch und viele mehr."
+          "answer": "Die mehrsprachigen Whisper-Modelle unterstützen 32 Sprachen: Arabisch, Bengalisch, Chinesisch, Deutsch, Dänisch, Englisch, Finnisch, Französisch, Griechisch, Hebräisch, Hindi, Indonesisch, Italienisch, Japanisch, Koreanisch, Malaiisch, Niederländisch, Norwegisch, Polnisch, Portugiesisch, Rumänisch, Russisch, Schwedisch, Spanisch, Tamil, Telugu, Thailändisch, Tschechisch, Türkisch, Ukrainisch, Ungarisch und Vietnamesisch"
         },
         {
           "question": "Welche Audioformate werden unterstützt?",
