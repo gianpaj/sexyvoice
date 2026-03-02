@@ -1,0 +1,399 @@
+import {
+  FinishReason,
+  type GenerateContentConfig,
+  type GenerateContentResponse,
+  GoogleGenAI,
+  HarmBlockThreshold,
+  HarmCategory,
+} from '@google/genai';
+import { Redis } from '@upstash/redis';
+import Replicate, { type Prediction } from 'replicate';
+
+import { getCharactersLimit } from '@/lib/ai';
+import { validateApiKey } from '@/lib/api/auth';
+import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
+import { getDefaultFormat, resolveExternalModelId } from '@/lib/api/model';
+import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
+import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
+import { convertToWav, generateHash } from '@/lib/audio';
+import { uploadFileToR2 } from '@/lib/storage/upload';
+import {
+  getCredits,
+  getVoiceIdByName,
+  hasUserPaid,
+  insertUsageEvent,
+  reduceCredits,
+  saveAudioFile,
+} from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
+import {
+  calculateCreditsFromTokens,
+  ERROR_CODES,
+  estimateCredits,
+  extractMetadata,
+  getErrorMessage,
+} from '@/lib/utils';
+
+const redis = Redis.fromEnv();
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
+export async function POST(request: Request) {
+  const authResult = validateApiKey(request);
+  if (!authResult.ok) {
+    return jsonWithRateLimitHeaders(authResult.body, {
+      status: authResult.status,
+    });
+  }
+
+  try {
+    const payload = await request.json();
+    const parsed = VoiceGenerationRequestSchema.safeParse(payload);
+    if (!parsed.success) {
+      return jsonWithRateLimitHeaders(zodErrorToApiError(parsed.error), {
+        status: 400,
+      });
+    }
+
+    const { model, input, voice, response_format, speed, style } = parsed.data;
+
+    if (speed !== 1) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: 'Only speed=1.0 is currently supported',
+          type: 'invalid_request_error',
+          code: 'speed_not_supported',
+          param: 'speed',
+        }),
+        { status: 400 },
+      );
+    }
+
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+    const userId = user?.id ?? process.env.EXTERNAL_API_DEFAULT_USER_ID ?? null;
+
+    if (!userId) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: 'No billing account available for this API key',
+          type: 'permission_error',
+          code: 'api_key_inactive',
+        }),
+        { status: 403 },
+      );
+    }
+
+    let voiceObj: Awaited<ReturnType<typeof getVoiceIdByName>> | null = null;
+    try {
+      voiceObj = await getVoiceIdByName(voice);
+    } catch {
+      voiceObj = null;
+    }
+
+    if (!voiceObj) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: `Voice "${voice}" was not found`,
+          type: 'not_found_error',
+          code: 'voice_not_found',
+          param: 'voice',
+        }),
+        { status: 404 },
+      );
+    }
+
+    const resolvedModel = resolveExternalModelId(voiceObj.model);
+    if (model !== resolvedModel) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: `Voice "${voice}" is not available for model "${model}"`,
+          type: 'invalid_request_error',
+          code: 'model_not_found',
+          param: 'model',
+        }),
+        { status: 400 },
+      );
+    }
+
+    const maxLength = getCharactersLimit(voiceObj.model);
+    if (input.length > maxLength) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: `The input text exceeds the maximum length of ${maxLength} characters`,
+          type: 'invalid_request_error',
+          code: 'input_too_long',
+          param: 'input',
+        }),
+        { status: 400 },
+      );
+    }
+
+    const defaultFormat = getDefaultFormat(resolvedModel);
+    if (response_format && response_format !== defaultFormat) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: `Model "${model}" only supports "${defaultFormat}" output`,
+          type: 'invalid_request_error',
+          code: 'invalid_request_error',
+          param: 'response_format',
+        }),
+        { status: 400 },
+      );
+    }
+
+    const currentCredits = await getCredits(userId);
+    const estimatedCredits = estimateCredits(input, voice, voiceObj.model);
+    if (currentCredits < estimatedCredits) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: 'Insufficient credits',
+          type: 'permission_error',
+          code: 'insufficient_credits',
+        }),
+        { status: 402 },
+      );
+    }
+
+    const finalText = style ? `${style}: ${input}` : input;
+    const hash = await generateHash(`${finalText}-${voice}`);
+    const userHasPaid = await hasUserPaid(userId);
+    const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
+    const extension = defaultFormat;
+    const filename = `${folder}/${voice}-${hash}.${extension}`;
+
+    const cachedUrl = await redis.get<string>(filename);
+    if (cachedUrl) {
+      return jsonWithRateLimitHeaders(
+        {
+          url: cachedUrl,
+          credits_used: 0,
+          credits_remaining: currentCredits,
+          cached: true,
+          usage: {
+            input_characters: input.length,
+            model,
+          },
+        },
+        { status: 200 },
+      );
+    }
+
+    const isGeminiVoice = voiceObj.model === 'gpro';
+    let modelUsed = voiceObj.model;
+    let uploadUrl = '';
+    let replicateResponse: Prediction | undefined;
+    let geminiResponse: GenerateContentResponse | null = null;
+
+    if (isGeminiVoice) {
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      });
+      const config: GenerateContentConfig = {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
+            },
+          },
+        },
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+        ],
+      };
+
+      try {
+        modelUsed = 'gemini-2.5-pro-preview-tts';
+        geminiResponse = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text: finalText }] }],
+          config,
+        });
+      } catch {
+        modelUsed = 'gemini-2.5-flash-preview-tts';
+        geminiResponse = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text: finalText }] }],
+          config,
+        });
+      }
+
+      const part = geminiResponse?.candidates?.[0]?.content?.parts?.[0];
+      const data = part?.inlineData?.data;
+      const mimeType = part?.inlineData?.mimeType;
+      const finishReason = geminiResponse?.candidates?.[0]?.finishReason;
+      const blockReason = geminiResponse?.promptFeedback?.blockReason;
+      const isProhibitedContent =
+        finishReason === FinishReason.PROHIBITED_CONTENT ||
+        blockReason === 'PROHIBITED_CONTENT';
+
+      if (finishReason !== FinishReason.STOP || !data || !mimeType) {
+        const code = isProhibitedContent
+          ? 'content_policy_violation'
+          : 'server_error';
+        const message = isProhibitedContent
+          ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
+          : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation');
+        return jsonWithRateLimitHeaders(
+          createApiError({
+            message,
+            type: isProhibitedContent
+              ? 'invalid_request_error'
+              : 'server_error',
+            code,
+            param: isProhibitedContent ? 'input' : null,
+          }),
+          { status: isProhibitedContent ? 422 : 500 },
+        );
+      }
+
+      const audioBuffer = convertToWav(data, mimeType);
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
+    } else {
+      const replicate = new Replicate();
+      const output = (await replicate.run(
+        voiceObj.model as `${string}/${string}`,
+        { input: { text: finalText, voice } },
+        (prediction: Prediction) => {
+          replicateResponse = prediction;
+        },
+      )) as ReadableStream | { error: string };
+
+      if ('error' in output) {
+        return jsonWithRateLimitHeaders(
+          createApiError({
+            message: getErrorMessage('REPLICATE_ERROR', 'voice-generation'),
+            type: 'server_error',
+            code: 'server_error',
+          }),
+          { status: 500 },
+        );
+      }
+
+      const chunks: Uint8Array[] = [];
+      const reader = output.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        if (value) {
+          chunks.push(value);
+        }
+      }
+      const audioBuffer = Buffer.concat(chunks);
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
+    }
+
+    await redis.set(filename, uploadUrl);
+
+    let creditsUsed = estimatedCredits;
+    const usageMetadata = extractMetadata(
+      isGeminiVoice,
+      geminiResponse,
+      replicateResponse,
+    );
+    if (isGeminiVoice && usageMetadata?.totalTokenCount) {
+      creditsUsed = calculateCreditsFromTokens(
+        Number.parseInt(usageMetadata.totalTokenCount, 10),
+      );
+    }
+
+    await reduceCredits({ userId, amount: creditsUsed });
+    const audioFileResult = await saveAudioFile({
+      userId,
+      filename,
+      text: finalText,
+      url: uploadUrl,
+      model: modelUsed,
+      predictionId: replicateResponse?.id,
+      isPublic: false,
+      voiceId: voiceObj.id,
+      duration: '-1',
+      credits_used: creditsUsed,
+      usage: {
+        ...(usageMetadata ?? {}),
+        userHasPaid,
+      },
+    });
+
+    await insertUsageEvent({
+      userId,
+      sourceType: 'tts',
+      sourceId: audioFileResult.data?.id ?? null,
+      unit: 'chars',
+      quantity: finalText.length,
+      creditsUsed,
+      metadata: {
+        voiceId: voiceObj.id,
+        voiceName: voice,
+        model: modelUsed,
+        textPreview: finalText.slice(0, 100),
+        textLength: finalText.length,
+        isGeminiVoice,
+        userHasPaid,
+        predictionId: replicateResponse?.id ?? null,
+      },
+    });
+
+    return jsonWithRateLimitHeaders(
+      {
+        url: uploadUrl,
+        credits_used: creditsUsed,
+        credits_remaining: Math.max(0, currentCredits - creditsUsed),
+        cached: false,
+        usage: {
+          input_characters: input.length,
+          model,
+        },
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    if (
+      Error.isError(error) &&
+      error.cause &&
+      Object.values(ERROR_CODES).includes(error.cause as never)
+    ) {
+      const isPolicy = error.cause === ERROR_CODES.PROHIBITED_CONTENT;
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: error.message,
+          type: isPolicy ? 'invalid_request_error' : 'server_error',
+          code: isPolicy ? 'content_policy_violation' : 'server_error',
+        }),
+        { status: isPolicy ? 422 : 500 },
+      );
+    }
+
+    if (
+      Error.isError(error) &&
+      error.message.includes('Unexpected end of JSON input')
+    ) {
+      return jsonWithRateLimitHeaders(
+        createApiError({
+          message: 'Invalid JSON payload',
+          type: 'invalid_request_error',
+          code: 'invalid_request',
+        }),
+        { status: 400 },
+      );
+    }
+
+    console.error(error);
+    return jsonWithRateLimitHeaders(
+      createApiError({
+        message: 'Internal server error',
+        type: 'server_error',
+        code: 'server_error',
+      }),
+      { status: 500 },
+    );
+  }
+}
+
+export const runtime = 'nodejs';

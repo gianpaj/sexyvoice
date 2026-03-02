@@ -68,6 +68,7 @@ process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
+process.env.EXTERNAL_API_KEY = 'test-external-api-key';
 // R2 environment variables
 process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
