@@ -6,12 +6,17 @@ import {
   HarmBlockThreshold,
   HarmCategory,
 } from '@google/genai';
+import { captureException } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
+import {
+  externalApiErrorResponse,
+  getExternalApiRequestId,
+} from '@/lib/api/external-errors';
 import { getDefaultFormat, resolveExternalModelId } from '@/lib/api/model';
 import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
@@ -39,56 +44,47 @@ const redis = Redis.fromEnv();
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
+  const requestId = getExternalApiRequestId();
+
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Missing Authorization header',
-        type: 'authentication_error',
-        code: 'invalid_api_key',
-        param: 'authorization',
-      }),
-      { status: 401 },
-    );
+    return externalApiErrorResponse({
+      key: 'missing_authorization_header',
+      requestId,
+    });
   }
 
   const authResult = await validateApiKey(authHeader);
   if (!authResult) {
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Invalid API key',
-        type: 'authentication_error',
-        code: 'invalid_api_key',
-        param: 'authorization',
-      }),
-      { status: 401 },
-    );
+    return externalApiErrorResponse({
+      key: 'invalid_api_key',
+      requestId,
+    });
   }
 
   const rateLimit = await consumeRateLimit(authResult.keyHash);
   if (!rateLimit.allowed) {
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Rate limit exceeded',
-        type: 'rate_limit_error',
-        code: 'rate_limit_exceeded',
-      }),
-      { status: 429 },
+    return externalApiErrorResponse({
+      key: 'rate_limit_exceeded',
       rateLimit,
-    );
+      requestId,
+    });
   }
+
+  const respond = (
+    body: unknown,
+    init: ResponseInit = {},
+    rateLimitState = rateLimit,
+  ) => jsonWithRateLimitHeaders(body, init, rateLimitState, requestId);
 
   try {
     const payload = await request.json();
+
     const parsed = VoiceGenerationRequestSchema.safeParse(payload);
     if (!parsed.success) {
-      return jsonWithRateLimitHeaders(
-        zodErrorToApiError(parsed.error),
-        {
-          status: 400,
-        },
-        rateLimit,
-      );
+      return respond(zodErrorToApiError(parsed.error), {
+        status: 400,
+      });
     }
 
     const { model, input, voice, response_format, style, seed } = parsed.data;
@@ -104,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     if (!voiceObj) {
-      return jsonWithRateLimitHeaders(
+      return respond(
         createApiError({
           message: `Voice "${voice}" was not found`,
           type: 'not_found_error',
@@ -112,13 +108,12 @@ export async function POST(request: Request) {
           param: 'voice',
         }),
         { status: 404 },
-        rateLimit,
       );
     }
 
     const resolvedModel = resolveExternalModelId(voiceObj.model);
     if (model !== resolvedModel) {
-      return jsonWithRateLimitHeaders(
+      return respond(
         createApiError({
           message: `Voice "${voice}" is not available for model "${model}"`,
           type: 'invalid_request_error',
@@ -126,13 +121,12 @@ export async function POST(request: Request) {
           param: 'model',
         }),
         { status: 400 },
-        rateLimit,
       );
     }
 
     const maxLength = getCharactersLimit(voiceObj.model);
     if (finalText.length > maxLength) {
-      return jsonWithRateLimitHeaders(
+      return respond(
         createApiError({
           message: `The input text exceeds the maximum length of ${maxLength} characters after applying style`,
           type: 'invalid_request_error',
@@ -140,13 +134,12 @@ export async function POST(request: Request) {
           param: 'input',
         }),
         { status: 400 },
-        rateLimit,
       );
     }
 
     const defaultFormat = getDefaultFormat(resolvedModel);
     if (response_format && response_format !== defaultFormat) {
-      return jsonWithRateLimitHeaders(
+      return respond(
         createApiError({
           message: `Model "${model}" only supports "${defaultFormat}" output`,
           type: 'invalid_request_error',
@@ -154,21 +147,19 @@ export async function POST(request: Request) {
           param: 'response_format',
         }),
         { status: 400 },
-        rateLimit,
       );
     }
 
     const currentCredits = await getCredits(userId);
     const estimatedCredits = estimateCredits(finalText, voice, voiceObj.model);
     if (currentCredits < estimatedCredits) {
-      return jsonWithRateLimitHeaders(
+      return respond(
         createApiError({
           message: 'Insufficient credits',
           type: 'permission_error',
           code: 'insufficient_credits',
         }),
         { status: 402 },
-        rateLimit,
       );
     }
 
@@ -190,6 +181,7 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: finalText.length,
         creditsUsed: 0,
+        requestId,
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
@@ -200,7 +192,7 @@ export async function POST(request: Request) {
           endpoint: '/api/v1/speech',
         },
       });
-      return jsonWithRateLimitHeaders(
+      return respond(
         {
           url: cachedUrl,
           credits_used: 0,
@@ -212,7 +204,6 @@ export async function POST(request: Request) {
           },
         },
         { status: 200 },
-        rateLimit,
       );
     }
 
@@ -277,7 +268,7 @@ export async function POST(request: Request) {
         const message = isProhibitedContent
           ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
           : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation');
-        return jsonWithRateLimitHeaders(
+        return respond(
           createApiError({
             message,
             type: isProhibitedContent
@@ -287,7 +278,6 @@ export async function POST(request: Request) {
             param: isProhibitedContent ? 'input' : null,
           }),
           { status: isProhibitedContent ? 422 : 500 },
-          rateLimit,
         );
       }
 
@@ -304,14 +294,13 @@ export async function POST(request: Request) {
       )) as ReadableStream | { error: string };
 
       if ('error' in output) {
-        return jsonWithRateLimitHeaders(
+        return respond(
           createApiError({
             message: getErrorMessage('REPLICATE_ERROR', 'voice-generation'),
             type: 'server_error',
             code: 'server_error',
           }),
           { status: 500 },
-          rateLimit,
         );
       }
 
@@ -384,6 +373,7 @@ export async function POST(request: Request) {
       unit: 'chars',
       quantity: finalText.length,
       creditsUsed,
+      requestId,
       metadata: {
         voiceId: voiceObj.id,
         voiceName: voice,
@@ -397,7 +387,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return jsonWithRateLimitHeaders(
+    return respond(
       {
         url: uploadUrl,
         credits_used: creditsUsed,
@@ -409,7 +399,6 @@ export async function POST(request: Request) {
         },
       },
       { status: 200 },
-      rateLimit,
     );
   } catch (error) {
     if (
@@ -418,39 +407,37 @@ export async function POST(request: Request) {
       Object.values(ERROR_CODES).includes(error.cause as never)
     ) {
       const isPolicy = error.cause === ERROR_CODES.PROHIBITED_CONTENT;
-      return jsonWithRateLimitHeaders(
+      return respond(
         createApiError({
           message: error.message,
           type: isPolicy ? 'invalid_request_error' : 'server_error',
           code: isPolicy ? 'content_policy_violation' : 'server_error',
         }),
         { status: isPolicy ? 422 : 500 },
-        rateLimit,
       );
     }
 
     if (error instanceof SyntaxError) {
-      return jsonWithRateLimitHeaders(
-        createApiError({
-          message: 'Invalid JSON payload',
-          type: 'invalid_request_error',
-          code: 'invalid_request',
-        }),
-        { status: 400 },
+      return externalApiErrorResponse({
+        key: 'invalid_json',
         rateLimit,
-      );
+        requestId,
+      });
     }
 
-    console.error(error);
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Internal server error',
-        type: 'server_error',
-        code: 'server_error',
-      }),
-      { status: 500 },
+    captureException(error, {
+      extra: {
+        requestId,
+        endpoint: '/api/v1/speech',
+        userId: authResult.userId,
+        apiKeyId: authResult.apiKeyId,
+      },
+    });
+    return externalApiErrorResponse({
+      key: 'server_error',
       rateLimit,
-    );
+      requestId,
+    });
   } finally {
     await updateApiKeyLastUsed(authResult.keyHash);
   }

@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
-import { getCredits, reduceCredits } from '@/lib/supabase/queries';
+import {
+  getCredits,
+  insertUsageEvent,
+  reduceCredits,
+} from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import {
   mockRedisGet,
@@ -35,6 +39,7 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(401);
     expect(json.error.code).toBe('invalid_api_key');
+    expect(response.headers.get('request-id')).toBeTruthy();
   });
 
   it('returns 400 for invalid request body', async () => {
@@ -56,6 +61,29 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(400);
     expect(json.error.type).toBe('invalid_request_error');
     expect(json.error.code).toBe('invalid_request');
+    expect(response.headers.get('request-id')).toBeTruthy();
+  });
+
+  it('ignores client request-id and generates prefixed request-id', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+        'request-id': 'debug-req-123',
+      },
+      body: JSON.stringify({
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+
+    const requestId = response.headers.get('request-id');
+    expect(requestId).toBeTruthy();
+    expect(requestId).toMatch(/^req_sv_[0-9a-f]{32}$/);
+    expect(requestId).not.toBe('debug-req-123');
   });
 
   it('returns 400 when unsupported speed is provided', async () => {
@@ -124,7 +152,13 @@ describe('/api/v1/speech', () => {
     expect(json.cached).toBe(true);
     expect(json.credits_used).toBe(0);
     expect(json.usage.input_characters).toBe(11);
+    expect(insertUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestId: expect.any(String),
+      }),
+    );
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
+    expect(response.headers.get('request-id')).toBeTruthy();
   });
 
   it('returns 402 when credits are insufficient', async () => {

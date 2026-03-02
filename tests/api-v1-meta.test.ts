@@ -22,6 +22,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(json.data).toHaveLength(2);
     expect(json.data[0].id).toBe('gpro');
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
+    expect(response.headers.get('request-id')).toBeTruthy();
   });
 
   it('returns voices list', async () => {
@@ -66,6 +67,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(json.data).toHaveLength(2);
     expect(json.data[0].model).toBe('gpro');
     expect(json.data[1].model).toBe('kokoro');
+    expect(response.headers.get('request-id')).toBeTruthy();
   });
 
   it('returns OpenAPI 3.1.0 document with speech path', async () => {
@@ -84,5 +86,11 @@ describe('/api/v1 metadata endpoints', () => {
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
     ).toBe('gpro');
+    const speechSchema = JSON.stringify(
+      json.paths['/api/v1/speech'].post.requestBody.content['application/json']
+        .schema,
+    );
+    expect(speechSchema).not.toContain('"speed"');
+    expect(response.headers.get('request-id')).toBeTruthy();
   });
 });

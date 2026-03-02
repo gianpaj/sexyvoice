@@ -1,49 +1,41 @@
+import { captureException } from '@sentry/nextjs';
+
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { EXTERNAL_API_MODELS } from '@/lib/api/constants';
-import { createApiError } from '@/lib/api/errors';
+import {
+  externalApiErrorResponse,
+  getExternalApiRequestId,
+} from '@/lib/api/external-errors';
 import { resolveExternalModelId } from '@/lib/api/model';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
+  const requestId = getExternalApiRequestId();
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Missing Authorization header',
-        type: 'authentication_error',
-        code: 'invalid_api_key',
-        param: 'authorization',
-      }),
-      { status: 401 },
-    );
+    return externalApiErrorResponse({
+      key: 'missing_authorization_header',
+      requestId,
+    });
   }
 
   const authResult = await validateApiKey(authHeader);
   if (!authResult) {
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Invalid API key',
-        type: 'authentication_error',
-        code: 'invalid_api_key',
-        param: 'authorization',
-      }),
-      { status: 401 },
-    );
+    return externalApiErrorResponse({
+      key: 'invalid_api_key',
+      requestId,
+    });
   }
 
   const rateLimit = await consumeRateLimit(authResult.keyHash);
   if (!rateLimit.allowed) {
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Rate limit exceeded',
-        type: 'rate_limit_error',
-        code: 'rate_limit_exceeded',
-      }),
-      { status: 429 },
+    return externalApiErrorResponse({
+      key: 'rate_limit_exceeded',
       rateLimit,
-    );
+      requestId,
+    });
   }
 
   try {
@@ -75,18 +67,22 @@ export async function GET(request: Request) {
       },
       { status: 200 },
       rateLimit,
+      requestId,
     );
   } catch (error) {
-    console.error(error);
-    return jsonWithRateLimitHeaders(
-      createApiError({
-        message: 'Failed to list voices',
-        type: 'server_error',
-        code: 'server_error',
-      }),
-      { status: 500 },
+    captureException(error, {
+      extra: {
+        requestId,
+        endpoint: '/api/v1/voices',
+        userId: authResult.userId,
+      },
+    });
+    return externalApiErrorResponse({
+      key: 'server_error',
+      message: 'Failed to list voices',
       rateLimit,
-    );
+      requestId,
+    });
   } finally {
     await updateApiKeyLastUsed(authResult.keyHash);
   }

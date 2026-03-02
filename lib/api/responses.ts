@@ -10,6 +10,7 @@ export function jsonWithRateLimitHeaders(
   body: unknown,
   init: ResponseInit = {},
   rateLimit?: RateLimitState,
+  requestId?: string,
 ): NextResponse {
   const response = NextResponse.json(body, init);
   const rateHeaders = createRateLimitHeaders(
@@ -17,6 +18,9 @@ export function jsonWithRateLimitHeaders(
   );
   for (const [key, value] of rateHeaders.entries()) {
     response.headers.set(key, value);
+  }
+  if (requestId) {
+    response.headers.set('request-id', requestId);
   }
   return response;
 }

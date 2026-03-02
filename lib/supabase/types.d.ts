@@ -416,6 +416,7 @@ declare type Database = {
           occurred_at: string;
           output_chars: number | null;
           quantity: number;
+          request_id: string | null;
           source_id: string | null;
           source_type: Database['public']['Enums']['usage_source_type'];
           unit: Database['public']['Enums']['usage_unit_type'];
@@ -434,6 +435,7 @@ declare type Database = {
           occurred_at?: string;
           output_chars?: number | null;
           quantity: number;
+          request_id?: string | null;
           source_id?: string | null;
           source_type: Database['public']['Enums']['usage_source_type'];
           unit: Database['public']['Enums']['usage_unit_type'];
@@ -452,6 +454,7 @@ declare type Database = {
           occurred_at?: string;
           output_chars?: number | null;
           quantity?: number;
+          request_id?: string | null;
           source_id?: string | null;
           source_type?: Database['public']['Enums']['usage_source_type'];
           unit?: Database['public']['Enums']['usage_unit_type'];
