@@ -516,10 +516,10 @@
     "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
     "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
     "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI",
-    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
-    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
-    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
-    "/tools/audio-joiner": "Audio Joiner"
+    "titleAudioJoiner": "Gratis Lyd Samler – Flet og Trim Lydfiler",
+    "descriptionAudioJoiner": "Flet flere lydfiler og trim hvert segment direkte i din browser. Privat, gratis og uden upload.",
+    "keywordsAudioJoiner": "gratis lyd samler, flet lydfiler, join mp3 online, kombiner wav-filer, trim lydsegmenter, browser lydeditor, lyd samler uden upload, privat lydeditor, ffmpeg wasm lyd samler",
+    "/tools/audio-joiner": "Lyd Samler"
   },
   "sidebar": {
     "profile": "Profil",
@@ -752,41 +752,41 @@
     }
   },
   "audioJoiner": {
-    "title": "Free Audio Joiner",
-    "subtitle": "Join and trim multiple audio files in your browser with no uploads",
+    "title": "Gratis Lyd Samler",
+    "subtitle": "Flet og trim flere lydfiler i din browser uden upload",
     "dropZone": {
-      "title": "Add audio files",
-      "subtitle": "Upload one or more files to start editing",
-      "addFiles": "Add files"
+      "title": "Tilføj lydfiler",
+      "subtitle": "Upload en eller flere filer for at begynde redigering",
+      "addFiles": "Tilføj filer"
     },
     "controls": {
       "format": "Format",
-      "play": "Play",
+      "play": "Afspil",
       "pause": "Pause",
-      "join": "Join",
-      "joining": "Joining...",
-      "cancel": "Cancel"
+      "join": "Flet",
+      "joining": "Fletter...",
+      "cancel": "Annuller"
     },
     "progress": {
-      "processing": "Processing"
+      "processing": "Behandler"
     },
     "success": {
-      "downloadStarted": "Download started.",
-      "cancelled": "Processing cancelled."
+      "downloadStarted": "Download startet.",
+      "cancelled": "Behandling annulleret."
     },
     "errors": {
-      "ffmpegLoadFailed": "Failed to load FFmpeg. Please refresh and try again.",
-      "decodeFailed": "Failed to read {file}. Try a different audio format.",
-      "previewFailed": "Unable to preview the joined timeline.",
-      "joinFailed": "Join failed. Please try again."
+      "ffmpegLoadFailed": "FFmpeg kunne ikke indlæses. Opdater siden og prøv igen.",
+      "decodeFailed": "Kunne ikke læse {file}. Prøv et andet lydformat.",
+      "previewFailed": "Kan ikke forhåndsvise den flettede tidslinje.",
+      "joinFailed": "Fletning mislykkedes. Prøv igen."
     },
     "footer": {
-      "poweredBy": "Powered by",
+      "poweredBy": "Drevet af",
       "ffmpeg": "FFmpeg",
-      "noUploads": "No uploads, 100% in-browser",
-      "alsoTry": "Also try our",
-      "audioConverterLink": "Free Audio Converter Tool",
-      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
+      "noUploads": "Ingen upload, 100% i browseren",
+      "alsoTry": "Prøv også vores",
+      "audioConverterLink": "Gratis Lydkonverter",
+      "madeWith": "Lavet med ♡ af SexyVoice.ai - Prøv gratis AI lydgenerator"
     }
   }
 }

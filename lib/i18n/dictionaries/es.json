@@ -516,10 +516,10 @@
     "keywordsAudioConverter": "conversor de audio gratis, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, conversor de audio online, conversor de audio en navegador, conversor de audio offline, mp3 a wav, wav a mp3, convertidor de formato de audio, ffmpeg online, conversor de audio sin subir archivos, conversor de audio privado",
     "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción 99 idiomas, transcripción privada",
     "keywordsLanding": "texto a voz, generador de voz IA, clonación de voz, texto a voz para adultos, texto a voz NSFW, síntesis de voz IA, generación de voz, TTS gratis, voces IA expresivas, clonar voz IA, síntesis de habla, contenido adulto IA, voz IA adultos",
-    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
-    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
-    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
-    "/tools/audio-joiner": "Audio Joiner"
+    "titleAudioJoiner": "Unificador de Audio Gratuito – Une y Recorta Audio",
+    "descriptionAudioJoiner": "Une varios archivos de audio y recorta cada segmento directamente en tu navegador. Privado, gratuito y sin subidas.",
+    "keywordsAudioJoiner": "unificador de audio gratis, unir archivos de audio, combinar mp3 online, combinar archivos wav, recortar segmentos de audio, editor de audio en navegador, unificador de audio sin subir, editor de audio privado, unificador de audio ffmpeg wasm",
+    "/tools/audio-joiner": "Unificador de Audio"
   },
   "sidebar": {
     "profile": "Perfil",
@@ -752,41 +752,41 @@
     }
   },
   "audioJoiner": {
-    "title": "Free Audio Joiner",
-    "subtitle": "Join and trim multiple audio files in your browser with no uploads",
+    "title": "Unificador de Audio Gratuito",
+    "subtitle": "Une y recorta varios archivos de audio en tu navegador sin subir nada",
     "dropZone": {
-      "title": "Add audio files",
-      "subtitle": "Upload one or more files to start editing",
-      "addFiles": "Add files"
+      "title": "Añadir archivos de audio",
+      "subtitle": "Sube uno o más archivos para empezar a editar",
+      "addFiles": "Añadir archivos"
     },
     "controls": {
-      "format": "Format",
-      "play": "Play",
-      "pause": "Pause",
-      "join": "Join",
-      "joining": "Joining...",
-      "cancel": "Cancel"
+      "format": "Formato",
+      "play": "Reproducir",
+      "pause": "Pausar",
+      "join": "Unir",
+      "joining": "Uniendo...",
+      "cancel": "Cancelar"
     },
     "progress": {
-      "processing": "Processing"
+      "processing": "Procesando"
     },
     "success": {
-      "downloadStarted": "Download started.",
-      "cancelled": "Processing cancelled."
+      "downloadStarted": "Descarga iniciada.",
+      "cancelled": "Procesamiento cancelado."
     },
     "errors": {
-      "ffmpegLoadFailed": "Failed to load FFmpeg. Please refresh and try again.",
-      "decodeFailed": "Failed to read {file}. Try a different audio format.",
-      "previewFailed": "Unable to preview the joined timeline.",
-      "joinFailed": "Join failed. Please try again."
+      "ffmpegLoadFailed": "Error al cargar FFmpeg. Por favor, recarga la página e inténtalo de nuevo.",
+      "decodeFailed": "Error al leer {file}. Prueba con un formato de audio diferente.",
+      "previewFailed": "No se puede previsualizar la línea de tiempo unida.",
+      "joinFailed": "Error al unir. Por favor, inténtalo de nuevo."
     },
     "footer": {
-      "poweredBy": "Powered by",
+      "poweredBy": "Desarrollado con",
       "ffmpeg": "FFmpeg",
-      "noUploads": "No uploads, 100% in-browser",
-      "alsoTry": "Also try our",
-      "audioConverterLink": "Free Audio Converter Tool",
-      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
+      "noUploads": "Sin subidas, 100% en el navegador",
+      "alsoTry": "Prueba también nuestro",
+      "audioConverterLink": "Conversor de Audio Gratuito",
+      "madeWith": "Hecho con ♡ por SexyVoice.ai - Generador de audio IA gratis"
     }
   }
 }

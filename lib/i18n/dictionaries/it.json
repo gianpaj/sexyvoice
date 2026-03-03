@@ -516,10 +516,10 @@
     "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore Audio",
     "/tools/transcribe": "Trascrizione Audio",
-    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
-    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
-    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
-    "/tools/audio-joiner": "Audio Joiner"
+    "titleAudioJoiner": "Unisci Audio Gratis – Combina e Taglia File Audio",
+    "descriptionAudioJoiner": "Unisci più file audio e taglia ogni segmento direttamente nel tuo browser. Privato, gratuito e senza upload.",
+    "keywordsAudioJoiner": "unisci audio gratis, combinare file audio, unire mp3 online, unire file wav, tagliare segmenti audio, editor audio nel browser, unisci audio senza upload, editor audio privato, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Unisci Audio"
   },
   "sidebar": {
     "profile": "Profilo",
@@ -752,41 +752,41 @@
     }
   },
   "audioJoiner": {
-    "title": "Free Audio Joiner",
-    "subtitle": "Join and trim multiple audio files in your browser with no uploads",
+    "title": "Unisci Audio Gratis",
+    "subtitle": "Unisci e taglia più file audio nel tuo browser senza caricarli",
     "dropZone": {
-      "title": "Add audio files",
-      "subtitle": "Upload one or more files to start editing",
-      "addFiles": "Add files"
+      "title": "Aggiungi file audio",
+      "subtitle": "Carica uno o più file per iniziare a modificare",
+      "addFiles": "Aggiungi file"
     },
     "controls": {
-      "format": "Format",
-      "play": "Play",
-      "pause": "Pause",
-      "join": "Join",
-      "joining": "Joining...",
-      "cancel": "Cancel"
+      "format": "Formato",
+      "play": "Riproduci",
+      "pause": "Pausa",
+      "join": "Unisci",
+      "joining": "Unione in corso...",
+      "cancel": "Annulla"
     },
     "progress": {
-      "processing": "Processing"
+      "processing": "Elaborazione"
     },
     "success": {
-      "downloadStarted": "Download started.",
-      "cancelled": "Processing cancelled."
+      "downloadStarted": "Download avviato.",
+      "cancelled": "Elaborazione annullata."
     },
     "errors": {
-      "ffmpegLoadFailed": "Failed to load FFmpeg. Please refresh and try again.",
-      "decodeFailed": "Failed to read {file}. Try a different audio format.",
-      "previewFailed": "Unable to preview the joined timeline.",
-      "joinFailed": "Join failed. Please try again."
+      "ffmpegLoadFailed": "Impossibile caricare FFmpeg. Aggiorna la pagina e riprova.",
+      "decodeFailed": "Impossibile leggere {file}. Prova un formato audio diverso.",
+      "previewFailed": "Impossibile visualizzare l'anteprima della timeline unita.",
+      "joinFailed": "Unione non riuscita. Riprova."
     },
     "footer": {
-      "poweredBy": "Powered by",
+      "poweredBy": "Sviluppato con",
       "ffmpeg": "FFmpeg",
-      "noUploads": "No uploads, 100% in-browser",
-      "alsoTry": "Also try our",
-      "audioConverterLink": "Free Audio Converter Tool",
-      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
+      "noUploads": "Nessun upload, 100% nel browser",
+      "alsoTry": "Prova anche il nostro",
+      "audioConverterLink": "Convertitore Audio Gratuito",
+      "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio IA gratuito"
     }
   }
 }
