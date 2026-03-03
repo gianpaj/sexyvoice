@@ -78,6 +78,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Vercel](https://vercel.com)** - Deployment and hosting platform
 - **[Sentry](https://sentry.io)** - Error tracking and performance monitoring
 - **[PostHog](https://posthog.com)** - Product analytics and feature flags
+- **[Axiom](https://axiom.co)** - Structured request logging for API routes
 - **[Stripe](https://stripe.com)** - Payment processing and subscription management
 
 ### Development Tools
@@ -146,6 +147,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
     - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Axiom logging (optional)
+      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
    - Vercel Edge Config (optional)
       - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)

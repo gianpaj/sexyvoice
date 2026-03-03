@@ -17,6 +17,7 @@ import {
   externalApiErrorResponse,
   getExternalApiRequestId,
 } from '@/lib/api/external-errors';
+import { createLogger } from '@/lib/api/logger';
 import { getDefaultFormat, resolveExternalModelId } from '@/lib/api/model';
 import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
@@ -40,14 +41,18 @@ import {
   getErrorMessage,
 } from '@/lib/utils';
 
+const ENDPOINT = '/api/v1/speech';
+
 const redis = Redis.fromEnv();
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
   const requestId = getExternalApiRequestId();
+  const log = createLogger({ requestId, endpoint: ENDPOINT });
 
   const authHeader = request.headers.get('authorization');
   if (!authHeader) {
+    await log({ status: 401, errorCode: 'missing_authorization_header' });
     return externalApiErrorResponse({
       key: 'missing_authorization_header',
       requestId,
@@ -56,6 +61,7 @@ export async function POST(request: Request) {
 
   const authResult = await validateApiKey(authHeader);
   if (!authResult) {
+    await log({ status: 401, errorCode: 'invalid_api_key' });
     return externalApiErrorResponse({
       key: 'invalid_api_key',
       requestId,
@@ -64,6 +70,12 @@ export async function POST(request: Request) {
 
   const rateLimit = await consumeRateLimit(authResult.keyHash);
   if (!rateLimit.allowed) {
+    await log({
+      status: 429,
+      errorCode: 'rate_limit_exceeded',
+      userId: authResult.userId,
+      apiKeyId: authResult.apiKeyId,
+    });
     return externalApiErrorResponse({
       key: 'rate_limit_exceeded',
       rateLimit,
@@ -82,9 +94,14 @@ export async function POST(request: Request) {
 
     const parsed = VoiceGenerationRequestSchema.safeParse(payload);
     if (!parsed.success) {
-      return respond(zodErrorToApiError(parsed.error), {
+      await log({
         status: 400,
+        errorCode: 'validation_error',
+        error: parsed.error.message,
+        userId: authResult.userId,
+        apiKeyId: authResult.apiKeyId,
       });
+      return respond(zodErrorToApiError(parsed.error), { status: 400 });
     }
 
     const { model, input, voice, response_format, style, seed } = parsed.data;
@@ -100,6 +117,14 @@ export async function POST(request: Request) {
     }
 
     if (!voiceObj) {
+      await log({
+        status: 404,
+        errorCode: 'voice_not_found',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+      });
       return respond(
         createApiError({
           message: `Voice "${voice}" was not found`,
@@ -113,6 +138,14 @@ export async function POST(request: Request) {
 
     const resolvedModel = resolveExternalModelId(voiceObj.model);
     if (model !== resolvedModel) {
+      await log({
+        status: 400,
+        errorCode: 'model_not_found',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+      });
       return respond(
         createApiError({
           message: `Voice "${voice}" is not available for model "${model}"`,
@@ -126,6 +159,15 @@ export async function POST(request: Request) {
 
     const maxLength = getCharactersLimit(voiceObj.model);
     if (finalText.length > maxLength) {
+      await log({
+        status: 400,
+        errorCode: 'input_too_long',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+        textLength: finalText.length,
+      });
       return respond(
         createApiError({
           message: `The input text exceeds the maximum length of ${maxLength} characters after applying style`,
@@ -139,6 +181,14 @@ export async function POST(request: Request) {
 
     const defaultFormat = getDefaultFormat(resolvedModel);
     if (response_format && response_format !== defaultFormat) {
+      await log({
+        status: 400,
+        errorCode: 'unsupported_response_format',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+      });
       return respond(
         createApiError({
           message: `Model "${model}" only supports "${defaultFormat}" output`,
@@ -153,6 +203,15 @@ export async function POST(request: Request) {
     const currentCredits = await getCredits(userId);
     const estimatedCredits = estimateCredits(finalText, voice, voiceObj.model);
     if (currentCredits < estimatedCredits) {
+      await log({
+        status: 402,
+        errorCode: 'insufficient_credits',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+        textLength: finalText.length,
+      });
       return respond(
         createApiError({
           message: 'Insufficient credits',
@@ -189,8 +248,18 @@ export async function POST(request: Request) {
           textLength: finalText.length,
           ...(seed !== undefined ? { seed } : {}),
           cached: true,
-          endpoint: '/api/v1/speech',
+          endpoint: ENDPOINT,
         },
+      });
+      await log({
+        status: 200,
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+        textLength: finalText.length,
+        cached: true,
+        creditsUsed: 0,
       });
       return respond(
         {
@@ -209,6 +278,15 @@ export async function POST(request: Request) {
 
     const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
     if (!speechApiBucket) {
+      await log({
+        status: 500,
+        errorCode: 'missing_r2_bucket_config',
+        error: 'R2_SPEECH_API_BUCKET_NAME is not configured',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+      });
       return respond(
         createApiError({
           message: 'R2_SPEECH_API_BUCKET_NAME is not configured',
@@ -280,6 +358,18 @@ export async function POST(request: Request) {
         const message = isProhibitedContent
           ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
           : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation');
+        const httpStatus = isProhibitedContent ? 422 : 500;
+        await log({
+          status: httpStatus,
+          errorCode: code,
+          error: message,
+          userId,
+          apiKeyId: authResult.apiKeyId,
+          voice,
+          model: modelUsed,
+          textLength: finalText.length,
+          isGeminiVoice,
+        });
         return respond(
           createApiError({
             message,
@@ -289,7 +379,7 @@ export async function POST(request: Request) {
             code,
             param: isProhibitedContent ? 'input' : null,
           }),
-          { status: isProhibitedContent ? 422 : 500 },
+          { status: httpStatus },
         );
       }
 
@@ -311,9 +401,22 @@ export async function POST(request: Request) {
       )) as ReadableStream | { error: string };
 
       if ('error' in output) {
+        const message = getErrorMessage('REPLICATE_ERROR', 'voice-generation');
+        await log({
+          status: 500,
+          errorCode: 'replicate_error',
+          error: message,
+          userId,
+          apiKeyId: authResult.apiKeyId,
+          voice,
+          model: modelUsed,
+          textLength: finalText.length,
+          provider,
+          isGeminiVoice,
+        });
         return respond(
           createApiError({
-            message: getErrorMessage('REPLICATE_ERROR', 'voice-generation'),
+            message,
             type: 'server_error',
             code: 'server_error',
           }),
@@ -409,6 +512,20 @@ export async function POST(request: Request) {
       },
     });
 
+    await log({
+      status: 200,
+      userId,
+      apiKeyId: authResult.apiKeyId,
+      voice,
+      model: modelUsed,
+      textLength: finalText.length,
+      cached: false,
+      provider,
+      creditsUsed,
+      dollarAmount,
+      isGeminiVoice,
+      userHasPaid,
+    });
     return respond(
       {
         url: uploadUrl,
@@ -429,17 +546,32 @@ export async function POST(request: Request) {
       Object.values(ERROR_CODES).includes(error.cause as never)
     ) {
       const isPolicy = error.cause === ERROR_CODES.PROHIBITED_CONTENT;
+      const httpStatus = isPolicy ? 422 : 500;
+      await log({
+        status: httpStatus,
+        errorCode: isPolicy ? 'content_policy_violation' : 'server_error',
+        error: error.message,
+        userId: authResult.userId,
+        apiKeyId: authResult.apiKeyId,
+      });
       return respond(
         createApiError({
           message: error.message,
           type: isPolicy ? 'invalid_request_error' : 'server_error',
           code: isPolicy ? 'content_policy_violation' : 'server_error',
         }),
-        { status: isPolicy ? 422 : 500 },
+        { status: httpStatus },
       );
     }
 
     if (error instanceof SyntaxError) {
+      await log({
+        status: 400,
+        errorCode: 'invalid_json',
+        error: error.message,
+        userId: authResult.userId,
+        apiKeyId: authResult.apiKeyId,
+      });
       return externalApiErrorResponse({
         key: 'invalid_json',
         rateLimit,
@@ -450,10 +582,17 @@ export async function POST(request: Request) {
     captureException(error, {
       extra: {
         requestId,
-        endpoint: '/api/v1/speech',
+        endpoint: ENDPOINT,
         userId: authResult.userId,
         apiKeyId: authResult.apiKeyId,
       },
+    });
+    await log({
+      status: 500,
+      errorCode: 'server_error',
+      error: error instanceof Error ? error.message : String(error),
+      userId: authResult.userId,
+      apiKeyId: authResult.apiKeyId,
     });
     return externalApiErrorResponse({
       key: 'server_error',
