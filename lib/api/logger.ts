@@ -50,7 +50,11 @@ export function createLogger({
       ...fields,
       durationMs: Date.now() - startTime,
     });
-    await axiom.flush();
+    // flush() errors must never propagate to callers — a logging failure
+    // should never affect the HTTP response sent to the client.
+    await axiom.flush().catch((err) => {
+      console.error('[logger] axiom flush failed:', err);
+    });
   }
 
   return log;

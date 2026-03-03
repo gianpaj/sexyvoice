@@ -89,6 +89,22 @@ export async function POST(request: Request) {
     rateLimitState = rateLimit,
   ) => jsonWithRateLimitHeaders(body, init, rateLimitState, requestId);
 
+  // Fail fast on misconfiguration before performing any I/O (credit checks,
+  // voice lookups, generation). The internal env-var name is intentionally
+  // omitted from the response body to avoid leaking implementation details.
+  const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
+  if (!speechApiBucket) {
+    await log({ status: 500, errorCode: 'missing_r2_bucket_config' });
+    return respond(
+      createApiError({
+        message: 'Storage is not configured. Please contact support.',
+        type: 'server_error',
+        code: 'server_error',
+      }),
+      { status: 500 },
+    );
+  }
+
   try {
     const payload = await request.json();
 
@@ -273,27 +289,6 @@ export async function POST(request: Request) {
           },
         },
         { status: 200 },
-      );
-    }
-
-    const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
-    if (!speechApiBucket) {
-      await log({
-        status: 500,
-        errorCode: 'missing_r2_bucket_config',
-        error: 'R2_SPEECH_API_BUCKET_NAME is not configured',
-        userId,
-        apiKeyId: authResult.apiKeyId,
-        voice,
-        model,
-      });
-      return respond(
-        createApiError({
-          message: 'R2_SPEECH_API_BUCKET_NAME is not configured',
-          type: 'server_error',
-          code: 'server_error',
-        }),
-        { status: 500 },
       );
     }
 
@@ -522,7 +517,10 @@ export async function POST(request: Request) {
       },
     });
 
-    await log({
+    // Fire-and-forget: do not await the log call on the success path.
+    // A flush failure must never return a 500 to the client after audio has
+    // been generated and credits have already been deducted.
+    log({
       status: 200,
       userId,
       apiKeyId: authResult.apiKeyId,
@@ -535,6 +533,8 @@ export async function POST(request: Request) {
       dollarAmount,
       isGeminiVoice,
       userHasPaid,
+    }).catch((err) => {
+      console.error('[speech] success-path log failed:', err);
     });
     return respond(
       {

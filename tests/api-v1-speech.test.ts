@@ -281,13 +281,13 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(200);
     expect(json.usage.input_characters).toBe(finalText.length);
+    // The mock for getVoiceIdByName('tara') returns model: 'kokoro' (see
+    // tests/setup.ts). estimateCredits must be called with that same value so
+    // this assertion reflects the actual code path rather than passing
+    // coincidentally because getCreditMultiplier ignores unknown model strings.
     expect(vi.mocked(reduceCredits)).toHaveBeenCalledWith({
       userId: 'test-user-id',
-      amount: estimateCredits(
-        finalText,
-        'tara',
-        'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
-      ),
+      amount: estimateCredits(finalText, 'tara', 'kokoro'),
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
       expect.any(String),

@@ -41,7 +41,7 @@ export function hashApiKey(key: string): string {
   const secret = process.env.API_KEY_HMAC_SECRET;
   if (!secret) {
     throw new Error(
-      '[auth] API_KEY_HMAC_SECRET is not set — falling back to plain SHA-256. Set the secret immediately.',
+      '[auth] API_KEY_HMAC_SECRET is not set. Set the secret immediately.',
     );
   }
   return createHmac('sha256', secret).update(key).digest('hex');
@@ -82,17 +82,13 @@ export async function validateApiKey(authHeader: string): Promise<{
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('api_keys')
-    .select('id, user_id, key_hash, is_active, expires_at')
+    .select('id, user_id, key_hash, is_active')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .maybeSingle();
 
   if (error || !data) {
-    return null;
-  }
-
-  if (data.expires_at && new Date(data.expires_at).getTime() <= Date.now()) {
     return null;
   }
 
