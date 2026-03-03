@@ -95,3 +95,21 @@ export const ModelInfoSchema = z.object({
 export const ModelsResponseSchema = z.object({
   data: z.array(ModelInfoSchema),
 });
+
+export const BillingTransactionSchema = z.object({
+  id: z.string(),
+  type: z.enum(['purchase', 'topup']),
+  amount: z.number(),
+  description: z.string(),
+  created_at: z.string(),
+  reference_id: z.string().nullable(),
+  subscription_id: z.string().nullable(),
+  metadata: z.unknown().nullable().optional(),
+});
+
+export const BillingResponseSchema = z.object({
+  creditsLeft: z.number().int().nonnegative(),
+  lastUpdated: z.string().nullable(),
+  userId: z.string(),
+  lastBillingTransaction: BillingTransactionSchema.nullable(),
+});

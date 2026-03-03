@@ -1,6 +1,7 @@
 import { createDocument } from 'zod-openapi';
 
 import {
+  BillingResponseSchema,
   ErrorResponseSchema,
   ModelsResponseSchema,
   VoiceGenerationRequestSchema,
@@ -30,6 +31,7 @@ export function createExternalApiOpenApiDocument() {
         ErrorResponse: ErrorResponseSchema,
         VoicesResponse: VoicesResponseSchema,
         ModelsResponse: ModelsResponseSchema,
+        BillingResponse: BillingResponseSchema,
       },
     },
     paths: {
@@ -166,6 +168,46 @@ export function createExternalApiOpenApiDocument() {
               content: {
                 'application/json': {
                   schema: ModelsResponseSchema,
+                },
+              },
+            },
+          },
+        },
+      },
+      '/api/v1/billing': {
+        get: {
+          security: [{ BearerAuth: [] }],
+          summary: 'Get billing balance',
+          responses: {
+            200: {
+              description: 'Billing balance',
+              content: {
+                'application/json': {
+                  schema: BillingResponseSchema,
+                },
+              },
+            },
+            401: {
+              description: 'Authentication failed',
+              content: {
+                'application/json': {
+                  schema: ErrorResponseSchema,
+                },
+              },
+            },
+            429: {
+              description: 'Rate limit exceeded',
+              content: {
+                'application/json': {
+                  schema: ErrorResponseSchema,
+                },
+              },
+            },
+            500: {
+              description: 'Server error',
+              content: {
+                'application/json': {
+                  schema: ErrorResponseSchema,
                 },
               },
             },
