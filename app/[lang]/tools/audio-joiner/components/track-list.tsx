@@ -26,13 +26,14 @@ interface TrackListProps {
 }
 
 /**
- * For each track, compute what fraction (0–1) of its full waveform width the
- * global playhead sits at, or `null` when the playhead is outside the track's
- * active (trimmed) window.
+ * For each track, compute what percentage (0–100) of its full waveform width
+ * the global playhead sits at, or `null` when the playhead is outside the
+ * track's active (trimmed) window.
  *
  * The "global timeline" is the concatenation of each track's trimmed region
  * [startSec, endSec] in order.  `currentTimeSec` is an offset into that joined
- * sequence.
+ * sequence.  The returned value is passed directly to `TrackRow`'s
+ * `playheadPct` prop and used as a CSS `left` percentage.
  */
 function usePlayheadPercents(
   tracks: TrackItem[],
@@ -64,7 +65,7 @@ function usePlayheadPercents(
       // How far into the trimmed region is the playhead?
       const localSec = track.startSec + (currentTimeSec - trackGlobalStart);
 
-      // Express as a fraction of the full (untrimmed) waveform width.
+      // Express as a percentage of the full (untrimmed) waveform width.
       return (localSec / track.durationSec) * 100;
     });
   }, [tracks, currentTimeSec]);
