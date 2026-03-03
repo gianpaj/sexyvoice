@@ -37,7 +37,7 @@ export async function Header({ lang }: { lang: Locale }) {
 
           {user ? (
             <Button asChild variant="default">
-              <Link href={`/${lang}/dashboard/call`} prefetch>
+              <Link href={`/${lang}/dashboard/generate`} prefetch>
                 {dict.generate}
               </Link>
             </Button>
@@ -64,7 +64,7 @@ export async function Header({ lang }: { lang: Locale }) {
             <Button asChild variant="default">
               <Link
                 className="w-full"
-                href={`/${lang}/dashboard/call`}
+                href={`/${lang}/dashboard/generate`}
                 prefetch
               >
                 {dict.generate}

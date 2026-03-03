@@ -49,7 +49,7 @@ export function LoginForm({
     }
     setLastUsedAuth('email');
 
-    router.push(`/${lang}/dashboard/call`);
+    router.push(`/${lang}/dashboard/generate`);
     router.refresh();
   };
 

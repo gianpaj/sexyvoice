@@ -56,12 +56,6 @@ export default function DashboardUI({
 
   const navigation = [
     {
-      name: dict.pages['/dashboard/call'],
-      href: `/${lang}/dashboard/call`,
-      icon: PhoneCallIcon,
-      current: pathname === `/${lang}/dashboard/call`,
-    },
-    {
       name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
@@ -72,6 +66,12 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
       current: pathname === `/${lang}/dashboard/clone`,
+    },
+    {
+      name: dict.pages['/dashboard/call'],
+      href: `/${lang}/dashboard/call`,
+      icon: PhoneCallIcon,
+      current: pathname === `/${lang}/dashboard/call`,
     },
     {
       name: dict.pages['/dashboard/history'],
