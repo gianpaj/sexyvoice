@@ -321,7 +321,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
-<!--- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*-->
+- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) NEW
 - **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status
@@ -337,7 +337,7 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
 - ✅ Audio transcription and translation tool
 - ✅ Real-time AI voice calls with configurable AI agents
-- 🚧 API access (coming soon)
+- ✅ API access
 
 ### Supported Languages by these Google Gemini TTS Models
 

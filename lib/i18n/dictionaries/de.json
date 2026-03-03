@@ -90,7 +90,6 @@
       "enterText": "Geben Sie Text zum Konvertieren ein",
       "speed": "Geschwindigkeit",
       "pitch": "Tonhöhe",
-      "generate": "Audio generieren (bald verfügbar)",
       "generating": "Wird generiert...",
       "play": "Abspielen",
       "pause": "Pause",
@@ -175,12 +174,22 @@
               "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 5 minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
             },
             {
-              "question": "Haben Sie eine API für Entwickler?",
-              "answer": "Sie kommt bald! Mit unserer API können Entwickler Sprachgenerierung und Stimmklonen zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert verwalten."
-            },
-            {
               "question": "Warum SexyVoice.ai wählen?",
               "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API für Entwickler",
+          "questions": [
+            {
+              "question": "Haben Sie eine API für Entwickler?",
+              "answer": "Ja! Unsere API ermöglicht Entwicklern, Sprachgenerierung in Apps, Websites und Spiele einzubinden. Sie können Sprache auf Abruf und programmgesteuert erstellen. Siehe die {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "Dokumentation"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "Für Gelegenheitsnutzer, die KI-Audio erkunden.",
         "features": [
-          "Alles im kostenlosen Plan"
+          "Alles im kostenlosen Plan",
+          "API-Zugang"
         ]
       },
       "standard": {
@@ -519,7 +529,13 @@
       "failedToCopy": "Kopieren fehlgeschlagen",
       "failedToLoad": "API-Schlüssel konnten nicht geladen werden",
       "failedToCreate": "API-Schlüssel konnte nicht erstellt werden",
-      "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden"
+      "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden",
+      "revokeConfirm": {
+        "title": "API-Schlüssel widerrufen?",
+        "description": "Diese Aktion kann nicht rückgängig gemacht werden. Der Schlüssel wird sofort deaktiviert und alle Anfragen damit schlagen fehl.",
+        "cancel": "Abbrechen",
+        "confirm": "Widerrufen"
+      }
     }
   },
   "pages": {
@@ -545,7 +561,11 @@
     "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
     "keywordsAudioConverter": "kostenloser Audio-Konverter, MP3 konvertieren, WAV konvertieren, FLAC konvertieren, OGG konvertieren, AAC konvertieren, Online-Audio-Konverter, Browser Audio-Konverter, Offline Audio-Konverter, MP3 zu WAV, WAV zu MP3, Audio-Format-Konverter, FFmpeg online, Audio-Konverter ohne Upload, privater Audio-Konverter",
     "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, 99 Sprachen Transkription, private Transkription",
-    "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, Text-zu-Sprache für Erwachsene, NSFW Text-zu-Sprache, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese, KI für Erwachseneninhalte, KI Stimme Erwachsene"
+    "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, Text-zu-Sprache für Erwachsene, NSFW Text-zu-Sprache, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese, KI für Erwachseneninhalte, KI Stimme Erwachsene",
+    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
+    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
+    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio Joiner"
   },
   "sidebar": {
     "profile": "Profil",

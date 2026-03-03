@@ -90,7 +90,6 @@
       "enterText": "Inserisci il testo da convertire",
       "speed": "Velocità",
       "pitch": "Tonalità",
-      "generate": "Genera audio (prossimamente)",
       "generating": "Generazione...",
       "play": "Riproduci",
       "pause": "Pausa",
@@ -175,12 +174,22 @@
               "answer": "Circa 1.000 crediti producono 1 minuto di generazione audio. I nuovi utenti ricevono 10.000 crediti gratuiti (circa 5 minuti di parlato). Il nostro piano Starter include 25.000 crediti mensili, mentre Pro offre 300.000 crediti per progetti più grandi. Scegli quello che funziona per le tue esigenze."
             },
             {
-              "question": "Avete un'API per sviluppatori?",
-              "answer": "Arriverà presto! La nostra API permetterà agli sviluppatori di aggiungere generazione e clonazione vocale ad app, siti web e giochi. Potrai creare parlato su richiesta e gestire modelli vocali in modo programmatico."
-            },
-            {
               "question": "Perché scegliere SexyVoice.ai?",
               "answer": "Combiniamo qualità vocale premium con strumenti semplici e prezzi equi. Che tu sia un creatore o un'azienda, ottieni risultati professionali senza contratti o configurazioni complicate. I crediti gratuiti rendono facile provare tutto."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API per sviluppatori",
+          "questions": [
+            {
+              "question": "Avete un'API per sviluppatori?",
+              "answer": "Sì! La nostra API permette agli sviluppatori di aggiungere la generazione vocale ad app, siti web e giochi. Potrai creare parlato su richiesta in modo programmatico. Consulta il {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "documentazione"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "Per utenti occasionali che esplorano l'audio IA.",
         "features": [
-          "Tutto in Gratuito"
+          "Tutto in Gratuito",
+          "Accesso API"
         ]
       },
       "standard": {
@@ -519,7 +529,13 @@
       "failedToCopy": "Copia non riuscita",
       "failedToLoad": "Impossibile caricare le chiavi API",
       "failedToCreate": "Impossibile creare la chiave API",
-      "failedToRevoke": "Impossibile revocare la chiave API"
+      "failedToRevoke": "Impossibile revocare la chiave API",
+      "revokeConfirm": {
+        "title": "Revocare la chiave API?",
+        "description": "Questa azione non può essere annullata. La chiave verrà disattivata immediatamente e non potrà più essere utilizzata.",
+        "cancel": "Annulla",
+        "confirm": "Sì, revoca"
+      }
     }
   },
   "pages": {
@@ -545,7 +561,11 @@
     "/dashboard/api-keys": "Chiavi API",
     "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore Audio",
-    "/tools/transcribe": "Trascrizione Audio"
+    "/tools/transcribe": "Trascrizione Audio",
+    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
+    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
+    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio Joiner"
   },
   "sidebar": {
     "profile": "Profilo",

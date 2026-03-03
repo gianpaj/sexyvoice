@@ -4,6 +4,17 @@ import { Copy, KeyRound, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -234,15 +245,39 @@ export function ApiKeys({
                     {key.is_active ? dict.statusActive : dict.statusRevoked}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      disabled={loading || !key.is_active}
-                      onClick={() => revokeKey(key.id)}
-                      size="sm"
-                      type="button"
-                      variant="ghost"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          disabled={loading || !key.is_active}
+                          size="sm"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {dict.revokeConfirm.title}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {dict.revokeConfirm.description}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            {dict.revokeConfirm.cancel}
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => revokeKey(key.id)}
+                          >
+                            {dict.revokeConfirm.confirm}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))

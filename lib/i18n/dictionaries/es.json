@@ -90,7 +90,6 @@
       "enterText": "Ingresa texto para convertir",
       "speed": "Velocidad",
       "pitch": "Tono",
-      "generate": "Generar Audio (próximamente)",
       "generating": "Generando...",
       "play": "Reproducir",
       "pause": "Pausar",
@@ -175,12 +174,22 @@
               "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 10.000 créditos gratuitos (alrededor de 5 minutos de voz). Nuestro plan Starter incluye 25.000 créditos mensuales, mientras que Pro ofrece 300.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
             },
             {
-              "question": "¿Tenéis una API para desarrolladores?",
-              "answer": "¡Pronto estará disponible! Nuestra API permitirá a los desarrolladores añadir generación y clonación de voz a apps, sitios web y juegos. Podrás crear voz bajo demanda y gestionar modelos de voz de forma programática."
-            },
-            {
               "question": "¿Por qué elegir SexyVoice.ai?",
               "answer": "Combinamos calidad de voz premium con herramientas simples y precios justos. Ya seas creador o empresa, obtendrás resultados profesionales sin contratos ni configuraciones complicadas. Los créditos gratuitos facilitan probar todo."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API para desarrolladores",
+          "questions": [
+            {
+              "question": "¿Tenéis una API para desarrolladores?",
+              "answer": "¡Sí! Nuestra API permite a los desarrolladores añadir generación de voz a apps, sitios web y juegos. Podrás crear voz bajo demanda y de forma programática. Consulta la {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "documentación"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Inicial",
         "description": "Para usuarios casuales que exploran el audio de IA.",
         "features": [
-          "Todo lo incluido en el plan Gratis"
+          "Todo lo incluido en el plan Gratis",
+          "Acceso a la API"
         ]
       },
       "standard": {
@@ -519,7 +529,13 @@
       "failedToCopy": "Error al copiar",
       "failedToLoad": "Error al cargar las claves API",
       "failedToCreate": "Error al crear la clave API",
-      "failedToRevoke": "Error al revocar la clave API"
+      "failedToRevoke": "Error al revocar la clave API",
+      "revokeConfirm": {
+        "title": "¿Revocar clave API?",
+        "description": "Esta acción es permanente. La clave quedará desactivada de inmediato y no podrá utilizarse más.",
+        "cancel": "Cancelar",
+        "confirm": "Sí, revocar"
+      }
     }
   },
   "pages": {

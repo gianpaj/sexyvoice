@@ -90,7 +90,6 @@
       "enterText": "Indtast tekst til konvertering",
       "speed": "Hastighed",
       "pitch": "Tonehøjde",
-      "generate": "Generer lyd (kommer snart)",
       "generating": "Genererer...",
       "play": "Afspil",
       "pause": "Pause",
@@ -175,12 +174,22 @@
               "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 10.000 gratis kreditter (ca. 5 minutters tale). Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
             },
             {
-              "question": "Har I en API til udviklere?",
-              "answer": "Den kommer snart! Vores API vil lade udviklere tilføje stemmegenerering og kloning til apps, hjemmesider og spil. Du vil kunne oprette tale on demand og administrere stemmemodeller programmatisk."
-            },
-            {
               "question": "Hvorfor vælge SexyVoice.ai?",
               "answer": "Vi kombinerer premium stemmekvalitet med enkle værktøjer og fair priser. Uanset om du er skaber eller virksomhed, får du professionelle resultater uden kontrakter eller komplicerede opsætninger. De gratis kreditter gør det nemt at prøve alt."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API til udviklere",
+          "questions": [
+            {
+              "question": "Har I en API til udviklere?",
+              "answer": "Ja! Vores API lader udviklere tilføje stemmegenerering til apps, hjemmesider og spil. Du kan oprette tale on demand og programmatisk. Se {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "dokumentationen"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
         "features": [
-          "Alt i Gratis"
+          "Alt i Gratis",
+          "API-adgang"
         ]
       },
       "standard": {
@@ -519,7 +529,13 @@
       "failedToCopy": "Kopiering mislykkedes",
       "failedToLoad": "Kunne ikke indlæse API-nøgler",
       "failedToCreate": "Kunne ikke oprette API-nøgle",
-      "failedToRevoke": "Kunne ikke tilbagekalde API-nøgle"
+      "failedToRevoke": "Kunne ikke tilbagekalde API-nøgle",
+      "revokeConfirm": {
+        "title": "Tilbagekald API-nøgle?",
+        "description": "Denne handling kan ikke fortrydes. Nøglen vil øjeblikkeligt holde op med at fungere.",
+        "cancel": "Annuller",
+        "confirm": "Tilbagekald"
+      }
     }
   },
   "pages": {

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import Link from 'next/link';
 
 import {
   Collapsible,
@@ -26,6 +27,31 @@ const faqIconMap: Record<string, LucideIcon> = {
   trustAndPolicies: ShieldCheck,
   pricingAndAccess: Coins,
 };
+
+interface FaqLink {
+  url: string;
+  text: string;
+}
+
+function renderAnswer(answer: string, link?: FaqLink) {
+  if (!link) return answer;
+  const parts = answer.split('{link}');
+  if (parts.length !== 2) return answer;
+  return (
+    <>
+      {parts[0]}
+      <Link
+        className="text-primary underline underline-offset-4 hover:no-underline"
+        href={link.url}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {link.text}
+      </Link>
+      {parts[1]}
+    </>
+  );
+}
 
 export const FAQComponent = async ({ lang }: { lang: Locale }) => {
   const dict = (await getDictionary(lang, 'landing')).faq;
@@ -73,7 +99,10 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
                       {faq.question}
                     </CollapsibleTrigger>
                     <CollapsibleContent className="whitespace-pre-wrap pb-4 text-muted-foreground text-sm">
-                      {faq.answer}
+                      {renderAnswer(
+                        faq.answer,
+                        (faq as { link?: FaqLink }).link,
+                      )}
                     </CollapsibleContent>
                   </Collapsible>
                 ))}
