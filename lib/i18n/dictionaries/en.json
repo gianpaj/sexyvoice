@@ -223,6 +223,7 @@
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
           "Everything in Free",
+          "API Access",
           "Voice Call: Custom Characters"
         ]
       },
@@ -232,8 +233,7 @@
         "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
-          "Everything in Free",
-          "Voice Call: Custom Characters"
+          "Everything in Standard, just cheaper"
         ]
       }
     },
