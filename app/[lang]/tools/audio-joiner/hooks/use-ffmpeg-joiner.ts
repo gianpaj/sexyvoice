@@ -109,6 +109,11 @@ async function trimSegmentsToWav({
       '-vn',
       '-acodec',
       'pcm_s16le',
+      '-ar',
+      '44100',
+      // normalizing during the trim step
+      '-ac',
+      '2',
       trimmedName,
     ]);
 
@@ -229,6 +234,8 @@ export function useFFmpegJoiner() {
         if (progressHandlerRef.current) {
           ffmpeg.off('progress', progressHandlerRef.current);
         }
+        // Ensure we don't accumulate multiple 'progress' listeners across joins
+        (ffmpeg as any).removeAllListeners?.('progress');
 
         const onProgress = ({
           progress: currentProgress,
