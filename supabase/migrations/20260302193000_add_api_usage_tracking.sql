@@ -49,9 +49,9 @@ select
   sum(coalesce(ue.dollar_amount, 0))::numeric(18, 6) as total_dollar_amount,
   sum(coalesce(ue.credits_used, 0))::bigint as total_credits_used
 from public.usage_events ue
-where ue.source_type in (
-  'api_tts'::public.usage_source_type,
-  'api_voice_cloning'::public.usage_source_type
+where ue.source_type::text in (
+  'api_tts',
+  'api_voice_cloning'
 )
 group by
   ue.user_id,

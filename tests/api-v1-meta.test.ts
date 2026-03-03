@@ -82,6 +82,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(response.status).toBe(200);
     expect(json.openapi).toBe('3.1.0');
     expect(json.paths['/api/v1/speech']).toBeDefined();
+    expect(json.paths['/api/v1/billing']).toBeDefined();
     expect(
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
