@@ -175,7 +175,7 @@
       "whatwg-url": "^14.0.0",
       "import-in-the-middle": "1.14.2",
       "require-in-the-middle": "7.5.2",
-      "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.4"
+      "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7"
     }
   },
   "overrides": {
