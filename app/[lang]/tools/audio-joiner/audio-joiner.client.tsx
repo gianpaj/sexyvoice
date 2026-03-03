@@ -444,7 +444,7 @@ export default function AudioJoinerClient({ dict }: Props) {
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
-      URL.revokeObjectURL(outputUrl);
+      setTimeout(() => URL.revokeObjectURL(outputUrl), 150);
       toast.success(dict.success.downloadStarted);
     } catch (err) {
       if (err instanceof Error && err.message === 'CANCELLED') {
