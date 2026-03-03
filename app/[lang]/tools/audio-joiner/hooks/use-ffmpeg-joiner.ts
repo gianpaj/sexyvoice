@@ -202,6 +202,10 @@ export function useFFmpegJoiner() {
     setProgress(0);
   }, []);
 
+  const progressHandlerRef = useRef<
+    (({ progress: p }: { progress: number }) => void) | null
+  >(null);
+
   const join = useCallback(
     async (
       segments: JoinerSegmentInput[],
@@ -220,9 +224,21 @@ export function useFFmpegJoiner() {
       const tempFiles: string[] = [];
 
       try {
-        ffmpeg.on('progress', ({ progress: currentProgress }) => {
+        // Remove any stale listener from a previous join call to prevent
+        // handler accumulation causing redundant/noisy progress updates.
+        if (progressHandlerRef.current) {
+          ffmpeg.off('progress', progressHandlerRef.current);
+        }
+
+        const onProgress = ({
+          progress: currentProgress,
+        }: {
+          progress: number;
+        }) => {
           setProgress(Math.min(0.5 + currentProgress * 0.5, 0.99));
-        });
+        };
+        progressHandlerRef.current = onProgress;
+        ffmpeg.on('progress', onProgress);
 
         await trimSegmentsToWav({
           ffmpeg,
