@@ -140,6 +140,9 @@ export function TrackRow({
         return;
       }
 
+      // Stop propagation so the event doesn't bubble to the waveform container
+      // and reset didDragRef to false via handleWaveformPointerDown.
+      event.stopPropagation();
       dragTypeRef.current = 'start';
       didDragRef.current = true; // treat handle interaction as a drag
       updateTrimFromPointer(event.clientX);
@@ -153,6 +156,9 @@ export function TrackRow({
         return;
       }
 
+      // Stop propagation so the event doesn't bubble to the waveform container
+      // and reset didDragRef to false via handleWaveformPointerDown.
+      event.stopPropagation();
       dragTypeRef.current = 'end';
       didDragRef.current = true; // treat handle interaction as a drag
       updateTrimFromPointer(event.clientX);
