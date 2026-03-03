@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type langDict from '@/lib/i18n/dictionaries/en.json';
 
 interface ApiKeyRow {
   id: string;
@@ -42,7 +43,11 @@ interface ApiKeyRow {
   is_active: boolean;
 }
 
-export function ApiKeys() {
+export function ApiKeys({
+  dict,
+}: {
+  dict: (typeof langDict)['profile']['apiKeys'];
+}) {
   const [apiKeys, setApiKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -55,17 +60,15 @@ export function ApiKeys() {
       const response = await fetch('/api/api-keys', { method: 'GET' });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? 'Failed to load API keys');
+        throw new Error(json.error ?? dict.failedToLoad);
       }
       setApiKeys(json.data);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to load API keys',
-      );
+      toast.error(error instanceof Error ? error.message : dict.failedToLoad);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dict.failedToLoad]);
 
   useEffect(() => {
     loadApiKeys();
@@ -81,16 +84,14 @@ export function ApiKeys() {
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? 'Failed to create API key');
+        throw new Error(json.error ?? dict.failedToCreate);
       }
       setNewApiKeyValue(json.key);
       setDialogOpen(false);
       setName('');
       await loadApiKeys();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to create API key',
-      );
+      toast.error(error instanceof Error ? error.message : dict.failedToCreate);
     } finally {
       setLoading(false);
     }
@@ -104,13 +105,11 @@ export function ApiKeys() {
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? 'Failed to revoke API key');
+        throw new Error(json.error ?? dict.failedToRevoke);
       }
       await loadApiKeys();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to revoke API key',
-      );
+      toast.error(error instanceof Error ? error.message : dict.failedToRevoke);
     } finally {
       setLoading(false);
     }
@@ -119,9 +118,9 @@ export function ApiKeys() {
   const copy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success('Copied to clipboard');
+      toast.success(dict.copiedToClipboard);
     } catch {
-      toast.error('Failed to copy');
+      toast.error(dict.failedToCopy);
     }
   };
 
@@ -129,32 +128,30 @@ export function ApiKeys() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>API Keys</CardTitle>
-          <CardDescription>
-            Create and manage keys for the external API.
-          </CardDescription>
+          <CardTitle>{dict.title}</CardTitle>
+          <CardDescription>{dict.description}</CardDescription>
         </div>
         <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              New Key
+              {dict.newKey}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create API Key</DialogTitle>
+              <DialogTitle>{dict.createDialogTitle}</DialogTitle>
               <DialogDescription>
-                The key is shown only once. Save it securely.
+                {dict.createDialogDescription}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
-              <Label htmlFor="api-key-name">Description</Label>
+              <Label htmlFor="api-key-name">{dict.nameLabel}</Label>
               <Input
                 id="api-key-name"
                 maxLength={100}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Production backend"
+                placeholder={dict.namePlaceholder}
                 value={name}
               />
             </div>
@@ -164,7 +161,7 @@ export function ApiKeys() {
                 onClick={createKey}
                 type="button"
               >
-                Create
+                {dict.createButton}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -173,7 +170,7 @@ export function ApiKeys() {
       <CardContent className="space-y-4">
         {newApiKeyValue ? (
           <div className="rounded-md border p-4">
-            <p className="mb-2 font-medium text-sm">New API key (shown once)</p>
+            <p className="mb-2 font-medium text-sm">{dict.newKeyBanner}</p>
             <div className="flex gap-2">
               <code className="block flex-1 overflow-auto rounded bg-muted px-3 py-2 text-xs">
                 {newApiKeyValue}
@@ -191,7 +188,7 @@ export function ApiKeys() {
                 type="button"
                 variant="ghost"
               >
-                Dismiss
+                {dict.dismiss}
               </Button>
             </div>
           </div>
@@ -200,19 +197,19 @@ export function ApiKeys() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Prefix</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Last Used</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead>{dict.table.name}</TableHead>
+              <TableHead>{dict.table.prefix}</TableHead>
+              <TableHead>{dict.table.created}</TableHead>
+              <TableHead>{dict.table.lastUsed}</TableHead>
+              <TableHead>{dict.table.status}</TableHead>
+              <TableHead className="text-right">{dict.table.action}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {apiKeys.length === 0 ? (
               <TableRow>
                 <TableCell className="text-muted-foreground" colSpan={6}>
-                  No API keys created yet.
+                  {dict.empty}
                 </TableCell>
               </TableRow>
             ) : (
@@ -231,9 +228,11 @@ export function ApiKeys() {
                   <TableCell>
                     {key.last_used_at
                       ? new Date(key.last_used_at).toLocaleDateString()
-                      : 'Never'}
+                      : dict.never}
                   </TableCell>
-                  <TableCell>{key.is_active ? 'Active' : 'Revoked'}</TableCell>
+                  <TableCell>
+                    {key.is_active ? dict.statusActive : dict.statusRevoked}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button
                       disabled={loading || !key.is_active}

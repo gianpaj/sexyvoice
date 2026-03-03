@@ -491,6 +491,35 @@
         "cancel": "Cancel",
         "continue": "Continue"
       }
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "description": "Create and manage keys for the external API.",
+      "newKey": "New Key",
+      "createDialogTitle": "Create API Key",
+      "createDialogDescription": "The key is shown only once. Save it securely.",
+      "nameLabel": "Description",
+      "namePlaceholder": "e.g. Production backend",
+      "createButton": "Create",
+      "newKeyBanner": "New API key (shown once)",
+      "dismiss": "Dismiss",
+      "table": {
+        "name": "Name",
+        "prefix": "Prefix",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "status": "Status",
+        "action": "Action"
+      },
+      "empty": "No API keys created yet.",
+      "never": "Never",
+      "statusActive": "Active",
+      "statusRevoked": "Revoked",
+      "copiedToClipboard": "Copied to clipboard",
+      "failedToCopy": "Failed to copy",
+      "failedToLoad": "Failed to load API keys",
+      "failedToCreate": "Failed to create API key",
+      "failedToRevoke": "Failed to revoke API key"
     }
   },
   "pages": {

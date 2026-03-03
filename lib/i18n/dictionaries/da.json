@@ -491,6 +491,35 @@
         "cancel": "Annuller",
         "continue": "Fortsæt"
       }
+    },
+    "apiKeys": {
+      "title": "API-nøgler",
+      "description": "Opret og administrer nøgler til den eksterne API.",
+      "newKey": "Ny nøgle",
+      "createDialogTitle": "Opret API-nøgle",
+      "createDialogDescription": "Nøglen vises kun én gang. Gem den sikkert.",
+      "nameLabel": "Beskrivelse",
+      "namePlaceholder": "f.eks. Produktions-backend",
+      "createButton": "Opret",
+      "newKeyBanner": "Ny API-nøgle (vises én gang)",
+      "dismiss": "Afvis",
+      "table": {
+        "name": "Navn",
+        "prefix": "Præfiks",
+        "created": "Oprettet",
+        "lastUsed": "Sidst brugt",
+        "status": "Status",
+        "action": "Handling"
+      },
+      "empty": "Ingen API-nøgler oprettet endnu.",
+      "never": "Aldrig",
+      "statusActive": "Aktiv",
+      "statusRevoked": "Tilbagekaldt",
+      "copiedToClipboard": "Kopieret til udklipsholder",
+      "failedToCopy": "Kopiering mislykkedes",
+      "failedToLoad": "Kunne ikke indlæse API-nøgler",
+      "failedToCreate": "Kunne ikke oprette API-nøgle",
+      "failedToRevoke": "Kunne ikke tilbagekalde API-nøgle"
     }
   },
   "pages": {

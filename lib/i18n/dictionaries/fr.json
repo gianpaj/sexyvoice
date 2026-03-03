@@ -491,6 +491,35 @@
         "cancel": "Annuler",
         "continue": "Continuer"
       }
+    },
+    "apiKeys": {
+      "title": "Clés API",
+      "description": "Créez et gérez des clés pour l'API externe.",
+      "newKey": "Nouvelle clé",
+      "createDialogTitle": "Créer une clé API",
+      "createDialogDescription": "La clé n'est affichée qu'une seule fois. Sauvegardez-la en lieu sûr.",
+      "nameLabel": "Description",
+      "namePlaceholder": "ex. Backend de production",
+      "createButton": "Créer",
+      "newKeyBanner": "Nouvelle clé API (affichée une seule fois)",
+      "dismiss": "Fermer",
+      "table": {
+        "name": "Nom",
+        "prefix": "Préfixe",
+        "created": "Créée",
+        "lastUsed": "Dernière utilisation",
+        "status": "Statut",
+        "action": "Action"
+      },
+      "empty": "Aucune clé API créée pour l'instant.",
+      "never": "Jamais",
+      "statusActive": "Active",
+      "statusRevoked": "Révoquée",
+      "copiedToClipboard": "Copié dans le presse-papiers",
+      "failedToCopy": "Échec de la copie",
+      "failedToLoad": "Échec du chargement des clés API",
+      "failedToCreate": "Échec de la création de la clé API",
+      "failedToRevoke": "Échec de la révocation de la clé API"
     }
   },
   "pages": {

@@ -491,6 +491,35 @@
         "cancel": "Abbrechen",
         "continue": "Weiter"
       }
+    },
+    "apiKeys": {
+      "title": "API-Schlüssel",
+      "description": "Schlüssel für die externe API erstellen und verwalten.",
+      "newKey": "Neuer Schlüssel",
+      "createDialogTitle": "API-Schlüssel erstellen",
+      "createDialogDescription": "Der Schlüssel wird nur einmal angezeigt. Bewahren Sie ihn sicher auf.",
+      "nameLabel": "Beschreibung",
+      "namePlaceholder": "z.B. Produktions-Backend",
+      "createButton": "Erstellen",
+      "newKeyBanner": "Neuer API-Schlüssel (einmalig angezeigt)",
+      "dismiss": "Schließen",
+      "table": {
+        "name": "Name",
+        "prefix": "Präfix",
+        "created": "Erstellt",
+        "lastUsed": "Zuletzt verwendet",
+        "status": "Status",
+        "action": "Aktion"
+      },
+      "empty": "Noch keine API-Schlüssel erstellt.",
+      "never": "Nie",
+      "statusActive": "Aktiv",
+      "statusRevoked": "Widerrufen",
+      "copiedToClipboard": "In die Zwischenablage kopiert",
+      "failedToCopy": "Kopieren fehlgeschlagen",
+      "failedToLoad": "API-Schlüssel konnten nicht geladen werden",
+      "failedToCreate": "API-Schlüssel konnte nicht erstellt werden",
+      "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden"
     }
   },
   "pages": {

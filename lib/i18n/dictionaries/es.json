@@ -491,6 +491,35 @@
         "cancel": "Cancelar",
         "continue": "Continuar"
       }
+    },
+    "apiKeys": {
+      "title": "Claves API",
+      "description": "Crea y gestiona claves para la API externa.",
+      "newKey": "Nueva clave",
+      "createDialogTitle": "Crear clave API",
+      "createDialogDescription": "La clave se muestra solo una vez. Guárdala de forma segura.",
+      "nameLabel": "Descripción",
+      "namePlaceholder": "p. ej. Backend de producción",
+      "createButton": "Crear",
+      "newKeyBanner": "Nueva clave API (mostrada una vez)",
+      "dismiss": "Cerrar",
+      "table": {
+        "name": "Nombre",
+        "prefix": "Prefijo",
+        "created": "Creada",
+        "lastUsed": "Último uso",
+        "status": "Estado",
+        "action": "Acción"
+      },
+      "empty": "Aún no hay claves API creadas.",
+      "never": "Nunca",
+      "statusActive": "Activa",
+      "statusRevoked": "Revocada",
+      "copiedToClipboard": "Copiado al portapapeles",
+      "failedToCopy": "Error al copiar",
+      "failedToLoad": "Error al cargar las claves API",
+      "failedToCreate": "Error al crear la clave API",
+      "failedToRevoke": "Error al revocar la clave API"
     }
   },
   "pages": {
