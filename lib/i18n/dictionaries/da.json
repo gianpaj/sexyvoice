@@ -515,7 +515,11 @@
     "descriptionTranscribe": "Gratis online lydtransskription – Transskriber lyd- og videofiler til tekst på 99+ sprog med OpenAI Whisper. 100% privat, kører direkte i din browser. Ingen upload påkrævet.",
     "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
     "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
-    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI"
+    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI",
+    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
+    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
+    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio Joiner"
   },
   "sidebar": {
     "profile": "Profil",
@@ -585,7 +589,8 @@
     "termsAndConditions": "Vilkår og betingelser",
     "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
     "audioConverter": "Gratis lydkonverter",
-    "transcribe": "Gratis lydtransskription"
+    "transcribe": "Gratis lydtransskription",
+    "audioJoiner": "Free Audio Joiner"
   },
   "promos": {
     "halloweenBanner": {
@@ -744,6 +749,44 @@
           "answer": "Når modellen er downloadet én gang, ja. Modellen caches i din browser, så fremtidige transskriptioner fungerer helt offline."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Free Audio Joiner",
+    "subtitle": "Join and trim multiple audio files in your browser with no uploads",
+    "dropZone": {
+      "title": "Add audio files",
+      "subtitle": "Upload one or more files to start editing",
+      "addFiles": "Add files"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Play",
+      "pause": "Pause",
+      "join": "Join",
+      "joining": "Joining...",
+      "cancel": "Cancel"
+    },
+    "progress": {
+      "processing": "Processing"
+    },
+    "success": {
+      "downloadStarted": "Download started.",
+      "cancelled": "Processing cancelled."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "Failed to load FFmpeg. Please refresh and try again.",
+      "decodeFailed": "Failed to read {file}. Try a different audio format.",
+      "previewFailed": "Unable to preview the joined timeline.",
+      "joinFailed": "Join failed. Please try again."
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "No uploads, 100% in-browser",
+      "alsoTry": "Also try our",
+      "audioConverterLink": "Free Audio Converter Tool",
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
     }
   }
 }

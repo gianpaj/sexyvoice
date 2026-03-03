@@ -9,6 +9,7 @@ import {
   FileText,
   Mic2,
   PhoneCallIcon,
+  Scissors,
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -104,6 +105,11 @@ export default function DashboardUI({
       name: dict.pages['/tools/transcribe'],
       href: `/${lang}/tools/transcribe`,
       icon: FileText,
+    },
+    {
+      name: dict.pages['/tools/audio-joiner'],
+      href: `/${lang}/tools/audio-joiner`,
+      icon: Scissors,
     },
   ];
 
