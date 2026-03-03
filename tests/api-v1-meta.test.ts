@@ -44,8 +44,7 @@ describe('/api/v1 metadata endpoints', () => {
               id: 'voice-tara-id',
               name: 'tara',
               language: 'en',
-              model:
-                'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+              model: 'kokoro',
               feature: 'tts',
               is_public: true,
             },

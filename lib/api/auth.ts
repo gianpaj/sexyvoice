@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHmac, randomBytes } from 'node:crypto';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -29,8 +29,22 @@ function createRandomAlphaNumeric(length: number): string {
   return output;
 }
 
+/**
+ * Hashes an API key for safe storage in the database.
+ *
+ * Uses HMAC-SHA256 keyed with API_KEY_HMAC_SECRET so that an attacker who
+ * obtains the database alone cannot verify candidate keys offline — they also
+ * need the application secret.
+ *
+ */
 export function hashApiKey(key: string): string {
-  return createHash('sha256').update(key).digest('hex');
+  const secret = process.env.API_KEY_HMAC_SECRET;
+  if (!secret) {
+    throw new Error(
+      '[auth] API_KEY_HMAC_SECRET is not set — falling back to plain SHA-256. Set the secret immediately.',
+    );
+  }
+  return createHmac('sha256', secret).update(key).digest('hex');
 }
 
 export function generateApiKey(): {
@@ -71,6 +85,7 @@ export async function validateApiKey(authHeader: string): Promise<{
     .select('id, user_id, key_hash, is_active, expires_at')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .maybeSingle();
 
   if (error || !data) {

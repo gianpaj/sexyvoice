@@ -75,6 +75,15 @@ process.env.R2_SECRET_ACCESS_KEY = 'test-r2-secret-key';
 process.env.R2_BUCKET_NAME = 'test-bucket';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
+process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+
+// Mock Axiom so tests never attempt a real network flush
+vi.mock('@axiomhq/js', () => ({
+  Axiom: class MockAxiom {
+    ingest = vi.fn();
+    flush = vi.fn().mockResolvedValue(undefined);
+  },
+}));
 
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/server', () => ({
@@ -146,6 +155,7 @@ vi.mock('@/lib/supabase/server', () => ({
 const mockAdminFrom = vi.fn(() => ({
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
+  or: vi.fn().mockReturnThis(),
   maybeSingle: vi.fn().mockResolvedValue({
     data: {
       id: 'test-api-key-id',
@@ -178,8 +188,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model:
-            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          model: 'kokoro',
         });
       }
       if (voiceName === 'poe') {

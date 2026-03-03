@@ -105,6 +105,10 @@ describe('/api/api-keys routes', () => {
       from: vi.fn(() => ({
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockResolvedValue({
+          data: [{ id: 'key-1' }],
+          error: null,
+        }),
       })),
     } as never);
 
@@ -115,5 +119,80 @@ describe('/api/api-keys routes', () => {
 
     expect(response.status).toBe(200);
     expect(json.success).toBe(true);
+  });
+
+  it('returns 404 when key does not exist or belongs to another user', async () => {
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'test-user-id' } },
+          error: null,
+        }),
+      },
+      from: vi.fn(() => ({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        // Zero rows matched — wrong id or different owner
+        select: vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
+        }),
+      })),
+    } as never);
+
+    const response = await DELETE(new Request('http://localhost'), {
+      params: Promise.resolve({ id: 'non-existent-key-id' }),
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(json.error).toBe('API key not found');
+  });
+
+  it('returns 500 when the database update fails', async () => {
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'test-user-id' } },
+          error: null,
+        }),
+      },
+      from: vi.fn(() => ({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'DB connection lost', code: '08006' },
+        }),
+      })),
+    } as never);
+
+    const response = await DELETE(new Request('http://localhost'), {
+      params: Promise.resolve({ id: 'key-1' }),
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error).toBe('Failed to deactivate API key');
+  });
+
+  it('returns 401 when user is not authenticated', async () => {
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+          error: { message: 'Not authenticated' },
+        }),
+      },
+      from: vi.fn(),
+    } as never);
+
+    const response = await DELETE(new Request('http://localhost'), {
+      params: Promise.resolve({ id: 'key-1' }),
+    });
+    const json = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(json.error).toBe('Unauthorized');
   });
 });

@@ -4,7 +4,7 @@ const axiom = new Axiom({
   token: process.env.AXIOM_TOKEN ?? '',
 });
 
-const DATASET = 'sexyvoice';
+const DATASET = 'vercel';
 
 export interface LogFields {
   status: number;

@@ -60,13 +60,14 @@ describe('/api/v1/billing', () => {
       ],
       error: null,
     });
+    const apiKeysOr = vi
+      .fn()
+      .mockReturnValue({ maybeSingle: apiKeysMaybeSingle });
+    apiKeysEq.mockReturnValue({ eq: apiKeysEq, or: apiKeysOr });
     const from = vi.fn((table: string) => {
       if (table === 'api_keys') {
         return {
-          select: vi.fn().mockReturnValue({
-            eq: apiKeysEq,
-            maybeSingle: apiKeysMaybeSingle,
-          }),
+          select: vi.fn().mockReturnValue({ eq: apiKeysEq }),
         };
       }
       if (table === 'credits') {

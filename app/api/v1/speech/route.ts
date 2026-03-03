@@ -300,7 +300,7 @@ export async function POST(request: Request) {
     const isGeminiVoice = voiceObj.model === 'gpro';
     const provider = isGeminiVoice ? 'google' : 'replicate';
     let modelUsed = voiceObj.model;
-    let uploadUrl = '';
+    let uploadUrl: string;
     let replicateResponse: Prediction | undefined;
     let geminiResponse: GenerateContentResponse | null = null;
 
@@ -333,13 +333,19 @@ export async function POST(request: Request) {
           contents: [{ parts: [{ text: finalText }] }],
           config,
         });
-      } catch {
+      } catch (proError) {
         modelUsed = 'gemini-2.5-flash-preview-tts';
-        geminiResponse = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text: finalText }] }],
-          config,
-        });
+        try {
+          geminiResponse = await ai.models.generateContent({
+            model: modelUsed,
+            contents: [{ parts: [{ text: finalText }] }],
+            config,
+          });
+        } catch (flashError) {
+          throw new Error(
+            `Both Gemini models failed. Pro error: ${proError instanceof Error ? proError.message : String(proError)}. Flash error: ${flashError instanceof Error ? flashError.message : String(flashError)}`,
+          );
+        }
       }
 
       const part = geminiResponse?.candidates?.[0]?.content?.parts?.[0];
@@ -444,6 +450,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!uploadUrl) {
+      throw new Error('uploadUrl is empty after generation — this is a bug');
+    }
+
     await redis.set(filename, uploadUrl);
 
     let creditsUsed = estimatedCredits;
@@ -534,7 +544,7 @@ export async function POST(request: Request) {
         cached: false,
         usage: {
           input_characters: finalText.length,
-          model,
+          model: modelUsed,
         },
       },
       { status: 200 },

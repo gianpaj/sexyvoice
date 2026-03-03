@@ -53,16 +53,21 @@ export async function GET(request: Request) {
 
     return jsonWithRateLimitHeaders(
       {
-        data: (data ?? []).map((voice) => {
+        data: (data ?? []).flatMap((voice) => {
           const model = resolveExternalModelId(voice.model);
-          return {
-            id: voice.id,
-            name: voice.name,
-            language: voice.language,
-            model,
-            formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
-            styles: [...EXTERNAL_API_MODELS[model].supportedStyles],
-          };
+          if (!model) {
+            return [];
+          }
+          return [
+            {
+              id: voice.id,
+              name: voice.name,
+              language: voice.language,
+              model,
+              formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
+              styles: [...EXTERNAL_API_MODELS[model].supportedStyles],
+            },
+          ];
         }),
       },
       { status: 200 },

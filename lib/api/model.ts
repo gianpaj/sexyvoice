@@ -3,10 +3,13 @@ import {
   type ExternalApiModelId,
 } from '@/lib/api/constants';
 
-export function resolveExternalModelId(model: string) {
+export function resolveExternalModelId(
+  model: string,
+): ExternalApiModelId | undefined {
   if (Object.hasOwn(EXTERNAL_API_MODELS, model)) {
     return model as ExternalApiModelId;
   }
+  return undefined;
 }
 
 export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
