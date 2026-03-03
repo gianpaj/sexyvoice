@@ -513,6 +513,7 @@
     "/dashboard/clone": "Clona",
     "/dashboard/history": "Cronologia",
     "/dashboard/credits": "Crediti",
+    "/dashboard/api-keys": "Chiavi API",
     "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore Audio",
     "/tools/transcribe": "Trascrizione Audio"

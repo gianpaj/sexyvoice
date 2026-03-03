@@ -6,6 +6,7 @@ import {
   FileAudio,
   FileClock,
   FileText,
+  KeyRound,
   Mic2,
   PhoneCallIcon,
   Wand2,
@@ -90,6 +91,12 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/usage`,
       icon: BarChart3,
       current: pathname === `/${lang}/dashboard/usage`,
+    },
+    {
+      name: dict.pages['/dashboard/api-keys'],
+      href: `/${lang}/dashboard/api-keys`,
+      icon: KeyRound,
+      current: pathname === `/${lang}/dashboard/api-keys`,
     },
   ];
 

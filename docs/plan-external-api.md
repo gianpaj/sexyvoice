@@ -303,7 +303,7 @@ management in DB, backend auth, and dashboard UI.
 ### 1. Database: `api_keys` table + migration
 
 - Create migration:
-  `supabase/migrations/20260108170000_create_api_keys_table.sql`
+  `supabase/migrations/20260302170000_create_api_keys_table.sql`
 - Table columns:
   - `id` UUID primary key
   - `user_id` UUID references `auth.users(id)` with `ON DELETE CASCADE`

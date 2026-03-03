@@ -506,6 +506,7 @@
     "/dashboard/clone": "Klon",
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
+    "/dashboard/api-keys": "API-nøgler",
     "/dashboard/usage": "Forbrug",
     "/tools/audio-converter": "Lydkonverter",
     "/tools/transcribe": "Lydtransskription",
