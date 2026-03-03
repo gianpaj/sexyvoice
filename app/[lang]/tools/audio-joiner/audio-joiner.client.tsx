@@ -47,6 +47,8 @@ function isInteractiveElement(target: EventTarget | null): boolean {
     tagName === 'input' ||
     tagName === 'textarea' ||
     tagName === 'select' ||
+    tagName === 'button' ||
+    target.getAttribute('role') === 'button' ||
     target.isContentEditable
   );
 }
