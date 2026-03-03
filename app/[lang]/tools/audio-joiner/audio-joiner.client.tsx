@@ -495,6 +495,7 @@ export default function AudioJoinerClient({ dict }: Props) {
 
           <DropZone
             addFilesLabel={dict.dropZone.addFiles}
+            compact={tracks.length > 0}
             disabled={isProcessing}
             onFilesSelected={handleFilesSelected}
             subtitle={dict.dropZone.subtitle}
