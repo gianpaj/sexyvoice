@@ -522,6 +522,7 @@
         "action": "Azione"
       },
       "empty": "Nessuna chiave API creata.",
+      "unpaidEmpty": "Abbonati o ricarica il tuo account per creare chiavi API.",
       "never": "Mai",
       "statusActive": "Attiva",
       "statusRevoked": "Revocata",

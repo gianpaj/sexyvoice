@@ -522,6 +522,7 @@
         "action": "Aktion"
       },
       "empty": "Noch keine API-Schlüssel erstellt.",
+      "unpaidEmpty": "Abonnieren Sie oder laden Sie Ihr Konto auf, um API-Schlüssel zu erstellen.",
       "never": "Nie",
       "statusActive": "Aktiv",
       "statusRevoked": "Widerrufen",

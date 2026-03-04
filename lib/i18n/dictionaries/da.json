@@ -522,6 +522,7 @@
         "action": "Handling"
       },
       "empty": "Ingen API-nøgler oprettet endnu.",
+      "unpaidEmpty": "Abonner eller fyld saldo på din konto for at oprette API-nøgler.",
       "never": "Aldrig",
       "statusActive": "Aktiv",
       "statusRevoked": "Tilbagekaldt",
