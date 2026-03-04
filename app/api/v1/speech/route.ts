@@ -470,26 +470,29 @@ export async function POST(request: Request) {
       model,
       inputChars: finalText.length,
     });
-    const audioFileResult = await saveAudioFile({
-      userId,
-      filename,
-      text: finalText,
-      url: uploadUrl,
-      model: modelUsed,
-      predictionId: replicateResponse?.id,
-      isPublic: false,
-      voiceId: voiceObj.id,
-      duration: '-1',
-      credits_used: creditsUsed,
-      usage: {
-        ...(usageMetadata ?? {}),
-        userHasPaid,
-        apiKeyId: authResult.apiKeyId,
-        sourceType: 'api_tts',
-        dollarAmount,
-        ...(seed !== undefined ? { seed } : {}),
-      },
-    });
+    const [audioFileResult, updatedCredits] = await Promise.all([
+      saveAudioFile({
+        userId,
+        filename,
+        text: finalText,
+        url: uploadUrl,
+        model: modelUsed,
+        predictionId: replicateResponse?.id,
+        isPublic: false,
+        voiceId: voiceObj.id,
+        duration: '-1',
+        credits_used: creditsUsed,
+        usage: {
+          ...(usageMetadata ?? {}),
+          userHasPaid,
+          apiKeyId: authResult.apiKeyId,
+          sourceType: 'api_tts',
+          dollarAmount,
+          ...(seed !== undefined ? { seed } : {}),
+        },
+      }),
+      getCredits(userId),
+    ]);
 
     await insertUsageEvent({
       userId,
@@ -540,7 +543,7 @@ export async function POST(request: Request) {
       {
         url: uploadUrl,
         credits_used: creditsUsed,
-        credits_remaining: Math.max(0, currentCredits - creditsUsed),
+        credits_remaining: Math.max(0, updatedCredits - creditsUsed),
         cached: false,
         usage: {
           input_characters: finalText.length,

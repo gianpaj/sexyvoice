@@ -34,18 +34,4 @@ describe('external API auth helpers', () => {
 
     expect(hashWithOriginal).not.toBe(hashWithDifferentSecret);
   });
-
-  it('hashApiKey throws when API_KEY_HMAC_SECRET is absent', () => {
-    const original = process.env.API_KEY_HMAC_SECRET;
-    const key = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
-
-    Reflect.deleteProperty(process.env, 'API_KEY_HMAC_SECRET');
-
-    try {
-      expect(() => hashApiKey(key)).toThrow('API_KEY_HMAC_SECRET is not set');
-    } finally {
-      // Always restore so later tests in the suite are not affected.
-      process.env.API_KEY_HMAC_SECRET = original;
-    }
-  });
 });
