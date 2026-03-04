@@ -1,5 +1,4 @@
 import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
-// import { GoogleAICacheManager } from '@google/generative-ai/server';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
