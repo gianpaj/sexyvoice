@@ -561,7 +561,11 @@
     "descriptionTranscribe": "Transcripción de audio online gratuita – Transcribe archivos de audio y vídeo a texto en más de 99 idiomas con OpenAI Whisper. 100% privado, se ejecuta en tu navegador. Sin subir archivos.",
     "keywordsAudioConverter": "conversor de audio gratis, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, conversor de audio online, conversor de audio en navegador, conversor de audio offline, mp3 a wav, wav a mp3, convertidor de formato de audio, ffmpeg online, conversor de audio sin subir archivos, conversor de audio privado",
     "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción 99 idiomas, transcripción privada",
-    "keywordsLanding": "texto a voz, generador de voz IA, clonación de voz, texto a voz para adultos, texto a voz NSFW, síntesis de voz IA, generación de voz, TTS gratis, voces IA expresivas, clonar voz IA, síntesis de habla, contenido adulto IA, voz IA adultos"
+    "keywordsLanding": "texto a voz, generador de voz IA, clonación de voz, texto a voz para adultos, texto a voz NSFW, síntesis de voz IA, generación de voz, TTS gratis, voces IA expresivas, clonar voz IA, síntesis de habla, contenido adulto IA, voz IA adultos",
+    "titleAudioJoiner": "Unificador de Audio Gratuito – Une y Recorta Audio",
+    "descriptionAudioJoiner": "Une varios archivos de audio y recorta cada segmento directamente en tu navegador. Privado, gratuito y sin subidas.",
+    "keywordsAudioJoiner": "unificador de audio gratis, unir archivos de audio, combinar mp3 online, combinar archivos wav, recortar segmentos de audio, editor de audio en navegador, unificador de audio sin subir, editor de audio privado, unificador de audio ffmpeg wasm",
+    "/tools/audio-joiner": "Unificador de Audio"
   },
   "sidebar": {
     "profile": "Perfil",
@@ -631,7 +635,8 @@
     "termsAndConditions": "Términos y condiciones",
     "copyright": "SexyVoice.ai. Todos los derechos reservados.",
     "audioConverter": "Conversor de Audio Gratuito",
-    "transcribe": "Transcripción de Audio Gratuita"
+    "transcribe": "Transcripción de Audio Gratuita",
+    "audioJoiner": "Unificador de Audio Gratuito"
   },
   "promos": {
     "halloweenBanner": {
@@ -775,7 +780,7 @@
         },
         {
           "question": "¿Qué idiomas admite?",
-          "answer": "Los modelos Whisper multilingües admiten más de 99 idiomas, incluyendo inglés, francés, alemán, japonés, árabe, hindi, portugués, italiano, ruso, chino, coreano y muchos más."
+          "answer": "Los modelos Whisper multilingües admiten 32 idiomas: alemán, árabe, bengalí, checo, chino, coreano, danés, español, finés, francés, griego, hebreo, hindi, húngaro, indonesio, inglés, italiano, japonés, malayo, neerlandés, noruego, polaco, portugués, rumano, ruso, sueco, tailandés, tamil, telugu, turco, ucraniano y vietnamita."
         },
         {
           "question": "¿Qué formatos de audio se admiten?",
@@ -790,6 +795,44 @@
           "answer": "Después de descargar el modelo una vez, sí. El modelo se almacena en caché en tu navegador, por lo que las transcripciones futuras funcionan completamente sin conexión."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Unificador de Audio Gratuito",
+    "subtitle": "Une y recorta varios archivos de audio en tu navegador sin subir nada",
+    "dropZone": {
+      "title": "Añadir archivos de audio",
+      "subtitle": "Sube uno o más archivos para empezar a editar",
+      "addFiles": "Añadir archivos"
+    },
+    "controls": {
+      "format": "Formato",
+      "play": "Reproducir",
+      "pause": "Pausar",
+      "join": "Unir",
+      "joining": "Uniendo...",
+      "cancel": "Cancelar"
+    },
+    "progress": {
+      "processing": "Procesando"
+    },
+    "success": {
+      "downloadStarted": "Descarga iniciada.",
+      "cancelled": "Procesamiento cancelado."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "Error al cargar FFmpeg. Por favor, recarga la página e inténtalo de nuevo.",
+      "decodeFailed": "Error al leer {file}. Prueba con un formato de audio diferente.",
+      "previewFailed": "No se puede previsualizar la línea de tiempo unida.",
+      "joinFailed": "Error al unir. Por favor, inténtalo de nuevo."
+    },
+    "footer": {
+      "poweredBy": "Desarrollado con",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Sin subidas, 100% en el navegador",
+      "alsoTry": "Prueba también nuestro",
+      "audioConverterLink": "Conversor de Audio Gratuito",
+      "madeWith": "Hecho con ♡ por SexyVoice.ai - Generador de audio IA gratis"
     }
   }
 }

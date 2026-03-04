@@ -243,9 +243,7 @@
         "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
-          "Everything in Free",
-          "Voice Call: Custom Characters",
-          "API Access"
+          "Everything in Standard, just cheaper"
         ]
       }
     },
@@ -563,7 +561,11 @@
     "/dashboard/api-keys": "API Keys",
     "/dashboard/usage": "Usage",
     "/tools/audio-converter": "Audio Converter",
-    "/tools/transcribe": "Audio Transcription"
+    "/tools/transcribe": "Audio Transcription",
+    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
+    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
+    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio Joiner"
   },
   "sidebar": {
     "profile": "Profile",
@@ -633,7 +635,8 @@
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved.",
     "audioConverter": "Free Audio Converter",
-    "transcribe": "Free Audio Transcription"
+    "transcribe": "Free Audio Transcription",
+    "audioJoiner": "Free Audio Joiner"
   },
   "promos": {
     "halloweenBanner": {
@@ -777,11 +780,11 @@
         },
         {
           "question": "What languages does it support?",
-          "answer": "The multilingual Whisper models support 99+ languages including Spanish, French, German, Japanese, Arabic, Hindi, Portuguese, Italian, Russian, Chinese, Korean, and many more."
+          "answer": "The multilingual Whisper models support 32 languages: Arabic, Bengali, Chinese, Czech, Danish, Dutch, English, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian, Indonesian, Italian, Japanese, Korean, Malay, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Tamil, Telugu, Thai, Turkish, Ukrainian, and Vietnamese."
         },
         {
           "question": "What audio formats are supported?",
-          "answer": "MP3, WAV, M4A, OGG, FLAC, and WebM — anything your browser can decode. Video files work too."
+          "answer": "MP3, WAV, M4A, OGG (WhatsApp), FLAC, and WebM — anything your browser can decode. Video files work too."
         },
         {
           "question": "How accurate is the transcription?",
@@ -792,6 +795,44 @@
           "answer": "After the model downloads once, yes. The model is cached in your browser, so future transcriptions work fully offline."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Free Audio Joiner",
+    "subtitle": "Join and trim multiple audio files in your browser with no uploads",
+    "dropZone": {
+      "title": "Add audio files",
+      "subtitle": "Upload one or more files to start editing",
+      "addFiles": "Add files"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Play",
+      "pause": "Pause",
+      "join": "Join",
+      "joining": "Joining...",
+      "cancel": "Cancel"
+    },
+    "progress": {
+      "processing": "Processing"
+    },
+    "success": {
+      "downloadStarted": "Download started.",
+      "cancelled": "Processing cancelled."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "Failed to load FFmpeg. Please refresh and try again.",
+      "decodeFailed": "Failed to read {file}. Try a different audio format.",
+      "previewFailed": "Unable to preview the joined timeline.",
+      "joinFailed": "Join failed. Please try again."
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "No uploads, 100% in-browser",
+      "alsoTry": "Also try our",
+      "audioConverterLink": "Free Audio Converter Tool",
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
     }
   }
 }

@@ -3,6 +3,7 @@
 import {
   BarChart3,
   CreditCard,
+  ExternalLink,
   FileAudio,
   FileClock,
   FileText,
@@ -172,9 +173,10 @@ export default function DashboardUI({
                   {freeTools.map((item) => (
                     <SidebarMenuItem key={item.name}>
                       <SidebarMenuButton asChild tooltip={item.name}>
-                        <Link href={item.href}>
+                        <Link href={item.href} target="_blank">
                           <item.icon className="mr-3 size-5" />
                           <span>{item.name}</span>
+                          <ExternalLink className="max-h-3 max-w-3" />
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

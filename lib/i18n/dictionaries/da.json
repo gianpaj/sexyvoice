@@ -561,7 +561,11 @@
     "descriptionTranscribe": "Gratis online lydtransskription – Transskriber lyd- og videofiler til tekst på 99+ sprog med OpenAI Whisper. 100% privat, kører direkte i din browser. Ingen upload påkrævet.",
     "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
     "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
-    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI"
+    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI",
+    "titleAudioJoiner": "Gratis Lyd Samler – Flet og Trim Lydfiler",
+    "descriptionAudioJoiner": "Flet flere lydfiler og trim hvert segment direkte i din browser. Privat, gratis og uden upload.",
+    "keywordsAudioJoiner": "gratis lyd samler, flet lydfiler, join mp3 online, kombiner wav-filer, trim lydsegmenter, browser lydeditor, lyd samler uden upload, privat lydeditor, ffmpeg wasm lyd samler",
+    "/tools/audio-joiner": "Lyd Samler"
   },
   "sidebar": {
     "profile": "Profil",
@@ -631,7 +635,8 @@
     "termsAndConditions": "Vilkår og betingelser",
     "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
     "audioConverter": "Gratis lydkonverter",
-    "transcribe": "Gratis lydtransskription"
+    "transcribe": "Gratis lydtransskription",
+    "audioJoiner": "Gratis lydsammenfletning"
   },
   "promos": {
     "halloweenBanner": {
@@ -775,7 +780,7 @@
         },
         {
           "question": "Hvilke sprog understøttes?",
-          "answer": "De flersprogede Whisper-modeller understøtter over 99 sprog, herunder spansk, fransk, tysk, japansk, arabisk, hindi, portugisisk, italiensk, russisk, kinesisk, koreansk og mange flere."
+          "answer": "De flersprogede Whisper-modeller understøtter 32 sprog: arabisk, bengali, dansk, engelsk, finsk, fransk, græsk, hebraisk, hindi, hollandsk, indonesisk, italiensk, japansk, kinesisk, koreansk, malaysisk, norsk, polsk, portugisisk, rumænsk, russisk, spansk, svensk, tjekkisk, thai, tamil, telugu, tyrkisk, tysk, ukrainsk, ungarsk og vietnamesisk."
         },
         {
           "question": "Hvilke lydformater understøttes?",
@@ -790,6 +795,44 @@
           "answer": "Når modellen er downloadet én gang, ja. Modellen caches i din browser, så fremtidige transskriptioner fungerer helt offline."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Gratis Lyd Samler",
+    "subtitle": "Flet og trim flere lydfiler i din browser uden upload",
+    "dropZone": {
+      "title": "Tilføj lydfiler",
+      "subtitle": "Upload en eller flere filer for at begynde redigering",
+      "addFiles": "Tilføj filer"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Afspil",
+      "pause": "Pause",
+      "join": "Flet",
+      "joining": "Fletter...",
+      "cancel": "Annuller"
+    },
+    "progress": {
+      "processing": "Behandler"
+    },
+    "success": {
+      "downloadStarted": "Download startet.",
+      "cancelled": "Behandling annulleret."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "FFmpeg kunne ikke indlæses. Opdater siden og prøv igen.",
+      "decodeFailed": "Kunne ikke læse {file}. Prøv et andet lydformat.",
+      "previewFailed": "Kan ikke forhåndsvise den flettede tidslinje.",
+      "joinFailed": "Fletning mislykkedes. Prøv igen."
+    },
+    "footer": {
+      "poweredBy": "Drevet af",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Ingen upload, 100% i browseren",
+      "alsoTry": "Prøv også vores",
+      "audioConverterLink": "Gratis Lydkonverter",
+      "madeWith": "Lavet med ♡ af SexyVoice.ai - Prøv gratis AI lydgenerator"
     }
   }
 }

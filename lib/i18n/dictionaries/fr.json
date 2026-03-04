@@ -561,7 +561,11 @@
     "descriptionTranscribe": "Transcription audio en ligne gratuite – Transcrivez des fichiers audio et vidéo en texte dans plus de 99 langues avec OpenAI Whisper AI. 100% privé, fonctionne entièrement dans votre navigateur. Aucun téléversement requis.",
     "keywordsAudioConverter": "convertisseur audio gratuit, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, convertisseur audio en ligne, convertisseur audio navigateur, convertisseur audio hors ligne, mp3 en wav, wav en mp3, convertisseur format audio, ffmpeg en ligne, convertisseur audio sans téléversement, convertisseur audio privé",
     "keywordsTranscribe": "transcription audio gratuite, transcrire audio, reconnaissance vocale, audio en texte, transcription whisper, openai whisper, transcription hors ligne, transcription navigateur, voix en texte, reconnaissance vocale gratuite, transcription audio en ligne, transcrire vidéo, transcription 99 langues, transcription privée",
-    "keywordsLanding": "synthèse vocale, générateur de voix IA, clonage vocal, synthèse vocale pour adultes, synthèse vocale NSFW, synthèse vocale IA, génération de voix, TTS gratuit, voix IA expressives, clone vocal IA, synthèse de la parole, contenu adulte IA, voix IA adulte"
+    "keywordsLanding": "synthèse vocale, générateur de voix IA, clonage vocal, synthèse vocale pour adultes, synthèse vocale NSFW, synthèse vocale IA, génération de voix, TTS gratuit, voix IA expressives, clone vocal IA, synthèse de la parole, contenu adulte IA, voix IA adulte",
+    "titleAudioJoiner": "Assembleur Audio Gratuit – Fusionner et Découper de l'Audio",
+    "descriptionAudioJoiner": "Assemblez plusieurs fichiers audio et découpez chaque segment directement dans votre navigateur. Privé, gratuit et sans téléversement requis.",
+    "keywordsAudioJoiner": "assembleur audio gratuit, fusionner fichiers audio, joindre mp3 en ligne, combiner fichiers wav, découper segments audio, éditeur audio navigateur, assembleur audio sans upload, éditeur audio privé, ffmpeg wasm assembleur audio",
+    "/tools/audio-joiner": "Assembleur Audio"
   },
   "sidebar": {
     "profile": "Profil",
@@ -631,7 +635,8 @@
     "termsAndConditions": "Conditions générales",
     "copyright": "SexyVoice.ai. Tous droits réservés.",
     "audioConverter": "Convertisseur audio gratuit",
-    "transcribe": "Transcription audio gratuite"
+    "transcribe": "Transcription audio gratuite",
+    "audioJoiner": "Assembleur audio gratuit"
   },
   "promos": {
     "halloweenBanner": {
@@ -775,7 +780,7 @@
         },
         {
           "question": "Quelles langues sont prises en charge ?",
-          "answer": "Les modèles Whisper multilingues prennent en charge plus de 99 langues, notamment l'espagnol, l'allemand, le japonais, l'arabe, l'hindi, le portugais, l'italien, le russe, le chinois, le coréen et bien d'autres."
+          "answer": "Les modèles Whisper multilingues prennent en charge 32 langues : allemand, anglais, arabe, bengali, chinois, coréen, danois, espagnol, finnois, français, grec, hébreu, hindi, hongrois, indonésien, italien, japonais, malais, néerlandais, norvégien, polonais, portugais, roumain, russe, suédois, tamoul, tchèque, thaï, télougou, turc, ukrainien et vietnamien."
         },
         {
           "question": "Quels formats audio sont pris en charge ?",
@@ -790,6 +795,44 @@
           "answer": "Après le premier téléchargement du modèle, oui. Le modèle est mis en cache dans votre navigateur, de sorte que les transcriptions futures fonctionnent entièrement hors ligne."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Assembleur Audio Gratuit",
+    "subtitle": "Assemblez et découpez plusieurs fichiers audio dans votre navigateur sans aucun téléversement",
+    "dropZone": {
+      "title": "Ajouter des fichiers audio",
+      "subtitle": "Téléversez un ou plusieurs fichiers pour commencer l'édition",
+      "addFiles": "Ajouter des fichiers"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Lecture",
+      "pause": "Pause",
+      "join": "Assembler",
+      "joining": "Assemblage en cours...",
+      "cancel": "Annuler"
+    },
+    "progress": {
+      "processing": "Traitement en cours"
+    },
+    "success": {
+      "downloadStarted": "Téléchargement démarré.",
+      "cancelled": "Traitement annulé."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "Échec du chargement de FFmpeg. Veuillez actualiser et réessayer.",
+      "decodeFailed": "Impossible de lire {file}. Essayez un autre format audio.",
+      "previewFailed": "Impossible de prévisualiser la timeline assemblée.",
+      "joinFailed": "L'assemblage a échoué. Veuillez réessayer."
+    },
+    "footer": {
+      "poweredBy": "Propulsé par",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Aucun téléversement, 100% dans le navigateur",
+      "alsoTry": "Essayez aussi notre",
+      "audioConverterLink": "Convertisseur Audio Gratuit",
+      "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
     }
   }
 }

@@ -562,10 +562,10 @@
     "keywordsAudioConverter": "kostenloser Audio-Konverter, MP3 konvertieren, WAV konvertieren, FLAC konvertieren, OGG konvertieren, AAC konvertieren, Online-Audio-Konverter, Browser Audio-Konverter, Offline Audio-Konverter, MP3 zu WAV, WAV zu MP3, Audio-Format-Konverter, FFmpeg online, Audio-Konverter ohne Upload, privater Audio-Konverter",
     "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, 99 Sprachen Transkription, private Transkription",
     "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, Text-zu-Sprache für Erwachsene, NSFW Text-zu-Sprache, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese, KI für Erwachseneninhalte, KI Stimme Erwachsene",
-    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
-    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
-    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
-    "/tools/audio-joiner": "Audio Joiner"
+    "titleAudioJoiner": "Kostenloser Audio-Joiner – Audiodateien zusammenfügen und zuschneiden",
+    "descriptionAudioJoiner": "Mehrere Audiodateien zusammenfügen und jeden Abschnitt direkt im Browser zuschneiden. Privat, kostenlos und ohne Upload.",
+    "keywordsAudioJoiner": "kostenloser audio joiner, audiodateien zusammenfügen, mp3 online zusammenfügen, wav dateien kombinieren, audio zuschneiden, browser audio editor, audio joiner ohne upload, privater audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio-Joiner"
   },
   "sidebar": {
     "profile": "Profil",
@@ -635,7 +635,8 @@
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
     "audioConverter": "Kostenloser Audio-Konverter",
-    "transcribe": "Kostenlose Audio-Transkription"
+    "transcribe": "Kostenlose Audio-Transkription",
+    "audioJoiner": "Kostenloser Audio-Zusammenfüger"
   },
   "promos": {
     "halloweenBanner": {
@@ -779,7 +780,7 @@
         },
         {
           "question": "Welche Sprachen werden unterstützt?",
-          "answer": "Die mehrsprachigen Whisper-Modelle unterstützen über 99 Sprachen, darunter Englisch, Französisch, Japanisch, Arabisch, Hindi, Portugiesisch, Russisch, Chinesisch, Koreanisch und viele mehr."
+          "answer": "Die mehrsprachigen Whisper-Modelle unterstützen 32 Sprachen: Arabisch, Bengalisch, Chinesisch, Deutsch, Dänisch, Englisch, Finnisch, Französisch, Griechisch, Hebräisch, Hindi, Indonesisch, Italienisch, Japanisch, Koreanisch, Malaiisch, Niederländisch, Norwegisch, Polnisch, Portugiesisch, Rumänisch, Russisch, Schwedisch, Spanisch, Tamil, Telugu, Thailändisch, Tschechisch, Türkisch, Ukrainisch, Ungarisch und Vietnamesisch"
         },
         {
           "question": "Welche Audioformate werden unterstützt?",
@@ -794,6 +795,44 @@
           "answer": "Nachdem das Modell einmal heruntergeladen wurde, ja. Das Modell wird in Ihrem Browser zwischengespeichert, sodass zukünftige Transkriptionen vollständig offline funktionieren."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Kostenloser Audio-Joiner",
+    "subtitle": "Mehrere Audiodateien im Browser zusammenfügen und zuschneiden – ohne Upload",
+    "dropZone": {
+      "title": "Audiodateien hinzufügen",
+      "subtitle": "Eine oder mehrere Dateien hochladen, um mit der Bearbeitung zu beginnen",
+      "addFiles": "Dateien hinzufügen"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Abspielen",
+      "pause": "Pause",
+      "join": "Zusammenfügen",
+      "joining": "Wird zusammengefügt...",
+      "cancel": "Abbrechen"
+    },
+    "progress": {
+      "processing": "Wird verarbeitet"
+    },
+    "success": {
+      "downloadStarted": "Download gestartet.",
+      "cancelled": "Verarbeitung abgebrochen."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "FFmpeg konnte nicht geladen werden. Bitte Seite aktualisieren und erneut versuchen.",
+      "decodeFailed": "{file} konnte nicht gelesen werden. Versuchen Sie ein anderes Audioformat.",
+      "previewFailed": "Vorschau der zusammengefügten Timeline nicht möglich.",
+      "joinFailed": "Zusammenfügen fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "footer": {
+      "poweredBy": "Unterstützt von",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Kein Upload, 100% im Browser",
+      "alsoTry": "Probieren Sie auch unser",
+      "audioConverterLink": "Kostenloses Audio-Konverter-Tool",
+      "madeWith": "Mit ♡ von SexyVoice.ai – Kostenlos den KI-Audiogenerator ausprobieren"
     }
   }
 }
