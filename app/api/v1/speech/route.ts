@@ -26,12 +26,12 @@ import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { convertToWav, generateHash } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
-  getCredits,
-  getVoiceIdByName,
-  hasUserPaid,
+  getCreditsAdmin,
+  getVoiceIdByNameAdmin,
+  hasUserPaidAdmin,
   insertUsageEvent,
-  reduceCredits,
-  saveAudioFile,
+  reduceCreditsAdmin,
+  saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import {
   calculateCreditsFromTokens,
@@ -125,9 +125,10 @@ export async function POST(request: Request) {
 
     const userId = authResult.userId;
 
-    let voiceObj: Awaited<ReturnType<typeof getVoiceIdByName>> | null = null;
+    let voiceObj: Awaited<ReturnType<typeof getVoiceIdByNameAdmin>> | null =
+      null;
     try {
-      voiceObj = await getVoiceIdByName(voice);
+      voiceObj = await getVoiceIdByNameAdmin(voice);
     } catch {
       voiceObj = null;
     }
@@ -216,7 +217,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const currentCredits = await getCredits(userId);
+    const currentCredits = await getCreditsAdmin(userId);
     const estimatedCredits = estimateCredits(finalText, voice, voiceObj.model);
     if (currentCredits < estimatedCredits) {
       await log({
@@ -239,7 +240,7 @@ export async function POST(request: Request) {
     }
 
     const hash = await generateHash(`${finalText}-${voice}-${seed ?? 'none'}`);
-    const userHasPaid = await hasUserPaid(userId);
+    const userHasPaid = await hasUserPaidAdmin(userId);
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
     const extension = defaultFormat;
     const filename = `${folder}/${voice}-${hash}.${extension}`;
@@ -463,7 +464,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await reduceCredits({ userId, amount: creditsUsed });
+    await reduceCreditsAdmin({ userId, amount: creditsUsed });
     const dollarAmount = calculateExternalApiDollarAmount({
       sourceType: 'api_tts',
       provider,
@@ -471,7 +472,7 @@ export async function POST(request: Request) {
       inputChars: finalText.length,
     });
     const [audioFileResult, updatedCredits] = await Promise.all([
-      saveAudioFile({
+      saveAudioFileAdmin({
         userId,
         filename,
         text: finalText,
@@ -491,7 +492,7 @@ export async function POST(request: Request) {
           ...(seed !== undefined ? { seed } : {}),
         },
       }),
-      getCredits(userId),
+      getCreditsAdmin(userId),
     ]);
 
     await insertUsageEvent({
