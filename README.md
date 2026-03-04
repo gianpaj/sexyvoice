@@ -78,6 +78,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Vercel](https://vercel.com)** - Deployment and hosting platform
 - **[Sentry](https://sentry.io)** - Error tracking and performance monitoring
 - **[PostHog](https://posthog.com)** - Product analytics and feature flags
+- **[Axiom](https://axiom.co)** - Structured request logging for API routes
 - **[Stripe](https://stripe.com)** - Payment processing and subscription management
 
 ### Development Tools
@@ -129,6 +130,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `R2_ACCESS_KEY_ID`
       - `R2_SECRET_ACCESS_KEY`
       - `R2_BUCKET_NAME`
+      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
       - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
    - AI 3rd party services
       - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
@@ -145,6 +147,10 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
     - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Axiom logging (optional)
+      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+   - API key security
+      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
    - Vercel Edge Config (optional)
       - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
@@ -315,7 +321,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
-<!--- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*-->
+- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) NEW
 - **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status
@@ -331,7 +337,7 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
 - ✅ Audio transcription and translation tool
 - ✅ Real-time AI voice calls with configurable AI agents
-- 🚧 API access (coming soon)
+- ✅ API access
 
 ### Supported Languages by these Google Gemini TTS Models
 

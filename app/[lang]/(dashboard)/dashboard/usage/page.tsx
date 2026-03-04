@@ -41,6 +41,8 @@ export default async function UsagePage(props: {
     voice_cloning: dict.summary.byType.voice_cloning,
     live_call: dict.summary.byType.live_call,
     audio_processing: dict.summary.byType.audio_processing,
+    api_tts: 'API TTS',
+    api_voice_cloning: 'API Voice Cloning',
   };
 
   return (

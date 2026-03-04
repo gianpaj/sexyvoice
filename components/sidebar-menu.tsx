@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronUp, User2 } from 'lucide-react';
+import { ChevronUp, ExternalLink, User2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useContext } from 'react';
@@ -65,6 +65,12 @@ export function SidebarMenu({
                 }}
               >
                 {dict.profile}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="https://docs.sexyvoice.ai" target="_blank">
+                Documentation
+                <ExternalLink className="ml-3 size-3" />
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>

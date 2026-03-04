@@ -120,7 +120,14 @@ export async function resolveCharacterPrompt(characterId: string) {
 export interface InsertUsageEventParams {
   userId: string;
   sourceType: UsageSourceType;
+  requestId?: string | null;
   sourceId?: string | null;
+  apiKeyId?: string | null;
+  model?: string | null;
+  inputChars?: number | null;
+  outputChars?: number | null;
+  durationSeconds?: number | null;
+  dollarAmount?: number | null;
   unit: UsageUnitType;
   quantity: number;
   creditsUsed: number;
@@ -241,7 +248,14 @@ export const insertUsageEvent = async (
       .insert({
         user_id: params.userId,
         source_type: params.sourceType,
+        request_id: params.requestId ?? null,
         source_id: params.sourceId ?? null,
+        api_key_id: params.apiKeyId ?? null,
+        model: params.model ?? null,
+        input_chars: params.inputChars ?? null,
+        output_chars: params.outputChars ?? null,
+        duration_seconds: params.durationSeconds ?? null,
+        dollar_amount: params.dollarAmount ?? null,
         unit: params.unit,
         quantity: params.quantity,
         credits_used: params.creditsUsed,

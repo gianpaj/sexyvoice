@@ -90,7 +90,6 @@
       "enterText": "Enter text to convert",
       "speed": "Speed",
       "pitch": "Pitch",
-      "generate": "Generate Audio (coming soon)",
       "generating": "Generating...",
       "play": "Play",
       "pause": "Pause",
@@ -175,12 +174,22 @@
               "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 5 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
             },
             {
-              "question": "Do you have an API for developers?",
-              "answer": "It's coming soon! Our API will let developers add voice generation and cloning to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically."
-            },
-            {
               "question": "Why choose SexyVoice.ai?",
               "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API for Developers",
+          "questions": [
+            {
+              "question": "Do you have an API for developers?",
+              "answer": "Yes! Our API lets developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and programmatically. See the {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "documentation"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "For casual users exploring AI audio.",
         "features": [
-          "Everything in Free"
+          "Everything in Free",
+          "API Access"
         ]
       },
       "standard": {
@@ -223,8 +233,8 @@
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
           "Everything in Free",
-          "API Access",
-          "Voice Call: Custom Characters"
+          "Voice Call: Custom Characters",
+          "API Access"
         ]
       },
       "pro": {
@@ -491,6 +501,41 @@
         "cancel": "Cancel",
         "continue": "Continue"
       }
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "description": "Create and manage keys for the external API.",
+      "newKey": "New Key",
+      "createDialogTitle": "Create API Key",
+      "createDialogDescription": "The key is shown only once. Save it securely.",
+      "nameLabel": "Description",
+      "namePlaceholder": "e.g. Production backend",
+      "createButton": "Create",
+      "newKeyBanner": "New API key (shown once)",
+      "dismiss": "Dismiss",
+      "table": {
+        "name": "Name",
+        "prefix": "Prefix",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "status": "Status",
+        "action": "Action"
+      },
+      "empty": "No API keys created yet.",
+      "never": "Never",
+      "statusActive": "Active",
+      "statusRevoked": "Revoked",
+      "copiedToClipboard": "Copied to clipboard",
+      "failedToCopy": "Failed to copy",
+      "failedToLoad": "Failed to load API keys",
+      "failedToCreate": "Failed to create API key",
+      "failedToRevoke": "Failed to revoke API key",
+      "revokeConfirm": {
+        "title": "Revoke API Key",
+        "description": "Are you sure you want to revoke this key? This action cannot be undone and any applications using it will stop working.",
+        "cancel": "Cancel",
+        "confirm": "Revoke"
+      }
     }
   },
   "pages": {
@@ -513,6 +558,7 @@
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
     "/dashboard/credits": "Credits",
+    "/dashboard/api-keys": "API Keys",
     "/dashboard/usage": "Usage",
     "/tools/audio-converter": "Audio Converter",
     "/tools/transcribe": "Audio Transcription",

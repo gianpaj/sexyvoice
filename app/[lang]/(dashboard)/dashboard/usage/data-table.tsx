@@ -220,6 +220,10 @@ export function DataTable({ dict }: DataTableProps) {
               <SelectItem value="audio_processing">
                 {dict.summary.byType.audio_processing}
               </SelectItem>
+              <SelectItem value="api_tts">API TTS</SelectItem>
+              <SelectItem value="api_voice_cloning">
+                API Voice Cloning
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
