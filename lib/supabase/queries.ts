@@ -547,6 +547,103 @@ export const isFreeUserOverCallLimit = async (
   return totalDuration >= FREE_USER_CALL_LIMIT_SECONDS;
 };
 
+// ─── Admin variants for external API routes ───
+// These bypass RLS using the service role key. Use only in server-side
+// API routes where the userId is resolved from a trusted API key, not a
+// session cookie.
+
+export async function getCreditsAdmin(userId: string): Promise<number> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credits')
+    .select('amount')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.amount ?? 0;
+}
+
+export async function getVoiceIdByNameAdmin(
+  voiceName: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('name', voiceName)
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function reduceCreditsAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
+
+  if (error) throw error;
+}
+
+export async function saveAudioFileAdmin(params: {
+  userId: string;
+  filename: string;
+  text: string;
+  url: string;
+  model: string;
+  predictionId?: string;
+  isPublic: boolean;
+  voiceId: string;
+  duration: string;
+  credits_used: number;
+  usage?: Record<string, string | number | boolean>;
+}) {
+  const admin = createAdminClient();
+  return admin
+    .from('audio_files')
+    .insert({
+      user_id: params.userId,
+      storage_key: params.filename,
+      text_content: params.text,
+      url: params.url,
+      model: params.model,
+      prediction_id: params.predictionId,
+      is_public: params.isPublic,
+      voice_id: params.voiceId,
+      duration: Number.parseFloat(params.duration),
+      credits_used: params.credits_used,
+      usage: params.usage,
+    })
+    .select('id')
+    .single();
+}
+
+export async function hasUserPaidAdmin(userId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_transactions')
+    .select('type')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup']);
+
+  if (error) throw error;
+
+  return (data?.length ?? 0) > 0;
+}
+
 export const isFreemiumUserOverLimit = async (
   userId: string,
 ): Promise<boolean> => {
