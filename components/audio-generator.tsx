@@ -206,6 +206,7 @@ export function AudioGenerator({
 
   const { complete } = useCompletion({
     api: '/api/generate-text',
+    streamProtocol: 'text',
   });
 
   const handleEnhanceText = async () => {

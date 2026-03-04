@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { DELETE } from '@/app/api/api-keys/[id]/route';
 import { GET, POST } from '@/app/api/api-keys/route';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 describe('/api/api-keys routes', () => {
@@ -43,6 +44,7 @@ describe('/api/api-keys routes', () => {
   });
 
   it('creates a new API key and returns secret once', async () => {
+    vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
         getUser: vi.fn().mockResolvedValue({
