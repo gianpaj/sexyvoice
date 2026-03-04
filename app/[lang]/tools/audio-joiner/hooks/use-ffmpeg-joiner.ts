@@ -195,11 +195,11 @@ export function useFFmpegJoiner() {
     }
   }, []);
 
-  const cancel = useCallback(async () => {
+  const cancel = useCallback(() => {
     cancelRequestedRef.current = true;
 
     if (ffmpegRef.current) {
-      await ffmpegRef.current.terminate();
+      ffmpegRef.current.terminate();
       ffmpegRef.current = null;
     }
 
@@ -208,7 +208,7 @@ export function useFFmpegJoiner() {
   }, []);
 
   const progressHandlerRef = useRef<
-    (({ progress: p }: { progress: number }) => void) | null
+    (({ progress }: { progress: number }) => void) | null
   >(null);
 
   const join = useCallback(
