@@ -223,6 +223,7 @@
         "description": "Per utenti occasionali che esplorano l'audio IA.",
         "features": [
           "Tutto in Gratuito",
+          "Generazione di testo 2× più lungo",
           "Accesso API"
         ]
       },
@@ -233,6 +234,7 @@
         "creditsWithPromo": "__NUM_CREDITS__ crediti",
         "features": [
           "Tutto in Gratuito",
+          "Generazione di testo 2× più lungo",
           "Chiamata vocale: Personaggi personalizzati"
         ]
       },

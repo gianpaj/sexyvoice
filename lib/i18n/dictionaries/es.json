@@ -223,6 +223,7 @@
         "description": "Para usuarios casuales que exploran el audio de IA.",
         "features": [
           "Todo lo incluido en el plan Gratis",
+          "Generación de texto 2× más largo",
           "Acceso a la API"
         ]
       },
@@ -233,6 +234,7 @@
         "creditsWithPromo": "__NUM_CREDITS__ créditos",
         "features": [
           "Todo lo incluido en el plan Gratis",
+          "Generación de texto 2× más largo",
           "Llamada de voz: Personajes personalizados"
         ]
       },
