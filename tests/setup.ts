@@ -201,15 +201,41 @@ vi.mock('@/lib/supabase/queries', async () => {
       }
       return Promise.resolve(null);
     }),
+    getVoiceIdByNameAdmin: vi.fn((voiceName: string) => {
+      if (voiceName === 'tara') {
+        return Promise.resolve({
+          id: 'voice-tara-id',
+          name: 'tara',
+          language: 'en',
+          model: 'kokoro',
+        });
+      }
+      if (voiceName === 'poe') {
+        return Promise.resolve({
+          id: 'voice-poe-id',
+          name: 'poe',
+          language: 'en',
+          model: 'gpro',
+        });
+      }
+      return Promise.resolve(null);
+    }),
     getCredits: vi.fn().mockResolvedValue(1000),
+    getCreditsAdmin: vi.fn().mockResolvedValue(1000),
     reduceCredits: vi.fn().mockResolvedValue(true),
+    reduceCreditsAdmin: vi.fn().mockResolvedValue(true),
     saveAudioFile: vi.fn().mockResolvedValue({
+      data: { id: 'test-audio-file-id' },
+      error: null,
+    }),
+    saveAudioFileAdmin: vi.fn().mockResolvedValue({
       data: { id: 'test-audio-file-id' },
       error: null,
     }),
     insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
     isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
     hasUserPaid: vi.fn().mockResolvedValue(false),
+    hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
   };
 });
 
