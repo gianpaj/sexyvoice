@@ -515,7 +515,11 @@
     "/dashboard/credits": "Crediti",
     "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore Audio",
-    "/tools/transcribe": "Trascrizione Audio"
+    "/tools/transcribe": "Trascrizione Audio",
+    "titleAudioJoiner": "Unisci Audio Gratis – Combina e Taglia File Audio",
+    "descriptionAudioJoiner": "Unisci più file audio e taglia ogni segmento direttamente nel tuo browser. Privato, gratuito e senza upload.",
+    "keywordsAudioJoiner": "unisci audio gratis, combinare file audio, unire mp3 online, unire file wav, tagliare segmenti audio, editor audio nel browser, unisci audio senza upload, editor audio privato, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Unisci Audio"
   },
   "sidebar": {
     "profile": "Profilo",
@@ -585,7 +589,8 @@
     "termsAndConditions": "Termini e condizioni",
     "copyright": "SexyVoice.ai. Tutti i diritti riservati.",
     "audioConverter": "Convertitore audio gratuito",
-    "transcribe": "Trascrizione audio gratuita"
+    "transcribe": "Trascrizione audio gratuita",
+    "audioJoiner": "Unione audio gratuita"
   },
   "promos": {
     "halloweenBanner": {
@@ -744,6 +749,44 @@
           "answer": "Dopo che il modello è stato scaricato una volta, sì. Il modello viene memorizzato nella cache del browser, quindi le trascrizioni future funzionano completamente offline."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Unisci Audio Gratis",
+    "subtitle": "Unisci e taglia più file audio nel tuo browser senza caricarli",
+    "dropZone": {
+      "title": "Aggiungi file audio",
+      "subtitle": "Carica uno o più file per iniziare a modificare",
+      "addFiles": "Aggiungi file"
+    },
+    "controls": {
+      "format": "Formato",
+      "play": "Riproduci",
+      "pause": "Pausa",
+      "join": "Unisci",
+      "joining": "Unione in corso...",
+      "cancel": "Annulla"
+    },
+    "progress": {
+      "processing": "Elaborazione"
+    },
+    "success": {
+      "downloadStarted": "Download avviato.",
+      "cancelled": "Elaborazione annullata."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "Impossibile caricare FFmpeg. Aggiorna la pagina e riprova.",
+      "decodeFailed": "Impossibile leggere {file}. Prova un formato audio diverso.",
+      "previewFailed": "Impossibile visualizzare l'anteprima della timeline unita.",
+      "joinFailed": "Unione non riuscita. Riprova."
+    },
+    "footer": {
+      "poweredBy": "Sviluppato con",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Nessun upload, 100% nel browser",
+      "alsoTry": "Prova anche il nostro",
+      "audioConverterLink": "Convertitore Audio Gratuito",
+      "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio IA gratuito"
     }
   }
 }
