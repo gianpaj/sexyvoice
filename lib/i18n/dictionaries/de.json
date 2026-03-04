@@ -90,7 +90,6 @@
       "enterText": "Geben Sie Text zum Konvertieren ein",
       "speed": "Geschwindigkeit",
       "pitch": "Tonhöhe",
-      "generate": "Audio generieren (bald verfügbar)",
       "generating": "Wird generiert...",
       "play": "Abspielen",
       "pause": "Pause",
@@ -175,12 +174,22 @@
               "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 5 minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
             },
             {
-              "question": "Haben Sie eine API für Entwickler?",
-              "answer": "Sie kommt bald! Mit unserer API können Entwickler Sprachgenerierung und Stimmklonen zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert verwalten."
-            },
-            {
               "question": "Warum SexyVoice.ai wählen?",
               "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API für Entwickler",
+          "questions": [
+            {
+              "question": "Haben Sie eine API für Entwickler?",
+              "answer": "Ja! Unsere API ermöglicht Entwicklern, Sprachgenerierung in Apps, Websites und Spiele einzubinden. Sie können Sprache auf Abruf und programmgesteuert erstellen. Siehe die {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "Dokumentation"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "Für Gelegenheitsnutzer, die KI-Audio erkunden.",
         "features": [
-          "Alles im kostenlosen Plan"
+          "Alles im kostenlosen Plan",
+          "API-Zugang"
         ]
       },
       "standard": {
@@ -491,6 +501,41 @@
         "cancel": "Abbrechen",
         "continue": "Weiter"
       }
+    },
+    "apiKeys": {
+      "title": "API-Schlüssel",
+      "description": "Schlüssel für die externe API erstellen und verwalten.",
+      "newKey": "Neuer Schlüssel",
+      "createDialogTitle": "API-Schlüssel erstellen",
+      "createDialogDescription": "Der Schlüssel wird nur einmal angezeigt. Bewahren Sie ihn sicher auf.",
+      "nameLabel": "Beschreibung",
+      "namePlaceholder": "z.B. Produktions-Backend",
+      "createButton": "Erstellen",
+      "newKeyBanner": "Neuer API-Schlüssel (einmalig angezeigt)",
+      "dismiss": "Schließen",
+      "table": {
+        "name": "Name",
+        "prefix": "Präfix",
+        "created": "Erstellt",
+        "lastUsed": "Zuletzt verwendet",
+        "status": "Status",
+        "action": "Aktion"
+      },
+      "empty": "Noch keine API-Schlüssel erstellt.",
+      "never": "Nie",
+      "statusActive": "Aktiv",
+      "statusRevoked": "Widerrufen",
+      "copiedToClipboard": "In die Zwischenablage kopiert",
+      "failedToCopy": "Kopieren fehlgeschlagen",
+      "failedToLoad": "API-Schlüssel konnten nicht geladen werden",
+      "failedToCreate": "API-Schlüssel konnte nicht erstellt werden",
+      "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden",
+      "revokeConfirm": {
+        "title": "API-Schlüssel widerrufen?",
+        "description": "Diese Aktion kann nicht rückgängig gemacht werden. Der Schlüssel wird sofort deaktiviert und alle Anfragen damit schlagen fehl.",
+        "cancel": "Abbrechen",
+        "confirm": "Widerrufen"
+      }
     }
   },
   "pages": {
@@ -506,6 +551,7 @@
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",
     "/dashboard/credits": "Credits",
+    "/dashboard/api-keys": "API-Schlüssel",
     "/dashboard/usage": "Nutzung",
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",

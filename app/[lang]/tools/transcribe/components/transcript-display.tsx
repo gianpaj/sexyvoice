@@ -134,7 +134,7 @@ export function TranscriptDisplay({
             })}
           </div>
         ) : (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+          <p className="whitespace-pre-wrap text-foreground text-sm leading-relaxed">
             {displayText}
           </p>
         )}

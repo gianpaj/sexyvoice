@@ -288,9 +288,17 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
-      const { saveAudioFile, insertUsageEvent } = await import(
-        '@/lib/supabase/queries'
-      );
+      const { saveAudioFile, insertUsageEvent, getVoiceIdByName } =
+        await import('@/lib/supabase/queries');
+      // The generate-voice route uses the raw DB model string (not the external
+      // API model ID), so restore the original Replicate versioned model for tara.
+      vi.mocked(getVoiceIdByName).mockResolvedValueOnce({
+        id: 'voice-tara-id',
+        name: 'tara',
+        language: 'en',
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+      });
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {

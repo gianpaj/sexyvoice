@@ -30,7 +30,7 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
     <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
       <div className="flex items-center gap-3">
         <div
-          className="flex items-end gap-[3px] shrink-0"
+          className="flex shrink-0 items-end gap-[3px]"
           style={{ height: '18px' }}
         >
           {([10, 16, 18, 12, 14] as const).map((h, i) => (

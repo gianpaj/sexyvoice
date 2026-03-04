@@ -90,7 +90,6 @@
       "enterText": "Inserisci il testo da convertire",
       "speed": "Velocità",
       "pitch": "Tonalità",
-      "generate": "Genera audio (prossimamente)",
       "generating": "Generazione...",
       "play": "Riproduci",
       "pause": "Pausa",
@@ -175,12 +174,22 @@
               "answer": "Circa 1.000 crediti producono 1 minuto di generazione audio. I nuovi utenti ricevono 10.000 crediti gratuiti (circa 5 minuti di parlato). Il nostro piano Starter include 25.000 crediti mensili, mentre Pro offre 300.000 crediti per progetti più grandi. Scegli quello che funziona per le tue esigenze."
             },
             {
-              "question": "Avete un'API per sviluppatori?",
-              "answer": "Arriverà presto! La nostra API permetterà agli sviluppatori di aggiungere generazione e clonazione vocale ad app, siti web e giochi. Potrai creare parlato su richiesta e gestire modelli vocali in modo programmatico."
-            },
-            {
               "question": "Perché scegliere SexyVoice.ai?",
               "answer": "Combiniamo qualità vocale premium con strumenti semplici e prezzi equi. Che tu sia un creatore o un'azienda, ottieni risultati professionali senza contratti o configurazioni complicate. I crediti gratuiti rendono facile provare tutto."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API per sviluppatori",
+          "questions": [
+            {
+              "question": "Avete un'API per sviluppatori?",
+              "answer": "Sì! La nostra API permette agli sviluppatori di aggiungere la generazione vocale ad app, siti web e giochi. Potrai creare parlato su richiesta in modo programmatico. Consulta il {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "documentazione"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "Per utenti occasionali che esplorano l'audio IA.",
         "features": [
-          "Tutto in Gratuito"
+          "Tutto in Gratuito",
+          "Accesso API"
         ]
       },
       "standard": {
@@ -491,6 +501,41 @@
         "cancel": "Annulla",
         "continue": "Continua"
       }
+    },
+    "apiKeys": {
+      "title": "Chiavi API",
+      "description": "Crea e gestisci le chiavi per l'API esterna.",
+      "newKey": "Nuova chiave",
+      "createDialogTitle": "Crea chiave API",
+      "createDialogDescription": "La chiave viene mostrata una sola volta. Salvala in modo sicuro.",
+      "nameLabel": "Descrizione",
+      "namePlaceholder": "es. Backend di produzione",
+      "createButton": "Crea",
+      "newKeyBanner": "Nuova chiave API (mostrata una sola volta)",
+      "dismiss": "Ignora",
+      "table": {
+        "name": "Nome",
+        "prefix": "Prefisso",
+        "created": "Creata",
+        "lastUsed": "Ultimo utilizzo",
+        "status": "Stato",
+        "action": "Azione"
+      },
+      "empty": "Nessuna chiave API creata.",
+      "never": "Mai",
+      "statusActive": "Attiva",
+      "statusRevoked": "Revocata",
+      "copiedToClipboard": "Copiato negli appunti",
+      "failedToCopy": "Copia non riuscita",
+      "failedToLoad": "Impossibile caricare le chiavi API",
+      "failedToCreate": "Impossibile creare la chiave API",
+      "failedToRevoke": "Impossibile revocare la chiave API",
+      "revokeConfirm": {
+        "title": "Revocare la chiave API?",
+        "description": "Questa azione non può essere annullata. La chiave verrà disattivata immediatamente e non potrà più essere utilizzata.",
+        "cancel": "Annulla",
+        "confirm": "Sì, revoca"
+      }
     }
   },
   "pages": {
@@ -513,6 +558,7 @@
     "/dashboard/clone": "Clona",
     "/dashboard/history": "Cronologia",
     "/dashboard/credits": "Crediti",
+    "/dashboard/api-keys": "Chiavi API",
     "/dashboard/usage": "Utilizzo",
     "/tools/audio-converter": "Convertitore Audio",
     "/tools/transcribe": "Trascrizione Audio",

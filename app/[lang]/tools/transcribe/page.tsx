@@ -211,7 +211,7 @@ export default async function TranscribePage({ params }: Props) {
           {/* Server-rendered FAQ — crawlable without JavaScript */}
           <section
             aria-labelledby="faq-heading"
-            className="mt-16 border-t border-border/50 pt-12"
+            className="mt-16 border-border/50 border-t pt-12"
             id="faq"
           >
             <h2

@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
       'voice_cloning',
       'live_call',
       'audio_processing',
+      'api_tts',
+      'api_voice_cloning',
     ];
     if (sourceType && !validSourceTypes.includes(sourceType)) {
       return NextResponse.json(
@@ -98,7 +100,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Failed to fetch usage events:', error);
-    Sentry.captureException(error);
+    captureException(error);
     return NextResponse.json(
       { error: 'Failed to fetch usage events' },
       { status: 500 },

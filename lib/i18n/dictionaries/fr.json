@@ -90,7 +90,6 @@
       "enterText": "Entrez le texte à convertir",
       "speed": "Vitesse",
       "pitch": "Tonalité",
-      "generate": "Générer l'audio (bientôt disponible)",
       "generating": "Génération...",
       "play": "Lire",
       "pause": "Pause",
@@ -175,12 +174,22 @@
               "answer": "Environ 1 000 crédits produisent 1 minute de génération audio. Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits (environ 5 minutes de parole). Notre plan Starter inclut 25 000 crédits mensuels, tandis que Pro offre 300 000 crédits pour les projets plus importants. Choisissez ce qui convient à vos besoins."
             },
             {
-              "question": "Avez-vous une API pour les développeurs ?",
-              "answer": "Elle arrive bientôt ! Notre API permettra aux développeurs d'ajouter la génération et le clonage vocal à leurs applications, sites web et jeux. Vous pourrez créer de la parole à la demande et gérer les modèles vocaux de manière programmatique."
-            },
-            {
               "question": "Pourquoi choisir SexyVoice.ai ?",
               "answer": "Nous combinons une qualité vocale premium avec des outils simples et des prix équitables. Que vous soyez créateur ou entreprise, vous obtenez des résultats professionnels sans contrats ni configurations compliquées. Les crédits gratuits facilitent l'essai de tout."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API pour les développeurs",
+          "questions": [
+            {
+              "question": "Avez-vous une API pour les développeurs ?",
+              "answer": "Oui ! Notre API permet aux développeurs d'ajouter la génération vocale à des applications, sites web et jeux. Vous pourrez créer de la parole à la demande et de manière programmatique. Consultez la {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "documentation"
+              }
             }
           ]
         }
@@ -213,7 +222,8 @@
         "name": "Starter",
         "description": "Pour les utilisateurs occasionnels explorant l'audio IA.",
         "features": [
-          "Tout dans Gratuit"
+          "Tout dans Gratuit",
+          "Accès API"
         ]
       },
       "standard": {
@@ -491,6 +501,41 @@
         "cancel": "Annuler",
         "continue": "Continuer"
       }
+    },
+    "apiKeys": {
+      "title": "Clés API",
+      "description": "Créez et gérez des clés pour l'API externe.",
+      "newKey": "Nouvelle clé",
+      "createDialogTitle": "Créer une clé API",
+      "createDialogDescription": "La clé n'est affichée qu'une seule fois. Sauvegardez-la en lieu sûr.",
+      "nameLabel": "Description",
+      "namePlaceholder": "ex. Backend de production",
+      "createButton": "Créer",
+      "newKeyBanner": "Nouvelle clé API (affichée une seule fois)",
+      "dismiss": "Fermer",
+      "table": {
+        "name": "Nom",
+        "prefix": "Préfixe",
+        "created": "Créée",
+        "lastUsed": "Dernière utilisation",
+        "status": "Statut",
+        "action": "Action"
+      },
+      "empty": "Aucune clé API créée pour l'instant.",
+      "never": "Jamais",
+      "statusActive": "Active",
+      "statusRevoked": "Révoquée",
+      "copiedToClipboard": "Copié dans le presse-papiers",
+      "failedToCopy": "Échec de la copie",
+      "failedToLoad": "Échec du chargement des clés API",
+      "failedToCreate": "Échec de la création de la clé API",
+      "failedToRevoke": "Échec de la révocation de la clé API",
+      "revokeConfirm": {
+        "title": "Révoquer la clé API ?",
+        "description": "Cette action est irréversible. La clé sera immédiatement désactivée et ne pourra plus être utilisée.",
+        "cancel": "Annuler",
+        "confirm": "Révoquer"
+      }
     }
   },
   "pages": {
@@ -506,6 +551,7 @@
     "/dashboard/clone": "Cloner",
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
+    "/dashboard/api-keys": "Clés API",
     "/dashboard/usage": "Utilisation",
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",

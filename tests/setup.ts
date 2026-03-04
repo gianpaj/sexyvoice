@@ -73,7 +73,17 @@ process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
 process.env.R2_SECRET_ACCESS_KEY = 'test-r2-secret-key';
 process.env.R2_BUCKET_NAME = 'test-bucket';
+process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
+process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+
+// Mock Axiom so tests never attempt a real network flush
+vi.mock('@axiomhq/js', () => ({
+  Axiom: class MockAxiom {
+    ingest = vi.fn();
+    flush = vi.fn().mockResolvedValue(undefined);
+  },
+}));
 
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/server', () => ({
@@ -142,6 +152,29 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }));
 
+const mockAdminFrom = vi.fn(() => ({
+  select: vi.fn().mockReturnThis(),
+  eq: vi.fn().mockReturnThis(),
+  or: vi.fn().mockReturnThis(),
+  maybeSingle: vi.fn().mockResolvedValue({
+    data: {
+      id: 'test-api-key-id',
+      user_id: 'test-user-id',
+      key_hash: 'test-key-hash',
+      is_active: true,
+      expires_at: null,
+    },
+    error: null,
+  }),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(() => ({
+    from: mockAdminFrom,
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+  })),
+}));
+
 // Mock Supabase queries specifically
 vi.mock('@/lib/supabase/queries', async () => {
   const actual = await vi.importActual<typeof import('@/lib/supabase/queries')>(
@@ -155,8 +188,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model:
-            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          model: 'kokoro',
         });
       }
       if (voiceName === 'poe') {
@@ -186,13 +218,26 @@ const mockRedisGet = vi.fn().mockResolvedValue(null);
 const mockRedisSet = vi.fn().mockResolvedValue('OK');
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockRedisKeys = vi.fn().mockResolvedValue([]);
+const mockRedisIncr = vi.fn().mockResolvedValue(1);
+const mockRedisExpire = vi.fn().mockResolvedValue(1);
+const mockRedisTtl = vi.fn().mockResolvedValue(60);
 
 const mockRedisInstance = {
   get: mockRedisGet,
   set: mockRedisSet,
   del: mockRedisDel,
   keys: mockRedisKeys,
+  incr: mockRedisIncr,
+  expire: mockRedisExpire,
+  ttl: mockRedisTtl,
 };
+
+const mockRatelimitLimit = vi.fn().mockResolvedValue({
+  success: true,
+  limit: 60,
+  remaining: 59,
+  reset: Date.now() + 60_000,
+});
 
 vi.mock('@upstash/redis', () => ({
   Redis: {
@@ -200,8 +245,28 @@ vi.mock('@upstash/redis', () => ({
   },
 }));
 
+vi.mock('@upstash/ratelimit', () => ({
+  Ratelimit: class MockRatelimit {
+    static tokenBucket = vi.fn(() => 'token_bucket_limiter');
+    // biome-ignore lint/correctness/noUnusedFunctionParameters: Mirrors SDK constructor shape for tests.
+    constructor(_config: unknown) {}
+    limit(identifier: string) {
+      return mockRatelimitLimit(identifier);
+    }
+  },
+}));
+
 // Export mocks for test access
-export { mockRedisGet, mockRedisSet, mockRedisDel, mockRedisKeys };
+export {
+  mockRatelimitLimit,
+  mockRedisDel,
+  mockRedisExpire,
+  mockRedisGet,
+  mockRedisIncr,
+  mockRedisKeys,
+  mockRedisSet,
+  mockRedisTtl,
+};
 
 // Mock Vercel Blob
 const mockBlobPut = vi.fn().mockImplementation((filename: string) =>

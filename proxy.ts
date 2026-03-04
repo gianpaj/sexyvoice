@@ -45,6 +45,9 @@ export async function proxy(req: NextRequest) {
   if (publicRoutesWithoutAuth.includes(pathname)) {
     return NextResponse.next();
   }
+  if (pathname.startsWith('/api/v1')) {
+    return NextResponse.next();
+  }
 
   if (publicRoutesWithLang(i18n.locales).includes(pathname)) {
     return NextResponse.next();
