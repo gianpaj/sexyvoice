@@ -538,6 +538,9 @@
       }
     }
   },
+  "apiBilling": {
+    "description": "Overvåg API-brug, anmodninger og omkostninger over tid."
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator til voksne",
     "description": "Generer udtryksfulde AI-stemmer med følelser til voksenindhold på 24+ sprog. Gratis tekst-til-tale med stemmekloning og NSFW-support. Start med gratis credits – intet kort påkrævet.",
@@ -552,6 +555,7 @@
     "/dashboard/history": "Historik",
     "/dashboard/credits": "Kreditter",
     "/dashboard/api-keys": "API-nøgler",
+    "/dashboard/api-billing": "API-fakturering",
     "/dashboard/usage": "Forbrug",
     "/tools/audio-converter": "Lydkonverter",
     "/tools/transcribe": "Lydtransskription",

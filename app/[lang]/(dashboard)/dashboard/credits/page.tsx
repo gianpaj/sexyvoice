@@ -15,7 +15,6 @@ import {
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { BillingUsageChart } from './billing-usage-chart';
 import { CreditHistory } from './credit-history';
 import { CreditTopup } from './credit-topup';
 import { TopupStatus } from './topup-status';
@@ -107,11 +106,6 @@ export default async function CreditsPage(props: {
 
       {/* Add Credit Top-up Section */}
       <CreditTopup dict={dict} lang={lang} />
-
-      <div className="my-8">
-        <h3 className="mb-4 font-semibold text-lg">API Billing Usage</h3>
-        <BillingUsageChart />
-      </div>
 
       <div className="my-8">
         <h3 className="mb-4 font-semibold text-lg">

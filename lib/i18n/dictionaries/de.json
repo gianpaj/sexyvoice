@@ -538,6 +538,9 @@
       }
     }
   },
+  "apiBilling": {
+    "description": "API-Nutzung, Anfragen und Kosten im Zeitverlauf überwachen."
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene",
     "description": "Generieren Sie ausdrucksstarke KI-Stimmen mit Emotionen für Erwachseneninhalte in 24+ Sprachen. Kostenlose Text-zu-Sprache mit Stimmenklonung und NSFW-Support. Mit kostenlosen Credits starten – keine Kreditkarte nötig.",
@@ -552,6 +555,7 @@
     "/dashboard/history": "Verlauf",
     "/dashboard/credits": "Credits",
     "/dashboard/api-keys": "API-Schlüssel",
+    "/dashboard/api-billing": "API-Abrechnung",
     "/dashboard/usage": "Nutzung",
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",

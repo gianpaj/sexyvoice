@@ -86,6 +86,22 @@ function addDaysToIsoDate(value: string, days: number): string {
   return isoDate(parsed);
 }
 
+/** Build a complete list of bucket start-dates covering [startingOn, endingBefore). */
+function buildDateSpine(
+  startingOn: string,
+  endingBefore: string,
+  bucketWidth: string,
+): string[] {
+  const stepDays = bucketWidth === '7d' ? 7 : 1;
+  const spine: string[] = [];
+  let current = startingOn;
+  while (current < endingBefore) {
+    spine.push(current);
+    current = addDaysToIsoDate(current, stepDays);
+  }
+  return spine;
+}
+
 export function BillingUsageChart() {
   const router = useRouter();
   const pathname = usePathname();
@@ -126,27 +142,37 @@ export function BillingUsageChart() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const bucketTotals = useMemo(
-    () =>
-      (data?.data ?? []).map((bucket) => {
-        const totals = bucket.results.reduce(
-          (accumulator, result) => {
-            accumulator.requests += result.requests;
-            accumulator.cost += result.total_dollar_amount;
-            accumulator.credits += result.total_credits_used;
-            return accumulator;
-          },
-          { requests: 0, cost: 0, credits: 0 },
-        );
-        return {
-          date: bucket.start_time_iso.slice(0, 10),
-          requests: totals.requests,
-          cost: totals.cost,
-          credits: totals.credits,
-        };
-      }),
-    [data],
-  );
+  const bucketTotals = useMemo(() => {
+    // Build a lookup from date → aggregated totals from the API response.
+    const byDate = new Map<
+      string,
+      { requests: number; cost: number; credits: number }
+    >();
+    for (const bucket of data?.data ?? []) {
+      const date = bucket.start_time_iso.slice(0, 10);
+      const totals = bucket.results.reduce(
+        (accumulator, result) => {
+          accumulator.requests += result.requests;
+          accumulator.cost += result.total_dollar_amount;
+          accumulator.credits += result.total_credits_used;
+          return accumulator;
+        },
+        { requests: 0, cost: 0, credits: 0 },
+      );
+      byDate.set(date, totals);
+    }
+
+    // Generate the full spine so empty days still appear in the chart.
+    const spine = buildDateSpine(
+      startingOn,
+      addDaysToIsoDate(endingBefore, 1),
+      bucketWidth,
+    );
+    return spine.map((date) => ({
+      date,
+      ...(byDate.get(date) ?? { requests: 0, cost: 0, credits: 0 }),
+    }));
+  }, [data, startingOn, endingBefore, bucketWidth]);
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
@@ -221,13 +247,13 @@ export function BillingUsageChart() {
         <p className="text-destructive text-sm">Failed to load usage chart.</p>
       ) : null}
 
-      {!(isLoading || error) && bucketTotals.length === 0 ? (
+      {!(isLoading || error) && bucketTotals.every((b) => b.requests === 0) ? (
         <p className="text-muted-foreground text-sm">
           No usage in selected period.
         </p>
       ) : null}
 
-      {!(isLoading || error) && bucketTotals.length > 0 ? (
+      {isLoading || error ? null : (
         <ChartContainer className="h-[320px] w-full" config={chartConfig}>
           <ComposedChart accessibilityLayer data={bucketTotals}>
             <CartesianGrid vertical={false} />
@@ -277,7 +303,7 @@ export function BillingUsageChart() {
             />
           </ComposedChart>
         </ChartContainer>
-      ) : null}
+      )}
     </div>
   );
 }

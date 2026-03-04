@@ -144,7 +144,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `STRIPE_TOPUP_5_PRICE_ID`
       - `STRIPE_TOPUP_10_PRICE_ID`
       - `STRIPE_TOPUP_99_PRICE_ID`
-    - Telegram cronjob
+   - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Axiom logging (optional)

@@ -538,6 +538,9 @@
       }
     }
   },
+  "apiBilling": {
+    "description": "Surveillez l'utilisation de l'API, les requêtes et les coûts au fil du temps."
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & générateur de voix pour adultes",
     "description": "Générez des voix IA expressives avec des émotions pour du contenu adulte en 24+ langues. Synthèse vocale gratuite avec clonage vocal et support NSFW. Commencez avec des crédits gratuits – aucune carte requise.",
@@ -552,6 +555,7 @@
     "/dashboard/history": "Historique",
     "/dashboard/credits": "Crédits",
     "/dashboard/api-keys": "Clés API",
+    "/dashboard/api-billing": "Facturation API",
     "/dashboard/usage": "Utilisation",
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",

@@ -56,8 +56,10 @@ interface ApiKeyRow {
 
 export function ApiKeys({
   dict,
+  isPaidUser,
 }: {
   dict: (typeof langDict)['profile']['apiKeys'];
+  isPaidUser: boolean;
 }) {
   const [apiKeys, setApiKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -144,7 +146,7 @@ export function ApiKeys({
         </div>
         <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={!isPaidUser}>
               <Plus className="mr-2 h-4 w-4" />
               {dict.newKey}
             </Button>
@@ -220,7 +222,7 @@ export function ApiKeys({
             {apiKeys.length === 0 ? (
               <TableRow>
                 <TableCell className="text-muted-foreground" colSpan={6}>
-                  {dict.empty}
+                  {isPaidUser ? dict.empty : dict.unpaidEmpty}
                 </TableCell>
               </TableRow>
             ) : (

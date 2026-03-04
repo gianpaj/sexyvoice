@@ -522,6 +522,7 @@
         "action": "Action"
       },
       "empty": "No API keys created yet.",
+      "unpaidEmpty": "Subscribe or top up your account to create API keys.",
       "never": "Never",
       "statusActive": "Active",
       "statusRevoked": "Revoked",
@@ -537,6 +538,9 @@
         "confirm": "Revoke"
       }
     }
+  },
+  "apiBilling": {
+    "description": "Monitor API usage, requests, and costs over time."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults",
@@ -559,6 +563,7 @@
     "/dashboard/history": "History",
     "/dashboard/credits": "Credits",
     "/dashboard/api-keys": "API Keys",
+    "/dashboard/api-billing": "API Billing",
     "/dashboard/usage": "Usage",
     "/tools/audio-converter": "Audio Converter",
     "/tools/transcribe": "Audio Transcription",
