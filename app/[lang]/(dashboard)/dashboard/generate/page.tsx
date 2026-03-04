@@ -1,6 +1,7 @@
 import CreditsSection from '@/components/credits-section';
 import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
 
@@ -30,11 +31,14 @@ export default async function GeneratePage(props: {
 
   const credits = creditsData || { amount: 0 };
 
-  const { data: credit_transactions } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+  const [{ data: credit_transactions }, isPaidUser] = await Promise.all([
+    supabase
+      .from('credit_transactions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    hasUserPaid(user.id),
+  ]);
 
   // Get user's voices
   // const { data: userVoices } = await supabase
@@ -76,6 +80,7 @@ export default async function GeneratePage(props: {
         <GenerateUI
           dict={dict.generate}
           hasEnoughCredits={credits.amount >= 10}
+          isPaidUser={isPaidUser}
           locale={lang}
           publicVoices={publicVoices}
         />

@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
-import { getVoiceIdByName } from '@/lib/supabase/queries';
+import { getVoiceIdByName, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { calculateCreditsFromTokens } from '@/lib/utils';
 
@@ -56,7 +56,7 @@ async function validateRequestBody(
   }
 }
 
-async function validateUser(): Promise<ValidationResult<object>> {
+async function validateUser(): Promise<ValidationResult<{ id: string }>> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -102,8 +102,9 @@ async function validateVoice(
 function validateTextLength(
   text: string,
   voiceModel: string,
+  isPaidUser = false,
 ): ValidationResult<null> {
-  const maxLength = getCharactersLimit(voiceModel);
+  const maxLength = getCharactersLimit(voiceModel, isPaidUser);
 
   if (text.length > maxLength) {
     return {
@@ -150,12 +151,18 @@ export async function POST(request: Request) {
       return userResult.response;
     }
 
+    const isPaidUser = await hasUserPaid(userResult.data.id);
+
     const voiceResult = await validateVoice(voice);
     if (!voiceResult.ok) {
       return voiceResult.response;
     }
 
-    const textError = validateTextLength(text, voiceResult.data.model);
+    const textError = validateTextLength(
+      text,
+      voiceResult.data.model,
+      isPaidUser,
+    );
     if (!textError.ok) {
       return textError.response;
     }

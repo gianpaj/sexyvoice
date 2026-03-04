@@ -100,7 +100,9 @@ export async function POST(request: Request) {
 
     const isGeminiVoice = voiceObj.model === 'gpro';
 
-    const maxLength = getCharactersLimit(voiceObj.model);
+    userHasPaid = await hasUserPaid(user.id);
+
+    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
@@ -138,8 +140,6 @@ export async function POST(request: Request) {
     const hash = await generateHash(`${text}-${voice}`);
 
     const abortController = new AbortController();
-
-    userHasPaid = await hasUserPaid(user.id);
 
     let folder = 'generated-audio-free';
 

@@ -223,6 +223,7 @@
         "description": "Für Gelegenheitsnutzer, die KI-Audio erkunden.",
         "features": [
           "Alles im kostenlosen Plan",
+          "2× längere Textgenerierung",
           "API-Zugang"
         ]
       },
@@ -233,6 +234,7 @@
         "creditsWithPromo": "__NUM_CREDITS__ Credits",
         "features": [
           "Alles im kostenlosen Plan, plus",
+          "2× längere Textgenerierung",
           "Sprachanruf: Benutzerdefinierte Charaktere"
         ]
       },

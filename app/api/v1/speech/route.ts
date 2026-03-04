@@ -171,7 +171,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const maxLength = getCharactersLimit(voiceObj.model);
+    const userHasPaid = await hasUserPaidAdmin(userId);
+    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (finalText.length > maxLength) {
       await log({
         status: 400,
@@ -236,7 +237,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const userHasPaid = await hasUserPaidAdmin(userId);
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
     const extension = defaultFormat;
     const filename = `${folder}/${voice}-${Date.now()}.${extension}`;

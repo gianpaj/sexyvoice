@@ -223,6 +223,7 @@
         "description": "For afslappede brugere, der udforsker AI-lyd.",
         "features": [
           "Alt i Gratis",
+          "2× længere tekstgenerering",
           "API-adgang"
         ]
       },
@@ -233,6 +234,7 @@
         "creditsWithPromo": "__NUM_CREDITS__ kreditter",
         "features": [
           "Alt i Gratis",
+          "2× længere tekstgenerering",
           "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       },

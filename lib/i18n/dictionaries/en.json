@@ -223,6 +223,7 @@
         "description": "For casual users exploring AI audio.",
         "features": [
           "Everything in Free",
+          "2× longer text generation",
           "API Access"
         ]
       },
@@ -233,6 +234,7 @@
         "creditsWithPromo": "__NUM_CREDITS__ credits",
         "features": [
           "Everything in Free",
+          "2× longer text generation",
           "Voice Call: Custom Characters",
           "API Access"
         ]

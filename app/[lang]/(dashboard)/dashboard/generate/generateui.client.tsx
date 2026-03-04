@@ -10,6 +10,7 @@ import { AudioProvider } from '../clone/audio-provider';
 interface GenerateUIProps {
   publicVoices: Tables<'voices'>[];
   hasEnoughCredits: boolean;
+  isPaidUser: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
 }
@@ -20,6 +21,7 @@ const STYLE_PROMPT_VARIANT_MOAN =
 export function GenerateUI({
   publicVoices,
   hasEnoughCredits,
+  isPaidUser,
   dict,
   locale,
 }: GenerateUIProps) {
@@ -42,6 +44,7 @@ export function GenerateUI({
         <AudioGenerator
           dict={dict}
           hasEnoughCredits={hasEnoughCredits}
+          isPaidUser={isPaidUser}
           locale={locale}
           selectedStyle={selectedStyle}
           selectedVoice={selectedVoiceSample}

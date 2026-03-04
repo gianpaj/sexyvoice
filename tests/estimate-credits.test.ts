@@ -96,6 +96,7 @@ describe('Estimate Credits API Route', () => {
   });
 
   it('returns tokens and credits for gpro voices', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
     mockCountTokens.mockResolvedValueOnce({ totalTokens: 360 });
 
     const request = new Request('http://localhost/api/estimate-credits', {
@@ -124,8 +125,8 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
   });
 
   it('returns 400 when text exceeds character limit', async () => {
-    // Create text that exceeds the limit (gpro max is 1000 chars)
-    const excessiveText = 'a'.repeat(1001);
+    // Free users have a 500 char limit (hasUserPaid defaults to false in tests)
+    const excessiveText = 'a'.repeat(501);
 
     const request = new Request('http://localhost/api/estimate-credits', {
       method: 'POST',
@@ -140,7 +141,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
 
     expect(response.status).toBe(400);
     expect(json.error).toContain('Text exceeds the maximum length');
-    expect(json.error).toContain('1000 characters');
+    expect(json.error).toContain('500 characters');
   });
 
   it('returns 400 when request body has malformed JSON', async () => {

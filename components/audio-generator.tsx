@@ -3,6 +3,7 @@
 import { useCompletion } from '@ai-sdk/react';
 import {
   CircleStop,
+  Crown,
   Download,
   Info,
   Loader2,
@@ -42,6 +43,7 @@ interface AudioGeneratorProps {
   selectedVoice?: Tables<'voices'>;
   selectedStyle?: string;
   hasEnoughCredits: boolean;
+  isPaidUser: boolean;
   dict: (typeof lang)['generate'];
   locale: string;
 }
@@ -50,6 +52,7 @@ export function AudioGenerator({
   selectedVoice,
   selectedStyle,
   hasEnoughCredits,
+  isPaidUser,
   dict,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
@@ -66,8 +69,8 @@ export function AudioGenerator({
   const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
-    () => getCharactersLimit(selectedVoice?.model || ''),
-    [selectedVoice],
+    () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
+    [selectedVoice, isPaidUser],
   );
 
   useEffect(() => {
@@ -308,7 +311,7 @@ export function AudioGenerator({
                 'textarea-2 transition-[height] duration-200 ease-in-out',
                 [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
               )}
-              maxLength={charactersLimit * 2}
+              maxLength={charactersLimit + 10}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               ref={textareaRef}
@@ -365,11 +368,32 @@ export function AudioGenerator({
           </div>
 
           <div
-            className={cn('text-right text-muted-foreground text-sm', [
-              textIsOverLimit ? 'font-bold text-red-500' : '',
-            ])}
+            className={cn(
+              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+              [textIsOverLimit ? 'font-bold text-red-500' : ''],
+            )}
           >
             {text.length} / {charactersLimit}
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Crown
+                    className={cn('h-3.5 w-3.5 cursor-default', [
+                      isPaidUser
+                        ? 'text-yellow-400'
+                        : 'text-muted-foreground/50',
+                    ])}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isPaidUser
+                      ? 'Paid users enjoy 2× character limit'
+                      : 'Upgrade to a paid plan for 2× character limit'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           {isGeminiVoice && (
             <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
