@@ -522,6 +522,7 @@
         "action": "Action"
       },
       "empty": "Aucune clé API créée pour l'instant.",
+      "unpaidEmpty": "Abonnez-vous ou rechargez votre compte pour créer des clés API.",
       "never": "Jamais",
       "statusActive": "Active",
       "statusRevoked": "Révoquée",
