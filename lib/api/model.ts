@@ -22,6 +22,5 @@ export function getModelCatalogResponse() {
     name: model.name,
     max_input_length: model.maxInputLength,
     supported_formats: [...model.supportedFormats],
-    supported_styles: [...model.supportedStyles],
   }));
 }
