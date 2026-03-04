@@ -10,6 +10,7 @@ import {
   KeyRound,
   Mic2,
   PhoneCallIcon,
+  ReceiptText,
   Scissors,
   Wand2,
 } from 'lucide-react';
@@ -99,6 +100,12 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/api-keys`,
       icon: KeyRound,
       current: pathname === `/${lang}/dashboard/api-keys`,
+    },
+    {
+      name: dict.pages['/dashboard/api-billing'],
+      href: `/${lang}/dashboard/api-billing`,
+      icon: ReceiptText,
+      current: pathname === `/${lang}/dashboard/api-billing`,
     },
   ];
 

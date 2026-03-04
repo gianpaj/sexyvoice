@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { generateApiKey } from '@/lib/api/auth';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 const MAX_ACTIVE_API_KEYS = 10;
@@ -57,6 +58,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: 'Invalid request body' },
       { status: 400 },
+    );
+  }
+
+  const isPaidUser = await hasUserPaid(user.id);
+  if (!isPaidUser) {
+    return NextResponse.json(
+      { error: 'A subscription or top-up is required to create API keys' },
+      { status: 403 },
     );
   }
 

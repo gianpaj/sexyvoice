@@ -522,6 +522,7 @@
         "action": "Acción"
       },
       "empty": "Aún no hay claves API creadas.",
+      "unpaidEmpty": "Suscríbete o recarga tu cuenta para crear claves API.",
       "never": "Nunca",
       "statusActive": "Activa",
       "statusRevoked": "Revocada",
@@ -538,6 +539,9 @@
       }
     }
   },
+  "apiBilling": {
+    "description": "Monitorea el uso de la API, las solicitudes y los costos a lo largo del tiempo."
+  },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis para adultos & texto a voz",
     "description": "Genera voces IA expresivas con emociones para contenido adulto en 24+ idiomas. Texto a voz gratis con clonación de voz y soporte NSFW. Empieza con créditos gratis – sin tarjeta requerida.",
@@ -552,6 +556,7 @@
     "/dashboard/history": "Historial",
     "/dashboard/credits": "Créditos",
     "/dashboard/api-keys": "Claves API",
+    "/dashboard/api-billing": "Facturación API",
     "/dashboard/usage": "Uso",
     "/tools/audio-converter": "Conversor de Audio",
     "/tools/transcribe": "Transcripción de Audio",
