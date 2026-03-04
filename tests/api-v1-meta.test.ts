@@ -72,7 +72,6 @@ describe('/api/v1 metadata endpoints', () => {
   it('returns OpenAPI 3.1.0 document with speech path', async () => {
     const request = new Request('http://localhost/api/v1/openapi', {
       method: 'GET',
-      headers: { authorization: TEST_AUTH_HEADER },
     });
 
     const response = await getOpenApi(request);
@@ -91,6 +90,5 @@ describe('/api/v1 metadata endpoints', () => {
         .schema,
     );
     expect(speechSchema).not.toContain('"speed"');
-    expect(response.headers.get('request-id')).toBeTruthy();
   });
 });

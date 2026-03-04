@@ -2,14 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
 import {
-  getCredits,
+  getCreditsAdmin,
   insertUsageEvent,
-  reduceCredits,
+  reduceCreditsAdmin,
 } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import {
   mockRatelimitLimit,
-  mockRedisGet,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
   setMockGoogleGenAIFactory,
@@ -131,40 +130,8 @@ describe('/api/v1/speech', () => {
     expect(json.error.code).toBe('model_not_found');
   });
 
-  it('returns cached response with usage and rate-limit headers', async () => {
-    mockRedisGet.mockResolvedValueOnce('https://example.com/cached.mp3');
-    const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
-      body: JSON.stringify({
-        model: 'kokoro',
-        input: 'Hello world',
-        voice: 'tara',
-      }),
-    });
-
-    const response = await POST(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(json.cached).toBe(true);
-    expect(json.credits_used).toBe(0);
-    expect(json.usage.input_characters).toBe(11);
-    expect(insertUsageEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        requestId: expect.any(String),
-      }),
-    );
-    expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
-    expect(response.headers.get('request-id')).toBeTruthy();
-  });
-
   it('returns 402 when credits are insufficient', async () => {
-    mockRedisGet.mockResolvedValueOnce(null);
-    vi.mocked(getCredits).mockResolvedValueOnce(1);
+    vi.mocked(getCreditsAdmin).mockResolvedValueOnce(1);
 
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
@@ -281,11 +248,7 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(200);
     expect(json.usage.input_characters).toBe(finalText.length);
-    // The mock for getVoiceIdByName('tara') returns model: 'kokoro' (see
-    // tests/setup.ts). estimateCredits must be called with that same value so
-    // this assertion reflects the actual code path rather than passing
-    // coincidentally because getCreditMultiplier ignores unknown model strings.
-    expect(vi.mocked(reduceCredits)).toHaveBeenCalledWith({
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
       userId: 'test-user-id',
       amount: estimateCredits(finalText, 'tara', 'kokoro'),
     });
@@ -294,6 +257,7 @@ describe('/api/v1/speech', () => {
       expect.any(Buffer),
       'audio/mpeg',
       'test-speech-bucket',
+      undefined,
     );
   });
 
@@ -365,8 +329,8 @@ describe('/api/v1/speech', () => {
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
   });
 
-  it('uses seed in hash input to avoid cache key collisions', async () => {
-    const unseededRequest = new Request('http://localhost/api/v1/speech', {
+  it('always generates fresh audio (no caching)', async () => {
+    const request1 = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -379,7 +343,7 @@ describe('/api/v1/speech', () => {
       }),
     });
 
-    const seededRequest = new Request('http://localhost/api/v1/speech', {
+    const request2 = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -389,16 +353,15 @@ describe('/api/v1/speech', () => {
         model: 'kokoro',
         input: 'Hello world',
         voice: 'tara',
-        seed: 999,
       }),
     });
 
-    await POST(unseededRequest);
-    await POST(seededRequest);
+    const [res1, res2] = await Promise.all([POST(request1), POST(request2)]);
 
-    expect(mockRedisGet).toHaveBeenCalledTimes(2);
-    const firstKey = mockRedisGet.mock.calls[0][0];
-    const secondKey = mockRedisGet.mock.calls[1][0];
-    expect(firstKey).not.toBe(secondKey);
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    // Both requests should trigger a real upload, not a cache hit
+    expect(mockUploadFileToR2).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledTimes(2);
   });
 });

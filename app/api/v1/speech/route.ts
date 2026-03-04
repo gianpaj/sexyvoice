@@ -7,7 +7,6 @@ import {
   HarmCategory,
 } from '@google/genai';
 import { captureException } from '@sentry/nextjs';
-import { Redis } from '@upstash/redis';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
@@ -23,7 +22,7 @@ import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
-import { convertToWav, generateHash } from '@/lib/audio';
+import { convertToWav } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -42,8 +41,6 @@ import {
 } from '@/lib/utils';
 
 const ENDPOINT = '/api/v1/speech';
-
-const redis = Redis.fromEnv();
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
@@ -239,59 +236,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const hash = await generateHash(`${finalText}-${voice}-${seed ?? 'none'}`);
     const userHasPaid = await hasUserPaidAdmin(userId);
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
     const extension = defaultFormat;
-    const filename = `${folder}/${voice}-${hash}.${extension}`;
-
-    const cachedUrl = await redis.get<string>(filename);
-    if (cachedUrl) {
-      await insertUsageEvent({
-        userId,
-        sourceType: 'api_tts',
-        apiKeyId: authResult.apiKeyId,
-        model,
-        inputChars: finalText.length,
-        dollarAmount: 0,
-        unit: 'chars',
-        quantity: finalText.length,
-        creditsUsed: 0,
-        requestId,
-        metadata: {
-          voiceId: voiceObj.id,
-          voiceName: voice,
-          model,
-          textLength: finalText.length,
-          ...(seed !== undefined ? { seed } : {}),
-          cached: true,
-          endpoint: ENDPOINT,
-        },
-      });
-      await log({
-        status: 200,
-        userId,
-        apiKeyId: authResult.apiKeyId,
-        voice,
-        model,
-        textLength: finalText.length,
-        cached: true,
-        creditsUsed: 0,
-      });
-      return respond(
-        {
-          url: cachedUrl,
-          credits_used: 0,
-          credits_remaining: currentCredits,
-          cached: true,
-          usage: {
-            input_characters: finalText.length,
-            model,
-          },
-        },
-        { status: 200 },
-      );
-    }
+    const filename = `${folder}/${voice}-${Date.now()}.${extension}`;
 
     const isGeminiVoice = voiceObj.model === 'gpro';
     const provider = isGeminiVoice ? 'google' : 'replicate';
@@ -452,8 +400,6 @@ export async function POST(request: Request) {
       throw new Error('uploadUrl is empty after generation — this is a bug');
     }
 
-    await redis.set(filename, uploadUrl);
-
     let creditsUsed = estimatedCredits;
     const usageMetadata = extractMetadata(
       isGeminiVoice,
@@ -533,7 +479,6 @@ export async function POST(request: Request) {
       voice,
       model: modelUsed,
       textLength: finalText.length,
-      cached: false,
       provider,
       creditsUsed,
       dollarAmount,
@@ -547,7 +492,6 @@ export async function POST(request: Request) {
         url: uploadUrl,
         credits_used: creditsUsed,
         credits_remaining: Math.max(0, updatedCredits - creditsUsed),
-        cached: false,
         usage: {
           input_characters: finalText.length,
           model: modelUsed,
