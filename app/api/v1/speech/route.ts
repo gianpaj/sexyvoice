@@ -391,6 +391,7 @@ export async function POST(request: Request) {
         audioBuffer,
         'audio/wav',
         speechApiBucket,
+        process.env.R2_SPEECH_API_PUBLIC_URL,
       );
     } else {
       const replicate = new Replicate();
@@ -443,6 +444,7 @@ export async function POST(request: Request) {
         audioBuffer,
         'audio/mpeg',
         speechApiBucket,
+        process.env.R2_SPEECH_API_PUBLIC_URL,
       );
     }
 
