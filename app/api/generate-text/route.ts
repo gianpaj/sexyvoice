@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google';
+import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
 // import { GoogleAICacheManager } from '@google/generative-ai/server';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
@@ -8,11 +8,11 @@ import { NextResponse } from 'next/server';
 import { getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
-// gemini-2.5-flash-lite
-// Launch stage: GA
-// Release date: July 22, 2025
-// Discontinuation date: July 22, 2026
-const model = google('gemini-2.5-flash-lite');
+// gemini-3.1-flash-lite-preview
+// Launch stage: n/a
+// Release date: March 3, 2026
+// Discontinuation date: n/a
+const model = google('gemini-3.1-flash-lite-preview');
 
 export async function POST(request: Request) {
   const {
@@ -66,6 +66,14 @@ Rules:
         isEnabled: true,
         recordInputs: true,
         recordOutputs: true,
+      },
+      providerOptions: {
+        google: {
+          thinkingConfig: {
+            thinkingLevel: 'low',
+            includeThoughts: false,
+          },
+        } satisfies GoogleLanguageModelOptions,
       },
     });
 
