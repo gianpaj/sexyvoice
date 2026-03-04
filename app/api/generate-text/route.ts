@@ -61,7 +61,7 @@ Rules:
       system,
       prompt,
       // temperature: 0.7,
-      maxTokens: 500,
+      maxOutputTokens: 500,
       experimental_telemetry: {
         isEnabled: true,
         recordInputs: true,
@@ -77,7 +77,7 @@ Rules:
       },
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('Text generation error:', error);
 
