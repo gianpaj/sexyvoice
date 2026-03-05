@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let seed: number | undefined;
   let user: User | null = null;
   let userHasPaid = false;
   try {
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
+    if (Number.isInteger(body.seed)) {
+      seed = body.seed;
+    }
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -206,6 +210,7 @@ export async function POST(request: Request) {
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,
         responseModalities: ['AUDIO'],
+        ...(seed !== undefined ? { seed } : {}),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {

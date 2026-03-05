@@ -400,6 +400,54 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Voice Generation - Google Gemini', () => {
+    it('passes optional seed to Gemini provider config', async () => {
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      } as GenerateContentResponse);
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent,
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'poe',
+          seed: 1_234_567,
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalled();
+      expect(generateContent.mock.calls[0][0].config.seed).toBe(1_234_567);
+    });
+
     it('should successfully generate voice using Google Gemini', async () => {
       const {
         reduceCredits,
@@ -489,7 +537,6 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       setMockGoogleGenAIFactory(() => ({
         models: {
           generateContent: vi.fn().mockImplementation(() => {
-            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
             callCount++;
             if (callCount === 1) {
               // First call (pro model) should throw
