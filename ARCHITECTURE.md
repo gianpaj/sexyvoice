@@ -15,29 +15,126 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Supabase** – Authentication (OAuth with Google) and PostgreSQL database with SSR support
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
 - **fal.ai** – Alternative voice cloning service *(optional)*
-- **Google Generative AI** – Text-to-speech, text enhancement, and automatic emotion tagging
+- **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS, text enhancement, and automatic emotion tagging
 - **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
-- **Cloudflare R2** – Scalable storage for generated audio files and user-uploaded samples with global CDN delivery
-- **Upstash Redis** – High-performance caching for audio URLs and request deduplication
+- **Cloudflare R2** – Scalable storage for generated audio files; two buckets: `R2_BUCKET_NAME` (dashboard) and `R2_SPEECH_API_BUCKET_NAME` (external API)
+- **Upstash Redis** – High-performance caching for audio URLs (dashboard/clone flows); rate limiting for external API keys
 - **Vercel Edge Config** – Dynamic configuration for call instructions and presets
 - **Stripe** – Payment processing, credit top-ups, subscription management
 - **Sentry** – Error tracking and performance monitoring
 - **PostHog** – Product analytics and feature flags
+- **Axiom** – Structured request logging for external API routes
 - **Inngest** – Background job processing and scheduled tasks
+- **External REST API** – `/api/v1/*` with HMAC-keyed API keys, rate limiting, and OpenAPI 3.1 spec
 
-## Voice Generation Flow
+## External REST API
+
+Base path: `/api/v1/`
+
+The external API allows third-party integrations to generate speech programmatically using API keys.
+
+### Authentication
+
+All endpoints except `GET /api/v1/openapi` require an `Authorization: Bearer sk_live_…` header. Keys are stored as HMAC-SHA256 hashes (`API_KEY_HMAC_SECRET`) — the raw key is shown only once at creation. Keys are managed via `/api/api-keys` (requires paid account, max 10 active keys).
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/speech` | Generate speech audio (always fresh, no cache) |
+| `GET` | `/api/v1/voices` | List available public TTS voices |
+| `GET` | `/api/v1/models` | List available model catalog |
+| `GET` | `/api/v1/billing` | Get credit balance and last transaction |
+| `GET` | `/api/v1/openapi` | OpenAPI 3.1 spec (public, no auth required) |
+
+### Error Shape
+
+All errors follow a consistent nested structure:
+
+```json
+{
+  "error": {
+    "message": "Human-readable description",
+    "type": "authentication_error | invalid_request_error | rate_limit_error | server_error | permission_error | not_found_error",
+    "param": "offending_field_or_null",
+    "code": "machine_readable_code"
+  }
+}
+```
+
+### Rate Limiting
+
+60 requests/minute per API key. Every response includes:
+- `X-RateLimit-Limit-Requests`
+- `X-RateLimit-Remaining-Requests`
+- `X-RateLimit-Reset-Requests`
+- `request-id` — prefixed `req_sv_` UUID for tracing
+
+### External API Speech Generation Flow
+
+```mermaid
+flowchart TD
+    A[POST /api/v1/speech] --> B[Validate Bearer token]
+    B -->|Invalid| Z1[401 invalid_api_key]
+    B -->|Valid| C[Check rate limit]
+    C -->|Exceeded| Z2[429 rate_limit_exceeded]
+    C -->|OK| D[Validate request body with Zod]
+    D -->|Invalid| Z3[400 validation_error]
+    D -->|Valid| E[Lookup voice by name — admin client]
+    E -->|Not found| Z4[404 voice_not_found]
+    E -->|Found| F[Check model compatibility + text length]
+    F -->|Invalid| Z5[400 Bad request]
+    F -->|OK| G[Fetch credit balance — admin client]
+    G -->|Insufficient| Z6[402 insufficient_credits]
+    G -->|Sufficient| H{Model?}
+    H -->|gpro| I[Gemini 2.5 Pro TTS → fallback Flash]
+    H -->|kokoro| J[Replicate kokoro model]
+    I --> K[Convert to WAV + Upload to R2_SPEECH_API_BUCKET]
+    J --> K
+    K --> L[Deduct credits — admin client]
+    L --> M[Save audio_file + insert usage_event]
+    M --> N[200 url + credits_used + usage]
+```
+
+### Shared API Layer (`lib/api/`)
+
+| File | Purpose |
+|------|---------|
+| `auth.ts` | `generateApiKey()`, `hashApiKey()`, `validateApiKey()`, `updateApiKeyLastUsed()` |
+| `constants.ts` | `EXTERNAL_API_MODELS` catalog, `RATE_LIMIT_DEFAULT` |
+| `errors.ts` | `createApiError()`, `zodErrorToApiError()` |
+| `external-errors.ts` | Structured error key map + `externalApiErrorResponse()` |
+| `logger.ts` | Axiom-backed per-request structured logger via `createLogger()` |
+| `model.ts` | `resolveExternalModelId()`, `getDefaultFormat()`, `getModelCatalogResponse()` |
+| `openapi.ts` | `createExternalApiOpenApiDocument()` using `zod-openapi` |
+| `pricing.ts` | `calculateExternalApiDollarAmount()` |
+| `rate-limit.ts` | `consumeRateLimit()` via Upstash Ratelimit (token bucket) |
+| `responses.ts` | `jsonWithRateLimitHeaders()` |
+| `schemas.ts` | Zod schemas for all v1 request/response types (shared with OpenAPI generator) |
+
+### Admin Query Pattern
+
+External API routes resolve `userId` from the API key, not a session cookie. `createClient()` (anon key + RLS) cannot see other users' data. All DB access in `/api/v1/*` uses `*Admin` variants from `lib/supabase/queries.ts`:
+
+- `getCreditsAdmin(userId)`
+- `getVoiceIdByNameAdmin(voiceName)`
+- `reduceCreditsAdmin({ userId, amount })`
+- `saveAudioFileAdmin(params)`
+- `hasUserPaidAdmin(userId)`
+
+## Voice Generation Flow (Dashboard)
 
 API endpoint: `POST /api/generate-voice`
 
 ```mermaid
 flowchart TD
-    A[User Input: Text + Voice] --> B[Authenticate User]
+    A[User Input: Text + Voice] --> B[Authenticate User - Session Cookie]
     B --> C[Check Credits]
     C --> D[Generate Cache Hash]
     D --> E{Check Redis Cache}
-    E -->|Cache Hit| F[Return Cached Audio]
+    E -->|Cache Hit| F[Return Cached Audio - 0 credits]
     E -->|Cache Miss| G[Generate Audio via AI Service]
-    G --> H[Upload to Cloudflare R2]
+    G --> H[Upload to Cloudflare R2 - R2_BUCKET_NAME]
     H --> I[Cache URL in Redis]
     I --> J[Background: Deduct Credits]
     J --> K[Background: Save to Database]
@@ -49,14 +146,14 @@ flowchart TD
 
 1. **Frontend Validation**: User enters text (max 500 chars) and selects a voice
 2. **API Authentication**: Verify user session via Supabase Auth
-3. **Credit Check**: Query user's credit balance in Supabase
-4. **Credit Estimation**: Calculate required credits based on text length
-5. **Cache Lookup**: Generate hash from (text + voice + parameters) and check Redis
-6. **Cache Hit**: Return cached audio URL immediately (0 credits used)
-7. **Cache Miss**:
-   - Call appropriate AI service (Replicate or Google Generative AI)
+4. **Credit Check**: Query user's credit balance in Supabase (via session-scoped `createClient()`)
+5. **Credit Estimation**: Calculate required credits based on text length
+6. **Cache Lookup**: Generate hash from (text + voice + parameters) and check Redis
+7. **Cache Hit**: Return cached audio URL immediately (0 credits used)
+8. **Cache Miss**:
+   - Call appropriate AI service (Replicate or Google Gemini TTS)
    - Generate audio from text
-8. **Storage**: Upload generated audio to Cloudflare R2
+9. **Storage**: Upload generated audio to Cloudflare R2 (`R2_BUCKET_NAME`, served from `files.sexyvoice.ai`)
 9. **Cache Update**: Store R2 URL in Redis for future requests
 10. **Background Tasks** (using Next.js `after()`):
     - Deduct credits from user balance
@@ -202,6 +299,7 @@ flowchart TD
 - `credit_transactions` – Credit usage and purchase history
 - `call_sessions` – Real-time voice call sessions with duration, room ID, and billing info
 - `usage_events` – Granular usage tracking for analytics, billing, and reporting
+- `api_keys` – External API keys; stores `key_hash` (HMAC-SHA256), `key_prefix` (first 12 chars for display), `is_active`, `expires_at`, `permissions` (JSONB scopes), `last_used_at`
 
 See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
 
@@ -209,16 +307,25 @@ See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
 
 ### Redis Cache Layer (Upstash)
 
+Used by the **dashboard** voice generation and voice cloning flows only. The external API (`/api/v1/speech`) always generates fresh audio and does not use the cache.
+
 - **Cache Key**: SHA-256 hash of request parameters (first 8 chars)
   - Voice Generation: `locale + text + voice + parameters`
   - Voice Cloning: `locale + text + audio_blob_url`
 - **TTL**: Persistent (no expiration)
 - **Cache Hit**: Returns audio URL immediately with 0 credit cost
-- **Cache Miss**: Generates new audio, uploads to blob, stores URL in cache
+- **Cache Miss**: Generates new audio, uploads to R2, stores URL in cache
 - **Benefits**:
   - Reduces AI API costs for repeated requests
   - Improves response time for common queries
   - Enables identical request deduplication across users
+
+### Rate Limiting (Upstash Ratelimit)
+
+Used by the **external API** (`/api/v1/*`) only. Token bucket algorithm, keyed by API key hash.
+
+- **Limit**: 60 requests/minute per API key (configurable via `RATE_LIMIT_DEFAULT`)
+- **Headers**: `X-RateLimit-Limit-Requests`, `X-RateLimit-Remaining-Requests`, `X-RateLimit-Reset-Requests` on every response
 
 ## Application Structure
 
@@ -237,16 +344,41 @@ app/[lang]/                    # Internationalized routes (en, es, de, da, it, f
 └── page.tsx                   # Landing page
 
 app/api/
+├── api-keys/                  # API key management (list, create) — requires paid account
+│   └── [id]/                  # Deactivate a specific key (DELETE)
 ├── call-token/                # LiveKit token generation for real-time calls
 ├── usage-events/              # Usage tracking API
 ├── daily-stats/               # Daily statistics endpoint
-├── generate-voice/            # Voice generation endpoint
+├── generate-voice/            # Voice generation endpoint (dashboard, session-auth)
 ├── clone-voice/               # Voice cloning endpoint
-├── webhooks/stripe/           # Stripe payment webhooks
+├── stripe/webhook/            # Stripe payment webhooks
+├── v1/                        # External REST API (API-key auth, rate-limited)
+│   ├── billing/               # GET  – credit balance + last transaction
+│   ├── models/                # GET  – model catalog
+│   ├── openapi/               # GET  – OpenAPI 3.1 spec (public, no auth)
+│   ├── speech/                # POST – text-to-speech generation
+│   └── voices/                # GET  – list public TTS voices
 └── cron/telegram/             # Daily stats notifications
 
 lib/
-├── supabase/                  # Database client, queries, types
+├── api/                       # External API shared layer
+│   ├── auth.ts                # API key generation, HMAC hashing, validateApiKey()
+│   ├── constants.ts           # EXTERNAL_API_MODELS catalog, RATE_LIMIT_DEFAULT
+│   ├── errors.ts              # createApiError(), zodErrorToApiError()
+│   ├── external-errors.ts     # Structured error definitions + externalApiErrorResponse()
+│   ├── logger.ts              # Axiom-backed per-request structured logger
+│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat()
+│   ├── openapi.ts             # createExternalApiOpenApiDocument() via zod-openapi
+│   ├── pricing.ts             # calculateExternalApiDollarAmount()
+│   ├── rate-limit.ts          # consumeRateLimit() — Upstash token bucket
+│   ├── responses.ts           # jsonWithRateLimitHeaders()
+│   └── schemas.ts             # Zod schemas (shared with OpenAPI generator)
+├── supabase/
+│   ├── admin.ts               # createAdminClient() — service role, bypasses RLS
+│   ├── queries.ts             # DB queries; *Admin variants for external API routes
+│   └── server.ts              # createClient() — anon key, session-scoped
+├── storage/
+│   └── upload.ts              # uploadFileToR2(filename, buffer, contentType, bucketName, publicBaseUrl)
 ├── i18n/                      # Internationalization (en, es, de, da, it, fr)
 ├── stripe/                    # Payment processing
 ├── edge-config/               # Vercel Edge Config for dynamic settings
@@ -272,5 +404,13 @@ components/
 ├── call/                      # Real-time call components (voice selector, chat, controls)
 └── [features]/                # Feature-specific components
 ```
+
+tests/
+├── setup.ts                   # Global Vitest setup — env vars, vi.mock() for all external deps
+├── api-v1-speech.test.ts      # External speech API — auth, validation, generation, credits
+├── api-v1-meta.test.ts        # External models/voices/openapi endpoints
+├── api-v1-billing.test.ts     # External billing endpoint
+├── api-keys-routes.test.ts    # API key CRUD routes
+└── *.test.ts                  # Other feature test suites
 
 See [AGENTS.md](./AGENTS.md) for detailed application structure and development guidelines.

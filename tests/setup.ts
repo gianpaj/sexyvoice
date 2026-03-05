@@ -188,7 +188,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model: 'kokoro',
+          model: 'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
       if (voiceName === 'poe') {
@@ -207,7 +207,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model: 'kokoro',
+          model: 'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
       if (voiceName === 'poe') {

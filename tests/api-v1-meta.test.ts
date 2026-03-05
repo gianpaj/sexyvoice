@@ -44,7 +44,8 @@ describe('/api/v1 metadata endpoints', () => {
               id: 'voice-tara-id',
               name: 'tara',
               language: 'en',
-              model: 'kokoro',
+              model:
+                'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
               feature: 'tts',
               is_public: true,
             },
@@ -65,7 +66,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(response.status).toBe(200);
     expect(json.data).toHaveLength(2);
     expect(json.data[0].model).toBe('gpro');
-    expect(json.data[1].model).toBe('kokoro');
+    expect(json.data[1].model).toBe('orpheus');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
 
