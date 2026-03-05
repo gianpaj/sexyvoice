@@ -28,7 +28,7 @@ describe('/api/v1/speech', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world',
         voice: 'tara',
       }),
@@ -94,7 +94,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world',
         voice: 'tara',
         speed: 1.2,
@@ -140,7 +140,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world this is a long enough sentence',
         voice: 'tara',
       }),
@@ -167,7 +167,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world',
         voice: 'tara',
       }),
@@ -188,7 +188,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world',
         voice: 'tara',
         response_format: 'wav',
@@ -211,7 +211,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'x'.repeat(498),
         style: 'aa',
         voice: 'tara',
@@ -236,7 +236,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input,
         style,
         voice: 'tara',
@@ -250,7 +250,11 @@ describe('/api/v1/speech', () => {
     expect(json.usage.input_characters).toBe(finalText.length);
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
       userId: 'test-user-id',
-      amount: estimateCredits(finalText, 'tara', 'kokoro'),
+      amount: estimateCredits(
+        finalText,
+        'tara',
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      ),
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
       expect.any(String),
@@ -337,7 +341,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world',
         voice: 'tara',
       }),
@@ -350,7 +354,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'kokoro',
+        model: 'orpheus',
         input: 'Hello world',
         voice: 'tara',
       }),
