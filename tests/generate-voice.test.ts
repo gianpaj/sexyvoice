@@ -90,7 +90,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should return 400 when text exceeds maximum length for Gemini voices', async () => {
-      const longText = 'a'.repeat(1001); // Exceeds 1000 char limit
+      const longText = 'a'.repeat(501); // Exceeds 500 char limit
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -458,14 +458,10 @@ describe('Generate Voice API Route', () => {
       } = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(getCredits).mockResolvedValueOnce(3000);
-      // Text is 1000 chars — requires paid limit; mock as paid user
+      // Keep paid user flow coverage; text limit is now 500 for all voices.
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      const text = `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
-
-And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
-
-As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`;
+      const text = 'Hello world';
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -490,7 +486,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 23,
         duration: '-1',
-        filename: 'generated-audio/poe-ddb72d4b.wav',
+        filename: 'generated-audio/poe-9de7f9fe.wav',
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
@@ -501,7 +497,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         },
         predictionId: undefined,
         text,
-        url: 'https://files.sexyvoice.ai/generated-audio/poe-ddb72d4b.wav',
+        url: 'https://files.sexyvoice.ai/generated-audio/poe-9de7f9fe.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
