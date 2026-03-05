@@ -45,7 +45,7 @@ export function SplitSegmentsPanel({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-input p-3">
+    <div className="space-y-3 rounded-lg border border-none p-0 md:border-input md:p-3">
       <div className="flex items-center justify-between">
         <p className="font-medium text-sm">Segment previews</p>
         {allSegmentsGenerated && (
@@ -105,7 +105,7 @@ export function SplitSegmentsPanel({
               )}
             </div>
             <Textarea
-              className="min-h-16 text-xs"
+              className="min-h-64 text-sm sm:min-h-32"
               disabled={isGenerating}
               maxLength={SPLIT_SEGMENT_MAX_LENGTH}
               onChange={(event) =>

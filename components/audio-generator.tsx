@@ -5,7 +5,6 @@ import {
   CircleStop,
   Crown,
   Download,
-  Info,
   Loader2,
   Maximize2,
   Minimize2,
@@ -639,7 +638,7 @@ export function AudioGenerator({
             <Textarea
               className={cn(
                 'textarea-2 transition-[height] duration-200 ease-in-out',
-                [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
+                [isGeminiVoice ? 'pr-10' : 'pr-14'],
               )}
               disabled={isGenerating}
               maxLength={charactersLimit + 10}
@@ -653,20 +652,23 @@ export function AudioGenerator({
               }
               value={text}
             />
-            {!isGeminiVoice && (
-              <>
-                <TooltipProvider>
-                  <Tooltip delayDuration={100} supportMobileTap>
-                    <TooltipTrigger asChild>
-                      <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>This model supports emotion tags</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+            <div className="absolute top-2 right-4 h-8 w-8">
+              <Button
+                className={'text-zinc-400 hover:bg-zinc-800 hover:text-white'}
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                size="icon"
+                title="Fullscreen"
+                variant="ghost"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
+              </Button>
+              {!isGeminiVoice && (
                 <Button
-                  className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
+                  className="hover:bg-zinc-800"
                   disabled={!text.trim() || isEnhancingText || isGenerating}
                   onClick={handleEnhanceText}
                   size="icon"
@@ -679,23 +681,8 @@ export function AudioGenerator({
                     <Sparkles className="h-4 w-4 text-yellow-300" />
                   )}
                 </Button>
-              </>
-            )}
-            <Button
-              className={
-                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-              }
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              size="icon"
-              title="Fullscreen"
-              variant="ghost"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
               )}
-            </Button>
+            </div>
           </div>
 
           <div
