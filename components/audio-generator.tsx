@@ -2,7 +2,6 @@
 
 import { useCompletion } from '@ai-sdk/react';
 import {
-  CheckCircle2,
   CircleStop,
   Crown,
   Download,
@@ -13,9 +12,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ExternalToast } from 'sonner';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { useFFmpegJoiner } from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
@@ -32,6 +29,14 @@ import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
+import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
+import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
+import {
+  generateRetrySeed,
+  SPLIT_TEXT_MIN_LENGTH,
+  splitLongTextIntoSegments,
+} from './audio-generator/split-segments-utils';
 import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
@@ -54,108 +59,6 @@ interface AudioGeneratorProps {
   locale: string;
 }
 
-const SPLIT_TEXT_MIN_LENGTH = 500;
-const SPLIT_SEGMENT_MAX_LENGTH = 500;
-const SPLIT_STORAGE_PREFIX = 'generate-split-segments-v1';
-
-type SplitSegmentStatus = 'idle' | 'generating' | 'success' | 'failed';
-
-interface SplitSegmentItem {
-  id: string;
-  text: string;
-  status: SplitSegmentStatus;
-  audioUrl: string;
-}
-
-interface PersistedSplitSegments {
-  segments: Array<{
-    text: string;
-    status: SplitSegmentStatus;
-    audioUrl?: string;
-  }>;
-  generatedByText?: Record<string, string>;
-}
-
-function buildSplitStorageKey(voiceName: string, text: string): string {
-  return `${SPLIT_STORAGE_PREFIX}:${voiceName}:${text}`;
-}
-
-function splitLongTextIntoSegments(text: string): string[] {
-  const trimmedText = text.trim();
-  if (!trimmedText) {
-    return [];
-  }
-
-  const sentenceLikeChunks = trimmedText
-    .split('.')
-    .map((chunk) => chunk.trim())
-    .filter(Boolean)
-    .map((chunk, index, array) =>
-      index < array.length - 1 || trimmedText.endsWith('.')
-        ? `${chunk}.`
-        : chunk,
-    );
-
-  const segments: string[] = [];
-  let currentSegment = '';
-
-  const pushCurrentSegment = () => {
-    const cleaned = currentSegment.trim();
-    if (cleaned) {
-      segments.push(cleaned);
-    }
-    currentSegment = '';
-  };
-
-  for (const sentence of sentenceLikeChunks) {
-    const candidate = currentSegment
-      ? `${currentSegment} ${sentence}`.trim()
-      : sentence;
-
-    if (candidate.length <= SPLIT_SEGMENT_MAX_LENGTH) {
-      currentSegment = candidate;
-      continue;
-    }
-
-    if (currentSegment) {
-      pushCurrentSegment();
-    }
-
-    if (sentence.length <= SPLIT_SEGMENT_MAX_LENGTH) {
-      currentSegment = sentence;
-      continue;
-    }
-
-    let remaining = sentence;
-    while (remaining.length > SPLIT_SEGMENT_MAX_LENGTH) {
-      segments.push(remaining.slice(0, SPLIT_SEGMENT_MAX_LENGTH).trim());
-      remaining = remaining.slice(SPLIT_SEGMENT_MAX_LENGTH).trim();
-    }
-
-    currentSegment = remaining;
-  }
-
-  pushCurrentSegment();
-  return segments;
-}
-
-function getSplitSegmentStatusLabel(status: SplitSegmentStatus): string {
-  switch (status) {
-    case 'success':
-      return 'Generated';
-    case 'generating':
-      return 'Generating...';
-    case 'failed':
-      return 'Failed';
-    default:
-      return 'Pending';
-  }
-}
-
-function generateRetrySeed(): number {
-  return Math.floor(1_000_000 + Math.random() * 9_000_000);
-}
-
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI orchestration
 export function AudioGenerator({
   selectedVoice,
@@ -173,10 +76,6 @@ export function AudioGenerator({
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
   const [splitTextAudios, setSplitTextAudios] = useState(false);
-  const [splitSegments, setSplitSegments] = useState<SplitSegmentItem[]>([]);
-  const [splitGeneratedByText, setSplitGeneratedByText] = useState<
-    Record<string, string>
-  >({});
   const [isDownloadingAllSegments, setIsDownloadingAllSegments] =
     useState(false);
   const [playerControls, setPlayerControls] =
@@ -194,7 +93,6 @@ export function AudioGenerator({
     isLoading: isJoinerLoading,
   } = useFFmpegJoiner();
   const abortController = useRef<AbortController | null>(null);
-  const generationToastIdRef = useRef<ExternalToast['id'] | null>(null);
   const textIsOverLimit = text.length > charactersLimit;
   const splitFeatureVisible = text.trim().length > SPLIT_TEXT_MIN_LENGTH;
   const shouldUseSplitMode =
@@ -203,66 +101,21 @@ export function AudioGenerator({
     () => splitLongTextIntoSegments(text),
     [text],
   );
-  const splitStorageKey = useMemo(() => {
-    if (!(selectedVoice?.name && text.trim())) {
-      return '';
-    }
-    return buildSplitStorageKey(selectedVoice.name, text);
-  }, [selectedVoice?.name, text]);
-  const allSegmentsGenerated =
-    splitSegments.length > 0 &&
-    splitSegments.every(
-      (segment) => segment.status === 'success' && Boolean(segment.audioUrl),
-    );
-  const showGenerationProgressToast = useCallback(
-    (segmentIndex: number, totalSegments: number) => {
-      const safeTotal = Math.max(1, totalSegments);
-      const progressPercent = Math.round((segmentIndex / safeTotal) * 100);
-      const title = selectedVoice?.name
-        ? `${selectedVoice.name} generation`
-        : 'Audio generation';
-
-      const toastId = toast.loading(
-        <div className="w-[280px] space-y-2">
-          <div className="flex items-center gap-2 font-semibold text-sm">
-            <span>{title}</span>
-          </div>
-          <p className="text-sm">
-            Segment {segmentIndex}/{safeTotal}
-          </p>
-          <div className="h-2 w-full rounded bg-muted">
-            <div
-              className="h-2 rounded bg-primary transition-all"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
-          <p className="text-muted-foreground text-xs">{progressPercent}%</p>
-        </div>,
-        {
-          duration: Number.POSITIVE_INFINITY,
-          id: generationToastIdRef.current || undefined,
-        },
-      );
-
-      generationToastIdRef.current = toastId;
-    },
-    [selectedVoice?.name],
-  );
-
-  const dismissGenerationProgressToast = useCallback(() => {
-    if (!generationToastIdRef.current) {
-      return;
-    }
-
-    toast.dismiss(generationToastIdRef.current);
-    generationToastIdRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      dismissGenerationProgressToast();
-    };
-  }, [dismissGenerationProgressToast]);
+  const {
+    splitSegments,
+    allSegmentsGenerated,
+    markSegmentGenerating,
+    markSegmentSuccess,
+    markSegmentFailed,
+    updateSegmentText,
+  } = useSplitSegments({
+    selectedVoiceName: selectedVoice?.name,
+    text,
+    shouldUseSplitMode,
+    splitSegmentTexts,
+  });
+  const { showGenerationProgressToast, dismissGenerationProgressToast } =
+    useGenerationProgressToast(selectedVoice?.name);
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -277,112 +130,6 @@ export function AudioGenerator({
       setSplitTextAudios(false);
     }
   }, [splitFeatureVisible]);
-
-  useEffect(() => {
-    if (!(shouldUseSplitMode && splitStorageKey)) {
-      setSplitSegments([]);
-      setSplitGeneratedByText({});
-      return;
-    }
-
-    const baseSegments = splitSegmentTexts.map((segmentText, index) => ({
-      id: `${index}-${segmentText.slice(0, 16)}`,
-      text: segmentText,
-      status: 'idle' as const,
-      audioUrl: '',
-    }));
-
-    if (typeof window === 'undefined') {
-      setSplitSegments(baseSegments);
-      return;
-    }
-
-    try {
-      const raw = window.localStorage.getItem(splitStorageKey);
-      if (!raw) {
-        setSplitSegments(baseSegments);
-        setSplitGeneratedByText({});
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as PersistedSplitSegments;
-      if (!parsed.segments || parsed.segments.length !== baseSegments.length) {
-        setSplitSegments(baseSegments);
-        setSplitGeneratedByText(parsed.generatedByText || {});
-        return;
-      }
-
-      const generatedByText = parsed.generatedByText || {};
-
-      const merged = baseSegments.map((segment, index) => {
-        const persistedSegment = parsed.segments[index];
-        if (!persistedSegment || persistedSegment.text !== segment.text) {
-          const cachedUrl = generatedByText[segment.text];
-          if (cachedUrl) {
-            return {
-              ...segment,
-              status: 'success' as const,
-              audioUrl: cachedUrl,
-            };
-          }
-          return segment;
-        }
-
-        if (
-          persistedSegment.status === 'success' &&
-          persistedSegment.audioUrl
-        ) {
-          return {
-            ...segment,
-            status: 'success' as const,
-            audioUrl: persistedSegment.audioUrl,
-          };
-        }
-
-        const cachedUrl = generatedByText[segment.text];
-        if (cachedUrl) {
-          return {
-            ...segment,
-            status: 'success' as const,
-            audioUrl: cachedUrl,
-          };
-        }
-
-        return segment;
-      });
-
-      setSplitSegments(merged);
-      setSplitGeneratedByText(generatedByText);
-    } catch {
-      setSplitSegments(baseSegments);
-      setSplitGeneratedByText({});
-    }
-  }, [shouldUseSplitMode, splitStorageKey, splitSegmentTexts]);
-
-  useEffect(() => {
-    if (
-      !(shouldUseSplitMode && splitStorageKey) ||
-      typeof window === 'undefined'
-    ) {
-      return;
-    }
-
-    const payload: PersistedSplitSegments = {
-      segments: splitSegments.map((segment) => ({
-        text: segment.text,
-        status: segment.status,
-        audioUrl: segment.audioUrl || undefined,
-      })),
-      generatedByText: splitGeneratedByText,
-    };
-
-    window.localStorage.setItem(splitStorageKey, JSON.stringify(payload));
-  }, [
-    shouldUseSplitMode,
-    splitStorageKey,
-    splitSegments,
-    splitGeneratedByText,
-  ]);
 
   const requestGenerateVoice = useCallback(
     async (segmentText: string, signal: AbortSignal, seed?: number) => {
@@ -473,7 +220,7 @@ export function AudioGenerator({
           ? { ...segment, status: 'generating', audioUrl: '' }
           : segment,
       );
-      setSplitSegments(latestSegments);
+      markSegmentGenerating(index);
       showGenerationProgressToast(index + 1, currentSegmentTexts.length);
 
       try {
@@ -487,11 +234,7 @@ export function AudioGenerator({
             ? { ...segment, status: 'success', audioUrl: generatedUrl }
             : segment,
         );
-        setSplitSegments(latestSegments);
-        setSplitGeneratedByText((current) => ({
-          ...current,
-          [currentSegmentTexts[index]]: generatedUrl,
-        }));
+        markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           throw error;
@@ -500,7 +243,7 @@ export function AudioGenerator({
         latestSegments = latestSegments.map((segment, segmentIndex) =>
           segmentIndex === index ? { ...segment, status: 'failed' } : segment,
         );
-        setSplitSegments(latestSegments);
+        markSegmentFailed(index);
 
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
@@ -521,6 +264,9 @@ export function AudioGenerator({
     splitSegments,
     requestGenerateVoice,
     showGenerationProgressToast,
+    markSegmentGenerating,
+    markSegmentSuccess,
+    markSegmentFailed,
     dict.error,
     dict.success,
   ]);
@@ -565,13 +311,7 @@ export function AudioGenerator({
       const seed = generateRetrySeed();
       abortController.current = new AbortController();
 
-      setSplitSegments((current) =>
-        current.map((item, index) =>
-          index === segmentIndex
-            ? { ...item, status: 'generating', audioUrl: '' }
-            : item,
-        ),
-      );
+      markSegmentGenerating(segmentIndex);
       showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
 
       try {
@@ -581,28 +321,14 @@ export function AudioGenerator({
           seed,
         );
 
-        setSplitSegments((current) =>
-          current.map((item, index) =>
-            index === segmentIndex
-              ? { ...item, status: 'success', audioUrl: generatedUrl }
-              : item,
-          ),
-        );
-        setSplitGeneratedByText((current) => ({
-          ...current,
-          [segment.text]: generatedUrl,
-        }));
+        markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
         toast.success(`Segment ${segmentIndex + 1} generated.`);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
 
-        setSplitSegments((current) =>
-          current.map((item, index) =>
-            index === segmentIndex ? { ...item, status: 'failed' } : item,
-          ),
-        );
+        markSegmentFailed(segmentIndex);
 
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
@@ -619,6 +345,9 @@ export function AudioGenerator({
       selectedVoice,
       showGenerationProgressToast,
       requestGenerateVoice,
+      markSegmentGenerating,
+      markSegmentSuccess,
+      markSegmentFailed,
       dict.error,
       dismissGenerationProgressToast,
     ],
@@ -1131,136 +860,20 @@ export function AudioGenerator({
             )}
           </div>
         </div>
-        {shouldUseSplitMode && splitSegments.length > 0 && (
-          <div className="space-y-3 rounded-lg border border-input p-3">
-            <div className="flex items-center justify-between">
-              <p className="font-medium text-sm">Segment previews</p>
-              {allSegmentsGenerated && (
-                <Button
-                  className="h-8 text-xs"
-                  disabled={isDownloadingAllSegments || isJoiningSegments}
-                  onClick={handleDownloadAllSegments}
-                  size="sm"
-                  variant="outline"
-                >
-                  {isDownloadingAllSegments || isJoiningSegments ? (
-                    <>
-                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                      Joining WAV...
-                    </>
-                  ) : (
-                    'Download All (WAV)'
-                  )}
-                </Button>
-              )}
-            </div>
-            {splitSegments.map((segment, index) => (
-              <div
-                className="space-y-2 rounded-md border border-input px-3 py-2"
-                key={segment.id}
-              >
-                {(() => {
-                  let segmentStatusIcon: ReactNode = null;
-                  if (segment.status === 'success') {
-                    segmentStatusIcon = (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    );
-                  } else if (segment.status === 'generating') {
-                    segmentStatusIcon = (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    );
-                  }
-
-                  return (
-                    <>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          {segmentStatusIcon}
-                          <p className="font-medium text-sm">
-                            Segment {index + 1}
-                          </p>
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                          {getSplitSegmentStatusLabel(segment.status)}
-                        </p>
-                        {segment.status === 'failed' && (
-                          <Button
-                            className="h-6 px-2 text-xs"
-                            disabled={isGenerating}
-                            onClick={() => handleRetrySegment(index)}
-                            size="sm"
-                            variant="outline"
-                          >
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                      <Textarea
-                        className="min-h-16 text-xs"
-                        disabled={isGenerating}
-                        maxLength={SPLIT_SEGMENT_MAX_LENGTH}
-                        onChange={(event) =>
-                          setSplitSegments((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? (() => {
-                                    const nextText = event.target.value;
-                                    const cachedUrl =
-                                      splitGeneratedByText[nextText];
-                                    if (cachedUrl) {
-                                      return {
-                                        ...item,
-                                        text: nextText,
-                                        status: 'success' as const,
-                                        audioUrl: cachedUrl,
-                                      };
-                                    }
-
-                                    return {
-                                      ...item,
-                                      text: nextText,
-                                      status: 'idle',
-                                      audioUrl: '',
-                                    };
-                                  })()
-                                : item,
-                            ),
-                          )
-                        }
-                        value={segment.text}
-                      />
-                    </>
-                  );
-                })()}
-                {segment.audioUrl && (
-                  <div className="flex items-center gap-2">
-                    <AudioPlayerWithContext
-                      className="rounded-md"
-                      playAudioTitle={dict.playAudio}
-                      progressColor="#8b5cf6"
-                      showWaveform
-                      url={segment.audioUrl}
-                      waveColor="#888888"
-                      waveformClassName="w-40"
-                    />
-                    <Button
-                      onClick={() => downloadSegmentAudio(segment.audioUrl)}
-                      size="icon"
-                      title={dict.downloadAudio}
-                      variant="secondary"
-                    >
-                      <Download className="size-5" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-            {isJoinerLoading && (
-              <p className="text-muted-foreground text-xs">
-                Preparing audio joiner...
-              </p>
-            )}
-          </div>
+        {shouldUseSplitMode && (
+          <SplitSegmentsPanel
+            allSegmentsGenerated={allSegmentsGenerated}
+            dict={dict}
+            isDownloadingAllSegments={isDownloadingAllSegments}
+            isGenerating={isGenerating}
+            isJoinerLoading={isJoinerLoading}
+            isJoiningSegments={isJoiningSegments}
+            onDownloadAllSegments={handleDownloadAllSegments}
+            onDownloadSegment={downloadSegmentAudio}
+            onRetrySegment={handleRetrySegment}
+            onSegmentTextChange={updateSegmentText}
+            segments={splitSegments}
+          />
         )}
       </CardContent>
     </Card>
