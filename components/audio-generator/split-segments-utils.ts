@@ -22,8 +22,19 @@ export interface PersistedSplitSegments {
   generatedByText?: Record<string, string>;
 }
 
-export function buildSplitStorageKey(voiceName: string, text: string): string {
-  return `${SPLIT_STORAGE_PREFIX}:${voiceName}:${text}`;
+async function hashText(text: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(text);
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function buildSplitStorageKey(
+  voiceName: string,
+  text: string,
+): Promise<string> {
+  const hash = await hashText(text);
+  return `${SPLIT_STORAGE_PREFIX}:${voiceName}:${hash}`;
 }
 
 export function splitLongTextIntoSegments(text: string): string[] {

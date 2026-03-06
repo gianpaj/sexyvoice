@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   buildSplitStorageKey,
@@ -26,11 +26,22 @@ export function useSplitSegments({
     Record<string, string>
   >({});
 
-  const splitStorageKey = useMemo(() => {
+  const [splitStorageKey, setSplitStorageKey] = useState('');
+
+  useEffect(() => {
     if (!(selectedVoiceName && text.trim())) {
-      return '';
+      setSplitStorageKey('');
+      return;
     }
-    return buildSplitStorageKey(selectedVoiceName, text);
+    let cancelled = false;
+    buildSplitStorageKey(selectedVoiceName, text).then((key) => {
+      if (!cancelled) {
+        setSplitStorageKey(key);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedVoiceName, text]);
 
   useEffect(() => {
