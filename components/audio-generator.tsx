@@ -337,7 +337,6 @@ export function AudioGenerator({
       splitSegments,
       isGenerating,
       selectedVoice,
-      setIsGenerating,
       showGenerationProgressToast,
       requestGenerateVoice,
       markSegmentGenerating,
