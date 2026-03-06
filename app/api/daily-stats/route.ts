@@ -401,6 +401,16 @@ export async function GET(request: NextRequest) {
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
   const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
 
+  // Calculate API TTS credits used yesterday
+  const apiTtsCreditsYesterday = filterByDateRange(
+    usageEventsWeekData,
+    previousDay,
+    today,
+    'occurred_at',
+  )
+    .filter((e) => e.source_type === 'api_tts')
+    .reduce((sum, e) => sum + e.credits_used, 0);
+
   // Filter call sessions by date ranges (using started_at as the date field)
   const callSessionsYesterdayData = filterByDateRange<
     'started_at',
@@ -989,7 +999,10 @@ export async function GET(request: NextRequest) {
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
-    `  - Used API Keys (new): ${usedNewApiKeysCount}`,
+    '',
+    `🔌 API:`,
+    `  - Used Keys (new): ${usedNewApiKeysCount}`,
+    `  - TTS Usage: ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
     '',
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
