@@ -76,7 +76,7 @@ export default function AudioConverterClient({ dict }: Props) {
       setConversionState('complete');
       setProgress(100);
     } catch (error) {
-      if (Error.isError(error)) {
+      if (error instanceof Error) {
         toast.error(error.message);
       } else {
         toast.error('An unknown error occurred during conversion.');
