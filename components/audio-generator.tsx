@@ -3,7 +3,6 @@
 import { useCompletion } from '@ai-sdk/react';
 import {
   CircleStop,
-  Crown,
   Download,
   Loader2,
   Maximize2,
@@ -42,12 +41,6 @@ import {
 } from './audio-player-with-context';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from './ui/tooltip';
 
 interface AudioGeneratorProps {
   selectedVoice?: Tables<'voices'>;
@@ -463,31 +456,34 @@ export function AudioGenerator({
         endSec: number;
       }> = [];
 
-      for (let index = 0; index < splitSegments.length; index++) {
-        const currentSegment = splitSegments[index];
-        if (!currentSegment.audioUrl) {
-          throw new Error('Missing segment URL');
-        }
+      const segmentPromises = splitSegments.map(
+        async (currentSegment, index) => {
+          if (!currentSegment.audioUrl) {
+            throw new Error('Missing segment URL');
+          }
 
-        const response = await fetch(currentSegment.audioUrl);
-        if (!response.ok) {
-          throw new Error('Could not fetch generated segment');
-        }
+          const response = await fetch(currentSegment.audioUrl);
+          if (!response.ok) {
+            throw new Error('Could not fetch generated segment');
+          }
 
-        const blob = await response.blob();
-        const mimeType = blob.type || 'audio/wav';
-        const extension = mimeType.includes('mpeg') ? 'mp3' : 'wav';
-        const file = new File([blob], `segment-${index + 1}.${extension}`, {
-          type: mimeType,
-        });
-        const durationSec = await getAudioDurationSeconds(file);
+          const blob = await response.blob();
+          const mimeType = blob.type || 'audio/wav';
+          const extension = mimeType.includes('mpeg') ? 'mp3' : 'wav';
+          const file = new File([blob], `segment-${index + 1}.${extension}`, {
+            type: mimeType,
+          });
+          const durationSec = await getAudioDurationSeconds(file);
 
-        segmentInputs.push({
-          file,
-          startSec: 0,
-          endSec: durationSec,
-        });
-      }
+          return {
+            file,
+            startSec: 0,
+            endSec: durationSec,
+          };
+        },
+      );
+
+      segmentInputs.push(...(await Promise.all(segmentPromises)));
 
       const outputBlob = await joinSegments(segmentInputs, 'wav');
       const outputUrl = URL.createObjectURL(outputBlob);
@@ -498,7 +494,8 @@ export function AudioGenerator({
       anchor.click();
       document.body.removeChild(anchor);
       setTimeout(() => URL.revokeObjectURL(outputUrl), 150);
-    } catch {
+    } catch (error) {
+      console.error('Failed to download all segments:', error);
       toast.error('Failed to download all segments as one WAV file.');
     } finally {
       setIsDownloadingAllSegments(false);
@@ -692,26 +689,6 @@ export function AudioGenerator({
             )}
           >
             {text.length} / {charactersLimit}
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Crown
-                    className={cn('h-3.5 w-3.5 cursor-default', [
-                      isPaidUser
-                        ? 'text-yellow-400'
-                        : 'text-muted-foreground/50',
-                    ])}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isPaidUser
-                      ? 'Paid users enjoy 2× character limit'
-                      : 'Upgrade to a paid plan for 2× character limit'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
           {splitFeatureVisible && (
             <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
