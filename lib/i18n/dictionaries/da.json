@@ -328,6 +328,25 @@
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇳🇱 Hollandsk (Holland),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)"
+    },
+    "split": {
+      "segmentPreviews": "Segmentforhåndsvisninger",
+      "segmentLabel": "Segment __INDEX__",
+      "downloadAll": "Download alle (WAV)",
+      "joiningWav": "Sammensætter WAV...",
+      "preparingJoiner": "Forbereder lydsammensætter...",
+      "retry": "Prøv igen",
+      "segmentCannotBeEmpty": "Segmenttekst må ikke være tom.",
+      "segmentFailed": "Segment __INDEX__ fejlede. Generering stoppet.",
+      "segmentGenerated": "Segment __INDEX__ genereret.",
+      "segmentRetryFailed": "Segment __INDEX__ forsøg mislykkedes.",
+      "progressTitle": "Lydgenerering",
+      "progressTitleWithVoice": "__VOICE__ generering",
+      "progressSegment": "Segment __CURRENT__/__TOTAL__",
+      "statusGenerated": "Genereret",
+      "statusGenerating": "Genererer...",
+      "statusFailed": "Fejlet",
+      "statusPending": "Afventer"
     }
   },
   "call": {

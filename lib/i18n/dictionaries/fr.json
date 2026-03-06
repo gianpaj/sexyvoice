@@ -328,6 +328,25 @@
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un murmure dramatique\"",
       "toolTipEmotionTags": "Tags d'émotion supportés :",
       "geminiInfo": "Soutient 24 langues :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)."
+    },
+    "split": {
+      "segmentPreviews": "Aperçus des segments",
+      "segmentLabel": "Segment __INDEX__",
+      "downloadAll": "Tout télécharger (WAV)",
+      "joiningWav": "Assemblage WAV...",
+      "preparingJoiner": "Préparation de l'assembleur audio...",
+      "retry": "Réessayer",
+      "segmentCannotBeEmpty": "Le texte du segment ne peut pas être vide.",
+      "segmentFailed": "Le segment __INDEX__ a échoué. Génération arrêtée.",
+      "segmentGenerated": "Segment __INDEX__ généré.",
+      "segmentRetryFailed": "Nouvelle tentative du segment __INDEX__ échouée.",
+      "progressTitle": "Génération audio",
+      "progressTitleWithVoice": "Génération de __VOICE__",
+      "progressSegment": "Segment __CURRENT__/__TOTAL__",
+      "statusGenerated": "Généré",
+      "statusGenerating": "En cours...",
+      "statusFailed": "Échoué",
+      "statusPending": "En attente"
     }
   },
   "call": {

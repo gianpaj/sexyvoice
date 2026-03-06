@@ -11,15 +11,8 @@ export const getEmotionTags = (language: string) => {
   }
 };
 
-const GEMINI_LIMIT = 1000;
 const DEFAULT_LIMIT = 500;
 
-export const getCharactersLimit = (model: string, isPaidUser = false) => {
-  if (!isPaidUser) {
-    return DEFAULT_LIMIT;
-  }
-  if (model === 'gpro') {
-    return GEMINI_LIMIT;
-  }
+export const getCharactersLimit = (_model: string, _isPaidUser = false) => {
   return DEFAULT_LIMIT;
 };

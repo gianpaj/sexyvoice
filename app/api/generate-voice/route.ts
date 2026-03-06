@@ -46,6 +46,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let seed: number | undefined;
   let user: User | null = null;
   let userHasPaid = false;
   try {
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
+    if (Number.isInteger(body.seed)) {
+      seed = body.seed;
+    }
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -136,8 +140,11 @@ export async function POST(request: Request) {
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice
-    const hash = await generateHash(`${text}-${voice}`);
+    // Generate hash for the combination of text, voice (and seed when provided,
+    // so requests with different seeds don't collide in the Redis cache)
+    const hashInput =
+      seed !== undefined ? `${text}-${voice}-${seed}` : `${text}-${voice}`;
+    const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
 
@@ -206,6 +213,7 @@ export async function POST(request: Request) {
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,
         responseModalities: ['AUDIO'],
+        ...(seed !== undefined ? { seed } : {}),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
