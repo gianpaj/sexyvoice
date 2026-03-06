@@ -129,6 +129,8 @@ export async function GET(request: NextRequest) {
   let profilesRecentResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let profilesTotalCountResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let apiKeysYesterdayResult: any;
   let allCreditTransactions: CreditTransaction[];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
@@ -165,6 +167,7 @@ export async function GET(request: NextRequest) {
       clonesResult,
       profilesRecentResult,
       profilesTotalCountResult,
+      apiKeysYesterdayResult,
 
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
@@ -214,6 +217,13 @@ export async function GET(request: NextRequest) {
       supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
+        .lt('created_at', today.toISOString()),
+
+      // (apiKeysYesterdayResult) API keys created yesterday with usage
+      supabase
+        .from('api_keys')
+        .select('id, created_at, last_used_at')
+        .gte('created_at', previousDay.toISOString())
         .lt('created_at', today.toISOString()),
 
       // Fetch active subscribers count
@@ -340,6 +350,7 @@ export async function GET(request: NextRequest) {
   if (clonesResult?.error) throw clonesResult.error;
   if (profilesRecentResult?.error) throw profilesRecentResult.error;
   if (profilesTotalCountResult?.error) throw profilesTotalCountResult.error;
+  if (apiKeysYesterdayResult?.error) throw apiKeysYesterdayResult.error;
 
   if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult?.error)
@@ -368,6 +379,18 @@ export async function GET(request: NextRequest) {
       item.created_at !== null,
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
+  const apiKeysYesterdayData = (
+    (apiKeysYesterdayResult.data ?? []) as {
+      id: string;
+      created_at: string;
+      last_used_at: string | null;
+    }[]
+  );
+  // Count keys created yesterday that have been used
+  const usedNewApiKeysCount = apiKeysYesterdayData.filter(
+    (key) => key.last_used_at !== null,
+  ).length;
+
   const creditTransactions: CreditTransaction[] = allCreditTransactions;
 
   const callSessionsWeekData = (
@@ -966,6 +989,7 @@ export async function GET(request: NextRequest) {
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
+    `  - Used API Keys (new): ${usedNewApiKeysCount}`,
     '',
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
