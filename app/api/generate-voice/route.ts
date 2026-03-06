@@ -140,8 +140,11 @@ export async function POST(request: Request) {
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice
-    const hash = await generateHash(`${text}-${voice}`);
+    // Generate hash for the combination of text, voice (and seed when provided,
+    // so requests with different seeds don't collide in the Redis cache)
+    const hashInput =
+      seed !== undefined ? `${text}-${voice}-${seed}` : `${text}-${voice}`;
+    const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
 
