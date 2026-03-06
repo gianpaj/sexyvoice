@@ -230,7 +230,7 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.warn(error);
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (Error.isError(error) && error.name === 'AbortError') {
           console.info('Gemini voice generation aborted');
           return NextResponse.json(
             { error: 'Request aborted' },
@@ -463,7 +463,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (Error.isError(error) && error.name === 'AbortError') {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
