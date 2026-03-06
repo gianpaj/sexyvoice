@@ -11,6 +11,10 @@ declare global {
 }
 
 declare module 'next-intl' {
+  interface AppConfig {
+    Locale: AppLocales;
+    Messages: Messages;
+  }
 }
 
 declare module 'next-intl/navigation' {

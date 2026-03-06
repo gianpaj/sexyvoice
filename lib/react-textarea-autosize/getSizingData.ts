@@ -1,8 +1,8 @@
 // import isBrowser from '#is-browser';
-export const noop = () => {};
+// export const noop = () => {};
 
 // biome-ignore lint/suspicious/noExplicitAny: it's grand
-export const pick = <Obj extends { [key: string]: any }, Key extends keyof Obj>(
+const pick = <Obj extends { [key: string]: any }, Key extends keyof Obj>(
   props: Key[],
   obj: Obj,
 ): Pick<Obj, Key> =>
@@ -49,11 +49,11 @@ type SizingProps = Extract<
 
 type SizingStyle = Pick<CSSStyleDeclaration, SizingProps>;
 
-export type SizingData = {
+export interface SizingData {
   sizingStyle: SizingStyle;
   paddingSize: number;
   borderSize: number;
-};
+}
 
 const isIE =
   typeof window !== 'undefined'

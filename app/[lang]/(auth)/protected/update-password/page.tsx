@@ -6,12 +6,13 @@ import type { Message } from '../../reset-password/reset-password-form';
 import { UpdatePasswordForm } from './update-password-form';
 
 export default async function UpdatePasswordPage(props: {
-  params: { lang: Locale };
-  searchParams: Message;
+  params: Promise<{ lang: Locale }>;
+  searchParams: Promise<Message>;
 }) {
-  const { lang } = props.params;
-  const searchParams = props.searchParams;
-
+  const [{ lang }, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams,
+  ]);
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (

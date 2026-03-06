@@ -2,17 +2,20 @@ const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
 const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
 
+// TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
  * Content Security Policy Header - Without Nonce
  * https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
  */
+// TODO DELETE https://x.public.blob.vercel-storage.com on March 18th 2026
 const cspHeader = `
-    default-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://api.unisvg.com https://api.iconify.design;
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://client.crisp.chat https://js.stripe.com https://vercel.live;
+    default-src 'self' blob: ${process.env.NEXT_PUBLIC_SUPABASE_URL} https://*.sentry.io https://files.sexyvoice.ai https://client.crisp.chat wss://client.relay.crisp.chat https://cdn.jsdelivr.net https://unpkg.com https://unpkg.com/@lottiefiles https://assets1.lottiefiles.com https://api.unisvg.com https://api.iconify.design https://uxjubqdyhv4aowsi.public.blob.vercel-storage.com https://*.livekit.cloud wss://*.livekit.cloud https://livekit.io https://*.livekit.io https://huggingface.co https://*.hf.co;
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://client.crisp.chat https://js.stripe.com https://vercel.live https://cdn.jsdelivr.net;
     style-src 'self' 'unsafe-inline' https://client.crisp.chat;
     img-src 'self' blob: data: https://image.crisp.chat https://client.crisp.chat;
     font-src 'self' https://client.crisp.chat;
     object-src 'none';
+    worker-src 'self' blob:;
     frame-src 'self' https://js.stripe.com;
     base-uri 'self';
     form-action 'self';
@@ -22,6 +25,11 @@ const cspHeader = `
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
+  reactCompiler: true,
+  experimental: {
+    // Enable filesystem caching for `next dev`
+    // turbopackFileSystemCacheForDev: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -32,32 +40,37 @@ let nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'uxjubqdyhv4aowsi.public.blob.vercel-storage.com',
+        hostname: 'images.sexyvoice.ai',
         port: '',
+        pathname: '**',
       },
     ],
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // do not bundle these packages and instead load them as external Node.js modules at runtime, which avoids the Turbopack dynamic import resolution issue
+  serverExternalPackages: [
+    'ogg-opus-decoder',
+    'mpg123-decoder',
+    '@wasm-audio-decoders/ogg-vorbis',
+  ],
   // images: { unoptimized: true },
 
   async rewrites() {
     return [
       {
-        source: '/ingest/static/:path*',
+        source: '/seguimiento/static/:path*',
         destination: 'https://eu-assets.i.posthog.com/static/:path*',
       },
       {
-        source: '/ingest/:path*',
+        source: '/seguimiento/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
       {
-        source: '/ingest/decide',
+        source: '/seguimiento/decide',
         destination: 'https://eu.i.posthog.com/decide',
       },
     ];
   },
+  // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
   skipTrailingSlashRedirect: true,
   async headers() {
     return [
@@ -102,14 +115,16 @@ if (process.env.NODE_ENV === 'production') {
   const { withSentryConfig } = require('@sentry/nextjs');
 
   nextConfig = withSentryConfig(nextConfig, {
-    // For all available options, see:
-    // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
     org: 'sexyvoiceai',
     project: 'sexyvoice-ai',
 
     // Only print logs for uploading source maps in CI
     silent: !process.env.CI,
+
+    telemetry: process.env.VERCEL_ENV === 'production',
+    sourcemaps: {
+      disable: process.env.VERCEL_ENV !== 'production',
+    },
 
     // For all available options, see:
     // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
@@ -119,18 +134,9 @@ if (process.env.NODE_ENV === 'production') {
 
     // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
     // This can increase your server load as well as your hosting bill.
-    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+    // Note: Check that the configured route will not match with your Next.js proxy, otherwise reporting of client-
     // side errors will fail.
-    tunnelRoute: true, // Generates a random route for each build (recommended)
-
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    disableLogger: true,
-
-    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
-    automaticVercelMonitors: false,
+    tunnelRoute: '/monitoring',
   });
 }
 

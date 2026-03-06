@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
@@ -12,7 +13,7 @@ import { getTopupPackages } from '@/lib/stripe/pricing';
 import type messages from '@/messages/en.json';
 
 interface CreditTopupProps {
-  dict: (typeof messages)['credits'];
+  dict: Pick<typeof messages, 'credits' | 'promos'>;
   lang: Locale;
 }
 
@@ -27,77 +28,77 @@ const initialState: ActionState = {
 };
 
 export function CreditTopup({ dict, lang }: CreditTopupProps) {
+  const t = useTranslations('credits.plans');
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink';
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || '';
+  const bannerTranslations = Object.hasOwn(dict.promos, translations)
+    ? dict.promos[translations as keyof typeof dict.promos]
+    : undefined;
 
-  const { plans: pPlans } = dict;
-
-  const TOPUP_PACKAGES = getTopupPackages(lang);
+  const { plans: pPlans } = dict.credits;
+  const topupPackages = getTopupPackages(lang);
 
   const plans = [
     {
       id: 'starter',
       name: pPlans.starter.name,
-      price: TOPUP_PACKAGES.starter.dollarAmount,
-      isPopular: false,
-      // pricePer1kCredits: TOPUP_PACKAGES.starter.pricePer1kCredits,
-      buttonText: pPlans.buyCredits,
+      price: topupPackages.starter.dollarAmount,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.starter.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.starter.promoBonus,
+      creditsText: t('x_credits', {
+        numCredits: topupPackages.starter.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.starter.promoBonus,
     },
     {
       id: 'standard',
       name: pPlans.standard.name,
-      price: TOPUP_PACKAGES.standard.dollarAmount,
+      price: topupPackages.standard.dollarAmount,
       isPopular: true,
-      pricePer1kCredits: TOPUP_PACKAGES.standard.pricePer1kCredits,
-      buttonText: pPlans.buyCredits,
+      pricePer1kCredits: topupPackages.standard.pricePer1kCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.standard.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.standard.promoBonus,
+      creditsText: t('x_credits', {
+        numCredits: topupPackages.standard.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.standard.promoBonus,
     },
     {
       id: 'pro',
       name: pPlans.pro.name,
-      price: TOPUP_PACKAGES.pro.dollarAmount,
-      pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.333,
-      buttonText: pPlans.buyCredits,
+      price: topupPackages.pro.dollarAmount,
+      pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
+      saveFromPrevPlanPer1kCredits: 0.15,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.pro.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.pro.promoBonus,
+      creditsText: t('x_credits', {
+        numCredits: topupPackages.pro.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.pro.promoBonus,
     },
   ];
 
   return (
-    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+    <div
+      className="grid gap-6 md:grid-cols-1 lg:grid-cols-3"
+      data-promo-theme={promoTheme}
+    >
       {plans.map((plan) => (
-        <CreditCard
-          dict={dict}
+        <PlanCard
+          bannerTranslations={bannerTranslations}
+          creditsDict={dict.credits}
           isPromoEnabled={isPromoEnabled}
           key={plan.id}
           plan={plan}
-          pPlans={pPlans}
         />
       ))}
     </div>
   );
 }
 
-function CreditCard({
+function PlanCard({
   plan,
-  dict,
+  creditsDict,
+  bannerTranslations,
   isPromoEnabled,
-  pPlans,
 }: {
   plan: {
     id: string;
@@ -106,14 +107,13 @@ function CreditCard({
     isPopular?: boolean;
     pricePer1kCredits?: string;
     saveFromPrevPlanPer1kCredits?: number;
-    buttonText: string;
     buttonVariant: string;
     creditsText: string;
     promoBonus?: string;
   };
-  dict: (typeof messages)['credits'];
+  creditsDict: typeof messages.credits;
   isPromoEnabled: boolean;
-  pPlans: (typeof messages)['credits']['plans'];
+  bannerTranslations?: (typeof messages.promos)[keyof typeof messages.promos];
 }) {
   const formAction = async (
     _prevState: ActionState,
@@ -136,11 +136,12 @@ function CreditCard({
     } catch (error) {
       console.error('Error creating checkout session:', error);
       return {
-        error: dict.status.checkoutError,
+        error: creditsDict.status.checkoutError,
         success: false,
       };
     }
   };
+
   const [state, formActionDispatch, pending] = useActionState(
     formAction,
     initialState,
@@ -148,25 +149,27 @@ function CreditCard({
 
   return (
     <Card
-      className={`grid grid-rows-auto gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-pink-400' : ''} relative overflow-hidden`}
+      className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-auto gap-2`}
     >
       {isPromoEnabled && plan.price > 0 && (
-        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-pink-500 to-pink-600 px-3 py-1 font-bold text-white text-xs">
-          Black Friday Sale
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
+          {bannerTranslations?.pricing.bannerText}
         </div>
       )}
       <div>
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-xl">{plan.name}</h3>
           {!isPromoEnabled && plan.isPopular ? (
-            <Badge className="rounded-full bg-pink-600">{pPlans.popular}</Badge>
+            <Badge className="rounded-full bg-promo-text">
+              {creditsDict.plans.popular}
+            </Badge>
           ) : (
             plan.price > 10 && (
               <Badge
-                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                className="bg-green-900 text-green-100"
                 variant="secondary"
               >
-                20% cheaper
+                37.5% cheaper
               </Badge>
             )
           )}
@@ -178,7 +181,7 @@ function CreditCard({
           <div className="mt-1 text-muted-foreground text-xs">
             ${plan.pricePer1kCredits} per 1k credits{' '}
             {plan.saveFromPrevPlanPer1kCredits && (
-              <span className="font-medium text-green-600 dark:text-green-400">
+              <span className="font-medium text-green-400">
                 (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
               </span>
             )}
@@ -193,7 +196,7 @@ function CreditCard({
       <div className="font-medium text-sm">
         {plan.creditsText}{' '}
         {isPromoEnabled && plan.promoBonus && (
-          <span className="font-semibold text-pink-600 dark:text-pink-400">
+          <span className="font-semibold text-promo-text-dark">
             (+{plan.promoBonus} bonus)
           </span>
         )}
@@ -217,10 +220,10 @@ function CreditCard({
           {pending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {dict.topup.processing}
+              {creditsDict.topup.processing}
             </>
           ) : (
-            dict.topup.buyCredits
+            creditsDict.topup.buyCredits
           )}
         </Button>
       </form>

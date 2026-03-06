@@ -1,12 +1,26 @@
 import { addIconSelectors } from '@iconify/tailwind';
-import type { Config } from 'tailwindcss';
 
-const config: Config = {
+const config = {
   darkMode: ['class'],
   content: [
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './posts/**/*.{md,mdx}',
+  ],
+  safelist: [
+    // Dynamic grid columns for preset-selector carousel
+    'grid-cols-1',
+    'grid-cols-2',
+    'grid-cols-3',
+    'grid-cols-4',
+    'grid-cols-5',
+    'grid-cols-6',
+    'sm:grid-cols-1',
+    'sm:grid-cols-2',
+    'sm:grid-cols-3',
+    'sm:grid-cols-4',
+    'sm:grid-cols-5',
+    'sm:grid-cols-6',
   ],
   theme: {
     container: {
@@ -15,11 +29,6 @@ const config: Config = {
       },
     },
     extend: {
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
@@ -29,6 +38,10 @@ const config: Config = {
         white: 'hsl(var(--white))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        brand: {
+          purple: 'hsl(var(--brand-purple))',
+          red: 'hsl(var(--brand-red))',
+        },
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
@@ -39,6 +52,7 @@ const config: Config = {
         },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
+          active: 'hsl(var(--primary-active))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
@@ -62,7 +76,7 @@ const config: Config = {
         ring: 'hsl(var(--ring))',
         chart: {
           '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
+          '2': 'hsl(var(--brand-red))',
           '3': 'hsl(var(--chart-3))',
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
@@ -76,6 +90,13 @@ const config: Config = {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
+        },
+        promo: {
+          primary: 'hsl(var(--promo-primary))',
+          'primary-dark': 'hsl(var(--promo-primary-dark))',
+          accent: 'hsl(var(--promo-accent))',
+          text: 'hsl(var(--promo-text))',
+          'text-dark': 'hsl(var(--promo-text-dark))',
         },
       },
       keyframes: {
@@ -95,10 +116,36 @@ const config: Config = {
             height: '0',
           },
         },
+        'bounce-subtle': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
+        },
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'scale-in': {
+          from: { opacity: '0', transform: 'scale(0.95)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(5deg)' },
+        },
+        'pulse-slow': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'bounce-subtle': 'bounce-subtle 2s ease-in-out infinite',
+        'fade-in': 'fade-in 0.5s ease-out forwards',
+        float: 'float 6s ease-in-out infinite',
+        'float-delayed': 'float 6s ease-in-out infinite 2s',
+        'scale-in': 'scale-in 0.3s ease-out forwards',
+        'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
       },
     },
   },

@@ -9,21 +9,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { banList } from '@/lib/banlist';
+import type langDict from '@/messages/en.json';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
-import { createClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export function SignUpForm({
   dict,
   lang,
 }: {
-  dict: Record<string, string>;
-  lang: string;
+  dict: (typeof langDict)['auth']['signup'];
+  lang: Locale;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const supabase = getSupabaseBrowserClient();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {

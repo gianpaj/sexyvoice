@@ -8,8 +8,10 @@ function parseMimeType(mimeType: string): WavConversionOptions {
   const [fileType, ...params] = mimeType.split(';').map((s) => s.trim());
   const [_, format] = fileType.split('/');
 
-  const options: Partial<WavConversionOptions> = {
+  const options: WavConversionOptions = {
     numChannels: 1,
+    sampleRate: 24_000,
+    bitsPerSample: 16,
   };
 
   if (format?.startsWith('L')) {
@@ -26,7 +28,7 @@ function parseMimeType(mimeType: string): WavConversionOptions {
     }
   }
 
-  return options as WavConversionOptions;
+  return options;
 }
 
 function createWavHeader(
@@ -59,8 +61,19 @@ function createWavHeader(
 // https://github.com/RiverTwilight/Geekits/blob/cc185957ff718d80064a6457fdae44703ae44f17/src/pages/api/ai/tts.ts#L69
 export function convertToWav(rawData: string, mimeType: string): Buffer {
   const options = parseMimeType(mimeType);
-  const wavHeader = createWavHeader(rawData.length, options);
   const buffer = Buffer.from(rawData, 'base64');
+  const wavHeader = createWavHeader(buffer.length, options);
 
   return Buffer.concat([wavHeader, buffer]);
+}
+
+export async function generateHash(input: string) {
+  const textEncoder = new TextEncoder();
+  const data = textEncoder.encode(input);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 8);
 }

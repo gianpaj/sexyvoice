@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { createTranslator } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
 import { Badge } from '@/components/ui/badge';
@@ -9,12 +10,23 @@ import { Link } from '@/lib/i18n/navigation';
 import { getTopupPackages } from '@/lib/stripe/pricing';
 
 async function PricingTable({ lang }: { lang: Locale }) {
-  const credits = ((await getMessages()) as IntlMessages).credits;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const { credits, promos } = messages;
+  const plansT = createTranslator({
+    locale: lang,
+    messages,
+    namespace: 'credits.plans',
+  });
+
+  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS;
+  const bannerTranslations =
+    translations && Object.hasOwn(promos, translations)
+      ? promos[translations as keyof typeof promos]
+      : undefined;
+
   const { plans: pPlans, billing } = credits;
-
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
-
-  const TOPUP_PACKAGES = getTopupPackages(lang);
+  const topupPackages = getTopupPackages(lang);
 
   const plans = [
     {
@@ -24,77 +36,76 @@ async function PricingTable({ lang }: { lang: Locale }) {
       description: pPlans.free.description,
       buttonText: pPlans.startFree,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.free.baseCreditsLocale,
-      ),
+      creditsText: plansT('x_credits', {
+        numCredits: topupPackages.free.baseCreditsLocale,
+      }),
       features: pPlans.free.features,
     },
     {
       name: pPlans.standard.name,
-      price: TOPUP_PACKAGES.standard.dollarAmount,
+      price: topupPackages.standard.dollarAmount,
       isPopular: true,
-      pricePer1kCredits: TOPUP_PACKAGES.standard.pricePer1kCredits,
+      pricePer1kCredits: topupPackages.standard.pricePer1kCredits,
       description: pPlans.standard.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.standard.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.standard.promoBonus,
+      creditsText: plansT('x_credits', {
+        numCredits: topupPackages.standard.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.standard.promoBonus,
       features: pPlans.standard.features,
     },
     {
       name: pPlans.pro.name,
-      price: TOPUP_PACKAGES.pro.dollarAmount,
-
-      pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.333,
+      price: topupPackages.pro.dollarAmount,
+      pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
+      saveFromPrevPlanPer1kCredits: 0.15,
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.pro.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.pro.promoBonus,
+      creditsText: plansT('x_credits', {
+        numCredits: topupPackages.pro.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.pro.promoBonus,
       features: pPlans.pro.features,
     },
   ];
 
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink';
+
   return (
-    <div className="flex flex-col gap-6 py-16 xl:px-28">
+    <div
+      className="flex flex-col gap-6 py-16 xl:px-28"
+      data-promo-theme={promoTheme}
+    >
       <h2 className="mx-auto mb-4 font-semibold text-2xl">
         {credits.pricingPlan}
       </h2>
       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card
-            className={`grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-orange-400' : ''} relative overflow-hidden`}
+            className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2`}
             key={plan.name}
-            // className={`grid gap-2 grid-rows-[auto_minmax(60px,auto)_auto_1fr] p-6 ${plan.isPopular ? 'border-green-600' : ''}`}
           >
             {isPromoEnabled && plan.price > 0 && (
-              <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-orange-500 to-orange-600 px-3 py-1 font-bold text-white text-xs">
-                🎃 Halloween Special
+              <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
+                {bannerTranslations?.pricing.bannerText}
               </div>
             )}
             <div>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-xl">{plan.name}</h3>
                 {!isPromoEnabled && plan.isPopular ? (
-                  <Badge className="rounded-full bg-orange-600">
-                    {/*<Badge className="rounded-full bg-green-600">*/}
+                  <Badge className="rounded-full bg-promo-text">
                     {pPlans.popular}
                   </Badge>
                 ) : (
                   plan.price > 10 && (
                     <Badge
-                      className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                      className="bg-green-900 text-green-100"
                       variant="secondary"
                     >
-                      20% cheaper
+                      37.5% cheaper
                     </Badge>
                   )
                 )}
@@ -109,7 +120,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
                 <div className="mt-1 text-muted-foreground text-xs">
                   ${plan.pricePer1kCredits} per 1k credits{' '}
                   {plan.saveFromPrevPlanPer1kCredits && (
-                    <span className="font-medium text-green-600 dark:text-green-400">
+                    <span className="font-medium text-green-400">
                       (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
                     </span>
                   )}
@@ -132,13 +143,13 @@ async function PricingTable({ lang }: { lang: Locale }) {
               <div className="font-medium text-sm">
                 {plan.creditsText}{' '}
                 {isPromoEnabled && plan.promoBonus && (
-                  <span className="font-semibold text-orange-600 dark:text-orange-400">
+                  <span className="font-semibold text-promo-text-dark">
                     (+{plan.promoBonus} bonus)
                   </span>
                 )}
               </div>
-              {plan.features.map((feature, i) => (
-                <div className="flex items-center text-sm" key={i}>
+              {plan.features.map((feature, index) => (
+                <div className="flex items-center text-sm" key={index}>
                   <Check className="mr-2 size-4 min-w-fit" />
                   {feature}
                 </div>

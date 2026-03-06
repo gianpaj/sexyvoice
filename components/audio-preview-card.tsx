@@ -5,15 +5,18 @@ import { useState } from 'react';
 
 import { Button } from './ui/button';
 
-// AudioPreviewCard component
 export function AudioPreviewCard({
   name,
   prompt,
   audioSrc,
+  lang,
+  dir,
 }: {
   name: string;
   prompt: string;
   audioSrc: string;
+  lang: string;
+  dir: 'ltr' | 'rtl';
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
@@ -62,7 +65,12 @@ export function AudioPreviewCard({
           )}
         </Button>
       </div>
-      <div className="grow whitespace-break-spaces rounded bg-gray-800/60 p-3 text-gray-200 text-sm">
+      <div
+        className="line-clamp-5 whitespace-break-spaces rounded border-[12px] border-transparent bg-accent text-justify text-gray-200 text-sm"
+        dir={dir}
+        lang={lang}
+        title={prompt}
+      >
         {prompt}
       </div>
     </div>

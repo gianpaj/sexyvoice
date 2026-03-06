@@ -1,8 +1,7 @@
 'use client';
 
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
-  type ColumnDef,
   type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
@@ -32,27 +31,35 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import type langDict from '@/messages/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
-import { getMyAudioFiles } from '@/lib/supabase/queries.client';
+import {
+  type AudioFileAndVoicesRes,
+  getMyAudioFiles,
+} from '@/lib/supabase/queries.client';
+import { createColumns } from './columns';
 
-interface DataTableProps<AudioFile, TValue> {
-  columns: ColumnDef<AudioFile, TValue>[];
+interface DataTableProps {
   userId: string;
+  dict: (typeof langDict)['history'];
+  showApiColumns: boolean;
 }
 
-export function DataTable<AudioFile, TValue>({
-  columns,
-  userId,
-}: DataTableProps<AudioFile, TValue>) {
+export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const supabase = useSupabaseBrowser();
-  const { data } = useQuery(getMyAudioFiles(supabase, userId));
+  const { data } = useQuery({
+    queryKey: ['audio_files', userId],
+    queryFn: () => getMyAudioFiles(supabase, userId),
+    enabled: !!userId,
+  });
+  const columns = createColumns({ showApiColumns });
 
-  const table = useReactTable<AudioFile>({
-    data: data as AudioFile[],
+  const table = useReactTable<AudioFileAndVoicesRes>({
+    data: (data as AudioFileAndVoicesRes[]) ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -70,15 +77,15 @@ export function DataTable<AudioFile, TValue>({
 
   return (
     <>
-      <div className="flex items-center justify-between py-4">
-        <div className="flex flex-1 items-center gap-2">
+      <div className="flex items-start justify-between gap-2 py-4 sm:items-center">
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             autoComplete="off"
             className="max-w-sm"
             onChange={(event) =>
               table.getColumn('text')?.setFilterValue(event.target.value)
             }
-            placeholder="Filter text..."
+            placeholder={dict.ui.filterText}
             value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
           />
           <p className="text-left text-muted-foreground text-sm">
@@ -90,8 +97,10 @@ export function DataTable<AudioFile, TValue>({
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
                 <ColumnsIcon />
-                <span className="hidden lg:inline">Customize Columns</span>
-                <span className="lg:hidden">Columns</span>
+                <span className="hidden lg:inline">
+                  {dict.ui.customizeColumns}
+                </span>
+                <span className="lg:hidden">{dict.ui.columns}</span>
                 <ChevronDownIcon />
               </Button>
             </DropdownMenuTrigger>
@@ -160,7 +169,7 @@ export function DataTable<AudioFile, TValue>({
                   className="h-24 text-center"
                   colSpan={columns.length}
                 >
-                  No results.
+                  {dict.empty}
                 </TableCell>
               </TableRow>
             )}
@@ -174,7 +183,7 @@ export function DataTable<AudioFile, TValue>({
           size="sm"
           variant="outline"
         >
-          Previous
+          {dict.ui.previous}
         </Button>
         <Button
           disabled={!table.getCanNextPage()}
@@ -182,7 +191,7 @@ export function DataTable<AudioFile, TValue>({
           size="sm"
           variant="outline"
         >
-          Next
+          {dict.ui.next}
         </Button>
       </div>
     </>

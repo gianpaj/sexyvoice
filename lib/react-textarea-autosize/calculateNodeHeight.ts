@@ -6,7 +6,7 @@ import type { SizingData } from './getSizingData';
 // TODO: use labeled tuples once they are available:
 //   export type CalculatedNodeHeights = [height: number, rowHeight: number];
 // https://github.com/microsoft/TypeScript/issues/28259
-export type CalculatedNodeHeights = number[];
+type CalculatedNodeHeights = number[];
 
 let hiddenTextarea: HTMLTextAreaElement | null = null;
 

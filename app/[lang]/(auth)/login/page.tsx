@@ -3,20 +3,19 @@ import { Suspense } from 'react';
 import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
-import { Header } from '@/components/header';
+import { HeaderStatic } from '@/components/header-static';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LoginForm } from './login-form';
 
 export default async function LoginPage(props: {
-  params: { lang: Locale };
+  params: Promise<{ lang: Locale }>;
 }) {
-  const { lang } = props.params;
-
+  const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <>
-      <Header lang={lang} />
+      <HeaderStatic />
       <main
         className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
         id="main-content"

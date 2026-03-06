@@ -31,18 +31,18 @@ export const updateSession = async (
       data: { user },
     } = await supabase.auth.getUser();
 
-    const isPublicRoute = publicRoutes.includes(pathname);
-
     if (!user && pathname.includes('/dashboard')) {
       // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone();
-      url.pathname = '/login';
+      url.pathname = `/${locale}/login`;
       return NextResponse.redirect(url);
     }
 
+    const isPublicRoute = publicRoutes.includes(pathname);
+
     if (!(user || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL(`/${locale}`, request.url));
     }
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
@@ -69,6 +69,6 @@ export const updateSession = async (
     return supabaseResponse;
   } catch (e) {
     console.error('Middleware error:', e);
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 };

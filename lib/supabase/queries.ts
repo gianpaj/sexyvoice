@@ -1,6 +1,138 @@
+'use server';
+
+import * as Sentry from '@sentry/nextjs';
+
 import { createAdminClient } from './admin';
-import { MAX_FREE_GENERATIONS } from './constants';
+import {
+  FREE_USER_CALL_LIMIT_SECONDS,
+  MAX_FREE_GENERATIONS,
+} from './constants';
 import { createClient } from './server';
+
+// Types for usage event tracking
+type UsageSourceType = Database['public']['Enums']['usage_source_type'];
+type UsageUnitType = Database['public']['Enums']['usage_unit_type'];
+
+// ─── Voices ───
+
+/** Get call voices (feature = 'call') for SSR */
+export async function getCallVoices() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select(
+      'id, name, type, description, sample_url, feature, model, language, sort_order',
+    )
+    .eq('feature', 'call')
+    // .eq('is_public', true)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+// ─── Characters ───
+
+/**
+ * Get public (predefined) call characters for SSR.
+ * Joins with voices to get voice name + sample_url.
+ * Does NOT include prompt text — predefined prompts never reach the client.
+ */
+export async function getPublicCallCharacters() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select(
+      `
+      id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      voice_id,
+      voices ( name, sample_url ),
+      prompt_id,
+      prompts ( type )
+    `,
+    )
+    // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
+    // Only prompt metadata (type) is joined. Public prompts are readable via RLS (is_public=true).
+    .eq('is_public', true)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Get user's custom call characters for SSR.
+ * Joins with prompts (to get editable prompt text) and voices.
+ */
+export async function getUserCallCharacters(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select(
+      `
+      id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      voice_id,
+      voices ( name, sample_url ),
+      prompt_id,
+      prompts ( prompt, localized_prompts )
+    `,
+    )
+    .eq('is_public', false)
+    .eq('user_id', userId)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/** Count user's custom call characters (for 10-limit check) */
+export async function countUserCallCharacters(userId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('characters')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_public', false)
+    .eq('user_id', userId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+// ─── Prompts (admin — for call-token resolution) ───
+
+/**
+ * Resolve the prompt for a character by character ID.
+ * Uses admin client to bypass RLS (reads predefined prompt text server-side).
+ */
+export async function resolveCharacterPrompt(characterId: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('characters')
+    .select(
+      `
+      id, is_public, user_id, voice_id,
+      voices ( id, name ),
+      prompts ( prompt, localized_prompts )
+    `,
+    )
+    .eq('id', characterId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export interface InsertUsageEventParams {
+  userId: string;
+  sourceType: UsageSourceType;
+  requestId?: string | null;
+  sourceId?: string | null;
+  apiKeyId?: string | null;
+  model?: string | null;
+  inputChars?: number | null;
+  outputChars?: number | null;
+  durationSeconds?: number | null;
+  dollarAmount?: number | null;
+  unit: UsageUnitType;
+  quantity: number;
+  creditsUsed: number;
+  metadata?: Json;
+}
 
 export async function getCredits(userId: string): Promise<number> {
   const supabase = await createClient();
@@ -73,24 +205,88 @@ export async function saveAudioFile({
   voiceId: string;
   duration: string;
   credits_used: number;
-  usage?: Record<string, string>;
+  usage?: Record<string, string | number | boolean>;
 }) {
   const supabase = await createClient();
 
-  return supabase.from('audio_files').insert({
-    user_id: userId,
-    storage_key: filename,
-    text_content: text,
-    url,
-    model,
-    prediction_id: predictionId,
-    is_public: isPublic,
-    voice_id: voiceId,
-    duration: Number.parseFloat(duration),
-    credits_used,
-    usage,
-  });
+  return supabase
+    .from('audio_files')
+    .insert({
+      user_id: userId,
+      storage_key: filename,
+      text_content: text,
+      url,
+      model,
+      prediction_id: predictionId,
+      is_public: isPublic,
+      voice_id: voiceId,
+      duration: Number.parseFloat(duration),
+      credits_used,
+      usage,
+    })
+    .select('id')
+    .single();
 }
+
+/**
+ * Insert a usage event record for tracking credit consumption.
+ *
+ * Design Decision: Usage tracking is non-blocking. If this function fails,
+ * it logs the error to Sentry but doesn't throw. This ensures that
+ * billing/tracking issues don't prevent users from using the service.
+ *
+ * @returns The inserted usage event ID, or null on failure
+ */
+export const insertUsageEvent = async (
+  params: InsertUsageEventParams,
+): Promise<string | null> => {
+  const supabase = createAdminClient();
+
+  try {
+    const { data, error } = await supabase
+      .from('usage_events')
+      .insert({
+        user_id: params.userId,
+        source_type: params.sourceType,
+        request_id: params.requestId ?? null,
+        source_id: params.sourceId ?? null,
+        api_key_id: params.apiKeyId ?? null,
+        model: params.model ?? null,
+        input_chars: params.inputChars ?? null,
+        output_chars: params.outputChars ?? null,
+        duration_seconds: params.durationSeconds ?? null,
+        dollar_amount: params.dollarAmount ?? null,
+        unit: params.unit,
+        quantity: params.quantity,
+        credits_used: params.creditsUsed,
+        metadata: (params.metadata ?? {}) as Json,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      Sentry.captureException(error, {
+        extra: {
+          params,
+          context: 'insertUsageEvent',
+        },
+      });
+      console.error('Failed to insert usage event:', error);
+      return null;
+    }
+
+    return data?.id ?? null;
+  } catch (error) {
+    Sentry.captureException(error, {
+      extra: {
+        params,
+        context: 'insertUsageEvent',
+      },
+    });
+    console.error('Failed to insert usage event:', error);
+    return null;
+  }
+};
 
 export const getUserById = async (userId: string) => {
   const supabase = await createClient();
@@ -114,6 +310,17 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
     .single();
 
   return data?.id;
+};
+
+export const getUserByStripeCustomerId = async (customerId: string) => {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('stripe_id', customerId)
+    .single();
+  return data;
 };
 
 export const insertSubscriptionCreditTransaction = async (
@@ -148,6 +355,17 @@ export const insertSubscriptionCreditTransaction = async (
     // Transaction doesn't exist, continue with insertion
   }
 
+  // Check if this is the user's first subscription transaction
+  const { data: existingSubscriptions } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'purchase')
+    .limit(1);
+
+  const isFirstSubscription =
+    !existingSubscriptions || existingSubscriptions.length === 0;
+
   // Insert the transaction with reference_id (payment_intent)
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
@@ -158,6 +376,7 @@ export const insertSubscriptionCreditTransaction = async (
     description: `Subscription payment - $${dollarAmount}`,
     metadata: {
       dollarAmount,
+      isFirstSubscription,
       // Figure out how to send promo metadata with a Stripe pricing table
       // ...(promo && { promo }),
     },
@@ -208,6 +427,16 @@ export const insertTopupCreditTransaction = async (
     // Transaction doesn't exist, continue with insertion
   }
 
+  // Check if this is the user's first transaction (topup)
+  const { data: existingTopup } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'topup')
+    .limit(1);
+
+  const isFirstTopup = !existingTopup || existingTopup.length === 0;
+
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     user_id: userId,
@@ -218,6 +447,7 @@ export const insertTopupCreditTransaction = async (
     metadata: {
       packageId,
       dollarAmount,
+      isFirstTopup,
       ...(promo && { promo }),
     },
   });
@@ -228,10 +458,7 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
-export const updateUserCredits = async (
-  userId: string,
-  creditAmount: number,
-) => {
+const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
@@ -240,6 +467,20 @@ export const updateUserCredits = async (
   });
 
   if (error) throw error;
+};
+
+export const getPaidTransactions = async (userId: string) => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup'])
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  return data;
 };
 
 export const hasUserPaid = async (userId: string): Promise<boolean> => {
@@ -259,6 +500,149 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
 };
+
+/**
+ * Get the total call duration in seconds for a user.
+ * This sums up all duration_seconds from their call_sessions.
+ */
+export const getTotalCallDurationSeconds = async (
+  userId: string,
+): Promise<number> => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from('call_sessions')
+    .select('duration_seconds')
+    .eq('user_id', userId);
+
+  if (error) {
+    Sentry.captureException(error, {
+      extra: { userId, context: 'getTotalCallDurationSeconds' },
+    });
+    throw error;
+  }
+
+  const totalSeconds = data.reduce(
+    (sum, session) => sum + (session.duration_seconds ?? 0),
+    0,
+  );
+
+  return totalSeconds;
+};
+
+/**
+ * Check if a free user has exceeded the call limit (5 minutes).
+ * Returns true if the user is a free user AND has exceeded the limit.
+ */
+export const isFreeUserOverCallLimit = async (
+  userId: string,
+): Promise<boolean> => {
+  const hasPaid = await hasUserPaid(userId);
+
+  if (hasPaid) {
+    return false;
+  }
+
+  const totalDuration = await getTotalCallDurationSeconds(userId);
+  return totalDuration >= FREE_USER_CALL_LIMIT_SECONDS;
+};
+
+// ─── Admin variants for external API routes ───
+// These bypass RLS using the service role key. Use only in server-side
+// API routes where the userId is resolved from a trusted API key, not a
+// session cookie.
+
+export async function getCreditsAdmin(userId: string): Promise<number> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credits')
+    .select('amount')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.amount ?? 0;
+}
+
+export async function getVoiceIdByNameAdmin(
+  voiceName: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('name', voiceName)
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function reduceCreditsAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
+
+  if (error) throw error;
+}
+
+export async function saveAudioFileAdmin(params: {
+  userId: string;
+  filename: string;
+  text: string;
+  url: string;
+  model: string;
+  predictionId?: string;
+  isPublic: boolean;
+  voiceId: string;
+  duration: string;
+  credits_used: number;
+  usage?: Record<string, string | number | boolean>;
+}) {
+  const admin = createAdminClient();
+  return admin
+    .from('audio_files')
+    .insert({
+      user_id: params.userId,
+      storage_key: params.filename,
+      text_content: params.text,
+      url: params.url,
+      model: params.model,
+      prediction_id: params.predictionId,
+      is_public: params.isPublic,
+      voice_id: params.voiceId,
+      duration: Number.parseFloat(params.duration),
+      credits_used: params.credits_used,
+      usage: params.usage,
+    })
+    .select('id')
+    .single();
+}
+
+export async function hasUserPaidAdmin(userId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_transactions')
+    .select('type')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup']);
+
+  if (error) throw error;
+
+  return (data?.length ?? 0) > 0;
+}
 
 export const isFreemiumUserOverLimit = async (
   userId: string,

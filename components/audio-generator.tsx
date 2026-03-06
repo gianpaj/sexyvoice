@@ -3,18 +3,18 @@
 import { useCompletion } from '@ai-sdk/react';
 import {
   CircleStop,
+  Crown,
   Download,
   Info,
   Loader2,
   Maximize2,
   Minimize2,
-  Pause,
-  Play,
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { toast } from '@/components/services/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,10 @@ import type messages from '@/messages/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import {
+  type AudioPlayerControls,
+  AudioPlayerWithContext,
+} from './audio-player-with-context';
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -36,10 +40,11 @@ import {
 } from './ui/tooltip';
 
 interface AudioGeneratorProps {
-  selectedVoice?: Voice;
+  selectedVoice?: Tables<'voices'>;
   selectedStyle?: string;
   hasEnoughCredits: boolean;
   dict: (typeof messages)['generate'];
+  isPaidUser: boolean;
   locale: string;
 }
 
@@ -47,20 +52,25 @@ export function AudioGenerator({
   selectedVoice,
   selectedStyle,
   hasEnoughCredits,
+  isPaidUser,
   dict,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [audioURL, setAudioURL] = useState('');
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
+  const [playerControls, setPlayerControls] =
+    useState<AudioPlayerControls | null>(null);
 
+  const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
-    () => getCharactersLimit(selectedVoice?.model || ''),
-    [selectedVoice],
+    () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
+    [selectedVoice, isPaidUser],
   );
 
   useEffect(() => {
@@ -93,13 +103,13 @@ export function AudioGenerator({
         signal: abortController.current.signal,
       });
 
-      if (!response.ok) {
-        const error: any = await response.json();
+      const data = await response.json();
 
+      if (!response.ok) {
         // Check if we have an error code for translation
-        if (error.errorCode && dict[error.errorCode as keyof typeof dict]) {
+        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
           const errorMessage = dict[
-            error.errorCode as keyof typeof dict
+            data.errorCode as keyof typeof dict
           ] as string;
           throw new APIError(
             errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
@@ -108,25 +118,21 @@ export function AudioGenerator({
         }
 
         // Fallback to the default English error message from API
-        throw new APIError(error.error || error.serverMessage, response);
+        throw new APIError(data.error || data.serverMessage, response);
       }
 
-      const { url } = await response.json();
+      const { url } = data;
 
-      // creditsUsed is undefined if the audio was previously generated
-      // creditsUsed && setCreditsUsed(creditsUsed);
+      // FIXME: this doesn't work
+      // refetch credits after generating audio
+      // setTimeout(() => {
+      // await queryClient.refetchQueries({
+      //   queryKey: ['credits'],
+      // });
+      // console.log('Credits refetched');
+      // }, 1000);
 
-      const newAudio = new Audio(url);
-
-      newAudio.addEventListener('ended', () => {
-        setIsPlaying(false);
-      });
-
-      setAudio(newAudio);
-
-      // Automatically play the audio
-      newAudio.play();
-      setIsPlaying(true);
+      setAudioURL(url);
 
       toast.success(dict.success);
     } catch (error) {
@@ -172,44 +178,30 @@ export function AudioGenerator({
     };
   }, [isGenerating, text, selectedVoice, hasEnoughCredits]);
 
-  const togglePlayback = () => {
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
   const resetPlayer = () => {
-    if (!audio) {
-      setIsPlaying(false);
+    // Reset wavesurfer player if available (waveform mode)
+    if (playerControls) {
+      playerControls.reset();
       return;
     }
 
-    try {
-      audio.pause();
-      audio.currentTime = 0;
-    } catch (error) {
-      console.error('Failed to reset audio', error);
-    } finally {
-      setAudio(null);
-      setIsPlaying(false);
+    // Fallback to audio provider reset (non-waveform mode)
+    if (audio) {
+      audio.reset();
     }
   };
 
   const downloadAudio = async () => {
+    // Check if there's an audio URL to download
+    if (!audioURL) return;
+
     // Prepare the anchor element once in a closure scope
     const anchorElement = document.createElement('a');
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
 
-    if (!audio) return;
-
     try {
-      await downloadUrl(audio.src, anchorElement);
+      await downloadUrl(audioURL, anchorElement);
     } catch {
       toast.error(dict.error);
     }
@@ -217,6 +209,7 @@ export function AudioGenerator({
 
   const { complete } = useCompletion({
     api: '/api/generate-text',
+    streamProtocol: 'text',
   });
 
   const handleEnhanceText = async () => {
@@ -248,6 +241,15 @@ export function AudioGenerator({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  const handleControlsReady = useCallback((controls: AudioPlayerControls) => {
+    setPlayerControls(controls);
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: needed
+  useEffect(() => {
+    setEstimatedCredits(null);
+  }, [selectedVoice, text]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
   useEffect(() => {
     // Auto-resize textarea when content changes
@@ -257,6 +259,44 @@ export function AudioGenerator({
   }, [text, isFullscreen]);
 
   const textIsOverLimit = text.length > charactersLimit;
+
+  const handleEstimateCredits = async () => {
+    if (!(selectedVoice && isGeminiVoice && text.trim())) return;
+
+    setIsEstimating(true);
+    try {
+      const response = await fetch('/api/estimate-credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voice: selectedVoice.name,
+          styleVariant: selectedStyle,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new APIError(data.error || dict.error, response);
+      }
+
+      const estimatedCredits = Number(data.estimatedCredits);
+      if (Number.isFinite(estimatedCredits)) {
+        setEstimatedCredits(estimatedCredits);
+      }
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message || dict.error);
+      } else {
+        toast.error(dict.errorEstimating);
+      }
+    } finally {
+      setIsEstimating(false);
+    }
+  };
 
   return (
     <Card>
@@ -271,7 +311,7 @@ export function AudioGenerator({
                 'textarea-2 transition-[height] duration-200 ease-in-out',
                 [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
               )}
-              maxLength={charactersLimit * 2}
+              maxLength={charactersLimit + 10}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               ref={textareaRef}
@@ -326,19 +366,68 @@ export function AudioGenerator({
               )}
             </Button>
           </div>
+
           <div
-            className={cn('text-right text-muted-foreground text-sm', [
-              textIsOverLimit ? 'font-bold text-red-500' : '',
-            ])}
+            className={cn(
+              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+              [textIsOverLimit ? 'font-bold text-red-500' : ''],
+            )}
           >
             {text.length} / {charactersLimit}
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Crown
+                    className={cn('h-3.5 w-3.5 cursor-default', [
+                      isPaidUser
+                        ? 'text-yellow-400'
+                        : 'text-muted-foreground/50',
+                    ])}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isPaidUser
+                      ? 'Paid users enjoy 2× character limit'
+                      : 'Upgrade to a paid plan for 2× character limit'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
+          {isGeminiVoice && (
+            <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
+              <Button
+                className="h-8 bg-secondary text-xs"
+                disabled={
+                  !text.trim() ||
+                  isEstimating ||
+                  isGenerating ||
+                  textIsOverLimit
+                }
+                onClick={handleEstimateCredits}
+                size="sm"
+                variant="outline"
+              >
+                {isEstimating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  dict.estimateCreditsButton
+                )}
+              </Button>
+              {estimatedCredits !== null && (
+                <div className="text-muted-foreground text-xs">
+                  ~{estimatedCredits.toString()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div
           className={cn(
-            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-2',
-            hasEnoughCredits ? 'items-center' : 'flex flex-col items-start',
+            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-[1fr_2fr]',
+            hasEnoughCredits ? '' : 'flex flex-col items-start',
           )}
         >
           {!hasEnoughCredits && (
@@ -348,7 +437,7 @@ export function AudioGenerator({
           )}
           <div className="flex flex-grow-0 gap-2">
             <Button
-              className="h-10"
+              className="h-10 w-full sm:w-fit"
               data-testid="generate-button"
               disabled={
                 isGenerating ||
@@ -388,21 +477,20 @@ export function AudioGenerator({
             )}
           </div>
 
-          <div>
-            {audio && (
-              <div className="flex justify-start gap-2 sm:w-full">
-                <Button
-                  onClick={togglePlayback}
-                  size="icon"
-                  title={dict.playAudio}
-                  variant="secondary"
-                >
-                  {isPlaying ? (
-                    <Pause className="size-6" />
-                  ) : (
-                    <Play className="size-6" />
-                  )}
-                </Button>
+          <div className="flex justify-start gap-2 sm:w-full">
+            {audioURL && (
+              <>
+                <AudioPlayerWithContext
+                  autoPlay
+                  className="rounded-md"
+                  onControlsReady={handleControlsReady}
+                  playAudioTitle={dict.playAudio}
+                  progressColor="#8b5cf6"
+                  showWaveform
+                  url={audioURL}
+                  waveColor="#888888"
+                  waveformClassName="w-48"
+                />
                 <Button
                   onClick={resetPlayer}
                   size="icon"
@@ -419,7 +507,7 @@ export function AudioGenerator({
                 >
                   <Download className="size-6" />
                 </Button>
-              </div>
+              </>
             )}
           </div>
         </div>

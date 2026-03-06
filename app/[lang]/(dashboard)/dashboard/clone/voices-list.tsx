@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import type { Locale } from '@/lib/i18n/i18n-config';
 // import {
 //   DropdownMenu,
 //   DropdownMenuContent,
@@ -30,8 +31,8 @@ export function VoicesList({
   voices,
   lang,
 }: {
-  voices: Voice[];
-  lang: string;
+  voices: Tables<'voices'>[];
+  lang: Locale;
 }) {
   // const [isLoading, setIsLoading] = useState<string | null>(null);
   // const router = useRouter();

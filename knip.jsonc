@@ -1,0 +1,71 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "contentlayer.config.ts",
+    "next.config.js",
+    "postcss.config.js",
+    "vitest.config.mts",
+    "sentry.server.config.ts",
+    "sentry.edge.config.ts"
+  ],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "utils/**/*.{ts,tsx}",
+    "scripts/**/*.{ts,tsx,js,sh,py}",
+    "tests/**/*.{ts,tsx}",
+    "supabase/**/*.ts",
+    "posts/**/*.{mdx,md}"
+  ],
+  "ignore": [
+    "scripts/**/*.{ts,tsx,js,sh,py}",
+    "supabase/functions/telegram-bot/index.ts",
+    ".next",
+    ".contentlayer",
+    ".claude",
+    ".cursor",
+    ".github",
+    ".husky",
+    ".vscode",
+    ".zed",
+    "backups",
+    "certificates",
+    "coverage",
+    "node_modules",
+    "public",
+    "*.csv",
+    "screenshot*.jpg",
+    "requirements.txt",
+    "prompts*.md",
+    "_instrumentation-client.ts_disable",
+    "deno.lock",
+    "pnpm-lock.yaml"
+  ],
+  "ignoreBinaries": [
+    "biome",
+    "husky",
+    "knip",
+    "lint-staged",
+    "tsx",
+    "ultracite"
+  ],
+  "ignoreDependencies": [
+    "@iconify-json/logos",
+    "@next/bundle-analyzer",
+    "autoprefixer",
+    "dotenv",
+    "husky",
+    "lint-staged",
+    "postcss",
+    "tsx",
+    "typescript",
+    "ultracite",
+    "ioredis",
+    "redis-memory-server",
+    "msw",
+    "@vitest/coverage-v8",
+    "vitest"
+  ]
+}

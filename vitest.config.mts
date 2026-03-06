@@ -27,12 +27,17 @@ export default defineConfig({
       return true;
     },
     setupFiles: ['./tests/setup.ts'],
-    include: ['tests/*.test.ts'],
-    // exclude: ['lib/utils.test.ts'],
+    include: [
+      'tests/*.test.ts',
+      'tests/*.test.tsx',
+      'tests/**/*.test.tsx',
+      'components/**/*.test.tsx',
+    ],
     coverage: {
       provider: 'v8',
       include: [
-        // app/api/clone-voice/route.ts
+        'lib/utils.ts',
+        'app/api/clone-voice/*.ts',
         'app/api/generate-voice/*.ts',
         'app/api/stripe/webhook/route.ts',
       ],
@@ -41,6 +46,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './'),
+      '@tests': resolve(__dirname, './tests'),
     },
   },
 });

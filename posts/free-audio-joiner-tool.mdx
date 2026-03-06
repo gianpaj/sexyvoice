@@ -1,0 +1,74 @@
+---
+title: "Free Audio Joiner — Trim and Join Audio Files in Your Browser"
+description: Upload audio files, trim each clip with start and end handles, reorder them, and join into one download. Runs entirely in your browser. No uploads, no sign-up, no cost.
+keywords:
+  - free audio joiner
+  - online audio joiner
+  - join audio files online
+  - merge audio files
+  - trim audio online
+  - browser audio editor
+  - FFmpeg WebAssembly
+  - no upload audio joiner
+  - combine audio files free
+date: 2026-03-03
+image: '/posts/free-audio-joiner-tool-landscape.webp'
+displayImageCover: false
+---
+
+[![Free Audio Joiner Tool](/posts/free-audio-joiner-tool.webp)](../tools/audio-joiner)
+
+## Trim and Join Audio Without Leaving Your Browser
+
+Need to stitch together an interview from separate recordings? Combine voice clips into one file? Cut silence from the start and end of each segment before merging?
+
+Most tools for this require an account, an upload, or a subscription. This one doesn't. Drop your audio files in, trim each clip, reorder them if needed, and download the result. Everything runs in your browser.
+
+[Join Your First Files Free →](../tools/audio-joiner)
+
+## Why In-Browser Processing Matters
+
+Uploading audio to a third-party server means handing over your recordings — interview raw cuts, music drafts, voice notes — to hardware you don't control. Most services store those files longer than you'd expect.
+
+This tool runs [FFmpeg](https://ffmpeg.org) via WebAssembly, directly in your browser. No file ever leaves your device. Once the tool loads, it works without an internet connection. Your audio stays yours.
+
+## How It Works
+
+1. **Drop your files.** Drag and drop one or more audio files, or click to browse. Each file appears as a waveform row.
+2. **Trim each clip.** Drag the start and end handles on any waveform to cut the portion you want to keep. Everything outside the handles is discarded.
+3. **Reorder the segments.** Use the up and down arrows on each row to arrange clips in the order they should play.
+4. **Preview before you commit.** Hit play to hear the full joined sequence. Click anywhere on a waveform to jump to that point. Spacebar toggles play and pause.
+5. **Choose a format.** Pick MP3, WAV, or M4A as your output.
+6. **Join and download.** One click processes all segments and triggers a download.
+
+No account required.
+
+## Supported Output Formats
+
+- **MP3** — universal playback, compact file size
+- **WAV** — uncompressed, full quality
+- **M4A** — efficient compression, native to Apple devices
+
+## What You Can Build With It
+
+- **Podcast episodes** from separate recorded segments
+- **Voice demos** assembled from multiple takes
+- **Audiobook chapters** joined from individual scene recordings
+- **Music sketches** stitched from loop fragments
+- **Interview clips** with silence and off-topic sections trimmed out
+
+## What It Costs
+
+Free. No limits, no credit card, no catch. Built as a public utility — the same philosophy behind our [audio converter](../tools/audio-converter) and [transcription tool](../tools/transcribe).
+
+## Technical Details
+
+- **Engine:** FFmpeg compiled to WebAssembly — the same tool audio professionals use on the command line
+- **Trimming:** Each segment is trimmed to a normalised WAV before joining, which keeps audio quality consistent regardless of the source format
+- **Performance:** Processing runs on a background thread so the page stays responsive
+- **Cancellation:** Changed your mind mid-process? Hit Cancel and the job stops immediately — no partial file, no waiting
+- **Privacy:** Zero network requests during processing. Fully offline after the initial load.
+
+## Get Started
+
+Open the [audio joiner](../tools/audio-joiner), drop your files, and trim away. No sign-up, no waiting, no strings attached.

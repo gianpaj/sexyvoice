@@ -1,43 +1,30 @@
-import { google } from '@ai-sdk/google';
-// import { GoogleAICacheManager } from '@google/generative-ai/server';
+import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
 import * as Sentry from '@sentry/nextjs';
+import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
 import { getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
-// const cacheManager = new GoogleAICacheManager(
-//   process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-// );
-
-// Configure the model
-const model = google('gemini-2.0-flash-lite');
-
-// const { name: cachedContent } = await cacheManager.create({
-//   model,
-//   contents: [
-//     {
-//       role: 'user',
-//       parts: [{ text: '1000 Lasagna Recipes...' }],
-//     },
-//   ],
-//   ttlSeconds: 60 * 5,
-// });
-
-// OR gpt-4.1-nano with temperature 0.7
+// gemini-3.1-flash-lite-preview
+// Launch stage: n/a
+// Release date: March 3, 2026
+// Discontinuation date: n/a
+const model = google('gemini-3.1-flash-lite-preview');
 
 export async function POST(request: Request) {
   const {
     prompt,
     selectedVoiceLanguage,
   }: { prompt: string; selectedVoiceLanguage: string } = await request.json();
+  let user: User | null = null;
   try {
     const supabase = await createClient();
 
     // Check if user is authenticated
     const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    user = data?.user;
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
@@ -73,25 +60,32 @@ Rules:
       system,
       prompt,
       // temperature: 0.7,
-      maxTokens: 500,
+      maxOutputTokens: 500,
       experimental_telemetry: {
         isEnabled: true,
         recordInputs: true,
         recordOutputs: true,
       },
+      providerOptions: {
+        google: {
+          thinkingConfig: {
+            thinkingLevel: 'low',
+            includeThoughts: false,
+          },
+        } satisfies GoogleLanguageModelOptions,
+      },
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('Text generation error:', error);
 
-    Sentry.captureException({
-      error: 'Text generation failed',
-      originalError: error,
-      prompt,
+    Sentry.captureException(error, {
+      user: { id: user?.id, email: user?.email },
+      extra: { prompt },
     });
 
-    if (error instanceof Error) {
+    if (Error.isError(error)) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

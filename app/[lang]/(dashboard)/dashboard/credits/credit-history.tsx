@@ -17,7 +17,7 @@ export function CreditHistory({
   dict: (typeof messages)['credits'];
   transactions:
     | Pick<
-        CreditTransaction,
+        Tables<'credit_transactions'>,
         'id' | 'created_at' | 'description' | 'type' | 'amount'
       >[]
     | null;

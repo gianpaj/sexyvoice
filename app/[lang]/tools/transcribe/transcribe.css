@@ -1,0 +1,55 @@
+.gradient-text {
+  background: var(--gradient-background);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-2xl;
+}
+
+/* Glow shadow for icon containers */
+.shadow-glow {
+  box-shadow:
+    0 0 24px hsl(var(--gradient-start) / 0.4),
+    0 0 8px hsl(var(--gradient-start) / 0.2);
+}
+
+/* Waveform bars — used in header decoration and progress display */
+@keyframes waveform-pulse {
+  0%, 100% {
+    transform: scaleY(0.25);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.wave-bar {
+  display: inline-block;
+  width: 3px;
+  border-radius: 3px;
+  transform-origin: bottom center;
+  background: var(--gradient-background);
+  animation: waveform-pulse 1.2s ease-in-out infinite;
+}
+
+/* Recording state pulse ring on the mic button */
+@keyframes recording-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(239, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.recording-pulse {
+  animation: recording-ring 1.5s ease-out infinite;
+}

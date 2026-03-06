@@ -1,3 +1,13 @@
+export function formatCompactNumber(num: number): string {
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}k`;
+  }
+  return num.toLocaleString();
+}
+
 export function startOfDay(date: Date): Date {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
@@ -27,10 +37,19 @@ export function formatCurrencyChange(
   previous: number,
 ): string {
   const diff = current - previous;
-  return diff >= 0 ? `+${diff.toFixed(2)}` : `${diff.toFixed(2)}`;
+  if (previous === 0) {
+    if (current === 0) {
+      return '→$0.00 (no change)';
+    }
+    return `↑$${current.toFixed(2)} (new)`;
+  }
+  const pct = (diff / previous) * 100;
+  const arrow = diff >= 0 ? '↑' : '↓';
+
+  return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(pct).toFixed(0)}%)`;
 }
 
-export function reduceAmountUsd(acc: number, row: { metadata: any }): number {
+export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     console.log('Invalid metadata in row:', row);
     return acc;
@@ -62,15 +81,25 @@ export function maskUsername(username?: string): string | undefined {
   return maskedUsername;
 }
 
-export const filterByDateRange = <T extends { created_at: string }>(
+export function filterByDateRange<T extends { created_at: string }>(
   items: T[],
   start: Date,
   end: Date,
-) => {
+): T[];
+export function filterByDateRange<
+  K extends string,
+  T extends Record<K, string>,
+>(items: T[], start: Date, end: Date, dateKey: K): T[];
+export function filterByDateRange<T extends Record<string, unknown>>(
+  items: T[],
+  start: Date,
+  end: Date,
+  dateKey = 'created_at',
+): T[] {
   const startTime = start.getTime();
   const endTime = end.getTime();
   return items.filter((item) => {
-    const itemTime = new Date(item.created_at).getTime();
+    const itemTime = new Date(item[dateKey] as string).getTime();
     return itemTime >= startTime && itemTime < endTime;
   });
-};
+}

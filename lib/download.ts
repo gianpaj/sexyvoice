@@ -10,8 +10,10 @@ export const downloadUrl = async (
     // Create a temporary object URL for the Blob
     const objectUrl = window.URL.createObjectURL(audioBlob);
 
+    const filename =
+      url.split('/').pop() || `generated_audio_${Date.now()}.mp3`;
     anchorElement.href = objectUrl;
-    anchorElement.download = `generated_audio_${Date.now()}.mp3`;
+    anchorElement.download = filename;
 
     // Simulate the click to trigger the download prompt
     anchorElement.click();

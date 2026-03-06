@@ -1,10 +1,9 @@
 import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import * as Sentry from '@sentry/nextjs';
+import { getMessages } from 'next-intl/server';
 import Link from 'next/link';
 import Script from 'next/script';
 import type Stripe from 'stripe';
-
-import { getMessages } from 'next-intl/server';
 
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -21,14 +20,11 @@ import { CreditTopup } from './credit-topup';
 import { TopupStatus } from './topup-status';
 
 export default async function CreditsPage(props: {
-  params: { lang: Locale };
+  params: Promise<{ lang: Locale }>;
 }) {
-  const { lang } = props.params;
-
-  const supabase = await createClient();
+  const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
-  const creditsDict = dict.credits;
-
+  const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
@@ -48,7 +44,7 @@ export default async function CreditsPage(props: {
     console.error(error.message);
     Sentry.captureException(error, {
       level: 'error',
-      extra: { userId: user.id, email: user.email },
+      user: { id: user.id, email: user.email },
     });
     throw error;
   }
@@ -66,7 +62,6 @@ export default async function CreditsPage(props: {
       shouldShowPricingTable = customerData.status !== 'active';
     } catch (error) {
       console.error('Failed to refresh Stripe subscription data', error);
-      // refreshCustomerSubscriptionData already reports errors to Sentry
       shouldShowPricingTable = false;
     }
   }
@@ -83,16 +78,20 @@ export default async function CreditsPage(props: {
     .limit(100);
 
   return (
-    <div className="space-y-8">
-      <TopupStatus dict={creditsDict} />
+    <div className="mx-auto max-w-5xl space-y-8">
+      <TopupStatus dict={dict.credits} />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 font-semibold text-lg">{creditsDict.topup.title}</h3>
-          <p className="text-muted-foreground">{creditsDict.topup.description}</p>
+          <h3 className="mb-4 font-semibold text-lg">
+            {dict.credits.topup.title}
+          </h3>
+          <p className="text-muted-foreground">
+            {dict.credits.topup.description}
+          </p>
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
-            href={'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww'}
+            href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
             target="_blank"
           >
             Stripe Customer Portal
@@ -100,14 +99,13 @@ export default async function CreditsPage(props: {
         </Button>
       </div>
 
-      {/* Add Credit Top-up Section */}
-      <CreditTopup dict={creditsDict} lang={lang} />
+      <CreditTopup dict={{ credits: dict.credits, promos: dict.promos }} lang={lang} />
 
       <div className="my-8">
         <h3 className="mb-4 font-semibold text-lg">
-          {creditsDict.history.title}
+          {dict.credits.history.title}
         </h3>
-        <CreditHistory dict={creditsDict} transactions={existingTransactions} />
+        <CreditHistory dict={dict.credits} transactions={existingTransactions} />
       </div>
 
       {shouldShowPricingTable && clientSecret && (
@@ -117,7 +115,6 @@ export default async function CreditsPage(props: {
   );
 }
 
-// Subscription plans
 const NextStripePricingTable = ({
   clientSecret,
 }: {

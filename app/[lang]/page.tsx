@@ -3,35 +3,36 @@ import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { getMessages } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import Script from 'next/script';
 import type { ReactNode } from 'react';
-import type { FAQPage, WithContext } from 'schema-dts';
+import type { Graph } from 'schema-dts';
 
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
-import { redirect } from 'next/navigation';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import { AudioPreviewCard } from '@/components/audio-preview-card';
+import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { PromoBanner } from '@/components/promo-banner';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSampleAudiosByLang } from '../sample-audio';
+import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
-  allPosts.filter((post) => post.locale === lang)?.slice(0, 3);
+  allPosts
+    .filter((post) => post.locale === lang && post.image)
+    ?.sort(
+      (postA, postB) =>
+        new Date(postB.date).getTime() - new Date(postA.date).getTime(),
+    )
+    .slice(0, 3);
 
 export const metadata: Metadata = {
   other: {
@@ -39,8 +40,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function LandingPage(props: { params: { lang: Locale } }) {
-  const { lang } = props.params;
+type PromoCountdownLabels = NonNullable<
+  React.ComponentProps<typeof PromoBanner>['countdown']
+>['labels'];
+
+export default async function LandingPage(props: {
+  params: Promise<{ lang: Locale }>;
+}) {
+  const { lang } = await props.params;
 
   // Validate that the language is a supported locale
   if (!i18n.locales.includes(lang as Locale)) {
@@ -49,95 +56,157 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dict = messages.landing;
-  const blackFridayDict = messages.promos.blackFridayBanner;
+  const dictLanding = messages.landing;
 
-  const [firstPart, ...restParts] = dict.hero.title.split(',');
+  const promoDictKey =
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
+    ? messages.promos[promoDictKey as keyof typeof messages.promos]
+    : undefined;
+
+  const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
   const titleRestParts = restParts.join(',');
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown as PromoCountdownLabels,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
-  const jsonLd: WithContext<FAQPage> = {
+  const faqQuestions = dictLanding.faq.groups.flatMap(
+    (group) => group.questions,
+  );
+
+  const siteUrl = `https://sexyvoice.ai/${lang}`;
+
+  const jsonLd: Graph = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: dict.faq.questions.map((q) => ({
-      '@type': 'Question',
-      name: q.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: q.answer,
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://sexyvoice.ai/#organization',
+        name: 'SexyVoice.ai',
+        url: 'https://sexyvoice.ai',
+        logo: 'https://sexyvoice.ai/icon-192x192.png',
+        sameAs: [
+          'https://x.com/sexyvoice_ai',
+          'https://instagram.com/sexyvoice.ai',
+        ],
       },
-    })),
+      {
+        '@type': 'WebSite',
+        '@id': 'https://sexyvoice.ai/#website',
+        url: 'https://sexyvoice.ai',
+        name: 'SexyVoice.ai',
+        description: messages.pages.description,
+        publisher: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${siteUrl}/#webpage`,
+        url: siteUrl,
+        name: messages.pages.defaultTitle,
+        description: messages.pages.description,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        about: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${siteUrl}/#faq`,
+        isPartOf: {
+          '@id': `${siteUrl}/#webpage`,
+        },
+        mainEntity: faqQuestions.map((q) => ({
+          '@type': 'Question' as const,
+          name: q.question,
+          acceptedAnswer: {
+            '@type': 'Answer' as const,
+            text: q.answer,
+          },
+        })),
+      },
+    ],
   };
 
   return (
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-      <PromoBanner
-        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
-        countdown={
-          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-            ? {
-                enabled: true,
-                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: blackFridayDict.countdown,
-              }
-            : undefined
-        }
-        ctaLink={`/${lang}/signup`}
-        ctaText={blackFridayDict.ctaLoggedOut}
-        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={blackFridayDict.text}
-      />
-      <HeaderStatic lang={lang} />
+      {promoDict && (
+        <PromoBanner
+          ariaLabelDismiss={promoDict.ariaLabelDismiss}
+          countdown={promoCountdown}
+          ctaLink={`/${lang}/signup`}
+          ctaText={promoDict.ctaLoggedOut}
+          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+          text={promoDict.text}
+        />
+      )}
+      <HeaderStatic />
       <main id="main-content">
-        <div className="disable-bg-firefox min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+        <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <LandingHero />
-              <h1 className="font-bold text-5xl text-white leading-10 md:text-6xl">
-                <span className="leading-[3.5rem]">{firstPart}</span>
+              <h1 className="font-bold text-5xl md:text-6xl">
+                <span className="text-white/90 leading-[3.5rem]">
+                  {firstPart}
+                </span>
+                <br />
                 {titleRestParts && (
-                  <span className="text-purple-400">{titleRestParts}</span>
+                  <span
+                    className="whitespace-break-spaces bg-gradient-to-r bg-clip-text text-transparent leading-[4rem]"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
+                    }}
+                  >
+                    {titleRestParts}
+                  </span>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl">
-                {dict.hero.subtitle}
+              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl leading-10">
+                {dictLanding.hero.subtitle}
               </p>
+
               <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
+                  className="w-fit self-center"
                   effect="expandIcon"
                   icon={ArrowRightIcon}
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href={`/${lang}/signup`}>{dict.hero.buttonCTA}</Link>
+                  <Link href={`/${lang}/signup`}>
+                    {dictLanding.hero.buttonCTA}
+                  </Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
-                  {dict.hero.noCreditCard}
+                  {dictLanding.hero.noCreditCard}
                 </p>
               </div>
             </div>
 
             {/* Audio Previews Grid */}
-            <div className="mx-auto mb-16 max-w-4xl md:pb-16">
-              <h2 className="mb-2 font-bold text-2xl text-white">
-                {dict.popular.trySamplesTitle}
-              </h2>
-              <p className="mb-6 text-gray-200">
-                {dict.popular.trySamplesSubtitle}
-              </p>
-              <div className="grid gap-6 md:grid-cols-2">
-                {getSampleAudiosByLang(lang).map((audio) => (
-                  <AudioPreviewCard
-                    audioSrc={`https://files.sexyvoice.ai/${audio.audioSrc}`}
-                    key={audio.id}
-                    name={audio.name}
-                    prompt={audio.prompt}
-                  />
-                ))}
-              </div>
-            </div>
+            <SampleAudioPreviews
+              initialAudios={getSampleAudiosByLanguage()}
+              trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
+              trySamplesTitle={dictLanding.popular.trySamplesTitle}
+            />
 
             {/* Voice Generator Section */}
             {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
@@ -169,17 +238,33 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Mic2 aria-hidden className="size-6 text-blue-400" />
+                    <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium">
-                    {dict.features.voiceCloning.title}
+                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                    {dictLanding.features.security.title}
+                  </h3>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-justify text-sm">
+                    {dictLanding.features.security.description}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="group shadow-zinc-950/5">
+                <CardHeader className="pb-3">
+                  <CardDecorator>
+                    <Mic2 aria-hidden className="size-6 text-gray-200" />
+                  </CardDecorator>
+
+                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                    {dictLanding.features.voiceCloning.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-sm">
-                    {dict.features.voiceCloning.description}
+                  <p className="text-justify text-sm">
+                    {dictLanding.features.voiceCloning.description}
                   </p>
                 </CardContent>
               </Card>
@@ -187,34 +272,17 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Globe2 aria-hidden className="size-6 text-blue-400" />
+                    <Globe2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium">
-                    {dict.features.multiLanguage.title}
+                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                    {dictLanding.features.multiLanguage.title}
                   </h3>
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-sm">
-                    {dict.features.multiLanguage.description}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="group shadow-zinc-950/5">
-                <CardHeader className="pb-3">
-                  <CardDecorator>
-                    <Shield aria-hidden className="size-6 text-blue-400" />
-                  </CardDecorator>
-
-                  <h3 className="mt-6 text-center font-medium">
-                    {dict.features.security.title}
-                  </h3>
-                </CardHeader>
-
-                <CardContent>
-                  <p className="text-sm">
-                    {dict.features.security.description}
+                  <p className="text-justify text-sm">
+                    {dictLanding.features.multiLanguage.description}
                   </p>
                 </CardContent>
               </Card>
@@ -224,34 +292,14 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">
-              <div className="mb-12 text-left md:text-center">
-                <h2 className="mb-2 font-bold text-3xl text-white">
-                  {dict.faq.title}
-                </h2>
-                <p className="text-gray-200">{dict.faq.subtitle}</p>
-              </div>
-
-              <Accordion className="w-full" collapsible type="single">
-                {dict.faq.questions.map((faq, index) => (
-                  <AccordionItem
-                    className="border-white/10 border-b"
-                    key={`item-${index}`}
-                    value={`item-${index}`}
-                  >
-                    <AccordionTrigger className="py-5 text-left text-white hover:text-blue-400 hover:no-underline">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="whitespace-break-spaces text-gray-200">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+              <FAQComponent lang={lang} />
             </div>
 
             {/* Blog posts Section */}
             <div className="mx-auto grid grid-cols-1 gap-4 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
-              <h2 className="mb-4 font-bold text-2xl">{dict.latestPosts}</h2>
+              <h2 className="mb-4 font-bold text-2xl">
+                {dictLanding.latestPosts}
+              </h2>
               {get3PostsByLang(lang).map((post, idx) => (
                 <Card
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
@@ -278,17 +326,18 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
                 </Card>
               ))}
             </div>
+
             {/* CTA Section */}
-            <div className="space-y-6 py-16 text-center">
+            <div className="space-y-8 py-16 text-center">
               <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
                 <Sparkles className="mr-2 size-4" />
-                <span>{dict.cta.freeCredits}</span>
+                <span>{dictLanding.cta.freeCredits}</span>
               </div>
               <h2 className="font-bold text-3xl text-white md:text-4xl">
-                {dict.cta.title}
+                {dictLanding.cta.title}
               </h2>
               <p className="mx-auto max-w-2xl text-gray-300 text-xl">
-                {dict.cta.subtitle}
+                {dictLanding.cta.subtitle}
               </p>
               <Button
                 asChild
@@ -296,7 +345,7 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href={`/${lang}/signup`}>{dict.cta.action}</Link>
+                <Link href={`/${lang}/signup`}>{dictLanding.cta.action}</Link>
               </Button>
             </div>
           </div>
@@ -308,16 +357,8 @@ export default async function LandingPage(props: { params: { lang: Locale } }) {
 }
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="relative mx-auto size-36 duration-200 [--color-border:color-mix(in_oklab,var(--color-zinc-950)10%,transparent)] dark:group-hover:bg-white/5 group-hover:[--color-border:color-mix(in_oklab,var(--color-zinc-950)20%,transparent)] dark:[--color-border:color-mix(in_oklab,var(--color-white)15%,transparent)] dark:group-hover:[--color-border:color-mix(in_oklab,var(--color-white)20%,transparent)]">
-    <div
-      aria-hidden
-      className="absolute inset-0 bg-[size:24px_24px] bg-grid-gradient"
-    />
-    <div
-      aria-hidden
-      className="absolute inset-0 bg-radial from-transparent to-75% to-card"
-    />
-    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center border-t border-l bg-card">
+  <div className="relative mx-auto size-36">
+    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
       {children}
     </div>
   </div>

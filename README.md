@@ -22,7 +22,7 @@
 
 ## 🌟 About
 
-- Generate AI voices in multiple languages (English & Spanish)
+- Generate AI voices in 20+ languages with voice cloning support
 - Voice selection system with customizable options
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
@@ -38,7 +38,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices in English, Spanish, and Italian (more languages coming soon)
+- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, German, French, Italian, Danish, Japanese, Korean, and more
+- **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -54,14 +55,15 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **International Support**: Full i18n implementation for global accessibility
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
+- **Public Tools**: Free utility tools including audio transcription and format conversion
 
 ## 🛠️ Tech Stack
 
 ### Frontend
 
-- **[Next.js 15](https://nextjs.org)** - React framework with App Router and TypeScript
+- **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
-- **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
+- **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 
@@ -69,13 +71,14 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **[Supabase](https://supabase.com)** - Authentication and PostgreSQL database with SSR support
 - **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations *(planned)*
-- **[Vercel Blob Storage](https://vercel.com/storage/blob)** - Scalable audio file storage
+- **[Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)** - Scalable audio file storage with global CDN
 
 ### DevOps & Monitoring
 
 - **[Vercel](https://vercel.com)** - Deployment and hosting platform
 - **[Sentry](https://sentry.io)** - Error tracking and performance monitoring
 - **[PostHog](https://posthog.com)** - Product analytics and feature flags
+- **[Axiom](https://axiom.co)** - Structured request logging for API routes
 - **[Stripe](https://stripe.com)** - Payment processing and subscription management
 
 ### Development Tools
@@ -90,7 +93,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 ### Prerequisites
 
-- **Node.js 22+**
+- **Node.js 24+**
 - **pnpm**
 - **Supabase account** - <https://supabase.com>
 
@@ -116,27 +119,62 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    ```
 
    Fill in the required environment variables as defined in [`.env.example`](.env.example):
-   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-   - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram cronjob)
-   - `KV_REST_API_URL` - Your Redis (Upstash) KV REST API URL
-   - `KV_REST_API_TOKEN` - Your Redis (Upstash) KV REST API token
-   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-   - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-   - `FAL_KEY` - Your fal.ai API key for voice cloning
-   - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-   - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
-   - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing
-   - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-   - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-   - `STRIPE_TOPUP_5_PRICE_ID`
-   - `STRIPE_TOPUP_10_PRICE_ID`
-   - `STRIPE_TOPUP_99_PRICE_ID`
-   - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
-   - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Supabase
+      - `NEXT_PUBLIC_SUPABASE_URL`
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+   - Your Redis (Upstash)
+      - `KV_REST_API_URL`
+      - `KV_REST_API_TOKEN`
+   - Cloudflare R2 storage
+      - `R2_ACCESS_KEY_ID`
+      - `R2_SECRET_ACCESS_KEY`
+      - `R2_BUCKET_NAME`
+      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
+      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+   - AI 3rd party services
+      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+      - `FAL_KEY` - Your fal.ai API key for voice cloning
+      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+   - Stripe
+      - `STRIPE_SECRET_KEY`
+      - `STRIPE_WEBHOOK_SECRET`
+      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
+      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
+      - `STRIPE_TOPUP_5_PRICE_ID`
+      - `STRIPE_TOPUP_10_PRICE_ID`
+      - `STRIPE_TOPUP_99_PRICE_ID`
+   - Telegram cronjob
+      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Axiom logging (optional)
+      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+   - API key security
+      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
+   - Vercel Edge Config (optional)
+      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-4. **Set up Supabase**
+4. **Set up Vercel Edge Config** (optional, for production)
+
+   Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
+
+   ```json
+   {
+     "call-instructions": {
+       "defaultInstructions": "You are a ...",
+       "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
+       "presetInstructions": {
+         "soft-amanda": "You are a ...",
+         "hard-brandi": "You are a ..."
+       }
+     }
+   }
+   ```
+
+   The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
+
+5. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -144,13 +182,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-5. **Start the development server**
+6. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 🧪 Development
@@ -166,11 +204,12 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm test:watch`         | Run tests in watch mode                 |
 | `pnpm lint`               | Lint codebase with Biome                |
 | `pnpm lint:fix`           | Fix linting issues automatically        |
-| `pnpm typecheck`          | Run TypeScript type checking            |
+| `pnpm type-check`         | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
 | `pnpm check-translations` | Validate translation files              |
 | `pnpm build:content`      | Build content layer                     |
 | `pnpm clean`              | Clean unused dependencies with Knip     |
+| `pnpm fixall`             | Run all fixes: lint, format, and check  |
 
 ### Testing
 
@@ -233,6 +272,12 @@ seewav your_audio.mp3 --color '0.8,0.0,0.4'
 # -ac 1: Set audio channels to mono (1 channel)
 # output.mp3: Output file
 ffmpeg -i input.wav -acodec libmp3lame -q:a 2 -ar 24000 -ac 1 output.mp3
+
+# For high quality MP3
+ffmpeg -i input.wav -acodec libmp3lame -q:a 0 -ar 44100 -ac 2 output-high-quality.mp3
+
+# For lowest quality MP3 possible
+ffmpeg -i input.wav -acodec libmp3lame -q:a 9 -ar 8000 -ac 1 output-lowest.mp3
 ```
 
 ## 🔒 Security
@@ -242,7 +287,7 @@ SexyVoice.ai implements multiple security layers:
 - **Authentication**: Secure OAuth integration with Supabase Auth
 - **Data Protection**: Row-level security (RLS) policies in PostgreSQL
 - **API Security**: Rate limiting and request validation
-- **File Security**: Secure blob storage with access controls
+- **File Security**: Secure R2 storage with access controls
 - **Error Handling**: Comprehensive error tracking with Sentry
 - **Environment Isolation**: Separate configurations for development and production
 
@@ -256,6 +301,18 @@ We welcome contributions!
 - Submit pull requests
 <!-- - Follow the code of conduct -->
 
+### Setup
+
+Zed with [Cspell](https://github.com/mantou132/zed-cspell/) extension
+
+```bash
+npm install -g cspell @cspell/dict-de-de @cspell/dict-es-es
+asdf reshim nodejs
+cspell link add @cspell/dict-de-de
+cspell link add @cspell/dict-es-es
+# restart Zed language server
+```
+
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
@@ -264,7 +321,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
-- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*
+- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) NEW
 - **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status
@@ -277,8 +334,10 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Website multi-language support (EN/ES)
-- 🚧 API access (coming soon)
+- ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
+- ✅ Audio transcription and translation tool
+- ✅ Real-time AI voice calls with configurable AI agents
+- ✅ API access
 
 ### Supported Languages by these Google Gemini TTS Models
 

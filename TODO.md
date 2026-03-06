@@ -1,47 +1,81 @@
 # TODO
 
-- merge `r2` branch
-  - share link & page after an audio has been generated
-  - listened counter?
-- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- self-host Sentry on Hetzner machine
+
+## Agents
+
+- create CLI for API auth <https://github.com/helius-labs/helius-cli>
+
+## Call
+
+- test and implement text interruptions <https://github.com/livekit/agents-js/pull/998>
+- add duration to generate audios. if there is a high duration and short text, add warning in `usage` JSON col that the audio may be silent for a long time.
+- fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
+- fix: landing page audios not stopping if another audio is played
+- Add usage page in Dashboard
+- Update daily-stats API route to include usage and a section for Voice calls. Mins, credits used, Top preset/voice/language and the averages
+- add audio clones demos on landing page
+  - Bruce Lee
+  - Sophia Loren
+  - a famous Arab female actor like Nesreen Tafesh
+  - a famous Arab male actor like Ahmed Helmy
+  - a famous Indian female actor like Aishwarya Rai
+  - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
+- share link & page after an audio has been generated
+- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
+- Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
+- Add presets for GPro voices. Adding a DB table for it.
+- Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
 - merge `codex/update-terms-and-conditions-for-retention-policy` branch
 - Get stats of `audio_files`. language, style. If using LLM, use batch mode.
-- Check security of Supabase tables. Users can't retrieve other users' data (audio_files, credit_transactions, credits or profiles)
+- Implement `fakefilter` or `mailchecker` npm packages to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
+  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
+- RESEARCH: AudioWaveform React component. can it compute the wave form in the browser in a small package and computing resources?
+- Return error messages with error codes and translate those in the front-end
+- Setup react testing library for the Generate & Clone pages and its components. Including mocking recording a microphone audio input.
+- show a Badge translated status of the voice model when cloning multi-lingual . add nextjs headers
+
+  ```js
+  fetch("https://replicate.com/resemble-ai/chatterbox-multilingual/status");
+  // {"status": "offline"}
+  ```
+
+- add noise filter to mic audio in voice cloning
+
+  ```js
+  import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
+
+  const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
+      useKrispNoiseFilter();
+
+  useEffect(() => {
+    setNoiseFilterEnabled(true);
+  }, [setNoiseFilterEnabled]);
+  ```
+
+- daily stats:
+  - add num of deleted profiles
 - Translate pages in Dashboard:
-  - Generate
-  - Clone
-  - History
+  - History (table headers)
   - Credits (table headers)
     - Create a pricing table in Spanish and German. (each its own STRIPE_PRICING_ID?)
   - Sidebar
-- Translate website to French
-- Add option to clean audio using <https://replicate.com/gianpaj/audio_separator>
-- Clone initial public voices. Theodore Roosevelt, Queen Victoria, Winston Churchill <https://archive.org/details/historysgreatest0000unse>
+- Translate website to Arabic
+- Translate website to Indian
+- Add option to clean audio using <https://replicate.com/gianpaj/audio_separator> <https://fal.ai/models/fal-ai/deepfilternet3>
 - Drip marking - i.e. send an email after the first 5000 credits have been used.
-- Link in footer to FeatureBase <https://sexyvoice.featurebase.app/>
 - Add a Share page for individual generated audio files.
   - Allow user to toggle Sharing profile page in Settings.
   - Allow user to upload profile picture? – after `r2` branch is merged
-- Crist and Posthug: add `isPaidUser` from `r2` branch
-- Implement `fakefilter` to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
-  - `curl -X GET https://api.usercheck.com/domain/fursee.com`
----
-- Deploy model
-  - FR: pierre, amelie, marie
-    chuckle, cough, gasp, groan, laugh, sigh, sniffle, whimper, yawn
-- Deploy model
-  - DE: jana, thomas, max
-    chuckle, cough, gasp, groan, laugh, sigh, sniffle, yawn
-- Korean: 유나, 준서
-- Mandarin: 长乐, 白芷
-
-Ciao, mi chiamo Pietro, <laugh> , e sono un modello di generazione vocale che può sembrare una persona.
-
-Ciao, mi chiamo Giulia, <gemito> , e sono un modello di generazione vocale che può sembrare una persona.
+- Crisp and Posthug: add `isPaidUser` from `r2` branch
 
 Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può sembrare una persona.
 
 > sigh, laugh, cough, sniffle, groan, yawn, gemito, gasp
+
+## Payments
+
+- add nowpayments.io to support Crypto
 
 ## SEO
 
@@ -56,25 +90,16 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 ## Features
 
-- Demo pre-cloned voices
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>
 <https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
-- History page. Add button to regenerate audio -> navigate to /generate page with text_content prefilled
 
 ## Tests
 
 - Setup Playwright for end-to-end testing.
-- Uses a test DB (in memory)
-- Setup Github actions
-
-## AI server
-
-- Monitor Replicate API calls. Which user is making more calls.
 
 ## Security
 
 - Implement rate limiting to prevent abuse.
-- Block temporary email addresses.
 - Add Cloudflare Captcha protection.
 - Add hCaptcha to Login and Registration forms <https://docs.hcaptcha.com>
 
@@ -83,10 +108,31 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 - add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
 - Sentry monitoring with Posthog error linking <https://posthog.com/docs/libraries/node#sentry-integration>
 
-##  Job scheduler
+## Research
 
-- upstash QStash - https://upstash.com/docs/qstash/quickstarts/vercel-nextjs
+- Automated Dialogue Replacement (ADR) is a post-production process in filmmaking where actors re-record their dialogue in a studio to improve audio quality or make changes to the script. This technique helps to ensure that the final audio matches the visuals and enhances the overall sound of the film.
 
-## Documentation / Knowledge base site
+## Emails
 
-- https://nextra.site
+- 'Welcome to SexyVoice!' - Glad to have you on board! – Gianfri
+
+## Later
+
+- Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- add a 'Remove background noise' checkbox in the Voice cloning upload step. (Extra 500 credits). 'You can download the cleaned audio after too'.
+
+## Other Voice cloning demos
+
+- <https://archive.org/details/historysgreatest0000unse>
+- Theodore Roosevelt
+  - Fellow citizens, we stand at the dawn of a new century, and it is ours to shape with courage and resolve. Remember, the only man who never makes mistakes is the man who never does anything.
+- Queen Victoria
+  - It is my steadfast wish that we move forward with dignity and compassion. May our empire continue to flourish through unity and understanding.
+- Winston Churchill
+  - We shall go forward together with resolute hearts. Let us face our challenges with the firmness and courage that have always defined our people.
+- Schedule on Grok to research every month top Netflix series which are popular. From those, fine female actress which are 'sex' symbols. Could be in English, Spanish, German, Indian, Arab. From those find video clips of these actress in their series being flirty or seductive.
+
+## Indian TTS
+
+- https://timepay.ai/products/tts - has emotion tags
+- https://sarvam.ai

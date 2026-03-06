@@ -3,12 +3,11 @@ import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 import Script from 'next/script';
 import type { Metadata } from 'next/types';
-import { Suspense } from 'react';
 
 import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
-import { Header } from '@/components/header';
+import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
 import { PromoBanner } from '@/components/promo-banner';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
@@ -19,25 +18,20 @@ import {
 
 export const dynamicParams = false;
 
+type PromoCountdownLabels = NonNullable<
+  React.ComponentProps<typeof PromoBanner>['countdown']
+>['labels'];
+
 export const generateStaticParams = ({
   params: { lang },
 }: {
-  params: { lang: string };
+  params: { lang: Locale };
 }) =>
   allPosts
-    .map((post) => {
-      // Determine locale from file extension or default to 'en'
-      const locale =
-        i18n.locales.find((loc) =>
-          post._raw.flattenedPath.endsWith(`.${loc}`),
-        ) || i18n.defaultLocale;
-
-      return {
-        slug: post._raw.flattenedPath,
-        locale,
-      };
-    })
-    .filter((post) => post.locale === lang);
+    .filter((post) => post.locale === lang)
+    .map((post) => ({
+      slug: post.slugAsParams,
+    }));
 
 interface PostProps {
   params: {
@@ -46,12 +40,13 @@ interface PostProps {
   };
 }
 
-async function getPostFromParams(params: PostProps['params']) {
-  const slug = params.slug;
-  const post = allPosts.find((post) => post._raw.flattenedPath === slug);
+async function getPostFromParams({ slug, lang }: PostProps['params']) {
+  const post = allPosts.find(
+    (post) => post.slugAsParams === slug && post.locale === lang,
+  );
 
   if (!post) {
-    null;
+    return null;
   }
 
   return post;
@@ -126,9 +121,13 @@ const PostLayout = async (props: {
   const { lang } = params;
   const post = await getPostFromParams(params);
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const blackFridayDict = messages.promos.blackFridayBanner;
+  const promoDictKey =
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
+    ? messages.promos[promoDictKey as keyof typeof messages.promos]
+    : undefined;
 
-  if (post === undefined) {
+  if (!post) {
     return <div>Post not found ({params.slug})</div>;
   }
 
@@ -154,6 +153,16 @@ const PostLayout = async (props: {
     .split(/\s+/)
     .filter((word) => word.length > 0).length;
   const readingTime = Math.ceil(wordCount / 200); // Average reading speed
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown as PromoCountdownLabels,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
   return (
     <>
@@ -195,26 +204,18 @@ const PostLayout = async (props: {
         {JSON.stringify(breadcrumbSchema)}
       </Script>
 
-      <PromoBanner
-        arialLabelDismiss={blackFridayDict.arialLabelDismiss}
-        countdown={
-          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-            ? {
-                enabled: true,
-                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: blackFridayDict.countdown,
-              }
-            : undefined
-        }
-        ctaLink={`/${lang}/signup`}
-        ctaText={blackFridayDict.ctaLoggedOut}
-        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={blackFridayDict.text}
-      />
+      {promoDict && (
+        <PromoBanner
+          ariaLabelDismiss={promoDict.ariaLabelDismiss}
+          countdown={promoCountdown}
+          ctaLink={`/${lang}/signup`}
+          ctaText={promoDict.ctaLoggedOut}
+          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+          text={promoDict.text}
+        />
+      )}
 
-      <Suspense fallback={<div>Loading...</div>}>
-        <Header lang={lang} />
-      </Suspense>
+      <HeaderStatic />
 
       {/* Semantic content structure for AI extraction */}
       <div
@@ -231,7 +232,7 @@ const PostLayout = async (props: {
             itemScope
             itemType="https://schema.org/EducationalAudience"
           >
-            <span itemProp="educationalRole">developers</span>,
+            <span itemProp="educationalRole">storytellers</span>,
             <span itemProp="educationalRole">content creators</span>
           </span>
         </p>
@@ -250,7 +251,7 @@ const PostLayout = async (props: {
 
       <main itemScope itemType="https://schema.org/WebPage">
         <article
-          className="prose dark:prose-invert max-w-2xl px-4 py-8 md:mx-auto md:px-0"
+          className="prose prose-invert max-w-2xl px-4 py-8 md:mx-auto md:px-0"
           itemProp="mainEntity"
           itemScope
           itemType="https://schema.org/BlogPosting"
@@ -323,7 +324,18 @@ const PostLayout = async (props: {
                 itemScope
                 itemType="https://schema.org/Organization"
               >
-                <span itemProp="name">SexyVoice.ai</span>
+                {post.author === 'Gianfranco' ? (
+                  <a
+                    href="https://x.com/gianpaj"
+                    itemProp="name"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {post.author}
+                  </a>
+                ) : (
+                  <span itemProp="name">{post.author || 'SexyVoice.ai'}</span>
+                )}
                 <meta content="https://sexyvoice.ai" itemProp="url" />
                 <meta
                   content="https://sexyvoice.ai/sexyvoice.png"
@@ -365,7 +377,7 @@ const PostLayout = async (props: {
             />
           </header>
 
-          {post.image && (
+          {post.image && post.displayImageCover !== false && (
             <figure className="mb-8">
               <Image
                 alt={post.title}
@@ -387,23 +399,21 @@ const PostLayout = async (props: {
           </div>
 
           {/* Article metadata for AI understanding */}
-          <div className="mt-12 border-gray-200 border-t pt-8 dark:border-gray-700">
+          <div className="mt-12 border-gray-700 border-t pt-8">
             <div className="mb-4 flex flex-wrap gap-2" itemProp="keywords">
-              <span className="font-medium text-gray-700 text-sm dark:text-gray-300">
-                Topics:
-              </span>
-              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
+              <span className="font-medium text-gray-300 text-sm">Topics:</span>
+              <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
                 Voice AI
               </span>
-              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
+              <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
                 Machine Learning
               </span>
-              <span className="inline-block rounded bg-blue-100 px-2 py-1 text-blue-800 text-xs dark:bg-blue-900 dark:text-blue-200">
+              <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
                 Speech Synthesis
               </span>
             </div>
 
-            <div className="text-gray-600 text-sm dark:text-gray-400">
+            <div className="text-gray-400 text-sm">
               <p>
                 This article is part of our comprehensive guide to AI voice
                 technology.
