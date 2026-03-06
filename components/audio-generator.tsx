@@ -602,12 +602,14 @@ export function AudioGenerator({
     setIsEstimating(true);
     try {
       if (shouldUseSplitMode) {
-        let totalEstimatedCredits = 0;
-        for (const segmentText of splitSegments.map(
-          (segment) => segment.text,
-        )) {
-          totalEstimatedCredits += await requestEstimateCredits(segmentText);
-        }
+        const creditPromises = splitSegments.map((segment) =>
+          requestEstimateCredits(segment.text),
+        );
+        const creditsPerSegment = await Promise.all(creditPromises);
+        const totalEstimatedCredits = creditsPerSegment.reduce(
+          (total, credits) => total + credits,
+          0,
+        );
         setEstimatedCredits(totalEstimatedCredits);
       } else {
         const estimatedCredits = await requestEstimateCredits(text);
