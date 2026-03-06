@@ -303,6 +303,7 @@ export function AudioGenerator({
       const seed = generateRetrySeed();
       abortController.current = new AbortController();
 
+      setIsGenerating(true);
       markSegmentGenerating(segmentIndex);
       showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
 
@@ -328,6 +329,7 @@ export function AudioGenerator({
           toast.error(`Segment ${segmentIndex + 1} retry failed.`);
         }
       } finally {
+        setIsGenerating(false);
         dismissGenerationProgressToast();
       }
     },
@@ -335,6 +337,7 @@ export function AudioGenerator({
       splitSegments,
       isGenerating,
       selectedVoice,
+      setIsGenerating,
       showGenerationProgressToast,
       requestGenerateVoice,
       markSegmentGenerating,
