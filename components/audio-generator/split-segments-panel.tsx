@@ -45,7 +45,7 @@ export function SplitSegmentsPanel({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-none p-0 md:border-input md:p-3">
+    <div className="space-y-3 rounded-lg border-0 p-0 md:border md:border-input md:p-3">
       <div className="flex items-center justify-between">
         <p className="font-medium text-sm">Segment previews</p>
         {allSegmentsGenerated && (
