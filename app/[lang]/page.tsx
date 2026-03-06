@@ -2,14 +2,14 @@ import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
+import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
 import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -40,29 +40,42 @@ export const metadata: Metadata = {
   },
 };
 
+type PromoCountdownLabels = NonNullable<
+  React.ComponentProps<typeof PromoBanner>['countdown']
+>['labels'];
+
 export default async function LandingPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
+  const { lang } = await props.params;
 
   // Validate that the language is a supported locale
   if (!i18n.locales.includes(lang as Locale)) {
     redirect(`/${i18n.defaultLocale}`);
   }
 
-  const dict = await getDictionary(lang);
-  const dictLanding = dict.landing;
-  const dictHeader = dict.header;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.landing;
+  const dictLanding = messages.landing;
 
   const promoDictKey =
     process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
-  // @ts-expect-error fix me
-  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
+  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
+    ? messages.promos[promoDictKey as keyof typeof messages.promos]
+    : undefined;
 
   const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
   const titleRestParts = restParts.join(',');
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown as PromoCountdownLabels,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
   const faqQuestions = dictLanding.faq.groups.flatMap(
     (group) => group.questions,
@@ -89,7 +102,7 @@ export default async function LandingPage(props: {
         '@id': 'https://sexyvoice.ai/#website',
         url: 'https://sexyvoice.ai',
         name: 'SexyVoice.ai',
-        description: dict.pages.description,
+        description: messages.pages.description,
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
@@ -99,8 +112,8 @@ export default async function LandingPage(props: {
         '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
         url: siteUrl,
-        name: dict.pages.defaultTitle,
-        description: dict.pages.description,
+        name: messages.pages.defaultTitle,
+        description: messages.pages.description,
         isPartOf: {
           '@id': 'https://sexyvoice.ai/#website',
         },
@@ -134,22 +147,14 @@ export default async function LandingPage(props: {
       {promoDict && (
         <PromoBanner
           ariaLabelDismiss={promoDict.ariaLabelDismiss}
-          countdown={
-            process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-              ? {
-                  enabled: true,
-                  endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                  labels: promoDict.countdown,
-                }
-              : undefined
-          }
+          countdown={promoCountdown}
           ctaLink={`/${lang}/signup`}
           ctaText={promoDict.ctaLoggedOut}
           isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
           text={promoDict.text}
         />
       )}
-      <HeaderStatic dict={dictHeader} lang={lang} />
+      <HeaderStatic />
       <main id="main-content">
         <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">

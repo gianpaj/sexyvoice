@@ -10,13 +10,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
+import { getMessages } from 'next-intl/server';
 
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Accordion, AccordionContent, AccordionItem } from './ui/accordion';
 
@@ -54,7 +54,8 @@ function renderAnswer(answer: string, link?: FaqLink) {
 }
 
 export const FAQComponent = async ({ lang }: { lang: Locale }) => {
-  const dict = (await getDictionary(lang, 'landing')).faq;
+  const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
+    .faq;
   return (
     <>
       <div className="mb-12 text-left md:text-center">

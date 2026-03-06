@@ -11,7 +11,7 @@ import {
   isInstructionsDirty,
   saveCharacter,
 } from '@/lib/characters';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { usePlaygroundState } from './use-playground-state';

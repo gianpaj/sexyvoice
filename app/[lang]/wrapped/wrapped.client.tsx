@@ -12,10 +12,10 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
+import { getMessages } from 'next-intl/server';
 
 import { HeaderStatic } from '@/components/header-static';
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 interface PlatformWrappedStats {
   totalAudioFiles: number;
@@ -290,11 +290,11 @@ const stats = {
 };
 
 export async function PlatformWrappedClient() {
-  const dictHeader = await getDictionary('en', 'header');
+  await getMessages({ locale: 'en' });
 
   return (
     <div className="min-h-screen bg-background">
-      <HeaderStatic dict={dictHeader} lang="en" />
+      <HeaderStatic />
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-10 md:py-16">
         {/* Hero Section */}
         <HeroSection stats={stats} />

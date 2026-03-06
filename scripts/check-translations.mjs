@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-// Path to dictionaries folder
-const DICTIONARIES_PATH = join(__dirname, '../lib/i18n/dictionaries');
+// Path to messages folder
+const DICTIONARIES_PATH = join(__dirname, '../messages');
 
 // Function to get all keys in a nested object (flattened with dot notation)
 function getAllKeys(obj, parentKey = '') {

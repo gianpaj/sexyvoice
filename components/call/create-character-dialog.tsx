@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { DBVoice } from '@/data/voices';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { VoicePlayButton } from './voice-play-button';
 
 export interface NewCharacterPayload {

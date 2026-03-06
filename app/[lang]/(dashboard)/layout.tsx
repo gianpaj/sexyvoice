@@ -4,9 +4,9 @@ import {
   HydrationBoundary,
   QueryClient,
 } from '@tanstack/react-query';
+import { getMessages } from 'next-intl/server';
 
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   getCreditsQuery,
@@ -22,12 +22,12 @@ export default async function DashboardLayout(props: {
   const { lang } = await props.params;
   const queryClient = new QueryClient();
   const supabase = await createClient();
-
-  const dict = await getDictionary(lang);
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const promoDictKey =
     process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
-  // @ts-expect-error fix me
-  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
+  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
+    ? messages.promos[promoDictKey as keyof typeof messages.promos]
+    : undefined;
 
   const {
     data: { user },
@@ -38,26 +38,14 @@ export default async function DashboardLayout(props: {
     supabase,
     user.id,
   );
-
-  // set the initial data
   await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
-
-  // await queryClient.prefetchQuery({
-  //   queryKey: ['credits'],
-  //   staleTime: 1000,
-  //   queryFn: async () => {
-  //     const { data } = await getCreditsQuery(supabase, user.id);
-  //     return data;
-  //   },
-  // });
 
   return (
     <ReactQueryClientProvider>
-      {/* HydrationBoundary is a Client Component, so hydration will happen there */}
       <HydrationBoundary state={dehydrate(queryClient)}>
         <DashboardUI
-          creditTransactions={creditTransactions}
-          dict={dict}
+          creditTransactions={creditTransactions ?? []}
+          dict={messages}
           lang={lang}
           promoDict={promoDict}
           userId={user.id}

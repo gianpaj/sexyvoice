@@ -75,7 +75,7 @@ describe('/api/v1 metadata endpoints', () => {
       method: 'GET',
     });
 
-    const response = await getOpenApi(request);
+    const response = await getOpenApi();
     const json = await response.json();
 
     expect(response.status).toBe(200);

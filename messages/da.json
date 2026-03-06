@@ -208,11 +208,11 @@
       "popular": "Mest populære",
       "startFree": "Start gratis",
       "buyCredits": "Køb kreditter",
-      "x_credits": "__NUM_CREDITS__ kreditter",
+      "x_credits": "{numCredits} kreditter",
       "free": {
         "name": "Gratis",
         "description": "For personer, der vil prøve den mest avancerede AI-lydgenerering.",
-        "creditsWithAudio": "__NUM_CREDITS__ kreditter (~4 min lyd)",
+        "creditsWithAudio": "{numCredits} kreditter (~4 min lyd)",
         "features": [
           "Generer tale med realistiske stønlyde",
           "Klon din stemme med kun 10 sekunders lyd"
@@ -230,8 +230,8 @@
       "standard": {
         "name": "Standard",
         "description": "For hobbyfolk, der skaber projekter med AI-lyd og tilpassede stemmer.",
-        "creditsWithAudio": "__NUM_CREDITS__ kreditter (~11 min lyd)",
-        "creditsWithPromo": "__NUM_CREDITS__ kreditter",
+        "creditsWithAudio": "{numCredits} kreditter (~11 min lyd)",
+        "creditsWithPromo": "{numCredits} kreditter",
         "features": [
           "Alt i Gratis",
           "2× længere tekstgenerering",
@@ -241,8 +241,8 @@
       "pro": {
         "name": "Pro",
         "description": "For større kreative behov og dristigere indhold.",
-        "creditsWithAudio": "__NUM_CREDITS__ kreditter (~125 minutters lyd)",
-        "creditsWithPromo": "__NUM_CREDITS__ kreditter",
+        "creditsWithAudio": "{numCredits} kreditter (~125 minutters lyd)",
+        "creditsWithPromo": "{numCredits} kreditter",
         "features": [
           "Alt i Gratis",
           "Stemmeopkald: Brugerdefinerede karakterer"
@@ -257,16 +257,16 @@
       "processing": "Behandler...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ Kreditter",
+          "name": "{numCredits} Kreditter",
           "description": "Perfekt til at komme i gang"
         },
         "standard": {
-          "name": "__NUM_CREDITS__ kreditter",
+          "name": "{numCredits} kreditter",
           "description": "Mest populære valg",
           "value": "Bedste værdi"
         },
         "pro": {
-          "name": "__NUM_CREDITS__ kreditter",
+          "name": "{numCredits} kreditter",
           "description": "Til superbrugere",
           "value": "Pro-pakke"
         }
