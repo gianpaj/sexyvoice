@@ -32,15 +32,11 @@ export function splitLongTextIntoSegments(text: string): string[] {
     return [];
   }
 
-  const sentenceLikeChunks = trimmedText
-    .split('.')
-    .map((chunk) => chunk.trim())
-    .filter(Boolean)
-    .map((chunk, index, array) =>
-      index < array.length - 1 || trimmedText.endsWith('.')
-        ? `${chunk}.`
-        : chunk,
-    );
+  const sentenceLikeChunks =
+    trimmedText
+      .match(/[^.!?]+[.!?]*/g)
+      ?.map((chunk) => chunk.trim())
+      .filter(Boolean) ?? [];
 
   const segments: string[] = [];
   let currentSegment = '';
