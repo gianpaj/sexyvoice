@@ -85,10 +85,10 @@ export function AudioGenerator({
     isLoading: isJoinerLoading,
   } = useFFmpegJoiner();
   const abortController = useRef<AbortController | null>(null);
-  const textIsOverLimit = text.length > charactersLimit;
   const splitFeatureVisible = text.trim().length > SPLIT_TEXT_MIN_LENGTH;
   const shouldUseSplitMode =
     isPaidUser && splitFeatureVisible && splitTextAudios;
+  const textIsOverLimit = !shouldUseSplitMode && text.length > charactersLimit;
   const splitSegmentTexts = useMemo(
     () => splitLongTextIntoSegments(text),
     [text],
