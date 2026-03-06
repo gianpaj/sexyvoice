@@ -81,16 +81,24 @@ export function splitLongTextIntoSegments(text: string): string[] {
   return segments;
 }
 
-export function getSplitSegmentStatusLabel(status: SplitSegmentStatus): string {
+export function getSplitSegmentStatusLabel(
+  status: SplitSegmentStatus,
+  dict: {
+    statusGenerated: string;
+    statusGenerating: string;
+    statusFailed: string;
+    statusPending: string;
+  },
+): string {
   switch (status) {
     case 'success':
-      return 'Generated';
+      return dict.statusGenerated;
     case 'generating':
-      return 'Generating...';
+      return dict.statusGenerating;
     case 'failed':
-      return 'Failed';
+      return dict.statusFailed;
     default:
-      return 'Pending';
+      return dict.statusPending;
   }
 }
 

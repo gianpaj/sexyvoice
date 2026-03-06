@@ -47,7 +47,7 @@ export function SplitSegmentsPanel({
   return (
     <div className="space-y-3 rounded-lg border-0 p-0 md:border md:border-input md:p-3">
       <div className="flex items-center justify-between">
-        <p className="font-medium text-sm">Segment previews</p>
+        <p className="font-medium text-sm">{dict.split.segmentPreviews}</p>
         {allSegmentsGenerated && (
           <Button
             className="h-8 text-xs"
@@ -59,10 +59,10 @@ export function SplitSegmentsPanel({
             {isDownloadingAllSegments || isJoiningSegments ? (
               <>
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                Joining WAV...
+                {dict.split.joiningWav}
               </>
             ) : (
-              'Download All (WAV)'
+              dict.split.downloadAll
             )}
           </Button>
         )}
@@ -87,10 +87,15 @@ export function SplitSegmentsPanel({
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {segmentStatusIcon}
-                <p className="font-medium text-sm">Segment {index + 1}</p>
+                <p className="font-medium text-sm">
+                  {dict.split.segmentLabel.replace(
+                    '__INDEX__',
+                    String(index + 1),
+                  )}
+                </p>
               </div>
               <p className="text-muted-foreground text-xs">
-                {getSplitSegmentStatusLabel(segment.status)}
+                {getSplitSegmentStatusLabel(segment.status, dict.split)}
               </p>
               {segment.status === 'failed' && (
                 <Button
@@ -100,7 +105,7 @@ export function SplitSegmentsPanel({
                   size="sm"
                   variant="outline"
                 >
-                  Retry
+                  {dict.split.retry}
                 </Button>
               )}
             </div>
@@ -139,7 +144,7 @@ export function SplitSegmentsPanel({
       })}
       {isJoinerLoading && (
         <p className="text-muted-foreground text-xs">
-          Preparing audio joiner...
+          {dict.split.preparingJoiner}
         </p>
       )}
     </div>

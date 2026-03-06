@@ -107,7 +107,7 @@ export function AudioGenerator({
     splitSegmentTexts,
   });
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
-    useGenerationProgressToast(selectedVoice?.name);
+    useGenerationProgressToast(selectedVoice?.name, dict.split);
 
   useEffect(() => {
     // Check if running on Mac for keyboard shortcut display
@@ -191,7 +191,7 @@ export function AudioGenerator({
       segment.text.trim(),
     );
     if (currentSegmentTexts.some((segmentText) => !segmentText)) {
-      toast.error('Segment text cannot be empty.');
+      toast.error(dict.split.segmentCannotBeEmpty);
       return;
     }
 
@@ -240,7 +240,9 @@ export function AudioGenerator({
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
         } else {
-          toast.error(`Segment ${index + 1} failed. Generation stopped.`);
+          toast.error(
+            dict.split.segmentFailed.replace('__INDEX__', String(index + 1)),
+          );
         }
 
         encounteredFailure = true;
@@ -261,6 +263,8 @@ export function AudioGenerator({
     markSegmentFailed,
     dict.error,
     dict.success,
+    dict.split.segmentCannotBeEmpty,
+    dict.split.segmentFailed,
   ]);
 
   const handleGenerate = async () => {
@@ -315,7 +319,12 @@ export function AudioGenerator({
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
-        toast.success(`Segment ${segmentIndex + 1} generated.`);
+        toast.success(
+          dict.split.segmentGenerated.replace(
+            '__INDEX__',
+            String(segmentIndex + 1),
+          ),
+        );
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
@@ -326,7 +335,12 @@ export function AudioGenerator({
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
         } else {
-          toast.error(`Segment ${segmentIndex + 1} retry failed.`);
+          toast.error(
+            dict.split.segmentRetryFailed.replace(
+              '__INDEX__',
+              String(segmentIndex + 1),
+            ),
+          );
         }
       } finally {
         setIsGenerating(false);
@@ -343,6 +357,8 @@ export function AudioGenerator({
       markSegmentSuccess,
       markSegmentFailed,
       dict.error,
+      dict.split.segmentGenerated,
+      dict.split.segmentRetryFailed,
       dismissGenerationProgressToast,
     ],
   );
