@@ -2,9 +2,9 @@ import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
@@ -55,7 +55,6 @@ export default async function LandingPage(props: {
   }
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.landing;
   const dictLanding = messages.landing;
 
   const promoDictKey =
@@ -203,7 +202,7 @@ export default async function LandingPage(props: {
 
             {/* Audio Previews Grid */}
             <SampleAudioPreviews
-              initialAudios={getSampleAudiosByLanguage()}
+              initialAudios={getSampleAudiosByLanguage(lang)}
               trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
               trySamplesTitle={dictLanding.popular.trySamplesTitle}
             />
