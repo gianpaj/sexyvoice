@@ -260,7 +260,7 @@ vi.mock('@/lib/supabase/queries', () => ({
   // Re-export other functions that might be imported
   getCredits: vi.fn(),
   isFreeUserOverCallLimit: vi.fn(),
-  resolveCharacterPrompt: vi.fn(),
+  fetchCharacterDetails: vi.fn(),
 }));
 
 // ---------------------------------------------------------------------------

@@ -10,14 +10,14 @@ import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function ConnectButton() {
   const { connect, disconnect, shouldConnect, dict } = useConnection();
-  const { pgState, helpers } = usePlaygroundState();
+  const { playgroundState, helpers } = usePlaygroundState();
   const [connecting, setConnecting] = useState<boolean>(false);
   const [initiateConnectionFlag, setInitiateConnectionFlag] = useState(false);
 
   // Check if selected character is custom and has empty instructions
-  const selectedPreset = helpers.getSelectedPreset(pgState);
+  const selectedPreset = helpers.getSelectedPreset(playgroundState);
   const isCustomCharacter = selectedPreset && !selectedPreset.isPublic;
-  const fullInstructions = helpers.getFullInstructions(pgState);
+  const fullInstructions = helpers.resolveActiveInstructions(playgroundState);
   const hasEmptyInstructions = isCustomCharacter && !fullInstructions.trim();
 
   const handleConnectionToggle = async () => {
@@ -75,7 +75,7 @@ export function ConnectButton() {
         disabled={
           connecting ||
           shouldConnect ||
-          !pgState.selectedPresetId ||
+          !playgroundState.selectedPresetId ||
           hasEmptyInstructions
         }
         icon={() =>

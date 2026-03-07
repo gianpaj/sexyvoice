@@ -130,7 +130,7 @@ export function PresetSelector({
   isPaidUser = false,
   callVoices = [],
 }: PresetSelectorProps) {
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { playgroundState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
@@ -157,17 +157,17 @@ export function PresetSelector({
     .getDefaultPresets()
     .filter((preset) => preset.image);
 
-  const customCharacters = pgState.customCharacters;
+  const customCharacters = playgroundState.customCharacters;
   const canAddMore = customCharacters.length < MAX_CUSTOM_CHARACTERS;
 
   // All characters combined — each is its own carousel slide
   const allCharacters = [...defaultCharacters, ...customCharacters];
 
-  const selectedPreset = helpers.getSelectedPreset(pgState);
+  const selectedPreset = helpers.getSelectedPreset(playgroundState);
 
   useEffect(() => {
-    if (pgState.selectedPresetId !== lastPresetId) {
-      setLastPresetId(pgState.selectedPresetId);
+    if (playgroundState.selectedPresetId !== lastPresetId) {
+      setLastPresetId(playgroundState.selectedPresetId);
       if (shouldConnect) {
         disconnect().then(() => {
           connect(pendingVoiceName);
@@ -175,7 +175,7 @@ export function PresetSelector({
       }
     }
   }, [
-    pgState.selectedPresetId,
+    playgroundState.selectedPresetId,
     shouldConnect,
     disconnect,
     connect,
@@ -193,7 +193,7 @@ export function PresetSelector({
 
     // Update URL with preset
     const params = helpers.encodeToUrlParams({
-      ...pgState,
+      ...playgroundState,
       selectedPresetId: presetId,
     });
     window.history.replaceState(
@@ -214,10 +214,10 @@ export function PresetSelector({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: payload.name,
-        localizedDescriptions: { [pgState.language]: payload.description },
+        localizedDescriptions: { [playgroundState.language]: payload.description },
         prompt: payload.prompt,
         localizedPrompts: {},
-        sessionConfig: { ...defaultSessionConfig, ...pgState.sessionConfig },
+        sessionConfig: { ...defaultSessionConfig, ...playgroundState.sessionConfig },
         voiceName: payload.voiceName,
       }),
     });
@@ -286,7 +286,7 @@ export function PresetSelector({
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset pending voice when selected preset changes
   useEffect(() => {
     setPendingVoiceName(null);
-  }, [pgState.selectedPresetId]);
+  }, [playgroundState.selectedPresetId]);
 
   const handleSaveNameOrDescription = async () => {
     if (!(selectedPreset && isCustomCharacter(selectedPreset.id))) {
@@ -298,7 +298,7 @@ export function PresetSelector({
     const nameChanged =
       isEditingName && editableName.trim() !== selectedPreset.name;
     const currentDesc =
-      selectedPreset.localizedDescriptions?.[pgState.language] ?? '';
+      selectedPreset.localizedDescriptions?.[playgroundState.language] ?? '';
     const descChanged =
       isEditingDescription && editableDescription.trim() !== currentDesc;
 
@@ -312,7 +312,7 @@ export function PresetSelector({
     const newDescriptions = descChanged
       ? buildUpdatedDescriptions(
           selectedPreset.localizedDescriptions,
-          pgState.language,
+          playgroundState.language,
           editableDescription.trim(),
         )
       : selectedPreset.localizedDescriptions;
@@ -350,7 +350,7 @@ export function PresetSelector({
   const handleStartEditDescription = () => {
     if (selectedPreset && isCustomCharacter(selectedPreset.id)) {
       setEditableDescription(
-        selectedPreset.localizedDescriptions?.[pgState.language] ??
+        selectedPreset.localizedDescriptions?.[playgroundState.language] ??
           selectedPreset.localizedDescriptions?.en ??
           '',
       );
@@ -380,7 +380,7 @@ export function PresetSelector({
       return;
     }
 
-    if (pgState.selectedPresetId === characterToDelete.id) {
+    if (playgroundState.selectedPresetId === characterToDelete.id) {
       handlePresetSelect(defaultCharacters[0]?.id ?? null);
     }
 
@@ -446,7 +446,7 @@ export function PresetSelector({
           <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
             <CarouselContent className="-ml-2">
               {allCharacters.map((preset) => {
-                const isSelected = pgState.selectedPresetId === preset.id;
+                const isSelected = playgroundState.selectedPresetId === preset.id;
                 const isCustom = isCustomCharacter(preset.id);
                 return (
                   <CarouselItem
@@ -577,7 +577,7 @@ export function PresetSelector({
                     >
                       <span className="text-foreground text-sm">
                         {selectedPreset.localizedDescriptions?.[
-                          pgState.language
+                          playgroundState.language
                         ] ??
                           selectedPreset.localizedDescriptions?.en ??
                           dict.clickToAddDescription}
@@ -636,7 +636,7 @@ export function PresetSelector({
               // Read-only bio card for predefined characters
               <p className="text-foreground text-sm">
                 <span className="font-semibold">{selectedPreset.name}:</span>{' '}
-                {selectedPreset.localizedDescriptions?.[pgState.language] ??
+                {selectedPreset.localizedDescriptions?.[playgroundState.language] ??
                   selectedPreset.localizedDescriptions?.en}
               </p>
             ))}

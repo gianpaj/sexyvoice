@@ -97,10 +97,10 @@ export async function countUserCallCharacters(userId: string): Promise<number> {
 // ─── Prompts (admin — for call-token resolution) ───
 
 /**
- * Resolve the prompt for a character by character ID.
- * Uses admin client to bypass RLS (reads predefined prompt text server-side).
+ * Fetch full character details by character ID, including voice and prompt relations.
+ * Uses admin client to bypass RLS (reads character configuration and prompt text server-side).
  */
-export async function resolveCharacterPrompt(characterId: string) {
+export async function fetchCharacterDetails(characterId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('characters')

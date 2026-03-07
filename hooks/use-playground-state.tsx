@@ -175,30 +175,24 @@ function playgroundStateReducer(
     case 'SET_SELECTED_PRESET_ID': {
       storageHelper.setStoredSelectedPresetId(action.payload);
 
-      const newState = {
-        ...state,
-        selectedPresetId: action.payload,
-      };
-
       const helpers = createPlaygroundStateHelpers(state.defaultPresets);
-      const selectedPreset = helpers.getSelectedPreset(newState);
+      const stateWithPresetId = { ...state, selectedPresetId: action.payload };
+      const selectedPreset = helpers.getSelectedPreset(stateWithPresetId);
 
-      if (action.payload) {
-        // Resolve instructions for the selected character in the current language
-        const allPresets = [...state.defaultPresets, ...state.customCharacters];
-        newState.instructions = resolveInstructions(
-          action.payload,
-          state.language,
-          state.characterOverrides,
-          allPresets,
-        );
-      } else {
-        newState.instructions = selectedPreset?.instructions || '';
-      }
+      const resolvedInstructions = action.payload
+        ? resolveInstructions(
+            action.payload,
+            state.language,
+            state.characterOverrides,
+            [...state.defaultPresets, ...state.customCharacters],
+          )
+        : selectedPreset?.instructions || '';
 
-      newState.sessionConfig =
-        selectedPreset?.sessionConfig || defaultSessionConfig;
-      return newState;
+      return {
+        ...stateWithPresetId,
+        instructions: resolvedInstructions,
+        sessionConfig: selectedPreset?.sessionConfig || defaultSessionConfig,
+      };
     }
     case 'SAVE_CUSTOM_CHARACTER': {
       const language = state.language;
@@ -282,7 +276,7 @@ function playgroundStateReducer(
 
 // Update the context type
 interface PlaygroundStateContextProps {
-  pgState: PlaygroundState;
+  playgroundState: PlaygroundState;
   dispatch: Dispatch<Action>;
   helpers: ReturnType<typeof createPlaygroundStateHelpers>;
 }
@@ -317,15 +311,15 @@ export const PlaygroundStateProvider = ({
   initialCustomCharacters = [],
   initialState,
 }: PlaygroundStateProviderProps) => {
-  const mergedDefaultPresets = defaultPresetsProp ?? [];
+  const resolvedDefaultPresets = defaultPresetsProp ?? [];
   const helpers = useMemo(
-    () => createPlaygroundStateHelpers(mergedDefaultPresets),
-    [mergedDefaultPresets],
+    () => createPlaygroundStateHelpers(resolvedDefaultPresets),
+    [resolvedDefaultPresets],
   );
-  const mergedInitialState: PlaygroundState = useMemo(
+  const resolvedInitialState: PlaygroundState = useMemo(
     () => ({
       ...defaultPlaygroundState,
-      defaultPresets: mergedDefaultPresets,
+      defaultPresets: resolvedDefaultPresets,
       customCharacters: initialCustomCharacters,
       ...initialState,
       sessionConfig: {
@@ -333,12 +327,12 @@ export const PlaygroundStateProvider = ({
         ...(initialState?.sessionConfig ?? {}),
       },
     }),
-    [initialState, mergedDefaultPresets, initialCustomCharacters],
+    [initialState, resolvedDefaultPresets, initialCustomCharacters],
   );
 
   const [state, dispatch] = useReducer(
     playgroundStateReducer,
-    mergedInitialState,
+    resolvedInitialState,
   );
 
   useEffect(() => {
@@ -388,7 +382,7 @@ export const PlaygroundStateProvider = ({
   return (
     <PlaygroundStateContext.Provider
       value={{
-        pgState: state,
+        playgroundState: state,
         dispatch,
         helpers,
       }}

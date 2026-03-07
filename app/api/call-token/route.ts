@@ -11,13 +11,13 @@ import {
   type PlaygroundState,
 } from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
-import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
+import { MIN_CREDITS_TO_START_CALL } from '@/lib/supabase/constants';
 import {
   getCredits,
   getVoiceIdByName,
   hasUserPaid,
   isFreeUserOverCallLimit,
-  resolveCharacterPrompt,
+  fetchCharacterDetails,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
     // Check if user has credits
     const currentAmount = await getCredits(user.id);
 
-    if (currentAmount < MINIMUM_CREDITS_FOR_CALL) {
+    if (currentAmount < MIN_CREDITS_TO_START_CALL) {
       logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
         extra: { currentCreditsAmount: currentAmount },
@@ -178,7 +178,7 @@ export async function POST(request: Request) {
 
     if (selectedPresetId) {
       try {
-        const character = await resolveCharacterPrompt(selectedPresetId);
+        const character = await fetchCharacterDetails(selectedPresetId);
 
         if (!character) {
           return NextResponse.json(
@@ -245,7 +245,7 @@ export async function POST(request: Request) {
           extra: {
             selectedPresetId,
             userId: user.id,
-            context: 'resolveCharacterPrompt',
+            context: 'fetchCharacterDetails',
           },
         });
         return NextResponse.json(
