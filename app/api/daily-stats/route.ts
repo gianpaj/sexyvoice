@@ -106,6 +106,14 @@ export async function GET(request: NextRequest) {
     profiles: { username: string } | null;
   }
 
+  interface AllTimeCreditStats {
+    total_purchase_count: number;
+    total_refund_count: number;
+    total_revenue_usd: number;
+    total_refund_usd: number;
+    total_unique_paid_users: number;
+  }
+
   interface UsageEvent {
     id: string;
     user_id: string;
@@ -129,6 +137,7 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let profilesTotalCountResult: any;
   let allCreditTransactions: CreditTransaction[];
+  let allTimeCreditStats: AllTimeCreditStats;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -149,6 +158,7 @@ export async function GET(request: NextRequest) {
     profilesRecentResult = cached.profilesRecentResult;
     profilesTotalCountResult = cached.profilesTotalCountResult;
     allCreditTransactions = cached.allCreditTransactions;
+    allTimeCreditStats = cached.allTimeCreditStats;
     activeSubscribersCount = cached.activeSubscribersCount;
     nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
     callSessionsWeekResult = cached.callSessionsWeekResult;
@@ -233,6 +243,13 @@ export async function GET(request: NextRequest) {
         .lt('started_at', today.toISOString()),
     ]);
 
+    // Fetch all-time credit stats via RPC (aggregated in DB to avoid timeout)
+    const { data: allTimeStatsData, error: allTimeStatsError } = await supabase
+      .rpc('get_credit_transactions_all_time_stats')
+      .single();
+    if (allTimeStatsError) throw allTimeStatsError;
+    allTimeCreditStats = allTimeStatsData as AllTimeCreditStats;
+
     // Fetch all usage events with pagination (Supabase limits to 1000 per request)
     const fetchAllUsageEvents = async () => {
       const allEvents: {
@@ -292,6 +309,10 @@ export async function GET(request: NextRequest) {
           )
           .in('type', ['purchase', 'topup', 'refund'])
           .not('description', 'ilike', '%manual%')
+          // Only fetch 3 months of rows for per-transaction analysis.
+          // All-time aggregates (total revenue, counts, unique users) are
+          // computed server-side by get_credit_transactions_all_time_stats().
+          .gte('created_at', threeMonthsAgoStart.toISOString())
           .lt('created_at', today.toISOString())
           .order('created_at', { ascending: true })
           .range(offset, offset + pageSize - 1);
@@ -322,6 +343,7 @@ export async function GET(request: NextRequest) {
         profilesRecentResult,
         profilesTotalCountResult,
         allCreditTransactions,
+        allTimeCreditStats,
         activeSubscribersCount,
         nextSubscriptionDueForPayment,
         callSessionsWeekResult,
@@ -491,7 +513,7 @@ export async function GET(request: NextRequest) {
     thirtyDaysAgo,
     today,
   ).length;
-  const creditsTotalCount = purchaseTransactions.length;
+  const creditsTotalCount = allTimeCreditStats.total_purchase_count;
 
   // Filter refund transactions by date ranges
   const refundsPrevDayData = filterByDateRange<CreditTransaction>(
@@ -504,7 +526,7 @@ export async function GET(request: NextRequest) {
     twoDaysAgo,
     previousDay,
   ).length;
-  const refundsTotalCount = refundTransactions.length;
+  const refundsTotalCount = allTimeCreditStats.total_refund_count;
 
   // Top customers calculation
   let hasInvalidMetadata = false;
@@ -602,11 +624,9 @@ export async function GET(request: NextRequest) {
 
   const topCustomerProfilesCount = topCustomerIds.length || '';
 
-  const totalUniquePaidUsers = new Set(
-    purchaseTransactions.map((t) => t.user_id),
-  ).size;
-  // Revenue calculations (incl. refund)
-  const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
+  // All-time aggregates come from the RPC (computed in DB, not from paginated rows)
+  const totalUniquePaidUsers = allTimeCreditStats.total_unique_paid_users;
+  const totalAmountUsd = allTimeCreditStats.total_revenue_usd;
 
   const creditsPrevDayData = filterByDateRange<CreditTransaction>(
     creditTransactions,
@@ -624,8 +644,8 @@ export async function GET(request: NextRequest) {
   const total7dRevenue = credits7dData.reduce(reduceAmountUsd, 0);
   const avg7dRevenue = total7dRevenue / 7;
 
-  // Refund amount calculations
-  const totalRefundAmountUsd = refundTransactions.reduce(reduceAmountUsd, 0);
+  // Refund amount calculations (all-time from RPC)
+  const totalRefundAmountUsd = allTimeCreditStats.total_refund_usd;
   const totalRefundAmountUsdToday = refundsPrevDayData.reduce(
     reduceAmountUsd,
     0,
