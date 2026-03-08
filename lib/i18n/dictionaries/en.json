@@ -346,7 +346,8 @@
       "statusGenerated": "Generated",
       "statusGenerating": "Generating...",
       "statusFailed": "Failed",
-      "statusPending": "Pending"
+      "statusPending": "Pending",
+      "splitToggleLabel": "Split text audios"
     }
   },
   "call": {

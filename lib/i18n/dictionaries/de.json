@@ -346,7 +346,8 @@
       "statusGenerated": "Generiert",
       "statusGenerating": "Wird generiert...",
       "statusFailed": "Fehlgeschlagen",
-      "statusPending": "Ausstehend"
+      "statusPending": "Ausstehend",
+      "splitToggleLabel": "Texte aufteilen"
     }
   },
   "call": {

@@ -228,14 +228,14 @@ export function AudioGenerator({
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
       } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          throw error;
-        }
-
+        // Ensure the segment is no longer marked as generating on abort or not
         latestSegments = latestSegments.map((segment, segmentIndex) =>
           segmentIndex === index ? { ...segment, status: 'failed' } : segment,
         );
         markSegmentFailed(index);
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          throw error;
+        }
 
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
@@ -326,11 +326,11 @@ export function AudioGenerator({
           ),
         );
       } catch (error) {
+        // Reset segment status so it doesn't remain stuck in "generating" after a user cancel.
+        markSegmentFailed(segmentIndex);
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
-
-        markSegmentFailed(segmentIndex);
 
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
@@ -444,9 +444,12 @@ export function AudioGenerator({
       };
 
       const onLoadedMetadata = () => {
-        const duration = Number.isFinite(element.duration)
-          ? element.duration
-          : 0;
+        const duration = element.duration;
+        if (!Number.isFinite(duration) || duration <= 0) {
+          cleanup();
+          reject(new Error('Unable to read segment duration'));
+          return;
+        }
         cleanup();
         resolve(duration);
       };
@@ -658,7 +661,6 @@ export function AudioGenerator({
                 [isGeminiVoice ? 'pr-10' : 'pr-14'],
               )}
               disabled={isGenerating}
-              maxLength={charactersLimit + 10}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               ref={textareaRef}
@@ -716,7 +718,7 @@ export function AudioGenerator({
                 className="cursor-pointer text-sm"
                 htmlFor="split-text-audios"
               >
-                Split text audios
+                {dict.split.splitToggleLabel}
               </Label>
               <Checkbox
                 checked={splitTextAudios}

@@ -346,7 +346,8 @@
       "statusGenerated": "Generato",
       "statusGenerating": "Generazione in corso...",
       "statusFailed": "Fallito",
-      "statusPending": "In attesa"
+      "statusPending": "In attesa",
+      "splitToggleLabel": "Dividi testo in audio"
     }
   },
   "call": {
