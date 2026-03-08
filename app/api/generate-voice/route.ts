@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
-    if (Number.isInteger(body.seed)) {
+    if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
       seed = body.seed;
     }
 
