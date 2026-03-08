@@ -347,7 +347,8 @@
       "statusGenerating": "Wird generiert...",
       "statusFailed": "Fehlgeschlagen",
       "statusPending": "Ausstehend",
-      "splitToggleLabel": "Texte aufteilen"
+      "splitToggleLabel": "Texte aufteilen",
+      "downloadAllFailed": "Alle Segmente konnten nicht als eine WAV-Datei heruntergeladen werden."
     }
   },
   "call": {

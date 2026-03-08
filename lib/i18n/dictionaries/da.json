@@ -347,7 +347,8 @@
       "statusGenerating": "Genererer...",
       "statusFailed": "Fejlet",
       "statusPending": "Afventer",
-      "splitToggleLabel": "Opdel tekstlyd"
+      "splitToggleLabel": "Opdel tekstlyd",
+      "downloadAllFailed": "Kunne ikke downloade alle segmenter som én WAV-fil."
     }
   },
   "call": {

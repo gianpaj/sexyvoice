@@ -347,7 +347,8 @@
       "statusGenerating": "En cours...",
       "statusFailed": "Échoué",
       "statusPending": "En attente",
-      "splitToggleLabel": "Diviser le texte en audios"
+      "splitToggleLabel": "Diviser le texte en audios",
+      "downloadAllFailed": "Impossible de télécharger tous les segments en un seul fichier WAV."
     }
   },
   "call": {

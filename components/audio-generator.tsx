@@ -517,7 +517,7 @@ export function AudioGenerator({
       setTimeout(() => URL.revokeObjectURL(outputUrl), 150);
     } catch (error) {
       console.error('Failed to download all segments:', error);
-      toast.error('Failed to download all segments as one WAV file.');
+      toast.error(dict.split.downloadAllFailed);
     } finally {
       setIsDownloadingAllSegments(false);
     }

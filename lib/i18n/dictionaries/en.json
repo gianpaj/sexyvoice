@@ -347,7 +347,8 @@
       "statusGenerating": "Generating...",
       "statusFailed": "Failed",
       "statusPending": "Pending",
-      "splitToggleLabel": "Split text audios"
+      "splitToggleLabel": "Split text audios",
+      "downloadAllFailed": "Failed to download all segments as one WAV file."
     }
   },
   "call": {
