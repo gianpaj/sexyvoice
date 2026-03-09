@@ -26,7 +26,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Code Quality**: Biome for linting and formatting
 - **Testing**: Vitest for unit/integration tests, MSW for API mocking
 - **Package Manager**: pnpm 10
-- **Internationalization**: Website support for English, Spanish, German, Danish, Italian, and French; voice generation and cloning in 20+ languages
+- **Internationalization**: `next-intl` for route-based i18n; website UI in English, Spanish, German, Danish, Italian, and French; voice generation and cloning in 20+ languages
 
 ## Architecture Overview
 
@@ -34,7 +34,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 
 This is a Next.js 16 App Router application with the following key architectural patterns:
 
-- **Internationalization**: Route-based i18n with English (en), Spanish (es), German (de), Danish (da), Italian (it), and French (fr) support using `[lang]` dynamic segments
+- **Internationalization**: `next-intl` with route-based i18n; English (en), Spanish (es), German (de), Danish (da), Italian (it), and French (fr) using `[lang]` dynamic segments; config in `lib/i18n/i18n-config.ts`; messages in `messages/*.json`; server components use `getMessages()` from `next-intl/server`, client components use `useTranslations()` from `next-intl`; navigation helpers (`Link`, `redirect`, `useRouter`, `usePathname`) exported from `lib/i18n/navigation.ts`; type-safe messages via `types/next-intl.d.ts`
 - **Authentication**: Supabase Auth with SSR support, session management in middleware
 - **Database**: Supabase PostgreSQL with type-safe operations
 - **Content**: Contentlayer2 for MDX blog posts with locale support
@@ -390,13 +390,16 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ### Internationalization
 
-- Add translations to `lib/i18n/dictionaries/`
-- Currently supports English (`en.json`), Spanish (`es.json`), German (`de.json`), Danish (`da.json`), Italian (`it.json`), French (`fr.json`)
-- Configured in `lib/i18n/i18n-config.ts` with `en` as default locale
-- Uses route-based i18n with `[lang]` dynamic segments
-- Middleware handles locale detection and routing
-- Use `getDictionary()` for server components
-- Run `pnpm run check-translations` before commits
+- Translations live in `messages/` — one JSON file per locale: `en.json`, `es.json`, `de.json`, `da.json`, `it.json`, `fr.json`
+- i18n is powered by **`next-intl`** (replaces the old `getDictionary()` helper, which has been deleted)
+- Locale config in `lib/i18n/i18n-config.ts` (`defaultLocale: 'en'`)
+- Request config (locale resolution + message loading) in `src/i18n/request.ts`
+- Type declarations in `types/next-intl.d.ts` — `IntlMessages` is globally augmented so all `useTranslations` / `getMessages` calls are fully type-safe
+- **Server components**: `import { getMessages } from 'next-intl/server'` then `const messages = (await getMessages({ locale: lang })) as IntlMessages`
+- **Client components**: `import { useTranslations } from 'next-intl'` then `const t = useTranslations('generate')`
+- **Navigation**: use `Link`, `redirect`, `useRouter`, `usePathname` from `lib/i18n/navigation.ts` (wraps `next-intl/navigation`) instead of Next.js builtins so locale prefix is handled automatically
+- Uses route-based i18n with `[lang]` dynamic segments; middleware handles locale detection and routing
+- Run `pnpm run check-translations` before commits to validate all locale files have the same keys
 
 ### Content Guidelines
 
@@ -461,7 +464,7 @@ Based on TODO.md, current priorities include:
 
 1. **Data Management**: Account deletion with audio cleanup, branch merges (r2, terms-and-conditions)
 2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
-3. **Internationalization**: Translate dashboard pages and SEO content to German, French, Italian, and Danish; expand voice models to French, German, Korean, Mandarin
+3. **Internationalization**: Expand voice models to French, German, Korean, Mandarin; translate remaining SEO content
 4. **User Experience**: Share pages for audio files, history page with regeneration
 5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
 6. **Analytics**: Add PostHog to auth pages, track paid user status
@@ -470,6 +473,7 @@ Based on TODO.md, current priorities include:
 
 ### Recently Completed Features
 
+- **next-intl migration**: Replaced the bespoke `getDictionary()` / `lib/i18n/dictionaries/` system with `next-intl`; messages moved to `messages/*.json`; server components use `getMessages()`, client components use `useTranslations()`; fully type-safe via `types/next-intl.d.ts`
 - **External REST API v1**: Public API (`/api/v1/*`) with API key auth (HMAC-SHA256), rate limiting, structured errors, OpenAPI 3.1 spec auto-generated from Zod schemas via `zod-openapi`
 - **API Key Management**: Dashboard UI and `/api/api-keys` routes for creating/listing/deactivating keys; requires paid account; max 10 active keys per user
 - **Real-time AI Voice Calls**: LiveKit-based voice calling with configurable AI agents
@@ -484,7 +488,7 @@ Based on TODO.md, current priorities include:
 2. **Follow the existing code patterns** and architectural decisions
 3. **Run `pnpm run fixall` before committing** to ensure code quality
 4. **Update documentation** when adding new features or changing APIs
-5. **Consider internationalization** for user-facing text (currently EN/ES/DE/DA/IT/FR, expanding to KO/PT/ZH)
+5. **Consider internationalization** for user-facing text — add keys to `messages/en.json` (and all other locale files), use `getMessages()` in server components and `useTranslations()` in client components; never hardcode English strings in UI
 6. **Implement proper error handling** and loading states
 7. **Follow security best practices** for voice-related features
 8. **Use TodoWrite tool** for multi-step tasks to track progress
