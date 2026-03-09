@@ -598,7 +598,8 @@ export async function reduceCreditsAdmin({
   if (error) throw error;
 }
 
-export function saveAudioFileAdmin(params: {
+// biome-ignore lint/suspicious/useAwait: server action
+export async function saveAudioFileAdmin(params: {
   userId: string;
   filename: string;
   text: string;
