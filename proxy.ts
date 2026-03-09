@@ -1,16 +1,9 @@
-import createMiddleware from 'next-intl/middleware';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import createMiddleware from 'next-intl/middleware';
 
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { updateSession } from '@/lib/supabase/middleware';
-
-const publicRoutesWithoutAuth = [
-  '/api/stripe/webhook',
-  '/api/daily-stats',
-  '/api/inngest',
-  '/api/health',
-];
 
 const publicRoutesWithLang = (locales: readonly string[]) =>
   locales.flatMap((locale) => [
@@ -28,14 +21,6 @@ const handleI18nRouting = createMiddleware({
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (publicRoutesWithoutAuth.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  if (pathname.startsWith('/api/v1')) {
-    return NextResponse.next();
-  }
-
   if (publicRoutesWithLang(i18n.locales).includes(pathname)) {
     return NextResponse.next();
   }
@@ -45,7 +30,8 @@ export async function proxy(request: NextRequest) {
     return i18nResponse;
   }
 
-  const localeFromPath = (pathname.split('/')[1] || i18n.defaultLocale) as Locale;
+  const localeFromPath = (pathname.split('/')[1] ||
+    i18n.defaultLocale) as Locale;
 
   if (pathname === `/${localeFromPath}` || pathname === `/${localeFromPath}/`) {
     return i18nResponse;
@@ -56,7 +42,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!api/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    // Note: api/ is excluded above so next-intl never locale-redirects fetch calls
   ],
   missing: [
     { type: 'header', key: 'next-router-prefetch' },
