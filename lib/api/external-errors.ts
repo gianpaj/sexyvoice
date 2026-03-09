@@ -18,11 +18,11 @@ type ExternalApiErrorKey =
   | 'server_error';
 
 interface ExternalApiErrorDefinition {
-  status: number;
-  type: ErrorType;
   code: string;
   message: string;
   param?: string | null;
+  status: number;
+  type: ErrorType;
 }
 
 const EXTERNAL_API_ERROR_DEFINITIONS: Record<

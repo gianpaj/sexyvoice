@@ -16,6 +16,10 @@ import { Button } from '../ui/button';
 import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
 
 interface Props {
+  mediaBlob: Blob | null;
+  mediaStream: MediaStream | null;
+  onClearMediaStream: () => void;
+  onToggleMicrophone: () => void;
   status:
     | 'idle'
     | 'acquiring_media'
@@ -25,10 +29,6 @@ interface Props {
     | 'stopping'
     | 'stopped'
     | 'failed';
-  mediaBlob: Blob | null;
-  mediaStream: MediaStream | null;
-  onToggleMicrophone: () => void;
-  onClearMediaStream: () => void;
 }
 
 function AudioPlayer({ blob }: { blob: Blob }) {

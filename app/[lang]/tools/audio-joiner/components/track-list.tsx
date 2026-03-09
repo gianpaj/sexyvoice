@@ -5,24 +5,24 @@ import { useMemo } from 'react';
 import { TrackRow } from './track-row';
 
 interface TrackItem {
+  durationSec: number;
+  endSec: number;
   id: string;
   name: string;
-  url: string;
-  durationSec: number;
   startSec: number;
-  endSec: number;
+  url: string;
 }
 
 interface TrackListProps {
-  tracks: TrackItem[];
-  disabled?: boolean;
   currentTimeSec?: number;
-  onMoveUp: (trackId: string) => void;
-  onMoveDown: (trackId: string) => void;
+  disabled?: boolean;
   onDelete: (trackId: string) => void;
-  onTrimChange: (trackId: string, startSec: number, endSec: number) => void;
   onDurationReady: (trackId: string, durationSec: number) => void;
+  onMoveDown: (trackId: string) => void;
+  onMoveUp: (trackId: string) => void;
   onSeek: (globalTimeSec: number) => void;
+  onTrimChange: (trackId: string, startSec: number, endSec: number) => void;
+  tracks: TrackItem[];
 }
 
 /**

@@ -16,8 +16,8 @@ import { useTranscriber } from './hooks/use-transcriber';
 import './transcribe.css';
 
 interface Props {
-  lang: Locale;
   dict: (typeof langDict)['transcribe'];
+  lang: Locale;
 }
 
 export default function TranscribeClient({ lang, dict }: Props) {
@@ -119,19 +119,16 @@ export default function TranscribeClient({ lang, dict }: Props) {
           className="mb-5 flex items-end justify-center gap-[3px] opacity-40"
           style={{ height: '28px' }}
         >
-          {[10, 18, 26, 14, 28, 20, 24, 12, 22, 16, 28, 18].map(
-            (height, i) => (
-              <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: static decorative array
-                key={i}
-                className="wave-bar"
-                style={{
-                  height: `${height}px`,
-                  animationDelay: `${i * 0.09}s`,
-                }}
-              />
-            ),
-          )}
+          {[10, 18, 26, 14, 28, 20, 24, 12, 22, 16, 28, 18].map((height, i) => (
+            <div
+              className="wave-bar"
+              key={i}
+              style={{
+                height: `${height}px`,
+                animationDelay: `${i * 0.09}s`,
+              }}
+            />
+          ))}
         </div>
 
         <div className="mb-5 flex flex-col items-center justify-center gap-3 md:flex-row md:gap-4">

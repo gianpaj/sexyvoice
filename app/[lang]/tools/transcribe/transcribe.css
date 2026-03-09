@@ -1,7 +1,7 @@
 .gradient-text {
+  -webkit-text-fill-color: transparent;
   background: var(--gradient-background);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
@@ -18,7 +18,8 @@
 
 /* Waveform bars — used in header decoration and progress display */
 @keyframes waveform-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scaleY(0.25);
     opacity: 0.5;
   }
@@ -31,9 +32,9 @@
 .wave-bar {
   display: inline-block;
   width: 3px;
+  background: var(--gradient-background);
   border-radius: 3px;
   transform-origin: bottom center;
-  background: var(--gradient-background);
   animation: waveform-pulse 1.2s ease-in-out infinite;
 }
 

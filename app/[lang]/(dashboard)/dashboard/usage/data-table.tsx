@@ -40,8 +40,8 @@ interface DataTableProps {
 }
 
 interface UsageEventsApiResponse extends PaginatedUsageEventsResponse {
-  monthlySummary?: MonthlyUsageSummary;
   allTimeSummary?: MonthlyUsageSummary;
+  monthlySummary?: MonthlyUsageSummary;
 }
 
 async function fetchUsageEvents(

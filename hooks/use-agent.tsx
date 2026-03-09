@@ -19,20 +19,20 @@ import { toast } from 'sonner';
 import { useConnection } from '@/hooks/use-connection';
 
 interface Transcription {
-  segment: TranscriptionSegment;
   participant?: Participant;
   publication?: TrackPublication;
+  segment: TranscriptionSegment;
 }
 
 interface GeneratedImage {
-  prompt: string;
   imageUrl: string;
+  prompt: string;
   timestamp: number;
 }
 
 interface AgentContextType {
-  displayTranscriptions: Transcription[];
   agent?: RemoteParticipant;
+  displayTranscriptions: Transcription[];
   generatedImages: GeneratedImage[];
 }
 

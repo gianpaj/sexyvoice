@@ -9,15 +9,15 @@ import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onAudioReady: (audio: Float32Array) => void;
-  onFileSelected?: (file: File) => void;
-  onRemove?: () => void;
-  disabled?: boolean;
   dict: (typeof langDict)['transcribe']['audioInput'];
+  disabled?: boolean;
   errorMessages?: {
     decodeError?: string;
     microphoneError?: string;
   };
+  onAudioReady: (audio: Float32Array) => void;
+  onFileSelected?: (file: File) => void;
+  onRemove?: () => void;
 }
 
 /**

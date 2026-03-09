@@ -42,10 +42,10 @@ import type messages from '@/messages/en.json';
 interface DashboardUIProps {
   children: React.ReactNode;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
-  userId: string;
-  lang: Locale;
   dict: typeof messages;
+  lang: Locale;
   promoDict?: (typeof messages.promos)[keyof typeof messages.promos];
+  userId: string;
 }
 
 export default function DashboardUI({

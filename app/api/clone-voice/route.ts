@@ -78,8 +78,8 @@ export const maxDuration = 320; // seconds - fluid compute is enabled
 // ============================================================================
 
 interface ReplicateOutput {
-  url: () => string;
   blob: () => Promise<Blob>;
+  url: () => string;
 }
 
 interface ReplicateError {
@@ -89,9 +89,9 @@ interface ReplicateError {
 type ReplicateResponse = ReplicateOutput | ReplicateError;
 
 interface FormInput {
-  text: string;
   file: File;
   locale: string;
+  text: string;
 }
 
 // ============================================================================

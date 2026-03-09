@@ -29,8 +29,8 @@ import type { DBVoice } from '@/data/voices';
 import { capitalizeFirstLetter } from '@/lib/utils';
 
 interface VoiceSelectorFormProps {
-  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
   callVoices?: DBVoice[];
+  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
 }
 
 export function VoiceSelectorForm({

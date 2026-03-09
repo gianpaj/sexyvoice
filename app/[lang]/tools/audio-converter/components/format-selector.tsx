@@ -12,13 +12,13 @@ import {
 type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
 
 interface Props {
-  value: AudioFormat;
-  onChange: (value: AudioFormat) => void;
-  disabled: boolean;
   dict: {
     label: string;
     placeholder: string;
   };
+  disabled: boolean;
+  onChange: (value: AudioFormat) => void;
+  value: AudioFormat;
 }
 
 const formats: { value: AudioFormat; label: string }[] = [

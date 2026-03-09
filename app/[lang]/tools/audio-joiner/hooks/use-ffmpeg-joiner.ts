@@ -7,9 +7,9 @@ import { useCallback, useRef, useState } from 'react';
 export type JoinerOutputFormat = 'mp3' | 'wav' | 'm4a';
 
 export interface JoinerSegmentInput {
+  endSec: number;
   file: File;
   startSec: number;
-  endSec: number;
 }
 
 const FFMPEG_CORE_VERSION = '0.12.6';

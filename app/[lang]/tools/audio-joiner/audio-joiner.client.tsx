@@ -15,14 +15,14 @@ import {
 import './audio-joiner.css';
 
 interface TrackSegment {
-  id: string;
-  file: File;
-  name: string;
-  url: string;
-  durationSec: number;
-  startSec: number;
-  endSec: number;
   decodedBuffer: AudioBuffer;
+  durationSec: number;
+  endSec: number;
+  file: File;
+  id: string;
+  name: string;
+  startSec: number;
+  url: string;
 }
 
 interface Props {

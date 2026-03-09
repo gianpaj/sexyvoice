@@ -22,10 +22,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
-import type messages from '@/messages/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import type messages from '@/messages/en.json';
 import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
@@ -40,12 +40,12 @@ import {
 } from './ui/tooltip';
 
 interface AudioGeneratorProps {
-  selectedVoice?: Tables<'voices'>;
-  selectedStyle?: string;
-  hasEnoughCredits: boolean;
   dict: (typeof messages)['generate'];
+  hasEnoughCredits: boolean;
   isPaidUser: boolean;
   locale: string;
+  selectedStyle?: string;
+  selectedVoice?: Tables<'voices'>;
 }
 
 export function AudioGenerator({

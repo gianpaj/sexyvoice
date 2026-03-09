@@ -122,8 +122,8 @@ function AvatarButton({
 }
 
 interface PresetSelectorProps {
-  isPaidUser?: boolean;
   callVoices?: DBVoice[];
+  isPaidUser?: boolean;
 }
 
 export function PresetSelector({

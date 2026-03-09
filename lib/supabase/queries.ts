@@ -118,20 +118,20 @@ export async function resolveCharacterPrompt(characterId: string) {
 }
 
 export interface InsertUsageEventParams {
-  userId: string;
-  sourceType: UsageSourceType;
+  apiKeyId?: string | null;
+  creditsUsed: number;
+  dollarAmount?: number | null;
+  durationSeconds?: number | null;
+  inputChars?: number | null;
+  metadata?: Json;
+  model?: string | null;
+  outputChars?: number | null;
+  quantity: number;
   requestId?: string | null;
   sourceId?: string | null;
-  apiKeyId?: string | null;
-  model?: string | null;
-  inputChars?: number | null;
-  outputChars?: number | null;
-  durationSeconds?: number | null;
-  dollarAmount?: number | null;
+  sourceType: UsageSourceType;
   unit: UsageUnitType;
-  quantity: number;
-  creditsUsed: number;
-  metadata?: Json;
+  userId: string;
 }
 
 export async function getCredits(userId: string): Promise<number> {
@@ -598,7 +598,7 @@ export async function reduceCreditsAdmin({
   if (error) throw error;
 }
 
-export async function saveAudioFileAdmin(params: {
+export function saveAudioFileAdmin(params: {
   userId: string;
   filename: string;
   text: string;

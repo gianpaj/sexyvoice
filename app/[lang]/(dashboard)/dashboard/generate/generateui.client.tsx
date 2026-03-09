@@ -8,11 +8,11 @@ import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
 interface GenerateUIProps {
-  publicVoices: Tables<'voices'>[];
-  hasEnoughCredits: boolean;
   dict: (typeof messages)['generate'];
+  hasEnoughCredits: boolean;
   isPaidUser: boolean;
   locale: string;
+  publicVoices: Tables<'voices'>[];
 }
 
 const STYLE_PROMPT_VARIANT_MOAN =

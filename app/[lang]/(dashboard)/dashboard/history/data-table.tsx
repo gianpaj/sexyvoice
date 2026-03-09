@@ -40,9 +40,9 @@ import {
 import { createColumns } from './columns';
 
 interface DataTableProps {
-  userId: string;
   dict: (typeof langDict)['history'];
   showApiColumns: boolean;
+  userId: string;
 }
 
 export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {

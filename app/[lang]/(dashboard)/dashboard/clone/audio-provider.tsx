@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 interface AudioContextType {
-  setUrlAndPlay: (url: string) => void;
-  play: () => void;
-  pause: () => void;
-  reset: () => void;
-  url: string | null;
   isPlaying: boolean;
+  pause: () => void;
+  play: () => void;
+  reset: () => void;
+  setUrlAndPlay: (url: string) => void;
+  url: string | null;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);

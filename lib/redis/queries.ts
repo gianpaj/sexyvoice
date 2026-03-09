@@ -17,16 +17,12 @@ function getRedisClient() {
 }
 
 export interface CustomerData {
-  // Stripe subscription
-  status: Stripe.Subscription.Status | 'none'; // extra;
-  subscriptionId?: string;
-  priceId?: string;
-  currentPeriodEnd?: number;
-  currentPeriodStart?: number;
   /**
    * Whether this subscription will (if status=active) or did (if status=canceled) cancel at the end of the current billing period.
    */
   cancelAtPeriodEnd?: boolean | null;
+  currentPeriodEnd?: number;
+  currentPeriodStart?: number;
   paymentMethod?: {
     /**
      * Card brand. Can be amex, diners, discover, eftpos_au, jcb, link, mastercard, unionpay, visa, or unknown.
@@ -34,6 +30,10 @@ export interface CustomerData {
     brand: string | null;
     last4: string | null;
   } | null;
+  priceId?: string;
+  // Stripe subscription
+  status: Stripe.Subscription.Status | 'none'; // extra;
+  subscriptionId?: string;
 }
 
 export function setCustomerData(customerId: string, data: CustomerData) {

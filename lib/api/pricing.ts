@@ -3,18 +3,18 @@ type ExternalProvider = 'google' | 'replicate';
 type ExternalModel = 'gpro' | 'orpheus' | string;
 
 interface PricingInput {
-  sourceType: ExternalSourceType;
-  provider: ExternalProvider;
-  model?: ExternalModel | null;
-  inputChars?: number | null;
-  outputChars?: number | null;
   durationSeconds?: number | null;
+  inputChars?: number | null;
+  model?: ExternalModel | null;
+  outputChars?: number | null;
+  provider: ExternalProvider;
+  sourceType: ExternalSourceType;
 }
 
 interface PriceConfig {
   perInputChar: number;
-  perOutputChar: number;
   perMinute: number;
+  perOutputChar: number;
   perRequest: number;
 }
 

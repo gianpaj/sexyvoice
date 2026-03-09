@@ -7,9 +7,9 @@ import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onFileSelect: (file: File) => void;
-  disabled?: boolean;
   dict: (typeof langDict)['audioConverter']['dropZone'];
+  disabled?: boolean;
+  onFileSelect: (file: File) => void;
 }
 
 export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
