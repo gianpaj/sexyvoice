@@ -168,10 +168,6 @@ export function getSampleAudiosByLanguage(locale?: string): SampleAudio[] {
       return 0;
     });
   }
-  console.log(
-    sortedAudios.map((a) => ({ lang: a.lang, prompt: a.prompt })),
-    locale,
-  );
 
   // Limit to 6 samples
   return sortedAudios.slice(0, 6);
