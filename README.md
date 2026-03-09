@@ -52,7 +52,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### 🌍 Platform Features
 
 - **Responsive Design**: Optimized for desktop and mobile devices
-- **International Support**: Full i18n implementation for global accessibility
+- **International Support**: Full i18n implementation powered by `next-intl` for global accessibility (EN/ES/DE/DA/IT/FR)
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
 - **Public Tools**: Free utility tools including audio transcription and format conversion
@@ -62,6 +62,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Frontend
 
 - **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
+- **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
 - **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
@@ -206,7 +207,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 | `pnpm lint:fix`           | Fix linting issues automatically        |
 | `pnpm type-check`         | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
-| `pnpm check-translations` | Validate translation files              |
+| `pnpm check-translations` | Validate all locale files have matching keys |
 | `pnpm build:content`      | Build content layer                     |
 | `pnpm clean`              | Clean unused dependencies with Knip     |
 | `pnpm fixall`             | Run all fixes: lint, format, and check  |
@@ -334,7 +335,7 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Website multi-language support (EN/ES/DE/DA/IT/FR)
+- ✅ Website multi-language support (EN/ES/DE/DA/IT/FR) via `next-intl`
 - ✅ Audio transcription and translation tool
 - ✅ Real-time AI voice calls with configurable AI agents
 - ✅ API access
