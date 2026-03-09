@@ -1,7 +1,7 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
+import { useLocale, useTranslations } from 'next-intl';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ export function HeaderStatic() {
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link className="z-10 flex items-end gap-0" href={`/${locale}`}>
+        <Link className="z-10 flex items-end gap-0" href={'/'}>
           <Image alt="Logo" height={292 / 8} src={logoSmall} width={221 / 8} />
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>

@@ -304,7 +304,7 @@ export default async function LandingPage(props: {
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
                   key={idx}
                 >
-                  <Link href={`/${post.locale}${post.url}`} prefetch>
+                  <Link href={post.url} prefetch>
                     <CardHeader>
                       {post.image && (
                         <Image

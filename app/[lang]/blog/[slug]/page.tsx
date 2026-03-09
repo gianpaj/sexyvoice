@@ -3,7 +3,6 @@ import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 import Script from 'next/script';
 import type { Metadata } from 'next/types';
-
 import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
@@ -74,10 +73,8 @@ export async function generateMetadata({
       'voice cloning',
       'text-to-speech',
       'voice synthesis',
-      'artificial intelligence',
-      'machine learning',
-      'neural networks',
-      'speech technology',
+      'uncensored voice',
+      'AI voice call',
     ],
     authors: [{ name: 'SexyVoice.ai' }],
     openGraph: {
@@ -97,7 +94,7 @@ export async function generateMetadata({
       type: 'article',
       publishedTime: post.date,
       section: 'Technology',
-      tags: ['Voice AI', 'Machine Learning', 'Speech Synthesis'],
+      tags: ['Voice AI', 'Voice Cloning', 'Speech Synthesis'],
     },
     twitter: {
       card: 'summary_large_image',
@@ -406,7 +403,7 @@ const PostLayout = async (props: {
                 Voice AI
               </span>
               <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
-                Machine Learning
+                Voice Cloning
               </span>
               <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
                 Speech Synthesis

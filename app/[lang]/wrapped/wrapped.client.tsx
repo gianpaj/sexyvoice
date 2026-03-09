@@ -12,7 +12,6 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { getMessages } from 'next-intl/server';
 
 import { HeaderStatic } from '@/components/header-static';
 import { Button } from '@/components/ui/button';
@@ -289,9 +288,7 @@ const stats = {
   daysSinceLaunch,
 };
 
-export async function PlatformWrappedClient() {
-  await getMessages({ locale: 'en' });
-
+export function PlatformWrappedClient() {
   return (
     <div className="min-h-screen bg-background">
       <HeaderStatic />

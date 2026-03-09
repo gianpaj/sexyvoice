@@ -71,10 +71,6 @@ describe('/api/v1 metadata endpoints', () => {
   });
 
   it('returns OpenAPI 3.1.0 document with speech path', async () => {
-    const request = new Request('http://localhost/api/v1/openapi', {
-      method: 'GET',
-    });
-
     const response = await getOpenApi();
     const json = await response.json();
 
