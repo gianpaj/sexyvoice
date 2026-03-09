@@ -3,7 +3,7 @@
 import { FileAudio, Music, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
 
 interface Props {

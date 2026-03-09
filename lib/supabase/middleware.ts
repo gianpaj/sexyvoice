@@ -16,13 +16,14 @@ const publicRoutes = [
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
-export const updateSession = async (request: NextRequest, locale: string) => {
+export const updateSession = async (
+  request: NextRequest,
+  locale: string,
+  response: NextResponse = NextResponse.next({ request }),
+) => {
   try {
     const { pathname } = request.nextUrl;
-
-    const supabaseResponse = NextResponse.next({
-      request,
-    });
+    const supabaseResponse = response;
 
     const supabase = await createClient();
 
@@ -33,7 +34,7 @@ export const updateSession = async (request: NextRequest, locale: string) => {
     if (!user && pathname.includes('/dashboard')) {
       // no user, potentially respond by redirecting the user to the login page
       const url = request.nextUrl.clone();
-      url.pathname = '/login';
+      url.pathname = `/${locale}/login`;
       return NextResponse.redirect(url);
     }
 
@@ -41,7 +42,7 @@ export const updateSession = async (request: NextRequest, locale: string) => {
 
     if (!(user || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL(`/${locale}`, request.url));
     }
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
@@ -68,6 +69,6 @@ export const updateSession = async (request: NextRequest, locale: string) => {
     return supabaseResponse;
   } catch (e) {
     console.error('Middleware error:', e);
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL(`/${locale}`, request.url));
   }
 };

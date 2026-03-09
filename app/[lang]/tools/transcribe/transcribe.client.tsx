@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { AudioInput } from './components/audio-input';
 import { LanguageSelector } from './components/language-selector';

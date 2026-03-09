@@ -4,7 +4,7 @@ import { ScissorsLineDashed } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { DropZone } from './components/drop-zone';
 import { JoinControls } from './components/join-controls';
 import { TrackList } from './components/track-list';

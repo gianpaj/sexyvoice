@@ -1,7 +1,7 @@
 'use client';
 
 import { Progress } from '@/components/ui/progress';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { DownloadProgress } from '../hooks/use-transcriber';
 
 interface Props {

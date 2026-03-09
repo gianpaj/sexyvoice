@@ -208,11 +208,11 @@
       "popular": "Am beliebtesten",
       "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
-      "x_credits": "__NUM_CREDITS__ Credits",
+      "x_credits": "{numCredits} Credits",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die die fortschrittlichste KI-Audiogenerierung ausprobieren möchten.",
-        "creditsWithAudio": "__NUM_CREDITS__ Credits (~4 Min. Audio)",
+        "creditsWithAudio": "{numCredits} Credits (~4 Min. Audio)",
         "features": [
           "Sprache mit realistischen Stöhngeräuschen generieren",
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
@@ -230,8 +230,8 @@
       "standard": {
         "name": "Standard",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "creditsWithAudio": "__NUM_CREDITS__ Credits (~11 Min. Audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "{numCredits} Credits (~11 Min. Audio)",
+        "creditsWithPromo": "{numCredits} Credits",
         "features": [
           "Alles im kostenlosen Plan, plus",
           "2× längere Textgenerierung",
@@ -241,8 +241,8 @@
       "pro": {
         "name": "Pro",
         "description": "Für größere kreative Bedürfnisse und mutigere Inhalte.",
-        "creditsWithAudio": "__NUM_CREDITS__ Credits (~125 Min. Audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "{numCredits} Credits (~125 Min. Audio)",
+        "creditsWithPromo": "{numCredits} Credits",
         "features": [
           "Alles im kostenlosen Plan",
           "Sprachanruf: Benutzerdefinierte Charaktere"
@@ -257,16 +257,16 @@
       "processing": "Wird verarbeitet...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Perfekt für den Einstieg"
         },
         "standard": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Beliebteste Wahl",
           "value": "Bestes Preis-Leistungs-Verhältnis"
         },
         "pro": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Für Power-User",
           "value": "Pro-Paket"
         }

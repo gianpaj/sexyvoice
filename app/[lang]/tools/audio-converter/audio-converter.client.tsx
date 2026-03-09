@@ -4,7 +4,7 @@ import { ArrowDown, Music } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { ConvertButton } from './components/convert-button';
 import { DownloadSection } from './components/download-section';
 import { DropZone } from './components/drop-zone';

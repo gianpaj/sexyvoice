@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   SidebarMenu as SidebarMenuUI,
 } from '@/components/ui/sidebar';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
