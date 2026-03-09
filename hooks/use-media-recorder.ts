@@ -58,18 +58,29 @@ type ErrorCallback = (error: Error) => void;
  */
 interface MediaRecorderProps {
   blobOptions?: BlobPropertyBag;
-  recordScreen?: boolean;
   customMediaStream?: MediaStream;
-  onStart?: () => void;
-  onStop?: (blob: Blob) => void;
-  onDataAvailable?: (data: Blob) => void;
-  onError?: ErrorCallback;
   mediaRecorderOptions?: MediaRecorderOptions;
   mediaStreamConstraints?: MediaStreamConstraints;
+  onDataAvailable?: (data: Blob) => void;
+  onError?: ErrorCallback;
+  onStart?: () => void;
+  onStop?: (blob: Blob) => void;
+  recordScreen?: boolean;
 }
 
 interface MediaRecorderHookOptions {
+  clearMediaBlob: () => void;
+  clearMediaStream: () => void;
   error?: unknown;
+  getMediaStream: () => Promise<MediaStream | undefined>;
+  isAudioMuted: boolean;
+  liveStream: MediaStream | null;
+  mediaBlob: Blob | null;
+  mediaStream: MediaStream | null;
+  muteAudio: () => void;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
+  startRecording: (timeSlice?: number) => Promise<void>;
   status:
     | 'idle'
     | 'acquiring_media'
@@ -79,19 +90,8 @@ interface MediaRecorderHookOptions {
     | 'stopping'
     | 'stopped'
     | 'failed';
-  mediaBlob: Blob | null;
-  mediaStream: MediaStream | null;
-  isAudioMuted: boolean;
   stopRecording: () => void;
-  getMediaStream: () => Promise<MediaStream | undefined>;
-  clearMediaStream: () => void;
-  clearMediaBlob: () => void;
-  startRecording: (timeSlice?: number) => Promise<void>;
-  pauseRecording: () => void;
-  resumeRecording: () => void;
-  muteAudio: () => void;
   unMuteAudio: () => void;
-  liveStream: MediaStream | null;
 }
 
 export default function useMediaRecorder({

@@ -5,16 +5,16 @@ import { CheckCircle2, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  fileName: string;
-  format: string;
-  onDownload: () => void;
-  onConvertAnother: () => void;
   dict: {
     title: string;
     description: string;
     download: string;
     convertAnother: string;
   };
+  fileName: string;
+  format: string;
+  onConvertAnother: () => void;
+  onDownload: () => void;
 }
 
 export function DownloadSection({

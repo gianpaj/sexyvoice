@@ -29,8 +29,8 @@ const faqIconMap: Record<string, LucideIcon> = {
 };
 
 interface FaqLink {
-  url: string;
   text: string;
+  url: string;
 }
 
 function renderAnswer(answer: string, link?: FaqLink) {

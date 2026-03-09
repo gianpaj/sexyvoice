@@ -14,14 +14,14 @@ import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 interface Props {
-  lang: Locale;
-  value: string;
-  onChange: (language: string) => void;
-  subtask: string;
-  onSubtaskChange: (subtask: string) => void;
+  dict: (typeof langDict)['transcribe']['languageSelector'];
   disabled?: boolean;
   isEnglishOnly?: boolean;
-  dict: (typeof langDict)['transcribe']['languageSelector'];
+  lang: Locale;
+  onChange: (language: string) => void;
+  onSubtaskChange: (subtask: string) => void;
+  subtask: string;
+  value: string;
 }
 
 export const WHISPER_LANGUAGE_CODES = [

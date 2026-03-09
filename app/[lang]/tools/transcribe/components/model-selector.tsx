@@ -10,10 +10,10 @@ import {
 import type langDict from '@/messages/en.json';
 
 interface Props {
-  value: string;
-  onChange: (model: string) => void;
-  disabled?: boolean;
   dict: (typeof langDict)['transcribe']['modelSelector'];
+  disabled?: boolean;
+  onChange: (model: string) => void;
+  value: string;
 }
 
 export const WHISPER_MODELS = [

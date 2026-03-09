@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface AudioPlayerProps {
-  url: string;
   className?: string;
   onTimeUpdate?: (currentTime: number) => void;
+  url: string;
 }
 
 export function AudioPlayer({

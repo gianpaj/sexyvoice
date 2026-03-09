@@ -11,8 +11,8 @@ import { AudioPreviewCard } from '@/components/audio-preview-card';
 
 interface SampleAudioPreviewsProps {
   initialAudios: SampleAudio[];
-  trySamplesTitle: string;
   trySamplesSubtitle: string;
+  trySamplesTitle: string;
 }
 
 export function SampleAudioPreviews({

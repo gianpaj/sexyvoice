@@ -6,15 +6,15 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onClick: () => void;
-  isConverting: boolean;
-  disabled: boolean;
-  progress: number;
   dict: {
     convert: string;
     converting: string;
     progress: string;
   };
+  disabled: boolean;
+  isConverting: boolean;
+  onClick: () => void;
+  progress: number;
 }
 
 export function ConvertButton({

@@ -7,21 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface AudioFile {
+  created_at: string;
+  duration: number;
   id: string;
+  is_public: boolean;
+  storage_key: string;
+  text_content: string;
+  total_plays: number;
+  total_votes: number;
   url: string;
+  user_id: string;
   voice_id: string;
   voices: {
     id: string;
     name: string;
   };
-  user_id: string;
-  storage_key: string;
-  duration: number;
-  text_content: string;
-  total_votes: number;
-  total_plays: number;
-  is_public: boolean;
-  created_at: string;
 }
 
 interface PopularAudiosProps {

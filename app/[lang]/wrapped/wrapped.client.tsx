@@ -17,41 +17,37 @@ import { HeaderStatic } from '@/components/header-static';
 import { Button } from '@/components/ui/button';
 
 interface PlatformWrappedStats {
-  totalAudioFiles: number;
-  totalDurationSeconds: number;
-  totalCharactersGenerated: number;
-  totalUsers: number;
-  totalPaidUsers: number;
-  totalVoiceClones: number;
-  totalClonedAudioFiles: number;
-  totalRevenue: number;
-  totalRefunds: number;
-  netRevenue: number;
-  topVoices: Array<{
-    name: string;
-    count: number;
-  }>;
+  averageTextLength: number;
+  daysSinceLaunch: number;
+  longestTextCharacters: number;
   monthlyStats: Array<{
     month: string;
     audioCount: number;
     userCount: number;
     revenue: number;
   }>;
-  longestTextCharacters: number;
-  averageTextLength: number;
-  totalUniqueVoicesUsed: number;
+  netRevenue: number;
   platformLaunchDate: string;
-  daysSinceLaunch: number;
+  topVoices: Array<{
+    name: string;
+    count: number;
+  }>;
+  totalAudioFiles: number;
+  totalCharactersGenerated: number;
+  totalClonedAudioFiles: number;
+  totalDurationSeconds: number;
+  totalPaidUsers: number;
+  totalRefunds: number;
+  totalRevenue: number;
+  totalUniqueVoicesUsed: number;
+  totalUsers: number;
+  totalVoiceClones: number;
 }
 
 function formatNumber(num: number): string {
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toLocaleString();
-}
-
-function formatCurrency(num: number): string {
-  return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function StatCard({

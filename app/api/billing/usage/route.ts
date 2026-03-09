@@ -8,17 +8,17 @@ type BucketWidth = '1d' | '7d';
 type ApiUsageSourceType = Database['public']['Enums']['usage_source_type'];
 
 interface ApiUsageDailyRow {
-  user_id: string;
-  usage_date: string;
-  source_type: string;
   api_key_id: string | null;
   model: string | null;
   requests: number;
+  source_type: string;
+  total_credits_used: number;
+  total_dollar_amount: number;
+  total_duration_seconds: number;
   total_input_chars: number;
   total_output_chars: number;
-  total_duration_seconds: number;
-  total_dollar_amount: number;
-  total_credits_used: number;
+  usage_date: string;
+  user_id: string;
 }
 
 function parseDate(value: string | null, fallback: Date): Date {

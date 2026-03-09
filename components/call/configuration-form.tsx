@@ -54,9 +54,9 @@ export interface ConfigurationFormFieldProps {
 }
 
 interface ConfigurationFormProps {
-  lang: Locale;
-  isPaidUser?: boolean;
   callVoices?: DBVoice[];
+  isPaidUser?: boolean;
+  lang: Locale;
 }
 
 export function ConfigurationForm({

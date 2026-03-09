@@ -19,14 +19,14 @@ import { usePlaygroundState } from './use-playground-state';
 export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
 
 interface TokenGeneratorData {
-  shouldConnect: boolean;
-  wsUrl: string;
-  token: string;
-  pgState: PlaygroundState;
-  voice: string;
+  connect: ConnectFn;
   dict: (typeof langDict)['call'];
   disconnect: () => Promise<void>;
-  connect: ConnectFn;
+  pgState: PlaygroundState;
+  shouldConnect: boolean;
+  token: string;
+  voice: string;
+  wsUrl: string;
 }
 
 const ConnectionContext = createContext<TokenGeneratorData | undefined>(

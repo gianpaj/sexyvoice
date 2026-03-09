@@ -97,22 +97,22 @@ export async function GET(request: NextRequest) {
 
   // Partial credit_transactions type matching the selected columns
   interface CreditTransaction {
-    id: string;
-    user_id: string;
     created_at: string;
-    type: 'purchase' | 'freemium' | 'topup' | 'refund';
     description: string | null;
+    id: string;
     metadata: Json;
     profiles: { username: string } | null;
+    type: 'purchase' | 'freemium' | 'topup' | 'refund';
+    user_id: string;
   }
 
   interface UsageEvent {
-    id: string;
-    user_id: string;
-    source_type: string;
     credits_used: number;
+    id: string;
     occurred_at: string;
     profiles: { username: string } | null;
+    source_type: string;
+    user_id: string;
   }
 
   // Load from cache if available (non-prod only)

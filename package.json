@@ -129,7 +129,7 @@
     "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.14",
+    "@biomejs/biome": "2.4.6",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -150,7 +150,7 @@
     "redis-memory-server": "^0.16.0",
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
-    "ultracite": "7.1.5 ",
+    "ultracite": "7.2.5",
     "vitest": "4.0.16"
   },
   "browserslist": [

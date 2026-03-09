@@ -7,12 +7,12 @@
  */
 
 interface CookieOptions extends Omit<CookieInit, 'expires'> {
-  name: string;
-  value: string;
   expires?: number | Date;
   maxAge?: number;
+  name: string;
   path?: string;
   sameSite?: 'strict' | 'lax' | 'none';
+  value: string;
 }
 
 type WindowWithCookieStore = Window & { cookieStore: CookieStore };
