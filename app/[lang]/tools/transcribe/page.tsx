@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
+import { getMessages } from 'next-intl/server';
 import Link from 'next/link';
 import Script from 'next/script';
 import type { Graph } from 'schema-dts';
 
 import { HeaderStatic } from '@/components/header-static';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import TranscribeClient from './transcribe.client';
 
@@ -14,8 +14,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const dict = await getDictionary(lang, 'pages');
-  const dictTranscribe = await getDictionary(lang, 'transcribe');
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.pages;
+  const dictTranscribe = messages.transcribe;
 
   const title = dict.titleTranscribe || dictTranscribe.title;
   const description = dict.descriptionTranscribe || dictTranscribe.subtitle;
@@ -78,9 +79,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TranscribePage({ params }: Props) {
   const { lang } = await params;
-  const dict = await getDictionary(lang, 'transcribe');
-  const dictPages = await getDictionary(lang, 'pages');
-  const dictHeader = await getDictionary(lang, 'header');
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.transcribe;
+  const dictPages = messages.pages;
 
   const url = `https://sexyvoice.ai/${lang}/tools/transcribe`;
   const title = dictPages.titleTranscribe || dict.title;
@@ -204,7 +205,7 @@ export default async function TranscribePage({ params }: Props) {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
       <div className="min-h-screen bg-background">
-        <HeaderStatic dict={dictHeader} lang={lang} />
+        <HeaderStatic />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
           <TranscribeClient dict={dict} lang={lang} />
 

@@ -36,16 +36,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import type messages from '@/messages/en.json';
 
 interface DashboardUIProps {
   children: React.ReactNode;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
   userId: string;
   lang: Locale;
-  dict: typeof langDict;
-  promoDict: (typeof langDict)['promos']['blackFridayBanner'];
+  dict: typeof messages;
+  promoDict?: (typeof messages.promos)[keyof typeof messages.promos];
 }
 
 export default function DashboardUI({
@@ -57,6 +57,16 @@ export default function DashboardUI({
   promoDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
   const navigation = [
     {
@@ -196,12 +206,10 @@ export default function DashboardUI({
           <SidebarFooter>
             <CreditsSection
               creditTransactions={creditTransactions}
-              dict={dict.creditsSection}
               lang={lang}
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />
-
             <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
           </SidebarFooter>
         </Sidebar>
@@ -209,15 +217,7 @@ export default function DashboardUI({
         {promoDict && (
           <PromoBanner
             ariaLabelDismiss={promoDict.ariaLabelDismiss}
-            countdown={
-              process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-                ? {
-                    enabled: true,
-                    endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                    labels: promoDict.countdown,
-                  }
-                : undefined
-            }
+            countdown={promoCountdown}
             ctaLink={`/${lang}/dashboard/credits`}
             ctaText={promoDict.ctaLoggedIn}
             inDashboard

@@ -1,5 +1,6 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
+const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
 
 // TODO: generate CSP Header and add policy domains to on the the needed routes
 /**
@@ -97,6 +98,14 @@ let nextConfig = {
   },
 };
 
+if (process.env.ANALYZE === 'true') {
+  const withBundleAnalyzer = require('@next/bundle-analyzer')({
+    enabled: true,
+  });
+  nextConfig = withBundleAnalyzer(nextConfig);
+}
+
+nextConfig = withNextIntl(nextConfig);
 nextConfig = withContentlayer(nextConfig);
 
 // nextConfig = withBotId(nextConfig);

@@ -39,7 +39,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -113,7 +113,7 @@ export default function NewVoiceClient({
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['clone'];
+  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
@@ -135,7 +135,7 @@ function NewVoiceClientInner({
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['clone'];
+  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {

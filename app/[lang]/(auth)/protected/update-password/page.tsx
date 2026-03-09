@@ -1,5 +1,6 @@
+import { getMessages } from 'next-intl/server';
+
 import { Header } from '@/components/header';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import type { Message } from '../../reset-password/reset-password-form';
 import { UpdatePasswordForm } from './update-password-form';
@@ -8,11 +9,11 @@ export default async function UpdatePasswordPage(props: {
   params: Promise<{ lang: Locale }>;
   searchParams: Promise<Message>;
 }) {
-  const params = await props.params;
-  const searchParams = await props.searchParams;
-
-  const { lang } = params;
-  const dict = await getDictionary(lang, 'auth');
+  const [{ lang }, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams,
+  ]);
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <>
@@ -21,13 +22,13 @@ export default async function UpdatePasswordPage(props: {
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
             <h1 className="mb-2 text-center font-bold text-3xl">
-              {dict.updatePassword.title}
+              {dict.auth.updatePassword.title}
             </h1>
             <p className="mb-8 text-muted-foreground text-sm">
-              {dict.updatePassword.subtitle}
+              {dict.auth.updatePassword.subtitle}
             </p>
             <UpdatePasswordForm
-              dict={dict.updatePassword}
+              dict={dict.auth.updatePassword}
               lang={lang}
               message={searchParams}
             />

@@ -4,14 +4,14 @@ import { useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
 interface GenerateUIProps {
   publicVoices: Tables<'voices'>[];
   hasEnoughCredits: boolean;
+  dict: (typeof messages)['generate'];
   isPaidUser: boolean;
-  dict: (typeof lang)['generate'];
   locale: string;
 }
 
