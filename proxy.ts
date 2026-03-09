@@ -9,6 +9,7 @@ const publicRoutesWithoutAuth = [
   '/api/stripe/webhook',
   '/api/daily-stats',
   '/api/inngest',
+  '/api/health',
 ];
 
 const publicRoutesWithLang = (locales: readonly string[]) =>
