@@ -68,9 +68,24 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
   };
 
   const play = () => {
-    if (url) {
-      audioRef.current?.play();
+    if (url && audioRef.current) {
+      const promise = audioRef.current.play();
       setIsPlaying(true);
+      if (promise !== undefined) {
+        promise.catch((error: unknown) => {
+          if (error instanceof Error && error.name === 'AbortError') {
+            // Expected when pause() is called before play() resolves — ignore silently
+            return;
+          }
+          if (error instanceof Error && error.name === 'NotAllowedError') {
+            // iOS blocks autoplay when the user gesture context is lost — reset state silently
+            setIsPlaying(false);
+            return;
+          }
+          console.error('Audio play error:', error);
+          setIsPlaying(false);
+        });
+      }
     }
   };
 

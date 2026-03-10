@@ -36,6 +36,18 @@ import {
 
 const { logger, captureException } = Sentry;
 
+/**
+ * The Google AI SDK wraps native AbortError into a generic Error whose name
+ * stays "Error" but whose message contains "AbortError" or "aborted".
+ * This helper covers both the native case and the SDK-wrapped case.
+ */
+function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'AbortError') return true;
+  const msg = error.message.toLowerCase();
+  return msg.includes('aborted') || msg.includes('abort error');
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 320; // seconds - fluid compute is enabled
 
@@ -230,7 +242,7 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.warn(error);
-        if (Error.isError(error) && error.name === 'AbortError') {
+        if (isAbortError(error)) {
           console.info('Gemini voice generation aborted');
           return NextResponse.json(
             { error: 'Request aborted' },
@@ -244,12 +256,47 @@ export async function POST(request: Request) {
             originalModel: modelUsed,
           },
         );
-        modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
-        genAIResponse = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text }] }],
-          config: geminiTTSConfig,
-        });
+        // Wrap the flash fallback so both-models-failed is handled cleanly
+        try {
+          modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
+          genAIResponse = await ai.models.generateContent({
+            model: modelUsed,
+            contents: [{ parts: [{ text }] }],
+            config: geminiTTSConfig,
+          });
+        } catch (flashError) {
+          if (isAbortError(flashError)) {
+            console.info('Gemini voice generation aborted (flash)');
+            return NextResponse.json(
+              { error: 'Request aborted' },
+              { status: 499 },
+            );
+          }
+          // Re-throw known Google API errors (quota exceeded, rate limits, etc.)
+          // so the outer catch can apply its specialised handling for them.
+          if (
+            flashError instanceof Error &&
+            flashError.message.includes('googleapis')
+          ) {
+            throw flashError;
+          }
+          logger.error('Both Gemini models failed', {
+            originalModel: 'gemini-2.5-pro-preview-tts',
+            fallbackModel: modelUsed,
+            error:
+              flashError instanceof Error
+                ? flashError.message
+                : String(flashError),
+          });
+          // Return 503 — transient upstream outage, not an application bug
+          return NextResponse.json(
+            {
+              error:
+                'Voice generation service is temporarily unavailable. Please try again in a moment.',
+            },
+            { status: 503 },
+          );
+        }
       }
       const data =
         genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -295,6 +342,28 @@ export async function POST(request: Request) {
             );
           }
         }
+        // Capture with rich context so we can diagnose WHY Gemini returned 200
+        // but produced no audio (MAX_TOKENS, SAFETY block, empty inlineData, etc.)
+        captureException(
+          new Error(
+            isProhibitedContent
+              ? 'Gemini 200 — prohibited content'
+              : 'Gemini 200 — no audio data',
+          ),
+          {
+            extra: {
+              finishReason,
+              blockReason,
+              hasData: !!data,
+              mimeType,
+              model: modelUsed,
+              isProhibitedContent,
+              textPreview: text.slice(0, 200),
+              voice,
+            },
+            user: { id: user.id },
+          },
+        );
         throw new Error(
           isProhibitedContent
             ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
@@ -463,7 +532,11 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (Error.isError(error) && error.name === 'AbortError') {
+    // Client disconnected — do not attempt to write to a dead socket (prevents write EPIPE)
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
+    if (isAbortError(error)) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }

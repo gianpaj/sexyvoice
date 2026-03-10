@@ -149,6 +149,9 @@ function float32ToInt16(float32Array: Float32Array): Int16Array {
  */
 function interleaveChannels(channelData: Float32Array[]): Float32Array {
   const numChannels = channelData.length;
+  if (numChannels === 0) {
+    throw new Error('Decoded audio contains no channels');
+  }
   if (numChannels === 1) {
     return channelData[0];
   }
@@ -246,15 +249,28 @@ export async function convertToWav(
         break;
 
       case 'ogg':
-      case 'opus':
-        // Try Opus first, fall back to Vorbis
+      case 'opus': {
+        // Try Opus first, fall back to Vorbis.
+        // Some files (e.g. WhatsApp .opus) are parsed by ogg-opus-decoder without
+        // throwing but return 0 decoded channels — treat that as a decode failure
+        // and fall through to the Vorbis decoder.
+        let opusResult: DecodedAudio | null = null;
         try {
-          decoded = await decodeOggOpus(audioData);
+          opusResult = await decodeOggOpus(audioData);
         } catch (_opusError) {
-          // If Opus decoding fails, try Vorbis
+          // fall through to Vorbis below
+        }
+        if (
+          !opusResult ||
+          opusResult.channelData.length === 0 ||
+          opusResult.samplesDecoded === 0
+        ) {
           decoded = await decodeOggVorbis(audioData);
+        } else {
+          decoded = opusResult;
         }
         break;
+      }
 
       case 'vorbis':
         decoded = await decodeOggVorbis(audioData);

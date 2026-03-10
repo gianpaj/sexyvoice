@@ -65,7 +65,7 @@ test.describe('Clone Dashboard - Authenticated User', () => {
     await clonePage.expectLegalConsentUnchecked();
   });
 
-  test('should toggle legal consent checkbox', async () => {
+  test('should display legal consent checkbox (visible)', async () => {
     await clonePage.expectLegalConsentVisible();
   });
 
@@ -73,7 +73,7 @@ test.describe('Clone Dashboard - Authenticated User', () => {
     await clonePage.expectSampleAudiosPresent();
   });
 
-  test('should expand sample audio accordion', async () => {
+  test('should display sample audio accordion items (visible)', async () => {
     await expect(clonePage.sampleAccordionItems.first()).toBeVisible();
   });
 
