@@ -1,11 +1,11 @@
 import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { join } from 'node:path';
 import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Debug cache file path (temporary for debugging)
-const CACHE_FILE = path.join(process.cwd(), '.daily-stats-cache.json');
+const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 
 import {
   countActiveCustomerSubscriptions,
@@ -103,22 +103,22 @@ export async function GET(request: NextRequest) {
 
   // Partial credit_transactions type matching the selected columns
   interface CreditTransaction {
-    id: string;
-    user_id: string;
     created_at: string;
-    type: 'purchase' | 'freemium' | 'topup' | 'refund';
     description: string | null;
+    id: string;
     metadata: Json;
     profiles: { username: string } | null;
+    type: 'purchase' | 'freemium' | 'topup' | 'refund';
+    user_id: string;
   }
 
   interface UsageEvent {
-    id: string;
-    user_id: string;
-    source_type: string;
     credits_used: number;
+    id: string;
     occurred_at: string;
     profiles: { username: string } | null;
+    source_type: string;
+    user_id: string;
   }
 
   // Load from cache if available (non-prod only)
@@ -161,6 +161,28 @@ export async function GET(request: NextRequest) {
     callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
     usageEventsWeekResult = cached.usageEventsWeekResult;
   } else {
+    // Helper to time individual queries
+    const _timed = async <T>(
+      label: string,
+      promise: Promise<T>,
+    ): Promise<T> => {
+      const start = Date.now();
+      console.log(`⏱  [daily-stats] START  ${label}`);
+      try {
+        const result = await promise;
+        console.log(
+          `✅ [daily-stats] DONE   ${label} — ${Date.now() - start}ms`,
+        );
+        return result;
+      } catch (err) {
+        console.log(
+          `❌ [daily-stats] ERROR  ${label} — ${Date.now() - start}ms`,
+          err,
+        );
+        throw err;
+      }
+    };
+
     // Fetch data in parallel - combine related queries and filter in memory
     [
       // Audio files - fetch for last specific ranges
@@ -317,26 +339,6 @@ export async function GET(request: NextRequest) {
     };
 
     allCreditTransactions = await fetchAllCreditTransactions();
-
-    // Cache results for faster debugging (non-prod only)
-    if (!isProd) {
-      const cacheData = {
-        audioYesterdayResult,
-        audioWeekResult,
-        audioTotalCountResult,
-        clonesResult,
-        profilesRecentResult,
-        profilesTotalCountResult,
-        allCreditTransactions,
-        activeSubscribersCount,
-        nextSubscriptionDueForPayment,
-        callSessionsWeekResult,
-        callSessionsTotalCountResult,
-        usageEventsWeekResult,
-      };
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-      console.log('📦 Cached API results to', CACHE_FILE);
-    }
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -350,6 +352,27 @@ export async function GET(request: NextRequest) {
   if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
   if (usageEventsWeekResult.error) throw usageEventsWeekResult.error;
+
+  // Cache results for faster debugging (non-prod only) — written after error
+  // checks so we never persist a partial/failed response to disk
+  if (!(isProd || useCache)) {
+    const cacheData = {
+      audioYesterdayResult,
+      audioWeekResult,
+      audioTotalCountResult,
+      clonesResult,
+      profilesRecentResult,
+      profilesTotalCountResult,
+      allCreditTransactions,
+      activeSubscribersCount,
+      nextSubscriptionDueForPayment,
+      callSessionsWeekResult,
+      callSessionsTotalCountResult,
+      usageEventsWeekResult,
+    };
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    console.log('📦 Cached API results to', CACHE_FILE);
+  }
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
   const audioYesterdayCount = audioYesterdayData.length;
