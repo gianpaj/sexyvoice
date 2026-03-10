@@ -56,54 +56,49 @@ export async function getCustomerData(
   return result as CustomerData;
 }
 
-export async function countActiveCustomerSubscriptions() {
-  let cursor: string | number = 0;
-  let activeCount = 0;
-  do {
-    const [nextCursor, keys]: [string, string[]] = await redis.scan(cursor, {
-      match: 'stripe:customer:*',
-    });
-
-    cursor = nextCursor;
-    if (keys.length > 0) {
-      const customerDataList = await redis.mget<CustomerData[]>(...keys);
-      activeCount += customerDataList.filter(
-        (data) => data !== null && data.status === 'active',
-      ).length;
-    }
-  } while (cursor !== '0');
-  return activeCount;
-}
-export async function findNextSubscriptionDueForPayment() {
-  let cursor: string | number = 0;
-  let nextDueSubscription: {
+interface SubscriptionScanResult {
+  activeCount: number;
+  nextDueSubscription: {
     customerId: string;
     data: CustomerData;
     dueDate: string;
-  } | null = null;
+  } | null;
+}
+
+/**
+ * Single SCAN pass over all `stripe:customer:*` keys that simultaneously
+ * counts active subscriptions and finds the next renewal date.
+ * Calling both `countActiveCustomerSubscriptions` and
+ * `findNextSubscriptionDueForPayment` separately used to do two full scans
+ * (hundreds of round-trips each). This shared helper halves that cost.
+ */
+async function scanSubscriptions(): Promise<SubscriptionScanResult> {
+  let cursor: string | number = 0;
+  let activeCount = 0;
+  let nextDueSubscription: SubscriptionScanResult['nextDueSubscription'] = null;
   let closestDueTime = Number.POSITIVE_INFINITY;
-  const now = new Date('2025-12-02').getTime() / 1000; // Current time in seconds
-  // const now = Date.now() / 1000; // Current time in seconds
+  const now = Date.now() / 1000; // seconds
 
   do {
     const [nextCursor, keys]: [string, string[]] = await redis.scan(cursor, {
       match: 'stripe:customer:*',
+      count: 500, // hint: return ~500 keys per iteration instead of the default ~10
     });
-
     cursor = nextCursor;
+
     if (keys.length > 0) {
       const customerDataList = await redis.mget<CustomerData[]>(...keys);
 
       for (let i = 0; i < customerDataList.length; i++) {
         const data = customerDataList[i];
-        // Find active subscriptions with a future renewal date
-        // that is closer than any we've seen so far
+        if (data === null || data.status !== 'active') continue;
+
+        activeCount++;
+
         if (
-          data !== null &&
-          data.status === 'active' &&
           data.currentPeriodEnd &&
-          data.currentPeriodEnd > now && // Hasn't expired yet
-          data.currentPeriodEnd < closestDueTime // Closer than previous best
+          data.currentPeriodEnd > now &&
+          data.currentPeriodEnd < closestDueTime
         ) {
           closestDueTime = data.currentPeriodEnd;
           nextDueSubscription = {
@@ -116,5 +111,31 @@ export async function findNextSubscriptionDueForPayment() {
     }
   } while (cursor !== '0');
 
+  return { activeCount, nextDueSubscription };
+}
+
+// Cache the in-flight scan promise so that concurrent callers (e.g. both
+// `countActiveCustomerSubscriptions` and `findNextSubscriptionDueForPayment`
+// called from the same Promise.all) share a single SCAN pass.
+let _scanPromise: Promise<SubscriptionScanResult> | null = null;
+
+function getSharedScanResult(): Promise<SubscriptionScanResult> {
+  if (!_scanPromise) {
+    _scanPromise = scanSubscriptions().finally(() => {
+      _scanPromise = null;
+    });
+  }
+  return _scanPromise;
+}
+
+export async function countActiveCustomerSubscriptions(): Promise<number> {
+  const { activeCount } = await getSharedScanResult();
+  return activeCount;
+}
+
+export async function findNextSubscriptionDueForPayment(): Promise<
+  SubscriptionScanResult['nextDueSubscription']
+> {
+  const { nextDueSubscription } = await getSharedScanResult();
   return nextDueSubscription;
 }

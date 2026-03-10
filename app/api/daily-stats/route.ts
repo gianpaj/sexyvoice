@@ -1,11 +1,11 @@
 import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { join } from 'node:path';
 import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 // Debug cache file path (temporary for debugging)
-const CACHE_FILE = path.join(process.cwd(), '.daily-stats-cache.json');
+const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 
 import {
   countActiveCustomerSubscriptions,
@@ -25,6 +25,12 @@ import {
   startOfPreviousMonth,
   subtractDays,
 } from './utils';
+
+// Allow up to 5 minutes — the cron does many paginated DB fetches and without
+// this Vercel kills the function at the plan default (10s hobby / 60s pro),
+// which drops the PostgREST connection and surfaces as a PostgreSQL 57014
+// (query_canceled) error rather than a Vercel timeout.
+export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
@@ -155,6 +161,28 @@ export async function GET(request: NextRequest) {
     callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
     usageEventsWeekResult = cached.usageEventsWeekResult;
   } else {
+    // Helper to time individual queries
+    const _timed = async <T>(
+      label: string,
+      promise: Promise<T>,
+    ): Promise<T> => {
+      const start = Date.now();
+      console.log(`⏱  [daily-stats] START  ${label}`);
+      try {
+        const result = await promise;
+        console.log(
+          `✅ [daily-stats] DONE   ${label} — ${Date.now() - start}ms`,
+        );
+        return result;
+      } catch (err) {
+        console.log(
+          `❌ [daily-stats] ERROR  ${label} — ${Date.now() - start}ms`,
+          err,
+        );
+        throw err;
+      }
+    };
+
     // Fetch data in parallel - combine related queries and filter in memory
     [
       // Audio files - fetch for last specific ranges
@@ -311,26 +339,6 @@ export async function GET(request: NextRequest) {
     };
 
     allCreditTransactions = await fetchAllCreditTransactions();
-
-    // Cache results for faster debugging (non-prod only)
-    if (!isProd) {
-      const cacheData = {
-        audioYesterdayResult,
-        audioWeekResult,
-        audioTotalCountResult,
-        clonesResult,
-        profilesRecentResult,
-        profilesTotalCountResult,
-        allCreditTransactions,
-        activeSubscribersCount,
-        nextSubscriptionDueForPayment,
-        callSessionsWeekResult,
-        callSessionsTotalCountResult,
-        usageEventsWeekResult,
-      };
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-      console.log('📦 Cached API results to', CACHE_FILE);
-    }
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -344,6 +352,27 @@ export async function GET(request: NextRequest) {
   if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
   if (usageEventsWeekResult.error) throw usageEventsWeekResult.error;
+
+  // Cache results for faster debugging (non-prod only) — written after error
+  // checks so we never persist a partial/failed response to disk
+  if (!(isProd || useCache)) {
+    const cacheData = {
+      audioYesterdayResult,
+      audioWeekResult,
+      audioTotalCountResult,
+      clonesResult,
+      profilesRecentResult,
+      profilesTotalCountResult,
+      allCreditTransactions,
+      activeSubscribersCount,
+      nextSubscriptionDueForPayment,
+      callSessionsWeekResult,
+      callSessionsTotalCountResult,
+      usageEventsWeekResult,
+    };
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
+    console.log('📦 Cached API results to', CACHE_FILE);
+  }
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
   const audioYesterdayCount = audioYesterdayData.length;
