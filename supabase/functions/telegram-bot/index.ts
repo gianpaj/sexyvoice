@@ -402,7 +402,7 @@ async function generateTodayStats(): Promise<string> {
     const mtdRevenueData = filterByDateRange(
       creditTransactions,
       monthStart,
-      now,
+      today,
     );
     const mtdRevenue = mtdRevenueData.reduce(reduceAmountUsd, 0);
 
