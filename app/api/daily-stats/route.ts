@@ -26,6 +26,12 @@ import {
   subtractDays,
 } from './utils';
 
+// Allow up to 5 minutes — the cron does many paginated DB fetches and without
+// this Vercel kills the function at the plan default (10s hobby / 60s pro),
+// which drops the PostgREST connection and surfaces as a PostgreSQL 57014
+// (query_canceled) error rather than a Vercel timeout.
+export const maxDuration = 300;
+
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
 
