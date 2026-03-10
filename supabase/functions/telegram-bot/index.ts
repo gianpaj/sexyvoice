@@ -126,16 +126,34 @@ function filterByDateRange<T>(
 async function generateTodayStats(): Promise<string> {
   const now = new Date();
   const today = startOfDay(now);
-  // const previousDay = subtractDays(today, 1);
+  const previousDay = subtractDays(today, 1);
   const sevenDaysAgo = subtractDays(today, 7);
   const thirtyDaysAgo = subtractDays(today, 30);
   const monthStart = startOfMonth(today);
   const previousMonthStart = startOfPreviousMonth(today);
+  const twoMonthsAgoStart = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 2, 1),
+  );
+  const threeMonthsAgoStart = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 3, 1),
+  );
 
-  // Calculate previous month period end for comparison (similar logic to route.ts)
+  // Calculate previous month period ends for comparison
   const duration = today.getTime() - monthStart.getTime();
   const previousMonthPeriodEnd = new Date(
     Math.min(previousMonthStart.getTime() + duration, monthStart.getTime()),
+  );
+  const twoMonthsAgoPeriodEnd = new Date(
+    Math.min(
+      twoMonthsAgoStart.getTime() + duration,
+      previousMonthStart.getTime(),
+    ),
+  );
+  const threeMonthsAgoPeriodEnd = new Date(
+    Math.min(
+      threeMonthsAgoStart.getTime() + duration,
+      twoMonthsAgoStart.getTime(),
+    ),
   );
 
   try {
@@ -352,6 +370,11 @@ async function generateTodayStats(): Promise<string> {
 
     // Refunds
     const refundsTodayData = filterByDateRange(refundTransactions, today, now);
+    const refundsPrevCount = filterByDateRange(
+      refundTransactions,
+      previousDay,
+      today,
+    ).length;
     const refundsTodayCount = refundsTodayData.length;
     const refundsTotalCount = refundTransactions.length;
     const totalRefundAmountUsd = refundTransactions.reduce(reduceAmountUsd, 0);
@@ -389,6 +412,21 @@ async function generateTodayStats(): Promise<string> {
       previousMonthPeriodEnd,
     );
     const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
+
+    const twoMonthsAgoMtdRevenue = filterByDateRange(
+      creditTransactions,
+      twoMonthsAgoStart,
+      twoMonthsAgoPeriodEnd,
+    ).reduce(reduceAmountUsd, 0);
+
+    const threeMonthsAgoMtdRevenue = filterByDateRange(
+      creditTransactions,
+      threeMonthsAgoStart,
+      threeMonthsAgoPeriodEnd,
+    ).reduce(reduceAmountUsd, 0);
+
+    const avgPrevMtdRevenue =
+      (prevMtdRevenue + twoMonthsAgoMtdRevenue + threeMonthsAgoMtdRevenue) / 3;
 
     const creditsTodayCount = purchaseTodayData.length;
     const totalUniquePaidUsers = new Set(
@@ -481,6 +519,13 @@ async function generateTodayStats(): Promise<string> {
     const usageValueToday = totalCreditsToday * LRCV;
     const usageValueWeek = totalCreditsWeek * LRCV;
 
+    // Anomaly detection: flag if today is significantly above 7d avg (>2x)
+    const avgCreditsPerDay = totalCreditsWeek / 7;
+    const usageAnomalyRatio =
+      avgCreditsPerDay > 0 ? totalCreditsToday / avgCreditsPerDay : 0;
+    const usageAnomalyFlag =
+      usageAnomalyRatio > 2 ? ` ⚠️ ${usageAnomalyRatio.toFixed(1)}x avg` : '';
+
     // Top Voices
     const voiceCounts = new Map<string, number>();
     for (const audio of audioTodayData) {
@@ -501,6 +546,7 @@ async function generateTodayStats(): Promise<string> {
           .join(', ');
 
     // Top Customers
+    let hasInvalidMetadata = false;
     const customerTransactions = new Map<
       string,
       Array<{ amount: number; type: string; username: string }>
@@ -512,6 +558,7 @@ async function generateTodayStats(): Promise<string> {
         typeof transaction.metadata !== 'object' ||
         typeof transaction.metadata.dollarAmount !== 'number'
       ) {
+        hasInvalidMetadata = true;
         continue;
       }
       const { dollarAmount, isFirstTopup, isFirstSubscription } =
@@ -632,14 +679,14 @@ async function generateTodayStats(): Promise<string> {
       '',
       ...(refundsTodayCount > 0
         ? [
-          `🔄 Refunds: ${refundsTodayCount} 😢`,
+          `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
           `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Today: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
         ]
         : [
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
       '',
-      `📈 Paid User Usage: ${formatCompactNumber(totalCreditsToday)} credits ≈ $${usageValueToday.toFixed(2)} (${uniquePaidUsersToday}/${totalActiveUsersToday} active users, ${paidVsTotalActiveRate}% paid)`,
+      `📈 Paid User Usage: ${formatCompactNumber(totalCreditsToday)} credits ≈ $${usageValueToday.toFixed(2)} (${uniquePaidUsersToday}/${totalActiveUsersToday} active users, ${paidVsTotalActiveRate}% paid)${usageAnomalyFlag}`,
       `  - ${formatUsageBreakdown(usageTodayBreakdown)}`,
       `  - Top 3: ${topUsageUsersList}`,
       `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
@@ -647,9 +694,15 @@ async function generateTodayStats(): Promise<string> {
       '💰 Revenue',
       `  - Today: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
       `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
-      `  - Prev MTD: $${prevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, prevMtdRevenue)})`,
+      `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
       // Subscribers info not available in Deno without extra implementation
       '',
+      ...(hasInvalidMetadata
+        ? [
+          '‼️ Info',
+          '  - Invalid Metadata in credit_transactions',
+        ]
+        : []),
     ];
 
     return message.join('\n');
