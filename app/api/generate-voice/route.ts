@@ -100,7 +100,9 @@ export async function POST(request: Request) {
 
     const isGeminiVoice = voiceObj.model === 'gpro';
 
-    const maxLength = getCharactersLimit(voiceObj.model);
+    userHasPaid = await hasUserPaid(user.id);
+
+    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
@@ -138,8 +140,6 @@ export async function POST(request: Request) {
     const hash = await generateHash(`${text}-${voice}`);
 
     const abortController = new AbortController();
-
-    userHasPaid = await hasUserPaid(user.id);
 
     let folder = 'generated-audio-free';
 
@@ -230,7 +230,7 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.warn(error);
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (Error.isError(error) && error.name === 'AbortError') {
           console.info('Gemini voice generation aborted');
           return NextResponse.json(
             { error: 'Request aborted' },
@@ -463,7 +463,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (Error.isError(error) && error.name === 'AbortError') {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }

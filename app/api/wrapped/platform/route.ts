@@ -3,37 +3,19 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 interface CreditTransaction {
-  id: string;
   created_at: string;
+  id: string;
   metadata: {
     dollarAmount?: number;
   } | null;
 }
 
 interface PlatformWrappedStats {
-  // Core stats
-  totalAudioFiles: number;
-  totalDurationSeconds: number;
-  totalCharactersGenerated: number;
+  averageTextLength: number;
+  daysSinceLaunch: number;
 
-  // User stats
-  totalUsers: number;
-  totalPaidUsers: number;
-
-  // Voice stats
-  totalVoiceClones: number;
-  totalClonedAudioFiles: number;
-
-  // Revenue stats
-  totalRevenue: number;
-  totalRefunds: number;
-  netRevenue: number;
-
-  // Top voices
-  topVoices: Array<{
-    name: string;
-    count: number;
-  }>;
+  // Fun stats
+  longestTextCharacters: number;
 
   // Monthly activity
   monthlyStats: Array<{
@@ -42,30 +24,48 @@ interface PlatformWrappedStats {
     userCount: number;
     revenue: number;
   }>;
-
-  // Fun stats
-  longestTextCharacters: number;
-  averageTextLength: number;
-  totalUniqueVoicesUsed: number;
+  netRevenue: number;
 
   // Platform age
   platformLaunchDate: string;
-  daysSinceLaunch: number;
+
+  // Top voices
+  topVoices: Array<{
+    name: string;
+    count: number;
+  }>;
+  // Core stats
+  totalAudioFiles: number;
+  totalCharactersGenerated: number;
+  totalClonedAudioFiles: number;
+  totalDurationSeconds: number;
+  totalPaidUsers: number;
+  totalRefunds: number;
+
+  // Revenue stats
+  totalRevenue: number;
+  totalUniqueVoicesUsed: number;
+
+  // User stats
+  totalUsers: number;
+
+  // Voice stats
+  totalVoiceClones: number;
 }
 
 interface AudioFile {
-  id: string;
   created_at: string | null;
   duration: number;
-  text_content: string;
+  id: string;
   model: string;
+  text_content: string;
   voice_id: string;
   voices: { name: string } | null;
 }
 
 interface Profile {
-  id: string;
   created_at: string | null;
+  id: string;
 }
 
 const CLONE_MODELS = [
@@ -304,10 +304,7 @@ export async function GET() {
       // All profiles (paginated)
       fetchAllProfiles(supabase),
       // All cloned voices (non-public) - unlikely to exceed 1000
-      supabase
-        .from('voices')
-        .select('id')
-        .eq('is_public', false),
+      supabase.from('voices').select('id').eq('is_public', false),
       // Users with payment transactions
       supabase
         .from('credit_transactions')

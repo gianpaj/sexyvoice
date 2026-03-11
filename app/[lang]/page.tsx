@@ -1,23 +1,23 @@
 import { allPosts } from 'contentlayer/generated';
-import { ArrowRightIcon, Globe2, LockIcon, Mic2, Sparkles } from 'lucide-react';
+import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import type { FAQPage, WithContext } from 'schema-dts';
+import type { Graph } from 'schema-dts';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
-import { IncomingCallButton } from '@/components/call/incoming-call-button';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
+import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { PromoBanner } from '@/components/promo-banner';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
@@ -40,74 +40,126 @@ export const metadata: Metadata = {
   },
 };
 
+type PromoCountdownLabels = NonNullable<
+  React.ComponentProps<typeof PromoBanner>['countdown']
+>['labels'];
+
 export default async function LandingPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
+  const { lang } = await props.params;
 
   // Validate that the language is a supported locale
   if (!i18n.locales.includes(lang as Locale)) {
     redirect(`/${i18n.defaultLocale}`);
   }
 
-  const dict = await getDictionary(lang);
-  const dictLanding = dict.landing;
-  const dictHeader = dict.header;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dictLanding = messages.landing;
 
   const promoDictKey =
     process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
-  // @ts-expect-error fix me
-  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
+  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
+    ? messages.promos[promoDictKey as keyof typeof messages.promos]
+    : undefined;
 
   const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
   const titleRestParts = restParts.join(',');
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown as PromoCountdownLabels,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
   const faqQuestions = dictLanding.faq.groups.flatMap(
     (group) => group.questions,
   );
 
-  const jsonLd: WithContext<FAQPage> = {
+  const siteUrl = `https://sexyvoice.ai/${lang}`;
+
+  const jsonLd: Graph = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqQuestions.map((q) => ({
-      '@type': 'Question',
-      name: q.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: q.answer,
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://sexyvoice.ai/#organization',
+        name: 'SexyVoice.ai',
+        url: 'https://sexyvoice.ai',
+        logo: 'https://sexyvoice.ai/icon-192x192.png',
+        sameAs: [
+          'https://x.com/sexyvoice_ai',
+          'https://instagram.com/sexyvoice.ai',
+        ],
       },
-    })),
+      {
+        '@type': 'WebSite',
+        '@id': 'https://sexyvoice.ai/#website',
+        url: 'https://sexyvoice.ai',
+        name: 'SexyVoice.ai',
+        description: messages.pages.description,
+        publisher: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${siteUrl}/#webpage`,
+        url: siteUrl,
+        name: messages.pages.defaultTitle,
+        description: messages.pages.description,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        about: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${siteUrl}/#faq`,
+        isPartOf: {
+          '@id': `${siteUrl}/#webpage`,
+        },
+        mainEntity: faqQuestions.map((q) => ({
+          '@type': 'Question' as const,
+          name: q.question,
+          acceptedAnswer: {
+            '@type': 'Answer' as const,
+            text: q.answer,
+          },
+        })),
+      },
+    ],
   };
 
   return (
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-      <PromoBanner
-        ariaLabelDismiss={promoDict.ariaLabelDismiss}
-        countdown={
-          process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-            ? {
-                enabled: true,
-                endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                labels: promoDict.countdown,
-              }
-            : undefined
-        }
-        ctaLink={`/${lang}/signup`}
-        ctaText={promoDict.ctaLoggedOut}
-        isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-        text={promoDict.text}
-      />
-      <HeaderStatic dict={dictHeader} lang={lang} />
+      {promoDict && (
+        <PromoBanner
+          ariaLabelDismiss={promoDict.ariaLabelDismiss}
+          countdown={promoCountdown}
+          ctaLink={`/${lang}/signup`}
+          ctaText={promoDict.ctaLoggedOut}
+          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
+          text={promoDict.text}
+        />
+      )}
+      <HeaderStatic />
       <main id="main-content">
         <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
-              {/*<LandingHero />*/}
+              <LandingHero />
               <h1 className="font-bold text-5xl md:text-6xl">
                 <span className="text-white/90 leading-[3.5rem]">
                   {firstPart}
@@ -129,10 +181,7 @@ export default async function LandingPage(props: {
                 {dictLanding.hero.subtitle}
               </p>
 
-              <div className="mx-auto">
-                <IncomingCallButton animated lang={lang} />
-              </div>
-              <div className="mx-auto flex w-fit flex-col gap-2 pt-8">
+              <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
                   className="w-fit self-center hit-area-4"
@@ -153,7 +202,7 @@ export default async function LandingPage(props: {
 
             {/* Audio Previews Grid */}
             <SampleAudioPreviews
-              initialAudios={getSampleAudiosByLanguage()}
+              initialAudios={getSampleAudiosByLanguage(lang)}
               trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
               trySamplesTitle={dictLanding.popular.trySamplesTitle}
             />
@@ -188,16 +237,16 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <LockIcon aria-hidden className="size-6 text-gray-200" />
+                    <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
-                    No humans involved - your secrets are safe here
+                    {dictLanding.features.security.title}
                   </h3>
                 </CardHeader>
                 <CardContent>
                   <p className="text-justify text-sm">
-                    {dict.call.notice1} - {dict.call.notice2}
+                    {dictLanding.features.security.description}
                   </p>
                 </CardContent>
               </Card>
@@ -255,7 +304,7 @@ export default async function LandingPage(props: {
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
                   key={idx}
                 >
-                  <Link href={`/${post.locale}${post.url}`} prefetch>
+                  <Link href={post.url} prefetch>
                     <CardHeader>
                       {post.image && (
                         <Image

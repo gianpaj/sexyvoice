@@ -4,14 +4,15 @@ import { useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
 interface GenerateUIProps {
-  publicVoices: Tables<'voices'>[];
+  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
-  dict: (typeof lang)['generate'];
+  isPaidUser: boolean;
   locale: string;
+  publicVoices: Tables<'voices'>[];
 }
 
 const STYLE_PROMPT_VARIANT_MOAN =
@@ -20,6 +21,7 @@ const STYLE_PROMPT_VARIANT_MOAN =
 export function GenerateUI({
   publicVoices,
   hasEnoughCredits,
+  isPaidUser,
   dict,
   locale,
 }: GenerateUIProps) {
@@ -42,6 +44,7 @@ export function GenerateUI({
         <AudioGenerator
           dict={dict}
           hasEnoughCredits={hasEnoughCredits}
+          isPaidUser={isPaidUser}
           locale={locale}
           selectedStyle={selectedStyle}
           selectedVoice={selectedVoiceSample}

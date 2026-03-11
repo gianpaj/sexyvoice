@@ -14,6 +14,8 @@ export const config = {
 const { R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME } =
   process.env;
 
+const DEFAULT_PUBLIC_URL = 'https://files.sexyvoice.ai';
+
 if (
   !(R2_ENDPOINT && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME)
 ) {
@@ -33,9 +35,11 @@ export const uploadFileToR2 = async (
   filename: string,
   buffer: PutObjectCommandInput['Body'],
   contentType: string,
+  bucketName: string = R2_BUCKET_NAME,
+  publicBaseUrl: string = DEFAULT_PUBLIC_URL,
 ) => {
   const params: PutObjectCommandInput = {
-    Bucket: R2_BUCKET_NAME,
+    Bucket: bucketName,
     Key: filename,
     Body: buffer,
     ACL: 'public-read',
@@ -43,7 +47,7 @@ export const uploadFileToR2 = async (
   };
 
   await s3Client.send(new PutObjectCommand(params));
-  return `https://files.sexyvoice.ai/${filename}`;
+  return `${publicBaseUrl}/${filename}`;
 };
 
 export const deleteFileFromR2 = async (filename: string) => {

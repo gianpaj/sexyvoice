@@ -1,5 +1,6 @@
+import { getMessages } from 'next-intl/server';
+
 import CreditsSection from '@/components/credits-section';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
@@ -8,19 +9,17 @@ export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-
   const supabase = await createClient();
-
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
+
   if (!user || error) {
     return <div>Not logged in</div>;
   }
 
-  // Run independent queries in parallel
-  const [{ data: creditsData }, { data: creditTransactions }] =
+  const [{ data: creditsData }, { data: creditTransactions }, messages] =
     await Promise.all([
       supabase
         .from('credits')
@@ -33,18 +32,17 @@ export default async function NewVoicePage(props: {
         .select('amount')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
+      getMessages({ locale: lang }),
     ]);
 
+  const dict = messages as IntlMessages;
   const credits = creditsData || { amount: 0 };
-
-  const dict = await getDictionary(lang);
 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 lg:hidden">
         <CreditsSection
           creditTransactions={creditTransactions}
-          dict={dict.creditsSection}
           doNotToggleSidebar
           lang={lang}
           userId={user.id}

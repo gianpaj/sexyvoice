@@ -31,20 +31,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
   getMyAudioFiles,
 } from '@/lib/supabase/queries.client';
-import { columns } from './columns';
+import { createColumns } from './columns';
 
 interface DataTableProps {
-  userId: string;
   dict: (typeof langDict)['history'];
+  showApiColumns: boolean;
+  userId: string;
 }
 
-export function DataTable({ userId, dict }: DataTableProps) {
+export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -55,6 +56,7 @@ export function DataTable({ userId, dict }: DataTableProps) {
     queryFn: () => getMyAudioFiles(supabase, userId),
     enabled: !!userId,
   });
+  const columns = createColumns({ showApiColumns });
 
   const table = useReactTable<AudioFileAndVoicesRes>({
     data: (data as AudioFileAndVoicesRes[]) ?? [],

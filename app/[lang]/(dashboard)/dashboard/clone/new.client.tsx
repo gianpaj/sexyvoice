@@ -39,7 +39,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
+import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
@@ -80,39 +81,39 @@ const sampleAudios: readonly SampleAudio[] = [
   // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
 ];
 
-const SUPPORTED_LOCALE_CODES = [
-  { code: 'ar', value: 'arabic' },
-  { code: 'da', value: 'danish' },
-  { code: 'de', value: 'german' },
-  { code: 'el', value: 'greek' },
-  { code: 'en', value: 'english' },
-  { code: 'en-multi', value: 'english' },
-  { code: 'es', value: 'spanish' },
-  { code: 'fi', value: 'finnish' },
-  { code: 'fr', value: 'french' },
-  { code: 'he', value: 'hebrew' },
-  { code: 'hi', value: 'hindi' },
-  { code: 'it', value: 'italian' },
-  { code: 'ja', value: 'japanese' },
-  { code: 'ko', value: 'korean' },
-  { code: 'ms', value: 'malay' },
-  { code: 'nl', value: 'dutch' },
-  { code: 'no', value: 'norwegian' },
-  { code: 'pl', value: 'polish' },
-  { code: 'pt', value: 'portuguese' },
-  { code: 'ru', value: 'russian' },
-  { code: 'sv', value: 'swedish' },
-  { code: 'sw', value: 'swahili' },
-  { code: 'tr', value: 'turkish' },
-  { code: 'zh', value: 'chinese' },
-];
+const SUPPORTED_LOCALE_CODES: Record<string, string> = {
+  ar: 'arabic',
+  da: 'danish',
+  de: 'german',
+  el: 'greek',
+  en: 'english',
+  'en-multi': 'english',
+  es: 'spanish',
+  fi: 'finnish',
+  fr: 'french',
+  he: 'hebrew',
+  hi: 'hindi',
+  it: 'italian',
+  ja: 'japanese',
+  ko: 'korean',
+  ms: 'malay',
+  nl: 'dutch',
+  no: 'norwegian',
+  pl: 'polish',
+  pt: 'portuguese',
+  ru: 'russian',
+  sv: 'swedish',
+  sw: 'swahili',
+  tr: 'turkish',
+  zh: 'chinese',
+};
 
 export default function NewVoiceClient({
   dict,
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['clone'];
+  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
@@ -134,7 +135,7 @@ function NewVoiceClientInner({
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['clone'];
+  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
@@ -223,14 +224,16 @@ function NewVoiceClientInner({
   // FFmpeg for audio conversion
 
   const supportedLocales = useMemo(() => {
-    const languageNames = new Intl.DisplayNames([lang], { type: 'language' });
-    return SUPPORTED_LOCALE_CODES.map(({ code, value }) => ({
+    const codes = Object.keys(SUPPORTED_LOCALE_CODES);
+    const translated = getTranslatedLanguages(lang, codes);
+    const merged = translated.map(({ value: code, label }) => ({
       code,
-      value,
-      name:
-        `${languageNames.of(code)?.charAt(0).toUpperCase()}${languageNames.of(code)?.slice(1)}` ||
-        code,
-    })).sort((a, b) => a.name.localeCompare(b.name));
+      value: SUPPORTED_LOCALE_CODES[code] || code,
+      name: label,
+    }));
+    const current = merged.find((l) => l.code === lang);
+    const rest = merged.filter((l) => l.code !== lang);
+    return current ? [current, ...rest] : merged;
   }, [lang]);
 
   const onFilesAdded = () => {
@@ -318,7 +321,7 @@ function NewVoiceClientInner({
             console.error('WebM to WAV conversion error:', convertError);
             // TODO send logs to Sentry
             setErrorMessage(
-              Error.isError(convertError)
+              convertError instanceof Error
                 ? `Audio conversion failed: ${convertError.message}`
                 : 'Audio conversion failed. Please try recording again.',
             );
@@ -386,7 +389,7 @@ function NewVoiceClientInner({
       setActiveTab('preview');
     } catch (err) {
       if (
-        Error.isError(err) &&
+        err instanceof Error &&
         err.message === 'signal is aborted without reason'
       ) {
         return;
@@ -394,7 +397,7 @@ function NewVoiceClientInner({
       let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
-      } else if (Error.isError(err)) {
+      } else if (err instanceof Error) {
         errorMsg = err.message;
       }
       setErrorMessage(errorMsg || 'Unexpected error occurred');

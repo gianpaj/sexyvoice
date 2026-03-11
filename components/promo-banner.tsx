@@ -11,12 +11,7 @@ import { getCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
 interface PromoBannerProps {
-  inDashboard?: boolean;
-  text: string;
-  ctaLink: string;
-  ctaText: string;
   ariaLabelDismiss: string;
-  isEnabled?: boolean;
   countdown?: {
     enabled: boolean;
     endDate: string; // UTC ISO date string
@@ -28,16 +23,21 @@ interface PromoBannerProps {
       seconds: string;
     };
   };
+  ctaLink: string;
+  ctaText: string;
+  inDashboard?: boolean;
+  isEnabled?: boolean;
+  text: string;
 }
 
 const PROMO_BANNER_COOKIE = `${process.env.NEXT_PUBLIC_PROMO_ID}-dismissed`;
 
 interface TimeRemaining {
   days: number;
+  expired: boolean;
   hours: number;
   minutes: number;
   seconds: number;
-  expired: boolean;
 }
 
 function calculateTimeRemaining(endDate: string): TimeRemaining | null {

@@ -15,17 +15,17 @@ export interface AudioPlayerControls {
 }
 
 interface AudioPlayerWithContextProps {
-  url: string;
-  className?: string;
-  buttonClassName?: string;
-  waveformClassName?: string;
-  playAudioTitle: string;
-  showWaveform?: boolean;
-  waveformHeight?: number;
-  waveColor?: string;
-  progressColor?: string;
   autoPlay?: boolean;
+  buttonClassName?: string;
+  className?: string;
   onControlsReady?: (controls: AudioPlayerControls) => void;
+  playAudioTitle: string;
+  progressColor?: string;
+  showWaveform?: boolean;
+  url: string;
+  waveColor?: string;
+  waveformClassName?: string;
+  waveformHeight?: number;
 }
 
 export function AudioPlayerWithContext({

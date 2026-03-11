@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
-// Path to dictionaries folder
-const DICTIONARIES_PATH = join(__dirname, '../lib/i18n/dictionaries');
+// Path to messages folder
+const MESSAGES_PATH = join(__dirname, '../messages');
 
 // Function to get all keys in a nested object (flattened with dot notation)
 function getAllKeys(obj, parentKey = '') {
@@ -50,7 +50,7 @@ function keyExists(obj, path) {
 function checkTranslations() {
   try {
     // Read all JSON files in the dictionaries folder
-    const files = readdirSync(DICTIONARIES_PATH).filter((file) =>
+    const files = readdirSync(MESSAGES_PATH).filter((file) =>
       file.endsWith('.json'),
     );
 
@@ -90,7 +90,7 @@ function checkTranslations() {
 function loadTranslations(files) {
   const translations = {};
   for (const file of files) {
-    const filePath = join(DICTIONARIES_PATH, file);
+    const filePath = join(MESSAGES_PATH, file);
     const content = readFileSync(filePath, 'utf8');
     translations[file] = JSON.parse(content);
   }

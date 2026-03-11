@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle, OctagonAlert } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { handleDeleteAccountAction } from '@/app/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -16,70 +17,53 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
-import type { Locale } from '@/lib/i18n/i18n-config';
 
-export function DeleteAccountForm({
-  lang,
-  dict,
-}: {
-  lang: Locale;
-  dict: (typeof langDict)['profile'];
-}) {
+export function DeleteAccountForm() {
+  const t = useTranslations('profile.dangerZone.deleteAccount');
+  const locale = useLocale();
+
   const handleDeleteAccount = async () => {
-    await handleDeleteAccountAction({ lang });
+    await handleDeleteAccountAction({ lang: locale });
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4">
-        <Alert className="p-4" variant="destructive">
+      <Alert variant="destructive">
+        <div className="flex items-center gap-3">
           <AlertCircle className="size-4" />
-          <AlertDescription>
-            {dict.dangerZone.deleteAccount.alertTitle}
-          </AlertDescription>
-        </Alert>
-      </div>
+          <AlertDescription>{t('alertTitle')}</AlertDescription>
+        </div>
+      </Alert>
 
-      <div className="grid grid-cols-1 gap-4">
-        {/* <div className="space-y-2">
-          <Label htmlFor="currentPassword">Confirm</Label>
-        </div> */}
-
-        <AlertDialog>
+      <AlertDialog>
+        <div className="flex justify-end">
           <AlertDialogTrigger asChild>
-            <div className="flex justify-end">
-              <Button variant="destructive">
-                {dict.dangerZone.deleteAccount.button}
-              </Button>
-            </div>
+            <Button variant="destructive">{t('button')}</Button>
           </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader className="items-center">
-              <AlertDialogTitle>
-                <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
-                  <OctagonAlert className="h-7 w-7 text-destructive" />
-                </div>
-                {dict.dangerZone.deleteAccount.confirmTitle}
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-center text-[15px]">
-                {dict.dangerZone.deleteAccount.confirmDescription}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-2 sm:justify-center">
-              <AlertDialogCancel>
-                {dict.dangerZone.deleteAccount.cancel}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                className={buttonVariants({ variant: 'destructive' })}
-                onClick={handleDeleteAccount}
-              >
-                {dict.dangerZone.deleteAccount.continue}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+        </div>
+        <AlertDialogContent>
+          <AlertDialogHeader className="items-center">
+            <AlertDialogTitle>
+              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+                <OctagonAlert className="h-7 w-7 text-destructive" />
+              </div>
+              {t('confirmTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-[15px]">
+              {t('confirmDescription')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-2 sm:justify-center">
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: 'destructive' })}
+              onClick={handleDeleteAccount}
+            >
+              {t('continue')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

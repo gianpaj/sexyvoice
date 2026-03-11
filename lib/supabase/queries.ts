@@ -3,21 +3,135 @@
 import * as Sentry from '@sentry/nextjs';
 
 import { createAdminClient } from './admin';
-import { MAX_FREE_GENERATIONS, FREE_USER_CALL_LIMIT_SECONDS } from './constants';
+import {
+  FREE_USER_CALL_LIMIT_SECONDS,
+  MAX_FREE_GENERATIONS,
+} from './constants';
 import { createClient } from './server';
 
 // Types for usage event tracking
 type UsageSourceType = Database['public']['Enums']['usage_source_type'];
 type UsageUnitType = Database['public']['Enums']['usage_unit_type'];
 
+// ─── Voices ───
+
+/** Get call voices (feature = 'call') for SSR */
+export async function getCallVoices() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select(
+      'id, name, type, description, sample_url, feature, model, language, sort_order',
+    )
+    .eq('feature', 'call')
+    // .eq('is_public', true)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+// ─── Characters ───
+
+/**
+ * Get public (predefined) call characters for SSR.
+ * Joins with voices to get voice name + sample_url.
+ * Does NOT include prompt text — predefined prompts never reach the client.
+ */
+export async function getPublicCallCharacters() {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select(
+      `
+      id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      voice_id,
+      voices ( name, sample_url ),
+      prompt_id,
+      prompts ( type )
+    `,
+    )
+    // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
+    // Only prompt metadata (type) is joined. Public prompts are readable via RLS (is_public=true).
+    .eq('is_public', true)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Get user's custom call characters for SSR.
+ * Joins with prompts (to get editable prompt text) and voices.
+ */
+export async function getUserCallCharacters(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('characters')
+    .select(
+      `
+      id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      voice_id,
+      voices ( name, sample_url ),
+      prompt_id,
+      prompts ( prompt, localized_prompts )
+    `,
+    )
+    .eq('is_public', false)
+    .eq('user_id', userId)
+    .order('sort_order');
+  if (error) throw error;
+  return data;
+}
+
+/** Count user's custom call characters (for 10-limit check) */
+export async function countUserCallCharacters(userId: string): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('characters')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_public', false)
+    .eq('user_id', userId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+// ─── Prompts (admin — for call-token resolution) ───
+
+/**
+ * Resolve the prompt for a character by character ID.
+ * Uses admin client to bypass RLS (reads predefined prompt text server-side).
+ */
+export async function resolveCharacterPrompt(characterId: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('characters')
+    .select(
+      `
+      id, is_public, user_id, voice_id,
+      voices ( id, name ),
+      prompts ( prompt, localized_prompts )
+    `,
+    )
+    .eq('id', characterId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export interface InsertUsageEventParams {
-  userId: string;
-  sourceType: UsageSourceType;
-  sourceId?: string | null;
-  unit: UsageUnitType;
-  quantity: number;
+  apiKeyId?: string | null;
   creditsUsed: number;
+  dollarAmount?: number | null;
+  durationSeconds?: number | null;
+  inputChars?: number | null;
   metadata?: Json;
+  model?: string | null;
+  outputChars?: number | null;
+  quantity: number;
+  requestId?: string | null;
+  sourceId?: string | null;
+  sourceType: UsageSourceType;
+  unit: UsageUnitType;
+  userId: string;
 }
 
 export async function getCredits(userId: string): Promise<number> {
@@ -134,7 +248,14 @@ export const insertUsageEvent = async (
       .insert({
         user_id: params.userId,
         source_type: params.sourceType,
+        request_id: params.requestId ?? null,
         source_id: params.sourceId ?? null,
+        api_key_id: params.apiKeyId ?? null,
+        model: params.model ?? null,
+        input_chars: params.inputChars ?? null,
+        output_chars: params.outputChars ?? null,
+        duration_seconds: params.durationSeconds ?? null,
+        dollar_amount: params.dollarAmount ?? null,
         unit: params.unit,
         quantity: params.quantity,
         credits_used: params.creditsUsed,
@@ -425,6 +546,104 @@ export const isFreeUserOverCallLimit = async (
   const totalDuration = await getTotalCallDurationSeconds(userId);
   return totalDuration >= FREE_USER_CALL_LIMIT_SECONDS;
 };
+
+// ─── Admin variants for external API routes ───
+// These bypass RLS using the service role key. Use only in server-side
+// API routes where the userId is resolved from a trusted API key, not a
+// session cookie.
+
+export async function getCreditsAdmin(userId: string): Promise<number> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credits')
+    .select('amount')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.amount ?? 0;
+}
+
+export async function getVoiceIdByNameAdmin(
+  voiceName: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('name', voiceName)
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function reduceCreditsAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
+
+  if (error) throw error;
+}
+
+// biome-ignore lint/suspicious/useAwait: server action
+export async function saveAudioFileAdmin(params: {
+  userId: string;
+  filename: string;
+  text: string;
+  url: string;
+  model: string;
+  predictionId?: string;
+  isPublic: boolean;
+  voiceId: string;
+  duration: string;
+  credits_used: number;
+  usage?: Record<string, string | number | boolean>;
+}) {
+  const admin = createAdminClient();
+  return admin
+    .from('audio_files')
+    .insert({
+      user_id: params.userId,
+      storage_key: params.filename,
+      text_content: params.text,
+      url: params.url,
+      model: params.model,
+      prediction_id: params.predictionId,
+      is_public: params.isPublic,
+      voice_id: params.voiceId,
+      duration: Number.parseFloat(params.duration),
+      credits_used: params.credits_used,
+      usage: params.usage,
+    })
+    .select('id')
+    .single();
+}
+
+export async function hasUserPaidAdmin(userId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_transactions')
+    .select('type')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup']);
+
+  if (error) throw error;
+
+  return (data?.length ?? 0) > 0;
+}
 
 export const isFreemiumUserOverLimit = async (
   userId: string,

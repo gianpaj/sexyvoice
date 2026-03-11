@@ -1,15 +1,10 @@
 import { defaultSessionConfig } from '@/data/default-config';
 import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
 import { getPresetInstructions } from '@/data/preset-instructions';
-import {
-  defaultPresets as baseDefaultPresets,
-  type Preset,
-} from '@/data/presets';
+import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
 
-export const createPlaygroundStateHelpers = (
-  defaultPresets: Preset[] = baseDefaultPresets,
-) => {
+export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
     getSelectedPreset: (state: PlaygroundState) =>
       [...defaultPresets, ...state.customCharacters].find(
@@ -151,40 +146,54 @@ export const createPlaygroundStateHelpers = (
         return state;
       }
 
+      // Resolve the selected preset so we can sync sessionConfig
+      const allPresets = [...defaultPresets, ...state.customCharacters];
+      const preset = allPresets.find((p) => p.id === state.selectedPresetId);
+
+      // Sync sessionConfig from the selected preset so the correct voice
+      // (and other settings) are sent to the call-token API.
+      // Voice changes on custom characters only update the preset inside
+      // customCharacters, not the top-level sessionConfig.
+      const baseState = preset
+        ? { ...state, sessionConfig: preset.sessionConfig }
+        : state;
+
       // 1. Per-language character override takes highest priority
       const langOverride =
-        state.characterOverrides[state.selectedPresetId]?.[state.language];
+        baseState.characterOverrides[baseState.selectedPresetId!]?.[
+          baseState.language
+        ];
       if (langOverride !== undefined) {
-        return { ...state, instructions: langOverride };
+        return { ...baseState, instructions: langOverride };
       }
 
       // 2. Custom character localizedInstructions
-      const allPresets = [...defaultPresets, ...state.customCharacters];
-      const preset = allPresets.find((p) => p.id === state.selectedPresetId);
-      if (preset?.localizedInstructions?.[state.language] !== undefined) {
+      if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
         return {
-          ...state,
-          instructions: preset.localizedInstructions[state.language] as string,
+          ...baseState,
+          instructions: preset.localizedInstructions[
+            baseState.language
+          ] as string,
         };
       }
 
       // 3. Built-in preset translations
-      if (state.language !== 'en') {
+      if (baseState.language !== 'en') {
         const translatedInstructions = getPresetInstructions(
-          state.selectedPresetId,
-          state.language as CallLanguage,
+          baseState.selectedPresetId!,
+          baseState.language as CallLanguage,
         );
         if (translatedInstructions) {
-          return { ...state, instructions: translatedInstructions };
+          return { ...baseState, instructions: translatedInstructions };
         }
       }
 
       // 4. Fallback to preset's default instructions
       if (preset) {
-        return { ...state, instructions: preset.instructions };
+        return { ...baseState, instructions: preset.instructions };
       }
 
-      return state;
+      return baseState;
     },
   };
 

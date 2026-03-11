@@ -4,7 +4,9 @@ export type UsageSourceType =
   | 'tts'
   | 'voice_cloning'
   | 'live_call'
-  | 'audio_processing';
+  | 'audio_processing'
+  | 'api_tts'
+  | 'api_voice_cloning';
 
 export type UsageUnitType = 'chars' | 'mins' | 'secs' | 'operation';
 
@@ -12,16 +14,16 @@ export type UsageEvent = Tables<'usage_events'>;
 
 export interface PaginatedUsageEventsResponse {
   data: UsageEvent[];
-  totalCount: number;
   page: number;
   pageSize: number;
+  totalCount: number;
   totalPages: number;
 }
 
 export interface MonthlyUsageSummary {
+  bySourceType: Record<UsageSourceType, { credits: number; count: number }>;
   totalCredits: number;
   totalOperations: number;
-  bySourceType: Record<UsageSourceType, { credits: number; count: number }>;
 }
 
 export interface GetUsageEventsOptions {
@@ -84,6 +86,8 @@ function buildSummaryFromRpcData(
       voice_cloning: { credits: 0, count: 0 },
       live_call: { credits: 0, count: 0 },
       audio_processing: { credits: 0, count: 0 },
+      api_tts: { credits: 0, count: 0 },
+      api_voice_cloning: { credits: 0, count: 0 },
     },
   };
 

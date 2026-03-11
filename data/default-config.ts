@@ -1,10 +1,9 @@
 import { ModelId } from './models';
 import type { SessionConfig } from './session-config';
-import { VoiceId } from './voices';
 
 export const defaultSessionConfig: SessionConfig = {
   model: ModelId.GROK_4_1_FAST_NON_REASONING,
-  voice: VoiceId.ARA,
+  voice: 'Ara',
   temperature: 0.8,
   maxOutputTokens: null,
   grokImageEnabled: false,

@@ -3,9 +3,9 @@ import { AudioLines, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ChatControlsProps {
-  showEditButton: boolean;
   isEditingInstructions: boolean;
   onToggleEdit: () => void;
+  showEditButton: boolean;
 }
 
 export function ChatControls({

@@ -1,52 +1,46 @@
+import { getMessages } from 'next-intl/server';
+import { redirect } from 'next/navigation';
+
 import CreditsSection from '@/components/credits-section';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
 
 export default async function GeneratePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-  const { lang } = params;
-  const dict = await getDictionary(lang);
-
+  const { lang } = await props.params;
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
   const supabase = await createClient();
 
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  if (!user || error) {
-    return <div>Not logged in</div>;
+
+  const userId = user?.id;
+  if (!userId || error) {
+    redirect(`/${lang}/login`);
   }
 
-  // Get user's credits
   const { data: creditsData } = (await supabase
     .from('credits')
     .select('amount')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .single()) || { amount: 0 };
-
   const credits = creditsData || { amount: 0 };
 
-  const { data: credit_transactions } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  // Get user's voices
-  // const { data: userVoices } = await supabase
-  //   .from('voices')
-  //   .select('*')
-  //   .eq('user_id', user?.id);
-
-  // Get public voices
-  const { data: publicVoices } = await supabase
-    .from('voices')
-    .select('*')
-    .eq('is_public', true);
+  const [{ data: creditTransactions }, isPaidUser, { data: publicVoices }] =
+    await Promise.all([
+      supabase
+        .from('credit_transactions')
+        .select('amount')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false }),
+      hasUserPaid(userId),
+      supabase.from('voices').select('*').eq('feature', 'tts').eq('is_public', true),
+    ]);
 
   if (!publicVoices) {
     return <div>No public voices found</div>;
@@ -63,11 +57,10 @@ export default async function GeneratePage(props: {
 
       <div className="lg:hidden">
         <CreditsSection
-          creditTransactions={credit_transactions || []}
-          dict={dict.creditsSection}
+          creditTransactions={creditTransactions || []}
           doNotToggleSidebar
           lang={lang}
-          userId={user.id}
+          userId={userId}
         />
       </div>
 
@@ -75,6 +68,7 @@ export default async function GeneratePage(props: {
         <GenerateUI
           dict={dict.generate}
           hasEnoughCredits={credits.amount >= 10}
+          isPaidUser={isPaidUser}
           locale={lang}
           publicVoices={publicVoices}
         />

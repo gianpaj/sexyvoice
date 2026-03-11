@@ -5,12 +5,12 @@ import { FileAudio, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  file: File;
-  onRemove: () => void;
-  disabled: boolean;
   dict: {
     remove: string;
   };
+  disabled: boolean;
+  file: File;
+  onRemove: () => void;
 }
 
 function getFileExtension(filename: string): string {
