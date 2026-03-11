@@ -693,7 +693,7 @@ export function AudioGenerator({
               }
               value={text}
             />
-            <div className="absolute top-2 right-4 h-8 w-8">
+            <div className="absolute top-2 right-4 flex flex-col">
               <Button
                 className={'text-zinc-400 hover:bg-zinc-800 hover:text-white'}
                 onClick={() => setIsFullscreen(!isFullscreen)}
