@@ -45,6 +45,9 @@ tsconfig.tsbuildinfo
 
 backups
 
+# Python virtual environment used by scripts/
+scripts/venv
+
 .edgeconfig.json
 
 .daily-stats-cache.json

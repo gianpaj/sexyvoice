@@ -27,7 +27,7 @@ import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
   allPosts
-    .filter((post) => post.locale === lang && post.image)
+    .filter((post) => post.locale === lang && post.image && !post.draft)
     ?.sort(
       (postA, postB) =>
         new Date(postB.date).getTime() - new Date(postA.date).getTime(),
@@ -155,19 +155,17 @@ export default async function LandingPage(props: {
       )}
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
+        <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <LandingHero />
               <h1 className="font-bold text-5xl md:text-6xl">
-                <span className="text-white/90 leading-[3.5rem]">
-                  {firstPart}
-                </span>
+                <span className="text-white/90 leading-14">{firstPart}</span>
                 <br />
                 {titleRestParts && (
                   <span
-                    className="whitespace-break-spaces bg-gradient-to-r bg-clip-text text-transparent leading-[4rem]"
+                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent leading-16"
                     style={{
                       backgroundImage:
                         'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
@@ -184,7 +182,7 @@ export default async function LandingPage(props: {
               <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
-                  className="w-fit self-center"
+                  className="hit-area-4 w-fit self-center"
                   effect="expandIcon"
                   icon={ArrowRightIcon}
                   iconPlacement="right"
@@ -340,7 +338,7 @@ export default async function LandingPage(props: {
               </p>
               <Button
                 asChild
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
+                className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
                 effect="ringHover"
                 size="lg"
               >

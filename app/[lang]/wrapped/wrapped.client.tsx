@@ -85,8 +85,8 @@ function StatCard({
 function HeroSection({ stats }: { stats: PlatformWrappedStats }) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-border bg-card">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-purple/20 via-transparent to-brand-red/20" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-chart-2/10 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-radial-tr-via from-brand-purple/20 via-transparent to-brand-red/20" />
+      <div className="absolute inset-0 bg-radial-bl-via from-chart-2/10 via-transparent to-transparent" />
 
       <div className="relative px-8 py-16 md:px-16 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
@@ -223,7 +223,7 @@ function MonthlyGrowthSection({ stats }: { stats: PlatformWrappedStats }) {
 function CTASection() {
   return (
     <section className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-12">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-purple via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-radial-tr-via from-brand-purple via-transparent to-transparent" />
 
       <div className="relative text-center">
         <h2 className="mb-3 font-bold text-2xl text-primary-foreground md:text-3xl">

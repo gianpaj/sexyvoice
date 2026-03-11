@@ -126,7 +126,7 @@ function CreditsSection({
         </div>
         <Button
           asChild
-          className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text pr-0 text-transparent hover:no-underline"
+          className="bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text pr-0 text-transparent hover:no-underline"
           size="sm"
           variant="link"
         >

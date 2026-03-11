@@ -16,7 +16,7 @@ export default async function SignUpPage(props: {
     <>
       <HeaderStatic />
       <main
-        className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
+        className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
         id="main-content"
       >
         <div className="mx-auto my-4 inline-flex items-center rounded-full bg-blue-500/10 bg-blue-600/20 px-4 py-2 text-blue-400">

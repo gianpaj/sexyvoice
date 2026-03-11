@@ -17,7 +17,7 @@ export default async function ResetPasswordPage(props: {
   return (
     <>
       <HeaderStatic />
-      <div className="flex min-h-[calc(100vh-65px)] flex-col justify-end p-4 pt-11 sm:min-h-screen sm:items-center sm:justify-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800">
+      <div className="flex min-h-[calc(100vh-65px)] flex-col justify-end p-4 pt-11 sm:min-h-screen sm:items-center sm:justify-center sm:pt-0 dark:bg-linear-to-br dark:from-gray-900 dark:to-gray-800">
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
             <h1 className="mb-2 text-center font-bold text-3xl">

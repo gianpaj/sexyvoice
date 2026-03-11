@@ -309,7 +309,7 @@ export function AudioGenerator({
             <Textarea
               className={cn(
                 'textarea-2 transition-[height] duration-200 ease-in-out',
-                [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
+                [isGeminiVoice ? 'pr-16' : 'pr-30'],
               )}
               maxLength={charactersLimit + 10}
               onChange={(e) => setText(e.target.value)}
@@ -435,7 +435,7 @@ export function AudioGenerator({
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
-          <div className="flex flex-grow-0 gap-2">
+          <div className="flex grow-0 gap-2">
             <Button
               className="h-10 w-full sm:w-fit"
               data-testid="generate-button"
@@ -457,7 +457,7 @@ export function AudioGenerator({
               ) : (
                 <span className="flex items-center gap-2">
                   {dict.ctaButton}
-                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </span>
@@ -467,7 +467,7 @@ export function AudioGenerator({
               <Button
                 aria-label={dict.cancel}
                 className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
-                icon={() => <CircleStop className="!size-8" name="cancel" />}
+                icon={() => <CircleStop className="size-8!" name="cancel" />}
                 iconPlacement="right"
                 onClick={handleCancel}
                 size="icon"

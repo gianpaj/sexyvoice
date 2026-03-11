@@ -1,3 +1,5 @@
+@reference "../../../globals.css";
+
 .gradient-text {
   -webkit-text-fill-color: transparent;
   background: var(--gradient-background);
@@ -18,11 +20,13 @@
 
 /* Waveform bars — used in header decoration and progress display */
 @keyframes waveform-pulse {
+
   0%,
   100% {
     transform: scaleY(0.25);
     opacity: 0.5;
   }
+
   50% {
     transform: scaleY(1);
     opacity: 1;
@@ -43,9 +47,11 @@
   0% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
   }
+
   70% {
     box-shadow: 0 0 0 14px rgba(239, 68, 68, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
