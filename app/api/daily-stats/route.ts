@@ -134,6 +134,8 @@ export async function GET(request: NextRequest) {
   let profilesRecentResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let profilesTotalCountResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let apiKeysYesterdayResult: any;
   let allCreditTransactions: CreditTransaction[];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
@@ -154,6 +156,7 @@ export async function GET(request: NextRequest) {
     clonesResult = cached.clonesResult;
     profilesRecentResult = cached.profilesRecentResult;
     profilesTotalCountResult = cached.profilesTotalCountResult;
+    apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
     allCreditTransactions = cached.allCreditTransactions;
     activeSubscribersCount = cached.activeSubscribersCount;
     nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
@@ -192,6 +195,7 @@ export async function GET(request: NextRequest) {
       clonesResult,
       profilesRecentResult,
       profilesTotalCountResult,
+      apiKeysYesterdayResult,
 
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
@@ -241,6 +245,13 @@ export async function GET(request: NextRequest) {
       supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
+        .lt('created_at', today.toISOString()),
+
+      // (apiKeysYesterdayResult) API keys created yesterday with usage
+      supabase
+        .from('api_keys')
+        .select('id, created_at, last_used_at')
+        .gte('created_at', previousDay.toISOString())
         .lt('created_at', today.toISOString()),
 
       // Fetch active subscribers count
@@ -316,7 +327,7 @@ export async function GET(request: NextRequest) {
         const { data, error } = await supabase
           .from('credit_transactions')
           .select(
-            'id, user_id, created_at, type, description, metadata, profiles(username)',
+            'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
           )
           .in('type', ['purchase', 'topup', 'refund'])
           .not('description', 'ilike', '%manual%')
@@ -347,6 +358,7 @@ export async function GET(request: NextRequest) {
   if (clonesResult?.error) throw clonesResult.error;
   if (profilesRecentResult?.error) throw profilesRecentResult.error;
   if (profilesTotalCountResult?.error) throw profilesTotalCountResult.error;
+  if (apiKeysYesterdayResult?.error) throw apiKeysYesterdayResult.error;
 
   if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult?.error)
@@ -363,6 +375,7 @@ export async function GET(request: NextRequest) {
       clonesResult,
       profilesRecentResult,
       profilesTotalCountResult,
+      apiKeysYesterdayResult,
       allCreditTransactions,
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
@@ -396,6 +409,16 @@ export async function GET(request: NextRequest) {
       item.created_at !== null,
   );
   const profilesTotalCount = profilesTotalCountResult.count ?? 0;
+  const apiKeysYesterdayData = (apiKeysYesterdayResult.data ?? []) as {
+    id: string;
+    created_at: string;
+    last_used_at: string | null;
+  }[];
+  // Count keys created yesterday that have been used
+  const usedNewApiKeysCount = apiKeysYesterdayData.filter(
+    (key) => key.last_used_at !== null,
+  ).length;
+
   const creditTransactions: CreditTransaction[] = allCreditTransactions;
 
   const callSessionsWeekData = (
@@ -405,6 +428,16 @@ export async function GET(request: NextRequest) {
   ).filter((item): item is Tables<'call_sessions'> => item.started_at !== null);
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
   const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
+
+  // Calculate API TTS credits used yesterday
+  const apiTtsCreditsYesterday = filterByDateRange(
+    usageEventsWeekData,
+    previousDay,
+    today,
+    'occurred_at',
+  )
+    .filter((e) => e.source_type === 'api_tts')
+    .reduce((sum, e) => sum + e.credits_used, 0);
 
   // Filter call sessions by date ranges (using started_at as the date field)
   const callSessionsYesterdayData = filterByDateRange<
@@ -866,12 +899,28 @@ export async function GET(request: NextRequest) {
         )
       : '0';
 
-  // Anomaly detection: flag if yesterday is significantly above 7d avg (>2x)
-  const avgCreditsPerDay = totalCreditsWeek / 7;
-  const usageAnomalyRatio =
-    avgCreditsPerDay > 0 ? totalCreditsYesterday / avgCreditsPerDay : 0;
-  const usageAnomalyFlag =
-    usageAnomalyRatio > 2 ? ` ⚠️ ${usageAnomalyRatio.toFixed(1)}x avg` : '';
+  // Comparison: Paid user usage (dollars) vs. Revenue purchased yesterday
+  // If users are burning more value than they are buying, that's a signal (burn rate > 100%)
+  const revenuePurchasedYesterday = purchasePrevDayData.reduce(
+    (sum, t) =>
+      sum +
+      ((t.metadata as { dollarAmount?: number } | null)?.dollarAmount || 0),
+    0,
+  );
+
+  // Both sides are in dollars: usageValueYesterday vs revenuePurchasedYesterday
+  // If purchase is 0, ratio is infinite if usage > 0.
+  const burnRateRatio =
+    revenuePurchasedYesterday > 0
+      ? usageValueYesterday / revenuePurchasedYesterday
+      : usageValueYesterday > 0
+        ? Number.POSITIVE_INFINITY
+        : 0;
+
+  const burnRateFlag =
+    burnRateRatio > 1.2 // Warn if burning 20% more than buying
+      ? ` ⚠️ Burn rate: ${revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'} vs purchased`
+      : '';
 
   // DEBUG: Credit calculation verification
   if (!isProd) {
@@ -885,8 +934,14 @@ export async function GET(request: NextRequest) {
     console.log('  - LRCV:', LRCV);
     console.log('  - Usage value yesterday: $', usageValueYesterday.toFixed(2));
     console.log('  - Usage value week: $', usageValueWeek.toFixed(2));
-    console.log('  - Avg credits/day (7d):', avgCreditsPerDay.toFixed(1));
-    console.log('  - Anomaly ratio:', usageAnomalyRatio.toFixed(2));
+    // console.log('  - Avg credits/day (7d):', avgCreditsPerDay.toFixed(1));
+    // console.log('  - Anomaly ratio:', usageAnomalyRatio.toFixed(2));
+    console.log(
+      '  - Burn rate ratio:',
+      burnRateRatio === Number.POSITIVE_INFINITY
+        ? 'Infinite'
+        : burnRateRatio.toFixed(2),
+    );
     console.log(
       '  - Breakdown yesterday:',
       Object.fromEntries(usageYesterdayBreakdown),
@@ -977,6 +1032,10 @@ export async function GET(request: NextRequest) {
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
     '',
+    '🔌 API:',
+    `  - Used Keys (new): ${usedNewApiKeysCount}`,
+    `  - TTS Usage: ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
+    '',
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
@@ -991,7 +1050,7 @@ export async function GET(request: NextRequest) {
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
     '',
-    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% paid)${usageAnomalyFlag}`,
+    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% paid)${burnRateFlag}`,
     `  - ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
     `  - Top 3: ${topUsageUsersList}`,
     `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,

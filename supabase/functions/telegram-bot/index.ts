@@ -167,6 +167,7 @@ async function generateTodayStats(): Promise<string> {
       profilesTotalCountResult,
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      apiKeysTodayResult,
     ] = await Promise.all([
       // Audio files today
       supabase
@@ -224,6 +225,13 @@ async function generateTodayStats(): Promise<string> {
         .from('call_sessions')
         .select('id', { count: 'exact', head: true })
         .lt('started_at', now.toISOString()),
+
+      // API keys created today with usage
+      supabase
+        .from('api_keys')
+        .select('id, created_at, last_used_at')
+        .gte('created_at', today.toISOString())
+        .lt('created_at', now.toISOString()),
     ]);
 
     // Fetch credit transactions with pagination (to avoid 1000-row cap)
@@ -326,6 +334,26 @@ async function generateTodayStats(): Promise<string> {
     const callsTodayCount = callSessionsTodayData.length;
     const callsWeekCount = callSessionsWeekData.length;
     const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
+
+    // API keys
+    const apiKeysTodayData = (apiKeysTodayResult.data ?? []) as {
+      id: string;
+      created_at: string;
+      last_used_at: string | null;
+    }[];
+    const usedNewApiKeysCount = apiKeysTodayData.filter(
+      (key) => key.last_used_at !== null,
+    ).length;
+
+    // API TTS credits used today
+    const apiTtsCreditsToday = filterByDateRange(
+      allUsageEvents,
+      today,
+      now,
+      'occurred_at',
+    )
+      .filter((e) => e.source_type === 'api_tts')
+      .reduce((sum: number, e: any) => sum + e.credits_used, 0);
 
     const callsDurationToday = callSessionsTodayData.reduce(
       (sum: number, call: any) => sum + call.duration_seconds,
@@ -468,6 +496,13 @@ async function generateTodayStats(): Promise<string> {
         ? ((uniquePaidUsersToday / totalActiveUsersToday) * 100).toFixed(1)
         : '0';
 
+    // Burn rate: paid user usage (dollars) vs revenue purchased today
+    const revenuePurchasedToday = purchaseTodayData.reduce(
+      (sum: number, t: any) =>
+        sum + ((t.metadata as { dollarAmount?: number } | null)?.dollarAmount || 0),
+      0,
+    );
+
     // Usage Breakdown
     type UsageSourceType =
       | 'tts'
@@ -519,12 +554,18 @@ async function generateTodayStats(): Promise<string> {
     const usageValueToday = totalCreditsToday * LRCV;
     const usageValueWeek = totalCreditsWeek * LRCV;
 
-    // Anomaly detection: flag if today is significantly above 7d avg (>2x)
-    const avgCreditsPerDay = totalCreditsWeek / 7;
-    const usageAnomalyRatio =
-      avgCreditsPerDay > 0 ? totalCreditsToday / avgCreditsPerDay : 0;
-    const usageAnomalyFlag =
-      usageAnomalyRatio > 2 ? ` ⚠️ ${usageAnomalyRatio.toFixed(1)}x avg` : '';
+    // Burn rate: usage value vs revenue purchased today (both in dollars)
+    const burnRateRatio =
+      revenuePurchasedToday > 0
+        ? usageValueToday / revenuePurchasedToday
+        : usageValueToday > 0
+          ? Number.POSITIVE_INFINITY
+          : 0;
+
+    const burnRateFlag =
+      burnRateRatio > 1.2
+        ? ` ⚠️ Burn rate: ${revenuePurchasedToday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'} vs purchased`
+        : '';
 
     // Top Voices
     const voiceCounts = new Map<string, number>();
@@ -686,7 +727,11 @@ async function generateTodayStats(): Promise<string> {
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
       '',
-      `📈 Paid User Usage: ${formatCompactNumber(totalCreditsToday)} credits ≈ $${usageValueToday.toFixed(2)} (${uniquePaidUsersToday}/${totalActiveUsersToday} active users, ${paidVsTotalActiveRate}% paid)${usageAnomalyFlag}`,
+      '🔌 API:',
+      `  - Used Keys (new): ${usedNewApiKeysCount}`,
+      `  - TTS Usage: ${formatCompactNumber(apiTtsCreditsToday)} credits ≈ $${(apiTtsCreditsToday * LRCV).toFixed(2)}`,
+      '',
+      `📈 Paid User Usage: ${formatCompactNumber(totalCreditsToday)} credits ≈ $${usageValueToday.toFixed(2)} (${uniquePaidUsersToday}/${totalActiveUsersToday} active users, ${paidVsTotalActiveRate}% paid)${burnRateFlag}`,
       `  - ${formatUsageBreakdown(usageTodayBreakdown)}`,
       `  - Top 3: ${topUsageUsersList}`,
       `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
