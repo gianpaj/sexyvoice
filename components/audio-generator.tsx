@@ -88,8 +88,8 @@ export function AudioGenerator({
     isPaidUser && splitFeatureVisible && splitTextAudios;
   const textIsOverLimit = !shouldUseSplitMode && text.length > charactersLimit;
   const splitSegmentTexts = useMemo(
-    () => splitLongTextIntoSegments(text),
-    [text],
+    () => (splitFeatureVisible ? splitLongTextIntoSegments(text) : []),
+    [text, splitFeatureVisible],
   );
   const {
     splitSegments,
