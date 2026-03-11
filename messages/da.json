@@ -112,6 +112,20 @@
           "category": "Stemmeoprettelse & stilarter",
           "questions": [
             {
+              "question": "Hvilke sprog understøttes for talesyntese?",
+              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇺🇸 Engelsk (US),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇺🇸 Spansk (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇺 Russisk (Rusland),\n🇳🇱 Hollandsk (Holland),\n🇵🇱 Polsk (Polen),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇻🇳 Vietnamesisk (Vietnam),\n🇷🇴 Rumænsk (Rumænien),\n🇺🇦 Ukrainsk (Ukraine),\n🇧🇩 Bengalsk (Bangladesh),\n🇮🇳 Engelsk/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\nog 🇮🇳 Telugu (Indien).\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK),\n🇮🇹 Pietro (Italiensk),\n🇺🇸 Emma (Engelsk US),\n🇪🇸 Javi (Spansk),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+            },
+            {
+              "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
+              "answer": "Ja! Vælg en flersproget stemme (f.eks. Zephyr) og skriv den stil, du ønsker — \"britisk accent\", \"piratstemme\", \"forførende tone\" osv. Modellen tilpasser sig øjeblikkeligt, og du kan forfine det med flere instruktioner."
+            }
+          ]
+        },
+        {
+          "id": "voiceCloning",
+          "category": "Stemmekloning",
+          "questions": [
+            {
               "question": "Hvordan fungerer stemmekloning?",
               "answer": "Vores AI analyserer din stemmeprøve (10 sekunder til 5 minutter) for at lære dens unikke mønstre og karakteristika. Med blot få sekunders ren lyd kan du bygge en digital version af din stemme, der lyder naturlig og realistisk."
             },
@@ -120,16 +134,8 @@
               "answer": "Ja! Med blot få sekunders ren lyd kan den bygge en digital version af din stemme, der lyder naturlig og realistisk."
             },
             {
-              "question": "Hvilke sprog understøttes for talesyntese?",
-              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇳🇱 Hollandsk (Holland),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam).\nAndre stemmer er sprogspecifikke:\n🇮🇹 Pietro (Italiensk),\n🇪🇸 Javi (Spansk),\n🇬🇧 Dan (Engelsk UK),\n🇺🇸 Emma (Engelsk US),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
-            },
-            {
               "question": "Hvilke sprog understøttes for stemmekloning?",
               "answer": "Stemmekloning understøtter følgende 23 sprog:\n\n🇸🇦 Arabisk,\n🇩🇰 Dansk,\n🇬🇧 Engelsk,\n🇫🇮 Finsk,\n🇫🇷 Fransk,\n🇬🇷 Græsk,\n🇮🇱 Hebraisk,\n🇮🇳 Hindi,\n🇳🇱 Hollandsk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇲🇾 Malajisk,\n🇨🇳 Mandarin-kinesisk,\n🇳🇴 Norsk,\n🇵🇱 Polsk,\n🇵🇹 Portugisisk,\n🇷🇺 Russisk,\n🇪🇸 Spansk,\n🇸🇪 Svensk,\n🇰🇪 Swahili,\n🇹🇷 Tyrkisk,\nog 🇩🇪 Tysk."
-            },
-            {
-              "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
-              "answer": "Ja! Vælg en flersproget stemme (f.eks. Zephyr) og skriv den stil, du ønsker — \"britisk accent\", \"piratstemme\", \"forførende tone\" osv. Modellen tilpasser sig øjeblikkeligt, og du kan forfine det med flere instruktioner."
             }
           ]
         },

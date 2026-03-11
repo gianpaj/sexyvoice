@@ -112,6 +112,20 @@
           "category": "Creación de voz y estilos",
           "questions": [
             {
+              "question": "¿Qué idiomas soportan tus voces de IA?",
+              "answer": "El soporte de idiomas depende de la voz seleccionada.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\ny 🇮🇳 Telugu (India).\nOtras voces son específicas del idioma:\n🇬🇧 Dan (Inglés UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglés EE.UU.),\n🇪🇸 Javi (Español),\n🇺🇸 Josh (Inglés EE.UU.),\n🇺🇸 y Tara (Inglés EE.UU.).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
+            },
+            {
+              "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
+              "answer": "¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) e ingresa el estilo que deseas—\"acento británico\", \"voz de pirata\", \"tono seductor\", etc. El modelo se adapta al instante, y puedes refinarlo con más instrucciones."
+            }
+          ]
+        },
+        {
+          "id": "voiceCloning",
+          "category": "Clonación de voz",
+          "questions": [
+            {
               "question": "¿Cómo funciona la clonación de voz?",
               "answer": "Nuestra IA analiza tu muestra de voz (10 segundos a 5 minutos) para aprender sus patrones y características únicas. Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
             },
@@ -120,16 +134,8 @@
               "answer": "¡Sí! Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
             },
             {
-              "question": "¿Qué idiomas soportan tus voces de IA?",
-              "answer": "El soporte de idiomas depende de la voz seleccionada al generar voz.\\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).\\nOtras voces son específicas del idioma:\nPietro (Italiano 🇮🇹),\nJavi (Español 🇪🇸),\nDan (Inglés Reino Unido 🇬🇧),\nEmma (Inglés EE.UU. 🇺🇸),\nJosh (Inglés EE.UU. 🇺🇸),\ny Tara (Inglés EE.UU. 🇺🇸).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
-            },
-            {
               "question": "¿Qué idiomas soporta la clonación de voz?",
               "answer": "La clonación de voz soporta los siguientes 23 idiomas:\n\n🇩🇪 Alemán,\n🇸🇦 Árabe,\n🇨🇳 Chino mandarín,\n🇰🇷 Coreano,\n🇩🇰 Danés,\n🇪🇸 Español,\n🇫🇮 Finlandés,\n🇫🇷 Francés,\n🇬🇷 Griego,\n🇮🇱 Hebreo,\n🇮🇳 Hindi,\n🇳🇱 Holandés,\n🇬🇧 Inglés,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇲🇾 Malayo,\n🇳🇴 Noruego,\n🇵🇱 Polaco,\n🇵🇹 Portugués,\n🇷🇺 Ruso,\n🇰🇪 Suajili,\n🇸🇪 Sueco,\ny 🇹🇷 Turco."
-            },
-            {
-              "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
-              "answer": "¡Sí! Elige una voz multilingüe (por ejemplo, Zephyr) e ingresa el estilo que deseas—\"acento británico\", \"voz de pirata\", \"tono seductor\", etc. El modelo se adapta al instante, y puedes refinarlo con más instrucciones."
             }
           ]
         },
