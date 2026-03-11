@@ -107,9 +107,11 @@ export async function POST(request: Request) {
     userHasPaid = await hasUserPaid(user.id);
 
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
-    if (text.length > maxLength) {
+    // Build finalText first so the length check accounts for the style prefix
+    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+    if (finalText.length > maxLength) {
       logger.error('Text exceeds maximum length', {
-        textLength: text.length,
+        textLength: finalText.length,
         maxLength,
         body,
         headers: Object.fromEntries(request.headers.entries()),
@@ -137,7 +139,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
     // Generate hash for the combination of text, voice (and seed when provided,
