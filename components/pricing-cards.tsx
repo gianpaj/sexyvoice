@@ -62,7 +62,7 @@ export function PricingCards({
       <div className="mx-auto flex items-center gap-1 rounded-full bg-muted p-1">
         <button
           aria-pressed={billingMode === 'monthly'}
-          className={`rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
+          className={`hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
             billingMode === 'monthly'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
@@ -77,7 +77,7 @@ export function PricingCards({
         </button>
         <button
           aria-pressed={billingMode === 'one-time'}
-          className={`rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
+          className={`hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
             billingMode === 'one-time'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
