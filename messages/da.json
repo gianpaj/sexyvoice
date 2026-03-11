@@ -284,7 +284,8 @@
           "value": "Pro-pakke"
         }
       },
-      "mostPopular": "Mest populære"
+      "mostPopular": "Mest populære",
+      "cheaperBadge": "{percent} billigere"
     },
     "status": {
       "success": {

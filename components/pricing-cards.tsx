@@ -1,13 +1,14 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link } from '@/lib/i18n/navigation';
+import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 
 export type BillingMode = 'monthly' | 'one-time';
 
@@ -45,6 +46,8 @@ export function PricingCards({
 }: PricingCardsProps) {
   const t = useTranslations('credits.plans');
   const billingT = useTranslations('credits.billing');
+  const creditsT = useTranslations('credits');
+  const format = useFormatter();
   const [billingMode, setBillingMode] = useState<BillingMode>('monthly');
 
   const plans = billingMode === 'monthly' ? subscriptionPlans : topupPlans;
@@ -55,7 +58,7 @@ export function PricingCards({
       data-promo-theme={promoTheme}
     >
       <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
-        {useTranslations('credits')('pricingPlan')}
+        {creditsT('pricingPlan')}
       </h2>
 
       {/* Billing toggle — the "+15%" badge here is the single source of truth */}
@@ -72,7 +75,7 @@ export function PricingCards({
         >
           {t('toggleMonthly')}
           <span className="ml-1.5 rounded-full bg-green-500/20 px-1.5 py-0.5 font-semibold text-green-400 text-xs">
-            +15%
+            +{SUBSCRIPTION_BONUS_MULTIPLIER}%
           </span>
         </button>
         <button
@@ -115,7 +118,12 @@ export function PricingCards({
                     className="bg-green-900 text-green-100"
                     variant="secondary"
                   >
-                    37.5% cheaper
+                    {creditsT('topup.cheaperBadge', {
+                      percent: format.number(0.375, {
+                        style: 'percent',
+                        maximumFractionDigits: 1,
+                      }),
+                    })}
                   </Badge>
                 )}
               </div>

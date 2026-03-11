@@ -284,7 +284,8 @@
           "value": "Pro-Paket"
         }
       },
-      "mostPopular": "Am beliebtesten"
+      "mostPopular": "Am beliebtesten",
+      "cheaperBadge": "{percent} günstiger"
     },
     "status": {
       "success": {
