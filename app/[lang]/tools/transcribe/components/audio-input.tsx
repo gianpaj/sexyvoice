@@ -256,7 +256,7 @@ export function AudioInput({
             />
             <div
               className={cn(
-                'relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20',
+                'relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-accent/20',
                 'transition-transform duration-300',
                 isDragging ? 'scale-110' : 'group-hover:scale-105',
               )}

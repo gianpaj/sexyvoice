@@ -61,6 +61,11 @@ const Post = defineDocumentType(() => ({
       description: 'The author of the post',
       required: false,
     },
+    draft: {
+      type: 'boolean',
+      description: 'Whether the post is a draft',
+      required: false,
+    },
     keywords: {
       type: 'list',
       of: { type: 'string' },

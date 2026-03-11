@@ -152,7 +152,7 @@ function PlanCard({
       className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-auto gap-2`}
     >
       {isPromoEnabled && plan.price > 0 && (
-        <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
+        <div className="absolute top-0 right-0 rounded-bl-lg bg-linear-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
           {bannerTranslations?.pricing.bannerText}
         </div>
       )}

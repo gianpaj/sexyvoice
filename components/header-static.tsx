@@ -17,7 +17,7 @@ export function HeaderStatic() {
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link className="z-10 flex items-end gap-0" href={'/'}>
+        <Link className="hit-area-2 z-10 flex items-end gap-0" href={'/'}>
           <Image alt="Logo" height={292 / 8} src={logoSmall} width={221 / 8} />
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>
@@ -40,6 +40,7 @@ export function HeaderStatic() {
         <div className="z-10 flex gap-2 md:hidden">
           <Button
             asChild
+            className="hit-area-2"
             size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
             variant="secondary"
           >
@@ -47,7 +48,11 @@ export function HeaderStatic() {
               {t('login')}
             </Link>
           </Button>
-          <Button asChild size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}>
+          <Button
+            asChild
+            className="hit-area-2"
+            size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
+          >
             <Link className="w-full" href="/signup" prefetch>
               {t('signup')}
             </Link>

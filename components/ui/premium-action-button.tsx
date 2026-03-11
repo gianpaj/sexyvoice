@@ -72,7 +72,7 @@ const PremiumActionButton = React.forwardRef<
         {!isPaidUser && (
           <span
             aria-label="Premium feature"
-            className="pointer-events-none absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 to-yellow-400 shadow-sm"
+            className="pointer-events-none absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-linear-to-tr from-amber-500 to-yellow-400 shadow-sm"
           >
             <Sparkles className="h-2.5 w-2.5 text-white" />
           </span>
