@@ -661,6 +661,7 @@ export function AudioGenerator({
                 [isGeminiVoice ? 'pr-10' : 'pr-14'],
               )}
               disabled={isGenerating}
+              maxLength={shouldUseSplitMode ? undefined : charactersLimit}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               ref={textareaRef}
