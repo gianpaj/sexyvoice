@@ -1,63 +1,57 @@
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { NextIntlClientProvider } from 'next-intl';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
+import { getMessages } from 'next-intl/server';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import '../globals.css';
 import { Providers } from '../providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export async function generateStaticParams() {
-  return i18n.locales.map((locale) => ({ lang: locale }));
-}
-
-import '../globals.css';
-
 interface Props {
+  children: React.ReactNode;
   params: Promise<{ lang: Locale }>;
 }
 
+export async function generateStaticParams() {
+  return i18n.locales.map((lang) => ({ lang }));
+}
+
 export async function generateMetadata(
-  { params }: Props,
+  { params }: Pick<Props, 'params'>,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const lang = (await params).lang;
-
+  const { lang } = await params;
   const { alternates, openGraph, title: parentTitle } = await parent;
 
-  const canonicalUrl = alternates?.canonical?.url;
-  const pathname = canonicalUrl ? new URL(canonicalUrl).pathname : '/';
+  const pathname = alternates?.canonical?.url
+    ? new URL(alternates.canonical.url).pathname
+    : '/';
   const pagePath = pathname.replace(`/${lang}`, '') || '/';
 
-  // Validate that the language is a supported locale
-  if (!i18n.locales.includes(lang as Locale)) {
+  if (!i18n.locales.includes(lang)) {
     return {
-      title:
-        'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults',
+      title: 'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults',
     };
   }
 
-  const dict = await getDictionary(lang, 'pages');
-  // @ts-expect-error FIXME
-  const pageTitle = dict[pagePath];
-  const defaultTitle = dict.defaultTitle;
-
-  const title = pageTitle || defaultTitle;
-
-  // Get page-specific description based on route
-  let description = dict.description;
-  if (pagePath === '/login') {
-    description = dict.descriptionLogin || dict.description;
-  } else if (pagePath === '/signup') {
-    description = dict.descriptionSignup || dict.description;
-  }
-
-  // Add keywords for the landing page
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const pages = messages.pages;
+  const pageTitle =
+    pagePath in pages ? pages[pagePath as keyof typeof pages] : undefined;
+  const title = pageTitle || pages.defaultTitle;
+  const description =
+    pagePath === '/login'
+      ? pages.descriptionLogin || pages.description
+      : pagePath === '/signup'
+        ? pages.descriptionSignup || pages.description
+        : pages.description;
   const keywords =
-    pagePath === '/' && dict.keywordsLanding
-      ? dict.keywordsLanding.split(',').map((k: string) => k.trim())
+    pagePath === '/' && pages.keywordsLanding
+      ? pages.keywordsLanding.split(',').map((keyword) => keyword.trim())
       : undefined;
 
   return {
@@ -75,7 +69,7 @@ export async function generateMetadata(
     openGraph: {
       title: {
         template: '%s | SexyVoice.ai',
-        default: defaultTitle,
+        default: pages.defaultTitle,
       },
       description,
       siteName: 'SexyVoice.ai',
@@ -86,7 +80,7 @@ export async function generateMetadata(
       card: 'summary_large_image',
       title: {
         template: '%s | SexyVoice.ai',
-        default: defaultTitle,
+        default: pages.defaultTitle,
       },
       description,
     },
@@ -102,15 +96,12 @@ export async function generateMetadata(
   };
 }
 
-export default async function LangLayout({
-  children,
-  params,
-}: Readonly<{
-  children: React.ReactNode;
-  params: Promise<{ lang: Locale }>;
-}>) {
+export default async function LangLayout({ children, params }: Readonly<Props>) {
+  const { lang } = await params;
+  const messages = await getMessages({ locale: lang });
+
   return (
-    <html lang={(await params).lang}>
+    <html lang={lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
           Skip to main content
@@ -121,7 +112,9 @@ export default async function LangLayout({
             <SpeedInsights debug={false} />
           </>
         )}
-        <Providers>{children}</Providers>
+        <NextIntlClientProvider locale={lang} messages={messages}>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

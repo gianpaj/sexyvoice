@@ -15,44 +15,39 @@ import Link from 'next/link';
 
 import { HeaderStatic } from '@/components/header-static';
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 
 interface PlatformWrappedStats {
-  totalAudioFiles: number;
-  totalDurationSeconds: number;
-  totalCharactersGenerated: number;
-  totalUsers: number;
-  totalPaidUsers: number;
-  totalVoiceClones: number;
-  totalClonedAudioFiles: number;
-  totalRevenue: number;
-  totalRefunds: number;
-  netRevenue: number;
-  topVoices: Array<{
-    name: string;
-    count: number;
-  }>;
+  averageTextLength: number;
+  daysSinceLaunch: number;
+  longestTextCharacters: number;
   monthlyStats: Array<{
     month: string;
     audioCount: number;
     userCount: number;
     revenue: number;
   }>;
-  longestTextCharacters: number;
-  averageTextLength: number;
-  totalUniqueVoicesUsed: number;
+  netRevenue: number;
   platformLaunchDate: string;
-  daysSinceLaunch: number;
+  topVoices: Array<{
+    name: string;
+    count: number;
+  }>;
+  totalAudioFiles: number;
+  totalCharactersGenerated: number;
+  totalClonedAudioFiles: number;
+  totalDurationSeconds: number;
+  totalPaidUsers: number;
+  totalRefunds: number;
+  totalRevenue: number;
+  totalUniqueVoicesUsed: number;
+  totalUsers: number;
+  totalVoiceClones: number;
 }
 
 function formatNumber(num: number): string {
   if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toLocaleString();
-}
-
-function formatCurrency(num: number): string {
-  return `$${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function StatCard({
@@ -90,8 +85,8 @@ function StatCard({
 function HeroSection({ stats }: { stats: PlatformWrappedStats }) {
   return (
     <section className="relative overflow-hidden rounded-3xl border border-border bg-card">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-purple/20 via-transparent to-brand-red/20" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-chart-2/10 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-radial-tr-via from-brand-purple/20 via-transparent to-brand-red/20" />
+      <div className="absolute inset-0 bg-radial-bl-via from-chart-2/10 via-transparent to-transparent" />
 
       <div className="relative px-8 py-16 md:px-16 md:py-24">
         <div className="mx-auto max-w-4xl text-center">
@@ -228,7 +223,7 @@ function MonthlyGrowthSection({ stats }: { stats: PlatformWrappedStats }) {
 function CTASection() {
   return (
     <section className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-12">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-purple via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-radial-tr-via from-brand-purple via-transparent to-transparent" />
 
       <div className="relative text-center">
         <h2 className="mb-3 font-bold text-2xl text-primary-foreground md:text-3xl">
@@ -289,12 +284,10 @@ const stats = {
   daysSinceLaunch,
 };
 
-export async function PlatformWrappedClient() {
-  const dictHeader = await getDictionary('en', 'header');
-
+export function PlatformWrappedClient() {
   return (
     <div className="min-h-screen bg-background">
-      <HeaderStatic dict={dictHeader} lang="en" />
+      <HeaderStatic />
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-10 md:py-16">
         {/* Hero Section */}
         <HeroSection stats={stats} />

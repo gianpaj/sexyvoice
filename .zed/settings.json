@@ -1,6 +1,7 @@
 {
   "formatter": "language_server",
   "code_actions_on_format": {
+    "source.action.noDuplicateClasses.biome": true,
     "source.fixAll.biome": true,
     "source.organizeImports.biome": true
   },

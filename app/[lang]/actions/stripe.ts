@@ -9,12 +9,12 @@ import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export interface CheckoutMetadata {
-  userId: string;
-  packageId: PackageType;
   credits: string;
   dollarAmount: string;
-  type: 'topup';
+  packageId: PackageType;
   promo?: string;
+  type: 'topup';
+  userId: string;
 }
 
 export async function createCheckoutSession(
@@ -54,6 +54,7 @@ export async function createCheckoutSession(
     } = await supabase.auth.getUser();
 
     const userData = user && (await getUserById(user.id));
+    // biome-ignore lint/complexity/useOptionalChain: needed
     if (!(userData && userData.stripe_id)) {
       const error = new Error('User not found or Stripe ID missing');
       Sentry.captureException(error, {
@@ -114,7 +115,7 @@ export async function createCheckoutSession(
       extra: {
         packageId,
         ui_mode: data.get('uiMode'),
-        error_message: Error.isError(error) ? error.message : 'Unknown error',
+        error_message: error instanceof Error ? error.message : String(error),
       },
     });
     throw error;

@@ -1,13 +1,13 @@
 'use client';
 
 import { Progress } from '@/components/ui/progress';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { DownloadProgress } from '../hooks/use-transcriber';
 
 interface Props {
-  progress: DownloadProgress[];
-  isTranscribing: boolean;
   dict: (typeof langDict)['transcribe']['progress'];
+  isTranscribing: boolean;
+  progress: DownloadProgress[];
 }
 
 export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
@@ -35,9 +35,8 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
         >
           {([10, 16, 18, 12, 14] as const).map((h, i) => (
             <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: static decorative array
-              key={i}
               className="wave-bar"
+              key={i}
               style={{
                 height: `${h}px`,
                 animationDelay: `${i * 0.12}s`,

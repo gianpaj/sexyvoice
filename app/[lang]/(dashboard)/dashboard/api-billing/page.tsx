@@ -1,4 +1,4 @@
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { getMessages } from 'next-intl/server';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { BillingUsageChart } from './billing-usage-chart';
 
@@ -6,7 +6,7 @@ export default async function ApiBillingPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = await getDictionary(lang);
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">

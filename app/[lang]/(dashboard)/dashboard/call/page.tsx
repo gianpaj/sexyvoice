@@ -1,7 +1,8 @@
+import { getMessages } from 'next-intl/server';
+
 import { Chat } from '@/components/call/chat';
 import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -11,8 +12,7 @@ export default async function Call(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-
-  const dict = await getDictionary(lang);
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   const supabase = await createClient();
 
@@ -40,7 +40,6 @@ export default async function Call(props: {
       <div className="lg:hidden">
         <CreditsSection
           creditTransactions={creditTransactions}
-          dict={dict.creditsSection}
           doNotToggleSidebar
           lang={lang}
           showMinutes

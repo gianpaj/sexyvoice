@@ -53,7 +53,7 @@ export function AudioPreviewCard({
         <h3 className="font-semibold text-lg text-white">{name}</h3>
         <Button
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="!text-blue-400 border-none bg-blue-600/20 hover:bg-blue-600/40"
+          className="hit-area-2 border-none bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 hover:text-blue-200"
           onClick={togglePlay}
           size="icon"
           variant="outline"
@@ -66,7 +66,7 @@ export function AudioPreviewCard({
         </Button>
       </div>
       <div
-        className="line-clamp-5 whitespace-break-spaces rounded border-[12px] border-transparent bg-accent text-justify text-gray-200 text-sm"
+        className="line-clamp-5 whitespace-break-spaces rounded border-12 border-transparent bg-accent text-justify text-gray-200 text-sm"
         dir={dir}
         lang={lang}
         title={prompt}

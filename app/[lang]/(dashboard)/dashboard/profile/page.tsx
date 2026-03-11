@@ -1,3 +1,5 @@
+import { getMessages } from 'next-intl/server';
+
 import {
   Card,
   CardContent,
@@ -5,8 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-// import { ProfileForm } from './profile-form';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
@@ -15,69 +15,37 @@ import { SecurityForm } from './security-form';
 export default async function ProfilePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
-
+  const { lang } = await props.params;
+  const profileDict = ((await getMessages({
+    locale: lang,
+  })) as IntlMessages).profile;
   const supabase = await createClient();
-  const dict = await getDictionary(lang, 'profile');
-
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   if (!user) {
-    return <div>{dict.notLoggedIn}</div>;
+    return <div>{profileDict.notLoggedIn}</div>;
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      {/* <div>
-        <h2 className="text-3xl font-bold tracking-tight">Profile Settings</h2>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences
-        </p>
-      </div> */}
-
-      {/* <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update your profile information and avatar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProfileForm initialData={profile} lang={lang} />
-            </CardContent>
-          </Card>
-        </TabsContent> */}
-
-      {/* <TabsContent value="security"> */}
       <Card>
         <CardHeader>
-          <CardTitle>{dict.security.title}</CardTitle>
-          <CardDescription>{dict.security.description}</CardDescription>
+          <CardTitle>{profileDict.security.title}</CardTitle>
+          <CardDescription>{profileDict.security.description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <SecurityForm dict={dict.securityForm} email={user.email} />
+          <SecurityForm dict={profileDict.securityForm} email={user.email} />
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{dict.dangerZone.title}</CardTitle>
+          <CardTitle>{profileDict.dangerZone.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <DeleteAccountForm dict={dict} lang={lang} />
+          <DeleteAccountForm />
         </CardContent>
       </Card>
-      {/* </TabsContent> */}
-      {/* </Tabs> */}
     </div>
   );
 }

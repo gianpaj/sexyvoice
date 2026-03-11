@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface DropZoneProps {
-  disabled?: boolean;
-  compact?: boolean;
-  title: string;
-  subtitle: string;
   addFilesLabel: string;
+  compact?: boolean;
+  disabled?: boolean;
   onFilesSelected: (files: File[]) => void;
+  subtitle: string;
+  title: string;
 }
 
 export function DropZone({

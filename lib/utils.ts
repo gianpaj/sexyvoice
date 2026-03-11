@@ -126,8 +126,8 @@ export function encodedRedirect(
 }
 
 interface GeminiMetadata extends Record<string, string> {
-  readonly promptTokenCount: string;
   readonly candidatesTokenCount: string;
+  readonly promptTokenCount: string;
   readonly totalTokenCount: string;
 }
 

@@ -7,23 +7,23 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface VoicePlayButtonProps {
-  voiceName: string;
-  sampleUrl: string | null;
   /** Optional custom aria labels */
   ariaLabels?: {
     play: string;
     stop: string;
   };
-  /** Optional custom title for tooltip */
-  title?: string;
-  /** Size variant - affects button and icon size */
-  size?: 'sm' | 'md' | 'lg';
-  /** Style variant */
-  variant?: 'button' | 'outline' | 'ghost';
   /** Additional className for the button */
   className?: string;
   /** Enable hover prefetching for faster playback */
   prefetch?: boolean;
+  sampleUrl: string | null;
+  /** Size variant - affects button and icon size */
+  size?: 'sm' | 'md' | 'lg';
+  /** Optional custom title for tooltip */
+  title?: string;
+  /** Style variant */
+  variant?: 'button' | 'outline' | 'ghost';
+  voiceName: string;
 }
 
 export function VoicePlayButton({

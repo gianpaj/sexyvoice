@@ -8,17 +8,17 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { Status } from './new.client';
 
 export interface SampleAudio {
-  id: number;
-  name: string;
-  language: string;
-  prompt: string;
-  audioSrc: string;
   audioExampleOutputSrc: string;
+  audioSrc: string;
+  id: number;
   image: string;
+  language: string;
+  name: string;
+  prompt: string;
 }
 
 export default function CloneSampleCard({

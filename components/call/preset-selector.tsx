@@ -81,7 +81,7 @@ function AvatarButton({
       <div
         className={`relative rounded-full p-[3px] transition-all duration-300 ${
           isSelected
-            ? 'bg-gradient-to-tr from-violet-500 via-purple-500 to-fuchsia-500'
+            ? 'bg-linear-to-tr from-violet-500 via-purple-500 to-fuchsia-500'
             : 'bg-transparent'
         } ${isConnected ? '' : 'group-hover:scale-105'}`}
       >
@@ -122,8 +122,8 @@ function AvatarButton({
 }
 
 interface PresetSelectorProps {
-  isPaidUser?: boolean;
   callVoices?: DBVoice[];
+  isPaidUser?: boolean;
 }
 
 export function PresetSelector({

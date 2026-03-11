@@ -14,16 +14,16 @@ export type UsageEvent = Tables<'usage_events'>;
 
 export interface PaginatedUsageEventsResponse {
   data: UsageEvent[];
-  totalCount: number;
   page: number;
   pageSize: number;
+  totalCount: number;
   totalPages: number;
 }
 
 export interface MonthlyUsageSummary {
+  bySourceType: Record<UsageSourceType, { credits: number; count: number }>;
   totalCredits: number;
   totalOperations: number;
-  bySourceType: Record<UsageSourceType, { credits: number; count: number }>;
 }
 
 export interface GetUsageEventsOptions {

@@ -208,11 +208,11 @@
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",
-      "x_credits": "__NUM_CREDITS__ credits",
+      "x_credits": "{numCredits} credits",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio generation.",
-        "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
+        "creditsWithAudio": "{numCredits} credits (~4 min of audio)",
         "features": [
           "Generate speech with realistic moaning sounds",
           "Clone your voice with as little as 10 seconds of audio"
@@ -230,8 +230,8 @@
       "standard": {
         "name": "Standard",
         "description": "For hobbyists creating projects with AI audio and custom voices.",
-        "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "{numCredits} credits (~11 min of audio)",
+        "creditsWithPromo": "{numCredits} credits",
         "features": [
           "Everything in Free",
           "2× longer text generation",
@@ -242,8 +242,8 @@
       "pro": {
         "name": "Pro",
         "description": "For bigger creative needs and bolder content.",
-        "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
+        "creditsWithPromo": "{numCredits} credits",
         "features": [
           "Everything in Standard, just cheaper"
         ]
@@ -257,16 +257,16 @@
       "processing": "Processing...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Perfect for getting started"
         },
         "standard": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Most popular choice",
           "value": "Best Value"
         },
         "pro": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }

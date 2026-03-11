@@ -7,13 +7,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 
 interface Props {
-  value: string;
-  onChange: (model: string) => void;
-  disabled?: boolean;
   dict: (typeof langDict)['transcribe']['modelSelector'];
+  disabled?: boolean;
+  onChange: (model: string) => void;
+  value: string;
 }
 
 export const WHISPER_MODELS = [

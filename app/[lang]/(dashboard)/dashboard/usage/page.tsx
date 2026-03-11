@@ -1,4 +1,4 @@
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { getMessages } from 'next-intl/server';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -27,7 +27,7 @@ export default async function UsagePage(props: {
     getAllTimeUsageSummary(supabase, user.id),
   ]);
 
-  const dict = await getDictionary(lang, 'usage');
+  const dict = ((await getMessages({ locale: lang })) as IntlMessages).usage;
 
   // Get month name for display
   const currentMonth = new Date().toLocaleDateString(lang, {

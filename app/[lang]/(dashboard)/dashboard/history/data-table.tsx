@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
@@ -40,9 +40,9 @@ import {
 import { createColumns } from './columns';
 
 interface DataTableProps {
-  userId: string;
   dict: (typeof langDict)['history'];
   showApiColumns: boolean;
+  userId: string;
 }
 
 export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {

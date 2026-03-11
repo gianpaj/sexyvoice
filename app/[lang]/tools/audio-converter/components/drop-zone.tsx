@@ -3,13 +3,13 @@
 import { FileAudio, Music, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onFileSelect: (file: File) => void;
-  disabled?: boolean;
   dict: (typeof langDict)['audioConverter']['dropZone'];
+  disabled?: boolean;
+  onFileSelect: (file: File) => void;
 }
 
 export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
@@ -96,7 +96,7 @@ export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
           />
           <div
             className={cn(
-              'relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20',
+              'relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-accent/20',
               'transition-transform duration-300',
               isDragging ? 'scale-110' : 'group-hover:scale-105',
             )}

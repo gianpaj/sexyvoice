@@ -39,7 +39,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { downloadUrl } from '@/lib/download';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -113,7 +113,7 @@ export default function NewVoiceClient({
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['clone'];
+  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
@@ -135,7 +135,7 @@ function NewVoiceClientInner({
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof langDict)['clone'];
+  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
@@ -321,7 +321,7 @@ function NewVoiceClientInner({
             console.error('WebM to WAV conversion error:', convertError);
             // TODO send logs to Sentry
             setErrorMessage(
-              Error.isError(convertError)
+              convertError instanceof Error
                 ? `Audio conversion failed: ${convertError.message}`
                 : 'Audio conversion failed. Please try recording again.',
             );
@@ -389,7 +389,7 @@ function NewVoiceClientInner({
       setActiveTab('preview');
     } catch (err) {
       if (
-        Error.isError(err) &&
+        err instanceof Error &&
         err.message === 'signal is aborted without reason'
       ) {
         return;
@@ -397,7 +397,7 @@ function NewVoiceClientInner({
       let errorMsg = '';
       if (voiceRes && !voiceRes.ok) {
         errorMsg = voiceRes.statusText;
-      } else if (Error.isError(err)) {
+      } else if (err instanceof Error) {
         errorMsg = err.message;
       }
       setErrorMessage(errorMsg || 'Unexpected error occurred');
@@ -633,7 +633,7 @@ function NewVoiceClientInner({
                       size="icon"
                       variant="ghost"
                     >
-                      <XIcon aria-hidden="true" className="!size-6" />
+                      <XIcon aria-hidden="true" className="size-6!" />
                     </Button>
                   </div>
                 ) : (
@@ -792,7 +792,7 @@ function NewVoiceClientInner({
               ) : (
                 <>
                   <span>{dict.ctaButton}</span>
-                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </>

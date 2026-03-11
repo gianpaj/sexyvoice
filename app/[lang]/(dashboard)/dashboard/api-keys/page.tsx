@@ -1,4 +1,4 @@
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { getMessages } from 'next-intl/server';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -8,7 +8,7 @@ export default async function ApiKeysPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = await getDictionary(lang, 'profile');
+  const dict = ((await getMessages({ locale: lang })) as IntlMessages).profile;
 
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
