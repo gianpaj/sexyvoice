@@ -191,6 +191,16 @@ export function useSplitSegments({
     }));
   };
 
+  const markSegmentIdle = (index: number) => {
+    setSplitSegments((current) =>
+      current.map((item, currentIndex) =>
+        currentIndex === index
+          ? { ...item, status: 'idle', audioUrl: '' }
+          : item,
+      ),
+    );
+  };
+
   const markSegmentFailed = (index: number) => {
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
@@ -230,6 +240,7 @@ export function useSplitSegments({
     splitSegments,
     allSegmentsGenerated,
     markSegmentGenerating,
+    markSegmentIdle,
     markSegmentSuccess,
     markSegmentFailed,
     updateSegmentText,

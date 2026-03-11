@@ -97,6 +97,7 @@ export function AudioGenerator({
     splitSegments,
     allSegmentsGenerated,
     markSegmentGenerating,
+    markSegmentIdle,
     markSegmentSuccess,
     markSegmentFailed,
     updateSegmentText,
@@ -228,14 +229,21 @@ export function AudioGenerator({
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
       } catch (error) {
-        // Ensure the segment is no longer marked as generating on abort or not
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          // User-initiated cancel is not a failure — reset to idle
+          latestSegments = latestSegments.map((segment, segmentIndex) =>
+            segmentIndex === index
+              ? { ...segment, status: 'idle', audioUrl: '' }
+              : segment,
+          );
+          markSegmentIdle(index);
+          throw error;
+        }
+        // Ensure the segment is no longer marked as generating on error
         latestSegments = latestSegments.map((segment, segmentIndex) =>
           segmentIndex === index ? { ...segment, status: 'failed' } : segment,
         );
         markSegmentFailed(index);
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          throw error;
-        }
 
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
@@ -259,6 +267,7 @@ export function AudioGenerator({
     requestGenerateVoice,
     showGenerationProgressToast,
     markSegmentGenerating,
+    markSegmentIdle,
     markSegmentSuccess,
     markSegmentFailed,
     dict.error,
