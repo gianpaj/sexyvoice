@@ -17,7 +17,7 @@ export function IncomingCallButton({
     <Button
       asChild
       className={cn(
-        'relative h-16 w-16 rounded-full bg-green-500/70 text-white hover:bg-green-600/70',
+        'relative h-16 w-16 rounded-full bg-green-500/70 text-white hover:bg-green-600/70 hit-area-10',
         animated && 'animate-incoming-call hover:animate-none',
       )}
       size="icon"

@@ -14,7 +14,7 @@ async function Footer({ lang }: { lang: Locale }) {
           <div className="mb-8 flex space-x-4">
             <Button
               asChild
-              className="rounded-full bg-gray-900"
+              className="rounded-full bg-gray-900 hit-area-4"
               size="icon"
               variant="outline"
             >
@@ -25,7 +25,7 @@ async function Footer({ lang }: { lang: Locale }) {
             </Button>
             <Button
               asChild
-              className="rounded-full bg-gray-900"
+              className="rounded-full bg-gray-900 hit-area-4"
               size="icon"
               variant="outline"
             >
@@ -41,14 +41,14 @@ async function Footer({ lang }: { lang: Locale }) {
             </p>
             <p className="mt-4 text-muted-foreground text-sm">
               <Link
-                className="hover:text-primary hover:underline"
+                className="hover:text-primary hover:underline hit-area-2"
                 href={`/${lang}/tools/audio-converter`}
               >
                 {dict.audioConverter}
               </Link>
               {' - '}
               <a
-                className="hover:text-primary hover:underline"
+                className="hover:text-primary hover:underline hit-area-2"
                 href="https://sexyvoice.checkly-dashboards.com/"
                 rel="noreferrer"
                 target="_blank"
@@ -57,14 +57,14 @@ async function Footer({ lang }: { lang: Locale }) {
               </a>
               {' - '}
               <Link
-                className="whitespace-nowrap hover:text-primary hover:underline"
+                className="whitespace-nowrap hover:text-primary hover:underline hit-area-2"
                 href={`/${lang}/privacy-policy`}
               >
                 {dict.privacyPolicy}
               </Link>
               {' - '}
               <Link
-                className="whitespace-nowrap hover:text-primary hover:underline"
+                className="whitespace-nowrap hover:text-primary hover:underline hit-area-2"
                 href={`/${lang}/terms`}
               >
                 {dict.termsAndConditions}

@@ -133,7 +133,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
             <p className="text-muted-foreground text-sm">{plan.description}</p>
             <Button
               asChild
-              className="my-4 w-full"
+              className="my-4 w-full hit-area-6"
               variant={plan.buttonVariant as 'outline' | 'default'}
             >
               <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>

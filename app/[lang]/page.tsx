@@ -135,7 +135,7 @@ export default async function LandingPage(props: {
               <div className="mx-auto flex w-fit flex-col gap-2 pt-8">
                 <Button
                   asChild
-                  className="w-fit self-center"
+                  className="w-fit self-center hit-area-4"
                   effect="expandIcon"
                   icon={ArrowRightIcon}
                   iconPlacement="right"
@@ -291,7 +291,7 @@ export default async function LandingPage(props: {
               </p>
               <Button
                 asChild
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
+                className="mt-4 bg-blue-600 hover:bg-blue-700 hit-area-4"
                 effect="ringHover"
                 size="lg"
               >
