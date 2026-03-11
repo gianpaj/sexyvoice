@@ -7,20 +7,20 @@ const axiom = new Axiom({
 const DATASET = 'vercel';
 
 export interface LogFields {
-  status: number;
-  errorCode?: string;
-  error?: string;
-  userId?: string;
   apiKeyId?: string;
-  voice?: string;
-  model?: string;
-  textLength?: number;
   cached?: boolean;
-  provider?: string;
   creditsUsed?: number;
   dollarAmount?: number;
+  error?: string;
+  errorCode?: string;
   isGeminiVoice?: boolean;
+  model?: string;
+  provider?: string;
+  status: number;
+  textLength?: number;
   userHasPaid?: boolean;
+  userId?: string;
+  voice?: string;
 }
 
 /**

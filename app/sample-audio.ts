@@ -1,13 +1,13 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 export interface SampleAudio {
+  audioSrc: string;
+  dir: 'ltr' | 'rtl';
   id: number;
+  lang: string;
   name: string;
   prompt: string;
-  audioSrc: string;
   showOnSiteLangs: Locale[];
-  lang: string;
-  dir: 'ltr' | 'rtl';
 }
 
 const sampleAudios: readonly SampleAudio[] = [

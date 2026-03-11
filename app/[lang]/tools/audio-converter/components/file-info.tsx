@@ -5,12 +5,12 @@ import { FileAudio, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  file: File;
-  onRemove: () => void;
-  disabled: boolean;
   dict: {
     remove: string;
   };
+  disabled: boolean;
+  file: File;
+  onRemove: () => void;
 }
 
 function getFileExtension(filename: string): string {
@@ -28,7 +28,7 @@ function formatFileSize(bytes: number): string {
 export function FileInfo({ file, onRemove, disabled, dict }: Props) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/50 p-4">
-      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center">
         <FileAudio className="h-6 w-6 text-primary-foreground" />
       </div>
       <div className="min-w-0 flex-1">
@@ -44,7 +44,7 @@ export function FileInfo({ file, onRemove, disabled, dict }: Props) {
       </div>
       <Button
         aria-label={dict.remove}
-        className="flex-shrink-0 hover:bg-destructive/10 hover:text-destructive"
+        className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
         disabled={disabled}
         onClick={onRemove}
         size="icon"

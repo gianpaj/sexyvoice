@@ -29,21 +29,21 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface BillingUsageResult {
-  source_type: string | null;
   api_key_id: string | null;
   model: string | null;
   requests: number;
+  source_type: string | null;
+  total_credits_used: number;
+  total_dollar_amount: number;
+  total_duration_seconds: number;
   total_input_chars: number;
   total_output_chars: number;
-  total_duration_seconds: number;
-  total_dollar_amount: number;
-  total_credits_used: number;
 }
 
 interface BillingUsageBucket {
-  start_time_iso: string;
   end_time_iso: string;
   results: BillingUsageResult[];
+  start_time_iso: string;
 }
 
 interface BillingUsageResponse {

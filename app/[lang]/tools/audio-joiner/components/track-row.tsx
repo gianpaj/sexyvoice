@@ -9,27 +9,27 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface TrackRowProps {
-  name: string;
-  url: string;
+  canMoveDown: boolean;
+  canMoveUp: boolean;
+  disabled?: boolean;
   durationSec: number;
-  startSec: number;
   endSec: number;
-  /** Playhead position as a percentage (0–100) of the full waveform width,
-   *  or null when the playhead is outside this track's active window. */
-  playheadPct?: number | null;
   /** Global timeline offset that precedes this track's trimmed region. */
   globalOffsetSec?: number;
-  disabled?: boolean;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  name: string;
   onDelete: () => void;
-  onTrimChange: (nextStartSec: number, nextEndSec: number) => void;
+  onMoveDown: () => void;
+  onMoveUp: () => void;
   onReady: (durationSec: number) => void;
   /** Called with the new global timeline position (seconds) when the user
    *  clicks the waveform to seek. */
   onSeek?: (globalTimeSec: number) => void;
+  onTrimChange: (nextStartSec: number, nextEndSec: number) => void;
+  /** Playhead position as a percentage (0–100) of the full waveform width,
+   *  or null when the playhead is outside this track's active window. */
+  playheadPct?: number | null;
+  startSec: number;
+  url: string;
 }
 
 const MIN_TRIM_GAP_SEC = 0.05;

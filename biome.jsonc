@@ -60,13 +60,15 @@
         "noUnknownAtRules": "off"
       },
       "correctness": {
-        "useUniqueElementIds": "off"
+        "useUniqueElementIds": "off",
+        "noNextAsyncClientComponent": "error"
       },
       "nursery": {
         "noShadow": "off",
         "noLeakedRender": "off"
       },
       "performance": {
+        "noNamespaceImport": "warn",
         "useTopLevelRegex": "off"
       }
     },
@@ -90,6 +92,7 @@
   "assist": {
     "actions": {
       "source": {
+        "noDuplicateClasses": "on",
         "organizeImports": {
           "level": "on",
           "options": {

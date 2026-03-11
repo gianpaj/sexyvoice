@@ -208,11 +208,11 @@
       "popular": "Más Popular",
       "startFree": "Comenzar Gratis",
       "buyCredits": "Comprar créditos",
-      "x_credits": "__NUM_CREDITS__ créditos",
+      "x_credits": "{numCredits} créditos",
       "free": {
         "name": "Gratis",
         "description": "Para particulares que quieran probar la generación de audio de IA más avanzada.",
-        "creditsWithAudio": "__NUM_CREDITS__ créditos (~4 min de audio)",
+        "creditsWithAudio": "{numCredits} créditos (~4 min de audio)",
         "features": [
           "Genera voz con sonidos de gemidos realistas",
           "Clona tu voz con tan solo 10 segundos de audio"
@@ -230,8 +230,8 @@
       "standard": {
         "name": "Standard",
         "description": "Para aficionados que crean proyectos con audio de IA y voces personalizadas.",
-        "creditsWithAudio": "__NUM_CREDITS__ créditos (~11 min de audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ créditos",
+        "creditsWithAudio": "{numCredits} créditos (~11 min de audio)",
+        "creditsWithPromo": "{numCredits} créditos",
         "features": [
           "Todo lo incluido en el plan Gratis",
           "Generación de texto 2× más largo",
@@ -241,8 +241,8 @@
       "pro": {
         "name": "Pro",
         "description": "Para necesidades creativas más grandes y contenido más atrevido.",
-        "creditsWithAudio": "__NUM_CREDITS__ créditos (~125 min de audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ créditos",
+        "creditsWithAudio": "{numCredits} créditos (~125 min de audio)",
+        "creditsWithPromo": "{numCredits} créditos",
         "features": [
           "Todo lo incluido en el plan Gratis",
           "Llamada de voz: Personajes personalizados"
@@ -257,16 +257,16 @@
       "processing": "Procesando...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ Créditos",
+          "name": "{numCredits} Créditos",
           "description": "Perfecto para empezar"
         },
         "standard": {
-          "name": "__NUM_CREDITS__ Créditos",
+          "name": "{numCredits} Créditos",
           "description": "La opción más popular",
           "value": "Mejor Valor"
         },
         "pro": {
-          "name": "__NUM_CREDITS__ Créditos",
+          "name": "{numCredits} Créditos",
           "description": "Para usuarios avanzados",
           "value": "Paquete Pro"
         }

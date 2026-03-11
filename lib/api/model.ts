@@ -1,4 +1,5 @@
 import {
+  DB_MODEL_TO_EXTERNAL_ID,
   EXTERNAL_API_MODELS,
   type ExternalApiModelId,
 } from '@/lib/api/constants';
@@ -6,8 +7,9 @@ import {
 export function resolveExternalModelId(
   model: string,
 ): ExternalApiModelId | undefined {
-  if (Object.hasOwn(EXTERNAL_API_MODELS, model)) {
-    return model as ExternalApiModelId;
+  const mapped = DB_MODEL_TO_EXTERNAL_ID[model];
+  if (mapped && Object.hasOwn(EXTERNAL_API_MODELS, mapped)) {
+    return mapped as ExternalApiModelId;
   }
   return undefined;
 }

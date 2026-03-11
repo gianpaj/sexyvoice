@@ -51,16 +51,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 
 interface ApiKeyRow {
-  id: string;
-  name: string;
-  key_prefix: string;
   created_at: string;
-  last_used_at: string | null;
   expires_at: string | null;
+  id: string;
   is_active: boolean;
+  key_prefix: string;
+  last_used_at: string | null;
+  name: string;
 }
 
 export function ApiKeys({

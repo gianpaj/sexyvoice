@@ -23,10 +23,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
-import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import type messages from '@/messages/en.json';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
@@ -43,12 +43,12 @@ import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 
 interface AudioGeneratorProps {
-  selectedVoice?: Tables<'voices'>;
-  selectedStyle?: string;
+  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
-  dict: (typeof lang)['generate'];
   locale: string;
+  selectedStyle?: string;
+  selectedVoice?: Tables<'voices'>;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: UI orchestration
@@ -770,7 +770,7 @@ export function AudioGenerator({
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
-          <div className="flex flex-grow-0 gap-2">
+          <div className="flex grow-0 gap-2">
             <Button
               className="h-10 w-full sm:w-fit"
               data-testid="generate-button"
@@ -792,7 +792,7 @@ export function AudioGenerator({
               ) : (
                 <span className="flex items-center gap-2">
                   {dict.ctaButton}
-                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </span>
@@ -802,7 +802,7 @@ export function AudioGenerator({
               <Button
                 aria-label={dict.cancel}
                 className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
-                icon={() => <CircleStop className="!size-8" name="cancel" />}
+                icon={() => <CircleStop className="size-8!" name="cancel" />}
                 iconPlacement="right"
                 onClick={handleCancel}
                 size="icon"

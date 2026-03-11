@@ -1,20 +1,20 @@
 type ExternalSourceType = 'api_tts' | 'api_voice_cloning';
 type ExternalProvider = 'google' | 'replicate';
-type ExternalModel = 'gpro' | 'kokoro' | string;
+type ExternalModel = 'gpro' | 'orpheus' | string;
 
 interface PricingInput {
-  sourceType: ExternalSourceType;
-  provider: ExternalProvider;
-  model?: ExternalModel | null;
-  inputChars?: number | null;
-  outputChars?: number | null;
   durationSeconds?: number | null;
+  inputChars?: number | null;
+  model?: ExternalModel | null;
+  outputChars?: number | null;
+  provider: ExternalProvider;
+  sourceType: ExternalSourceType;
 }
 
 interface PriceConfig {
   perInputChar: number;
-  perOutputChar: number;
   perMinute: number;
+  perOutputChar: number;
   perRequest: number;
 }
 
@@ -33,7 +33,7 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perMinute: 0,
     perRequest: 0,
   },
-  'api_tts:replicate:kokoro': {
+  'api_tts:replicate:orpheus': {
     perInputChar: 0.000_015,
     perOutputChar: 0,
     perMinute: 0,

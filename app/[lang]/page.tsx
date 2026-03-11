@@ -2,14 +2,14 @@ import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -27,7 +27,7 @@ import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
   allPosts
-    .filter((post) => post.locale === lang && post.image)
+    .filter((post) => post.locale === lang && post.image && !post.draft)
     ?.sort(
       (postA, postB) =>
         new Date(postB.date).getTime() - new Date(postA.date).getTime(),
@@ -40,29 +40,41 @@ export const metadata: Metadata = {
   },
 };
 
+type PromoCountdownLabels = NonNullable<
+  React.ComponentProps<typeof PromoBanner>['countdown']
+>['labels'];
+
 export default async function LandingPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
+  const { lang } = await props.params;
 
   // Validate that the language is a supported locale
   if (!i18n.locales.includes(lang as Locale)) {
     redirect(`/${i18n.defaultLocale}`);
   }
 
-  const dict = await getDictionary(lang);
-  const dictLanding = dict.landing;
-  const dictHeader = dict.header;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dictLanding = messages.landing;
 
   const promoDictKey =
     process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
-  // @ts-expect-error fix me
-  const promoDict = (await getDictionary(lang, 'promos'))[promoDictKey];
+  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
+    ? messages.promos[promoDictKey as keyof typeof messages.promos]
+    : undefined;
 
   const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
   const titleRestParts = restParts.join(',');
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown as PromoCountdownLabels,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
   const faqQuestions = dictLanding.faq.groups.flatMap(
     (group) => group.questions,
@@ -89,7 +101,7 @@ export default async function LandingPage(props: {
         '@id': 'https://sexyvoice.ai/#website',
         url: 'https://sexyvoice.ai',
         name: 'SexyVoice.ai',
-        description: dict.pages.description,
+        description: messages.pages.description,
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
@@ -99,8 +111,8 @@ export default async function LandingPage(props: {
         '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
         url: siteUrl,
-        name: dict.pages.defaultTitle,
-        description: dict.pages.description,
+        name: messages.pages.defaultTitle,
+        description: messages.pages.description,
         isPartOf: {
           '@id': 'https://sexyvoice.ai/#website',
         },
@@ -134,36 +146,26 @@ export default async function LandingPage(props: {
       {promoDict && (
         <PromoBanner
           ariaLabelDismiss={promoDict.ariaLabelDismiss}
-          countdown={
-            process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-              ? {
-                  enabled: true,
-                  endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                  labels: promoDict.countdown,
-                }
-              : undefined
-          }
+          countdown={promoCountdown}
           ctaLink={`/${lang}/signup`}
           ctaText={promoDict.ctaLoggedOut}
           isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
           text={promoDict.text}
         />
       )}
-      <HeaderStatic dict={dictHeader} lang={lang} />
+      <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-gradient-to-br from-background to-gray-800">
+        <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <LandingHero />
               <h1 className="font-bold text-5xl md:text-6xl">
-                <span className="text-white/90 leading-[3.5rem]">
-                  {firstPart}
-                </span>
+                <span className="text-white/90 leading-14">{firstPart}</span>
                 <br />
                 {titleRestParts && (
                   <span
-                    className="whitespace-break-spaces bg-gradient-to-r bg-clip-text text-transparent leading-[4rem]"
+                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent leading-16"
                     style={{
                       backgroundImage:
                         'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
@@ -180,7 +182,7 @@ export default async function LandingPage(props: {
               <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
-                  className="w-fit self-center"
+                  className="hit-area-4 w-fit self-center"
                   effect="expandIcon"
                   icon={ArrowRightIcon}
                   iconPlacement="right"
@@ -198,7 +200,7 @@ export default async function LandingPage(props: {
 
             {/* Audio Previews Grid */}
             <SampleAudioPreviews
-              initialAudios={getSampleAudiosByLanguage()}
+              initialAudios={getSampleAudiosByLanguage(lang)}
               trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
               trySamplesTitle={dictLanding.popular.trySamplesTitle}
             />
@@ -300,7 +302,7 @@ export default async function LandingPage(props: {
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
                   key={idx}
                 >
-                  <Link href={`/${post.locale}${post.url}`} prefetch>
+                  <Link href={post.url} prefetch>
                     <CardHeader>
                       {post.image && (
                         <Image
@@ -336,7 +338,7 @@ export default async function LandingPage(props: {
               </p>
               <Button
                 asChild
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
+                className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
                 effect="ringHover"
                 size="lg"
               >

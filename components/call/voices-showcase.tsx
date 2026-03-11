@@ -18,9 +18,9 @@ import { cn } from '@/lib/utils';
 
 interface VoicesShowcaseProps {
   callVoices?: DBVoice[];
-  onSelectVoice?: (voiceName: string) => void;
   currentVoice?: string;
   onOpenChange?: (open: boolean) => void;
+  onSelectVoice?: (voiceName: string) => void;
 }
 
 function VoiceCardPlayButton({

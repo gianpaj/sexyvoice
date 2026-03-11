@@ -8,30 +8,30 @@ export interface TranscriptChunk {
 }
 
 export interface TranscriptionResult {
-  text: string;
   chunks?: TranscriptChunk[];
+  text: string;
 }
 
 export interface DownloadProgress {
-  status: string;
-  name?: string;
   file?: string;
-  progress?: number;
   loaded?: number;
+  name?: string;
+  progress?: number;
+  status: string;
   total?: number;
 }
 
 type TranscriberState = 'idle' | 'loading' | 'ready' | 'transcribing';
 
 interface UseTranscriberReturn {
-  state: TranscriberState;
-  transcript: TranscriptionResult | null;
-  partialTranscript: string;
   downloadProgress: DownloadProgress[];
   error: string | null;
   loadModel: (model: string, quantized: boolean) => void;
-  transcribe: (audio: Float32Array, language: string, subtask: string) => void;
+  partialTranscript: string;
   reset: () => void;
+  state: TranscriberState;
+  transcribe: (audio: Float32Array, language: string, subtask: string) => void;
+  transcript: TranscriptionResult | null;
 }
 
 export function useTranscriber(): UseTranscriberReturn {

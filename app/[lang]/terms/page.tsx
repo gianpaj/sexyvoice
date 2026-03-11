@@ -1,11 +1,11 @@
 import { allPolicyPages } from 'contentlayer/generated';
 import type { Metadata } from 'next';
+import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 
 const TERMS_SLUG = 'terms';
@@ -60,7 +60,7 @@ export default async function TermsPolicyPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dictHeader = await getDictionary(lang, 'header');
+  await getMessages({ locale: lang });
 
   if (!i18n.locales.includes(lang)) {
     redirect(`/${i18n.defaultLocale}/${TERMS_SLUG}`);
@@ -73,8 +73,8 @@ export default async function TermsPolicyPage(props: {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800">
-      <HeaderStatic dict={dictHeader} lang={lang} />
+    <main className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800">
+      <HeaderStatic />
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1>{policy.title}</h1>
         <p className="mt-2 text-muted-foreground text-sm">

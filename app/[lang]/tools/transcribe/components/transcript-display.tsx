@@ -4,15 +4,15 @@ import { Check, ClipboardCopy } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
 import type { TranscriptionResult } from '../hooks/use-transcriber';
 
 interface Props {
-  transcript: TranscriptionResult | null;
-  partialTranscript: string;
   currentTime?: number | null;
   dict: (typeof langDict)['transcribe']['transcriptDisplay'];
+  partialTranscript: string;
+  transcript: TranscriptionResult | null;
 }
 
 function formatTimestamp(seconds: number): string {
@@ -112,9 +112,7 @@ export function TranscriptDisplay({
                   <span
                     className={cn(
                       'mt-0.5 shrink-0 font-mono text-xs tabular-nums',
-                      isActive
-                        ? 'text-primary'
-                        : 'text-muted-foreground/60',
+                      isActive ? 'text-primary' : 'text-muted-foreground/60',
                     )}
                   >
                     {formatTimestamp(chunk.timestamp[0])}

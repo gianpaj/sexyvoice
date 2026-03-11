@@ -14,14 +14,9 @@ import {
 import type { JoinerOutputFormat } from '../hooks/use-ffmpeg-joiner';
 
 interface JoinControlsProps {
-  outputFormat: JoinerOutputFormat;
-  onOutputFormatChange: (format: JoinerOutputFormat) => void;
-  isPlaying: boolean;
-  onTogglePlayPause: () => void;
-  onJoin: () => void;
-  onCancel: () => void;
-  isProcessing: boolean;
   canJoin: boolean;
+  isPlaying: boolean;
+  isProcessing: boolean;
   labels: {
     format: string;
     play: string;
@@ -30,6 +25,11 @@ interface JoinControlsProps {
     joining: string;
     cancel: string;
   };
+  onCancel: () => void;
+  onJoin: () => void;
+  onOutputFormatChange: (format: JoinerOutputFormat) => void;
+  onTogglePlayPause: () => void;
+  outputFormat: JoinerOutputFormat;
 }
 
 export function JoinControls({

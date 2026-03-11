@@ -13,14 +13,14 @@ type BillingTransactionType =
   Database['public']['Enums']['credit_transaction_type'];
 
 interface BillingTransaction {
-  id: string;
-  type: BillingTransactionType;
   amount: number;
-  description: string;
   created_at: string;
+  description: string;
+  id: string;
+  metadata: Json | null;
   reference_id: string | null;
   subscription_id: string | null;
-  metadata: Json | null;
+  type: BillingTransactionType;
 }
 
 export async function GET(request: Request) {

@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter } from '@/lib/utils';
 import { AudioPlayerWithContext } from './audio-player-with-context';
@@ -52,7 +52,7 @@ export function VoiceSelector({
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
-  dict: (typeof lang)['generate'];
+  dict: (typeof messages)['generate'];
 }) {
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -146,7 +146,7 @@ export function VoiceSelector({
                 playAudioTitle={dict.playAudio}
                 showWaveform
                 url={selectedVoice.sample_url}
-                waveformClassName="!h-5"
+                waveformClassName="h-5!"
               />
               <div className="flex items-center gap-3">
                 <p className="text-muted-foreground text-sm">

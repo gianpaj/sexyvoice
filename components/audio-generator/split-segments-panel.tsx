@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from '../audio-player-with-context';
 import {
   getSplitSegmentStatusLabel,
@@ -14,17 +14,17 @@ import {
 } from './split-segments-utils';
 
 interface SplitSegmentsPanelProps {
-  segments: SplitSegmentItem[];
+  allSegmentsGenerated: boolean;
+  dict: (typeof messages)['generate'];
+  isDownloadingAllSegments: boolean;
   isGenerating: boolean;
   isJoinerLoading: boolean;
   isJoiningSegments: boolean;
-  isDownloadingAllSegments: boolean;
-  allSegmentsGenerated: boolean;
-  dict: (typeof lang)['generate'];
   onDownloadAllSegments: () => void;
+  onDownloadSegment: (url: string) => void;
   onRetrySegment: (index: number) => void;
   onSegmentTextChange: (index: number, text: string) => void;
-  onDownloadSegment: (url: string) => void;
+  segments: SplitSegmentItem[];
 }
 
 export function SplitSegmentsPanel({

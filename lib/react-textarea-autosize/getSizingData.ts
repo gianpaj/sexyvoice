@@ -50,9 +50,9 @@ type SizingProps = Extract<
 type SizingStyle = Pick<CSSStyleDeclaration, SizingProps>;
 
 export interface SizingData {
-  sizingStyle: SizingStyle;
-  paddingSize: number;
   borderSize: number;
+  paddingSize: number;
+  sizingStyle: SizingStyle;
 }
 
 const isIE =

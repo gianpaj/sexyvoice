@@ -96,7 +96,6 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Tests
 
 - Setup Playwright for end-to-end testing.
-- Uses a test DB (in memory)
 
 ## Security
 
@@ -109,9 +108,9 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 - add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
 - Sentry monitoring with Posthog error linking <https://posthog.com/docs/libraries/node#sentry-integration>
 
-## Documentation / Knowledge base site
+## Research
 
-- <https://nextra.site>
+- Automated Dialogue Replacement (ADR) is a post-production process in filmmaking where actors re-record their dialogue in a studio to improve audio quality or make changes to the script. This technique helps to ensure that the final audio matches the visuals and enhances the overall sound of the film.
 
 ## Emails
 

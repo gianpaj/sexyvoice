@@ -50,9 +50,9 @@ const getBadgeClasses = (name: string) => {
 };
 
 interface AudioUsageData {
-  sourceType?: string;
   apiKeyId?: string;
   dollarAmount?: number;
+  sourceType?: string;
 }
 
 function getUsageData(value: unknown): AudioUsageData | null {

@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
+import { getMessages } from 'next-intl/server';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getMyAudioFilesQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
@@ -28,7 +28,7 @@ export default async function HistoryPage(props: {
   // set the initial data
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
 
-  const dict = await getDictionary(lang, 'history');
+  const dict = ((await getMessages({ locale: lang })) as IntlMessages).history;
 
   return (
     <div className="container mx-auto pb-10">

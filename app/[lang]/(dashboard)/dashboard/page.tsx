@@ -9,7 +9,7 @@ export default async function DashboardPage(props: {
 }) {
   const params = await props.params;
 
-  redirect(`/${params.lang}/dashboard/call`);
+  redirect(`/${params.lang}/dashboard/generate`);
 }
 
 // {'success' in searchParams && (

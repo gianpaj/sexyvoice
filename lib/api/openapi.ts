@@ -62,12 +62,12 @@ export function createExternalApiOpenApiDocument() {
                       style: 'happy',
                     },
                   },
-                  minimal: {
-                    summary: 'Minimum required parameters',
+                  orpheus_voice: {
+                    summary: 'Orpheus model with English voice',
                     value: {
-                      model: 'gpro',
-                      input: 'Test',
-                      voice: 'aoede',
+                      model: 'orpheus',
+                      input: 'Hello, my name is Tara!',
+                      voice: 'tara',
                     },
                   },
                 },

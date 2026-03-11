@@ -1,25 +1,23 @@
 import { Suspense } from 'react';
 
+import { getMessages } from 'next-intl/server';
+
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LoginForm } from './login-form';
 
 export default async function LoginPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
-
-  const dict = await getDictionary(lang);
+  const { lang } = await props.params;
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <>
-      <HeaderStatic dict={dict.header} lang={lang} />
+      <HeaderStatic />
       <main
-        className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800"
+        className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-linear-to-br dark:from-gray-900 dark:to-gray-800"
         id="main-content"
       >
         <div className="w-full max-w-md">

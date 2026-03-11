@@ -6,10 +6,10 @@ import { useEffect, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import type lang from '@/lib/i18n/dictionaries/en.json';
+import type messages from '@/messages/en.json';
 
 interface TopupStatusProps {
-  dict: (typeof lang)['credits'];
+  dict: (typeof messages)['credits'];
 }
 
 export function TopupStatus({ dict }: TopupStatusProps) {
@@ -65,10 +65,10 @@ export function TopupStatus({ dict }: TopupStatusProps) {
     <div className="mb-6 w-full lg:w-1/2">
       {status === 'success' && (
         <Alert className="grid grid-cols-subgrid gap-2">
-          <div className="grid grid-cols-[auto,1fr,auto] items-center gap-2">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
             <CircleCheckIcon
               aria-hidden="true"
-              className="!text-emerald-500 me-3 -mt-0.5 inline-flex"
+              className="text-emerald-500! me-3 -mt-0.5 inline-flex"
             />
 
             <AlertTitle>{dict.status.success.title}</AlertTitle>
@@ -81,7 +81,7 @@ export function TopupStatus({ dict }: TopupStatusProps) {
               {dict.status.success.dismiss}
             </Button>
           </div>
-          <div className="grid grid-cols-[2fr,1fr,auto]">
+          <div className="grid grid-cols-[2fr_1fr_auto]">
             <AlertDescription className="text-muted-foreground">
               {creditsAmount
                 ? dict.status.success.descriptionWithAmount.replace(
