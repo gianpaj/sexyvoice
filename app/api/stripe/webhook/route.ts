@@ -5,7 +5,7 @@ import type Stripe from 'stripe';
 
 import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
-import { getTopupPackages } from '@/lib/stripe/pricing';
+import { getSubscriptionPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
   getUserIdByStripeCustomerId,
@@ -250,23 +250,23 @@ async function handleCheckoutSessionCompleted(
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const priceId = subscription.items.data[0].price.id;
 
-      const TOPUP_PACKAGES = getTopupPackages('en');
+      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
       let credits = 0;
       let dollarAmount = 0;
 
       switch (priceId) {
         case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-          credits = TOPUP_PACKAGES.starter.credits;
-          dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
+          credits = SUBSCRIPTION_PACKAGES.starter.credits;
+          dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
           break;
         case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-          credits = TOPUP_PACKAGES.standard.credits;
-          dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
+          credits = SUBSCRIPTION_PACKAGES.standard.credits;
+          dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
           break;
         // TODO: use `pro_monthly` look up key
         case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-          credits = TOPUP_PACKAGES.pro.credits;
-          dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
+          credits = SUBSCRIPTION_PACKAGES.pro.credits;
+          dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
           break;
         default:
           console.error('[STRIPE HOOK] Invalid subscription price ID', {
@@ -365,23 +365,23 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items.data[0].price.id;
 
-    const TOPUP_PACKAGES = getTopupPackages('en');
+    const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
     let credits = 0;
     let dollarAmount = 0;
 
     switch (priceId) {
       case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-        credits = TOPUP_PACKAGES.starter.credits;
-        dollarAmount = TOPUP_PACKAGES.starter.dollarAmount;
+        credits = SUBSCRIPTION_PACKAGES.starter.credits;
+        dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
         break;
       case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-        credits = TOPUP_PACKAGES.standard.credits;
-        dollarAmount = TOPUP_PACKAGES.standard.dollarAmount;
+        credits = SUBSCRIPTION_PACKAGES.standard.credits;
+        dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
         break;
       // FIXME: change env var name to STRIPE_SUBSCRIPTION_PRO_PRICE_ID
       case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-        credits = TOPUP_PACKAGES.pro.credits;
-        dollarAmount = TOPUP_PACKAGES.pro.dollarAmount;
+        credits = SUBSCRIPTION_PACKAGES.pro.credits;
+        dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
         break;
       default:
         console.error('[STRIPE HOOK] Invalid subscription price ID', {

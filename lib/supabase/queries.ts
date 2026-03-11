@@ -2,6 +2,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
 import {
   FREE_USER_CALL_LIMIT_SECONDS,
@@ -373,7 +374,7 @@ export const insertSubscriptionCreditTransaction = async (
     subscription_id: subscriptionId,
     amount: creditAmount,
     type: 'purchase',
-    description: `Subscription payment - $${dollarAmount}`,
+    description: `Subscription payment - $${dollarAmount} (includes ${Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}% bonus)`,
     metadata: {
       dollarAmount,
       isFirstSubscription,

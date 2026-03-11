@@ -1,8 +1,8 @@
 import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import * as Sentry from '@sentry/nextjs';
-import { getMessages } from 'next-intl/server';
 import Link from 'next/link';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type Stripe from 'stripe';
 
 import { Button } from '@/components/ui/button';
@@ -99,13 +99,19 @@ export default async function CreditsPage(props: {
         </Button>
       </div>
 
-      <CreditTopup dict={{ credits: dict.credits, promos: dict.promos }} lang={lang} />
+      <CreditTopup
+        dict={{ credits: dict.credits, promos: dict.promos }}
+        lang={lang}
+      />
 
       <div className="my-8">
         <h3 className="mb-4 font-semibold text-lg">
           {dict.credits.history.title}
         </h3>
-        <CreditHistory dict={dict.credits} transactions={existingTransactions} />
+        <CreditHistory
+          dict={dict.credits}
+          transactions={existingTransactions}
+        />
       </div>
 
       {shouldShowPricingTable && clientSecret && (

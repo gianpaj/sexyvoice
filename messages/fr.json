@@ -112,6 +112,20 @@
           "category": "Création de voix et styles",
           "questions": [
             {
+              "question": "Quelles langues sont supportées pour la génération vocale ?",
+              "answer": "Le support linguistique dépend de la voix sélectionnée.\n\nCertaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) supportent 24 langues, notamment :\n🇪🇬 Arabe (égyptien),\n🇺🇸 Anglais (US),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇺🇸 Espagnol (US),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇧🇷 Portugais (Brésil),\n🇷🇺 Russe (Russie),\n🇳🇱 Néerlandais (Pays-Bas),\n🇵🇱 Polonais (Pologne),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇻🇳 Vietnamien (Vietnam),\n🇷🇴 Roumain (Roumanie),\n🇺🇦 Ukrainien (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇳 Marathi (Inde),\n🇮🇳 Tamoul (Inde),\net 🇮🇳 Telugu (Inde).\nD'autres voix sont spécifiques à une langue :\n🇬🇧 Dan (Anglais UK),\n🇮🇹 Pietro (Italien),\n🇺🇸 Emma (Anglais US),\n🇪🇸 Javi (Espagnol),\n🇺🇸 Josh (Anglais US),\n🇺🇸 et Tara (Anglais US).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
+            },
+            {
+              "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
+              "answer": "Oui ! Choisissez une voix multilingue (ex. Zephyr) et tapez le style souhaité — \"accent britannique\", \"voix de pirate\", \"ton séducteur\", etc. Le modèle s'adapte instantanément, et vous pouvez l'affiner avec plus d'instructions."
+            }
+          ]
+        },
+        {
+          "id": "voiceCloning",
+          "category": "Clonage vocal",
+          "questions": [
+            {
               "question": "Comment fonctionne le clonage vocal ?",
               "answer": "Notre IA analyse votre échantillon vocal (10 secondes à 5 minutes) pour apprendre ses motifs et caractéristiques uniques. Avec seulement quelques secondes d'audio clair, vous pouvez créer une version numérique de votre voix qui sonne naturelle et réaliste."
             },
@@ -120,16 +134,8 @@
               "answer": "Oui ! Avec seulement quelques secondes d'audio clair, il peut créer une version numérique de votre voix qui sonne naturelle et réaliste."
             },
             {
-              "question": "Quelles langues sont supportées pour la génération vocale ?",
-              "answer": "Le support linguistique dépend de la voix sélectionnée.\n\nCertaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) supportent 24 langues, notamment :\n🇩🇪 Allemand (Allemagne),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇮🇩 Indonésien (Indonésie),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇹🇭 Thaï (Thaïlande),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam).\nD'autres voix sont spécifiques à une langue :\n🇮🇹 Pietro (Italien),\n🇪🇸 Javi (Espagnol),\n🇬🇧 Dan (Anglais UK),\n🇺🇸 Emma (Anglais US),\n🇺🇸 Josh (Anglais US),\n🇺🇸 et Tara (Anglais US).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
-            },
-            {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",
               "answer": "Le clonage vocal supporte les 23 langues suivantes :\n\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
-            },
-            {
-              "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
-              "answer": "Oui ! Choisissez une voix multilingue (ex. Zephyr) et tapez le style souhaité — \"accent britannique\", \"voix de pirate\", \"ton séducteur\", etc. Le modèle s'adapte instantanément, et vous pouvez l'affiner avec plus d'instructions."
             }
           ]
         },
@@ -202,13 +208,20 @@
     "description": "Choisissez la quantité de crédits qui correspond le mieux à vos besoins",
     "historyEmpty": "Votre historique d'utilisation des crédits apparaîtra ici",
     "billing": {
-      "forever": "(pour toujours)"
+      "forever": "(pour toujours)",
+      "monthly": "/mois",
+      "oneTime": "Achat unique"
     },
     "plans": {
       "popular": "Le plus populaire",
       "startFree": "Commencer gratuitement",
       "buyCredits": "Acheter des crédits",
+      "subscribe": "S'abonner",
       "x_credits": "{numCredits} crédits",
+      "subscriptionBonus": "+15% de crédits en plus",
+      "subscriptionBonusCredits": "+{bonusCredits} crédits bonus",
+      "toggleMonthly": "Mensuel",
+      "toggleOneTime": "Achat unique",
       "free": {
         "name": "Gratuit",
         "description": "Pour ceux qui veulent essayer la génération audio IA la plus avancée.",
@@ -271,7 +284,8 @@
           "value": "Pack Pro"
         }
       },
-      "mostPopular": "Le plus populaire"
+      "mostPopular": "Le plus populaire",
+      "cheaperBadge": "{percent} moins cher"
     },
     "status": {
       "success": {
