@@ -10,9 +10,9 @@ import {
 
 interface UseSplitSegmentsParams {
   selectedVoiceName?: string;
-  text: string;
   shouldUseSplitMode: boolean;
   splitSegmentTexts: string[];
+  text: string;
 }
 
 export function useSplitSegments({
@@ -29,7 +29,7 @@ export function useSplitSegments({
   const [splitStorageKey, setSplitStorageKey] = useState('');
 
   useEffect(() => {
-    if (!(selectedVoiceName && text.trim())) {
+    if (!(shouldUseSplitMode && selectedVoiceName && text.trim())) {
       setSplitStorageKey('');
       return;
     }
@@ -42,7 +42,7 @@ export function useSplitSegments({
     return () => {
       cancelled = true;
     };
-  }, [selectedVoiceName, text]);
+  }, [shouldUseSplitMode, selectedVoiceName, text]);
 
   useEffect(() => {
     if (!(shouldUseSplitMode && splitStorageKey)) {
