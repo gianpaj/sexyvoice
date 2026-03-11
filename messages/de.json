@@ -112,6 +112,20 @@
           "category": "Stimmerstellung und Stile",
           "questions": [
             {
+              "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
+              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\nund 🇮🇳 Telugu (Indien).\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK),\n🇮🇹 Pietro (Italienisch),\n🇺🇸 Emma (Englisch US),\n🇪🇸 Javi (Spanisch),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+            },
+            {
+              "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
+              "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
+            }
+          ]
+        },
+        {
+          "id": "voiceCloning",
+          "category": "Stimmklonen",
+          "questions": [
+            {
               "question": "Wie funktioniert das Klonen von Stimmen?",
               "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
             },
@@ -120,16 +134,8 @@
               "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
             },
             {
-              "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
-              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam).\nAndere Stimmen sind sprachspezifisch:\n🇮🇹 Pietro (Italienisch),\n🇪🇸 Javi (Spanisch),\n🇬🇧 Dan (Englisch UK),\n🇺🇸 Emma (Englisch US),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
-            },
-            {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
               "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
-            },
-            {
-              "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
-              "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
             }
           ]
         },
@@ -202,13 +208,20 @@
     "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
     "billing": {
-      "forever": "(für immer)"
+      "forever": "(für immer)",
+      "monthly": "/Monat",
+      "oneTime": "Einmalzahlung"
     },
     "plans": {
       "popular": "Am beliebtesten",
       "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
+      "subscribe": "Abonnieren",
       "x_credits": "{numCredits} Credits",
+      "subscriptionBonus": "+15% mehr Credits",
+      "subscriptionBonusCredits": "+{bonusCredits} Bonus-Credits",
+      "toggleMonthly": "Monatlich",
+      "toggleOneTime": "Einmalzahlung",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die die fortschrittlichste KI-Audiogenerierung ausprobieren möchten.",
@@ -271,7 +284,8 @@
           "value": "Pro-Paket"
         }
       },
-      "mostPopular": "Am beliebtesten"
+      "mostPopular": "Am beliebtesten",
+      "cheaperBadge": "{percent} günstiger"
     },
     "status": {
       "success": {

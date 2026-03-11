@@ -71,14 +71,21 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --color-promo-primary: hsl(var(--promo-primary));
-  --color-promo-primary-dark: hsl(var(--promo-primary-dark));
-  --color-promo-accent: hsl(var(--promo-accent));
-  --color-promo-text: hsl(var(--promo-text));
-  --color-promo-text-dark: hsl(var(--promo-text-dark));
-
   /* Container */
   --container-max: 1300px;
+}
+
+/* Promo color tokens use @theme inline so that Tailwind emits
+   var(--color-promo-*) references in utilities rather than trying
+   to statically resolve the value at build time. This allows the
+   runtime CSS variables (set via [data-promo-theme] or :root) to
+   take effect, making ring-promo-accent / text-promo-text etc. work. */
+@theme inline {
+  --color-promo-primary: var(--promo-primary-resolved);
+  --color-promo-primary-dark: var(--promo-primary-dark-resolved);
+  --color-promo-accent: var(--promo-accent-resolved);
+  --color-promo-text: var(--promo-text-resolved);
+  --color-promo-text-dark: var(--promo-text-dark-resolved);
 
   /* Keyframes */
   --animate-accordion-down: accordion-down 0.2s ease-out;
@@ -400,35 +407,35 @@
     --incoming-call-color: 34, 197, 94;
 
     /* Promo theme colors - default to pink */
-    --promo-primary: var(--color-pink-500);
-    --promo-primary-dark: var(--color-pink-600);
-    --promo-accent: var(--color-pink-400);
-    --promo-text: var(--color-pink-600);
-    --promo-text-dark: var(--color-pink-400);
+    --promo-primary-resolved: var(--color-pink-500);
+    --promo-primary-dark-resolved: var(--color-pink-600);
+    --promo-accent-resolved: var(--color-pink-400);
+    --promo-text-resolved: var(--color-pink-600);
+    --promo-text-dark-resolved: var(--color-pink-400);
   }
 
   [data-promo-theme="orange"] {
-    --promo-primary: var(--color-orange-500);
-    --promo-primary-dark: var(--color-orange-600);
-    --promo-accent: var(--color-orange-400);
-    --promo-text: var(--color-orange-600);
-    --promo-text-dark: var(--color-orange-400);
+    --promo-primary-resolved: var(--color-orange-500);
+    --promo-primary-dark-resolved: var(--color-orange-600);
+    --promo-accent-resolved: var(--color-orange-400);
+    --promo-text-resolved: var(--color-orange-600);
+    --promo-text-dark-resolved: var(--color-orange-400);
   }
 
   [data-promo-theme="pink"] {
-    --promo-primary: var(--color-pink-500);
-    --promo-primary-dark: var(--color-pink-600);
-    --promo-accent: var(--color-pink-400);
-    --promo-text: var(--color-pink-600);
-    --promo-text-dark: var(--color-pink-400);
+    --promo-primary-resolved: var(--color-pink-500);
+    --promo-primary-dark-resolved: var(--color-pink-600);
+    --promo-accent-resolved: var(--color-pink-400);
+    --promo-text-resolved: var(--color-pink-600);
+    --promo-text-dark-resolved: var(--color-pink-400);
   }
 
   [data-promo-theme="blue"] {
-    --promo-primary: 0 0% 0%;
-    --promo-primary-dark: 229.7 59.82% 56.08%;
-    --promo-accent: 251.78 100% 68.04%;
-    --promo-text: 229.7 59.82% 56.08%;
-    --promo-text-dark: 245.63 100% 74.9%;
+    --promo-primary-resolved: oklch(0 0 0);
+    --promo-primary-dark-resolved: oklch(53.5% 0.197 258.4);
+    --promo-accent-resolved: oklch(48.2% 0.184 260.5);
+    --promo-text-resolved: oklch(53.5% 0.197 258.4);
+    --promo-text-dark-resolved: oklch(70.5% 0.231 273.8);
   }
 
   * {
