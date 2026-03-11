@@ -514,7 +514,7 @@ export function AudioGenerator({
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
-      setTimeout(() => URL.revokeObjectURL(outputUrl), 150);
+      setTimeout(() => URL.revokeObjectURL(outputUrl), 5000);
     } catch (error) {
       console.error('Failed to download all segments:', error);
       toast.error(dict.split.downloadAllFailed);
