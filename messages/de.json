@@ -651,6 +651,10 @@
     }
   },
   "footer": {
+    "tagline": "KI-gestützte Sprachgenerierung. Erstellen Sie natürliches, ausdrucksstarkes Audio in Sekunden.",
+    "toolsHeading": "Werkzeuge",
+    "companyHeading": "Unternehmen",
+    "legalHeading": "Rechtliches",
     "statusPage": "Statusseite",
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",

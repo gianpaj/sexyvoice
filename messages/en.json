@@ -651,6 +651,10 @@
     }
   },
   "footer": {
+    "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "toolsHeading": "Tools",
+    "companyHeading": "Company",
+    "legalHeading": "Legal",
     "statusPage": "Status page",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",

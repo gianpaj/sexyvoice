@@ -651,6 +651,10 @@
     }
   },
   "footer": {
+    "tagline": "Generación de voz con IA. Crea audio natural y expresivo en segundos.",
+    "toolsHeading": "Herramientas",
+    "companyHeading": "Empresa",
+    "legalHeading": "Legal",
     "statusPage": "Página de estado",
     "privacyPolicy": "Política de privacidad",
     "termsAndConditions": "Términos y condiciones",
