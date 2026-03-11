@@ -498,34 +498,32 @@ export function AudioGenerator({
         endSec: number;
       }> = [];
 
-      const segmentPromises = splitSegments.map(
-        async (currentSegment, index) => {
-          if (!currentSegment.audioUrl) {
-            throw new Error('Missing segment URL');
-          }
+      for (let index = 0; index < splitSegments.length; index++) {
+        const currentSegment = splitSegments[index];
 
-          const response = await fetch(currentSegment.audioUrl);
-          if (!response.ok) {
-            throw new Error('Could not fetch generated segment');
-          }
+        if (!currentSegment.audioUrl) {
+          throw new Error('Missing segment URL');
+        }
 
-          const blob = await response.blob();
-          const mimeType = blob.type || 'audio/wav';
-          const extension = mimeType.includes('mpeg') ? 'mp3' : 'wav';
-          const file = new File([blob], `segment-${index + 1}.${extension}`, {
-            type: mimeType,
-          });
-          const durationSec = await getAudioDurationSeconds(file);
+        const response = await fetch(currentSegment.audioUrl);
+        if (!response.ok) {
+          throw new Error('Could not fetch generated segment');
+        }
 
-          return {
-            file,
-            startSec: 0,
-            endSec: durationSec,
-          };
-        },
-      );
+        const blob = await response.blob();
+        const mimeType = blob.type || 'audio/wav';
+        const extension = mimeType.includes('mpeg') ? 'mp3' : 'wav';
+        const file = new File([blob], `segment-${index + 1}.${extension}`, {
+          type: mimeType,
+        });
+        const durationSec = await getAudioDurationSeconds(file);
 
-      segmentInputs.push(...(await Promise.all(segmentPromises)));
+        segmentInputs.push({
+          file,
+          startSec: 0,
+          endSec: durationSec,
+        });
+      }
 
       const outputBlob = await joinSegments(segmentInputs, 'wav');
       const outputUrl = URL.createObjectURL(outputBlob);
