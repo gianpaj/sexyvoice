@@ -1,3 +1,5 @@
+@reference "../../../globals.css";
+
 .gradient-text {
   -webkit-text-fill-color: transparent;
   background: var(--gradient-background);
