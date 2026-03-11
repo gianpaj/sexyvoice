@@ -710,7 +710,9 @@ export function AudioGenerator({
               [textIsOverLimit ? 'font-bold text-red-500' : ''],
             )}
           >
-            {text.length} / {charactersLimit}
+            {shouldUseSplitMode
+              ? `${text.length} chars → ${splitSegmentTexts.length} segments`
+              : `${text.length} / ${charactersLimit}`}
           </div>
           {splitFeatureVisible && (
             <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
