@@ -212,6 +212,7 @@ export function AudioGenerator({
           : segment,
       );
       markSegmentGenerating(index);
+      const isLastSegment = index === currentSegmentTexts.length - 1;
       showGenerationProgressToast(index + 1, currentSegmentTexts.length);
 
       try {
@@ -226,6 +227,13 @@ export function AudioGenerator({
             : segment,
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
+        if (isLastSegment) {
+          showGenerationProgressToast(
+            index + 1,
+            currentSegmentTexts.length,
+            true,
+          );
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
           // User-initiated cancel is not a failure — reset to idle
@@ -327,6 +335,11 @@ export function AudioGenerator({
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
+        showGenerationProgressToast(
+          segmentIndex + 1,
+          splitSegments.length,
+          true,
+        );
         toast.success(
           dict.split.segmentGenerated.replace(
             '__INDEX__',

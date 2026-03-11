@@ -6,9 +6,9 @@ import type { ExternalToast } from 'sonner';
 import { toast } from '@/components/services/toast';
 
 interface SplitProgressDict {
+  progressSegment: string;
   progressTitle: string;
   progressTitleWithVoice: string;
-  progressSegment: string;
 }
 
 export function useGenerationProgressToast(
@@ -18,9 +18,13 @@ export function useGenerationProgressToast(
   const generationToastIdRef = useRef<ExternalToast['id'] | null>(null);
 
   const showGenerationProgressToast = useCallback(
-    (segmentIndex: number, totalSegments: number) => {
+    (segmentIndex: number, totalSegments: number, isComplete = false) => {
       const safeTotal = Math.max(1, totalSegments);
-      const progressPercent = Math.round((segmentIndex / safeTotal) * 100);
+      // Show (segmentIndex - 1) / total while a segment is in progress so we
+      // only reach 100% once the final segment has actually finished.
+      const progressPercent = isComplete
+        ? 100
+        : Math.round(((segmentIndex - 1) / safeTotal) * 100);
       const title = voiceName
         ? (dict?.progressTitleWithVoice ?? `${voiceName} generation`).replace(
             '__VOICE__',
