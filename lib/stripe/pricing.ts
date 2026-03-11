@@ -1,6 +1,27 @@
 import type { Locale } from '../i18n/i18n-config';
 
 /**
+ * Discount rate of the pro top-up plan vs the standard top-up plan,
+ * expressed as a fraction (e.g. 0.375 = 37.5% cheaper per 1k credits).
+ * Computed from actual package prices so it stays in sync automatically:
+ *   standard: $10 / 25_000 credits = $0.40/1k
+ *   pro:      $75 / 300_000 credits = $0.25/1k
+ *   discount: (0.40 - 0.25) / 0.40 = 0.375
+ */
+const STANDARD_TOPUP_DOLLAR_AMOUNT = 10;
+const STANDARD_TOPUP_BASE_CREDITS = 25_000;
+const PRO_TOPUP_DOLLAR_AMOUNT = 75;
+const PRO_TOPUP_BASE_CREDITS = 300_000;
+
+const _standardPricePer1k =
+  (STANDARD_TOPUP_DOLLAR_AMOUNT / STANDARD_TOPUP_BASE_CREDITS) * 1000;
+const _proPricePer1k =
+  (PRO_TOPUP_DOLLAR_AMOUNT / PRO_TOPUP_BASE_CREDITS) * 1000;
+
+export const PRO_TOPUP_DISCOUNT_VS_STANDARD =
+  (_standardPricePer1k - _proPricePer1k) / _standardPricePer1k;
+
+/**
  * Subscription bonus multiplier.
  * Subscribers receive 15% more credits than one-time top-up buyers
  * at the same price point, incentivizing recurring revenue.
@@ -54,7 +75,7 @@ export const getTopupPackages = (lang: Locale) => {
     },
     standard: {
       priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
-      baseCredits: 25_000,
+      baseCredits: STANDARD_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
       },
@@ -69,11 +90,11 @@ export const getTopupPackages = (lang: Locale) => {
         return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.308 : $0.4
       },
       promoBonus: promoBonuses.standard.toLocaleString(lang),
-      dollarAmount: 10, // $10.00
+      dollarAmount: STANDARD_TOPUP_DOLLAR_AMOUNT, // $10.00
     },
     pro: {
       priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
-      baseCredits: 300_000,
+      baseCredits: PRO_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
       },
@@ -88,7 +109,7 @@ export const getTopupPackages = (lang: Locale) => {
         return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.244 : 0.33
       },
       promoBonus: promoBonuses.pro.toLocaleString(lang),
-      dollarAmount: 75, // $75.00
+      dollarAmount: PRO_TOPUP_DOLLAR_AMOUNT, // $75.00
     },
   } as const;
 };

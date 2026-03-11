@@ -8,7 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link } from '@/lib/i18n/navigation';
-import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
+import {
+  PRO_TOPUP_DISCOUNT_VS_STANDARD,
+  SUBSCRIPTION_BONUS_MULTIPLIER,
+} from '@/lib/stripe/pricing';
 
 export type BillingMode = 'monthly' | 'one-time';
 
@@ -75,7 +78,7 @@ export function PricingCards({
         >
           {t('toggleMonthly')}
           <span className="ml-1.5 rounded-full bg-green-500/20 px-1.5 py-0.5 font-semibold text-green-400 text-xs">
-            +{SUBSCRIPTION_BONUS_MULTIPLIER}%
+            +{Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}%
           </span>
         </button>
         <button
@@ -119,7 +122,7 @@ export function PricingCards({
                     variant="secondary"
                   >
                     {creditsT('topup.cheaperBadge', {
-                      percent: format.number(0.375, {
+                      percent: format.number(PRO_TOPUP_DISCOUNT_VS_STANDARD, {
                         style: 'percent',
                         maximumFractionDigits: 1,
                       }),
