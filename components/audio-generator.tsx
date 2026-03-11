@@ -85,6 +85,7 @@ export function AudioGenerator({
     isLoading: isJoinerLoading,
   } = useFFmpegJoiner();
   const abortController = useRef<AbortController | null>(null);
+  const retryAbortController = useRef<AbortController | null>(null);
   const splitFeatureVisible = text.trim().length > SPLIT_TEXT_MIN_LENGTH;
   const shouldUseSplitMode =
     isPaidUser && splitFeatureVisible && splitTextAudios;
@@ -304,6 +305,7 @@ export function AudioGenerator({
   const handleCancel = () => {
     setIsGenerating(false);
     abortController.current?.abort();
+    retryAbortController.current?.abort();
   };
 
   const handleRetrySegment = useCallback(
@@ -314,7 +316,7 @@ export function AudioGenerator({
       }
 
       const seed = generateRetrySeed();
-      abortController.current = new AbortController();
+      retryAbortController.current = new AbortController();
 
       setIsGenerating(true);
       markSegmentGenerating(segmentIndex);
@@ -323,7 +325,7 @@ export function AudioGenerator({
       try {
         const generatedUrl = await requestGenerateVoice(
           segment.text,
-          abortController.current.signal,
+          retryAbortController.current.signal,
           seed,
         );
 
