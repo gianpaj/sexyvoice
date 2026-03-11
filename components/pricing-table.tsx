@@ -63,7 +63,12 @@ async function PricingTable({ lang }: { lang: Locale }) {
       name: pPlans.pro.name,
       price: topupPackages.pro.dollarAmount,
       pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.15,
+      saveFromPrevPlanPer1kCredits: Number(
+        (
+          Number(topupPackages.standard.pricePer1kCredits) -
+          Number(topupPackages.pro.pricePer1kCredits)
+        ).toFixed(2),
+      ),
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
@@ -98,7 +103,12 @@ async function PricingTable({ lang }: { lang: Locale }) {
       name: pPlans.pro.name,
       price: subscriptionPackages.pro.dollarAmount,
       pricePer1kCredits: subscriptionPackages.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.15,
+      saveFromPrevPlanPer1kCredits: Number(
+        (
+          Number(subscriptionPackages.standard.pricePer1kCredits) -
+          Number(subscriptionPackages.pro.pricePer1kCredits)
+        ).toFixed(2),
+      ),
       description: pPlans.pro.description,
       buttonText: pPlans.subscribe,
       buttonVariant: 'default',
