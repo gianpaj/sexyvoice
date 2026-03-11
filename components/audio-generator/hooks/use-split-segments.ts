@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   buildSplitStorageKey,
@@ -27,6 +27,7 @@ export function useSplitSegments({
   >({});
 
   const [splitStorageKey, setSplitStorageKey] = useState('');
+  const prevSplitStorageKeyRef = useRef('');
 
   useEffect(() => {
     if (!(shouldUseSplitMode && selectedVoiceName && text.trim())) {
@@ -36,6 +37,13 @@ export function useSplitSegments({
     let cancelled = false;
     buildSplitStorageKey(selectedVoiceName, text).then((key) => {
       if (!cancelled) {
+        // Remove the old localStorage entry when the key changes to prevent
+        // unbounded growth from unique text hashes accumulating over time.
+        const prevKey = prevSplitStorageKeyRef.current;
+        if (prevKey && prevKey !== key && typeof window !== 'undefined') {
+          window.localStorage.removeItem(prevKey);
+        }
+        prevSplitStorageKeyRef.current = key;
         setSplitStorageKey(key);
       }
     });
