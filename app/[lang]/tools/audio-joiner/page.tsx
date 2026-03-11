@@ -129,6 +129,22 @@ export default async function AudioJoinerPage({ params }: Props) {
           <AudioJoinerClient dict={dict} />
         </div>
       </div>
+
+      {/* Attribution bar — preserves FFmpeg credit and privacy note */}
+      <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
+        <p>
+          {dict.footer.poweredBy}{' '}
+          <a
+            className="font-semibold text-foreground transition-colors hover:text-primary"
+            href="https://ffmpeg.org"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {dict.footer.ffmpeg}
+          </a>{' '}
+          &bull; {dict.footer.noUploads}
+        </p>
+      </div>
       <Footer lang={lang} />
     </>
   );

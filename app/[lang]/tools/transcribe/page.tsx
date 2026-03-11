@@ -236,6 +236,31 @@ export default async function TranscribePage({ params }: Props) {
           </section>
         </div>
       </div>
+
+      {/* Attribution bar — preserves Whisper/Transformers.js credit and privacy note */}
+      <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
+        <p>
+          {dict.footer.poweredBy}{' '}
+          <a
+            className="font-semibold text-foreground transition-colors hover:text-primary"
+            href="https://huggingface.co/docs/transformers.js"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {dict.footer.transformersJs}
+          </a>{' '}
+          &bull;{' '}
+          <a
+            className="font-semibold text-foreground transition-colors hover:text-primary"
+            href="https://openai.com/index/whisper/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {dict.footer.whisper}
+          </a>{' '}
+          &bull; {dict.footer.noUploads}
+        </p>
+      </div>
       <Footer lang={lang} />
     </>
   );
