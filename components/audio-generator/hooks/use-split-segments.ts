@@ -8,6 +8,22 @@ import {
   type SplitSegmentItem,
 } from '../split-segments-utils';
 
+// Returns a stable UUID for each unique segment text, generating one on first
+// encounter and reusing it on subsequent renders. This prevents React from
+// unmounting/remounting segment components when surrounding text changes but
+// the segment content itself hasn't.
+function useStableSegmentIds() {
+  const idMapRef = useRef<Map<string, string>>(new Map());
+
+  return (segmentText: string): string => {
+    const existing = idMapRef.current.get(segmentText);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    idMapRef.current.set(segmentText, id);
+    return id;
+  };
+}
+
 interface UseSplitSegmentsParams {
   selectedVoiceName?: string;
   shouldUseSplitMode: boolean;
@@ -28,6 +44,7 @@ export function useSplitSegments({
 
   const [splitStorageKey, setSplitStorageKey] = useState('');
   const prevSplitStorageKeyRef = useRef('');
+  const getStableId = useStableSegmentIds();
 
   useEffect(() => {
     if (!(shouldUseSplitMode && selectedVoiceName && text.trim())) {
@@ -59,8 +76,8 @@ export function useSplitSegments({
       return;
     }
 
-    const baseSegments = splitSegmentTexts.map((segmentText, index) => ({
-      id: `${index}-${segmentText.slice(0, 16)}`,
+    const baseSegments = splitSegmentTexts.map((segmentText) => ({
+      id: getStableId(segmentText),
       text: segmentText,
       status: 'idle' as const,
       audioUrl: '',
