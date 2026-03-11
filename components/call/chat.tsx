@@ -115,7 +115,7 @@ export function Chat() {
         <div className="flex w-full flex-col gap-4">
           {/* Show visualizer stacked */}
           <div className="flex w-full flex-col gap-4">
-            <div className="flex w-full flex-shrink-0 flex-col items-center justify-center gap-2">
+            <div className="flex w-full shrink-0 flex-col items-center justify-center gap-2">
               {renderConnectionControl()}
             </div>
 
@@ -126,7 +126,7 @@ export function Chat() {
         </div>
 
         {/* Button for normal screens - show after visualizer */}
-        {/*<div className="my-4 flex-shrink-0 [@media(max-height:800px)]:hidden">
+        {/*<div className="my-4 shrink-0 [@media(max-height:800px)]:hidden">
           {renderConnectionControl()}
         </div>*/}
       </div>

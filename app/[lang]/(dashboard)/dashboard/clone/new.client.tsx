@@ -633,7 +633,7 @@ function NewVoiceClientInner({
                       size="icon"
                       variant="ghost"
                     >
-                      <XIcon aria-hidden="true" className="!size-6" />
+                      <XIcon aria-hidden="true" className="size-6!" />
                     </Button>
                   </div>
                 ) : (
@@ -792,7 +792,7 @@ function NewVoiceClientInner({
               ) : (
                 <>
                   <span>{dict.ctaButton}</span>
-                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </>

@@ -1,12 +1,6 @@
 import { addIconSelectors } from '@iconify/tailwind';
 
 const config = {
-  darkMode: ['class'],
-  content: [
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './posts/**/*.{md,mdx}',
-  ],
   safelist: [
     // Dynamic grid columns for preset-selector carousel
     'grid-cols-1',

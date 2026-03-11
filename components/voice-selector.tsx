@@ -146,7 +146,7 @@ export function VoiceSelector({
                 playAudioTitle={dict.playAudio}
                 showWaveform
                 url={selectedVoice.sample_url}
-                waveformClassName="!h-5"
+                waveformClassName="h-5!"
               />
               <div className="flex items-center gap-3">
                 <p className="text-muted-foreground text-sm">

@@ -52,7 +52,7 @@ export function SidebarMenu({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-popper-anchor-width]"
+            className="w-(--radix-popper-anchor-width)"
             side="top"
           >
             <DropdownMenuItem asChild>

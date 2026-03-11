@@ -23,7 +23,7 @@ export function IncomingCallButton({
       size="icon"
     >
       <Link href={`/${lang}/signup`}>
-        <PhoneCall className="!h-6 !w-6" />
+        <PhoneCall className="h-6! w-6!" />
       </Link>
     </Button>
   );

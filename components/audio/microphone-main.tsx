@@ -81,7 +81,7 @@ function DeviceSelectDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          className="rounded-l-none border-gray-700 border-l-[1px] px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
+          className="rounded-l-none border-gray-700 border-l px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
           variant="secondary"
         >
           <ChevronDown className="h-4 w-4 text-secondary-foreground" />
@@ -206,7 +206,7 @@ export function MicrophoneMain(props: Props) {
             onClick={onClearMediaStream}
             variant="ghost"
           >
-            <XIcon className="!size-6" />
+            <XIcon className="size-6!" />
           </Button>
         </div>
       )}
