@@ -13,6 +13,9 @@ export const getEmotionTags = (language: string) => {
 
 const DEFAULT_LIMIT = 500;
 
-export const getCharactersLimit = (_model: string, _isPaidUser = false) => {
+// The limit is uniform across all models and user tiers for now.
+// If per-model or per-tier limits are needed in the future, restore the
+// `model` and `isPaidUser` parameters here and at all call sites.
+export const getCharactersLimit = () => {
   return DEFAULT_LIMIT;
 };

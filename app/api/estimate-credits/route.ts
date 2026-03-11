@@ -104,7 +104,7 @@ function validateTextLength(
   voiceModel: string,
   isPaidUser = false,
 ): ValidationResult<null> {
-  const maxLength = getCharactersLimit(voiceModel, isPaidUser);
+  const maxLength = getCharactersLimit();
 
   if (text.length > maxLength) {
     return {

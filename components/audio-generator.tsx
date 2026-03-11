@@ -75,10 +75,7 @@ export function AudioGenerator({
 
   const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
-  const charactersLimit = useMemo(
-    () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
-    [selectedVoice, isPaidUser],
-  );
+  const charactersLimit = useMemo(() => getCharactersLimit(), []);
   const {
     join: joinSegments,
     isProcessing: isJoiningSegments,

@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     userHasPaid = await hasUserPaid(user.id);
 
-    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
+    const maxLength = getCharactersLimit();
     // Build finalText first so the length check accounts for the style prefix
     const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
     if (finalText.length > maxLength) {
