@@ -202,13 +202,20 @@
     "description": "Vælg den mængde kreditter, der passer bedst til dine behov",
     "historyEmpty": "Din kreditforbrugshistorik vises her",
     "billing": {
-      "forever": "(for evigt)"
+      "forever": "(for evigt)",
+      "monthly": "/måned",
+      "oneTime": "Engangskøb"
     },
     "plans": {
       "popular": "Mest populære",
       "startFree": "Start gratis",
       "buyCredits": "Køb kreditter",
+      "subscribe": "Abonner",
       "x_credits": "{numCredits} kreditter",
+      "subscriptionBonus": "+15% flere kreditter",
+      "subscriptionBonusCredits": "+{bonusCredits} bonuskreditter",
+      "toggleMonthly": "Månedligt",
+      "toggleOneTime": "Engangskøb",
       "free": {
         "name": "Gratis",
         "description": "For personer, der vil prøve den mest avancerede AI-lydgenerering.",
@@ -221,7 +228,11 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
+        "features": [
+          "Alt i Gratis",
+          "2× længere tekstgenerering",
+          "API-adgang"
+        ]
       },
       "standard": {
         "name": "Standard",

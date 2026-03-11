@@ -202,13 +202,20 @@
     "description": "Elige la cantidad de créditos que mejor se adapte a tus necesidades",
     "historyEmpty": "Tu historial de uso de créditos aparecerá aquí",
     "billing": {
-      "forever": "(para siempre)"
+      "forever": "(para siempre)",
+      "monthly": "/mes",
+      "oneTime": "Pago único"
     },
     "plans": {
       "popular": "Más Popular",
       "startFree": "Comenzar Gratis",
       "buyCredits": "Comprar créditos",
+      "subscribe": "Suscribirse",
       "x_credits": "{numCredits} créditos",
+      "subscriptionBonus": "+15% más créditos",
+      "subscriptionBonusCredits": "+{bonusCredits} créditos de bonificación",
+      "toggleMonthly": "Mensual",
+      "toggleOneTime": "Pago único",
       "free": {
         "name": "Gratis",
         "description": "Para particulares que quieran probar la generación de audio de IA más avanzada.",

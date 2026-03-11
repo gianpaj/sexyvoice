@@ -271,7 +271,7 @@ describe('Stripe Webhook Route', () => {
         'user_789',
         paymentIntentId, // payment_intent, not subscription_id
         subscriptionId,
-        25_000,
+        28_750, // 25,000 * 1.15 (subscription bonus)
         10,
       );
     });
@@ -336,7 +336,7 @@ describe('Stripe Webhook Route', () => {
         'user_recurring',
         paymentIntentId, // Unique payment_intent for this billing cycle
         subscriptionId,
-        25_000,
+        28_750, // 25,000 * 1.15 (subscription bonus)
         10,
       );
 
@@ -469,7 +469,7 @@ describe('Stripe Webhook Route', () => {
         'user_real',
         paymentIntentId, // Uses payment_intent as reference_id
         subscriptionId,
-        25_000,
+        28_750, // 25,000 * 1.15 (subscription bonus)
         10,
       );
 
@@ -522,7 +522,7 @@ describe('Stripe Webhook Route', () => {
         'user_recurring',
         'pi_month1_payment',
         subscriptionId,
-        25_000,
+        28_750, // 25,000 * 1.15 (subscription bonus)
         10,
       );
       expect(insertSubscriptionCreditTransaction).toHaveBeenNthCalledWith(
@@ -530,7 +530,7 @@ describe('Stripe Webhook Route', () => {
         'user_recurring',
         'pi_month2_payment',
         subscriptionId,
-        25_000,
+        28_750, // 25,000 * 1.15 (subscription bonus)
         10,
       );
     });
@@ -669,23 +669,24 @@ describe('Stripe Webhook Route', () => {
   });
 
   describe('Credit Awards by Subscription Plan - Via Invoice Payment', () => {
+    // Subscription credits include 15% bonus (SUBSCRIPTION_BONUS_MULTIPLIER = 1.15)
     const testPlans = [
       {
         name: 'Starter',
         priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
-        expectedCredits: 10_000,
+        expectedCredits: 11_500, // 10,000 * 1.15
         expectedAmount: 5,
       },
       {
         name: 'Standard',
         priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
-        expectedCredits: 25_000,
+        expectedCredits: 28_750, // 25,000 * 1.15
         expectedAmount: 10,
       },
       {
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
-        expectedCredits: 300_000,
+        expectedCredits: 345_000, // 300,000 * 1.15
         expectedAmount: 75,
       },
     ];
@@ -854,23 +855,25 @@ describe('Stripe Webhook Route', () => {
 
     const userId = 'user_sub_promo_test';
 
+    // Subscription credits include 15% bonus on top of (base + promo)
+    // e.g. Starter: (10,000 + 2,000) * 1.15 = 13,800
     const testSubscriptionPlans = [
       {
         name: 'Starter',
         priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
-        expectedCredits: 12_000,
+        expectedCredits: 13_800, // (10,000 + 2,000) * 1.15
         expectedAmount: 5,
       },
       {
         name: 'Standard',
         priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
-        expectedCredits: 32_500,
+        expectedCredits: 37_375, // (25,000 + 7,500) * 1.15
         expectedAmount: 10,
       },
       {
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
-        expectedCredits: 405_000,
+        expectedCredits: 465_750, // (300,000 + 105,000) * 1.15
         expectedAmount: 75,
       },
     ];

@@ -373,7 +373,7 @@ export const insertSubscriptionCreditTransaction = async (
     subscription_id: subscriptionId,
     amount: creditAmount,
     type: 'purchase',
-    description: `Subscription payment - $${dollarAmount}`,
+    description: `Subscription payment - $${dollarAmount} (includes 15% bonus)`,
     metadata: {
       dollarAmount,
       isFirstSubscription,

@@ -202,13 +202,20 @@
     "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
-      "forever": "(forever)"
+      "forever": "(forever)",
+      "monthly": "/month",
+      "oneTime": "One-time"
     },
     "plans": {
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",
+      "subscribe": "Subscribe",
       "x_credits": "{numCredits} credits",
+      "subscriptionBonus": "+15% more credits",
+      "subscriptionBonusCredits": "+{bonusCredits} bonus credits",
+      "toggleMonthly": "Monthly",
+      "toggleOneTime": "One-time",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio generation.",

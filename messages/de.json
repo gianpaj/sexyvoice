@@ -202,13 +202,20 @@
     "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
     "billing": {
-      "forever": "(für immer)"
+      "forever": "(für immer)",
+      "monthly": "/Monat",
+      "oneTime": "Einmalzahlung"
     },
     "plans": {
       "popular": "Am beliebtesten",
       "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
+      "subscribe": "Abonnieren",
       "x_credits": "{numCredits} Credits",
+      "subscriptionBonus": "+15% mehr Credits",
+      "subscriptionBonusCredits": "+{bonusCredits} Bonus-Credits",
+      "toggleMonthly": "Monatlich",
+      "toggleOneTime": "Einmalzahlung",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die die fortschrittlichste KI-Audiogenerierung ausprobieren möchten.",
