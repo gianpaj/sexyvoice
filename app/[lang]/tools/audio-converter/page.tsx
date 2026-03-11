@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
-import Link from 'next/link';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
+import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import AudioConverterClient from './audio-converter.client';
@@ -126,38 +126,29 @@ export default async function AudioConverterPage({ params }: Props) {
   return (
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
-      <div className="min-h-screen bg-background">
+      <div className="bg-background">
         <HeaderStatic />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
           <AudioConverterClient dict={dict} />
-          <footer className="mt-12 text-center text-muted-foreground text-sm">
-            <p>
-              {dict.footer.poweredBy}{' '}
-              <span className="font-semibold text-foreground">
-                {dict.footer.ffmpeg}
-              </span>{' '}
-              &bull; {dict.footer.noUploads}
-            </p>
-            <p className="mt-4">
-              {dict.footer.alsoTry}{' '}
-              <Link
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href={`/${lang}/tools/transcribe`}
-              >
-                {dict.footer.transcribeLink}
-              </Link>
-            </p>
-            <p className="mt-2 opacity-70">
-              <Link
-                className="transition-colors hover:text-foreground"
-                href={`/${lang}`}
-              >
-                {dict.footer.madeWith}
-              </Link>
-            </p>
-          </footer>
         </div>
       </div>
+
+      {/* Attribution bar — preserves FFmpeg credit and privacy note */}
+      <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
+        <p>
+          {dict.footer.poweredBy}{' '}
+          <a
+            className="font-semibold text-foreground transition-colors hover:text-primary"
+            href="https://ffmpeg.org"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {dict.footer.ffmpeg}
+          </a>{' '}
+          &bull; {dict.footer.noUploads}
+        </p>
+      </div>
+      <Footer lang={lang} />
     </>
   );
 }

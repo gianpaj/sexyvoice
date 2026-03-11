@@ -651,6 +651,10 @@
     }
   },
   "footer": {
+    "tagline": "AI-drevet stemmegenerering. Skab naturlig, udtryksfuld lyd på sekunder.",
+    "toolsHeading": "Værktøjer",
+    "companyHeading": "Virksomhed",
+    "legalHeading": "Juridisk",
     "statusPage": "Statusside",
     "privacyPolicy": "Privatlivspolitik",
     "termsAndConditions": "Vilkår og betingelser",
