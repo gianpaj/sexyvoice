@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
-import Link from 'next/link';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
+import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import TranscribeClient from './transcribe.client';
@@ -204,7 +204,7 @@ export default async function TranscribePage({ params }: Props) {
   return (
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
-      <div className="min-h-screen bg-background">
+      <div className="bg-background">
         <HeaderStatic />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
           <TranscribeClient dict={dict} lang={lang} />
@@ -234,49 +234,9 @@ export default async function TranscribePage({ params }: Props) {
               ))}
             </dl>
           </section>
-
-          <footer className="mt-12 text-center text-muted-foreground text-sm">
-            <p>
-              {dict.footer.poweredBy}{' '}
-              <a
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href="https://huggingface.co/docs/transformers.js"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {dict.footer.transformersJs}
-              </a>{' '}
-              &bull;{' '}
-              <a
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href="https://openai.com/index/whisper/"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {dict.footer.whisper}
-              </a>{' '}
-              &bull; {dict.footer.noUploads}
-            </p>
-            <p className="mt-4">
-              {dict.footer.alsoTry}{' '}
-              <Link
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href={`/${lang}/tools/audio-converter`}
-              >
-                {dict.footer.audioConverterLink}
-              </Link>
-            </p>
-            <p className="mt-2 opacity-70">
-              <Link
-                className="transition-colors hover:text-foreground"
-                href={`/${lang}`}
-              >
-                {dict.footer.madeWith}
-              </Link>
-            </p>
-          </footer>
         </div>
       </div>
+      <Footer lang={lang} />
     </>
   );
 }
