@@ -67,7 +67,12 @@ export function CreditTopup({ dict, lang }: CreditTopupProps) {
       name: pPlans.pro.name,
       price: topupPackages.pro.dollarAmount,
       pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.15,
+      saveFromPrevPlanPer1kCredits: Number(
+        (
+          Number(topupPackages.standard.pricePer1kCredits) -
+          Number(topupPackages.pro.pricePer1kCredits)
+        ).toFixed(2),
+      ),
       buttonVariant: 'default',
       creditsText: t('x_credits', {
         numCredits: topupPackages.pro.baseCreditsLocale,
