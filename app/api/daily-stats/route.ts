@@ -225,12 +225,12 @@ export async function GET(request: NextRequest) {
           .then((result) => result),
       ),
 
-      // (audioTotalCountResult) Total audio files count
+      // (audioTotalCountResult) Approximate total audio files count
       _timed(
-        `audio_files:total_count < ${today.toISOString()}`,
+        `audio_files:total_count_estimated < ${today.toISOString()}`,
         supabase
           .from('audio_files')
-          .select('id', { count: 'exact', head: true })
+          .select('id', { count: 'planned', head: true })
           .lt('created_at', today.toISOString())
           .then((result) => result),
       ),
