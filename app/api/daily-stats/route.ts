@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       // (audioYesterdayResult) Audio files yesterday with voice information
       _timed(
-        `audio_files:yesterday ${previousDay.toISOString()}..${today.toISOString()}`,
+        `audio_files:yesterday ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         supabase
           .from('audio_files')
           .select('id, created_at, model, voice_id, voices(name)')
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
 
       // (audioWeekResult) Audio files last 7 days
       _timed(
-        `audio_files:week_count ${sevenDaysAgo.toISOString()}..${today.toISOString()}`,
+        `audio_files:week_count ${sevenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         supabase
           .from('audio_files')
           .select('id', { count: 'exact', head: true })
@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
 
       // (audioTotalCountResult) Approximate total audio files count
       _timed(
-        `audio_files:total_count_estimated < ${today.toISOString()}`,
+        `audio_files:total_count_estimated < ${today.toISOString().slice(0, 10)}`,
         supabase
           .from('audio_files')
           .select('id', { count: 'planned', head: true })
@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
 
       // (clonesResult) Cloned audio files last 7 days (includes yesterday)
       _timed(
-        `audio_files:clones ${sevenDaysAgo.toISOString()}..${today.toISOString()}`,
+        `audio_files:clones ${sevenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         supabase
           .from('audio_files')
           .select('id, created_at')
