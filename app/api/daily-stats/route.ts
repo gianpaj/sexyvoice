@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
     // Helper to time individual queries
     const _timed = async <T>(
       label: string,
-      promise: Promise<T>,
+      promise: PromiseLike<T>,
     ): Promise<T> => {
       const start = Date.now();
       console.log(`⏱  [daily-stats] START  ${label}`);
@@ -204,35 +204,51 @@ export async function GET(request: NextRequest) {
       callSessionsTotalCountResult,
     ] = await Promise.all([
       // (audioYesterdayResult) Audio files yesterday with voice information
-      supabase
-        .from('audio_files')
-        .select('id, created_at, model, voice_id, voices(name)')
-        .gte('created_at', previousDay.toISOString())
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:yesterday ${previousDay.toISOString()}..${today.toISOString()}`,
+        supabase
+          .from('audio_files')
+          .select('id, created_at, model, voice_id, voices(name)')
+          .gte('created_at', previousDay.toISOString())
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
       // (audioWeekResult) Audio files last 7 days
-      supabase
-        .from('audio_files')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:week_count ${sevenDaysAgo.toISOString()}..${today.toISOString()}`,
+        supabase
+          .from('audio_files')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', sevenDaysAgo.toISOString())
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
       // (audioTotalCountResult) Total audio files count
-      supabase
-        .from('audio_files')
-        .select('id', { count: 'exact', head: true })
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:total_count < ${today.toISOString()}`,
+        supabase
+          .from('audio_files')
+          .select('id', { count: 'exact', head: true })
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
       // (clonesResult) Cloned audio files last 7 days (includes yesterday)
-      supabase
-        .from('audio_files')
-        .select('id, created_at')
-        .in('model', [
-          'resemble-ai/chatterbox-multilingual',
-          'resemble-ai/chatterbox',
-        ])
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:clones ${sevenDaysAgo.toISOString()}..${today.toISOString()}`,
+        supabase
+          .from('audio_files')
+          .select('id, created_at')
+          .in('model', [
+            'resemble-ai/chatterbox-multilingual',
+            'resemble-ai/chatterbox',
+          ])
+          .gte('created_at', sevenDaysAgo.toISOString())
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
       // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
       supabase
@@ -317,7 +333,10 @@ export async function GET(request: NextRequest) {
     };
 
     // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
-    const fetchAllCreditTransactions = async () => {
+    const fetchCreditTransactionsInRange = async (
+      start: Date,
+      end: Date,
+    ): Promise<CreditTransaction[]> => {
       const allTransactions: CreditTransaction[] = [];
       const pageSize = 1000;
       let offset = 0;
@@ -331,7 +350,8 @@ export async function GET(request: NextRequest) {
           )
           .in('type', ['purchase', 'topup', 'refund'])
           .not('description', 'ilike', '%manual%')
-          .lt('created_at', today.toISOString())
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
           .order('created_at', { ascending: true })
           .range(offset, offset + pageSize - 1);
 
@@ -349,7 +369,52 @@ export async function GET(request: NextRequest) {
       return allTransactions;
     };
 
-    allCreditTransactions = await fetchAllCreditTransactions();
+    const [
+      yesterdayCreditTransactions,
+      sevenDayCreditTransactions,
+      thirtyDayCreditTransactions,
+      monthToDateCreditTransactions,
+      previousMonthToDateCreditTransactions,
+      twoMonthsAgoToDateCreditTransactions,
+      threeMonthsAgoToDateCreditTransactions,
+      allTimeRefundTransactions,
+    ] = await Promise.all([
+      fetchCreditTransactionsInRange(previousDay, today),
+      fetchCreditTransactionsInRange(sevenDaysAgo, today),
+      fetchCreditTransactionsInRange(thirtyDaysAgo, today),
+      fetchCreditTransactionsInRange(monthStart, today),
+      fetchCreditTransactionsInRange(
+        previousMonthStart,
+        previousMonthPeriodEnd,
+      ),
+      fetchCreditTransactionsInRange(twoMonthsAgoStart, twoMonthsAgoPeriodEnd),
+      fetchCreditTransactionsInRange(
+        threeMonthsAgoStart,
+        threeMonthsAgoPeriodEnd,
+      ),
+      fetchCreditTransactionsInRange(
+        new Date('1970-01-01T00:00:00.000Z'),
+        today,
+      ),
+    ]);
+
+    allCreditTransactions = [
+      ...allTimeRefundTransactions.filter((t) => t.type === 'refund'),
+      ...new Map(
+        [
+          ...yesterdayCreditTransactions,
+          ...sevenDayCreditTransactions,
+          ...thirtyDayCreditTransactions,
+          ...monthToDateCreditTransactions,
+          ...previousMonthToDateCreditTransactions,
+          ...twoMonthsAgoToDateCreditTransactions,
+          ...threeMonthsAgoToDateCreditTransactions,
+        ].map((transaction) => [transaction.id, transaction]),
+      ).values(),
+    ].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -538,33 +603,35 @@ export async function GET(request: NextRequest) {
           .join(', ');
 
   // Filter credit transactions by date ranges (purchases/top-ups only)
-  const purchasePrevDayData = filterByDateRange(
-    purchaseTransactions,
-    previousDay,
-    today,
+  const purchasePrevDayData = purchaseTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousDay.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
-  const creditsWeekCount = filterByDateRange<CreditTransaction>(
-    purchaseTransactions,
-    sevenDaysAgo,
-    today,
-  ).length;
-  const creditsMonthCount = filterByDateRange<CreditTransaction>(
-    purchaseTransactions,
-    thirtyDaysAgo,
-    today,
-  ).length;
+  const purchaseWeekData = purchaseTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= sevenDaysAgo.toISOString() &&
+      transaction.created_at < today.toISOString(),
+  );
+  const purchaseThirtyDayData = purchaseTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= thirtyDaysAgo.toISOString() &&
+      transaction.created_at < today.toISOString(),
+  );
+  const creditsWeekCount = purchaseWeekData.length;
+  const creditsMonthCount = purchaseThirtyDayData.length;
   const creditsTotalCount = purchaseTransactions.length;
 
   // Filter refund transactions by date ranges
-  const refundsPrevDayData = filterByDateRange<CreditTransaction>(
-    refundTransactions,
-    previousDay,
-    today,
+  const refundsPrevDayData = refundTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousDay.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
-  const refundsPrevCount = filterByDateRange<CreditTransaction>(
-    refundTransactions,
-    twoDaysAgo,
-    previousDay,
+  const refundsPrevCount = refundTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= twoDaysAgo.toISOString() &&
+      transaction.created_at < previousDay.toISOString(),
   ).length;
   const refundsTotalCount = refundTransactions.length;
 
@@ -670,18 +737,18 @@ export async function GET(request: NextRequest) {
   // Revenue calculations (incl. refund)
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
 
-  const creditsPrevDayData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    previousDay,
-    today,
+  const creditsPrevDayData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousDay.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
   const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
 
   // 7-day revenue calculations
-  const credits7dData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    sevenDaysAgo,
-    today,
+  const credits7dData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= sevenDaysAgo.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
   const total7dRevenue = credits7dData.reduce(reduceAmountUsd, 0);
   const avg7dRevenue = total7dRevenue / 7;
@@ -694,31 +761,35 @@ export async function GET(request: NextRequest) {
   );
 
   // MTD revenue calculations (purchases/top-ups only)
-  const mtdRevenueData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    monthStart,
-    today,
+  const mtdRevenueData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= monthStart.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
   const mtdRevenue = mtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const prevMtdRevenueData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    previousMonthStart,
-    previousMonthPeriodEnd,
+  const prevMtdRevenueData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousMonthStart.toISOString() &&
+      transaction.created_at < previousMonthPeriodEnd.toISOString(),
   );
   const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const twoMonthsAgoMtdRevenue = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    twoMonthsAgoStart,
-    twoMonthsAgoPeriodEnd,
-  ).reduce(reduceAmountUsd, 0);
+  const twoMonthsAgoMtdRevenue = creditTransactions
+    .filter(
+      (transaction) =>
+        transaction.created_at >= twoMonthsAgoStart.toISOString() &&
+        transaction.created_at < twoMonthsAgoPeriodEnd.toISOString(),
+    )
+    .reduce(reduceAmountUsd, 0);
 
-  const threeMonthsAgoMtdRevenue = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    threeMonthsAgoStart,
-    threeMonthsAgoPeriodEnd,
-  ).reduce(reduceAmountUsd, 0);
+  const threeMonthsAgoMtdRevenue = creditTransactions
+    .filter(
+      (transaction) =>
+        transaction.created_at >= threeMonthsAgoStart.toISOString() &&
+        transaction.created_at < threeMonthsAgoPeriodEnd.toISOString(),
+    )
+    .reduce(reduceAmountUsd, 0);
 
   // Mean of the last 3 months' MTD revenue for comparison
   const avgPrevMtdRevenue =
