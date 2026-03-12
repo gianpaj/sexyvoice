@@ -399,9 +399,9 @@ export async function GET(request: NextRequest) {
     ]);
 
     allCreditTransactions = [
-      ...allTimeRefundTransactions.filter((t) => t.type === 'refund'),
       ...new Map(
         [
+          ...allTimeRefundTransactions,
           ...yesterdayCreditTransactions,
           ...sevenDayCreditTransactions,
           ...thirtyDayCreditTransactions,
