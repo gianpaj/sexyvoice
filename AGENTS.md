@@ -408,6 +408,13 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Contentlayer2 processes content and generates type-safe data
 - Follow SEO best practices for content structure
 
+### Changelog Maintenance
+
+- Keep changelog formatting rules in `docs/changelog-format.md`
+- Treat `Changelog.md` updates as release-only documentation work:
+  no `Unreleased` section, use the documented header/category format,
+  and include only items supported by repo history
+
 ## Environment and Deployment
 
 ### Environment Setup

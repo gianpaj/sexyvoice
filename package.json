@@ -1,5 +1,6 @@
 {
   "private": true,
+  "version": "2026.3.13",
   "scripts": {
     "dev": "next dev",
     "prebuild": "pnpm run check-translations && pnpm run build:content",
