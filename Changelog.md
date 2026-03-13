@@ -12,8 +12,8 @@
 - Expanded UX polish with larger hit areas on key controls and a new
   mobile-first multi-column footer. [#290](https://github.com/gianpaj/sexyvoice/pull/290)
   [#295](https://github.com/gianpaj/sexyvoice/pull/295)
-- Increased subscription plans by 15% bonus credits.
+- Increased bonus credits in subscription plans by 15%.
   [#294](https://github.com/gianpaj/sexyvoice/pull/294)
 - Follow-up fixes this week also covered `/api/` locale redirect
-  exclusions, `api/health`, build stability, daily stats corrections,
+  exclusions, `/api/health`, build stability, daily stats corrections,
   and PostHog pageview tracking.
