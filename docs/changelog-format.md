@@ -15,14 +15,24 @@ releases only.
 ```
 
 - The version in the release header must match `package.json`.
-- Organize each release by feature area, omitting empty sections.
-- Prefer these subsections when they apply:
+- Organize each release by change type first, then by feature area.
+- Omit empty change-type sections and empty feature groups.
+- Use these change-type sections when they apply:
 
 ```md
-### API
-### Voice generation
-### Cloning
-### Internal
+### Added
+### Changed
+### Fixed
+```
+
+- Within each populated change-type section, group entries by feature
+  area using these subheadings when they apply:
+
+```md
+#### API
+#### Voice generation
+#### Cloning
+#### Internal
 ```
 
 ## Writing rules
@@ -32,8 +42,8 @@ releases only.
   "performance improvements" without details.
 - Only include items supported by repo history.
 - Link PRs inline when available.
-- Put each bullet under the most relevant feature area instead of
-  separating by `Added`/`Changed`/`Fixed`.
+- Keep each bullet under the most relevant feature area within its
+  `Added`/`Changed`/`Fixed` section.
 - If a change came from direct commits instead of a PR, describe the
   user-facing outcome without inventing extra scope.
 - Do not add speculative items, placeholders, or future work.
@@ -45,13 +55,19 @@ releases only.
 
 ## [2026.3.13] - 2026-03-13
 
-### API
-- Improved an API response with a supporting PR link. [#123](https://github.com/gianpaj/sexyvoice/pull/123)
+### Added
 
-### Voice generation
+#### Cloning
+- Added a cloning capability with a supporting PR link. [#123](https://github.com/gianpaj/sexyvoice/pull/123)
+
+### Changed
+
+#### Voice generation
 - Updated voice generation behavior with clear user-facing wording.
 
-### Internal
+### Fixed
+
+#### Internal
 - Corrected a shipped internal regression with specific impact.
 ```
 
@@ -59,7 +75,8 @@ releases only.
 
 - Confirm the release version in `package.json`.
 - Confirm every item is supported by merged PRs or direct commits.
-- Group items into the relevant feature areas.
+- Group items into `Added`, `Changed`, and `Fixed`, then by the
+  relevant feature areas.
 - Keep the newest release at the top.
 - Leave `Changelog.md` as the canonical file name unless the repo
   standardizes on a different one later.
