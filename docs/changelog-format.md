@@ -29,7 +29,7 @@ releases only.
   area using these subheadings when they apply:
 
 ```md
-#### API
+#### External API
 #### Voice generation
 #### Cloning
 #### Internal
@@ -44,6 +44,10 @@ releases only.
 - Link PRs inline when available.
 - Keep each bullet under the most relevant feature area within its
   `Added`/`Changed`/`Fixed` section.
+- Use `External API` only for the public API under `app/api/v1/*`.
+- Do not put internal app routes under `External API`; changes to
+  non-`/api/v1/*` routes belong under the front-end feature they support
+  or under `Internal` when they are cross-cutting.
 - If a change came from direct commits instead of a PR, describe the
   user-facing outcome without inventing extra scope.
 - Do not add speculative items, placeholders, or future work.
@@ -62,8 +66,8 @@ releases only.
 
 ### Changed
 
-#### Voice generation
-- Updated voice generation behavior with clear user-facing wording.
+#### External API
+- Updated a public `/api/v1/*` capability with clear user-facing wording.
 
 ### Fixed
 
@@ -77,6 +81,7 @@ releases only.
 - Confirm every item is supported by merged PRs or direct commits.
 - Group items into `Added`, `Changed`, and `Fixed`, then by the
   relevant feature areas.
+- Reserve `External API` for public `app/api/v1/*` changes only.
 - Keep the newest release at the top.
 - Leave `Changelog.md` as the canonical file name unless the repo
   standardizes on a different one later.

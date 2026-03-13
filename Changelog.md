@@ -6,14 +6,12 @@ Completed releases are documented here in reverse chronological order.
 
 ### Changed
 
-#### API
+#### Internal
 
 - Switched daily stats reporting to burn rate and aligned Telegram bot
   stats output with the dashboard's daily stats data.
   [#287](https://github.com/gianpaj/sexyvoice/pull/287)
   [#289](https://github.com/gianpaj/sexyvoice/pull/289)
-
-#### Internal
 
 - Migrated the app to `next-intl`, replacing the legacy dictionary flow
   with locale-aware routing and typed translations.
@@ -27,14 +25,11 @@ Completed releases are documented here in reverse chronological order.
 
 ### Fixed
 
-#### API
+#### Internal
 
 - Resolved the daily-stats cron query timeout.
   [#288](https://github.com/gianpaj/sexyvoice/pull/288)
 - Stopped locale-prefix redirects from affecting `/api/` routes.
 - Restored `/api/health` and build stability after the i18n migration.
-
-#### Internal
-
 - Corrected daily stats revenue and planned audio file count reporting.
 - Set PostHog `capture_pageview` back to the expected default behavior.
