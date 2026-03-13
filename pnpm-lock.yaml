@@ -226,7 +226,7 @@ importers:
         version: 0.523.0(react@19.2.3)
       mailchecker:
         specifier: ^6.0.19
-        version: 6.0.19
+        version: 6.0.20
       mdx-bundler:
         specifier: ^10.1.1
         version: 10.1.1(acorn@8.16.0)(esbuild@0.25.5)
@@ -5716,8 +5716,8 @@ packages:
   magicast@0.5.1:
     resolution: {integrity: sha512-xrHS24IxaLrvuo613F719wvOIv9xPHFWQHuvGUBmPnCA/3MQxKI3b+r7n1jAoDHmsbC5bRhTZYR77invLAxVnw==}
 
-  mailchecker@6.0.19:
-    resolution: {integrity: sha512-a7yghUa0IC1n6OkSJIqCSw2HS8ujKJGBJcRkjhHiKvHqPU3JB28Yze9o90L52r6lA/sp/EBveDXOWbozcdmxYg==}
+  mailchecker@6.0.20:
+    resolution: {integrity: sha512-mZ3kmtfXzGj06prtNm6d8an7D++Kf1G4jEkPZ1QQyhknYNLkmGoMtfaNPNHJU6E8J+Bm3AcZlIIfq5D6L4MS2g==}
     engines: {node: '>=0.10'}
 
   make-dir@3.1.0:
@@ -13528,7 +13528,7 @@ snapshots:
       '@babel/types': 7.28.5
       source-map-js: 1.2.1
 
-  mailchecker@6.0.19: {}
+  mailchecker@6.0.20: {}
 
   make-dir@3.1.0:
     dependencies:
