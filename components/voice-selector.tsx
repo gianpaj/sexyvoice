@@ -184,7 +184,7 @@ export function VoiceSelector({
         {isGeminiVoice && (
           <div className="relative">
             <Textarea
-              className="textarea-1 pr-16 transition-[height] duration-200 ease-in-out"
+              className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
               ref={textareaRef}
