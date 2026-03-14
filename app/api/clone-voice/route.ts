@@ -107,6 +107,14 @@ const sanitizeFilename = (filename: string): string => {
     .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
 };
 
+async function generateBufferHash(buffer: Buffer): Promise<string> {
+  const data = new Uint8Array(buffer);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function getAudioDuration(
   fileBuffer: Buffer,
   mimeType: string,
@@ -271,6 +279,7 @@ async function validateCredits(
 // Audio Processing Functions
 // ============================================================================
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: large
 async function processAudioFile(
   file: File,
   locale: string,
@@ -378,11 +387,9 @@ async function uploadReferenceAudio(
   processedBuffer: Buffer,
   processedMimeType: string,
   userId: string,
-): Promise<{ url: string; blobUrl: string }> {
-  const isMicAudio = file.name
-    .toLowerCase()
-    .startsWith('microphone-recording.');
+): Promise<{ url: string; audioHash: string }> {
   const referenceAudioFilename = sanitizeFilename(file.name);
+  const audioHash = await generateBufferHash(processedBuffer);
 
   const processedFilename =
     processedMimeType === 'audio/wav' &&
@@ -390,20 +397,19 @@ async function uploadReferenceAudio(
       ? `${referenceAudioFilename.replace(/\.[^/.]+$/, '')}.wav`
       : referenceAudioFilename;
 
-  const timestamp = isMicAudio ? `-${Date.now().toString()}` : '';
-  const blobUrl = `clone-voice-input/${userId}${timestamp}-${processedFilename}`;
+  const blobUrl = `clone-voice-input/${userId}-${audioHash}-${processedFilename}`;
 
   // Check if already uploaded
   const existingAudio = await redis.get<string>(blobUrl);
   if (existingAudio) {
-    return { url: existingAudio, blobUrl };
+    return { url: existingAudio, audioHash };
   }
 
   // Upload to R2
   const url = await uploadFileToR2(blobUrl, processedBuffer, processedMimeType);
   await redis.set(blobUrl, url);
 
-  return { url, blobUrl };
+  return { url, audioHash };
 }
 
 // ============================================================================
@@ -654,7 +660,7 @@ export async function POST(request: Request) {
     duration = processedAudio.duration;
 
     // Upload reference audio
-    const { url: referenceUrl, blobUrl } = await uploadReferenceAudio(
+    const { url: referenceUrl, audioHash } = await uploadReferenceAudio(
       referenceAudioFile,
       processedAudio.buffer,
       processedAudio.mimeType,
@@ -662,14 +668,24 @@ export async function POST(request: Request) {
     );
     audioReferenceUrl = referenceUrl;
 
-    // Generate output filename
-    const hash = await generateHash(
-      `${locale}-${text}-${blobUrl}-${Date.now()}`,
-    );
+    // Generate deterministic cache key by audio hash, text, and locale
+    const hash = await generateHash(`${locale}-${text}-${audioHash}`);
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
     const path = `${basePath}/${hash}`;
     const filename = `${path}.wav`;
+
+    const cachedOutputUrl = await redis.get<string>(filename);
+    if (cachedOutputUrl) {
+      return NextResponse.json(
+        {
+          url: cachedOutputUrl,
+          creditsUsed: estimate,
+          creditsRemaining: (currentAmount || 0) - estimate,
+        },
+        { status: 200 },
+      );
+    }
 
     // Generate voice
     let outputUrl: string;
