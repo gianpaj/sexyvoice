@@ -224,9 +224,6 @@ importers:
       lucide-react:
         specifier: ^0.523.0
         version: 0.523.0(react@19.2.3)
-      mailchecker:
-        specifier: ^6.0.19
-        version: 6.0.20
       mdx-bundler:
         specifier: ^10.1.1
         version: 10.1.1(acorn@8.16.0)(esbuild@0.25.5)
@@ -5715,10 +5712,6 @@ packages:
 
   magicast@0.5.1:
     resolution: {integrity: sha512-xrHS24IxaLrvuo613F719wvOIv9xPHFWQHuvGUBmPnCA/3MQxKI3b+r7n1jAoDHmsbC5bRhTZYR77invLAxVnw==}
-
-  mailchecker@6.0.20:
-    resolution: {integrity: sha512-mZ3kmtfXzGj06prtNm6d8an7D++Kf1G4jEkPZ1QQyhknYNLkmGoMtfaNPNHJU6E8J+Bm3AcZlIIfq5D6L4MS2g==}
-    engines: {node: '>=0.10'}
 
   make-dir@3.1.0:
     resolution: {integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw==}
@@ -13527,8 +13520,6 @@ snapshots:
       '@babel/parser': 7.28.5
       '@babel/types': 7.28.5
       source-map-js: 1.2.1
-
-  mailchecker@6.0.20: {}
 
   make-dir@3.1.0:
     dependencies:
