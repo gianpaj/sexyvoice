@@ -133,7 +133,7 @@ importers:
         version: 10.38.0(@opentelemetry/context-async-hooks@2.5.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.5.0(@opentelemetry/api@1.9.0))(next@16.1.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.86.3))(react@19.2.4)(webpack@5.99.9(esbuild@0.25.5))
       '@supabase-cache-helpers/postgrest-react-query':
         specifier: ^1.13.7
-        version: 1.13.8(@supabase/postgrest-js@2.89.0)(@tanstack/react-query@5.90.21(react@19.2.4))(react@19.2.4)
+        version: 1.13.9(@supabase/postgrest-js@2.89.0)(@tanstack/react-query@5.90.21(react@19.2.4))(react@19.2.4)
       '@supabase/ssr':
         specifier: ^0.8.0
         version: 0.8.0(@supabase/supabase-js@2.89.0)
@@ -3568,13 +3568,13 @@ packages:
   '@standard-schema/utils@0.3.0':
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
-  '@supabase-cache-helpers/postgrest-core@0.13.0':
-    resolution: {integrity: sha512-Pb1VrZYgeMRotMtdJWbbngATFfdi+XdR2yaxK2LRNACigY6JB4lknI+MZ/3bl9hxj73D3EI0Bqz65FzFklaJtg==}
+  '@supabase-cache-helpers/postgrest-core@0.13.1':
+    resolution: {integrity: sha512-NKOlRlnQqM53hcMdIOat00kLgyPT+0iRN5Q8ntvoXY95zNI7h1oVBiaVYZMbd5medaQ4P5kLC7vAfZLq6qxtdw==}
     peerDependencies:
       '@supabase/postgrest-js': ^1.19.4 || ^2.0.0
 
-  '@supabase-cache-helpers/postgrest-react-query@1.13.8':
-    resolution: {integrity: sha512-FtkoFk0ix/1LaIbyjk0wWcr6j7TSs+ASGgJrJ4zuENSCEtRbTzaIT6pF2Td0KJIrGLZ/r3AZq/glGyRYro+17g==}
+  '@supabase-cache-helpers/postgrest-react-query@1.13.9':
+    resolution: {integrity: sha512-sdaSfaK2T6Bjvmln+0P/+l7TKk2YRsrdqijsGxGxTPquoq7ciaqGVWB+bZhzKhLqwhl5E/ryZzsTXOvoZOZHkw==}
     peerDependencies:
       '@supabase/postgrest-js': ^1.19.4 || ^2.0.0
       '@tanstack/react-query': ^4.0.0 || ^5.0.0
@@ -11316,7 +11316,7 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@supabase-cache-helpers/postgrest-core@0.13.0(@supabase/postgrest-js@2.89.0)':
+  '@supabase-cache-helpers/postgrest-core@0.13.1(@supabase/postgrest-js@2.89.0)':
     dependencies:
       '@supabase/postgrest-js': 2.89.0
       fast-equals: 5.4.0
@@ -11324,9 +11324,9 @@ snapshots:
       merge-anything: 5.1.7
       xregexp: 5.1.2
 
-  '@supabase-cache-helpers/postgrest-react-query@1.13.8(@supabase/postgrest-js@2.89.0)(@tanstack/react-query@5.90.21(react@19.2.4))(react@19.2.4)':
+  '@supabase-cache-helpers/postgrest-react-query@1.13.9(@supabase/postgrest-js@2.89.0)(@tanstack/react-query@5.90.21(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@supabase-cache-helpers/postgrest-core': 0.13.0(@supabase/postgrest-js@2.89.0)
+      '@supabase-cache-helpers/postgrest-core': 0.13.1(@supabase/postgrest-js@2.89.0)
       '@supabase/postgrest-js': 2.89.0
       '@tanstack/react-query': 5.90.21(react@19.2.4)
       flat: 6.0.1
