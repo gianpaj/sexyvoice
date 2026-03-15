@@ -145,6 +145,8 @@ export async function GET(request: NextRequest) {
   let callSessionsWeekResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessionsTotalCountResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let callSessionsAllTimeDurationResult: any;
   let usageEventsWeekResult: { data: UsageEvent[] | null; error: unknown };
 
   if (useCache) {
@@ -162,6 +164,8 @@ export async function GET(request: NextRequest) {
     nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
     callSessionsWeekResult = cached.callSessionsWeekResult;
     callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
+    callSessionsAllTimeDurationResult =
+      cached.callSessionsAllTimeDurationResult;
     usageEventsWeekResult = cached.usageEventsWeekResult;
   } else {
     // Helper to time individual queries
@@ -202,6 +206,7 @@ export async function GET(request: NextRequest) {
       // Call sessions - fetch for last 7 days (includes yesterday)
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      callSessionsAllTimeDurationResult,
     ] = await Promise.all([
       // (audioYesterdayResult) Audio files yesterday with voice information
       _timed(
@@ -250,12 +255,9 @@ export async function GET(request: NextRequest) {
           .then((result) => result),
       ),
 
-      // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
-      supabase
-        .from('profiles')
-        .select('id, created_at, username')
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      // (profilesRecentResult) Placeholder; fetched below with pagination because
+      // Supabase caps result sets at 1000 rows per request
+      Promise.resolve({ data: null, error: null }),
 
       // (profilesTotalCountResult) Total profiles count
       supabase
@@ -285,6 +287,12 @@ export async function GET(request: NextRequest) {
       supabase
         .from('call_sessions')
         .select('id', { count: 'exact', head: true })
+        .lt('started_at', today.toISOString()),
+
+      // (callSessionsAllTimeDurationResult) All-time call sessions durations
+      supabase
+        .from('call_sessions')
+        .select('duration_seconds')
         .lt('started_at', today.toISOString()),
     ]);
 
@@ -333,6 +341,53 @@ export async function GET(request: NextRequest) {
     };
 
     // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
+    const fetchAllProfilesInRange = async (
+      start: Date,
+      end: Date,
+    ): Promise<
+      {
+        id: string;
+        created_at: string | null;
+        username: string | null;
+      }[]
+    > => {
+      const allProfiles: {
+        id: string;
+        created_at: string | null;
+        username: string | null;
+      }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, created_at, username')
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
+          .order('created_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allProfiles.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allProfiles;
+    };
+
+    profilesRecentResult = {
+      data: await fetchAllProfilesInRange(sevenDaysAgo, today),
+      error: null,
+    };
+
     const fetchCreditTransactionsInRange = async (
       start: Date,
       end: Date,
@@ -446,6 +501,7 @@ export async function GET(request: NextRequest) {
       nextSubscriptionDueForPayment,
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      callSessionsAllTimeDurationResult,
       usageEventsWeekResult,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
@@ -492,6 +548,10 @@ export async function GET(request: NextRequest) {
     })[]
   ).filter((item): item is Tables<'call_sessions'> => item.started_at !== null);
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
+  const callSessionsAllTimeDurationData =
+    (callSessionsAllTimeDurationResult.data ?? []) as {
+      duration_seconds: number;
+    }[];
   const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
 
   // Calculate API TTS credits used yesterday
@@ -521,12 +581,35 @@ export async function GET(request: NextRequest) {
     (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
+  const callsAvgDurationYesterday =
+    Math.round(callsDurationYesterday / callsYesterdayCount) || 0;
+  const callsAvgDurationWeek =
+    Math.round(callsDurationWeek / callsWeekCount) || 0;
+  const callsDurationAllTime = callSessionsAllTimeDurationData.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const callsAvgDurationAllTime =
+    Math.round(
+      callSessionsTotalCount > 0
+        ? callsDurationAllTime / callSessionsTotalCount
+        : 0,
+    ) || 0;
 
   // Format duration in minutes
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  };
+
+  const formatDurationChange = (
+    currentSeconds: number,
+    baselineSeconds: number,
+  ): string => {
+    const diffSeconds = Math.round(currentSeconds - baselineSeconds);
+    const sign = diffSeconds >= 0 ? '+' : '-';
+    return `${sign}${formatDuration(Math.abs(diffSeconds))}`;
   };
 
   // Separate refunds from purchases/top-ups
@@ -618,6 +701,34 @@ export async function GET(request: NextRequest) {
       transaction.created_at >= thirtyDaysAgo.toISOString() &&
       transaction.created_at < today.toISOString(),
   );
+  const newSubscribersTodayCount = purchasePrevDayData.filter((transaction) => {
+    if (transaction.type !== 'purchase') {
+      return false;
+    }
+
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      return false;
+    }
+
+    return (
+      (transaction.metadata as { isFirstSubscription?: boolean })
+        .isFirstSubscription === true
+    );
+  }).length;
+  const newSubscribersWeekCount = purchaseWeekData.filter((transaction) => {
+    if (transaction.type !== 'purchase') {
+      return false;
+    }
+
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      return false;
+    }
+
+    return (
+      (transaction.metadata as { isFirstSubscription?: boolean })
+        .isFirstSubscription === true
+    );
+  }).length;
   const creditsWeekCount = purchaseWeekData.length;
   const creditsMonthCount = purchaseThirtyDayData.length;
   const creditsTotalCount = purchaseTransactions.length;
@@ -1096,8 +1207,8 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
     `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(Math.round(callsDurationYesterday / callsYesterdayCount) || 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / callsWeekCount) || 0)})`,
-    `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
+    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDurationWeek)} vs 7d) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(callsAvgDurationWeek)})`,
+    `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
@@ -1130,7 +1241,7 @@ export async function GET(request: NextRequest) {
     `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
     `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
     `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
       ? [
