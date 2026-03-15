@@ -145,6 +145,8 @@ export async function GET(request: NextRequest) {
   let callSessionsWeekResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessionsTotalCountResult: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let callSessionsAllTimeDurationResult: any;
   let usageEventsWeekResult: { data: UsageEvent[] | null; error: unknown };
 
   if (useCache) {
@@ -162,6 +164,8 @@ export async function GET(request: NextRequest) {
     nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
     callSessionsWeekResult = cached.callSessionsWeekResult;
     callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
+    callSessionsAllTimeDurationResult =
+      cached.callSessionsAllTimeDurationResult;
     usageEventsWeekResult = cached.usageEventsWeekResult;
   } else {
     // Helper to time individual queries
@@ -202,6 +206,7 @@ export async function GET(request: NextRequest) {
       // Call sessions - fetch for last 7 days (includes yesterday)
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      callSessionsAllTimeDurationResult,
     ] = await Promise.all([
       // (audioYesterdayResult) Audio files yesterday with voice information
       _timed(
@@ -282,6 +287,12 @@ export async function GET(request: NextRequest) {
       supabase
         .from('call_sessions')
         .select('id', { count: 'exact', head: true })
+        .lt('started_at', today.toISOString()),
+
+      // (callSessionsAllTimeDurationResult) All-time call sessions durations
+      supabase
+        .from('call_sessions')
+        .select('duration_seconds')
         .lt('started_at', today.toISOString()),
     ]);
 
@@ -490,6 +501,7 @@ export async function GET(request: NextRequest) {
       nextSubscriptionDueForPayment,
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      callSessionsAllTimeDurationResult,
       usageEventsWeekResult,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
@@ -536,6 +548,10 @@ export async function GET(request: NextRequest) {
     })[]
   ).filter((item): item is Tables<'call_sessions'> => item.started_at !== null);
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
+  const callSessionsAllTimeDurationData =
+    (callSessionsAllTimeDurationResult.data ?? []) as {
+      duration_seconds: number;
+    }[];
   const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
 
   // Calculate API TTS credits used yesterday
@@ -565,12 +581,35 @@ export async function GET(request: NextRequest) {
     (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
+  const callsAvgDurationYesterday =
+    Math.round(callsDurationYesterday / callsYesterdayCount) || 0;
+  const callsAvgDurationWeek =
+    Math.round(callsDurationWeek / callsWeekCount) || 0;
+  const callsDurationAllTime = callSessionsAllTimeDurationData.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const callsAvgDurationAllTime =
+    Math.round(
+      callSessionsTotalCount > 0
+        ? callsDurationAllTime / callSessionsTotalCount
+        : 0,
+    ) || 0;
 
   // Format duration in minutes
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  };
+
+  const formatDurationChange = (
+    currentSeconds: number,
+    baselineSeconds: number,
+  ): string => {
+    const diffSeconds = Math.round(currentSeconds - baselineSeconds);
+    const sign = diffSeconds >= 0 ? '+' : '-';
+    return `${sign}${formatDuration(Math.abs(diffSeconds))}`;
   };
 
   // Separate refunds from purchases/top-ups
@@ -1140,8 +1179,8 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
     `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(Math.round(callsDurationYesterday / callsYesterdayCount) || 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / callsWeekCount) || 0)})`,
-    `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
+    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDurationWeek)} vs 7d) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(callsAvgDurationWeek)})`,
+    `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
