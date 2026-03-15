@@ -139,7 +139,7 @@
     "@types/node": "^24.10.4",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@typescript/native-preview": "7.0.0-dev.20260310.1",
+    "@typescript/native-preview": "7.0.0-dev.20260312.1",
     "@vitest/coverage-v8": "4.0.18",
     "autoprefixer": "^10.4.23",
     "husky": "^9.1.7",
