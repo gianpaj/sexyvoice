@@ -701,6 +701,34 @@ export async function GET(request: NextRequest) {
       transaction.created_at >= thirtyDaysAgo.toISOString() &&
       transaction.created_at < today.toISOString(),
   );
+  const newSubscribersTodayCount = purchasePrevDayData.filter((transaction) => {
+    if (transaction.type !== 'purchase') {
+      return false;
+    }
+
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      return false;
+    }
+
+    return (
+      (transaction.metadata as { isFirstSubscription?: boolean })
+        .isFirstSubscription === true
+    );
+  }).length;
+  const newSubscribersWeekCount = purchaseWeekData.filter((transaction) => {
+    if (transaction.type !== 'purchase') {
+      return false;
+    }
+
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      return false;
+    }
+
+    return (
+      (transaction.metadata as { isFirstSubscription?: boolean })
+        .isFirstSubscription === true
+    );
+  }).length;
   const creditsWeekCount = purchaseWeekData.length;
   const creditsMonthCount = purchaseThirtyDayData.length;
   const creditsTotalCount = purchaseTransactions.length;
@@ -1213,7 +1241,7 @@ export async function GET(request: NextRequest) {
     `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
     `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
     `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
     '',
     ...(hasInvalidMetadata
       ? [
