@@ -250,12 +250,9 @@ export async function GET(request: NextRequest) {
           .then((result) => result),
       ),
 
-      // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
-      supabase
-        .from('profiles')
-        .select('id, created_at, username')
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      // (profilesRecentResult) Placeholder; fetched below with pagination because
+      // Supabase caps result sets at 1000 rows per request
+      Promise.resolve({ data: null, error: null }),
 
       // (profilesTotalCountResult) Total profiles count
       supabase
@@ -333,6 +330,53 @@ export async function GET(request: NextRequest) {
     };
 
     // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
+    const fetchAllProfilesInRange = async (
+      start: Date,
+      end: Date,
+    ): Promise<
+      {
+        id: string;
+        created_at: string | null;
+        username: string | null;
+      }[]
+    > => {
+      const allProfiles: {
+        id: string;
+        created_at: string | null;
+        username: string | null;
+      }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, created_at, username')
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
+          .order('created_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allProfiles.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allProfiles;
+    };
+
+    profilesRecentResult = {
+      data: await fetchAllProfilesInRange(sevenDaysAgo, today),
+      error: null,
+    };
+
     const fetchCreditTransactionsInRange = async (
       start: Date,
       end: Date,
