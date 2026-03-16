@@ -1,35 +1,40 @@
 /**
  * Call Sessions Analysis Script
  *
- * Analyzes call_sessions transcripts from the last 24 hours using Google Gemini LLM.
+ * Analyzes call_sessions transcripts from the last 24 hours using xAI Grok via the AI SDK.
  * Extracts insights about conversation patterns, topics, languages, and user engagement.
  *
  * Usage:
- *   node scripts/analyze-call-sessions.mjs [--dry-run] [--hours=24] [--limit=100]
+ *   node scripts/analyze-call-sessions.mjs [--dry-run] [--hours=24] [--limit=100] [--debug] [--debug-session=UUID] [--smoke-test]
  *
  * Options:
- *   --dry-run   Run without updating the database
- *   --hours=N   Analyze calls from the last N hours (default: 24)
- *   --limit=N   Limit the number of calls to analyze (default: no limit)
+ *   --dry-run            Run without updating the database
+ *   --hours=N            Analyze calls from the last N hours (default: 24)
+ *   --limit=N            Limit the number of calls to analyze (default: no limit)
+ *   --debug              Enable detailed provider/debug logging
+ *   --debug-session=UUID Only debug a specific session ID
+ *   --smoke-test         Run a tiny xAI request before analyzing transcripts
  *
  * Environment variables required:
  *   - NEXT_PUBLIC_SUPABASE_URL
  *   - SUPABASE_SERVICE_ROLE_KEY
- *   - GOOGLE_GENERATIVE_AI_API_KEY
+ *   - XAI_API_KEY
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { createXai } from '@ai-sdk/xai';
 import { createClient } from '@supabase/supabase-js';
+import { generateText } from 'ai';
 import { config } from 'dotenv';
 
 // Load environment variables
-config({ path: ['.env', '.env.local'] });
+config({ path: ['.env', '../.env.local'] });
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
 const BATCH_SIZE = 5; // Number of calls to analyze per LLM batch request
+const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120; // 2 minutes
 const LONG_CALL_THRESHOLD_SECONDS = 180; // 3 minutes
 const OUTPUT_FILE_PREFIX = 'call-analysis-results';
 
@@ -43,6 +48,9 @@ function parseArgs() {
     dryRun: false,
     hours: 24,
     limit: null,
+    debug: false,
+    debugSession: null,
+    smokeTest: false,
   };
 
   for (const arg of args) {
@@ -52,25 +60,36 @@ function parseArgs() {
       options.hours = Number.parseInt(arg.split('=')[1], 10);
     } else if (arg.startsWith('--limit=')) {
       options.limit = Number.parseInt(arg.split('=')[1], 10);
+    } else if (arg === '--debug') {
+      options.debug = true;
+    } else if (arg.startsWith('--debug-session=')) {
+      options.debugSession = arg.split('=')[1] || null;
+      options.debug = true;
+    } else if (arg === '--smoke-test') {
+      options.smokeTest = true;
+      options.debug = true;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Call Sessions Analysis Script
 
-Analyzes call_sessions transcripts using Google Gemini LLM.
+Analyzes call_sessions transcripts using xAI Grok via the AI SDK.
 
 Usage:
   node scripts/analyze-call-sessions.mjs [options]
 
 Options:
-  --dry-run     Run without updating the database
-  --hours=N     Analyze calls from the last N hours (default: 24)
-  --limit=N     Limit the number of calls to analyze
-  -h, --help    Show this help message
+  --dry-run            Run without updating the database
+  --hours=N            Analyze calls from the last N hours (default: 24)
+  --limit=N            Limit the number of calls to analyze
+  --debug              Enable detailed provider/debug logging
+  --debug-session=UUID Only debug a specific session ID
+  --smoke-test         Run a tiny xAI request before analyzing transcripts
+  -h, --help           Show this help message
 
 Environment variables:
   NEXT_PUBLIC_SUPABASE_URL         Supabase project URL
   SUPABASE_SERVICE_ROLE_KEY        Supabase service role key
-  GOOGLE_GENERATIVE_AI_API_KEY     Google AI API key
+  XAI_API_KEY                      xAI API key
       `);
       process.exit(0);
     }
@@ -104,15 +123,17 @@ function createAdminClient() {
 }
 
 // ============================================================================
-// Google Gemini Client
+// xAI Client
 // ============================================================================
 
-function createGeminiClient() {
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    throw new Error('Missing env.GOOGLE_GENERATIVE_AI_API_KEY');
+function createXaiClient() {
+  if (!process.env.XAI_API_KEY) {
+    throw new Error('Missing env.XAI_API_KEY');
   }
 
-  return new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
+  return createXai({
+    apiKey: process.env.XAI_API_KEY,
+  });
 }
 
 // ============================================================================
@@ -135,6 +156,7 @@ async function getUnanalyzedCallSessions(supabase, hoursAgo, limit = null) {
     .gte('started_at', cutoffTime)
     .eq('status', 'completed')
     .not('transcript', 'is', null)
+    .gte('duration_seconds', MIN_ANALYSIS_CALL_DURATION_SECONDS)
     .order('started_at', { ascending: false });
 
   // Filter out already analyzed sessions (metadata->analysed is not true)
@@ -327,16 +349,51 @@ async function saveAllSessionAnalyses(supabase, results) {
 function extractMessages(transcript) {
   if (!transcript) return [];
 
-  // Handle both direct messages array and nested structure
-  const messages = transcript.messages || transcript;
+  const assistantMessages = Array.isArray(transcript)
+    ? transcript
+    : Array.isArray(transcript.messages)
+      ? transcript.messages
+      : [];
 
-  if (!Array.isArray(messages)) return [];
+  const userTranscriptions = Array.isArray(transcript.user_transcriptions)
+    ? transcript.user_transcriptions
+    : [];
 
-  return messages.map((msg) => ({
-    role: msg.role,
-    content: msg.content,
-    timestamp: msg.timestamp,
-  }));
+  const normalizedAssistantMessages = assistantMessages
+    .map((msg) => ({
+      role: msg.role || 'assistant',
+      content:
+        typeof msg.content === 'string'
+          ? msg.content
+          : typeof msg.text === 'string'
+            ? msg.text
+            : '',
+      timestamp: msg.timestamp || msg.created_at || msg.time || null,
+    }))
+    .filter((msg) => msg.content);
+
+  const normalizedUserMessages = userTranscriptions
+    .map((msg) => ({
+      role: 'user',
+      content:
+        typeof msg.content === 'string'
+          ? msg.content
+          : typeof msg.text === 'string'
+            ? msg.text
+            : typeof msg.transcript === 'string'
+              ? msg.transcript
+              : '',
+      timestamp: msg.timestamp || msg.created_at || msg.time || null,
+    }))
+    .filter((msg) => msg.content);
+
+  return [...normalizedAssistantMessages, ...normalizedUserMessages].sort(
+    (a, b) => {
+      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return timeA - timeB;
+    },
+  );
 }
 
 /**
@@ -430,24 +487,213 @@ function buildConversationSummary(messages, maxLength = 4000) {
 // LLM Analysis
 // ============================================================================
 
+function sanitizeMessageContent(content) {
+  if (typeof content !== 'string') {
+    return '';
+  }
+
+  return content.replaceAll('\u0000', '').trim();
+}
+
+function summarizeDebugError(error) {
+  if (!error || typeof error !== 'object') {
+    return { serialized: String(error), cause: null };
+  }
+
+  const serialized = JSON.stringify(
+    error,
+    Object.getOwnPropertyNames(error),
+    2,
+  );
+
+  let cause = null;
+  if ('cause' in error) {
+    try {
+      cause =
+        typeof error.cause === 'string'
+          ? error.cause
+          : JSON.stringify(error.cause, null, 2);
+    } catch {
+      cause = String(error.cause);
+    }
+  }
+
+  return { serialized, cause };
+}
+
+function buildTranscriptDebugPreview(transcript) {
+  if (!transcript || typeof transcript !== 'object') {
+    return {
+      transcriptType: typeof transcript,
+      topLevelKeys: [],
+      rawMessagesType: 'none',
+      rawMessagesLength: 0,
+      rawUserTranscriptionsType: 'none',
+      rawUserTranscriptionsLength: 0,
+      sampleMessages: [],
+      sampleUserTranscriptions: [],
+    };
+  }
+
+  const topLevelKeys = Object.keys(transcript);
+  const rawMessages = Array.isArray(transcript)
+    ? transcript
+    : Array.isArray(transcript.messages)
+      ? transcript.messages
+      : Array.isArray(transcript.segments)
+        ? transcript.segments
+        : [];
+  const rawUserTranscriptions = Array.isArray(transcript.user_transcriptions)
+    ? transcript.user_transcriptions
+    : [];
+
+  const sampleMessages = rawMessages.slice(0, 3).map((message) => {
+    if (!message || typeof message !== 'object') {
+      return {
+        messageType: typeof message,
+        value: message,
+      };
+    }
+
+    return {
+      keys: Object.keys(message),
+      role: message.role,
+      speaker: message.speaker,
+      participant: message.participant,
+      type: message.type,
+      content: message.content,
+      text: message.text,
+      timestamp: message.timestamp,
+    };
+  });
+
+  const sampleUserTranscriptions = rawUserTranscriptions
+    .slice(0, 3)
+    .map((message) => {
+      if (!message || typeof message !== 'object') {
+        return {
+          messageType: typeof message,
+          value: message,
+        };
+      }
+
+      return {
+        keys: Object.keys(message),
+        role: message.role,
+        speaker: message.speaker,
+        participant: message.participant,
+        type: message.type,
+        content: message.content,
+        text: message.text,
+        transcript: message.transcript,
+        timestamp: message.timestamp,
+      };
+    });
+
+  return {
+    transcriptType: Array.isArray(transcript) ? 'array' : 'object',
+    topLevelKeys,
+    rawMessagesType: Array.isArray(rawMessages) ? 'array' : typeof rawMessages,
+    rawMessagesLength: rawMessages.length,
+    rawUserTranscriptionsType: Array.isArray(rawUserTranscriptions)
+      ? 'array'
+      : typeof rawUserTranscriptions,
+    rawUserTranscriptionsLength: rawUserTranscriptions.length,
+    sampleMessages,
+    sampleUserTranscriptions,
+  };
+}
+
+async function runSmokeTest(xai) {
+  const model = xai('grok-4');
+
+  const { text } = await generateText({
+    model,
+    prompt: 'Reply with exactly this plain text and nothing else: healthy',
+  });
+
+  return text;
+}
+
 /**
- * Analyze a batch of call sessions using Gemini
+ * Analyze a batch of call sessions using Grok
  */
-async function analyzeCallSessionsWithLLM(genAI, sessions) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+async function analyzeCallSessionsWithLLM(xai, sessions, options = {}) {
+  const modelId = 'grok-4';
+  const model = xai(modelId);
 
   const results = [];
 
   for (const session of sessions) {
+    if (options.debugSession && session.id !== options.debugSession) {
+      continue;
+    }
+
     try {
-      const messages = extractMessages(session.transcript);
+      const messages = extractMessages(session.transcript).map((msg) => ({
+        ...msg,
+        content: sanitizeMessageContent(msg.content),
+      }));
       const conversationSummary = buildConversationSummary(messages);
       const stats = calculateConversationStats(messages);
+
+      if (options.debug) {
+        console.log('\n🔎 Session debug info:');
+        console.log({
+          sessionId: session.id,
+          modelId,
+          messageCount: messages.length,
+          summaryLength: conversationSummary.length,
+          userMessageCount: stats.userMessageCount,
+          assistantMessageCount: stats.assistantMessageCount,
+          hasNonStringContent: messages.some(
+            (msg) => typeof msg.content !== 'string',
+          ),
+          transcriptType: Array.isArray(session.transcript)
+            ? 'array'
+            : typeof session.transcript,
+          firstRoles: messages.slice(0, 10).map((msg) => msg.role),
+        });
+
+        if (!options.debugSession || options.debugSession === session.id) {
+          console.log('🧩 Raw transcript structure:');
+          console.log(
+            JSON.stringify(
+              buildTranscriptDebugPreview(session.transcript),
+              null,
+              2,
+            ),
+          );
+        }
+      }
 
       if (messages.length === 0) {
         results.push({
           sessionId: session.id,
+          userId: session.user_id,
+          startedAt: session.started_at,
+          endedAt: session.ended_at,
+          durationSeconds: session.duration_seconds,
+          endReason: session.end_reason,
+          model: session.model,
+          voiceId: session.voice_id,
           error: 'No messages in transcript',
+          stats,
+        });
+        continue;
+      }
+
+      if (stats.userMessageCount === 0) {
+        results.push({
+          sessionId: session.id,
+          userId: session.user_id,
+          startedAt: session.started_at,
+          endedAt: session.ended_at,
+          durationSeconds: session.duration_seconds,
+          endReason: session.end_reason,
+          model: session.model,
+          voiceId: session.voice_id,
+          error: 'Skipped: assistant-only transcript',
           stats,
         });
         continue;
@@ -477,8 +723,14 @@ Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
   "notable_patterns": "Any notable patterns or insights about this conversation"
 }`;
 
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      if (options.debug) {
+        console.log('🧪 Prompt preview:', prompt.slice(0, 800));
+      }
+
+      const { text: responseText } = await generateText({
+        model,
+        prompt,
+      });
 
       // Parse JSON response
       let analysis;
@@ -520,10 +772,22 @@ Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
         analysis,
       });
     } catch (error) {
-      console.error(`❌ Error analyzing session ${session.id}:`, error.message);
+      const name = error instanceof Error ? error.name : 'UnknownError';
+      const message = error instanceof Error ? error.message : String(error);
+      const { serialized, cause } = summarizeDebugError(error);
+
+      console.error(`❌ Error analyzing session ${session.id}: ${message}`);
+      if (options.debug) {
+        console.error('   name:', name);
+        console.error('   full error:', serialized);
+        if (cause) {
+          console.error('   cause:', cause);
+        }
+      }
+
       results.push({
         sessionId: session.id,
-        error: error.message,
+        error: message,
       });
     }
   }
@@ -551,11 +815,113 @@ function incrementCount(distribution, key) {
 function aggregateInsights(analysisResults) {
   const validResults = analysisResults.filter((r) => r.analysis && !r.error);
 
+  const userCallStats = {};
+  const errorSummary = {};
+  for (const result of analysisResults) {
+    const userId = result.userId || 'unknown';
+    if (!userCallStats[userId]) {
+      userCallStats[userId] = {
+        userId,
+        totalCalls: 0,
+        totalDurationSeconds: 0,
+        averageDurationSeconds: 0,
+        successfulAnalyses: 0,
+        erroredCalls: 0,
+      };
+    }
+
+    userCallStats[userId].totalCalls += 1;
+    userCallStats[userId].totalDurationSeconds += result.durationSeconds || 0;
+
+    if (result.error) {
+      userCallStats[userId].erroredCalls += 1;
+      incrementCount(errorSummary, result.error);
+    } else {
+      userCallStats[userId].successfulAnalyses += 1;
+    }
+  }
+
+  const topUsersByCallCount = Object.values(userCallStats)
+    .map((user) => ({
+      ...user,
+      averageDurationSeconds:
+        user.totalCalls > 0 ? user.totalDurationSeconds / user.totalCalls : 0,
+    }))
+    .sort((a, b) => b.totalCalls - a.totalCalls)
+    .slice(0, 10);
+
+  const topUsersByDuration = [...topUsersByCallCount]
+    .sort((a, b) => b.totalDurationSeconds - a.totalDurationSeconds)
+    .slice(0, 10);
+
+  const allDurations = analysisResults
+    .map((r) => r.durationSeconds || 0)
+    .filter((duration) => duration > 0);
+  const shortCalls = allDurations.filter((duration) => duration < 60);
+  const mediumCalls = allDurations.filter(
+    (duration) => duration >= 60 && duration < LONG_CALL_THRESHOLD_SECONDS,
+  );
+  const longCallsAll = analysisResults.filter(
+    (r) => (r.durationSeconds || 0) >= LONG_CALL_THRESHOLD_SECONDS,
+  );
+  const hourlyDistribution = {};
+  for (const r of longCallsAll) {
+    if (!r.startedAt) {
+      continue;
+    }
+    const hour = new Date(r.startedAt).getUTCHours();
+    incrementCount(hourlyDistribution, hour);
+  }
+
+  const peakHours = Object.entries(hourlyDistribution)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([hour, count]) => ({ hour: Number.parseInt(hour, 10), count }));
+
+  const baseInsights = {
+    totalAnalyzed: analysisResults.length,
+    validAnalyses: validResults.length,
+    errors: analysisResults.filter((r) => r.error).length,
+    errorSummary,
+    durationAnalysis: {
+      shortCalls: shortCalls.length,
+      mediumCalls: mediumCalls.length,
+      longCalls: longCallsAll.length,
+      averageDuration:
+        allDurations.length > 0
+          ? allDurations.reduce((sum, duration) => sum + duration, 0) /
+            allDurations.length
+          : 0,
+    },
+    timeOfDayAnalysis: {
+      hourlyDistribution,
+      peakHours,
+      totalLongCalls: longCallsAll.length,
+    },
+    topUsers: {
+      byCallCount: topUsersByCallCount,
+      byTotalDuration: topUsersByDuration,
+    },
+  };
+
   if (validResults.length === 0) {
     return {
-      totalAnalyzed: analysisResults.length,
-      validAnalyses: 0,
-      errors: analysisResults.filter((r) => r.error).length,
+      ...baseInsights,
+      languageDistribution: {},
+      topicDistribution: {},
+      subtopicDistribution: {},
+      engagementLevels: {},
+      conversationDeathAnalysis: {
+        totalConversationsDied: 0,
+        reasons: [],
+      },
+      aiComplianceIssues: {
+        total: 0,
+        issues: [],
+      },
+      popularTopics: [],
+      leastPopularTopics: [],
+      topUserRequests: [],
     };
   }
 
@@ -600,30 +966,6 @@ function aggregateInsights(analysisResults) {
       issue: r.analysis.ai_compliance_issues,
     }));
 
-  // Time of day analysis (for calls > 3 minutes)
-  const longCalls = validResults.filter(
-    (r) => r.durationSeconds >= LONG_CALL_THRESHOLD_SECONDS,
-  );
-  const hourlyDistribution = {};
-  for (const r of longCalls) {
-    const hour = new Date(r.startedAt).getUTCHours();
-    incrementCount(hourlyDistribution, hour);
-  }
-
-  // Find peak hours
-  const peakHours = Object.entries(hourlyDistribution)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([hour, count]) => ({ hour: Number.parseInt(hour, 10), count }));
-
-  // Duration distribution
-  const shortCalls = validResults.filter((r) => r.durationSeconds < 60);
-  const mediumCalls = validResults.filter(
-    (r) =>
-      r.durationSeconds >= 60 &&
-      r.durationSeconds < LONG_CALL_THRESHOLD_SECONDS,
-  );
-
   // User requests aggregation
   const allRequests = validResults
     .filter((r) => r.analysis.key_user_requests)
@@ -638,10 +980,7 @@ function aggregateInsights(analysisResults) {
     .slice(0, 10);
 
   return {
-    totalAnalyzed: analysisResults.length,
-    validAnalyses: validResults.length,
-    errors: analysisResults.filter((r) => r.error).length,
-
+    ...baseInsights,
     languageDistribution,
     topicDistribution,
     subtopicDistribution,
@@ -655,21 +994,6 @@ function aggregateInsights(analysisResults) {
     aiComplianceIssues: {
       total: complianceIssues.length,
       issues: complianceIssues.slice(0, 10),
-    },
-
-    durationAnalysis: {
-      shortCalls: shortCalls.length,
-      mediumCalls: mediumCalls.length,
-      longCalls: longCalls.length,
-      averageDuration:
-        validResults.reduce((sum, r) => sum + r.durationSeconds, 0) /
-        validResults.length,
-    },
-
-    timeOfDayAnalysis: {
-      hourlyDistribution,
-      peakHours,
-      totalLongCalls: longCalls.length,
     },
 
     popularTopics: Object.entries(topicDistribution)
@@ -819,6 +1143,23 @@ function printDeathAnalysis(insights) {
   }
 }
 
+function printErrorSummary(insights) {
+  console.log('\n❌ Error Summary:');
+
+  const sortedErrors = Object.entries(insights.errorSummary)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10);
+
+  if (sortedErrors.length === 0) {
+    console.log('   No errors recorded.');
+    return;
+  }
+
+  for (const [reason, count] of sortedErrors) {
+    console.log(`   ${reason}: ${count}`);
+  }
+}
+
 /**
  * Print summary report to console
  */
@@ -832,14 +1173,32 @@ function printSummaryReport(insights) {
   console.log(`   Successful analyses: ${insights.validAnalyses}`);
   console.log(`   Errors: ${insights.errors}`);
 
+  printDurationAnalysis(insights);
+
+  console.log('\n👥 Top Users by Number of Calls:');
+  for (const user of insights.topUsers.byCallCount) {
+    console.log(
+      `   ${user.userId}: ${user.totalCalls} calls, ${Math.round(user.totalDurationSeconds)}s total, ${Math.round(user.averageDurationSeconds)}s avg`,
+    );
+  }
+
+  console.log('\n⏳ Top Users by Total Call Duration:');
+  for (const user of insights.topUsers.byTotalDuration) {
+    console.log(
+      `   ${user.userId}: ${Math.round(user.totalDurationSeconds)}s total across ${user.totalCalls} calls`,
+    );
+  }
+
+  printErrorSummary(insights);
+
   if (insights.validAnalyses === 0) {
-    console.log('\n⚠️ No valid analyses to report on.');
+    console.log('\n⚠️ No valid LLM analyses to report on.');
+    console.log(`\n${'═'.repeat(70)}`);
     return;
   }
 
   printLanguageDistribution(insights);
   printTopicsAndEngagement(insights);
-  printDurationAnalysis(insights);
   printDeathAnalysis(insights);
 
   if (insights.aiComplianceIssues.total > 0) {
@@ -869,6 +1228,12 @@ function printStartupInfo(options) {
   console.log(`   Mode: ${modeText}`);
   console.log(`   Time range: Last ${options.hours} hours`);
   console.log(`   Limit: ${options.limit || 'No limit'}`);
+  console.log(
+    `   Min analysis duration: ${MIN_ANALYSIS_CALL_DURATION_SECONDS}s`,
+  );
+  console.log(`   Debug: ${options.debug ? 'enabled' : 'disabled'}`);
+  console.log(`   Debug session: ${options.debugSession || 'all'}`);
+  console.log(`   Smoke test: ${options.smokeTest ? 'enabled' : 'disabled'}`);
   console.log('━'.repeat(50));
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
@@ -878,8 +1243,8 @@ function printStartupInfo(options) {
   }
 }
 
-async function processSessionsInBatches(genAI, sessions) {
-  console.log('\n🤖 Analyzing sessions with Gemini LLM...');
+async function processSessionsInBatches(genAI, sessions, options) {
+  console.log('\n🤖 Analyzing sessions with Grok via AI SDK...');
   const allResults = [];
 
   for (let i = 0; i < sessions.length; i += BATCH_SIZE) {
@@ -890,7 +1255,11 @@ async function processSessionsInBatches(genAI, sessions) {
       `   Processing batch ${batchNum}/${totalBatches} (${batch.length} sessions)...`,
     );
 
-    const batchResults = await analyzeCallSessionsWithLLM(genAI, batch);
+    const batchResults = await analyzeCallSessionsWithLLM(
+      genAI,
+      batch,
+      options,
+    );
     allResults.push(...batchResults);
 
     // Small delay between batches to avoid rate limiting
@@ -972,7 +1341,13 @@ async function main() {
 
   // Initialize clients
   const supabase = createAdminClient();
-  const genAI = createGeminiClient();
+  const xai = createXaiClient();
+
+  if (options.smokeTest) {
+    console.log('\n🧪 Running xAI smoke test...');
+    const smokeTestResult = await runSmokeTest(xai);
+    console.log('   Smoke test response:', smokeTestResult);
+  }
 
   // Fetch unanalyzed call sessions
   console.log('\n📥 Fetching unanalyzed call sessions...');
@@ -981,7 +1356,32 @@ async function main() {
     options.hours,
     options.limit,
   );
-  console.log(`   Found ${sessions.length} unanalyzed sessions`);
+  console.log(
+    `   Found ${sessions.length} unanalyzed sessions >= ${MIN_ANALYSIS_CALL_DURATION_SECONDS}s`,
+  );
+
+  if (sessions.length > 0) {
+    const durations = sessions
+      .map((session) => session.duration_seconds || 0)
+      .sort((a, b) => a - b);
+    const shortestDuration = durations[0];
+    const longestDuration = durations[durations.length - 1];
+    const averageDuration =
+      durations.reduce((sum, duration) => sum + duration, 0) / durations.length;
+    const topLongestSessions = [...sessions]
+      .sort((a, b) => (b.duration_seconds || 0) - (a.duration_seconds || 0))
+      .slice(0, 5);
+
+    console.log(
+      `   Duration stats: min=${shortestDuration}s avg=${Math.round(averageDuration)}s max=${longestDuration}s`,
+    );
+    console.log('   Top longest fetched sessions:');
+    for (const session of topLongestSessions) {
+      console.log(
+        `     - ${session.id}: ${session.duration_seconds || 0}s (user ${session.user_id || 'unknown'})`,
+      );
+    }
+  }
 
   if (sessions.length === 0) {
     console.log('\n✅ No new sessions to analyze. Exiting.');
@@ -989,7 +1389,7 @@ async function main() {
   }
 
   // Analyze sessions in batches
-  const allResults = await processSessionsInBatches(genAI, sessions);
+  const allResults = await processSessionsInBatches(xai, sessions, options);
 
   // Aggregate insights
   console.log('\n📊 Aggregating insights...');
@@ -998,11 +1398,11 @@ async function main() {
   // Print summary report
   printSummaryReport(insights);
 
-  // Save results to files and database (if not dry run)
+  // Save results to database (if not dry run)
   if (options.dryRun) {
-    console.log('\n⏭️ Dry run - skipping file and database updates');
-  } else {
+    console.log('\n⏭️ Dry run - skipping database updates');
     await saveResults(allResults, insights);
+  } else {
     await updateDatabase(supabase, allResults, options, insights);
   }
 
