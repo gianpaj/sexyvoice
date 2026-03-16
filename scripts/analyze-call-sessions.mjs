@@ -683,20 +683,43 @@ async function analyzeCallSessionsWithLLM(xai, sessions, options = {}) {
         continue;
       }
 
+      let assistantOnlyNote = null;
       if (stats.userMessageCount === 0) {
-        results.push({
-          sessionId: session.id,
-          userId: session.user_id,
-          startedAt: session.started_at,
-          endedAt: session.ended_at,
-          durationSeconds: session.duration_seconds,
-          endReason: session.end_reason,
-          model: session.model,
-          voiceId: session.voice_id,
-          error: 'Skipped: assistant-only transcript',
-          stats,
-        });
-        continue;
+        const userTranscriptions = Array.isArray(
+          session.transcript?.user_transcriptions,
+        )
+          ? session.transcript.user_transcriptions
+          : [];
+        const userTranscriptionCount = userTranscriptions.length;
+        const usableUserTranscriptionCount = userTranscriptions.filter(
+          (msg) => {
+            if (!msg || typeof msg !== 'object') {
+              return false;
+            }
+
+            const content =
+              typeof msg.content === 'string'
+                ? msg.content
+                : typeof msg.text === 'string'
+                  ? msg.text
+                  : typeof msg.transcript === 'string'
+                    ? msg.transcript
+                    : '';
+
+            return content.trim().length > 0;
+          },
+        ).length;
+
+        if (userTranscriptionCount === 0) {
+          assistantOnlyNote =
+            'No user transcription detected; analysis based on assistant transcript only.';
+        } else if (usableUserTranscriptionCount === 0) {
+          assistantOnlyNote =
+            'User transcriptions were present but contained no usable text; analysis based on assistant transcript only.';
+        } else {
+          assistantOnlyNote =
+            'User messages were not recoverable after normalization; analysis based on assistant transcript only.';
+        }
       }
 
       const prompt = `Analyze this AI voice call conversation and provide insights in JSON format.
@@ -708,10 +731,11 @@ CONTEXT:
 - Call duration: ${session.duration_seconds} seconds
 - End reason: ${session.end_reason || 'unknown'}
 - Total messages: ${stats.totalMessages}
+${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}
 
 Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
 {
-  "language": "ISO 639-1 two-letter code of the primary language used by the USER (e.g., 'en', 'es', 'de', 'fr')",
+  "language": "ISO 639-1 two-letter code of the primary language used by the USER when user transcriptions are available; otherwise infer from the overall conversation context and set notable_patterns to mention the missing user transcription",
   "topic_category": "One of: roleplay_intimate, roleplay_fantasy, casual_chat, emotional_support, asmr_relaxation, fetish_content, other",
   "topic_subcategory": "More specific topic description (e.g., 'daddy_dom', 'girlfriend_experience', 'meditation', etc.)",
   "user_engagement_level": "One of: high, medium, low, minimal",
@@ -720,7 +744,7 @@ Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
   "user_sentiment": "One of: satisfied, frustrated, bored, engaged, confused",
   "key_user_requests": ["List of main things the user asked for or wanted"],
   "ai_compliance_issues": "Any issues with AI responses (too loud, wrong tone, etc.) or null",
-  "notable_patterns": "Any notable patterns or insights about this conversation"
+  "notable_patterns": "Any notable patterns or insights about this conversation, including whether user transcriptions were missing"
 }`;
 
       if (options.debug) {
@@ -769,7 +793,14 @@ Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
         model: session.model,
         voiceId: session.voice_id,
         stats,
-        analysis,
+        analysis: assistantOnlyNote
+          ? {
+              ...analysis,
+              notable_patterns: analysis?.notable_patterns
+                ? `${analysis.notable_patterns} Missing user transcription detected; analysis based on assistant transcript only.`
+                : 'Missing user transcription detected; analysis based on assistant transcript only.',
+            }
+          : analysis,
       });
     } catch (error) {
       const name = error instanceof Error ? error.name : 'UnknownError';
@@ -835,7 +866,16 @@ function aggregateInsights(analysisResults) {
 
     if (result.error) {
       userCallStats[userId].erroredCalls += 1;
-      incrementCount(errorSummary, result.error);
+      if (!errorSummary[result.error]) {
+        errorSummary[result.error] = {
+          count: 0,
+          sessionIds: [],
+        };
+      }
+      errorSummary[result.error].count += 1;
+      if (result.sessionId) {
+        errorSummary[result.error].sessionIds.push(result.sessionId);
+      }
     } else {
       userCallStats[userId].successfulAnalyses += 1;
     }
@@ -1147,7 +1187,7 @@ function printErrorSummary(insights) {
   console.log('\n❌ Error Summary:');
 
   const sortedErrors = Object.entries(insights.errorSummary)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => b.count - a.count)
     .slice(0, 10);
 
   if (sortedErrors.length === 0) {
@@ -1155,8 +1195,11 @@ function printErrorSummary(insights) {
     return;
   }
 
-  for (const [reason, count] of sortedErrors) {
-    console.log(`   ${reason}: ${count}`);
+  for (const [reason, details] of sortedErrors) {
+    console.log(`   ${reason}: ${details.count}`);
+    if (details.sessionIds.length > 0) {
+      console.log(`     Sessions: ${details.sessionIds.join(', ')}`);
+    }
   }
 }
 
