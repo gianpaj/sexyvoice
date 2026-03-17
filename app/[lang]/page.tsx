@@ -1,5 +1,12 @@
 import { allPosts } from 'contentlayer/generated';
-import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  CheckCircle2,
+  Globe2,
+  Mic2,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
@@ -17,7 +24,7 @@ import { Link } from '@/lib/i18n/navigation';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
-import LandingHero from '@/components/landing-hero';
+import AnimWaveForm from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { PromoBanner } from '@/components/promo-banner';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
@@ -35,6 +42,26 @@ const get3PostsByLang = (lang: Locale) =>
     .slice(0, 3);
 
 export const metadata: Metadata = {
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: 'website',
+    url: 'https://sexyvoice.ai/en',
+    images: [
+      {
+        url: 'https://sexyvoice.ai/sexyvoice.ai-og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'SexyVoice.ai AI voice generator homepage',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['https://sexyvoice.ai/sexyvoice.ai-og-image.jpg'],
+  },
   other: {
     preconnect: 'https://files.sexyvoice.ai',
   },
@@ -159,8 +186,8 @@ export default async function LandingPage(props: {
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
-              <LandingHero />
-              <h1 className="font-bold text-5xl md:text-6xl">
+              <AnimWaveForm />
+              <h1 className="text-balance font-bold text-5xl md:text-6xl">
                 <span className="text-white/90 leading-14">{firstPart}</span>
                 <br />
                 {titleRestParts && (
@@ -198,12 +225,145 @@ export default async function LandingPage(props: {
               </div>
             </div>
 
+            {/* Trust Section */}
+            <section
+              aria-labelledby="trust-section-title"
+              className="mx-auto max-w-6xl py-10"
+            >
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/3 px-6 py-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)] backdrop-blur-sm md:px-10 md:py-10">
+                <div className="-left-10 absolute top-0 h-32 w-32 rounded-full bg-brand-red/10 blur-3xl" />
+                <div className="-right-6 absolute bottom-0 h-36 w-36 rounded-full bg-brand-purple/10 blur-3xl" />
+                <div className="relative mb-8 text-center">
+                  <p className="mb-3 font-medium text-[11px] uppercase tracking-[0.35em] text-white/45">
+                    Instant clarity
+                  </p>
+                  <h2
+                    className="mx-auto max-w-2xl text-balance font-bold text-2xl text-white md:text-3xl"
+                    id="trust-section-title"
+                  >
+                    {dictLanding.trust.title}
+                  </h2>
+                </div>
+                <div className="relative grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {dictLanding.trust.items.map((item, idx) => (
+                    <Card
+                      className="group overflow-hidden border-white/10 bg-black/20 transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.07]"
+                      key={idx}
+                    >
+                      <CardContent className="flex min-h-32 flex-col gap-4 p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-10 items-center justify-center rounded-full border border-brand-red/25 bg-brand-red/10 text-brand-red shadow-[0_0_30px_rgba(239,68,68,0.15)]">
+                            <CheckCircle2 aria-hidden className="size-5" />
+                          </div>
+                          <span className="font-medium text-[11px] uppercase tracking-[0.26em] text-white/35">
+                            0{idx + 1}
+                          </span>
+                        </div>
+                        <p className="min-w-0 wrap-break-word text-sm leading-6 text-white/88">
+                          {item}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </section>
+
             {/* Audio Previews Grid */}
             <SampleAudioPreviews
               initialAudios={getSampleAudiosByLanguage(lang)}
               trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
               trySamplesTitle={dictLanding.popular.trySamplesTitle}
             />
+
+            {/* How It Works Section */}
+            <section
+              aria-labelledby="how-it-works-title"
+              className="mx-auto max-w-6xl py-18"
+            >
+              <div className="mb-10 text-center">
+                <p className="mb-3 font-medium text-[11px] uppercase tracking-[0.35em] text-white/45">
+                  Three-step flow
+                </p>
+                <h2
+                  className="mx-auto max-w-2xl text-balance font-bold text-3xl text-white md:text-4xl"
+                  id="how-it-works-title"
+                >
+                  {dictLanding.howItWorks.title}
+                </h2>
+              </div>
+              <div className="grid gap-6 md:grid-cols-3">
+                {dictLanding.howItWorks.steps.map((step, idx) => (
+                  <Card
+                    className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-linear-to-b from-white/[0.07] to-white/3 shadow-[0_12px_50px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+                    key={idx}
+                  >
+                    <div className="absolute inset-x-6 top-0 h-px bg-linear-to-r from-transparent via-white/25 to-transparent" />
+                    <CardHeader className="pb-3 pt-6">
+                      <div className="mb-5 flex items-center justify-between">
+                        <div className="flex size-14 items-center justify-center rounded-full border border-brand-red/25 bg-brand-red/10 font-bold text-brand-red text-lg tabular-nums shadow-[0_0_40px_rgba(239,68,68,0.16)]">
+                          {idx + 1}
+                        </div>
+                        <span className="font-medium text-[11px] uppercase tracking-[0.3em] text-white/30">
+                          Step
+                        </span>
+                      </div>
+                      <h3 className="text-balance text-left font-medium text-pink-200 text-xl leading-8">
+                        {step.title}
+                      </h3>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-left text-sm leading-7 text-white/75">
+                        {step.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            {/* Use Cases Section */}
+            <section
+              aria-labelledby="use-cases-title"
+              className="mx-auto max-w-6xl py-16"
+            >
+              <div className="mb-10 text-center">
+                <p className="mb-3 font-medium text-[11px] uppercase tracking-[0.35em] text-white/45">
+                  Creative fit
+                </p>
+                <h2
+                  className="mx-auto max-w-3xl text-balance font-bold text-3xl text-white md:text-4xl"
+                  id="use-cases-title"
+                >
+                  {dictLanding.useCases.title}
+                </h2>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                {dictLanding.useCases.items.map((item, idx) => (
+                  <Card
+                    className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/20 shadow-[0_12px_50px_rgba(0,0,0,0.22)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-white/5"
+                    key={idx}
+                  >
+                    <div className="absolute inset-y-0 left-0 w-px bg-linear-to-b from-transparent via-white/20 to-transparent" />
+                    <CardHeader className="pb-3">
+                      <div className="mb-4 flex items-center gap-3">
+                        <span className="inline-flex rounded-full border border-white/10 bg-white/6 px-3 py-1 font-medium text-[10px] uppercase tracking-[0.25em] text-white/45">
+                          Use case {idx + 1}
+                        </span>
+                      </div>
+                      <CardTitle className="text-balance text-pink-200 text-xl leading-8">
+                        {item.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="min-w-0 wrap-break-word text-sm leading-7 text-white/75">
+                        {item.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
 
             {/* Voice Generator Section */}
             {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">

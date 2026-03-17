@@ -57,31 +57,31 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Expressive Voices, Uncensored",
-      "subtitle": "Free AI Text-to-Speech & Voice Generator for Adults.\nPerfect for content creators and storytellers. 😉",
-      "buttonCTA": "Sign up for Free",
+      "title": "Sensual AI Voice Generator, for Adults",
+      "subtitle": "Craft seductive text-to-speech, clone intimate voices, and ignite spicy audio for roleplay, fantasies, and adult adventures.",
+      "buttonCTA": "Dive In with 10,000 Free Credits",
       "noCreditCard": "No credit card required",
       "signIn": "Sign In"
     },
     "features": {
       "voiceCloning": {
-        "title": "Natural Voices",
-        "description": "Integrate natural emotions — add laughter, sighs, coughs, and more — to create authentic, captivating audio experiences."
+        "title": "Seductive Voice Cloning",
+        "description": "Infuse passionate sighs, sultry whispers, and intimate moans to craft steamy, realistic voices for your wildest adult fantasies."
       },
       "multiLanguage": {
-        "title": "Multi-Language Support",
-        "description": "Pick from 20+ unique voices in multiple languages, perfect for your specific needs and preferences."
+        "title": "Global Sensual Voices",
+        "description": "Choose from 20+ tantalizing voices in multiple languages, ideal for spicy roleplay and cross-cultural adult storytelling."
       },
       "security": {
-        "title": "Secure & Private",
-        "description": "Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history."
+        "title": "Discreet & Secure",
+        "description": "Keep your sensual creations private with top-tier security. Full control over your spicy audio history and intimate profiles."
       }
     },
     "cta": {
-      "freeCredits": "Start with 10,000 free credits (5 min voice call) ( ͡° ͜ʖ ͡°)",
-      "title": "Ready to find your voice?",
-      "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
-      "action": "Create your first voice"
+      "freeCredits": "Unlock 10,000 free credits for your first spicy session ( ͡° ͜ʖ ͡°)",
+      "title": "Ready to unleash your fantasies?",
+      "subtitle": "Join passionate creators crafting seductive, emotion-filled audio for adult roleplay and more.",
+      "action": "Create your first sensual voice"
     },
     "generator": {
       "title": "Try it now",
@@ -103,9 +103,56 @@
       "trySamplesTitle": "Try Our Voice Samples",
       "trySamplesSubtitle": "Listen to voice samples created with our advanced AI technology"
     },
+    "trust": {
+      "title": "Why passionate adults choose SexyVoice.ai",
+      "items": [
+        "10,000 free credits to ignite your sensual audio explorations",
+        "24+ languages for steamy, cross-cultural roleplay fantasies",
+        "Voice cloning for intimate, personalized seduction",
+        "Discreet, secure generation with total control over your spicy files"
+      ]
+    },
+    "howItWorks": {
+      "title": "How to craft your spicy audio",
+      "steps": [
+        {
+          "title": "Select a seductive voice",
+          "description": "Choose from tantalizing AI voices perfect for adult roleplay, intimate stories, and sensual content."
+        },
+        {
+          "title": "Script or clone intimately",
+          "description": "Write your steamy dialogue or clone a voice for that personal, breathy touch of passion."
+        },
+        {
+          "title": "Generate in sultry seconds",
+          "description": "Produce, preview, and savor your spicy audio instantly with free credits — no card needed."
+        }
+      ]
+    },
+    "useCases": {
+      "title": "Designed for sensual adult experiences",
+      "items": [
+        {
+          "title": "Erotic storytelling and scenes",
+          "description": "Transform steamy scripts into passionate audio with seductive emotions and spicy character voices."
+        },
+        {
+          "title": "Intimate roleplay and fantasies",
+          "description": "Build uncensored, immersive soundscapes for adult roleplay, kinky fantasies, and private indulgence."
+        },
+        {
+          "title": "Sensual creator content",
+          "description": "Generate sultry voiceovers for spicy videos, erotic podcasts, and teasing social posts effortlessly."
+        },
+        {
+          "title": "Personal voice cloning for passion",
+          "description": "Clone voices for intimate, multilingual audio that brings your wildest adult visions to life."
+        }
+      ]
+    },
     "faq": {
-      "title": "Frequently Asked Questions",
-      "subtitle": "Everything you need to know about SexyVoice.ai",
+      "title": "Your Spicy Questions Answered",
+      "subtitle": "Everything you need to know about SexyVoice.ai for adult creators",
       "groups": [
         {
           "id": "voiceCreation",
@@ -559,8 +606,8 @@
     "description": "Monitor API usage, requests, and costs over time."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults",
-    "description": "Generate expressive AI voices with emotions for adult content in 24+ languages. Free text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
+    "defaultTitle": "AI Voice Generator for Adults | SexyVoice.ai",
+    "description": "Generate realistic text-to-speech, clone voices, and create natural audio for storytelling, roleplay, and adult content with free credits.",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
