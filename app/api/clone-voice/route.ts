@@ -78,8 +78,8 @@ export const maxDuration = 320; // seconds - fluid compute is enabled
 // ============================================================================
 
 interface ReplicateOutput {
-  url: () => string;
   blob: () => Promise<Blob>;
+  url: () => string;
 }
 
 interface ReplicateError {
@@ -89,9 +89,9 @@ interface ReplicateError {
 type ReplicateResponse = ReplicateOutput | ReplicateError;
 
 interface FormInput {
-  text: string;
   file: File;
   locale: string;
+  text: string;
 }
 
 // ============================================================================
@@ -332,12 +332,12 @@ async function processAudioFile(
         });
       }
     } catch (conversionError) {
-      const errorMessage =
-        conversionError instanceof Error
-          ? conversionError.message
-          : 'Unknown error';
-      const errorStack =
-        conversionError instanceof Error ? conversionError.stack : undefined;
+      const errorMessage = Error.isError(conversionError)
+        ? conversionError.message
+        : 'Unknown error';
+      const errorStack = Error.isError(conversionError)
+        ? conversionError.stack
+        : undefined;
 
       console.error('Audio conversion failed:', {
         error: errorMessage,
@@ -785,7 +785,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: Error.isError(error) ? error.message : 'Failed to clone voice' },
+      { error: Error.isError(error) ? error.message : String(error) },
       { status: 500 },
     );
   }

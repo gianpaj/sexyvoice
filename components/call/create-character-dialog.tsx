@@ -23,22 +23,22 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { DBVoice } from '@/data/voices';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { VoicePlayButton } from './voice-play-button';
 
 export interface NewCharacterPayload {
-  name: string;
   description: string;
-  voiceName: string;
+  name: string;
   prompt: string;
+  voiceName: string;
 }
 
 interface CreateCharacterDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   callVoices: DBVoice[];
-  onSave: (character: NewCharacterPayload) => Promise<void>;
   dict: (typeof langDict)['call']['createCharacter'];
+  onOpenChange: (open: boolean) => void;
+  onSave: (character: NewCharacterPayload) => Promise<void>;
+  open: boolean;
 }
 
 export function CreateCharacterDialog({

@@ -2,6 +2,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
 import {
   FREE_USER_CALL_LIMIT_SECONDS,
@@ -118,13 +119,20 @@ export async function resolveCharacterPrompt(characterId: string) {
 }
 
 export interface InsertUsageEventParams {
-  userId: string;
-  sourceType: UsageSourceType;
-  sourceId?: string | null;
-  unit: UsageUnitType;
-  quantity: number;
+  apiKeyId?: string | null;
   creditsUsed: number;
+  dollarAmount?: number | null;
+  durationSeconds?: number | null;
+  inputChars?: number | null;
   metadata?: Json;
+  model?: string | null;
+  outputChars?: number | null;
+  quantity: number;
+  requestId?: string | null;
+  sourceId?: string | null;
+  sourceType: UsageSourceType;
+  unit: UsageUnitType;
+  userId: string;
 }
 
 export async function getCredits(userId: string): Promise<number> {
@@ -241,7 +249,14 @@ export const insertUsageEvent = async (
       .insert({
         user_id: params.userId,
         source_type: params.sourceType,
+        request_id: params.requestId ?? null,
         source_id: params.sourceId ?? null,
+        api_key_id: params.apiKeyId ?? null,
+        model: params.model ?? null,
+        input_chars: params.inputChars ?? null,
+        output_chars: params.outputChars ?? null,
+        duration_seconds: params.durationSeconds ?? null,
+        dollar_amount: params.dollarAmount ?? null,
         unit: params.unit,
         quantity: params.quantity,
         credits_used: params.creditsUsed,
@@ -359,7 +374,7 @@ export const insertSubscriptionCreditTransaction = async (
     subscription_id: subscriptionId,
     amount: creditAmount,
     type: 'purchase',
-    description: `Subscription payment - $${dollarAmount}`,
+    description: `Subscription payment - $${dollarAmount} (includes ${Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}% bonus)`,
     metadata: {
       dollarAmount,
       isFirstSubscription,
@@ -532,6 +547,104 @@ export const isFreeUserOverCallLimit = async (
   const totalDuration = await getTotalCallDurationSeconds(userId);
   return totalDuration >= FREE_USER_CALL_LIMIT_SECONDS;
 };
+
+// ─── Admin variants for external API routes ───
+// These bypass RLS using the service role key. Use only in server-side
+// API routes where the userId is resolved from a trusted API key, not a
+// session cookie.
+
+export async function getCreditsAdmin(userId: string): Promise<number> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credits')
+    .select('amount')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.amount ?? 0;
+}
+
+export async function getVoiceIdByNameAdmin(
+  voiceName: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('name', voiceName)
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function reduceCreditsAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc('decrement_user_credits', {
+    user_id_var: userId,
+    credit_amount_var: Math.abs(amount),
+  });
+
+  if (error) throw error;
+}
+
+// biome-ignore lint/suspicious/useAwait: server action
+export async function saveAudioFileAdmin(params: {
+  userId: string;
+  filename: string;
+  text: string;
+  url: string;
+  model: string;
+  predictionId?: string;
+  isPublic: boolean;
+  voiceId: string;
+  duration: string;
+  credits_used: number;
+  usage?: Record<string, string | number | boolean>;
+}) {
+  const admin = createAdminClient();
+  return admin
+    .from('audio_files')
+    .insert({
+      user_id: params.userId,
+      storage_key: params.filename,
+      text_content: params.text,
+      url: params.url,
+      model: params.model,
+      prediction_id: params.predictionId,
+      is_public: params.isPublic,
+      voice_id: params.voiceId,
+      duration: Number.parseFloat(params.duration),
+      credits_used: params.credits_used,
+      usage: params.usage,
+    })
+    .select('id')
+    .single();
+}
+
+export async function hasUserPaidAdmin(userId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_transactions')
+    .select('type')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup']);
+
+  if (error) throw error;
+
+  return (data?.length ?? 0) > 0;
+}
 
 export const isFreemiumUserOverLimit = async (
   userId: string,

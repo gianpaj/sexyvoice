@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "hero": {
-      "title": "Private call with an AI, Talk freely –\nno judgment",
-      "subtitle": "Experience the connection – try 5 mins free call",
+      "title": "Expressive Voices, Uncensored",
+      "subtitle": "Free AI Text-to-Speech & Voice Generator for Adults.\nPerfect for content creators and storytellers. 😉",
       "buttonCTA": "Sign up for Free",
-      "noCreditCard": "No credit card required. You can hang up anytime",
+      "noCreditCard": "No credit card required",
       "signIn": "Sign In"
     },
     "features": {
@@ -90,7 +90,6 @@
       "enterText": "Enter text to convert",
       "speed": "Speed",
       "pitch": "Pitch",
-      "generate": "Generate Audio (coming soon)",
       "generating": "Generating...",
       "play": "Play",
       "pause": "Pause",
@@ -109,22 +108,22 @@
       "subtitle": "Everything you need to know about SexyVoice.ai",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live AI Calling",
+          "id": "voiceCreation",
+          "category": "Voice creation & styles",
           "questions": [
             {
-              "question": "How does Live AI Calling work?",
-              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
+              "question": "Which languages are supported for Speech Generation?",
+              "answer": "Language support depends on the selected voice.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) support 24 languages including:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\nand 🇮🇳 Telugu (India).\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
             },
             {
-              "question": "How much does it cost?",
-              "answer": "Live calling costs 2000 credits per minute while you’re connected."
+              "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
+              "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
             }
           ]
         },
         {
-          "id": "voiceCreation",
-          "category": "Voice creation & styles",
+          "id": "voiceCloning",
+          "category": "Voice cloning",
           "questions": [
             {
               "question": "How does voice cloning work?",
@@ -135,16 +134,22 @@
               "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
             },
             {
-              "question": "Which languages are supported for Speech Generation?",
-              "answer": "Language support depends on the selected voice.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) support 24 languages including:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\nand 🇮🇳 Telugu (India).\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
-            },
-            {
               "question": "Which languages are supported for Voice Cloning?",
               "answer": "Voice cloning supports the following 23 languages:\n\n🇸🇦 Arabic,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\nand 🇹🇷 Turkish."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live AI Calling",
+          "questions": [
+            {
+              "question": "How does Live AI Calling work?",
+              "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
-              "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
-              "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
+              "question": "How much does it cost?",
+              "answer": "Live calling costs 2000 credits per minute while you're connected."
             }
           ]
         },
@@ -175,12 +180,22 @@
               "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 5 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
             },
             {
-              "question": "Do you have an API for developers?",
-              "answer": "It's coming soon! Our API will let developers add voice generation and cloning to apps, websites, and games. You'll be able to create speech on demand and manage voice models programmatically."
-            },
-            {
               "question": "Why choose SexyVoice.ai?",
               "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API for Developers",
+          "questions": [
+            {
+              "question": "Do you have an API for developers?",
+              "answer": "Yes! Our API lets developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and programmatically. See the {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "documentation"
+              }
             }
           ]
         }
@@ -193,17 +208,24 @@
     "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
-      "forever": "(forever)"
+      "forever": "(forever)",
+      "monthly": "/month",
+      "oneTime": "One-time"
     },
     "plans": {
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",
-      "x_credits": "__NUM_CREDITS__ credits",
+      "subscribe": "Subscribe",
+      "x_credits": "{numCredits} credits",
+      "subscriptionBonus": "+15% more credits",
+      "subscriptionBonusCredits": "+{bonusCredits} bonus credits",
+      "toggleMonthly": "Monthly",
+      "toggleOneTime": "One-time",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio generation.",
-        "creditsWithAudio": "__NUM_CREDITS__ credits (~4 min of audio)",
+        "creditsWithAudio": "{numCredits} credits (~4 min of audio)",
         "features": [
           "Generate speech with realistic moaning sounds",
           "Clone your voice with as little as 10 seconds of audio"
@@ -213,27 +235,30 @@
         "name": "Starter",
         "description": "For casual users exploring AI audio.",
         "features": [
-          "Everything in Free"
+          "Everything in Free",
+          "2× longer text generation",
+          "API Access"
         ]
       },
       "standard": {
         "name": "Standard",
         "description": "For hobbyists creating projects with AI audio and custom voices.",
-        "creditsWithAudio": "__NUM_CREDITS__ credits (~11 min of audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "{numCredits} credits (~11 min of audio)",
+        "creditsWithPromo": "{numCredits} credits",
         "features": [
           "Everything in Free",
-          "Voice Call: Custom Characters"
+          "2× longer text generation",
+          "Voice Call: Custom Characters",
+          "API Access"
         ]
       },
       "pro": {
         "name": "Pro",
         "description": "For bigger creative needs and bolder content.",
-        "creditsWithAudio": "__NUM_CREDITS__ credits (~125 minutes of audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ credits",
+        "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
+        "creditsWithPromo": "{numCredits} credits",
         "features": [
-          "Everything in Free",
-          "Voice Call: Custom Characters"
+          "Everything in Standard, just cheaper"
         ]
       }
     },
@@ -245,21 +270,22 @@
       "processing": "Processing...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Perfect for getting started"
         },
         "standard": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Most popular choice",
           "value": "Best Value"
         },
         "pro": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "For power users",
           "value": "Pro Pack"
         }
       },
-      "mostPopular": "Most Popular"
+      "mostPopular": "Most Popular",
+      "cheaperBadge": "{percent} cheaper"
     },
     "status": {
       "success": {
@@ -326,7 +352,7 @@
     "configurationTitle": "Configuration",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
-    "startCall": "Start a call",
+    "startCall": "Start call",
     "connecting": "Connecting",
     "reconnected": "Reconnected",
     "reconnectionFailed": "Reconnection failed",
@@ -334,6 +360,7 @@
     "configurationUpdateError": "Error updating configuration",
     "agentUnavailable": "Agent unavailable",
     "activeCallError": "You already have an active call in progress",
+    "microphonePermissionDenied": "Microphone access denied. Please allow microphone access and try again.",
     "disconnected": "Disconnected",
     "chooseCharacter": "Who do you want to talk to?",
     "presetRemoved": "Preset removed",
@@ -490,20 +517,59 @@
         "cancel": "Cancel",
         "continue": "Continue"
       }
+    },
+    "apiKeys": {
+      "title": "API Keys",
+      "description": "Create and manage keys for the external API.",
+      "newKey": "New Key",
+      "createDialogTitle": "Create API Key",
+      "createDialogDescription": "The key is shown only once. Save it securely.",
+      "nameLabel": "Description",
+      "namePlaceholder": "e.g. Production backend",
+      "createButton": "Create",
+      "newKeyBanner": "New API key (shown once)",
+      "dismiss": "Dismiss",
+      "table": {
+        "name": "Name",
+        "prefix": "Prefix",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "status": "Status",
+        "action": "Action"
+      },
+      "empty": "No API keys created yet.",
+      "unpaidEmpty": "Subscribe or top up your account to create API keys.",
+      "never": "Never",
+      "statusActive": "Active",
+      "statusRevoked": "Revoked",
+      "copiedToClipboard": "Copied to clipboard",
+      "failedToCopy": "Failed to copy",
+      "failedToLoad": "Failed to load API keys",
+      "failedToCreate": "Failed to create API key",
+      "failedToRevoke": "Failed to revoke API key",
+      "revokeConfirm": {
+        "title": "Revoke API Key",
+        "description": "Are you sure you want to revoke this key? This action cannot be undone and any applications using it will stop working.",
+        "cancel": "Cancel",
+        "confirm": "Revoke"
+      }
     }
   },
+  "apiBilling": {
+    "description": "Monitor API usage, requests, and costs over time."
+  },
   "pages": {
-    "defaultTitle": "Talk to your AI - Private Voice Calls with No Judgment | SexyVoice.ai",
-    "description": "Experience private AI voice calls with zero judgment. Your secrets stay safe. Try a free 5-min call now – no credit card required. 20+ voices, 24+ languages.",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults",
+    "description": "Generate expressive AI voices with emotions for adult content in 24+ languages. Free text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
-    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & make private calls in 24+ languages.",
+    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
     "titleTranscribe": "Free Audio Transcription – 99+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
     "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
     "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
-    "keywordsLanding": "AI voice calls, private AI companion, talk to AI, AI voice chat, AI phone call, voice AI, AI conversation, private voice chat, AI voice generator, text to speech, voice cloning, no judgment AI calls",
+    "keywordsLanding": "text to speech, AI voice generator, voice cloning, adult text to speech, NSFW text to speech, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis, adult content AI, AI voice adult",
     "/": "",
     "/login": "Sign In",
     "/signup": "Sign Up Free – 10,000 Credits",
@@ -512,9 +578,15 @@
     "/dashboard/clone": "Clone",
     "/dashboard/history": "History",
     "/dashboard/credits": "Credits",
+    "/dashboard/api-keys": "API Keys",
+    "/dashboard/api-billing": "API Billing",
     "/dashboard/usage": "Usage",
     "/tools/audio-converter": "Audio Converter",
-    "/tools/transcribe": "Audio Transcription"
+    "/tools/transcribe": "Audio Transcription",
+    "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
+    "descriptionAudioJoiner": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
+    "keywordsAudioJoiner": "free audio joiner, merge audio files, join mp3 online, combine wav files, trim audio segments, browser audio editor, no upload audio joiner, private audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio Joiner"
   },
   "sidebar": {
     "profile": "Profile",
@@ -579,12 +651,17 @@
     }
   },
   "footer": {
+    "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "toolsHeading": "Tools",
+    "companyHeading": "Company",
+    "legalHeading": "Legal",
     "statusPage": "Status page",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",
     "copyright": "SexyVoice.ai. All rights reserved.",
     "audioConverter": "Free Audio Converter",
-    "transcribe": "Free Audio Transcription"
+    "transcribe": "Free Audio Transcription",
+    "audioJoiner": "Free Audio Joiner"
   },
   "promos": {
     "halloweenBanner": {
@@ -728,11 +805,11 @@
         },
         {
           "question": "What languages does it support?",
-          "answer": "The multilingual Whisper models support 99+ languages including Spanish, French, German, Japanese, Arabic, Hindi, Portuguese, Italian, Russian, Chinese, Korean, and many more."
+          "answer": "The multilingual Whisper models support 32 languages: Arabic, Bengali, Chinese, Czech, Danish, Dutch, English, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian, Indonesian, Italian, Japanese, Korean, Malay, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Tamil, Telugu, Thai, Turkish, Ukrainian, and Vietnamese."
         },
         {
           "question": "What audio formats are supported?",
-          "answer": "MP3, WAV, M4A, OGG, FLAC, and WebM — anything your browser can decode. Video files work too."
+          "answer": "MP3, WAV, M4A, OGG (WhatsApp), FLAC, and WebM — anything your browser can decode. Video files work too."
         },
         {
           "question": "How accurate is the transcription?",
@@ -743,6 +820,44 @@
           "answer": "After the model downloads once, yes. The model is cached in your browser, so future transcriptions work fully offline."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Free Audio Joiner",
+    "subtitle": "Join and trim multiple audio files in your browser with no uploads",
+    "dropZone": {
+      "title": "Add audio files",
+      "subtitle": "Upload one or more files to start editing",
+      "addFiles": "Add files"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Play",
+      "pause": "Pause",
+      "join": "Join",
+      "joining": "Joining...",
+      "cancel": "Cancel"
+    },
+    "progress": {
+      "processing": "Processing"
+    },
+    "success": {
+      "downloadStarted": "Download started.",
+      "cancelled": "Processing cancelled."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "Failed to load FFmpeg. Please refresh and try again.",
+      "decodeFailed": "Failed to read {file}. Try a different audio format.",
+      "previewFailed": "Unable to preview the joined timeline.",
+      "joinFailed": "Join failed. Please try again."
+    },
+    "footer": {
+      "poweredBy": "Powered by",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "No uploads, 100% in-browser",
+      "alsoTry": "Also try our",
+      "audioConverterLink": "Free Audio Converter Tool",
+      "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
     }
   }
 }

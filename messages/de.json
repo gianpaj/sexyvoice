@@ -57,10 +57,10 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "hero": {
-      "title": "Privates Gespräch mit einer KI, sprechen Sie frei ohne Vorurteile",
-      "subtitle": "Erleben Sie die Verbindung - versuchen Sie 5 minuten kostenlosen Anruf",
+      "title": "Starke Stimmen, frei",
+      "subtitle": "Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene.\nPerfekt für Content-Ersteller und Geschichtenerzähler. 😉",
       "buttonCTA": "Kostenlos anmelden",
-      "noCreditCard": "Keine Kreditkarte erforderlich. Sie können jederzeit auflegen",
+      "noCreditCard": "Keine Kreditkarte erforderlich",
       "signIn": "Anmelden"
     },
     "features": {
@@ -90,7 +90,6 @@
       "enterText": "Geben Sie Text zum Konvertieren ein",
       "speed": "Geschwindigkeit",
       "pitch": "Tonhöhe",
-      "generate": "Audio generieren (bald verfügbar)",
       "generating": "Wird generiert...",
       "play": "Abspielen",
       "pause": "Pause",
@@ -109,22 +108,22 @@
       "subtitle": "Alles, was Sie über SexyVoice.ai wissen müssen",
       "groups": [
         {
-          "id": "liveCalling",
-          "category": "Live-KI-Anrufe",
+          "id": "voiceCreation",
+          "category": "Stimmerstellung und Stile",
           "questions": [
             {
-              "question": "Wie funktionieren Live-KI-Anrufe?",
-              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
+              "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
+              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\nund 🇮🇳 Telugu (Indien).\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK),\n🇮🇹 Pietro (Italienisch),\n🇺🇸 Emma (Englisch US),\n🇪🇸 Javi (Spanisch),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
             },
             {
-              "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
+              "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
+              "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
             }
           ]
         },
         {
-          "id": "voiceCreation",
-          "category": "Stimmerstellung und Stile",
+          "id": "voiceCloning",
+          "category": "Stimmklonen",
           "questions": [
             {
               "question": "Wie funktioniert das Klonen von Stimmen?",
@@ -135,16 +134,22 @@
               "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
             },
             {
-              "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
-              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam).\nAndere Stimmen sind sprachspezifisch:\n🇮🇹 Pietro (Italienisch),\n🇪🇸 Javi (Spanisch),\n🇬🇧 Dan (Englisch UK),\n🇺🇸 Emma (Englisch US),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
-            },
-            {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
               "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
+            }
+          ]
+        },
+        {
+          "id": "liveCalling",
+          "category": "Live-KI-Anrufe",
+          "questions": [
+            {
+              "question": "Wie funktionieren Live-KI-Anrufe?",
+              "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
             },
             {
-              "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
-              "answer": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – \"Britischer Akzent\", \"Piratenstimme\", \"Verführerischer Ton\" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern."
+              "question": "Was kostet das?",
+              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
             }
           ]
         },
@@ -175,12 +180,22 @@
               "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 5 minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
             },
             {
-              "question": "Haben Sie eine API für Entwickler?",
-              "answer": "Sie kommt bald! Mit unserer API können Entwickler Sprachgenerierung und Stimmklonen zu Apps, Websites und Spielen hinzufügen. Sie können Sprache bei Bedarf erstellen und Sprachmodelle programmgesteuert verwalten."
-            },
-            {
               "question": "Warum SexyVoice.ai wählen?",
               "answer": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren."
+            }
+          ]
+        },
+        {
+          "id": "developers",
+          "category": "API für Entwickler",
+          "questions": [
+            {
+              "question": "Haben Sie eine API für Entwickler?",
+              "answer": "Ja! Unsere API ermöglicht Entwicklern, Sprachgenerierung in Apps, Websites und Spiele einzubinden. Sie können Sprache auf Abruf und programmgesteuert erstellen. Siehe die {link}.",
+              "link": {
+                "url": "https://docs.sexyvoice.ai",
+                "text": "Dokumentation"
+              }
             }
           ]
         }
@@ -193,17 +208,24 @@
     "description": "Wählen Sie die Anzahl an Credits, die am besten zu Ihren Bedürfnissen passt",
     "historyEmpty": "Ihre Credit-Nutzungshistorie wird hier angezeigt",
     "billing": {
-      "forever": "(für immer)"
+      "forever": "(für immer)",
+      "monthly": "/Monat",
+      "oneTime": "Einmalzahlung"
     },
     "plans": {
       "popular": "Am beliebtesten",
       "startFree": "Kostenlos starten",
       "buyCredits": "Credits kaufen",
-      "x_credits": "__NUM_CREDITS__ Credits",
+      "subscribe": "Abonnieren",
+      "x_credits": "{numCredits} Credits",
+      "subscriptionBonus": "+15% mehr Credits",
+      "subscriptionBonusCredits": "+{bonusCredits} Bonus-Credits",
+      "toggleMonthly": "Monatlich",
+      "toggleOneTime": "Einmalzahlung",
       "free": {
         "name": "Kostenlos",
         "description": "Für Einzelpersonen, die die fortschrittlichste KI-Audiogenerierung ausprobieren möchten.",
-        "creditsWithAudio": "__NUM_CREDITS__ Credits (~4 Min. Audio)",
+        "creditsWithAudio": "{numCredits} Credits (~4 Min. Audio)",
         "features": [
           "Sprache mit realistischen Stöhngeräuschen generieren",
           "Klonen Sie Ihre Stimme mit nur 10 Sekunden Audio"
@@ -213,24 +235,27 @@
         "name": "Starter",
         "description": "Für Gelegenheitsnutzer, die KI-Audio erkunden.",
         "features": [
-          "Alles im kostenlosen Plan"
+          "Alles im kostenlosen Plan",
+          "2× längere Textgenerierung",
+          "API-Zugang"
         ]
       },
       "standard": {
         "name": "Standard",
         "description": "Für Hobbyisten, die Projekte mit KI-Audio erstellen und benutzerdefinierte Stimmen erstellen.",
-        "creditsWithAudio": "__NUM_CREDITS__ Credits (~11 Min. Audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "{numCredits} Credits (~11 Min. Audio)",
+        "creditsWithPromo": "{numCredits} Credits",
         "features": [
           "Alles im kostenlosen Plan, plus",
+          "2× längere Textgenerierung",
           "Sprachanruf: Benutzerdefinierte Charaktere"
         ]
       },
       "pro": {
         "name": "Pro",
         "description": "Für größere kreative Bedürfnisse und mutigere Inhalte.",
-        "creditsWithAudio": "__NUM_CREDITS__ Credits (~125 Min. Audio)",
-        "creditsWithPromo": "__NUM_CREDITS__ Credits",
+        "creditsWithAudio": "{numCredits} Credits (~125 Min. Audio)",
+        "creditsWithPromo": "{numCredits} Credits",
         "features": [
           "Alles im kostenlosen Plan",
           "Sprachanruf: Benutzerdefinierte Charaktere"
@@ -245,21 +270,22 @@
       "processing": "Wird verarbeitet...",
       "packages": {
         "starter": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Perfekt für den Einstieg"
         },
         "standard": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Beliebteste Wahl",
           "value": "Bestes Preis-Leistungs-Verhältnis"
         },
         "pro": {
-          "name": "__NUM_CREDITS__ Credits",
+          "name": "{numCredits} Credits",
           "description": "Für Power-User",
           "value": "Pro-Paket"
         }
       },
-      "mostPopular": "Am beliebtesten"
+      "mostPopular": "Am beliebtesten",
+      "cheaperBadge": "{percent} günstiger"
     },
     "status": {
       "success": {
@@ -334,6 +360,7 @@
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
+    "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",
     "presetRemoved": "Preset entfernt",
@@ -490,11 +517,50 @@
         "cancel": "Abbrechen",
         "continue": "Weiter"
       }
+    },
+    "apiKeys": {
+      "title": "API-Schlüssel",
+      "description": "Schlüssel für die externe API erstellen und verwalten.",
+      "newKey": "Neuer Schlüssel",
+      "createDialogTitle": "API-Schlüssel erstellen",
+      "createDialogDescription": "Der Schlüssel wird nur einmal angezeigt. Bewahren Sie ihn sicher auf.",
+      "nameLabel": "Beschreibung",
+      "namePlaceholder": "z.B. Produktions-Backend",
+      "createButton": "Erstellen",
+      "newKeyBanner": "Neuer API-Schlüssel (einmalig angezeigt)",
+      "dismiss": "Schließen",
+      "table": {
+        "name": "Name",
+        "prefix": "Präfix",
+        "created": "Erstellt",
+        "lastUsed": "Zuletzt verwendet",
+        "status": "Status",
+        "action": "Aktion"
+      },
+      "empty": "Noch keine API-Schlüssel erstellt.",
+      "unpaidEmpty": "Abonnieren Sie oder laden Sie Ihr Konto auf, um API-Schlüssel zu erstellen.",
+      "never": "Nie",
+      "statusActive": "Aktiv",
+      "statusRevoked": "Widerrufen",
+      "copiedToClipboard": "In die Zwischenablage kopiert",
+      "failedToCopy": "Kopieren fehlgeschlagen",
+      "failedToLoad": "API-Schlüssel konnten nicht geladen werden",
+      "failedToCreate": "API-Schlüssel konnte nicht erstellt werden",
+      "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden",
+      "revokeConfirm": {
+        "title": "API-Schlüssel widerrufen?",
+        "description": "Diese Aktion kann nicht rückgängig gemacht werden. Der Schlüssel wird sofort deaktiviert und alle Anfragen damit schlagen fehl.",
+        "cancel": "Abbrechen",
+        "confirm": "Widerrufen"
+      }
     }
   },
+  "apiBilling": {
+    "description": "API-Nutzung, Anfragen und Kosten im Zeitverlauf überwachen."
+  },
   "pages": {
-    "defaultTitle": "Mit deiner KI sprechen - Private Sprachanrufe ohne Vorurteile | SexyVoice.ai",
-    "description": "Erleben Sie KI-Sprachanrufe in Echtzeit in völliger Privatsphäre. Sprechen Sie frei ohne Vorurteile - Ihre Geheimnisse sind sicher. Testen Sie 5 Min. kostenlos. Keine Kreditkarte erforderlich.",
+    "defaultTitle": "SexyVoice.ai – Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene",
+    "description": "Generieren Sie ausdrucksstarke KI-Stimmen mit Emotionen für Erwachseneninhalte in 24+ Sprachen. Kostenlose Text-zu-Sprache mit Stimmenklonung und NSFW-Support. Mit kostenlosen Credits starten – keine Kreditkarte nötig.",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",
@@ -505,6 +571,8 @@
     "/dashboard/clone": "Klonen",
     "/dashboard/history": "Verlauf",
     "/dashboard/credits": "Credits",
+    "/dashboard/api-keys": "API-Schlüssel",
+    "/dashboard/api-billing": "API-Abrechnung",
     "/dashboard/usage": "Nutzung",
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",
@@ -514,7 +582,11 @@
     "descriptionTranscribe": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
     "keywordsAudioConverter": "kostenloser Audio-Konverter, MP3 konvertieren, WAV konvertieren, FLAC konvertieren, OGG konvertieren, AAC konvertieren, Online-Audio-Konverter, Browser Audio-Konverter, Offline Audio-Konverter, MP3 zu WAV, WAV zu MP3, Audio-Format-Konverter, FFmpeg online, Audio-Konverter ohne Upload, privater Audio-Konverter",
     "keywordsTranscribe": "kostenlose Audio-Transkription, Audio transkribieren, Sprache zu Text, Audio zu Text, Whisper Transkription, OpenAI Whisper, Offline-Transkription, Browser-Transkription, Stimme zu Text, kostenlose Spracherkennung, Audio-Transkription online, Video transkribieren, 99 Sprachen Transkription, private Transkription",
-    "keywordsLanding": "KI Sprachanrufe, privater KI Begleiter, mit KI sprechen, KI Sprachchat, KI Telefonanruf, Sprach-KI, KI Gespräch, privater Sprachchat, KI Stimmengenerator, Text zu Sprache, Stimmklonen, KI Anrufe ohne Vorurteile"
+    "keywordsLanding": "Text zu Sprache, KI Stimmengenerator, Stimmklonen, Text-zu-Sprache für Erwachsene, NSFW Text-zu-Sprache, KI Sprachsynthese, Stimmenerzeugung, kostenlose TTS, ausdrucksstarke KI-Stimmen, KI Stimmklon, Sprachsynthese, KI für Erwachseneninhalte, KI Stimme Erwachsene",
+    "titleAudioJoiner": "Kostenloser Audio-Joiner – Audiodateien zusammenfügen und zuschneiden",
+    "descriptionAudioJoiner": "Mehrere Audiodateien zusammenfügen und jeden Abschnitt direkt im Browser zuschneiden. Privat, kostenlos und ohne Upload.",
+    "keywordsAudioJoiner": "kostenloser audio joiner, audiodateien zusammenfügen, mp3 online zusammenfügen, wav dateien kombinieren, audio zuschneiden, browser audio editor, audio joiner ohne upload, privater audio editor, ffmpeg wasm audio joiner",
+    "/tools/audio-joiner": "Audio-Joiner"
   },
   "sidebar": {
     "profile": "Profil",
@@ -579,12 +651,17 @@
     }
   },
   "footer": {
+    "tagline": "KI-gestützte Sprachgenerierung. Erstellen Sie natürliches, ausdrucksstarkes Audio in Sekunden.",
+    "toolsHeading": "Werkzeuge",
+    "companyHeading": "Unternehmen",
+    "legalHeading": "Rechtliches",
     "statusPage": "Statusseite",
     "privacyPolicy": "Datenschutzrichtlinie",
     "termsAndConditions": "Allgemeine Geschäftsbedingungen",
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
     "audioConverter": "Kostenloser Audio-Konverter",
-    "transcribe": "Kostenlose Audio-Transkription"
+    "transcribe": "Kostenlose Audio-Transkription",
+    "audioJoiner": "Kostenloser Audio-Zusammenfüger"
   },
   "promos": {
     "halloweenBanner": {
@@ -728,7 +805,7 @@
         },
         {
           "question": "Welche Sprachen werden unterstützt?",
-          "answer": "Die mehrsprachigen Whisper-Modelle unterstützen über 99 Sprachen, darunter Englisch, Französisch, Japanisch, Arabisch, Hindi, Portugiesisch, Russisch, Chinesisch, Koreanisch und viele mehr."
+          "answer": "Die mehrsprachigen Whisper-Modelle unterstützen 32 Sprachen: Arabisch, Bengalisch, Chinesisch, Deutsch, Dänisch, Englisch, Finnisch, Französisch, Griechisch, Hebräisch, Hindi, Indonesisch, Italienisch, Japanisch, Koreanisch, Malaiisch, Niederländisch, Norwegisch, Polnisch, Portugiesisch, Rumänisch, Russisch, Schwedisch, Spanisch, Tamil, Telugu, Thailändisch, Tschechisch, Türkisch, Ukrainisch, Ungarisch und Vietnamesisch"
         },
         {
           "question": "Welche Audioformate werden unterstützt?",
@@ -743,6 +820,44 @@
           "answer": "Nachdem das Modell einmal heruntergeladen wurde, ja. Das Modell wird in Ihrem Browser zwischengespeichert, sodass zukünftige Transkriptionen vollständig offline funktionieren."
         }
       ]
+    }
+  },
+  "audioJoiner": {
+    "title": "Kostenloser Audio-Joiner",
+    "subtitle": "Mehrere Audiodateien im Browser zusammenfügen und zuschneiden – ohne Upload",
+    "dropZone": {
+      "title": "Audiodateien hinzufügen",
+      "subtitle": "Eine oder mehrere Dateien hochladen, um mit der Bearbeitung zu beginnen",
+      "addFiles": "Dateien hinzufügen"
+    },
+    "controls": {
+      "format": "Format",
+      "play": "Abspielen",
+      "pause": "Pause",
+      "join": "Zusammenfügen",
+      "joining": "Wird zusammengefügt...",
+      "cancel": "Abbrechen"
+    },
+    "progress": {
+      "processing": "Wird verarbeitet"
+    },
+    "success": {
+      "downloadStarted": "Download gestartet.",
+      "cancelled": "Verarbeitung abgebrochen."
+    },
+    "errors": {
+      "ffmpegLoadFailed": "FFmpeg konnte nicht geladen werden. Bitte Seite aktualisieren und erneut versuchen.",
+      "decodeFailed": "{file} konnte nicht gelesen werden. Versuchen Sie ein anderes Audioformat.",
+      "previewFailed": "Vorschau der zusammengefügten Timeline nicht möglich.",
+      "joinFailed": "Zusammenfügen fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "footer": {
+      "poweredBy": "Unterstützt von",
+      "ffmpeg": "FFmpeg",
+      "noUploads": "Kein Upload, 100% im Browser",
+      "alsoTry": "Probieren Sie auch unser",
+      "audioConverterLink": "Kostenloses Audio-Konverter-Tool",
+      "madeWith": "Mit ♡ von SexyVoice.ai – Kostenlos den KI-Audiogenerator ausprobieren"
     }
   }
 }

@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type {
   MonthlyUsageSummary,
   PaginatedUsageEventsResponse,
@@ -40,8 +40,8 @@ interface DataTableProps {
 }
 
 interface UsageEventsApiResponse extends PaginatedUsageEventsResponse {
-  monthlySummary?: MonthlyUsageSummary;
   allTimeSummary?: MonthlyUsageSummary;
+  monthlySummary?: MonthlyUsageSummary;
 }
 
 async function fetchUsageEvents(
@@ -223,6 +223,10 @@ export function DataTable({ dict }: DataTableProps) {
               </SelectItem>
               <SelectItem value="audio_processing">
                 {dict.summary.byType.audio_processing}
+              </SelectItem>
+              <SelectItem value="api_tts">API TTS</SelectItem>
+              <SelectItem value="api_voice_cloning">
+                API Voice Cloning
               </SelectItem>
             </SelectContent>
           </Select>

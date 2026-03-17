@@ -3,11 +3,15 @@
 import {
   BarChart3,
   CreditCard,
+  ExternalLink,
   FileAudio,
   FileClock,
   FileText,
+  KeyRound,
   Mic2,
   PhoneCallIcon,
+  ReceiptText,
+  Scissors,
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -32,16 +36,16 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import type messages from '@/messages/en.json';
 
 interface DashboardUIProps {
   children: React.ReactNode;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
-  userId: string;
+  dict: typeof messages;
   lang: Locale;
-  dict: typeof langDict;
-  promoDict: (typeof langDict)['promos']['blackFridayBanner'];
+  promoDict?: (typeof messages.promos)[keyof typeof messages.promos];
+  userId: string;
 }
 
 export default function DashboardUI({
@@ -53,14 +57,18 @@ export default function DashboardUI({
   promoDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
+  const promoCountdown =
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
+    promoDict &&
+    'countdown' in promoDict
+      ? ({
+          enabled: true,
+          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
+          labels: promoDict.countdown,
+        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
+      : undefined;
 
   const navigation = [
-    {
-      name: dict.pages['/dashboard/call'],
-      href: `/${lang}/dashboard/call`,
-      icon: PhoneCallIcon,
-      current: pathname === `/${lang}/dashboard/call`,
-    },
     {
       name: dict.pages['/dashboard/generate'],
       href: `/${lang}/dashboard/generate`,
@@ -72,6 +80,12 @@ export default function DashboardUI({
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
       current: pathname === `/${lang}/dashboard/clone`,
+    },
+    {
+      name: dict.pages['/dashboard/call'],
+      href: `/${lang}/dashboard/call`,
+      icon: PhoneCallIcon,
+      current: pathname === `/${lang}/dashboard/call`,
     },
     {
       name: dict.pages['/dashboard/history'],
@@ -91,6 +105,18 @@ export default function DashboardUI({
       icon: BarChart3,
       current: pathname === `/${lang}/dashboard/usage`,
     },
+    {
+      name: dict.pages['/dashboard/api-keys'],
+      href: `/${lang}/dashboard/api-keys`,
+      icon: KeyRound,
+      current: pathname === `/${lang}/dashboard/api-keys`,
+    },
+    {
+      name: dict.pages['/dashboard/api-billing'],
+      href: `/${lang}/dashboard/api-billing`,
+      icon: ReceiptText,
+      current: pathname === `/${lang}/dashboard/api-billing`,
+    },
   ];
 
   const freeTools = [
@@ -103,6 +129,11 @@ export default function DashboardUI({
       name: dict.pages['/tools/transcribe'],
       href: `/${lang}/tools/transcribe`,
       icon: FileText,
+    },
+    {
+      name: dict.pages['/tools/audio-joiner'],
+      href: `/${lang}/tools/audio-joiner`,
+      icon: Scissors,
     },
   ];
 
@@ -159,9 +190,10 @@ export default function DashboardUI({
                   {freeTools.map((item) => (
                     <SidebarMenuItem key={item.name}>
                       <SidebarMenuButton asChild tooltip={item.name}>
-                        <Link href={item.href}>
+                        <Link href={item.href} target="_blank">
                           <item.icon className="mr-3 size-5" />
                           <span>{item.name}</span>
+                          <ExternalLink className="max-h-3 max-w-3" />
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -174,12 +206,10 @@ export default function DashboardUI({
           <SidebarFooter>
             <CreditsSection
               creditTransactions={creditTransactions}
-              dict={dict.creditsSection}
               lang={lang}
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />
-
             <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
           </SidebarFooter>
         </Sidebar>
@@ -187,15 +217,7 @@ export default function DashboardUI({
         {promoDict && (
           <PromoBanner
             ariaLabelDismiss={promoDict.ariaLabelDismiss}
-            countdown={
-              process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE
-                ? {
-                    enabled: true,
-                    endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-                    labels: promoDict.countdown,
-                  }
-                : undefined
-            }
+            countdown={promoCountdown}
             ctaLink={`/${lang}/dashboard/credits`}
             ctaText={promoDict.ctaLoggedIn}
             inDashboard

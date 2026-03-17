@@ -1,7 +1,7 @@
 interface WavConversionOptions {
+  bitsPerSample: number;
   numChannels: number;
   sampleRate: number;
-  bitsPerSample: number;
 }
 
 function parseMimeType(mimeType: string): WavConversionOptions {

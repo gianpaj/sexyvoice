@@ -45,6 +45,9 @@ tsconfig.tsbuildinfo
 
 backups
 
+# Python virtual environment used by scripts/
+scripts/venv
+
 # Playwright
 .auth/
 playwright-report/
@@ -55,5 +58,4 @@ playwright/.cache/
 .edgeconfig.json
 
 .daily-stats-cache.json
-
-.ck
+.ck/

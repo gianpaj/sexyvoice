@@ -23,7 +23,7 @@ Sentry.init({
     /tronLink/i,
   ],
 
-  beforeSend(event, hint) {
+  beforeSend(event) {
     const eventUrl = event.request?.url ?? '';
 
     // Additional filtering for app:// protocol (browser extensions)
@@ -47,8 +47,8 @@ Sentry.init({
   integrations: [
     Sentry.replayIntegration({
       // Additional SDK configuration goes in here, for example:
-      maskAllText: true,
-      blockAllMedia: true,
+      maskAllText: false,
+      blockAllMedia: false,
     }),
   ],
 });
@@ -60,7 +60,5 @@ export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   api_host: '/seguimiento',
   ui_host: 'https://eu.posthog.com',
-  defaults: '2025-05-24',
-  capture_pageview: false, // We capture pageviews manually
-  capture_pageleave: true, // Enable pageleave capture
+  defaults: '2026-01-30',
 });

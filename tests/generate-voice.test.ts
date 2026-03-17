@@ -288,9 +288,17 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Replicate', () => {
     it('should successfully generate voice using Replicate', async () => {
-      const { saveAudioFile, insertUsageEvent } = await import(
-        '@/lib/supabase/queries'
-      );
+      const { saveAudioFile, insertUsageEvent, getVoiceIdByName } =
+        await import('@/lib/supabase/queries');
+      // The generate-voice route uses the raw DB model string (not the external
+      // API model ID), so restore the original Replicate versioned model for tara.
+      vi.mocked(getVoiceIdByName).mockResolvedValueOnce({
+        id: 'voice-tara-id',
+        name: 'tara',
+        language: 'en',
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+      });
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -393,10 +401,17 @@ describe('Generate Voice API Route', () => {
 
   describe('Voice Generation - Google Gemini', () => {
     it('should successfully generate voice using Google Gemini', async () => {
-      const { reduceCredits, saveAudioFile, getCredits, insertUsageEvent } =
-        await import('@/lib/supabase/queries');
+      const {
+        reduceCredits,
+        saveAudioFile,
+        getCredits,
+        insertUsageEvent,
+        hasUserPaid,
+      } = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(getCredits).mockResolvedValueOnce(3000);
+      // Text is 1000 chars — requires paid limit; mock as paid user
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
       const text = `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
 
@@ -427,18 +442,18 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 23,
         duration: '-1',
-        filename: 'generated-audio-free/poe-ddb72d4b.wav',
+        filename: 'generated-audio/poe-ddb72d4b.wav',
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
-          userHasPaid: false,
+          userHasPaid: true,
         },
         predictionId: undefined,
         text,
-        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-ddb72d4b.wav',
+        url: 'https://files.sexyvoice.ai/generated-audio/poe-ddb72d4b.wav',
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -458,7 +473,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
           textPreview: text.slice(0, 100),
           textLength: text.length,
           isGeminiVoice: true,
-          userHasPaid: false,
+          userHasPaid: true,
           predictionId: null,
         },
       });

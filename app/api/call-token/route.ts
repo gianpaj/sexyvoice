@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       playgroundState = validationResult.data as PlaygroundState;
     } catch (error) {
       logger.error('Invalid JSON in request body', {
-        error: error instanceof Error ? error.message : String(error),
+        error: Error.isError(error) ? error.message : String(error),
       });
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
@@ -315,7 +315,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: 'Error generating token',
-        details: error instanceof Error ? error.message : JSON.stringify(error),
+        details: Error.isError(error) ? error.message : JSON.stringify(error),
       },
       { status: 500 },
     );

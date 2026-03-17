@@ -16,18 +16,20 @@ const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   voice_cloning: 'bg-blue-500',
   live_call: 'bg-green-500',
   audio_processing: 'bg-orange-500',
+  api_tts: 'bg-indigo-500',
+  api_voice_cloning: 'bg-rose-500',
 };
 
 interface SummaryCardProps {
-  title: string;
+  bySourceType: MonthlyUsageSummary['bySourceType'];
+  noDataLabel: string;
+  sourceTypeLabels: Record<UsageSourceType, string>;
   subtitle: string;
+  title: string;
   totalCredits: number;
   totalCreditsLabel: string;
   totalOperations: number;
   totalOperationsLabel: string;
-  bySourceType: MonthlyUsageSummary['bySourceType'];
-  sourceTypeLabels: Record<UsageSourceType, string>;
-  noDataLabel: string;
 }
 
 export function SummaryCard({

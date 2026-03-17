@@ -3,6 +3,7 @@
 import { useCompletion } from '@ai-sdk/react';
 import {
   CircleStop,
+  Crown,
   Download,
   Info,
   Loader2,
@@ -21,10 +22,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
-import type lang from '@/lib/i18n/dictionaries/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import type messages from '@/messages/en.json';
 import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
@@ -39,17 +40,19 @@ import {
 } from './ui/tooltip';
 
 interface AudioGeneratorProps {
-  selectedVoice?: Tables<'voices'>;
-  selectedStyle?: string;
+  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
-  dict: (typeof lang)['generate'];
+  isPaidUser: boolean;
   locale: string;
+  selectedStyle?: string;
+  selectedVoice?: Tables<'voices'>;
 }
 
 export function AudioGenerator({
   selectedVoice,
   selectedStyle,
   hasEnoughCredits,
+  isPaidUser,
   dict,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
@@ -66,8 +69,8 @@ export function AudioGenerator({
   const audio = useAudio();
   const isGeminiVoice = selectedVoice?.model === 'gpro';
   const charactersLimit = useMemo(
-    () => getCharactersLimit(selectedVoice?.model || ''),
-    [selectedVoice],
+    () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
+    [selectedVoice, isPaidUser],
   );
 
   useEffect(() => {
@@ -206,6 +209,7 @@ export function AudioGenerator({
 
   const { complete } = useCompletion({
     api: '/api/generate-text',
+    streamProtocol: 'text',
   });
 
   const handleEnhanceText = async () => {
@@ -305,10 +309,10 @@ export function AudioGenerator({
             <Textarea
               className={cn(
                 'textarea-2 transition-[height] duration-200 ease-in-out',
-                [isGeminiVoice ? 'pr-16' : 'pr-[7.5rem]'],
+                [isGeminiVoice ? 'pr-16' : 'pr-30'],
               )}
               data-testid="generate-textarea"
-              maxLength={charactersLimit * 2}
+              maxLength={charactersLimit + 10}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
               ref={textareaRef}
@@ -365,12 +369,33 @@ export function AudioGenerator({
           </div>
 
           <div
-            className={cn('text-right text-muted-foreground text-sm', [
-              textIsOverLimit ? 'font-bold text-red-500' : '',
-            ])}
+            className={cn(
+              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+              [textIsOverLimit ? 'font-bold text-red-500' : ''],
+            )}
             data-testid="generate-character-count"
           >
             {text.length} / {charactersLimit}
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Crown
+                    className={cn('h-3.5 w-3.5 cursor-default', [
+                      isPaidUser
+                        ? 'text-yellow-400'
+                        : 'text-muted-foreground/50',
+                    ])}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isPaidUser
+                      ? 'Paid users enjoy 2× character limit'
+                      : 'Upgrade to a paid plan for 2× character limit'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           {isGeminiVoice && (
             <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
@@ -412,7 +437,7 @@ export function AudioGenerator({
               <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
             </Alert>
           )}
-          <div className="flex flex-grow-0 gap-2">
+          <div className="flex grow-0 gap-2">
             <Button
               className="h-10 w-full sm:w-fit"
               data-testid="generate-button"
@@ -434,7 +459,7 @@ export function AudioGenerator({
               ) : (
                 <span className="flex items-center gap-2">
                   {dict.ctaButton}
-                  <span className="rounded-sm border-[1px] border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
                     {shortcutKey}
                   </span>
                 </span>
@@ -444,7 +469,7 @@ export function AudioGenerator({
               <Button
                 aria-label={dict.cancel}
                 className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
-                icon={() => <CircleStop className="!size-8" name="cancel" />}
+                icon={() => <CircleStop className="size-8!" name="cancel" />}
                 iconPlacement="right"
                 onClick={handleCancel}
                 size="icon"

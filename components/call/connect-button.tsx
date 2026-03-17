@@ -2,6 +2,7 @@
 
 import { Loader2, PhoneCall } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { useConnection } from '@/hooks/use-connection';
@@ -30,13 +31,35 @@ export function ConnectButton() {
   const initiateConnection = useCallback(async () => {
     setConnecting(true);
     try {
+      // Verify microphone access before spending a token request
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        // Release the tracks immediately — LiveKit will acquire them on connect
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+      } catch (err) {
+        if (
+          err instanceof DOMException &&
+          (err.name === 'NotAllowedError' ||
+            err.name === 'PermissionDeniedError')
+        ) {
+          toast.error(dict.microphonePermissionDenied);
+          return;
+        }
+        // For other errors (e.g. NotFoundError — no mic device), log and
+        // continue so LiveKit can surface a more specific error itself.
+        console.warn('Microphone pre-check warning:', err);
+      }
       await connect();
     } catch (error) {
       console.error('Connection failed:', error);
     } finally {
       setConnecting(false);
     }
-  }, [connect]);
+  }, [connect, dict]);
 
   useEffect(() => {
     if (initiateConnectionFlag) {

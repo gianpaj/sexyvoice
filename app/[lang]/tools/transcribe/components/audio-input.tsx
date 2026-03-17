@@ -5,19 +5,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  onAudioReady: (audio: Float32Array) => void;
-  onFileSelected?: (file: File) => void;
-  onRemove?: () => void;
-  disabled?: boolean;
   dict: (typeof langDict)['transcribe']['audioInput'];
+  disabled?: boolean;
   errorMessages?: {
     decodeError?: string;
     microphoneError?: string;
   };
+  onAudioReady: (audio: Float32Array) => void;
+  onFileSelected?: (file: File) => void;
+  onRemove?: () => void;
 }
 
 /**
@@ -256,7 +256,7 @@ export function AudioInput({
             />
             <div
               className={cn(
-                'relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20',
+                'relative flex h-20 w-20 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-accent/20',
                 'transition-transform duration-300',
                 isDragging ? 'scale-110' : 'group-hover:scale-105',
               )}

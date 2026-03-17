@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 type VisualizerState = 'listening' | 'idle' | 'speaking' | 'thinking';
 
 interface MultibandAudioVisualizerProps {
-  state: VisualizerState;
-  barWidth: number;
-  minBarHeight: number;
-  maxBarHeight: number;
-  frequencies: Float32Array[] | number[][];
-  borderRadius: number;
-  gap: number;
   barColor?: string;
+  barWidth: number;
+  borderRadius: number;
+  frequencies: Float32Array[] | number[][];
+  gap: number;
+  maxBarHeight: number;
+  minBarHeight: number;
+  state: VisualizerState;
 }
 
 export const MultibandAudioVisualizer = ({

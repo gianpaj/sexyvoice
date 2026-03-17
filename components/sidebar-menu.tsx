@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronUp, User2 } from 'lucide-react';
+import { ChevronUp, ExternalLink, User2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useContext } from 'react';
@@ -17,7 +17,7 @@ import {
   SidebarMenuItem,
   SidebarMenu as SidebarMenuUI,
 } from '@/components/ui/sidebar';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
@@ -52,7 +52,7 @@ export function SidebarMenu({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-popper-anchor-width]"
+            className="w-(--radix-popper-anchor-width)"
             side="top"
           >
             <DropdownMenuItem asChild>
@@ -65,6 +65,12 @@ export function SidebarMenu({
                 }}
               >
                 {dict.profile}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="https://docs.sexyvoice.ai" target="_blank">
+                Documentation
+                <ExternalLink className="ml-3 size-3" />
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>

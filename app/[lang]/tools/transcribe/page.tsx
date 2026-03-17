@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
+import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import TranscribeClient from './transcribe.client';
 
@@ -14,8 +14,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const dict = await getDictionary(lang, 'pages');
-  const dictTranscribe = await getDictionary(lang, 'transcribe');
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.pages;
+  const dictTranscribe = messages.transcribe;
 
   const title = dict.titleTranscribe || dictTranscribe.title;
   const description = dict.descriptionTranscribe || dictTranscribe.subtitle;
@@ -78,9 +79,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TranscribePage({ params }: Props) {
   const { lang } = await params;
-  const dict = await getDictionary(lang, 'transcribe');
-  const dictPages = await getDictionary(lang, 'pages');
-  const dictHeader = await getDictionary(lang, 'header');
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.transcribe;
+  const dictPages = messages.pages;
 
   const url = `https://sexyvoice.ai/${lang}/tools/transcribe`;
   const title = dictPages.titleTranscribe || dict.title;
@@ -203,15 +204,15 @@ export default async function TranscribePage({ params }: Props) {
   return (
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
-      <div className="min-h-screen bg-background">
-        <HeaderStatic dict={dictHeader} lang={lang} />
+      <div className="bg-background">
+        <HeaderStatic />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
           <TranscribeClient dict={dict} lang={lang} />
 
           {/* Server-rendered FAQ — crawlable without JavaScript */}
           <section
             aria-labelledby="faq-heading"
-            className="mt-16 border-t border-border/50 pt-12"
+            className="mt-16 border-border/50 border-t pt-12"
             id="faq"
           >
             <h2
@@ -233,49 +234,34 @@ export default async function TranscribePage({ params }: Props) {
               ))}
             </dl>
           </section>
-
-          <footer className="mt-12 text-center text-muted-foreground text-sm">
-            <p>
-              {dict.footer.poweredBy}{' '}
-              <a
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href="https://huggingface.co/docs/transformers.js"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {dict.footer.transformersJs}
-              </a>{' '}
-              &bull;{' '}
-              <a
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href="https://openai.com/index/whisper/"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {dict.footer.whisper}
-              </a>{' '}
-              &bull; {dict.footer.noUploads}
-            </p>
-            <p className="mt-4">
-              {dict.footer.alsoTry}{' '}
-              <Link
-                className="font-semibold text-foreground transition-colors hover:text-primary"
-                href={`/${lang}/tools/audio-converter`}
-              >
-                {dict.footer.audioConverterLink}
-              </Link>
-            </p>
-            <p className="mt-2 opacity-70">
-              <Link
-                className="transition-colors hover:text-foreground"
-                href={`/${lang}`}
-              >
-                {dict.footer.madeWith}
-              </Link>
-            </p>
-          </footer>
         </div>
       </div>
+
+      {/* Attribution bar — preserves Whisper/Transformers.js credit and privacy note */}
+      <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
+        <p>
+          {dict.footer.poweredBy}{' '}
+          <a
+            className="font-semibold text-foreground transition-colors hover:text-primary"
+            href="https://huggingface.co/docs/transformers.js"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {dict.footer.transformersJs}
+          </a>{' '}
+          &bull;{' '}
+          <a
+            className="font-semibold text-foreground transition-colors hover:text-primary"
+            href="https://openai.com/index/whisper/"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {dict.footer.whisper}
+          </a>{' '}
+          &bull; {dict.footer.noUploads}
+        </p>
+      </div>
+      <Footer lang={lang} />
     </>
   );
 }

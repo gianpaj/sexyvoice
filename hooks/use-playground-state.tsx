@@ -209,9 +209,9 @@ function playgroundStateReducer(
 
 // Update the context type
 interface PlaygroundStateContextProps {
-  pgState: PlaygroundState;
   dispatch: Dispatch<Action>;
   helpers: ReturnType<typeof createPlaygroundStateHelpers>;
+  pgState: PlaygroundState;
 }
 
 // Create the context

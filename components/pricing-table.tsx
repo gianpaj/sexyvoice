@@ -1,163 +1,137 @@
-import { Check } from 'lucide-react';
-import Link from 'next/link';
+import { createTranslator } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
+import { type PlanData, PricingCards } from '@/components/pricing-cards';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { getTopupPackages } from '@/lib/stripe/pricing';
+import {
+  getSubscriptionPackages,
+  getTopupPackages,
+} from '@/lib/stripe/pricing';
 
 async function PricingTable({ lang }: { lang: Locale }) {
-  const credits = await getDictionary(lang, 'credits');
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const { credits, promos } = messages;
+  const plansT = createTranslator({
+    locale: lang,
+    messages,
+    namespace: 'credits.plans',
+  });
+
   const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS;
-  const promos = await getDictionary(lang, 'promos');
   const bannerTranslations =
     translations && Object.hasOwn(promos, translations)
       ? promos[translations as keyof typeof promos]
       : undefined;
+
   const { plans: pPlans, billing } = credits;
-
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+  const topupPackages = getTopupPackages(lang);
+  const subscriptionPackages = getSubscriptionPackages(lang);
 
-  const TOPUP_PACKAGES = getTopupPackages(lang);
+  // Free plan is the same regardless of billing mode
+  const freePlan: PlanData = {
+    name: pPlans.free.name,
+    price: 0,
+    billing: billing.forever,
+    description: pPlans.free.description,
+    buttonText: pPlans.startFree,
+    buttonVariant: 'default',
+    creditsText: plansT('x_credits', {
+      numCredits: topupPackages.free.baseCreditsLocale,
+    }),
+    features: pPlans.free.features,
+  };
 
-  const plans = [
-    {
-      name: pPlans.free.name,
-      price: 0,
-      billing: billing.forever,
-      description: pPlans.free.description,
-      buttonText: pPlans.startFree,
-      buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.free.baseCreditsLocale,
-      ),
-      features: pPlans.free.features,
-    },
+  // --- Top-up (one-time) plans ---
+  const topupPlans: PlanData[] = [
+    freePlan,
     {
       name: pPlans.standard.name,
-      price: TOPUP_PACKAGES.standard.dollarAmount,
+      price: topupPackages.standard.dollarAmount,
       isPopular: true,
-      pricePer1kCredits: TOPUP_PACKAGES.standard.pricePer1kCredits,
+      pricePer1kCredits: topupPackages.standard.pricePer1kCredits,
       description: pPlans.standard.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.standard.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.standard.promoBonus,
+      creditsText: plansT('x_credits', {
+        numCredits: topupPackages.standard.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.standard.promoBonus,
       features: pPlans.standard.features,
     },
     {
       name: pPlans.pro.name,
-      price: TOPUP_PACKAGES.pro.dollarAmount,
-
-      pricePer1kCredits: TOPUP_PACKAGES.pro.pricePer1kCredits,
-      saveFromPrevPlanPer1kCredits: 0.15,
+      price: topupPackages.pro.dollarAmount,
+      pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
+      saveFromPrevPlanPer1kCredits: Number(
+        (
+          Number(topupPackages.standard.pricePer1kCredits) -
+          Number(topupPackages.pro.pricePer1kCredits)
+        ).toFixed(2),
+      ),
       description: pPlans.pro.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
-      creditsText: pPlans.x_credits.replace(
-        '__NUM_CREDITS__',
-        TOPUP_PACKAGES.pro.baseCreditsLocale,
-      ),
-      promoBonus: TOPUP_PACKAGES.pro.promoBonus,
+      creditsText: plansT('x_credits', {
+        numCredits: topupPackages.pro.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.pro.promoBonus,
       features: pPlans.pro.features,
     },
   ];
 
-  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
+  // --- Subscription (monthly) plans with 15% bonus ---
+  const subscriptionPlans: PlanData[] = [
+    freePlan,
+    {
+      name: pPlans.standard.name,
+      price: subscriptionPackages.standard.dollarAmount,
+      isPopular: true,
+      pricePer1kCredits: subscriptionPackages.standard.pricePer1kCredits,
+      description: pPlans.standard.description,
+      buttonText: pPlans.subscribe,
+      buttonVariant: 'default',
+      creditsText: plansT('x_credits', {
+        numCredits: subscriptionPackages.standard.creditsLocale,
+      }),
+      promoBonus: subscriptionPackages.standard.promoBonus,
+      subscriptionBonusCredits:
+        subscriptionPackages.standard.subscriptionBonusLocale,
+      features: pPlans.standard.features,
+    },
+    {
+      name: pPlans.pro.name,
+      price: subscriptionPackages.pro.dollarAmount,
+      pricePer1kCredits: subscriptionPackages.pro.pricePer1kCredits,
+      saveFromPrevPlanPer1kCredits: Number(
+        (
+          Number(subscriptionPackages.standard.pricePer1kCredits) -
+          Number(subscriptionPackages.pro.pricePer1kCredits)
+        ).toFixed(2),
+      ),
+      description: pPlans.pro.description,
+      buttonText: pPlans.subscribe,
+      buttonVariant: 'default',
+      creditsText: plansT('x_credits', {
+        numCredits: subscriptionPackages.pro.creditsLocale,
+      }),
+      promoBonus: subscriptionPackages.pro.promoBonus,
+      subscriptionBonusCredits:
+        subscriptionPackages.pro.subscriptionBonusLocale,
+      features: pPlans.pro.features,
+    },
+  ];
+
+  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink';
 
   return (
-    <div
-      className="flex flex-col gap-6 py-16 xl:px-28"
-      data-promo-theme={promoTheme}
-    >
-      <h2 className="mx-auto mb-4 font-semibold text-2xl">
-        {credits.pricingPlan}
-      </h2>
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <Card
-            className={`grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2 p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} relative overflow-hidden`}
-            key={plan.name}
-          >
-            {isPromoEnabled && plan.price > 0 && (
-              <div className="absolute top-0 right-0 rounded-bl-lg bg-gradient-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
-                {bannerTranslations?.pricing.bannerText}
-              </div>
-            )}
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-xl">{plan.name}</h3>
-                {!isPromoEnabled && plan.isPopular ? (
-                  <Badge className="rounded-full bg-promo-text">
-                    {/*<Badge className="rounded-full bg-green-600">*/}
-                    {pPlans.popular}
-                  </Badge>
-                ) : (
-                  plan.price > 10 && (
-                    <Badge
-                      className="bg-green-900 text-green-100"
-                      variant="secondary"
-                    >
-                      37.5% cheaper
-                    </Badge>
-                  )
-                )}
-              </div>
-              <div className="flex items-baseline">
-                <span className="font-bold text-3xl">${plan.price}</span>
-                <span className="text-muted-foreground text-sm">
-                  {plan.billing}
-                </span>
-              </div>
-              {!isPromoEnabled && plan.pricePer1kCredits ? (
-                <div className="mt-1 text-muted-foreground text-xs">
-                  ${plan.pricePer1kCredits} per 1k credits{' '}
-                  {plan.saveFromPrevPlanPer1kCredits && (
-                    <span className="font-medium text-green-400">
-                      (save ${plan.saveFromPrevPlanPer1kCredits}/1k credits)
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-1 text-muted-foreground text-xs">
-                  <br />
-                </div>
-              )}
-            </div>
-            <p className="text-muted-foreground text-sm">{plan.description}</p>
-            <Button
-              asChild
-              className="my-4 w-full"
-              variant={plan.buttonVariant as 'outline' | 'default'}
-            >
-              <Link href={`/${lang}/signup`}>{plan.buttonText}</Link>
-            </Button>
-            <div className="space-y-2">
-              <div className="font-medium text-sm">
-                {plan.creditsText}{' '}
-                {isPromoEnabled && plan.promoBonus && (
-                  <span className="font-semibold text-promo-text-dark">
-                    (+{plan.promoBonus} bonus)
-                  </span>
-                )}
-              </div>
-              {plan.features.map((feature, i) => (
-                <div className="flex items-center text-sm" key={i}>
-                  <Check className="mr-2 size-4 min-w-fit" />
-                  {feature}
-                </div>
-              ))}
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <PricingCards
+      isPromoEnabled={isPromoEnabled}
+      promoBannerText={bannerTranslations?.pricing.bannerText}
+      promoTheme={promoTheme}
+      subscriptionPlans={subscriptionPlans}
+      topupPlans={topupPlans}
+    />
   );
 }
 

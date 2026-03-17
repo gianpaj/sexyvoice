@@ -5,9 +5,9 @@ import { toast as sonnerToast } from 'sonner';
 import { TOAST_DURATION } from '@/lib/ui-constants';
 
 interface PromiseData<ToastData> {
+  error?: React.ReactNode | ((error: Error) => React.ReactNode);
   loading?: React.ReactNode;
   success?: React.ReactNode | ((data: ToastData) => React.ReactNode);
-  error?: React.ReactNode | ((error: Error) => React.ReactNode);
 }
 
 const defaultToastOptions: ExternalToast = {

@@ -2,10 +2,10 @@ import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import * as Sentry from '@sentry/nextjs';
 import Link from 'next/link';
 import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
 import type Stripe from 'stripe';
 
 import { Button } from '@/components/ui/button';
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import {
@@ -22,13 +22,9 @@ import { TopupStatus } from './topup-status';
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const params = await props.params;
-
-  const { lang } = params;
-
+  const { lang } = await props.params;
+  const dict = (await getMessages({ locale: lang })) as IntlMessages;
   const supabase = await createClient();
-  const dict = await getDictionary(lang);
-
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
@@ -66,7 +62,6 @@ export default async function CreditsPage(props: {
       shouldShowPricingTable = customerData.status !== 'active';
     } catch (error) {
       console.error('Failed to refresh Stripe subscription data', error);
-      // refreshCustomerSubscriptionData already reports errors to Sentry
       shouldShowPricingTable = false;
     }
   }
@@ -96,7 +91,7 @@ export default async function CreditsPage(props: {
         </div>
         <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
           <Link
-            href={'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww'}
+            href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
             target="_blank"
           >
             Stripe Customer Portal
@@ -104,8 +99,10 @@ export default async function CreditsPage(props: {
         </Button>
       </div>
 
-      {/* Add Credit Top-up Section */}
-      <CreditTopup dict={dict} lang={lang} />
+      <CreditTopup
+        dict={{ credits: dict.credits, promos: dict.promos }}
+        lang={lang}
+      />
 
       <div className="my-8">
         <h3 className="mb-4 font-semibold text-lg">
@@ -124,7 +121,6 @@ export default async function CreditsPage(props: {
   );
 }
 
-// Subscription plans
 const NextStripePricingTable = ({
   clientSecret,
 }: {

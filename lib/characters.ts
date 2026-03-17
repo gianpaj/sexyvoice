@@ -4,9 +4,15 @@ import type { Preset } from '@/data/presets';
 
 export interface ApiCharacterResponse {
   id: string;
-  name: string;
-  localized_descriptions?: Record<string, string> | null;
   image?: string | null;
+  is_public?: boolean;
+  localized_descriptions?: Record<string, string> | null;
+  name: string;
+  prompt_id?: string;
+  prompts?: {
+    prompt?: string | null;
+    localized_prompts?: Record<string, string> | null;
+  } | null;
   session_config?: {
     model?: string;
     voice?: string;
@@ -17,24 +23,18 @@ export interface ApiCharacterResponse {
     grok_image_enabled?: boolean;
   } | null;
   sort_order?: number;
-  is_public?: boolean;
   voice_id?: string;
   voices?: { name?: string | null; sample_url?: string | null } | null;
-  prompt_id?: string;
-  prompts?: {
-    prompt?: string | null;
-    localized_prompts?: Record<string, string> | null;
-  } | null;
 }
 
 // ─── API request payload (sent to POST /api/characters) ───────────────────────
 
 export interface SaveCharacterPayload {
   id: string;
-  name: string;
   localizedDescriptions: Partial<Record<string, string>>;
-  prompt: string;
   localizedPrompts: Partial<Record<string, string>>;
+  name: string;
+  prompt: string;
   sessionConfig: Preset['sessionConfig'];
   voiceName: string;
 }

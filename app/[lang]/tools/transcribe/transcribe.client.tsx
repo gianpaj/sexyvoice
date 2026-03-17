@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
-import type langDict from '@/lib/i18n/dictionaries/en.json';
+import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { AudioInput } from './components/audio-input';
 import { LanguageSelector } from './components/language-selector';
@@ -16,8 +16,8 @@ import { useTranscriber } from './hooks/use-transcriber';
 import './transcribe.css';
 
 interface Props {
-  lang: Locale;
   dict: (typeof langDict)['transcribe'];
+  lang: Locale;
 }
 
 export default function TranscribeClient({ lang, dict }: Props) {
@@ -29,6 +29,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const [currentTime, setCurrentTime] = useState<number | null>(null);
   const audioRef = useRef<Float32Array | null>(null);
   const loadedModelRef = useRef<string | null>(null);
+  const prevStateRef = useRef<string>('idle');
 
   const transcriber = useTranscriber();
 
@@ -80,13 +81,13 @@ export default function TranscribeClient({ lang, dict }: Props) {
     }
   }, [transcriber, model, language, subtask, isEnglishOnly]);
 
-  // Auto-transcribe when model becomes ready
+  // Auto-transcribe when model finishes loading (loading → ready transition)
   useEffect(() => {
-    if (
-      transcriber.state === 'ready' &&
-      audioRef.current &&
-      loadedModelRef.current !== model
-    ) {
+    const justLoaded =
+      prevStateRef.current === 'loading' && transcriber.state === 'ready';
+    prevStateRef.current = transcriber.state;
+
+    if (justLoaded && audioRef.current) {
       loadedModelRef.current = model;
       transcriber.transcribe(
         audioRef.current,
@@ -118,19 +119,16 @@ export default function TranscribeClient({ lang, dict }: Props) {
           className="mb-5 flex items-end justify-center gap-[3px] opacity-40"
           style={{ height: '28px' }}
         >
-          {[10, 18, 26, 14, 28, 20, 24, 12, 22, 16, 28, 18].map(
-            (height, i) => (
-              <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: static decorative array
-                key={i}
-                className="wave-bar"
-                style={{
-                  height: `${height}px`,
-                  animationDelay: `${i * 0.09}s`,
-                }}
-              />
-            ),
-          )}
+          {[10, 18, 26, 14, 28, 20, 24, 12, 22, 16, 28, 18].map((height, i) => (
+            <div
+              className="wave-bar"
+              key={i}
+              style={{
+                height: `${height}px`,
+                animationDelay: `${i * 0.09}s`,
+              }}
+            />
+          ))}
         </div>
 
         <div className="mb-5 flex flex-col items-center justify-center gap-3 md:flex-row md:gap-4">

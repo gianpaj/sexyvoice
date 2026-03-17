@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
+import { getMessages } from 'next-intl/server';
 
-import { getDictionary } from '@/lib/i18n/get-dictionary';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getMyAudioFilesQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
@@ -20,16 +20,24 @@ export default async function HistoryPage(props: {
   if (!user) return null;
 
   const { data: audioFiles } = await getMyAudioFilesQuery(supabase, user.id);
+  const { count: apiKeysCount } = await supabase
+    .from('api_keys')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id);
 
   // set the initial data
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
 
-  const dict = await getDictionary(lang, 'history');
+  const dict = ((await getMessages({ locale: lang })) as IntlMessages).history;
 
   return (
     <div className="container mx-auto pb-10">
       <h2 className="mb-4 font-bold text-2xl">{dict.header}</h2>
-      <DataTable dict={dict} userId={user.id} />
+      <DataTable
+        dict={dict}
+        showApiColumns={(apiKeysCount ?? 0) > 0}
+        userId={user.id}
+      />
     </div>
   );
 }

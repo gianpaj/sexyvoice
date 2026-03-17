@@ -52,7 +52,7 @@ export function SessionControls() {
           <div className="flex items-center gap-2">
             <TrackToggle
               className={
-                'hover:!bg-bg3 hover:!rounded-l-md !px-3 !border-r-[1px] !border-separator1 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-l-md font-medium text-foreground text-sm shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                'hover:!bg-bg3 hover:rounded-l-md! px-3! border-r! !border-separator1 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-l-md font-medium text-foreground text-sm shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
               }
               showIcon={false}
               source={Track.Source.Microphone}
@@ -66,7 +66,7 @@ export function SessionControls() {
             </TrackToggle>
             <BarVisualizer
               barCount={7}
-              className="!h-6 pr-4 pl-2"
+              className="h-6! pr-4 pl-2"
               state="speaking"
               trackRef={{
                 participant: localParticipant.localParticipant,
@@ -78,7 +78,7 @@ export function SessionControls() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                className="h-9 rounded-r-md rounded-l-none border-separator1 border-l-[1px] bg-bg2 px-3 font-semibold text-sm shadow-none hover:bg-bg3"
+                className="h-9 rounded-r-md rounded-l-none border-separator1 border-l bg-bg2 px-3 font-semibold text-sm shadow-none hover:bg-bg3"
                 variant="secondary"
               >
                 <ChevronDown className="h-4 w-4 text-fg3" />
