@@ -218,7 +218,6 @@ export function createDefaultPgState(
     customCharacters: [],
     selectedPresetId: 'ramona',
     instructions: 'test instructions',
-    characterOverrides: {},
     language: 'en' as const,
     initialInstruction: 'Say hi',
     defaultPresets: defaultPresetsFixture,

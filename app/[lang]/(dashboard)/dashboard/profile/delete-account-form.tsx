@@ -41,7 +41,7 @@ export function DeleteAccountForm() {
             <Button variant="destructive">{t('button')}</Button>
           </AlertDialogTrigger>
         </div>
-        <AlertDialogContent>
+        <AlertDialogContent data-testid="delete-account-dialog">
           <AlertDialogHeader className="items-center">
             <AlertDialogTitle>
               <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">

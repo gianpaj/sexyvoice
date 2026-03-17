@@ -9,6 +9,10 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
     "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && pnpm run format:write",
     "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
     "build:content": "contentlayer2 build",
@@ -130,7 +134,9 @@
     "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
+    "@argos-ci/playwright": "^6.4.2",
     "@biomejs/biome": "2.4.6",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -142,6 +148,7 @@
     "@typescript/native-preview": "7.0.0-dev.20260310.1",
     "@vitest/coverage-v8": "4.0.18",
     "autoprefixer": "^10.4.23",
+    "dotenv": "^17.2.4",
     "husky": "^9.1.7",
     "ioredis": "^5.8.2",
     "jsdom": "28.1.0",

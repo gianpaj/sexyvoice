@@ -299,7 +299,7 @@ export function AudioGenerator({
   };
 
   return (
-    <Card>
+    <Card data-testid="audio-generator-card">
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
@@ -311,6 +311,7 @@ export function AudioGenerator({
                 'textarea-2 transition-[height] duration-200 ease-in-out',
                 [isGeminiVoice ? 'pr-16' : 'pr-30'],
               )}
+              data-testid="generate-textarea"
               maxLength={charactersLimit + 10}
               onChange={(e) => setText(e.target.value)}
               placeholder={dict.textAreaPlaceholder}
@@ -372,6 +373,7 @@ export function AudioGenerator({
               'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
               [textIsOverLimit ? 'font-bold text-red-500' : ''],
             )}
+            data-testid="generate-character-count"
           >
             {text.length} / {charactersLimit}
             <TooltipProvider>
