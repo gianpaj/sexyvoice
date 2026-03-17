@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import { ProfilePage } from './pages/profile.page';
@@ -20,12 +21,16 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     await profilePage.goto();
   });
 
-  test('should display the profile page correctly', async () => {
+  test('should display the profile page correctly', async ({
+    page,
+  }, testInfo) => {
     // Verify security section is visible
     await profilePage.expectSecurityCardVisible();
 
     // Verify danger zone is visible
     await profilePage.expectDangerZoneVisible();
+
+    await argosScreenshot(page, `profile-dashboard-${testInfo.project.name}`);
   });
 
   test('should display email address as disabled', async () => {
@@ -77,7 +82,7 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     await expect(deleteButton).toHaveText(/delete account/i);
   });
 
-  test('should open delete confirmation dialog', async () => {
+  test('should open delete confirmation dialog', async ({ page }, testInfo) => {
     // Click delete account button
     await profilePage.clickDeleteAccount();
 
@@ -87,6 +92,11 @@ test.describe('Profile Dashboard - Authenticated User', () => {
     // Dialog should have cancel and continue/delete buttons
     await expect(profilePage.confirmationCancelButton).toBeVisible();
     await expect(profilePage.confirmationContinueButton).toBeVisible();
+
+    await argosScreenshot(
+      page,
+      `profile-dashboard-delete-dialog-${testInfo.project.name}`,
+    );
   });
 
   test('should close delete confirmation dialog on cancel', async () => {

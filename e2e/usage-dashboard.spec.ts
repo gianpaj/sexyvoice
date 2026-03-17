@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import {
@@ -37,7 +38,9 @@ test.describe('Usage Dashboard - Authenticated User', () => {
     await page.unroute('**/*');
   });
 
-  test('should display the usage page correctly', async () => {
+  test('should display the usage page correctly', async ({
+    page,
+  }, testInfo) => {
     // Verify heading is visible
     await usagePage.expectHeadingVisible();
 
@@ -46,6 +49,8 @@ test.describe('Usage Dashboard - Authenticated User', () => {
 
     // Verify data table is visible
     await usagePage.expectTableVisible();
+
+    await argosScreenshot(page, `usage-dashboard-${testInfo.project.name}`);
   });
 
   test('should display monthly summary card', async () => {
@@ -99,7 +104,9 @@ test.describe('Usage Dashboard - Authenticated User', () => {
 test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
   let usagePage: UsagePage;
 
-  test('should display usage events from mocked API', async ({ page }) => {
+  test('should display usage events from mocked API', async ({
+    page,
+  }, testInfo) => {
     await page.route('**/api/usage-events*', handleUsageEvents);
 
     usagePage = new UsagePage(page);
@@ -112,11 +119,16 @@ test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
     const rowCount = await usagePage.getRowCount();
     expect(rowCount).toBeGreaterThan(0);
 
+    await argosScreenshot(
+      page,
+      `usage-dashboard-mocked-data-${testInfo.project.name}`,
+    );
+
     // Clean up
     await page.unroute('**/*');
   });
 
-  test('should show empty state when no data', async ({ page }) => {
+  test('should show empty state when no data', async ({ page }, testInfo) => {
     await page.route('**/api/usage-events*', handleUsageEventsEmpty);
 
     usagePage = new UsagePage(page);
@@ -125,11 +137,16 @@ test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
     // Table should show empty state message
     await usagePage.expectTableRowsOrEmptyState();
 
+    await argosScreenshot(
+      page,
+      `usage-dashboard-empty-state-${testInfo.project.name}`,
+    );
+
     // Clean up
     await page.unroute('**/*');
   });
 
-  test('should handle API error gracefully', async ({ page }) => {
+  test('should handle API error gracefully', async ({ page }, testInfo) => {
     await page.route('**/api/usage-events*', handleUsageEventsError);
 
     usagePage = new UsagePage(page);
@@ -137,6 +154,11 @@ test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
 
     // Should show error message
     await usagePage.expectErrorVisible();
+
+    await argosScreenshot(
+      page,
+      `usage-dashboard-error-state-${testInfo.project.name}`,
+    );
 
     // Clean up
     await page.unroute('**/*');

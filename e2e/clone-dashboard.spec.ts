@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import { ClonePage } from './pages/clone.page';
@@ -25,7 +26,9 @@ test.describe('Clone Dashboard - Authenticated User', () => {
     await clonePage.goto();
   });
 
-  test('should display the clone page correctly', async () => {
+  test('should display the clone page correctly', async ({
+    page,
+  }, testInfo) => {
     // Verify page title and upload tab are visible
     await clonePage.expectPageVisible();
 
@@ -34,6 +37,8 @@ test.describe('Clone Dashboard - Authenticated User', () => {
 
     // Verify generate button is visible
     await clonePage.expectGenerateButtonVisible();
+
+    await argosScreenshot(page, `clone-dashboard-${testInfo.project.name}`);
   });
 
   test('should display tabs (Upload and Preview)', async () => {

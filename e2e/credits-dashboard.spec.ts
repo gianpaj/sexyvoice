@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import { CreditsPage } from './pages/credits.page';
@@ -23,7 +24,9 @@ test.describe('Credits Dashboard - Authenticated User', () => {
     await creditsPage.goto();
   });
 
-  test('should display the credits page correctly', async () => {
+  test('should display the credits page correctly', async ({
+    page,
+  }, testInfo) => {
     // Verify the top-up section is visible
     await creditsPage.expectTopupSectionVisible();
 
@@ -32,6 +35,8 @@ test.describe('Credits Dashboard - Authenticated User', () => {
 
     // Verify Stripe portal link is visible
     await creditsPage.expectStripePortalLinkVisible();
+
+    await argosScreenshot(page, `credits-dashboard-${testInfo.project.name}`);
   });
 
   test('should display three credit packages', async () => {
@@ -71,9 +76,15 @@ test.describe('Credits Dashboard - TopupStatus Alerts', () => {
     creditsPage = new CreditsPage(page);
   });
 
-  test('should show success alert with query param', async () => {
+  test('should show success alert with query param', async ({
+    page,
+  }, testInfo) => {
     await creditsPage.gotoWithSuccess();
     await creditsPage.expectSuccessAlertVisible();
+    await argosScreenshot(
+      page,
+      `credits-dashboard-success-alert-${testInfo.project.name}`,
+    );
   });
 
   test('should show success alert with credits amount', async () => {

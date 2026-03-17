@@ -127,9 +127,9 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@argos-ci/playwright": "^6.4.2",
     "@biomejs/biome": "2.3.14",
     "@playwright/test": "^1.57.0",
-    "@typescript/native-preview": "7.0.0-dev.20260220.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -137,6 +137,7 @@
     "@types/node": "^24.10.4",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "@typescript/native-preview": "7.0.0-dev.20260220.1",
     "@vitest/coverage-v8": "4.0.16",
     "autoprefixer": "^10.4.23",
     "dotenv": "^17.2.4",

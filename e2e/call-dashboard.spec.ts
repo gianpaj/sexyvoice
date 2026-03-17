@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import { CallPage } from './pages/call.page';
@@ -32,6 +33,38 @@ test.describe('Call Dashboard - Authenticated User', () => {
       });
     });
 
+    const placeholderSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+        <rect width="128" height="128" fill="#27272a" />
+        <circle cx="64" cy="48" r="24" fill="#71717a" />
+        <rect x="28" y="82" width="72" height="22" rx="11" fill="#71717a" />
+      </svg>
+    `;
+
+    await page.route('**/characters/*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml',
+        body: placeholderSvg,
+      });
+    });
+
+    await page.route('**/_next/image*', async (route) => {
+      const url = new URL(route.request().url());
+      const imageUrl = url.searchParams.get('url');
+
+      if (imageUrl?.startsWith('/characters/')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/svg+xml',
+          body: placeholderSvg,
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
     callPage = new CallPage(page);
     await callPage.goto();
   });
@@ -40,10 +73,14 @@ test.describe('Call Dashboard - Authenticated User', () => {
     await page.unroute('**/*');
   });
 
-  test('should display the call page correctly', async () => {
+  test('should display the call page correctly', async ({ page }, testInfo) => {
     // Verify configuration form is visible
     await callPage.expectPageVisible();
     await callPage.expectConfigurationFormVisible();
+    await argosScreenshot(
+      page,
+      `call-dashboard-desktop-${testInfo.project.name}`,
+    );
   });
 
   test('should display language selector', async () => {
@@ -92,6 +129,38 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
       });
     });
 
+    const placeholderSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+        <rect width="128" height="128" fill="#27272a" />
+        <circle cx="64" cy="48" r="24" fill="#71717a" />
+        <rect x="28" y="82" width="72" height="22" rx="11" fill="#71717a" />
+      </svg>
+    `;
+
+    await page.route('**/characters/*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml',
+        body: placeholderSvg,
+      });
+    });
+
+    await page.route('**/_next/image*', async (route) => {
+      const url = new URL(route.request().url());
+      const imageUrl = url.searchParams.get('url');
+
+      if (imageUrl?.startsWith('/characters/')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'image/svg+xml',
+          body: placeholderSvg,
+        });
+        return;
+      }
+
+      await route.continue();
+    });
+
     callPage = new CallPage(page);
     await callPage.goto();
   });
@@ -100,8 +169,14 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
     await page.unroute('**/*');
   });
 
-  test('should display credits section on mobile', async () => {
+  test('should display credits section on mobile', async ({
+    page,
+  }, testInfo) => {
     await callPage.expectCreditsSectionVisible();
+    await argosScreenshot(
+      page,
+      `call-dashboard-mobile-${testInfo.project.name}`,
+    );
   });
 });
 

@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import { HistoryPage } from './pages/history.page';
@@ -24,12 +25,16 @@ test.describe('History Dashboard - Authenticated User', () => {
     await historyPage.goto();
   });
 
-  test('should display the history page correctly', async () => {
+  test('should display the history page correctly', async ({
+    page,
+  }, testInfo) => {
     // Verify heading is visible
     await historyPage.expectHeadingVisible();
 
     // Verify table is visible
     await historyPage.expectTableVisible();
+
+    await argosScreenshot(page, `history-dashboard-${testInfo.project.name}`);
   });
 
   test('should display table headers', async () => {

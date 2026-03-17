@@ -1,3 +1,4 @@
+import { argosScreenshot } from '@argos-ci/playwright';
 import { expect, test } from '@playwright/test';
 
 import {
@@ -38,7 +39,9 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     await page.unroute('**/*');
   });
 
-  test('should display the generate page correctly', async () => {
+  test('should display the generate page correctly', async ({
+    page,
+  }, testInfo) => {
     // Verify page loaded with correct heading
     await generatePage.expectHeadingContains(/generate/i);
 
@@ -50,9 +53,13 @@ test.describe('Generate Dashboard - Authenticated User', () => {
 
     // Verify generate button exists
     await expect(generatePage.generateButton).toBeVisible();
+
+    await argosScreenshot(page, `generate-dashboard-${testInfo.project.name}`);
   });
 
-  test('should successfully generate audio with mocked API', async () => {
+  test('should successfully generate audio with mocked API', async ({
+    page,
+  }, testInfo) => {
     // Zephyr is already selected by default, no need to select
 
     // Fill in text input
@@ -71,6 +78,11 @@ test.describe('Generate Dashboard - Authenticated User', () => {
 
     // Verify success toast appears
     await generatePage.expectSuccessToast();
+
+    await argosScreenshot(
+      page,
+      `generate-dashboard-result-${testInfo.project.name}`,
+    );
   });
 
   test('should disable generate button when text is empty', async () => {
