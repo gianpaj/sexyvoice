@@ -71,7 +71,7 @@ const SUPPORTED_LOCALE_CODES = [
   { code: 'zh', value: 'chinese' },
 ];
 
-export const maxDuration = 320; // seconds - fluid compute is enabled
+export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // ============================================================================
 // Types

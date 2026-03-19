@@ -37,7 +37,7 @@ import {
 const { logger, captureException } = Sentry;
 
 // https://vercel.com/docs/functions/configuring-functions/duration
-export const maxDuration = 320; // seconds - fluid compute is enabled
+export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
