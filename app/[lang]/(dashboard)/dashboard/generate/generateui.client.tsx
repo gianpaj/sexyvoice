@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
@@ -17,6 +17,7 @@ interface GenerateUIProps {
 
 const STYLE_PROMPT_VARIANT_MOAN =
   process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN;
+const DEFAULT_GROK_CODEC = 'mp3';
 
 export function GenerateUI({
   publicVoices,
@@ -25,17 +26,25 @@ export function GenerateUI({
   dict,
   locale,
 }: GenerateUIProps) {
-  const [selectedVoice, setSelectedVoice] = useState('zephyr');
+  const initialVoiceName = useMemo(
+    () => publicVoices[0]?.name || 'zephyr',
+    [publicVoices],
+  );
+  const [selectedVoice, setSelectedVoice] = useState(initialVoiceName);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
+  const [selectedGrokCodec, setSelectedGrokCodec] =
+    useState(DEFAULT_GROK_CODEC);
   const selectedVoiceSample = publicVoices.find(
     (file) => file.name === selectedVoice,
   );
+  const isGeminiVoice = selectedVoiceSample?.model === 'gpro';
+  const isGrokVoice = selectedVoiceSample?.model === 'grok';
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
         dict={dict}
         publicVoices={publicVoices}
-        selectedStyle={selectedStyle}
+        selectedStyle={isGeminiVoice ? selectedStyle : undefined}
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}
         setSelectedVoice={setSelectedVoice}
@@ -46,8 +55,10 @@ export function GenerateUI({
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
           locale={locale}
-          selectedStyle={selectedStyle}
+          selectedGrokCodec={isGrokVoice ? selectedGrokCodec : undefined}
+          selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
+          setSelectedGrokCodec={setSelectedGrokCodec}
         />
       </AudioProvider>
     </div>

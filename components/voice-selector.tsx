@@ -4,6 +4,7 @@ import {
   type Dispatch,
   type SetStateAction,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -26,9 +27,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
-import type messages from '@/messages/en.json';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter } from '@/lib/utils';
+import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -54,7 +55,17 @@ export function VoiceSelector({
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
   dict: (typeof messages)['generate'];
 }) {
-  const isGeminiVoice = selectedVoice?.model === 'gpro';
+  const provider = useMemo(() => {
+    if (selectedVoice?.model === 'gpro') {
+      return 'gemini';
+    }
+    if (selectedVoice?.model === 'grok') {
+      return 'grok';
+    }
+    return 'replicate';
+  }, [selectedVoice?.model]);
+  const isGeminiVoice = provider === 'gemini';
+  const isGrokVoice = provider === 'grok';
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -104,6 +115,8 @@ export function VoiceSelector({
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
                 {isGeminiVoice ? (
                   <p>{dict.voiceSelector.geminiInfo}</p>
+                ) : isGrokVoice ? (
+                  <p>{dict.voiceSelector.grokInfo}</p>
                 ) : (
                   <p>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial
