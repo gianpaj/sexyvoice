@@ -2,9 +2,8 @@ import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { i18n } from '@/lib/i18n/i18n-config';
+import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { createClient } from './server';
-
-const OAUTH_CALLBACK_COOKIE_NAME = 'sv_oauth_callback_ok';
 
 const routesPerLocale = (routes: string[]): string[] =>
   i18n.locales.flatMap((locale) =>
