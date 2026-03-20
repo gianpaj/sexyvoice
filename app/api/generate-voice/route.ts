@@ -43,7 +43,7 @@ import {
 const { logger, captureException } = Sentry;
 
 // https://vercel.com/docs/functions/configuring-functions/duration
-export const maxDuration = 320; // seconds - fluid compute is enabled
+export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -533,6 +533,16 @@ export async function POST(request: Request) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
+
+    if (Error.isError(error) && error.cause === 'PROHIBITED_CONTENT') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation failed, please retry',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
     const errorObj = {
       text,
       voice,

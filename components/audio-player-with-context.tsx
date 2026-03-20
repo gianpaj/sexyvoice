@@ -7,6 +7,7 @@ import type WaveSurfer from 'wavesurfer.js';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { Button } from '@/components/ui/button';
+import { attemptPlayback } from '@/lib/media-playback';
 import { cn } from '@/lib/utils';
 
 export interface AudioPlayerControls {
@@ -73,7 +74,9 @@ export function AudioPlayerWithContext({
       setWavesurfer(ws);
       setIsWaveformPlaying(false);
       if (autoPlay) {
-        ws.play();
+        void attemptPlayback(() => ws.play(), () => {
+          setIsWaveformPlaying(false);
+        });
       }
     },
     [autoPlay],
@@ -87,9 +90,19 @@ export function AudioPlayerWithContext({
     setIsWaveformPlaying(false);
   }, []);
 
-  const handlePlayWithWaveform = useCallback(() => {
-    wavesurfer?.playPause();
-  }, [wavesurfer]);
+  const handlePlayWithWaveform = useCallback(async () => {
+    if (!wavesurfer) return;
+
+    if (isWaveformPlaying) {
+      wavesurfer.pause();
+      return;
+    }
+
+    setIsWaveformPlaying(true);
+    await attemptPlayback(() => wavesurfer.play(), () => {
+      setIsWaveformPlaying(false);
+    });
+  }, [isWaveformPlaying, wavesurfer]);
 
   const handlePlayWithContext = useCallback(() => {
     if (!audio) return;

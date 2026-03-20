@@ -71,7 +71,7 @@ const SUPPORTED_LOCALE_CODES = [
   { code: 'zh', value: 'chinese' },
 ];
 
-export const maxDuration = 320; // seconds - fluid compute is enabled
+export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // ============================================================================
 // Types
@@ -106,6 +106,16 @@ const sanitizeFilename = (filename: string): string => {
     .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
 };
+
+async function generateBufferHash(buffer: Buffer): Promise<string> {
+  // Use a content-based SHA-256 hash so identical uploads produce the same cache key.
+  // This allows R2/Redis entries to be reused deterministically instead of depending on timestamps.
+  // Pass the Buffer directly to avoid creating an extra Uint8Array copy before hashing.
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 async function getAudioDuration(
   fileBuffer: Buffer,
@@ -271,6 +281,7 @@ async function validateCredits(
 // Audio Processing Functions
 // ============================================================================
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: large
 async function processAudioFile(
   file: File,
   locale: string,
@@ -378,11 +389,9 @@ async function uploadReferenceAudio(
   processedBuffer: Buffer,
   processedMimeType: string,
   userId: string,
-): Promise<{ url: string; blobUrl: string }> {
-  const isMicAudio = file.name
-    .toLowerCase()
-    .startsWith('microphone-recording.');
+): Promise<{ url: string; audioHash: string }> {
   const referenceAudioFilename = sanitizeFilename(file.name);
+  const audioHash = await generateBufferHash(processedBuffer);
 
   const processedFilename =
     processedMimeType === 'audio/wav' &&
@@ -390,20 +399,19 @@ async function uploadReferenceAudio(
       ? `${referenceAudioFilename.replace(/\.[^/.]+$/, '')}.wav`
       : referenceAudioFilename;
 
-  const timestamp = isMicAudio ? `-${Date.now().toString()}` : '';
-  const blobUrl = `clone-voice-input/${userId}${timestamp}-${processedFilename}`;
+  const blobUrl = `clone-voice-input/${userId}-${audioHash}-${processedFilename}`;
 
   // Check if already uploaded
   const existingAudio = await redis.get<string>(blobUrl);
   if (existingAudio) {
-    return { url: existingAudio, blobUrl };
+    return { url: existingAudio, audioHash };
   }
 
   // Upload to R2
   const url = await uploadFileToR2(blobUrl, processedBuffer, processedMimeType);
   await redis.set(blobUrl, url);
 
-  return { url, blobUrl };
+  return { url, audioHash };
 }
 
 // ============================================================================
@@ -654,7 +662,7 @@ export async function POST(request: Request) {
     duration = processedAudio.duration;
 
     // Upload reference audio
-    const { url: referenceUrl, blobUrl } = await uploadReferenceAudio(
+    const { url: referenceUrl, audioHash } = await uploadReferenceAudio(
       referenceAudioFile,
       processedAudio.buffer,
       processedAudio.mimeType,
@@ -662,14 +670,24 @@ export async function POST(request: Request) {
     );
     audioReferenceUrl = referenceUrl;
 
-    // Generate output filename
-    const hash = await generateHash(
-      `${locale}-${text}-${blobUrl}-${Date.now()}`,
-    );
+    // Generate deterministic cache key by audio hash, text, and locale
+    const hash = await generateHash(`${locale}-${text}-${audioHash}`);
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
     const path = `${basePath}/${hash}`;
     const filename = `${path}.wav`;
+
+    const cachedOutputUrl = await redis.get<string>(filename);
+    if (cachedOutputUrl) {
+      return NextResponse.json(
+        {
+          url: cachedOutputUrl,
+          creditsUsed: 0,
+          creditsRemaining: currentAmount || 0,
+        },
+        { status: 200 },
+      );
+    }
 
     // Generate voice
     let outputUrl: string;

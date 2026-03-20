@@ -22,6 +22,41 @@ interface DecodedAudio {
   samplesDecoded: number;
 }
 
+function isValidChannelData(
+  channelData: Float32Array[] | undefined,
+): channelData is [Float32Array, ...Float32Array[]] {
+  if (!Array.isArray(channelData) || channelData.length === 0) {
+    return false;
+  }
+
+  const firstChannel = channelData[0];
+  if (!(firstChannel instanceof Float32Array) || firstChannel.length === 0) {
+    return false;
+  }
+
+  return channelData.every(
+    (channel) =>
+      channel instanceof Float32Array && channel.length === firstChannel.length,
+  );
+}
+
+function validateDecodedAudio(
+  decoded: DecodedAudio,
+  format: SupportedAudioFormat,
+): asserts decoded is DecodedAudio & {
+  channelData: [Float32Array, ...Float32Array[]];
+} {
+  if (!isValidChannelData(decoded.channelData)) {
+    throw new Error(
+      `Decoded ${format} audio did not contain valid channel data`,
+    );
+  }
+
+  if (!Number.isFinite(decoded.sampleRate) || decoded.sampleRate <= 0) {
+    throw new Error(`Decoded ${format} audio did not contain a valid sample rate`);
+  }
+}
+
 /**
  * Detect audio format from MIME type or file extension
  */
@@ -269,6 +304,8 @@ export async function convertToWav(
       `Failed to decode ${format} audio: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );
   }
+
+  validateDecodedAudio(decoded, format);
 
   // Interleave channels if stereo/multi-channel
   const interleaved = interleaveChannels(decoded.channelData);
