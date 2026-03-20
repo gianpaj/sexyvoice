@@ -1,6 +1,7 @@
 import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as Sentry from '@sentry/nextjs';
 
 import { POST } from '@/app/api/generate-voice/route';
 import { getErrorMessage } from '@/lib/utils';
@@ -784,6 +785,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.error).toBe(
         getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
 

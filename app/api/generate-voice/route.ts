@@ -467,6 +467,16 @@ export async function POST(request: Request) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
+
+    if (Error.isError(error) && error.cause === 'PROHIBITED_CONTENT') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation failed, please retry',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
     const errorObj = {
       text,
       voice,

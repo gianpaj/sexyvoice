@@ -193,6 +193,7 @@ export function createColumns({
   const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
     {
       id: 'api source',
+      accessorFn: (row) => getUsageData(row.usage)?.sourceType ?? null,
       header: 'API Source',
       cell: ({ row }) => {
         const usage = getUsageData(row.original.usage);
@@ -200,11 +201,12 @@ export function createColumns({
         if (sourceType !== 'api_tts') {
           return <span className="text-muted-foreground">-</span>;
         }
-        return <Badge variant="secondary">API TTS</Badge>;
+        return <Badge variant="secondary">TTS</Badge>;
       },
     },
     {
       id: 'api key',
+      accessorFn: (row) => getUsageData(row.usage)?.apiKeyId ?? null,
       header: 'API Key',
       cell: ({ row }) => {
         const usage = getUsageData(row.original.usage);
@@ -222,6 +224,7 @@ export function createColumns({
     },
     {
       id: 'api cost',
+      accessorFn: (row) => getUsageData(row.usage)?.dollarAmount ?? null,
       header: 'API Cost',
       cell: ({ row }) => {
         const usage = getUsageData(row.original.usage);

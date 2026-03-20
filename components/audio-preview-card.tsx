@@ -3,6 +3,7 @@
 import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 
+import { attemptPlayback } from '@/lib/media-playback';
 import { Button } from './ui/button';
 
 export function AudioPreviewCard({
@@ -23,7 +24,7 @@ export function AudioPreviewCard({
     null,
   );
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     if (isPlaying) {
       // Pause the current audio
       if (audioElement) {
@@ -41,9 +42,12 @@ export function AudioPreviewCard({
       });
 
       // Play and store the reference
-      audio.play();
-      setAudioElement(audio);
       setIsPlaying(true);
+      setAudioElement(audio);
+      await attemptPlayback(() => audio.play(), () => {
+        setIsPlaying(false);
+        setAudioElement(null);
+      });
     }
   };
 

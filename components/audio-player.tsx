@@ -4,6 +4,7 @@ import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { attemptPlayback } from '@/lib/media-playback';
 import { cn } from '@/lib/utils';
 
 interface AudioPlayerProps {
@@ -20,13 +21,18 @@ export function AudioPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const handlePlay = () => {
+  const handlePlay = async () => {
     if (isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current?.play();
+      const audio = audioRef.current;
+      if (!audio) return;
+
       setIsPlaying(true);
+      await attemptPlayback(() => audio.play(), () => {
+        setIsPlaying(false);
+      });
     }
   };
 
