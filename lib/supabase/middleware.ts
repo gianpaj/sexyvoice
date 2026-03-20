@@ -93,7 +93,7 @@ export const updateSession = async (
     }
 
     if (hasOauthCallbackMarker && pathname.includes('/dashboard')) {
-      clearOauthCallbackCookie(supabaseResponse);
+      return clearOauthCallbackCookie(supabaseResponse);
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
