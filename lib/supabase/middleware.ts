@@ -32,6 +32,10 @@ const publicRoutes = [
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
 
+const isDashboardPath = (pathname: string, locale: string) =>
+  pathname === `/${locale}/dashboard` ||
+  pathname.startsWith(`/${locale}/dashboard/`);
+
 export const updateSession = async (
   request: NextRequest,
   locale: string,
@@ -49,7 +53,7 @@ export const updateSession = async (
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user && pathname.includes('/dashboard')) {
+    if (!user && isDashboardPath(pathname, locale)) {
       const redirectResponse = NextResponse.redirect(
         new URL(`/${locale}/login`, request.url),
       );
@@ -92,7 +96,7 @@ export const updateSession = async (
       );
     }
 
-    if (hasOauthCallbackMarker && pathname.includes('/dashboard')) {
+    if (hasOauthCallbackMarker && isDashboardPath(pathname, locale)) {
       return clearOauthCallbackCookie(supabaseResponse);
     }
 
