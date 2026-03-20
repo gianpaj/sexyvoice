@@ -6,7 +6,7 @@ This file contains repository-specific guidelines and instructions for Claude wh
 
 ## Rules
 
-When ever writing a test, run the test suite for that file or the entire one.
+Whenever writing a test, run the test suite for that file or the entire suite.
 
 ## Project Overview
 
