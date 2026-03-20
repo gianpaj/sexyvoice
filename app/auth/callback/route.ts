@@ -45,81 +45,97 @@ export async function GET(request: Request) {
   const locale = getLocaleFromRedirectPath(redirectTo);
   const loginPath = `/${locale}/login`;
 
-  if (!code) {
-    return NextResponse.redirect(`${origin}${loginPath}`);
-  }
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: exchangeError,
-  } = await supabase.auth.exchangeCodeForSession(code);
+  try {
+    if (!code) {
+      return NextResponse.redirect(`${origin}${loginPath}`);
+    }
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: exchangeError,
+    } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (exchangeError) {
-    captureException(exchangeError, {
-      tags: {
-        area: 'auth',
-        flow: 'oauth-callback',
-      },
-      extra: {
-        redirectTo,
-        locale,
-      },
-    });
-
-    return NextResponse.redirect(`${origin}${loginPath}`);
-  }
-
-  const email = user?.email;
-  if (!email) {
-    captureMessage('OAuth callback completed without a user email.', {
-      level: 'error',
-      tags: {
-        area: 'auth',
-        flow: 'oauth-callback',
-      },
-      extra: {
-        redirectTo,
-        locale,
-        userId: user?.id ?? null,
-      },
-    });
-
-    return NextResponse.redirect(`${origin}${loginPath}`);
-  }
-
-  // Add Stripe customer creation
-  if (user) {
-    const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-    if (!stripe_id) {
-      console.error('Failed to create Stripe customer.');
-      captureMessage('Failed to create Stripe customer.', {
-        level: 'error',
-        user: { id: user.id, email: user.email },
+    if (exchangeError) {
+      captureException(exchangeError, {
+        tags: {
+          area: 'auth',
+          flow: 'oauth-callback',
+        },
+        extra: {
+          redirectTo,
+          locale,
+        },
       });
+
+      return NextResponse.redirect(`${origin}${loginPath}`);
     }
 
-    const posthog = PostHogClient();
+    const email = user?.email;
+    if (!email) {
+      captureMessage('OAuth callback completed without a user email.', {
+        level: 'error',
+        tags: {
+          area: 'auth',
+          flow: 'oauth-callback',
+        },
+        extra: {
+          redirectTo,
+          locale,
+          userId: user?.id ?? null,
+        },
+      });
 
-    const login_type =
-      user.app_metadata.provider === 'email' ? 'email' : 'social';
+      return NextResponse.redirect(`${origin}${loginPath}`);
+    }
 
-    posthog.capture({
-      distinctId: user.id,
-      event: 'sign-up',
-      properties: {
-        login_type,
-        //   is_free_trial: true,
+    // Add Stripe customer creation
+    if (user) {
+      const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
+      if (!stripe_id) {
+        console.error('Failed to create Stripe customer.');
+        captureMessage('Failed to create Stripe customer.', {
+          level: 'error',
+          user: { id: user.id, email: user.email },
+        });
+      }
+
+      const posthog = PostHogClient();
+
+      const login_type =
+        user.app_metadata.provider === 'email' ? 'email' : 'social';
+
+      posthog.capture({
+        distinctId: user.id,
+        event: 'sign-up',
+        properties: {
+          login_type,
+          //   is_free_trial: true,
+        },
+      });
+      await posthog.shutdown();
+    }
+
+    if (isSafeRedirectPath(redirectTo)) {
+      return createOauthRedirectResponse(`${origin}${redirectTo}`);
+    }
+
+    // URL to redirect to after sign up process completes
+    return createOauthRedirectResponse(
+      `${origin}/${i18n.defaultLocale}/dashboard`,
+    );
+  } catch (error) {
+    captureException(error, {
+      tags: {
+        area: 'auth',
+        flow: 'oauth-callback',
+      },
+      extra: {
+        redirectTo,
+        locale,
+        hasCode: Boolean(code),
       },
     });
-    await posthog.shutdown();
-  }
 
-  if (isSafeRedirectPath(redirectTo)) {
-    return createOauthRedirectResponse(`${origin}${redirectTo}`);
+    return NextResponse.redirect(`${origin}${loginPath}`);
   }
-
-  // URL to redirect to after sign up process completes
-  return createOauthRedirectResponse(
-    `${origin}/${i18n.defaultLocale}/dashboard`,
-  );
 }
