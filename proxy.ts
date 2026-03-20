@@ -21,6 +21,10 @@ const handleI18nRouting = createMiddleware({
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  if (pathname === '/auth/callback') {
+    return NextResponse.next();
+  }
+
   if (publicRoutesWithLang(i18n.locales).includes(pathname)) {
     return NextResponse.next();
   }
@@ -37,7 +41,7 @@ export async function proxy(request: NextRequest) {
     return i18nResponse;
   }
 
-  return updateSession(request, localeFromPath, i18nResponse);
+  return await updateSession(request, localeFromPath, i18nResponse);
 }
 
 export const config = {
