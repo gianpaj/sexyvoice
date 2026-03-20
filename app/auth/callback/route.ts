@@ -6,7 +6,7 @@ import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { createClient } from '@/lib/supabase/server';
 
-const OAUTH_CALLBACK_COOKIE_NAME = 'sv_oauth_callback_ok';
+export { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/constants';
 
 const isSafeRedirectPath = (value: string | null) =>
   Boolean(value?.startsWith('/') && !value.startsWith('//'));
