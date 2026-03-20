@@ -108,6 +108,10 @@ const sanitizeFilename = (filename: string): string => {
 };
 
 async function generateBufferHash(buffer: Buffer): Promise<string> {
+  // Use a content-based SHA-256 hash so identical uploads produce the same cache key.
+  // This allows R2/Redis entries to be reused deterministically instead of depending on timestamps.
+  // `new Uint8Array(buffer)` creates a view over the existing Buffer data here, so it does not
+  // materially increase memory usage beyond hashing the already in-memory upload.
   const data = new Uint8Array(buffer);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -680,8 +684,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           url: cachedOutputUrl,
-          creditsUsed: estimate,
-          creditsRemaining: (currentAmount || 0) - estimate,
+          creditsUsed: 0,
+          creditsRemaining: currentAmount || 0,
         },
         { status: 200 },
       );

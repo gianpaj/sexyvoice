@@ -4,6 +4,10 @@
 
 This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
 
+## Rules
+
+When ever writing a test, run the test suite for that file or the entire one.
+
 ## Project Overview
 
 SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system.
