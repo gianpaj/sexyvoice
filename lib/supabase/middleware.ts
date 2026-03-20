@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { i18n } from '@/lib/i18n/i18n-config';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] =>
@@ -44,8 +45,9 @@ export const updateSession = async (
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = response;
-    const hasOauthCallbackMarker =
-      request.cookies.get(OAUTH_CALLBACK_COOKIE_NAME)?.value === '1';
+    const hasOauthCallbackMarker = verifyOauthCallbackMarkerValue(
+      request.cookies.get(OAUTH_CALLBACK_COOKIE_NAME)?.value,
+    );
 
     const supabase = await createClient();
 

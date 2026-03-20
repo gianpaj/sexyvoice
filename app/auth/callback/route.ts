@@ -5,6 +5,7 @@ import { i18n } from '@/lib/i18n/i18n-config';
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
+import { createOauthCallbackMarkerValue } from '@/lib/supabase/oauth-callback-marker';
 import { createClient } from '@/lib/supabase/server';
 
 const isSafeRedirectPath = (value: string | null) =>
@@ -20,16 +21,19 @@ const getLocaleFromRedirectPath = (redirectPath: string | null) => {
 
 const createOauthRedirectResponse = (url: string) => {
   const response = NextResponse.redirect(url);
+  const markerValue = createOauthCallbackMarkerValue();
 
-  response.cookies.set({
-    name: OAUTH_CALLBACK_COOKIE_NAME,
-    value: '1',
-    httpOnly: true,
-    maxAge: 60,
-    path: '/',
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
+  if (markerValue) {
+    response.cookies.set({
+      name: OAUTH_CALLBACK_COOKIE_NAME,
+      value: markerValue,
+      httpOnly: true,
+      maxAge: 60,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+  }
 
   return response;
 };
