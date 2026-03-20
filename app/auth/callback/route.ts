@@ -1,10 +1,12 @@
-import * as Sentry from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
 import { i18n } from '@/lib/i18n/i18n-config';
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { createClient } from '@/lib/supabase/server';
+
+const OAUTH_CALLBACK_COOKIE_NAME = 'sv_oauth_callback_ok';
 
 const isSafeRedirectPath = (value: string | null) =>
   Boolean(value?.startsWith('/') && !value.startsWith('//'));
@@ -15,6 +17,22 @@ const getLocaleFromRedirectPath = (redirectPath: string | null) => {
   return i18n.locales.includes(locale as (typeof i18n.locales)[number])
     ? locale
     : i18n.defaultLocale;
+};
+
+const createOauthRedirectResponse = (url: string) => {
+  const response = NextResponse.redirect(url);
+
+  response.cookies.set({
+    name: OAUTH_CALLBACK_COOKIE_NAME,
+    value: '1',
+    httpOnly: true,
+    maxAge: 60,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  return response;
 };
 
 export async function GET(request: Request) {
@@ -34,10 +52,39 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
+    error: exchangeError,
   } = await supabase.auth.exchangeCodeForSession(code);
+
+  if (exchangeError) {
+    captureException(exchangeError, {
+      tags: {
+        area: 'auth',
+        flow: 'oauth-callback',
+      },
+      extra: {
+        redirectTo,
+        locale,
+      },
+    });
+
+    return NextResponse.redirect(`${origin}${loginPath}`);
+  }
 
   const email = user?.email;
   if (!email) {
+    captureMessage('OAuth callback completed without a user email.', {
+      level: 'error',
+      tags: {
+        area: 'auth',
+        flow: 'oauth-callback',
+      },
+      extra: {
+        redirectTo,
+        locale,
+        userId: user?.id ?? null,
+      },
+    });
+
     return NextResponse.redirect(`${origin}${loginPath}`);
   }
 
@@ -46,7 +93,7 @@ export async function GET(request: Request) {
     const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
     if (!stripe_id) {
       console.error('Failed to create Stripe customer.');
-      Sentry.captureMessage('Failed to create Stripe customer.', {
+      captureMessage('Failed to create Stripe customer.', {
         level: 'error',
         user: { id: user.id, email: user.email },
       });
@@ -69,9 +116,11 @@ export async function GET(request: Request) {
   }
 
   if (isSafeRedirectPath(redirectTo)) {
-    return NextResponse.redirect(`${origin}${redirectTo}`);
+    return createOauthRedirectResponse(`${origin}${redirectTo}`);
   }
 
   // URL to redirect to after sign up process completes
-  return NextResponse.redirect(`${origin}/${i18n.defaultLocale}/dashboard`);
+  return createOauthRedirectResponse(
+    `${origin}/${i18n.defaultLocale}/dashboard`,
+  );
 }

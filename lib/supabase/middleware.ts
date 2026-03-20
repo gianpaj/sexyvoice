@@ -1,7 +1,10 @@
+import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { i18n } from '@/lib/i18n/i18n-config';
 import { createClient } from './server';
+
+const OAUTH_CALLBACK_COOKIE_NAME = 'sv_oauth_callback_ok';
 
 const routesPerLocale = (routes: string[]): string[] =>
   i18n.locales.flatMap((locale) =>
@@ -9,6 +12,20 @@ const routesPerLocale = (routes: string[]): string[] =>
       route === '/' ? [`/${locale}`, `/${locale}/`] : `/${locale}${route}`,
     ),
   );
+
+const clearOauthCallbackCookie = (response: NextResponse) => {
+  response.cookies.set({
+    name: OAUTH_CALLBACK_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  return response;
+};
 
 const publicRoutes = [
   '/api/health',
@@ -24,6 +41,8 @@ export const updateSession = async (
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = response;
+    const hasOauthCallbackMarker =
+      request.cookies.get(OAUTH_CALLBACK_COOKIE_NAME)?.value === '1';
 
     const supabase = await createClient();
 
@@ -32,10 +51,31 @@ export const updateSession = async (
     } = await supabase.auth.getUser();
 
     if (!user && pathname.includes('/dashboard')) {
+      const redirectResponse = NextResponse.redirect(
+        new URL(`/${locale}/login`, request.url),
+      );
+
+      if (hasOauthCallbackMarker) {
+        captureMessage(
+          'OAuth callback completed but dashboard session was missing.',
+          {
+            level: 'error',
+            tags: {
+              area: 'auth',
+              flow: 'oauth-callback',
+            },
+            extra: {
+              pathname,
+              locale,
+            },
+          },
+        );
+
+        return clearOauthCallbackCookie(redirectResponse);
+      }
+
       // no user, potentially respond by redirecting the user to the login page
-      const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/login`;
-      return NextResponse.redirect(url);
+      return redirectResponse;
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);
@@ -51,6 +91,10 @@ export const updateSession = async (
       return NextResponse.redirect(
         new URL(`/${locale}/dashboard`, request.url),
       );
+    }
+
+    if (hasOauthCallbackMarker && pathname.includes('/dashboard')) {
+      clearOauthCallbackCookie(supabaseResponse);
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
