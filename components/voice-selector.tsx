@@ -1,5 +1,5 @@
 'use client';
-import { Info, Maximize2, Minimize2 } from 'lucide-react';
+import { Info, Maximize2, Minimize2, Sparkles } from 'lucide-react';
 import {
   type Dispatch,
   type SetStateAction,
@@ -28,7 +28,8 @@ import {
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { capitalizeFirstLetter } from '@/lib/utils';
+import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { isFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { Button } from './ui/button';
@@ -39,6 +40,27 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+
+type VoiceGroup = {
+  label: string;
+  voices: Tables<'voices'>[];
+};
+
+function isMultilingualVoice(voice: Tables<'voices'>) {
+  return voice.model === 'grok' || voice.language === 'multiple';
+}
+
+function sortVoices(voices: Tables<'voices'>[]) {
+  return [...voices].sort((voiceA, voiceB) => {
+    const isFeaturedA = isFeaturedVoice(voiceA);
+    const isFeaturedB = isFeaturedVoice(voiceB);
+
+    if (isFeaturedA && !isFeaturedB) return -1;
+    if (!isFeaturedA && isFeaturedB) return 1;
+
+    return voiceA.name.localeCompare(voiceB.name);
+  });
+}
 
 export function VoiceSelector({
   publicVoices,
@@ -59,13 +81,26 @@ export function VoiceSelector({
     if (selectedVoice?.model === 'gpro') {
       return 'gemini';
     }
+
     if (selectedVoice?.model === 'grok') {
       return 'grok';
     }
+
     return 'replicate';
   }, [selectedVoice?.model]);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
+  const voiceSelectorLabels =
+    dict.voiceSelector as typeof dict.voiceSelector & {
+      featuredBadge?: string;
+      featuredGroupLabel?: string;
+      multilingualGroupLabel?: string;
+    };
+  const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? 'Featured';
+  const featuredGroupLabel =
+    voiceSelectorLabels.featuredGroupLabel ?? 'Featured';
+  const multilingualGroupLabel =
+    voiceSelectorLabels.multilingualGroupLabel ?? 'Multilingual 🌍';
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -77,24 +112,56 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  const groupedVoices = Object.entries(
-    publicVoices.reduce(
-      (acc, voice) => {
-        const language =
-          voice.language === 'multiple' ? 'Multilingual 🌍' : voice.language;
-        if (!acc[language]) {
-          acc[language] = [];
-        }
-        acc[language].push(voice);
-        return acc;
-      },
-      {} as Record<string, Tables<'voices'>[]>,
-    ),
-  ).sort(([langA], [langB]) => {
-    if (langA === 'Multilingual 🌍') return -1;
-    if (langB === 'Multilingual 🌍') return 1;
-    return langA.localeCompare(langB);
-  });
+  const voiceGroups = useMemo(() => {
+    const featuredVoices = sortVoices(
+      publicVoices.filter((voice) => isFeaturedVoice(voice)),
+    );
+
+    const nonFeaturedVoices = publicVoices.filter(
+      (voice) => !isFeaturedVoice(voice),
+    );
+
+    const groupedVoices = Object.entries(
+      nonFeaturedVoices.reduce(
+        (acc, voice) => {
+          const language = isMultilingualVoice(voice)
+            ? multilingualGroupLabel
+            : voice.language;
+
+          if (!acc[language]) {
+            acc[language] = [];
+          }
+
+          acc[language].push(voice);
+          return acc;
+        },
+        {} as Record<string, Tables<'voices'>[]>,
+      ),
+    )
+      .map(
+        ([label, voices]) =>
+          ({
+            label,
+            voices: sortVoices(voices),
+          }) satisfies VoiceGroup,
+      )
+      .sort((groupA, groupB) => {
+        if (groupA.label === multilingualGroupLabel) return -1;
+        if (groupB.label === multilingualGroupLabel) return 1;
+        return groupA.label.localeCompare(groupB.label);
+      });
+
+    const groups: VoiceGroup[] = [];
+
+    if (featuredVoices.length > 0) {
+      groups.push({
+        label: featuredGroupLabel,
+        voices: featuredVoices,
+      });
+    }
+
+    return [...groups, ...groupedVoices];
+  }, [featuredGroupLabel, multilingualGroupLabel, publicVoices]);
 
   return (
     <Card>
@@ -113,11 +180,9 @@ export function VoiceSelector({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
-                {isGeminiVoice ? (
-                  <p>{dict.voiceSelector.geminiInfo}</p>
-                ) : isGrokVoice ? (
-                  <p>{dict.voiceSelector.grokInfo}</p>
-                ) : (
+                {isGeminiVoice && <p>{dict.voiceSelector.geminiInfo}</p>}
+                {isGrokVoice && <p>{dict.voiceSelector.grokInfo}</p>}
+                {!(isGeminiVoice || isGrokVoice) && (
                   <p>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial
                     use ✔️
@@ -136,18 +201,33 @@ export function VoiceSelector({
           </SelectTrigger>
           <SelectContent>
             {publicVoices.length > 0 &&
-              groupedVoices.map(([language, voices]) => (
-                <SelectGroup key={language}>
-                  <SelectLabel className="font-light">{language}</SelectLabel>
-                  {voices.map((voice) => (
-                    <SelectItem
-                      className="cursor-pointer py-3"
-                      key={voice.id}
-                      value={voice.name}
-                    >
-                      {capitalizeFirstLetter(voice.name)}
-                    </SelectItem>
-                  ))}
+              voiceGroups.map(({ label, voices }) => (
+                <SelectGroup key={label}>
+                  <SelectLabel className="font-light">{label}</SelectLabel>
+                  {voices.map((voice) => {
+                    const isFeatured = isFeaturedVoice(voice);
+
+                    return (
+                      <SelectItem
+                        className={cn(
+                          'cursor-pointer py-3',
+                          isFeatured && 'font-medium',
+                        )}
+                        key={voice.id}
+                        value={voice.name}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>{capitalizeFirstLetter(voice.name)}</span>
+                          {isFeatured && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 font-semibold text-[10px] text-primary uppercase tracking-wide">
+                              <Sparkles className="h-3 w-3" />
+                              {featuredBadgeLabel}
+                            </span>
+                          )}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectGroup>
               ))}
           </SelectContent>

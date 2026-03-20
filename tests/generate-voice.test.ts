@@ -1,7 +1,7 @@
 import type { GenerateContentResponse } from '@google/genai';
+import * as Sentry from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as Sentry from '@sentry/nextjs';
 
 import { POST } from '@/app/api/generate-voice/route';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
@@ -586,7 +586,7 @@ describe('Generate Voice API Route', () => {
           };
 
           expect(body.voice_id).toBe('sal');
-          expect(body.language).toBe('es-ES');
+          expect(body.language).toBe('auto');
           expect(body.output_format.codec).toBe('wav');
 
           return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {

@@ -340,8 +340,6 @@
       "inlineEffectPlaceholder": "Inline-Effekt einfügen",
       "wrappingEffectPlaceholder": "Mit Stil-Tag umschließen",
       "formatPlaceholder": "Format wählen",
-      "formatMp3": "MP3",
-      "formatWav": "WAV",
       "helperText": "Fügen Sie ausdrucksstarke Tags wie [laugh] ein oder umschließen Sie ausgewählten Text mit Tags wie <fast>...</fast>.",
       "effects": {
         "pause": "[pause]",
@@ -378,10 +376,13 @@
     "voiceSelector": {
       "title": "Stimme auswählen",
       "description": "Wählen Sie aus verfügbaren Stimmen",
+      "featuredGroupLabel": "Empfohlen",
+      "multilingualGroupLabel": "Mehrsprachig 🌍",
       "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)",
-      "grokInfo": "xAI Grok TTS unterstützt ausdrucksstarke Inline-Tags wie [laugh] und umschließende Tags wie <fast>...</fast>."
+      "grokInfo": "xAI Grok TTS unterstützt ausdrucksstarke Inline-Tags wie [laugh] und umschließende Tags wie <fast>...</fast>.",
+      "featuredBadge": "Empfohlen"
     }
   },
   "call": {

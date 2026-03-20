@@ -64,8 +64,6 @@ const baseDict = {
     inlineEffectPlaceholder: 'Insert inline effect',
     wrappingEffectPlaceholder: 'Wrap selected text',
     formatPlaceholder: 'Select format',
-    formatMp3: 'MP3',
-    formatWav: 'WAV',
     effects: {
       pause: 'Pause',
       longPause: 'Long pause',
@@ -215,11 +213,45 @@ describe('GenerateUI', () => {
     );
   });
 
-  it('uses the first public voice as the initial selected voice', () => {
+  it('uses the featured voice as the initial selected voice when present', () => {
     const firstVoice = createVoice({
       id: 'voice-first',
+      name: 'tara',
+      model:
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+    });
+    const featuredVoice = createVoice({
+      id: 'voice-featured',
       name: 'eve',
       model: 'grok',
+    });
+    const thirdVoice = createVoice({
+      id: 'voice-third',
+      name: 'poe',
+      model: 'gpro',
+    });
+
+    renderGenerateUI([firstVoice, featuredVoice, thirdVoice]);
+
+    expect(mockVoiceSelector).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedVoice: featuredVoice,
+      }),
+    );
+
+    expect(mockAudioGenerator).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedVoice: featuredVoice,
+      }),
+    );
+  });
+
+  it('uses the first public voice as the initial selected voice when no featured voice is present', () => {
+    const firstVoice = createVoice({
+      id: 'voice-first',
+      name: 'tara',
+      model:
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
     });
     const secondVoice = createVoice({
       id: 'voice-second',

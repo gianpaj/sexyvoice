@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
@@ -30,12 +31,12 @@ import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
 } from './audio-player-with-context';
-import dynamic from 'next/dynamic';
 
 const GrokTTSEditor = dynamic(
   () => import('./grok-tts-editor').then((mod) => mod.GrokTTSEditor),
   { ssr: false },
 );
+
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -51,11 +52,9 @@ interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
-  locale: string;
   selectedGrokCodec?: string;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
-  setSelectedGrokCodec?: (codec: string) => void;
 }
 
 function getProvider(model?: string): Provider {
@@ -71,13 +70,12 @@ function getProvider(model?: string): Provider {
 }
 
 export function AudioGenerator({
-  selectedVoice,
-  selectedStyle,
-  selectedGrokCodec,
-  setSelectedGrokCodec,
+  dict,
   hasEnoughCredits,
   isPaidUser,
-  dict,
+  selectedGrokCodec,
+  selectedStyle,
+  selectedVoice,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -340,10 +338,8 @@ export function AudioGenerator({
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
-              codec={selectedGrokCodec}
               maxLength={charactersLimit}
               onChange={setText}
-              onCodecChange={setSelectedGrokCodec}
               placeholder={dict.textAreaPlaceholder}
               value={text}
             />

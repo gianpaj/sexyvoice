@@ -49,6 +49,56 @@ export const server = setupServer(...handlers);
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
+
+  if (typeof document !== 'undefined') {
+    if (typeof document.elementFromPoint !== 'function') {
+      document.elementFromPoint = () => document.body;
+    }
+
+    const rangePrototype = globalThis.Range?.prototype as
+      | (Range & {
+          getClientRects?: () => DOMRectList;
+          getBoundingClientRect?: () => DOMRect;
+        })
+      | undefined;
+
+    if (rangePrototype) {
+      if (typeof rangePrototype.getClientRects !== 'function') {
+        rangePrototype.getClientRects = () =>
+          ({
+            length: 0,
+            item: () => null,
+            *[Symbol.iterator]() {},
+          }) as DOMRectList;
+      }
+
+      if (typeof rangePrototype.getBoundingClientRect !== 'function') {
+        rangePrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+    }
+
+    const elementPrototype = globalThis.HTMLElement?.prototype as
+      | (HTMLElement & {
+          getClientRects?: () => DOMRectList;
+          getBoundingClientRect?: () => DOMRect;
+        })
+      | undefined;
+
+    if (elementPrototype) {
+      if (typeof elementPrototype.getClientRects !== 'function') {
+        elementPrototype.getClientRects = () =>
+          ({
+            length: 0,
+            item: () => null,
+            *[Symbol.iterator]() {},
+          }) as DOMRectList;
+      }
+
+      if (typeof elementPrototype.getBoundingClientRect !== 'function') {
+        elementPrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+    }
+  }
 });
 
 afterEach(() => {
@@ -93,11 +143,18 @@ vi.mock('next/dynamic', () => ({
     const { lazy, Suspense, createElement } = require('react');
     const LazyComp = lazy(() =>
       loader().then((resolved: any) => ({
-        default: typeof resolved === 'function' ? resolved : (resolved.default || resolved),
+        default:
+          typeof resolved === 'function'
+            ? resolved
+            : resolved.default || resolved,
       })),
     );
     return function DynamicMock(props: any) {
-      return createElement(Suspense, { fallback: null }, createElement(LazyComp, props));
+      return createElement(
+        Suspense,
+        { fallback: null },
+        createElement(LazyComp, props),
+      );
     };
   },
 }));

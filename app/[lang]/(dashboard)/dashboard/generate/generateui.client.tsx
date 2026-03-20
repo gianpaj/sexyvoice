@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
+import { getFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
@@ -27,7 +28,8 @@ export function GenerateUI({
   locale,
 }: GenerateUIProps) {
   const initialVoiceName = useMemo(
-    () => publicVoices[0]?.name || 'zephyr',
+    () =>
+      getFeaturedVoice(publicVoices)?.name || publicVoices[0]?.name || 'zephyr',
     [publicVoices],
   );
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceName);
@@ -54,11 +56,9 @@ export function GenerateUI({
           dict={dict}
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
-          locale={locale}
           selectedGrokCodec={isGrokVoice ? selectedGrokCodec : undefined}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
-          setSelectedGrokCodec={setSelectedGrokCodec}
         />
       </AudioProvider>
     </div>

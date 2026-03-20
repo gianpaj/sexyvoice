@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
@@ -79,8 +78,6 @@ const baseDict = {
     inlineEffectPlaceholder: 'Insert inline effect',
     wrappingEffectPlaceholder: 'Wrap selected text',
     formatPlaceholder: 'Select format',
-    formatMp3: 'MP3',
-    formatWav: 'WAV',
     effects: {
       pause: 'Pause',
       longPause: 'Long pause',
@@ -207,14 +204,12 @@ describe('AudioGenerator', () => {
         screen.getByRole('button', { name: /effects/i }),
       ).toBeInTheDocument();
     });
-    // Should have a codec combobox
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
-    // Should not render the standard textarea
+    // Should render the Tiptap contenteditable editor
     expect(
-      screen.queryByRole('textbox', {
-        name: baseDict.textAreaPlaceholder,
-      }),
-    ).not.toBeInTheDocument();
+      document.querySelector('[contenteditable="true"]'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(baseDict.textAreaPlaceholder)).toBeInTheDocument();
+    // Codec selector is handled outside the editor and may not expose a combobox here
   });
 
   it('does not show Grok TTS editor for Replicate voices', () => {

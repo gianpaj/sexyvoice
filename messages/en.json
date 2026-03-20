@@ -340,8 +340,6 @@
       "inlineEffectPlaceholder": "Insert inline effect",
       "wrappingEffectPlaceholder": "Wrap with style tag",
       "formatPlaceholder": "Select format",
-      "formatMp3": "MP3",
-      "formatWav": "WAV",
       "helperText": "Insert expressive tags like [laugh] or wrap selected text with tags like <fast>...</fast>.",
       "effects": {
         "pause": "[pause]",
@@ -378,10 +376,13 @@
     "voiceSelector": {
       "title": "Select Voice",
       "description": "Choose from available voices",
+      "featuredGroupLabel": "Featured",
+      "multilingualGroupLabel": "Multilingual 🌍",
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)",
-      "grokInfo": "xAI Grok TTS supports expressive inline tags like [laugh] and wrapping tags like <fast>...</fast>."
+      "grokInfo": "xAI Grok TTS supports expressive inline tags like [laugh] and wrapping tags like <fast>...</fast>.",
+      "featuredBadge": "Featured"
     }
   },
   "call": {

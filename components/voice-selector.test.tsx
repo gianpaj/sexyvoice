@@ -33,6 +33,9 @@ const baseDict = {
     grokInfo: 'Grok voice info',
     toolTipEmotionTags: 'Emotion tags',
     selectStyleTextareaPlaceholder: 'Describe the speaking style',
+    featuredBadge: 'Featured',
+    featuredGroupLabel: 'Featured',
+    multilingualGroupLabel: 'Multilingual 🌍',
   },
 } as const;
 
@@ -83,7 +86,7 @@ function renderVoiceSelector(
   ];
 
   const defaultProps: React.ComponentProps<typeof VoiceSelector> = {
-    dict: baseDict as typeof import('@/messages/en.json')['generate'],
+    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     publicVoices,
     selectedStyle: 'soft and breathy',
     selectedVoice: publicVoices[0],
@@ -214,5 +217,56 @@ describe('VoiceSelector', () => {
     expect(
       screen.queryByText(baseDict.voiceSelector.grokInfo),
     ).not.toBeInTheDocument();
+  });
+
+  it('exposes the featured badge copy in the selected value for the featured voice', () => {
+    renderVoiceSelector({
+      selectedVoice: createVoice({
+        id: 'voice-grok',
+        name: 'eve',
+        model: 'grok',
+      }),
+    });
+
+    expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
+    expect(screen.getByRole('combobox')).toHaveTextContent(/featured/i);
+  });
+
+  it('provides dedicated selector group labels for featured and multilingual voices', () => {
+    expect(baseDict.voiceSelector.featuredGroupLabel).toBe('Featured');
+    expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
+      'Multilingual 🌍',
+    );
+  });
+
+  it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
+    renderVoiceSelector({
+      publicVoices: [
+        createVoice({
+          id: 'voice-replicate',
+          name: 'tara',
+          language: 'en',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        }),
+        createVoice({
+          id: 'voice-grok',
+          name: 'eve',
+          language: 'en',
+          model: 'grok',
+        }),
+      ],
+      selectedVoice: createVoice({
+        id: 'voice-grok',
+        name: 'eve',
+        language: 'en',
+        model: 'grok',
+      }),
+    });
+
+    expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
+    expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
+      'Multilingual 🌍',
+    );
   });
 });
