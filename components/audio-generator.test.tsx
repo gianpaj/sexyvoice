@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -192,7 +192,7 @@ describe('AudioGenerator', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows Grok helper controls for Grok voices', () => {
+  it('shows Grok TTS editor for Grok voices', async () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
         name: 'eve',
@@ -201,24 +201,23 @@ describe('AudioGenerator', () => {
       selectedGrokCodec: 'wav',
     });
 
-    expect(screen.getByText(baseDict.grok.helperText)).toBeInTheDocument();
-    expect(screen.getAllByRole('combobox')).toHaveLength(3);
-
+    // GrokTTSEditor is loaded dynamically, wait for it
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /effects/i }),
+      ).toBeInTheDocument();
+    });
+    // Should have a codec combobox
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    // Should not render the standard textarea
     expect(
-      screen.getByRole('button', { name: baseDict.grok.effects.laugh }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: baseDict.grok.effects.pause }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: baseDict.grok.effects.breath }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: baseDict.grok.effects.sigh }),
-    ).toBeInTheDocument();
+      screen.queryByRole('textbox', {
+        name: baseDict.textAreaPlaceholder,
+      }),
+    ).not.toBeInTheDocument();
   });
 
-  it('does not show Grok helper controls for Replicate voices', () => {
+  it('does not show Grok TTS editor for Replicate voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
         name: 'tara',
@@ -228,36 +227,7 @@ describe('AudioGenerator', () => {
     });
 
     expect(
-      screen.queryByText(baseDict.grok.helperText),
+      screen.queryByRole('button', { name: /effects/i }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: baseDict.grok.effects.laugh }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('inserts an inline Grok tag at the cursor when a quick action is clicked', async () => {
-    const user = userEvent.setup();
-
-    renderAudioGenerator({
-      selectedVoice: createVoice({
-        name: 'eve',
-        model: 'grok',
-      }),
-      selectedGrokCodec: 'mp3',
-    });
-
-    const textarea = screen.getByPlaceholderText(
-      baseDict.textAreaPlaceholder,
-    ) as HTMLTextAreaElement;
-
-    await user.type(textarea, 'Hello world');
-    textarea.focus();
-    textarea.setSelectionRange(5, 5);
-
-    await user.click(
-      screen.getByRole('button', { name: baseDict.grok.effects.laugh }),
-    );
-
-    expect(textarea.value).toBe('Hello[laugh] world');
   });
 });

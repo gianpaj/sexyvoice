@@ -18,13 +18,6 @@ import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provide
 import { toast } from '@/components/services/toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
@@ -37,6 +30,12 @@ import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
 } from './audio-player-with-context';
+import dynamic from 'next/dynamic';
+
+const GrokTTSEditor = dynamic(
+  () => import('./grok-tts-editor').then((mod) => mod.GrokTTSEditor),
+  { ssr: false },
+);
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -48,37 +47,6 @@ import {
 
 type Provider = 'gemini' | 'grok' | 'replicate';
 
-type GrokInlineTag =
-  | '[pause]'
-  | '[long-pause]'
-  | '[hum-tune]'
-  | '[laugh]'
-  | '[chuckle]'
-  | '[giggle]'
-  | '[cry]'
-  | '[tsk]'
-  | '[tongue-click]'
-  | '[lip-smack]'
-  | '[breath]'
-  | '[inhale]'
-  | '[exhale]'
-  | '[sigh]';
-
-type GrokWrappingTag =
-  | 'soft'
-  | 'whisper'
-  | 'loud'
-  | 'build-intensity'
-  | 'decrease-intensity'
-  | 'higher-pitch'
-  | 'lower-pitch'
-  | 'slow'
-  | 'fast'
-  | 'sing-song'
-  | 'singing'
-  | 'laugh-speak'
-  | 'emphasis';
-
 interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
@@ -89,78 +57,6 @@ interface AudioGeneratorProps {
   selectedVoice?: Tables<'voices'>;
   setSelectedGrokCodec?: (codec: string) => void;
 }
-
-const GROK_INLINE_TAG_KEYS = [
-  'pause',
-  'longPause',
-  'humTune',
-  'laugh',
-  'chuckle',
-  'giggle',
-  'cry',
-  'tsk',
-  'tongueClick',
-  'lipSmack',
-  'breath',
-  'inhale',
-  'exhale',
-  'sigh',
-] as const;
-
-const GROK_WRAPPING_TAG_KEYS = [
-  'soft',
-  'whisper',
-  'loud',
-  'buildIntensity',
-  'decreaseIntensity',
-  'higherPitch',
-  'lowerPitch',
-  'slow',
-  'fast',
-  'singSong',
-  'singing',
-  'laughSpeak',
-  'emphasis',
-] as const;
-
-const GROK_INLINE_TAGS: Record<
-  (typeof GROK_INLINE_TAG_KEYS)[number],
-  GrokInlineTag
-> = {
-  pause: '[pause]',
-  longPause: '[long-pause]',
-  humTune: '[hum-tune]',
-  laugh: '[laugh]',
-  chuckle: '[chuckle]',
-  giggle: '[giggle]',
-  cry: '[cry]',
-  tsk: '[tsk]',
-  tongueClick: '[tongue-click]',
-  lipSmack: '[lip-smack]',
-  breath: '[breath]',
-  inhale: '[inhale]',
-  exhale: '[exhale]',
-  sigh: '[sigh]',
-};
-
-const GROK_WRAPPING_TAGS: Record<
-  (typeof GROK_WRAPPING_TAG_KEYS)[number],
-  GrokWrappingTag
-> = {
-  soft: 'soft',
-  whisper: 'whisper',
-  loud: 'loud',
-  buildIntensity: 'build-intensity',
-  decreaseIntensity: 'decrease-intensity',
-  higherPitch: 'higher-pitch',
-  lowerPitch: 'lower-pitch',
-  slow: 'slow',
-  fast: 'fast',
-  singSong: 'sing-song',
-  singing: 'singing',
-  laughSpeak: 'laugh-speak',
-  emphasis: 'emphasis',
-};
 
 function getProvider(model?: string): Provider {
   if (model === 'gpro') {
@@ -174,18 +70,11 @@ function getProvider(model?: string): Provider {
   return 'replicate';
 }
 
-function insertText(
-  fullText: string,
-  start: number,
-  end: number,
-  insertedText: string,
-) {
-  return `${fullText.slice(0, start)}${insertedText}${fullText.slice(end)}`;
-}
-
 export function AudioGenerator({
   selectedVoice,
   selectedStyle,
+  selectedGrokCodec,
+  setSelectedGrokCodec,
   hasEnoughCredits,
   isPaidUser,
   dict,
@@ -241,112 +130,21 @@ export function AudioGenerator({
     setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
   }, []);
 
-  const focusTextareaWithSelection = useCallback(
-    (selectionStart: number, selectionEnd: number) => {
-      requestAnimationFrame(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) {
-          return;
-        }
-
-        textarea.focus();
-        textarea.setSelectionRange(selectionStart, selectionEnd);
-      });
-    },
-    [],
-  );
-
-  const insertTextAtSelection = useCallback(
-    (insertedText: string) => {
-      const textarea = textareaRef.current;
-
-      if (!textarea) {
-        setText((currentText) => `${currentText}${insertedText}`);
-        return;
-      }
-
-      const start = textarea.selectionStart ?? text.length;
-      const end = textarea.selectionEnd ?? text.length;
-      const nextText = insertText(text, start, end, insertedText);
-
-      setText(nextText);
-      const cursorPosition = start + insertedText.length;
-      focusTextareaWithSelection(cursorPosition, cursorPosition);
-    },
-    [focusTextareaWithSelection, text],
-  );
-
-  const wrapSelectionWithTag = useCallback(
-    (tag: GrokWrappingTag) => {
-      const textarea = textareaRef.current;
-      const openingTag = `<${tag}>`;
-      const closingTag = `</${tag}>`;
-
-      if (!textarea) {
-        setText((currentText) => `${currentText}${openingTag}${closingTag}`);
-        return;
-      }
-
-      const start = textarea.selectionStart ?? text.length;
-      const end = textarea.selectionEnd ?? text.length;
-      const selectedText = text.slice(start, end);
-
-      if (selectedText) {
-        const wrappedText = `${openingTag}${selectedText}${closingTag}`;
-        const nextText = insertText(text, start, end, wrappedText);
-
-        setText(nextText);
-        const selectionStart = start + openingTag.length;
-        const selectionEnd = selectionStart + selectedText.length;
-        focusTextareaWithSelection(selectionStart, selectionEnd);
-        return;
-      }
-
-      const insertedText = `${openingTag}${closingTag}`;
-      const nextText = insertText(text, start, end, insertedText);
-
-      setText(nextText);
-      const cursorPosition = start + openingTag.length;
-      focusTextareaWithSelection(cursorPosition, cursorPosition);
-    },
-    [focusTextareaWithSelection, text],
-  );
-
-  const handleInsertGrokInlineTag = useCallback(
-    (tag: GrokInlineTag) => {
-      insertTextAtSelection(tag);
-    },
-    [insertTextAtSelection],
-  );
-
-  const handleInsertGrokWrappingTag = useCallback(
-    (tag: GrokWrappingTag) => {
-      wrapSelectionWithTag(tag);
-    },
-    [wrapSelectionWithTag],
-  );
-
-  const handleGrokInlineEffectSelect = useCallback(
-    (value: string) => {
-      handleInsertGrokInlineTag(value as GrokInlineTag);
-    },
-    [handleInsertGrokInlineTag],
-  );
-
-  const handleGrokWrappingEffectSelect = useCallback(
-    (value: string) => {
-      handleInsertGrokWrappingTag(value as GrokWrappingTag);
-    },
-    [handleInsertGrokWrappingTag],
-  );
-
   const requestBody = useMemo(
     () => ({
       text,
       voice: selectedVoice?.name,
       styleVariant: isGeminiVoice ? selectedStyle : '',
+      outputCodec: isGrokVoice ? selectedGrokCodec : undefined,
     }),
-    [isGeminiVoice, selectedStyle, selectedVoice?.name, text],
+    [
+      isGeminiVoice,
+      isGrokVoice,
+      selectedGrokCodec,
+      selectedStyle,
+      selectedVoice?.name,
+      text,
+    ],
   );
 
   const handleCancel = useCallback(() => {
@@ -540,136 +338,109 @@ export function AudioGenerator({
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
         <div className="space-y-2">
-          <div className="relative">
-            <Textarea
-              className={cn(
-                'textarea-2 transition-[height] duration-200 ease-in-out',
-                textareaRightPadding,
-              )}
-              maxLength={charactersLimit + 10}
-              onChange={(e) => setText(e.target.value)}
+          {isGrokVoice ? (
+            <GrokTTSEditor
+              codec={selectedGrokCodec}
+              maxLength={charactersLimit}
+              onChange={setText}
+              onCodecChange={setSelectedGrokCodec}
               placeholder={dict.textAreaPlaceholder}
-              ref={textareaRef}
-              style={
-                {
-                  '--ta2-height': isFullscreen ? '30vh' : '8rem',
-                } as React.CSSProperties
-              }
               value={text}
             />
+          ) : (
+            <>
+              <div className="relative">
+                <Textarea
+                  className={cn(
+                    'textarea-2 transition-[height] duration-200 ease-in-out',
+                    textareaRightPadding,
+                  )}
+                  maxLength={charactersLimit + 10}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={dict.textAreaPlaceholder}
+                  ref={textareaRef}
+                  style={
+                    {
+                      '--ta2-height': isFullscreen ? '30vh' : '8rem',
+                    } as React.CSSProperties
+                  }
+                  value={text}
+                />
 
-            {showEnhanceButton && (
-              <>
+                {showEnhanceButton && (
+                  <>
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100} supportMobileTap>
+                        <TooltipTrigger asChild>
+                          <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This model supports emotion tags</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button
+                      className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
+                      disabled={!text.trim() || isEnhancingText || isGenerating}
+                      onClick={handleEnhanceText}
+                      size="icon"
+                      title="Enhance text with AI emotion tags"
+                      variant="ghost"
+                    >
+                      {isEnhancingText ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-yellow-300" />
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  size="icon"
+                  title="Fullscreen"
+                  variant="ghost"
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              <div
+                className={cn(
+                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+                  textIsOverLimit ? 'font-bold text-red-500' : '',
+                )}
+              >
+                {text.length} / {charactersLimit}
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>
                     <TooltipTrigger asChild>
-                      <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
+                      <Crown
+                        className={cn(
+                          'h-3.5 w-3.5 cursor-default',
+                          isPaidUser
+                            ? 'text-yellow-400'
+                            : 'text-muted-foreground/50',
+                        )}
+                      />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>This model supports emotion tags</p>
+                      <p>
+                        {isPaidUser
+                          ? 'Paid users enjoy 2× character limit'
+                          : 'Upgrade to a paid plan for 2× character limit'}
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <Button
-                  className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-                  disabled={!text.trim() || isEnhancingText || isGenerating}
-                  onClick={handleEnhanceText}
-                  size="icon"
-                  title="Enhance text with AI emotion tags"
-                  variant="ghost"
-                >
-                  {isEnhancingText ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 text-yellow-300" />
-                  )}
-                </Button>
-              </>
-            )}
-
-            <Button
-              className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              size="icon"
-              title="Fullscreen"
-              variant="ghost"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
-          <div
-            className={cn(
-              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-              textIsOverLimit ? 'font-bold text-red-500' : '',
-            )}
-          >
-            {text.length} / {charactersLimit}
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Crown
-                    className={cn(
-                      'h-3.5 w-3.5 cursor-default',
-                      isPaidUser
-                        ? 'text-yellow-400'
-                        : 'text-muted-foreground/50',
-                    )}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isPaidUser
-                      ? 'Paid users enjoy 2× character limit'
-                      : 'Upgrade to a paid plan for 2× character limit'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          {isGrokVoice && (
-            <div className="flex flex-col gap-3 rounded-lg border border-input border-dashed p-3 sm:p-2">
-              <p className="text-muted-foreground text-xs">
-                {dict.grok.helperText}
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                <Select onValueChange={handleGrokInlineEffectSelect}>
-                  <SelectTrigger className="w-full sm:w-48">
-                    <SelectValue
-                      placeholder={dict.grok.inlineEffectPlaceholder}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GROK_INLINE_TAG_KEYS.map((key) => (
-                      <SelectItem key={key} value={GROK_INLINE_TAGS[key]}>
-                        {dict.grok.effects[key]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select onValueChange={handleGrokWrappingEffectSelect}>
-                  <SelectTrigger className="w-full sm:w-56">
-                    <SelectValue
-                      placeholder={dict.grok.wrappingEffectPlaceholder}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GROK_WRAPPING_TAG_KEYS.map((key) => (
-                      <SelectItem key={key} value={GROK_WRAPPING_TAGS[key]}>
-                        {dict.grok.wrappingTags[key]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
-            </div>
+            </>
           )}
 
           {isGeminiVoice && (

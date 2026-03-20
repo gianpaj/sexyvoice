@@ -86,6 +86,22 @@ vi.mock('@axiomhq/js', () => ({
   },
 }));
 
+// Mock next/dynamic to render the component directly in tests
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: (loader: () => Promise<any>) => {
+    const { lazy, Suspense, createElement } = require('react');
+    const LazyComp = lazy(() =>
+      loader().then((resolved: any) => ({
+        default: typeof resolved === 'function' ? resolved : (resolved.default || resolved),
+      })),
+    );
+    return function DynamicMock(props: any) {
+      return createElement(Suspense, { fallback: null }, createElement(LazyComp, props));
+    };
+  },
+}));
+
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/server', () => ({
   NextResponse: {
