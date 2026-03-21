@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import type langDict from '@/messages/en.json';
 
 export function LoginForm({
   dict,
@@ -57,10 +57,12 @@ export function LoginForm({
     setIsLoading(true);
     setError(null);
 
+    const redirectTo = encodeURIComponent(`/${lang}/dashboard`);
+    const callbackUrl = `${window.location.origin}/auth/callback?redirect_to=${redirectTo}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
       },
     });
 

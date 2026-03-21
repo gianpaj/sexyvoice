@@ -711,6 +711,49 @@ describe('Clone Voice API Route', () => {
       // Should upload both input and output audio files
       expect(mockUploadFileToR2).toHaveBeenCalledTimes(2);
     });
+
+    it('should return cached output without consuming credits or uploading output again', async () => {
+      const cachedInputUrl = 'https://files.sexyvoice.ai/cached-input.mp3';
+      const cachedOutputUrl = 'https://files.sexyvoice.ai/cached-output.wav';
+
+      // First Redis lookup is for the input audio cache; second is for the output filename cache.
+      mockRedisGet
+        .mockResolvedValueOnce(cachedInputUrl)
+        .mockResolvedValueOnce(cachedOutputUrl);
+
+      const formData = createFormDataWithAudio('Hello world');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json).toEqual({
+        url: cachedOutputUrl,
+        creditsUsed: 0,
+        creditsRemaining: 1000,
+      });
+
+      expect(mockRedisGet).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('clone-voice-input/'),
+      );
+      expect(mockRedisGet).toHaveBeenNthCalledWith(
+        2,
+        expect.stringMatching(/^cloned-audio-free\/[a-f0-9]+\.wav$/),
+      );
+
+      // Should reuse both cached input and cached output, so no uploads occur.
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(queries.insertUsageEvent).not.toHaveBeenCalled();
+      expect(mockRedisSet).not.toHaveBeenCalled();
+    });
   });
 
   describe('Voice Cloning Generation', () => {
@@ -766,8 +809,9 @@ describe('Clone Voice API Route', () => {
             exaggeration: 0.5,
             language: 'fr',
             seed: 0,
-            reference_audio:
-              'https://files.sexyvoice.ai/clone-voice-input/test-user-id-audio1.wav',
+            reference_audio: expect.stringMatching(
+              /^https:\/\/files\.sexyvoice\.ai\/clone-voice-input\/test-user-id-[a-f0-9]+-audio1\.wav$/,
+            ),
           },
         },
         expect.any(Function),
@@ -894,7 +938,9 @@ describe('Clone Voice API Route', () => {
       // Verify that sanitized filename is used.
       // MP3 input is converted to WAV before uploading (server-side), so extension becomes .wav
       expect(mockUploadFileToR2).toHaveBeenCalledWith(
-        'clone-voice-input/test-user-id-test-audio_____.mp3',
+        expect.stringMatching(
+          /^clone-voice-input\/test-user-id-[a-f0-9]+-test-audio_____.mp3$/,
+        ),
         expect.any(Buffer),
         expect.any(String),
       );
@@ -944,12 +990,13 @@ describe('Clone Voice API Route', () => {
       const outputCalls = putCalls.filter((call) =>
         call[0].includes('cloned-audio-free/'),
       );
-      // Input audio filenames are the same, but hashes differ due to Date.now()
-      // and different text content
-      expect(outputCalls.length).toBeGreaterThan(0);
+      // Each uncached request uploads one input file and one generated output file.
+      expect(putCalls).toHaveLength(4);
+      expect(outputCalls).toHaveLength(2);
+      expect(outputCalls[0][0]).not.toBe(outputCalls[1][0]);
     });
 
-    it('should use input audio cache key based on filename', async () => {
+    it('should use input audio cache key based on audio hash and filename', async () => {
       const formData1 = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('audio-1.mp3'),
@@ -973,9 +1020,16 @@ describe('Clone Voice API Route', () => {
       await POST(request2);
 
       // Verify different input audio cache keys were used for different filenames
-      const calls = mockRedisGet.mock.calls.map((call) => call[0]);
-      expect(calls[0]).toContain('clone-voice-input/test-user-id-audio-1.wav');
-      expect(calls[1]).toContain('clone-voice-input/test-user-id-audio-2.wav');
+      const calls = mockRedisGet.mock.calls
+        .map((call) => call[0])
+        .filter((key) => key.startsWith('clone-voice-input/'));
+
+      expect(calls[0]).toMatch(
+        /^clone-voice-input\/test-user-id-[a-f0-9]+-audio-1\.wav$/,
+      );
+      expect(calls[1]).toMatch(
+        /^clone-voice-input\/test-user-id-[a-f0-9]+-audio-2\.wav$/,
+      );
       expect(calls[0]).not.toBe(calls[1]);
     });
   });
