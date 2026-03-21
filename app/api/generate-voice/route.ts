@@ -201,7 +201,9 @@ export async function POST(request: Request) {
             { status: 403 },
           );
         }
-        apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY;
+        apiKey =
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY;
       }
 
       const ai = new GoogleGenAI({ apiKey });
