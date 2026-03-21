@@ -591,7 +591,8 @@
   "sidebar": {
     "profile": "Profil",
     "signOut": "Log ud",
-    "freeTools": "Gratis værktøjer"
+    "freeTools": "Gratis værktøjer",
+    "subscriptionDiscount": "Få {discount}% ekstra kreditter med et abonnement"
   },
   "header": {
     "generate": "Generer",
