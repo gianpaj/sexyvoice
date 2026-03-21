@@ -1,4 +1,4 @@
-export const MAX_FREE_GENERATIONS = 6;
+export const MAX_FREE_GENERATIONS = 10;
 
 export const MINIMUM_CREDITS_FOR_CALL = 999;
 export const CREDITS_PER_MINUTE = 2000;
