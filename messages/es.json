@@ -591,7 +591,8 @@
   "sidebar": {
     "profile": "Perfil",
     "signOut": "Cerrar sesión",
-    "freeTools": "Herramientas Gratuitas"
+    "freeTools": "Herramientas Gratuitas",
+    "subscriptionDiscount": "Obtén {discount}% de créditos extra con una suscripción"
   },
   "header": {
     "generate": "Generar",

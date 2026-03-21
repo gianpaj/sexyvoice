@@ -92,11 +92,12 @@ async function PricingTable({ lang }: { lang: Locale }) {
       buttonText: pPlans.subscribe,
       buttonVariant: 'default',
       creditsText: plansT('x_credits', {
-        numCredits: subscriptionPackages.standard.creditsLocale,
+        numCredits: subscriptionPackages.standard.baseCreditsLocale,
       }),
-      promoBonus: subscriptionPackages.standard.promoBonus,
-      subscriptionBonusCredits:
-        subscriptionPackages.standard.subscriptionBonusLocale,
+      subscriptionBonusCredits: (
+        subscriptionPackages.standard.credits -
+        subscriptionPackages.standard.baseCredits
+      ).toLocaleString(lang),
       features: pPlans.standard.features,
     },
     {
@@ -113,11 +114,12 @@ async function PricingTable({ lang }: { lang: Locale }) {
       buttonText: pPlans.subscribe,
       buttonVariant: 'default',
       creditsText: plansT('x_credits', {
-        numCredits: subscriptionPackages.pro.creditsLocale,
+        numCredits: subscriptionPackages.pro.baseCreditsLocale,
       }),
-      promoBonus: subscriptionPackages.pro.promoBonus,
-      subscriptionBonusCredits:
-        subscriptionPackages.pro.subscriptionBonusLocale,
+      subscriptionBonusCredits: (
+        subscriptionPackages.pro.credits -
+        subscriptionPackages.pro.baseCredits
+      ).toLocaleString(lang),
       features: pPlans.pro.features,
     },
   ];
