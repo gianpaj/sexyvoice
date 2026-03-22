@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   type GrokEditorToken as GrokTtsToken,
+  type GrokInstantTag,
+  type GrokWrapperCloseTag,
+  type GrokWrapperOpenTag,
   parseGrokTtsText,
   serializeGrokEditorTokens as serializeGrokTtsDoc,
 } from '@/lib/grok-tts-editor';
@@ -13,7 +16,7 @@ function text(value: string): GrokTtsToken {
   };
 }
 
-function instant(tag: string): GrokTtsToken {
+function instant(tag: GrokInstantTag): GrokTtsToken {
   return {
     type: 'instant-tag',
     tag,
@@ -21,8 +24,8 @@ function instant(tag: string): GrokTtsToken {
 }
 
 function wrapper(
-  openTag: string,
-  closeTag: string,
+  openTag: GrokWrapperOpenTag,
+  closeTag: GrokWrapperCloseTag,
   children: GrokTtsToken[],
 ): GrokTtsToken {
   return {

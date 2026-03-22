@@ -586,7 +586,7 @@ describe('Generate Voice API Route', () => {
           };
 
           expect(body.voice_id).toBe('sal');
-          expect(body.language).toBe('auto');
+          expect(body.language).toBe('es-ES');
           expect(body.output_format.codec).toBe('wav');
 
           return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {

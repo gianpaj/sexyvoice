@@ -140,11 +140,9 @@ function renderAudioGenerator(
     dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     hasEnoughCredits: true,
     isPaidUser: true,
-    locale: 'en',
     selectedStyle: 'moan softly',
     selectedVoice: createVoice(),
     selectedGrokCodec: undefined,
-    setSelectedGrokCodec: vi.fn(),
   };
 
   return render(<AudioGenerator {...defaultProps} {...overrides} />);
