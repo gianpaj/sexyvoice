@@ -137,6 +137,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
       - `FAL_KEY` - Your fal.ai API key for voice cloning
       - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
    - Stripe
       - `STRIPE_SECRET_KEY`
       - `STRIPE_WEBHOOK_SECRET`

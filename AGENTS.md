@@ -15,7 +15,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 ### Key Technologies
 
 - **Frontend**: Next.js 16 with App Router, React 19, TypeScript 5
-- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
+- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning), xAI (Grok TTS)
 - **Database**: Supabase PostgreSQL
 - **Storage**: Cloudflare R2 for audio files (`R2_BUCKET_NAME` for dashboard, `R2_SPEECH_API_BUCKET_NAME` for external API)
 - **Caching**: Upstash Redis for audio URL caching (dashboard/clone flows only; external API always generates fresh audio)
@@ -24,7 +24,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Content**: Contentlayer2 for MDX blog processing
 - **Payments**: Stripe integration with promotional bonus system
 - **Monitoring**: Sentry error tracking and PostHog analytics; Axiom for structured API request logging
-- **AI Services**: Google Generative AI for text-to-speech (Gemini 2.5 Pro/Flash TTS) and text enhancement
+- **AI Services**: Google Generative AI for text-to-speech (Gemini 2.5 Pro/Flash TTS) and text enhancement; xAI Grok TTS for multi-language voice generation
 - **Configuration**: Vercel Edge Config for dynamic call instructions
 - **External API**: REST API (`/api/v1/*`) with HMAC-keyed API keys, rate limiting, OpenAPI 3.1 spec
 - **Code Quality**: Biome for linting and formatting
@@ -94,7 +94,7 @@ lib/
 │   ├── errors.ts              # createApiError(), zodErrorToApiError()
 │   ├── external-errors.ts     # Structured error definitions + externalApiErrorResponse()
 │   ├── logger.ts              # Axiom-backed per-request structured logger
-│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), getModelCatalogResponse()
+│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), isFormatSupported(), getModelCatalogResponse()
 │   ├── openapi.ts             # createExternalApiOpenApiDocument() via zod-openapi
 │   ├── pricing.ts             # calculateExternalApiDollarAmount()
 │   ├── rate-limit.ts          # consumeRateLimit() using Upstash Ratelimit
@@ -180,7 +180,7 @@ Shared enum types:
 5. Voice looked up by name in `voices` table (admin client, bypasses RLS)
 6. Model compatibility, text length, and format validated
 7. User credit balance fetched via admin client; 402 returned if insufficient
-8. Audio generated fresh every time (no cache) — Gemini TTS for `gpro`, Replicate for `kokoro`
+8. Audio generated fresh every time (no cache) — Gemini TTS for `gpro`, xAI TTS for `grok`, Replicate for `orpheus`
 9. Audio uploaded to `R2_SPEECH_API_BUCKET_NAME` with public URL from `R2_SPEECH_API_PUBLIC_URL`
 10. Credits deducted, audio file saved, usage event inserted — all via admin client
 11. Response includes `url`, `credits_used`, `credits_remaining`, and `usage` object
@@ -437,7 +437,7 @@ Key environment variables include:
 - **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2 — dashboard audio); `R2_SPEECH_API_BUCKET_NAME`, `R2_SPEECH_API_PUBLIC_URL` (separate bucket + public domain for external API audio)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
-- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
+- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `XAI_API_KEY` (xAI Grok TTS)
 - **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
 - **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
