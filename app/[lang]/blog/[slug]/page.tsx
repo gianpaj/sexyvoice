@@ -5,10 +5,11 @@ import Script from 'next/script';
 import type { Metadata } from 'next/types';
 import { getMessages } from 'next-intl/server';
 
+import { Banner } from '@/components/banner';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
-import { PromoBanner } from '@/components/promo-banner';
+import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
@@ -16,10 +17,6 @@ import {
 } from '@/lib/structured-data';
 
 export const dynamicParams = false;
-
-type PromoCountdownLabels = NonNullable<
-  React.ComponentProps<typeof PromoBanner>['countdown']
->['labels'];
 
 export const generateStaticParams = ({
   params: { lang },
@@ -118,11 +115,12 @@ const PostLayout = async (props: {
   const { lang } = params;
   const post = await getPostFromParams(params);
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const promoDictKey =
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
-  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
-    ? messages.promos[promoDictKey as keyof typeof messages.promos]
-    : undefined;
+  const activeBanner = resolveActiveBanner({
+    audience: 'loggedOut',
+    lang,
+    messages,
+    placement: 'blog',
+  });
 
   if (!post) {
     return <div>Post not found ({params.slug})</div>;
@@ -150,17 +148,6 @@ const PostLayout = async (props: {
     .split(/\s+/)
     .filter((word) => word.length > 0).length;
   const readingTime = Math.ceil(wordCount / 200); // Average reading speed
-  const promoCountdown =
-    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
-    promoDict &&
-    'countdown' in promoDict
-      ? ({
-          enabled: true,
-          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-          labels: promoDict.countdown as PromoCountdownLabels,
-        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
-      : undefined;
-
   return (
     <>
       {/* Enhanced Structured Data for LLM Understanding */}
@@ -201,16 +188,7 @@ const PostLayout = async (props: {
         {JSON.stringify(breadcrumbSchema)}
       </Script>
 
-      {promoDict && (
-        <PromoBanner
-          ariaLabelDismiss={promoDict.ariaLabelDismiss}
-          countdown={promoCountdown}
-          ctaLink={`/${lang}/signup`}
-          ctaText={promoDict.ctaLoggedOut}
-          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-          text={promoDict.text}
-        />
-      )}
+      {activeBanner && <Banner banner={activeBanner} />}
 
       <HeaderStatic />
 

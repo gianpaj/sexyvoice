@@ -234,11 +234,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -738,6 +734,14 @@
       "pricing": {
         "bannerText": "❄️ Vinterudsalg"
       }
+    }
+  },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "De nye ekspressive stemmer er nu live. Oplev mere naturlig rytme, tone og foelelse i det nyeste stemmeudvalg.",
+      "ctaLoggedIn": "Proev stemmer",
+      "ctaLoggedOut": "Log ind",
+      "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
     }
   },
   "audioConverter": {

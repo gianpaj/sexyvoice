@@ -740,6 +740,14 @@
       }
     }
   },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "Die neuen expressiven Stimmen sind jetzt verfugbar. Erlebe naturlichere Betonung, Dynamik und Emotion mit der neuesten Stimmenauswahl.",
+      "ctaLoggedIn": "Stimmen testen",
+      "ctaLoggedOut": "Anmelden",
+      "ariaLabelDismiss": "Hinweis zu expressiven Stimmen schliessen"
+    }
+  },
   "audioConverter": {
     "title": "Kostenloser Audio-Konverter",
     "subtitle": "Konvertieren Sie Audiodateien offline in Ihrem Browser zu MP3, WAV, MP4 und mehr",

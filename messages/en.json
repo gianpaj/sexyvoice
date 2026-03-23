@@ -257,9 +257,7 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": [
-          "Everything in Standard, just cheaper"
-        ]
+        "features": ["Everything in Standard, just cheaper"]
       }
     },
     "topup": {
@@ -738,6 +736,14 @@
       "pricing": {
         "bannerText": "❄️ Winter Sale"
       }
+    }
+  },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "New expressive voices are live. Hear more natural pacing, tone, and emotion in the latest voice lineup.",
+      "ctaLoggedIn": "Try voices",
+      "ctaLoggedOut": "Log in",
+      "ariaLabelDismiss": "Dismiss expressive voices announcement"
     }
   },
   "audioConverter": {

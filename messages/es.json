@@ -740,6 +740,14 @@
       }
     }
   },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "Las nuevas voces expresivas ya estan disponibles. Escucha una entonacion, ritmo y emocion mas naturales en la nueva seleccion de voces.",
+      "ctaLoggedIn": "Probar voces",
+      "ctaLoggedOut": "Iniciar sesion",
+      "ariaLabelDismiss": "Cerrar anuncio de voces expresivas"
+    }
+  },
   "audioConverter": {
     "title": "Conversor de Audio Gratuito",
     "subtitle": "Convierte archivos de audio a MP3, WAV, MP4 y más formatos sin conexión en tu navegador",

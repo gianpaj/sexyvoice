@@ -19,8 +19,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
-import { PromoBanner } from '@/components/promo-banner';
 import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
 import {
   Sidebar,
@@ -36,37 +36,28 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import type { ResolvedBanner } from '@/lib/banners/types';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import type messages from '@/messages/en.json';
 
 interface DashboardUIProps {
+  activeBanner: ResolvedBanner | null;
   children: React.ReactNode;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
   dict: typeof messages;
   lang: Locale;
-  promoDict?: (typeof messages.promos)[keyof typeof messages.promos];
   userId: string;
 }
 
 export default function DashboardUI({
+  activeBanner,
   children,
   creditTransactions,
   userId,
   lang,
   dict,
-  promoDict,
 }: DashboardUIProps) {
   const pathname = usePathname();
-  const promoCountdown =
-    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
-    promoDict &&
-    'countdown' in promoDict
-      ? ({
-          enabled: true,
-          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-          labels: promoDict.countdown,
-        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
-      : undefined;
 
   const navigation = [
     {
@@ -214,17 +205,7 @@ export default function DashboardUI({
           </SidebarFooter>
         </Sidebar>
 
-        {promoDict && (
-          <PromoBanner
-            ariaLabelDismiss={promoDict.ariaLabelDismiss}
-            countdown={promoCountdown}
-            ctaLink={`/${lang}/dashboard/credits`}
-            ctaText={promoDict.ctaLoggedIn}
-            inDashboard
-            isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-            text={promoDict.text}
-          />
-        )}
+        {activeBanner && <Banner banner={activeBanner} inDashboard />}
         <div className="flex w-full flex-1 flex-col">
           <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
             <SidebarTrigger className="lg:hidden" />
