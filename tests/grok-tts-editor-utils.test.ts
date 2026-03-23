@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  type GrokEditorToken as GrokTtsToken,
   type GrokInstantTag,
+  type GrokEditorToken as GrokTtsToken,
   type GrokWrapperCloseTag,
   type GrokWrapperOpenTag,
+  grokTextToTipTapDoc,
+  grokTipTapDocToText,
   parseGrokTtsText,
   serializeGrokEditorTokens as serializeGrokTtsDoc,
 } from '@/lib/grok-tts-editor';
@@ -179,6 +181,104 @@ describe('grok-tts-editor-utils', () => {
       const parsed = parseGrokTtsText(input).tokens;
 
       expect(serializeGrokTtsDoc(parsed)).toBe(input);
+    });
+  });
+
+  describe('TipTap document conversion', () => {
+    it('converts wrapper tags into text nodes with wrapper marks', () => {
+      expect(grokTextToTipTapDoc('<soft>Hello</soft>')).toEqual({
+        content: [
+          {
+            content: [
+              {
+                marks: [
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      openTag: '<soft>',
+                    },
+                    type: 'grokWrapper',
+                  },
+                ],
+                text: 'Hello',
+                type: 'text',
+              },
+            ],
+            type: 'paragraph',
+          },
+        ],
+        type: 'doc',
+      });
+    });
+
+    it('converts instant tags into inline instantTag nodes', () => {
+      expect(grokTextToTipTapDoc('Hello [pause]')).toEqual({
+        content: [
+          {
+            content: [
+              {
+                text: 'Hello ',
+                type: 'text',
+              },
+              {
+                attrs: {
+                  tag: '[pause]',
+                },
+                type: 'instantTag',
+              },
+            ],
+            type: 'paragraph',
+          },
+        ],
+        type: 'doc',
+      });
+    });
+
+    it('serializes wrapper marks and instant nodes back to Grok text', () => {
+      expect(
+        grokTipTapDocToText({
+          content: [
+            {
+              content: [
+                {
+                  marks: [
+                    {
+                      attrs: {
+                        closeTag: '</soft>',
+                        openTag: '<soft>',
+                      },
+                      type: 'grokWrapper',
+                    },
+                  ],
+                  text: 'Hello ',
+                  type: 'text',
+                },
+                {
+                  attrs: {
+                    tag: '[laugh]',
+                  },
+                  marks: [
+                    {
+                      attrs: {
+                        closeTag: '</soft>',
+                        openTag: '<soft>',
+                      },
+                      type: 'grokWrapper',
+                    },
+                  ],
+                  type: 'instantTag',
+                },
+                {
+                  text: 'there',
+                  type: 'text',
+                },
+              ],
+              type: 'paragraph',
+            },
+          ],
+          type: 'doc',
+        }),
+      ).toBe('<soft>Hello [laugh]</soft>there');
     });
   });
 });

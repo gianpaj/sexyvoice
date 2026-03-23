@@ -65,7 +65,18 @@ export interface GrokEditorParseResult {
   tokens: GrokEditorToken[];
 }
 
+export interface GrokTipTapWrapperMark {
+  attrs: {
+    closeTag: GrokWrapperCloseTag;
+    openTag: GrokWrapperOpenTag;
+  };
+  type: 'grokWrapper';
+}
+
+export type GrokTipTapMark = GrokTipTapWrapperMark;
+
 export interface GrokTipTapTextNode {
+  marks?: GrokTipTapMark[];
   text: string;
   type: 'text';
 }
@@ -74,22 +85,13 @@ export interface GrokTipTapInstantTagNode {
   attrs: {
     tag: GrokInstantTag;
   };
+  marks?: GrokTipTapMark[];
   type: 'instantTag';
-}
-
-export interface GrokTipTapWrapperTagNode {
-  attrs: {
-    openTag: GrokWrapperOpenTag;
-    closeTag: GrokWrapperCloseTag;
-  };
-  content: GrokTipTapInlineNode[];
-  type: 'wrapperTag';
 }
 
 export type GrokTipTapInlineNode =
   | GrokTipTapTextNode
-  | GrokTipTapInstantTagNode
-  | GrokTipTapWrapperTagNode;
+  | GrokTipTapInstantTagNode;
 
 export interface GrokTipTapParagraphNode {
   content?: GrokTipTapInlineNode[];
@@ -102,6 +104,12 @@ export interface GrokTipTapDocNode {
 }
 
 interface WrapperTagConfig {
+  closeTag: GrokWrapperCloseTag;
+  openTag: GrokWrapperOpenTag;
+}
+
+interface WrapperFrame {
+  children: GrokEditorToken[];
   closeTag: GrokWrapperCloseTag;
   openTag: GrokWrapperOpenTag;
 }
@@ -119,12 +127,6 @@ const WRAPPER_CLOSE_TO_OPEN = new Map<GrokWrapperCloseTag, GrokWrapperOpenTag>(
 const SORTED_TAG_CANDIDATES = [...INSTANT_TAGS, ...WRAPPER_TAGS.flat()].sort(
   (a, b) => b.length - a.length,
 );
-
-interface WrapperFrame {
-  children: GrokEditorToken[];
-  closeTag: GrokWrapperCloseTag;
-  openTag: GrokWrapperOpenTag;
-}
 
 function isInstantTag(tag: string): tag is GrokInstantTag {
   return INSTANT_TAG_SET.has(tag);
@@ -165,8 +167,130 @@ function getMatchingTagAt(input: string, index: number): string | null {
   return null;
 }
 
-function splitTextByLines(value: string): string[] {
-  return value.split('\n');
+function createWrapperMark(
+  openTag: GrokWrapperOpenTag,
+  closeTag: GrokWrapperCloseTag,
+): GrokTipTapWrapperMark {
+  return {
+    attrs: {
+      closeTag,
+      openTag,
+    },
+    type: 'grokWrapper',
+  };
+}
+
+function marksEqual(
+  a: GrokTipTapMark[] | undefined,
+  b: GrokTipTapMark[] | undefined,
+) {
+  if (!(a || b)) {
+    return true;
+  }
+
+  if (!(a && b) || a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((mark, index) => {
+    const other = b[index];
+
+    return (
+      other?.type === mark.type &&
+      other.attrs.openTag === mark.attrs.openTag &&
+      other.attrs.closeTag === mark.attrs.closeTag
+    );
+  });
+}
+
+function cloneMarks(marks: readonly GrokTipTapMark[]) {
+  if (marks.length === 0) {
+    return undefined;
+  }
+
+  return marks.map((mark) => ({
+    attrs: {
+      closeTag: mark.attrs.closeTag,
+      openTag: mark.attrs.openTag,
+    },
+    type: mark.type,
+  }));
+}
+
+function appendInlineNode(
+  paragraphs: GrokTipTapInlineNode[][],
+  node: GrokTipTapInlineNode,
+) {
+  const currentParagraph = paragraphs.at(-1);
+  if (!currentParagraph) {
+    return;
+  }
+
+  const previous = currentParagraph.at(-1);
+  if (
+    previous?.type === 'text' &&
+    node.type === 'text' &&
+    marksEqual(previous.marks, node.marks)
+  ) {
+    previous.text += node.text;
+    return;
+  }
+
+  currentParagraph.push(node);
+}
+
+function pushText(
+  paragraphs: GrokTipTapInlineNode[][],
+  value: string,
+  activeMarks: readonly GrokTipTapMark[],
+) {
+  const lines = value.split('\n');
+  const marks = cloneMarks(activeMarks);
+
+  lines.forEach((line, index) => {
+    if (line) {
+      appendInlineNode(paragraphs, {
+        ...(marks ? { marks } : {}),
+        text: line,
+        type: 'text',
+      });
+    }
+
+    if (index < lines.length - 1) {
+      paragraphs.push([]);
+    }
+  });
+}
+
+function appendTokensToParagraphs(
+  tokens: GrokEditorToken[],
+  paragraphs: GrokTipTapInlineNode[][],
+  activeMarks: readonly GrokTipTapMark[] = [],
+) {
+  for (const token of tokens) {
+    if (token.type === 'text') {
+      pushText(paragraphs, token.value, activeMarks);
+      continue;
+    }
+
+    if (token.type === 'instant-tag') {
+      const marks = cloneMarks(activeMarks);
+
+      appendInlineNode(paragraphs, {
+        ...(marks ? { marks } : {}),
+        attrs: {
+          tag: token.tag,
+        },
+        type: 'instantTag',
+      });
+      continue;
+    }
+
+    appendTokensToParagraphs(token.children, paragraphs, [
+      ...activeMarks,
+      createWrapperMark(token.openTag, token.closeTag),
+    ]);
+  }
 }
 
 function tokensToParagraphs(
@@ -174,62 +298,13 @@ function tokensToParagraphs(
 ): GrokTipTapParagraphNode[] {
   const paragraphs: GrokTipTapInlineNode[][] = [[]];
 
-  const appendInlineNode = (node: GrokTipTapInlineNode) => {
-    const currentParagraph = paragraphs.at(-1);
-    if (!currentParagraph) {
-      return;
-    }
-    currentParagraph.push(node);
-  };
-
-  const pushText = (value: string) => {
-    const lines = splitTextByLines(value);
-
-    lines.forEach((line, index) => {
-      if (line) {
-        appendInlineNode({
-          type: 'text',
-          text: line,
-        });
-      }
-
-      if (index < lines.length - 1) {
-        paragraphs.push([]);
-      }
-    });
-  };
-
-  for (const token of tokens) {
-    if (token.type === 'text') {
-      pushText(token.value);
-      continue;
-    }
-
-    if (token.type === 'instant-tag') {
-      appendInlineNode({
-        type: 'instantTag',
-        attrs: {
-          tag: token.tag,
-        },
-      });
-      continue;
-    }
-
-    appendInlineNode({
-      type: 'wrapperTag',
-      attrs: {
-        openTag: token.openTag,
-        closeTag: token.closeTag,
-      },
-      content: tokensToInlineNodes(token.children),
-    });
-  }
+  appendTokensToParagraphs(tokens, paragraphs);
 
   return paragraphs.map((content) =>
     content.length > 0
       ? {
-          type: 'paragraph',
           content,
+          type: 'paragraph',
         }
       : {
           type: 'paragraph',
@@ -237,41 +312,51 @@ function tokensToParagraphs(
   );
 }
 
-function tokensToInlineNodes(
-  tokens: GrokEditorToken[],
-): GrokTipTapInlineNode[] {
-  const doc = tokensToParagraphs(tokens);
-
-  if (doc.length <= 1) {
-    return doc[0]?.content ?? [];
+function isWrapperMark(mark: unknown): mark is GrokTipTapWrapperMark {
+  if (!mark || typeof mark !== 'object') {
+    return false;
   }
 
-  const nodes: GrokTipTapInlineNode[] = [];
+  const maybeMark = mark as {
+    attrs?: Record<string, unknown>;
+    type?: string;
+  };
 
-  doc.forEach((paragraph, index) => {
-    if (paragraph.content) {
-      nodes.push(...paragraph.content);
-    }
+  const openTag = maybeMark.attrs?.openTag;
+  const closeTag = maybeMark.attrs?.closeTag;
 
-    if (index < doc.length - 1) {
-      nodes.push({
-        type: 'text',
-        text: '\n',
-      });
-    }
-  });
-
-  return nodes;
+  return (
+    maybeMark.type === 'grokWrapper' &&
+    typeof openTag === 'string' &&
+    typeof closeTag === 'string' &&
+    isWrapperOpenTag(openTag) &&
+    isWrapperCloseTag(closeTag)
+  );
 }
 
-function serializeInlineNode(node: unknown): string {
+function getNodeMarks(node: unknown): GrokTipTapWrapperMark[] {
+  if (!node || typeof node !== 'object') {
+    return [];
+  }
+
+  const maybeNode = node as {
+    marks?: unknown[];
+  };
+
+  if (!Array.isArray(maybeNode.marks)) {
+    return [];
+  }
+
+  return maybeNode.marks.filter(isWrapperMark);
+}
+
+function serializeInlineNodeText(node: unknown): string {
   if (!node || typeof node !== 'object') {
     return '';
   }
 
   const maybeNode = node as {
     attrs?: Record<string, unknown>;
-    content?: unknown[];
     text?: unknown;
     type?: string;
   };
@@ -285,27 +370,25 @@ function serializeInlineNode(node: unknown): string {
     return typeof tag === 'string' && isInstantTag(tag) ? tag : '';
   }
 
-  if (maybeNode.type === 'wrapperTag') {
-    const openTag = maybeNode.attrs?.openTag;
-    const closeTag = maybeNode.attrs?.closeTag;
+  return '';
+}
 
-    if (
-      typeof openTag !== 'string' ||
-      typeof closeTag !== 'string' ||
-      !isWrapperOpenTag(openTag) ||
-      !isWrapperCloseTag(closeTag)
-    ) {
-      return '';
-    }
+function getCommonPrefixLength(
+  current: readonly GrokTipTapWrapperMark[],
+  next: readonly GrokTipTapWrapperMark[],
+) {
+  const max = Math.min(current.length, next.length);
+  let index = 0;
 
-    const children = Array.isArray(maybeNode.content)
-      ? maybeNode.content.map(serializeInlineNode).join('')
-      : '';
-
-    return `${openTag}${children}${closeTag}`;
+  while (
+    index < max &&
+    current[index]?.attrs.openTag === next[index]?.attrs.openTag &&
+    current[index]?.attrs.closeTag === next[index]?.attrs.closeTag
+  ) {
+    index += 1;
   }
 
-  return '';
+  return index;
 }
 
 function serializeParagraphNode(node: unknown): string {
@@ -318,15 +401,38 @@ function serializeParagraphNode(node: unknown): string {
     type?: string;
   };
 
-  if (maybeNode.type !== 'paragraph') {
+  if (maybeNode.type !== 'paragraph' || !Array.isArray(maybeNode.content)) {
     return '';
   }
 
-  if (!Array.isArray(maybeNode.content)) {
-    return '';
+  let result = '';
+  let activeMarks: GrokTipTapWrapperMark[] = [];
+
+  for (const child of maybeNode.content) {
+    const nextMarks = getNodeMarks(child);
+    const prefixLength = getCommonPrefixLength(activeMarks, nextMarks);
+
+    for (
+      let index = activeMarks.length - 1;
+      index >= prefixLength;
+      index -= 1
+    ) {
+      result += activeMarks[index]?.attrs.closeTag ?? '';
+    }
+
+    for (let index = prefixLength; index < nextMarks.length; index += 1) {
+      result += nextMarks[index]?.attrs.openTag ?? '';
+    }
+
+    result += serializeInlineNodeText(child);
+    activeMarks = nextMarks;
   }
 
-  return maybeNode.content.map(serializeInlineNode).join('');
+  for (let index = activeMarks.length - 1; index >= 0; index -= 1) {
+    result += activeMarks[index]?.attrs.closeTag ?? '';
+  }
+
+  return result;
 }
 
 export function getGrokInstantTags(): readonly GrokInstantTag[] {
@@ -362,8 +468,8 @@ export function parseGrokTtsText(input: string): GrokEditorParseResult {
 
     if (isInstantTag(match)) {
       getCurrentTarget().push({
-        type: 'instant-tag',
         tag: match,
+        type: 'instant-tag',
       });
       cursor += matchLength;
       continue;
@@ -395,14 +501,12 @@ export function parseGrokTtsText(input: string): GrokEditorParseResult {
 
       stack.pop();
 
-      const wrapperToken: GrokWrapperTagToken = {
-        type: 'wrapper-tag',
-        openTag: top.openTag,
-        closeTag: top.closeTag,
+      getCurrentTarget().push({
         children: top.children,
-      };
-
-      getCurrentTarget().push(wrapperToken);
+        closeTag: top.closeTag,
+        openTag: top.openTag,
+        type: 'wrapper-tag',
+      });
       cursor += matchLength;
       continue;
     }
@@ -446,8 +550,8 @@ export function grokTextToTipTapDoc(input: string): GrokTipTapDocNode {
   const parsed = parseGrokTtsText(input);
 
   return {
-    type: 'doc',
     content: tokensToParagraphs(parsed.tokens),
+    type: 'doc',
   };
 }
 

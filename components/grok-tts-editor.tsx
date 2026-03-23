@@ -3,8 +3,13 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { GrokWrapperMark } from '@/components/grok-tts/extensions/grok-wrapper-mark';
+import {
+  createInstantTagNode,
+  InstantTag,
+} from '@/components/grok-tts/extensions/instant-tag';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -147,6 +152,7 @@ export function GrokTTSEditor({
   value,
 }: GrokTTSEditorProps) {
   const [effectsOpen, setEffectsOpen] = useState(false);
+  const [currentLength, setCurrentLength] = useState(value.length);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -166,6 +172,8 @@ export function GrokTTSEditor({
         orderedList: false,
         strike: false,
       }),
+      InstantTag,
+      GrokWrapperMark,
     ],
     content: plainTextToDoc(value),
     editorProps: {
@@ -185,17 +193,10 @@ export function GrokTTSEditor({
         nextEditor.commands.setContent(plainTextToDoc(text));
       }
 
+      setCurrentLength(text.length);
       onChange(text);
     },
   });
-
-  const currentLength = useMemo(() => {
-    if (!editor) {
-      return value.length;
-    }
-
-    return grokTipTapDocToText(editor.getJSON()).length;
-  }, [editor, value]);
 
   useEffect(() => {
     if (!editor) {
@@ -204,10 +205,12 @@ export function GrokTTSEditor({
 
     const current = grokTipTapDocToText(editor.getJSON());
     if (current === value) {
+      setCurrentLength(current.length);
       return;
     }
 
     editor.commands.setContent(plainTextToDoc(value));
+    setCurrentLength(value.length);
   }, [editor, value]);
 
   const insertInstantTag = useCallback(
@@ -217,9 +220,13 @@ export function GrokTTSEditor({
       }
 
       const serialized = grokTipTapDocToText(editor.getJSON());
-      const nextValue = `${serialized}${tag.tag}`.slice(0, maxLength);
+      const nextLength = serialized.length + tag.tag.length;
 
-      editor.commands.setContent(plainTextToDoc(nextValue));
+      if (nextLength > maxLength) {
+        return;
+      }
+
+      editor.chain().focus().insertContent(createInstantTagNode(tag.tag)).run();
       setEffectsOpen(false);
     },
     [editor, maxLength],
@@ -231,13 +238,27 @@ export function GrokTTSEditor({
         return;
       }
 
-      const serialized = grokTipTapDocToText(editor.getJSON());
-      const nextValue = `${serialized}${tag.tag}${tag.closeTag}`.slice(
-        0,
-        maxLength,
-      );
+      const { empty } = editor.state.selection;
+      if (empty) {
+        return;
+      }
 
-      editor.commands.setContent(plainTextToDoc(nextValue));
+      const serialized = grokTipTapDocToText(editor.getJSON());
+      const nextLength =
+        serialized.length + tag.tag.length + tag.closeTag.length;
+
+      if (nextLength > maxLength) {
+        return;
+      }
+
+      editor
+        .chain()
+        .focus()
+        .setMark('grokWrapper', {
+          closeTag: tag.closeTag,
+          openTag: tag.tag,
+        })
+        .run();
       setEffectsOpen(false);
     },
     [editor, maxLength],

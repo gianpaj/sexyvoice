@@ -94,4 +94,48 @@ describe('GrokTTSEditor', () => {
     ).toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it('inserts an instant tag via the effects popover', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /effects/i }));
+    await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
+
+    expect(onChange).toHaveBeenCalledWith('[pause]');
+  });
+
+  it('hides the placeholder once typing begins', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await screen.findByText(
+      (_, element) => element?.classList.contains('ProseMirror') ?? false,
+    );
+
+    expect(screen.getByText('Type your script')).toBeInTheDocument();
+
+    await user.type(editor, 'Hello');
+
+    expect(screen.queryByText('Type your script')).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('Hello');
+  });
 });
