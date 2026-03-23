@@ -1,9 +1,16 @@
 'use client';
 
+import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Sparkles } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { GrokWrapperMark } from '@/components/grok-tts/extensions/grok-wrapper-mark';
 import {
@@ -17,6 +24,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
+  GROK_EMPTY_WRAPPER_TEXT,
   type GrokInstantTag,
   getGrokInstantTags,
   grokTextToTipTapDoc,
@@ -141,8 +149,129 @@ interface GrokTTSEditorProps {
   value: string;
 }
 
+interface EditorSelectionSnapshot {
+  empty: boolean;
+  from: number;
+  to: number;
+}
+
+type EditorInstance = NonNullable<ReturnType<typeof useEditor>>;
+
+type GrokDebugPhase =
+  | 'create'
+  | 'handleKeyDown'
+  | 'handleTextInput'
+  | 'selection'
+  | 'transaction'
+  | 'update';
+
+interface GrokDebugEntry {
+  doc: unknown;
+  dom: string;
+  phase: GrokDebugPhase;
+  selection: EditorSelectionSnapshot;
+  serialized: string;
+  storedMarks: { attrs: Record<string, unknown>; type: string }[];
+  timestamp: string;
+}
+
+declare global {
+  interface Window {
+    __SV_GROK_DEBUG?: boolean;
+    __SV_GROK_DEBUG_LOGS?: GrokDebugEntry[];
+  }
+}
+
 function plainTextToDoc(value: string) {
   return grokTextToTipTapDoc(value);
+}
+
+function getDomSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot | null {
+  const selection = window.getSelection();
+
+  if (!(selection && selection.rangeCount > 0)) {
+    return null;
+  }
+
+  const range = selection.getRangeAt(0);
+  const editorDom = editor.view.dom;
+  const startNode = range.startContainer;
+  const endNode = range.endContainer;
+
+  if (!(editorDom.contains(startNode) && editorDom.contains(endNode))) {
+    return null;
+  }
+
+  try {
+    const anchor = editor.view.posAtDOM(startNode, range.startOffset);
+    const head = editor.view.posAtDOM(endNode, range.endOffset);
+
+    return {
+      empty: anchor === head,
+      from: Math.min(anchor, head),
+      to: Math.max(anchor, head),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function snapshotSelection(selection: {
+  empty: boolean;
+  from: number;
+  to: number;
+}): EditorSelectionSnapshot {
+  return {
+    empty: selection.empty,
+    from: selection.from,
+    to: selection.to,
+  };
+}
+
+function snapshotMarks(
+  marks:
+    | readonly {
+        attrs: Record<string, unknown>;
+        type: { name: string };
+      }[]
+    | null
+    | undefined,
+) {
+  if (!marks) {
+    return [];
+  }
+
+  return marks.map((mark) => ({
+    attrs: mark.attrs,
+    type: mark.type.name,
+  }));
+}
+
+function isGrokDebugEnabled() {
+  return typeof window !== 'undefined' && window.__SV_GROK_DEBUG === true;
+}
+
+function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
+  if (!isGrokDebugEnabled()) {
+    return;
+  }
+
+  const doc = editor.getJSON();
+  const entry: GrokDebugEntry = {
+    doc,
+    dom: editor.view.dom.innerHTML,
+    phase,
+    selection: snapshotSelection(editor.state.selection),
+    serialized: grokTipTapDocToText(doc),
+    storedMarks: snapshotMarks(editor.state.storedMarks),
+    timestamp: new Date().toISOString(),
+  };
+
+  window.__SV_GROK_DEBUG_LOGS ??= [];
+  window.__SV_GROK_DEBUG_LOGS.push(entry);
+  console.debug('[grok-tts-debug]', entry);
 }
 
 export function GrokTTSEditor({
@@ -153,6 +282,11 @@ export function GrokTTSEditor({
 }: GrokTTSEditorProps) {
   const [effectsOpen, setEffectsOpen] = useState(false);
   const [currentLength, setCurrentLength] = useState(value.length);
+  const lastSelectionRef = useRef<EditorSelectionSnapshot>({
+    empty: true,
+    from: 1,
+    to: 1,
+  });
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -184,6 +318,53 @@ export function GrokTTSEditor({
         class:
           'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
       },
+      handleDOMEvents: {
+        keydown: (_view, event) => {
+          if (editor) {
+            recordGrokDebug('handleKeyDown', editor);
+          }
+
+          return false;
+        },
+      },
+      handleTextInput: (view) => {
+        if (editor) {
+          recordGrokDebug('handleTextInput', editor);
+          return false;
+        }
+
+        const fallbackDoc = view.state.doc.toJSON();
+        if (isGrokDebugEnabled()) {
+          const entry: GrokDebugEntry = {
+            doc: fallbackDoc,
+            dom: view.dom.innerHTML,
+            phase: 'handleTextInput',
+            selection: snapshotSelection(view.state.selection),
+            serialized: grokTipTapDocToText(fallbackDoc),
+            storedMarks: snapshotMarks(view.state.storedMarks),
+            timestamp: new Date().toISOString(),
+          };
+
+          window.__SV_GROK_DEBUG_LOGS ??= [];
+          window.__SV_GROK_DEBUG_LOGS.push(entry);
+          console.debug('[grok-tts-debug]', entry);
+        }
+
+        return false;
+      },
+    },
+    onCreate: ({ editor: nextEditor }) => {
+      const { empty, from, to } = nextEditor.state.selection;
+      lastSelectionRef.current = { empty, from, to };
+      recordGrokDebug('create', nextEditor);
+    },
+    onSelectionUpdate: ({ editor: nextEditor }) => {
+      const { empty, from, to } = nextEditor.state.selection;
+      lastSelectionRef.current = { empty, from, to };
+      recordGrokDebug('selection', nextEditor);
+    },
+    onTransaction: ({ editor: nextEditor }) => {
+      recordGrokDebug('transaction', nextEditor);
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
@@ -195,8 +376,15 @@ export function GrokTTSEditor({
 
       setCurrentLength(text.length);
       onChange(text);
+      recordGrokDebug('update', nextEditor);
     },
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__SV_GROK_DEBUG_LOGS ??= [];
+    }
+  }, []);
 
   useEffect(() => {
     if (!editor) {
@@ -238,30 +426,84 @@ export function GrokTTSEditor({
         return;
       }
 
-      const { empty } = editor.state.selection;
-      if (empty) {
-        return;
-      }
+      const selection = lastSelectionRef.current;
+      const wrapperLength = tag.tag.length + tag.closeTag.length;
 
       const serialized = grokTipTapDocToText(editor.getJSON());
-      const nextLength =
-        serialized.length + tag.tag.length + tag.closeTag.length;
+      const nextLength = serialized.length + wrapperLength;
 
       if (nextLength > maxLength) {
         return;
       }
 
-      editor
-        .chain()
-        .focus()
-        .setMark('grokWrapper', {
+      if (selection.empty) {
+        const tr = editor.state.tr;
+        const insertFrom = selection.from;
+        const wrapperMark = editor.schema.marks.grokWrapper?.create({
           closeTag: tag.closeTag,
           openTag: tag.tag,
-        })
-        .run();
+        });
+
+        tr.insertText(GROK_EMPTY_WRAPPER_TEXT, insertFrom, selection.to);
+        if (wrapperMark) {
+          tr.addMark(
+            insertFrom,
+            insertFrom + GROK_EMPTY_WRAPPER_TEXT.length,
+            wrapperMark,
+          );
+        }
+        const cursorPos = insertFrom + GROK_EMPTY_WRAPPER_TEXT.length;
+        tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+        editor.view.dispatch(tr);
+        editor
+          .chain()
+          .focus()
+          .setTextSelection(cursorPos)
+          .setMark('grokWrapper', {
+            closeTag: tag.closeTag,
+            openTag: tag.tag,
+          })
+          .run();
+      } else {
+        editor
+          .chain()
+          .focus()
+          .setTextSelection({
+            from: selection.from,
+            to: selection.to,
+          })
+          .setMark('grokWrapper', {
+            closeTag: tag.closeTag,
+            openTag: tag.tag,
+          })
+          .run();
+      }
+
       setEffectsOpen(false);
     },
     [editor, maxLength],
+  );
+
+  const preserveSelection = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+    },
+    [],
+  );
+
+  const preserveEditorSelection = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      if (editor) {
+        const snapshot = getDomSelectionSnapshot(editor);
+
+        if (snapshot) {
+          lastSelectionRef.current = snapshot;
+        }
+      }
+
+      event.preventDefault();
+    },
+    [editor],
   );
 
   const handleInsertTag = useCallback(
@@ -300,7 +542,12 @@ export function GrokTTSEditor({
         <div className="mt-2 flex items-center gap-2">
           <Popover onOpenChange={setEffectsOpen} open={effectsOpen}>
             <PopoverTrigger asChild>
-              <Button className="h-8" size="sm" variant="outline">
+              <Button
+                className="h-8"
+                onMouseDown={preserveEditorSelection}
+                size="sm"
+                variant="outline"
+              >
                 <Sparkles className="mr-1.5 size-3.5" />
                 Effects
                 <ChevronDown className="ml-1 size-3" />
@@ -317,6 +564,7 @@ export function GrokTTSEditor({
                         className="rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
                         key={tag.tag}
                         onClick={() => handleInsertTag(tag)}
+                        onMouseDown={preserveSelection}
                         type="button"
                       >
                         <div className="font-medium">
@@ -340,6 +588,7 @@ export function GrokTTSEditor({
                         className="rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
                         key={tag.tag}
                         onClick={() => handleInsertTag(tag)}
+                        onMouseDown={preserveSelection}
                         type="button"
                       >
                         <div className="font-medium">

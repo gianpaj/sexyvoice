@@ -3,6 +3,8 @@ import { mergeAttributes, Node } from '@tiptap/core';
 import { type GrokInstantTag, getGrokInstantTags } from '@/lib/grok-tts-editor';
 
 const INSTANT_TAGS = new Set(getGrokInstantTags());
+export const GROK_TAG_CHIP_CLASS =
+  'inline-flex rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground';
 
 function isGrokInstantTag(tag: string): tag is GrokInstantTag {
   return INSTANT_TAGS.has(tag as GrokInstantTag);
@@ -40,8 +42,7 @@ export const InstantTag = Node.create({
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-grok-instant-tag': '',
-        class:
-          'inline-flex rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground',
+        class: GROK_TAG_CHIP_CLASS,
         contenteditable: 'false',
       }),
       HTMLAttributes.tag,

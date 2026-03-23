@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  GROK_EMPTY_WRAPPER_TEXT,
   type GrokInstantTag,
   type GrokEditorToken as GrokTtsToken,
   type GrokWrapperCloseTag,
@@ -211,6 +212,32 @@ describe('grok-tts-editor-utils', () => {
       });
     });
 
+    it('keeps empty wrapper tags as marked placeholder text', () => {
+      expect(grokTextToTipTapDoc('<soft></soft>')).toEqual({
+        content: [
+          {
+            content: [
+              {
+                marks: [
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      openTag: '<soft>',
+                    },
+                    type: 'grokWrapper',
+                  },
+                ],
+                text: GROK_EMPTY_WRAPPER_TEXT,
+                type: 'text',
+              },
+            ],
+            type: 'paragraph',
+          },
+        ],
+        type: 'doc',
+      });
+    });
+
     it('converts instant tags into inline instantTag nodes', () => {
       expect(grokTextToTipTapDoc('Hello [pause]')).toEqual({
         content: [
@@ -279,6 +306,34 @@ describe('grok-tts-editor-utils', () => {
           type: 'doc',
         }),
       ).toBe('<soft>Hello [laugh]</soft>there');
+    });
+
+    it('serializes empty wrapper placeholder text back to empty tags', () => {
+      expect(
+        grokTipTapDocToText({
+          content: [
+            {
+              content: [
+                {
+                  marks: [
+                    {
+                      attrs: {
+                        closeTag: '</soft>',
+                        openTag: '<soft>',
+                      },
+                      type: 'grokWrapper',
+                    },
+                  ],
+                  text: GROK_EMPTY_WRAPPER_TEXT,
+                  type: 'text',
+                },
+              ],
+              type: 'paragraph',
+            },
+          ],
+          type: 'doc',
+        }),
+      ).toBe('<soft></soft>');
     });
   });
 });

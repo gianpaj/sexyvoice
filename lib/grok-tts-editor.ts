@@ -34,6 +34,7 @@ export type GrokInstantTag = (typeof INSTANT_TAGS)[number];
 export type GrokWrapperOpenTag = (typeof WRAPPER_TAGS)[number][0];
 export type GrokWrapperCloseTag = (typeof WRAPPER_TAGS)[number][1];
 export type GrokWrapperTagPair = (typeof WRAPPER_TAGS)[number];
+export const GROK_EMPTY_WRAPPER_TEXT = '\u00a0';
 export type GrokTagText =
   | GrokInstantTag
   | GrokWrapperOpenTag
@@ -286,6 +287,14 @@ function appendTokensToParagraphs(
       continue;
     }
 
+    if (token.children.length === 0) {
+      pushText(paragraphs, GROK_EMPTY_WRAPPER_TEXT, [
+        ...activeMarks,
+        createWrapperMark(token.openTag, token.closeTag),
+      ]);
+      continue;
+    }
+
     appendTokensToParagraphs(token.children, paragraphs, [
       ...activeMarks,
       createWrapperMark(token.openTag, token.closeTag),
@@ -362,7 +371,9 @@ function serializeInlineNodeText(node: unknown): string {
   };
 
   if (maybeNode.type === 'text') {
-    return typeof maybeNode.text === 'string' ? maybeNode.text : '';
+    return typeof maybeNode.text === 'string'
+      ? maybeNode.text.replaceAll(GROK_EMPTY_WRAPPER_TEXT, '')
+      : '';
   }
 
   if (maybeNode.type === 'instantTag') {
