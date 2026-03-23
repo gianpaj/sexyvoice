@@ -53,6 +53,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **International Support**: Full i18n implementation powered by `next-intl` for global accessibility (EN/ES/DE/DA/IT/FR)
+- **Localized Site Banners**: Shared banner system for promos and announcements across landing, blog, and dashboard with independent dismiss state and one visible banner at a time
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
 - **Public Tools**: Free utility tools including audio transcription and format conversion
@@ -146,6 +147,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `STRIPE_TOPUP_5_PRICE_ID`
       - `STRIPE_TOPUP_10_PRICE_ID`
       - `STRIPE_TOPUP_99_PRICE_ID`
+   - Banner and promotion configuration
+      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
+      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
+      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
+      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
+      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
+      - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+      - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
    - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
@@ -192,6 +204,18 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+
+### Banner System
+
+The app uses a shared banner system for both promotions and announcements:
+
+- `components/banner.tsx` renders the banner UI
+- `lib/banners/registry.ts` defines supported banners
+- `lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `app/[lang]/actions/banners.ts` handles dismissal cookies
+
+Banner copy is localized in `messages.promos.*` and `messages.announcements.*`.
+Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 ## 🧪 Development
 

@@ -441,7 +441,7 @@ Key environment variables include:
 - **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
 - **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
-- **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
+- **Banners & Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`, `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER`, `NEXT_PUBLIC_PROMO_TRANSLATIONS` (legacy promo fallback), `NEXT_PUBLIC_PROMO_THEME`, `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`); Axiom (`AXIOM_TOKEN`) for structured API request logs
@@ -449,25 +449,28 @@ Key environment variables include:
 - **Production**: Environment-specific configurations for Sentry and CSP
 - Follow `.env.example` for complete list and setup instructions
 
-## Promotion System
+## Banner System
 
-### Generic Promotion Framework
+### Shared Banner Framework
 
-The platform includes a flexible promotion system for credit bonuses:
+The platform includes a shared banner system for promotions and announcements:
 
-- **Configuration**: Environment variables control promotion state and bonus amounts
-- **Banner Component**: `promo-banner.tsx` displays dismissible promotion banners
-- **Server Actions**: `app/[lang]/actions/promos.ts` handles banner dismissal with cookie tracking
-- **Pricing Integration**: `lib/stripe/pricing.ts` calculates credit bonuses based on promotion status
-- **Client-side State**: Cookie-based dismissal tracking (30-day expiry)
+- **Renderer**: `components/banner.tsx` renders the shared dismissible banner UI
+- **Registry**: `lib/banners/registry.ts` defines supported promo and announcement banners
+- **Resolver**: `lib/banners/resolve-banner.ts` chooses the single visible banner for landing, blog, or dashboard
+- **Server Actions**: `app/[lang]/actions/banners.ts` handles banner dismissal with per-banner cookies
+- **Localization**: Banner copy lives in `messages.promos.*` and `messages.announcements.*`
+- **Visibility Model**: Only one banner is visible at a time; dismiss state is independent per banner
 
 ### Implementation Pattern
 
-1. Enable promotion via `NEXT_PUBLIC_PROMO_ENABLED=true`
-2. Set promotion ID (e.g., `halloween_2025`) and bonus amounts
-3. Banner displays on landing and dashboard pages with CTA
-4. Users can dismiss banner (stored in cookies)
-5. Credit packages automatically include bonus credits when enabled
+1. Define the banner in `lib/banners/registry.ts`
+2. Add localized copy to all `messages/*.json` files under `promos` or `announcements`
+3. Activate a promo via `NEXT_PUBLIC_PROMO_ENABLED=true` plus `NEXT_PUBLIC_ACTIVE_PROMO_BANNER=<id>`
+4. Activate an announcement via `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER=<id>`
+5. The resolver selects the highest-priority banner valid for the current placement
+6. Users can dismiss a banner without affecting other banners
+7. Credit packages still use the existing promo bonus env vars when promos are enabled
 
 ## Feature Development Priorities
 
