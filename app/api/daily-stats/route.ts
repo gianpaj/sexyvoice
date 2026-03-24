@@ -13,6 +13,7 @@ import {
 } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserByStripeCustomerId } from '@/lib/supabase/queries';
+import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
   filterByDateRange,
   formatChange,
@@ -997,35 +998,30 @@ export async function GET(request: NextRequest) {
   }
 
   // Calculate usage breakdown by source_type
-  type UsageSourceType =
-    | 'tts'
-    | 'voice_cloning'
-    | 'live_call'
-    | 'audio_processing';
-  const sourceTypeLabels: Record<UsageSourceType, string> = {
+  const sourceTypeLabels: Partial<Record<UsageSourceType, string>> = {
     tts: 'TTS',
     voice_cloning: 'Cloning',
     live_call: 'Calls',
     audio_processing: 'Processing',
+    api_tts: 'API TTS',
+    api_voice_cloning: 'API Cloning',
   };
+
+  const getSourceTypeLabel = (sourceType: string): string =>
+    sourceTypeLabels[sourceType as UsageSourceType] ?? sourceType;
 
   const calculateUsageBreakdown = (
     events: typeof paidUserUsageEvents,
-  ): Map<UsageSourceType, number> => {
-    const breakdown = new Map<UsageSourceType, number>();
+  ): Map<string, number> => {
+    const breakdown = new Map<string, number>();
     for (const event of events) {
-      const current = breakdown.get(event.source_type as UsageSourceType) ?? 0;
-      breakdown.set(
-        event.source_type as UsageSourceType,
-        current + event.credits_used,
-      );
+      const current = breakdown.get(event.source_type) ?? 0;
+      breakdown.set(event.source_type, current + event.credits_used);
     }
     return breakdown;
   };
 
-  const formatUsageBreakdown = (
-    breakdown: Map<UsageSourceType, number>,
-  ): string => {
+  const formatUsageBreakdown = (breakdown: Map<string, number>): string => {
     const total = [...breakdown.values()].reduce((sum, v) => sum + v, 0);
     if (total === 0) return 'No usage';
 
@@ -1033,7 +1029,7 @@ export async function GET(request: NextRequest) {
       .sort(([, a], [, b]) => b - a)
       .map(([type, credits]) => {
         const pct = ((credits / total) * 100).toFixed(0);
-        return `${sourceTypeLabels[type]}: ${formatCompactNumber(credits)} (${pct}%)`;
+        return `${getSourceTypeLabel(type)}: ${formatCompactNumber(credits)} (${pct}%)`;
       })
       .join(' | ');
   };
@@ -1092,17 +1088,19 @@ export async function GET(request: NextRequest) {
 
   // Both sides are in dollars: usageValueYesterday vs revenuePurchasedYesterday
   // If purchase is 0, ratio is infinite if usage > 0.
-  const burnRateRatio =
-    revenuePurchasedYesterday > 0
-      ? usageValueYesterday / revenuePurchasedYesterday
-      : usageValueYesterday > 0
-        ? Number.POSITIVE_INFINITY
-        : 0;
+  let burnRateRatio = 0;
+  if (revenuePurchasedYesterday > 0) {
+    burnRateRatio = usageValueYesterday / revenuePurchasedYesterday;
+  } else if (usageValueYesterday > 0) {
+    burnRateRatio = Number.POSITIVE_INFINITY;
+  }
 
-  const burnRateFlag =
-    burnRateRatio > 1.2 // Warn if burning 20% more than buying
-      ? ` ⚠️ Burn rate: ${revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'} vs purchased`
-      : '';
+  let burnRateFlag = '';
+  if (burnRateRatio > 1.2) {
+    const burnRateDisplay =
+      revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞';
+    burnRateFlag = ` ⚠️ Burn rate: ${burnRateDisplay} vs purchased`;
+  }
 
   // DEBUG: Credit calculation verification
   if (!isProd) {
