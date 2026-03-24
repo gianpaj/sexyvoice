@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/performance/noNamespaceImport: it's fine */
 import * as fs from 'node:fs';
 import { join } from 'node:path';
 import * as Sentry from '@sentry/nextjs';
@@ -28,11 +29,12 @@ import {
 } from './utils';
 
 // Allow up to 5 minutes — the cron does many paginated DB fetches and without
-// this Vercel kills the function at the plan default (10s hobby / 60s pro),
+// this Vercel kills the function depending on the plan,
 // which drops the PostgREST connection and surfaces as a PostgreSQL 57014
 // (query_canceled) error rather than a Vercel timeout.
 export const maxDuration = 300;
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
 
@@ -66,9 +68,10 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
-  const useCache = !isProd && fs.existsSync(CACHE_FILE);
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
+  const cacheReportDate = today.toISOString().slice(0, 10);
+  const useCache = !isProd && fs.existsSync(CACHE_FILE);
   const previousDay = subtractDays(today, 1);
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
@@ -137,7 +140,7 @@ export async function GET(request: NextRequest) {
   let profilesTotalCountResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
-  let allCreditTransactions: CreditTransaction[];
+  let allCreditTransactions: CreditTransaction[] = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -148,27 +151,51 @@ export async function GET(request: NextRequest) {
   let callSessionsTotalCountResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessionsAllTimeDurationResult: any;
-  let usageEventsWeekResult: { data: UsageEvent[] | null; error: unknown };
+  let usageEventsWeekResult:
+    | { data: UsageEvent[] | null; error: unknown }
+    | undefined;
+  let loadedFromValidCache = false;
 
   if (useCache) {
-    console.log('📦 Loading from cache:', CACHE_FILE);
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    audioYesterdayResult = cached.audioYesterdayResult;
-    audioWeekResult = cached.audioWeekResult;
-    audioTotalCountResult = cached.audioTotalCountResult;
-    clonesResult = cached.clonesResult;
-    profilesRecentResult = cached.profilesRecentResult;
-    profilesTotalCountResult = cached.profilesTotalCountResult;
-    apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
-    allCreditTransactions = cached.allCreditTransactions;
-    activeSubscribersCount = cached.activeSubscribersCount;
-    nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
-    callSessionsWeekResult = cached.callSessionsWeekResult;
-    callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
-    callSessionsAllTimeDurationResult =
-      cached.callSessionsAllTimeDurationResult;
-    usageEventsWeekResult = cached.usageEventsWeekResult;
-  } else {
+    if (typeof cached.reportDate !== 'string') {
+      console.log(
+        '♻️ Ignoring legacy cache without reportDate:',
+        CACHE_FILE,
+        '(forcing refresh)',
+      );
+    } else if (cached.reportDate === cacheReportDate) {
+      console.log(
+        '📦 Loading from cache:',
+        CACHE_FILE,
+        `(report date: ${cached.reportDate})`,
+      );
+      audioYesterdayResult = cached.audioYesterdayResult;
+      audioWeekResult = cached.audioWeekResult;
+      audioTotalCountResult = cached.audioTotalCountResult;
+      clonesResult = cached.clonesResult;
+      profilesRecentResult = cached.profilesRecentResult;
+      profilesTotalCountResult = cached.profilesTotalCountResult;
+      apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
+      allCreditTransactions = cached.allCreditTransactions;
+      activeSubscribersCount = cached.activeSubscribersCount;
+      nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
+      callSessionsWeekResult = cached.callSessionsWeekResult;
+      callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
+      callSessionsAllTimeDurationResult =
+        cached.callSessionsAllTimeDurationResult;
+      usageEventsWeekResult = cached.usageEventsWeekResult;
+      loadedFromValidCache = true;
+    } else {
+      console.log(
+        '♻️ Ignoring stale cache:',
+        CACHE_FILE,
+        `(cached: ${cached.reportDate}, requested: ${cacheReportDate})`,
+      );
+    }
+  }
+
+  if (!loadedFromValidCache) {
     // Helper to time individual queries
     const _timed = async <T>(
       label: string,
@@ -484,12 +511,18 @@ export async function GET(request: NextRequest) {
   if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
+  if (!usageEventsWeekResult) {
+    throw new Error(
+      'usageEventsWeekResult was not loaded after cache validation/fetch',
+    );
+  }
   if (usageEventsWeekResult.error) throw usageEventsWeekResult.error;
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
-  if (!(isProd || useCache)) {
+  if (!isProd) {
     const cacheData = {
+      reportDate: cacheReportDate,
       audioYesterdayResult,
       audioWeekResult,
       audioTotalCountResult,
@@ -506,7 +539,11 @@ export async function GET(request: NextRequest) {
       usageEventsWeekResult,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-    console.log('📦 Cached API results to', CACHE_FILE);
+    console.log(
+      '📦 Cached API results to',
+      CACHE_FILE,
+      `(report date: ${cacheReportDate})`,
+    );
   }
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
@@ -1230,10 +1267,10 @@ export async function GET(request: NextRequest) {
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
     '',
-    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% paid)${burnRateFlag}`,
+    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% of active users are paid)${burnRateFlag}`,
     `  - ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
     `  - Top 3: ${topUsageUsersList}`,
-    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
+    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day ≈ $${(usageValueWeek / 7).toFixed(2)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
     '',
     '💰 Revenue',
     `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
