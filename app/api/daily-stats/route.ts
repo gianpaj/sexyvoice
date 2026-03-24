@@ -1231,8 +1231,182 @@ export async function GET(request: NextRequest) {
           })
           .join(', ');
 
+  const revenueDeltaVsAvg = totalAmountUsdToday - avg7dRevenue;
+  const revenueDeltaPctVsAvg =
+    avg7dRevenue > 0 ? (revenueDeltaVsAvg / avg7dRevenue) * 100 : 0;
+  const usageHighlights = [
+    audioYesterdayCount > audioWeekCount / 7
+      ? `Audio strong: ${audioYesterdayCount} vs ${(audioWeekCount / 7).toFixed(
+          1,
+        )} avg`
+      : null,
+    callsYesterdayCount > callsWeekCount / 7
+      ? `Calls above trend: ${callsYesterdayCount} vs ${(
+          callsWeekCount / 7
+        ).toFixed(1)} avg`
+      : null,
+    clonePrevCount > cloneWeekCount / 7
+      ? `Cloning above trend: ${clonePrevCount} vs ${(
+          cloneWeekCount / 7
+        ).toFixed(1)} avg`
+      : null,
+  ].filter(Boolean);
+
+  const executiveSummaryLines = [
+    `- Revenue ${revenueDeltaVsAvg >= 0 ? 'strong' : 'soft'}: $${totalAmountUsdToday.toFixed(2)} yesterday vs $${avg7dRevenue.toFixed(2)} 7d avg (${revenueDeltaVsAvg >= 0 ? '↑' : '↓'}${Math.abs(revenueDeltaPctVsAvg).toFixed(0)}%)`,
+    `- Usage ${usageHighlights.length > 0 ? 'strong' : 'mixed'}: ${audioYesterdayCount} audios, ${callsYesterdayCount} calls, ${clonePrevCount} clones`,
+    `- Monetization ${Number.parseFloat(paidVsTotalActiveRate) < 5 ? 'weak' : 'healthy'}: ${paidVsTotalActiveRate}% of active users are paid (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday})`,
+  ];
+
+  const top3UsageCredits = topUsageUsers.reduce(
+    (sum, [, credits]) => sum + credits,
+    0,
+  );
+  const top3UsageSharePct =
+    totalCreditsYesterday > 0
+      ? ((top3UsageCredits / totalCreditsYesterday) * 100).toFixed(0)
+      : '0';
+  const top1UsageCredits = topUsageUsers[0]?.[1] ?? 0;
+  const top1UsageSharePct =
+    totalCreditsYesterday > 0
+      ? ((top1UsageCredits / totalCreditsYesterday) * 100).toFixed(0)
+      : '0';
+
+  const alerts = [
+    callsYesterdayCount === 0 ? 'Calls had no usage yesterday' : null,
+    clonePrevCount === 0 ? 'Voice cloning had no usage yesterday' : null,
+    apiTtsCreditsYesterday === 0 ? 'API TTS had no usage yesterday' : null,
+    creditsTodayCount === 0 ? 'No purchases yesterday' : null,
+    burnRateRatio > 1.2
+      ? `Paid-user credit burn outpaced purchases (${revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'})`
+      : null,
+    totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
+      ? `Paid usage is concentrated: top 3 users drove ${top3UsageSharePct}%`
+      : null,
+    profilesTodayCount >= 100 && creditsTodayCount === 0
+      ? 'Strong signup day but no purchases'
+      : null,
+  ].filter(Boolean);
+
+  const funnelActivationRate =
+    profilesTodayCount > 0
+      ? ((totalActiveUsersYesterday / profilesTodayCount) * 100).toFixed(1)
+      : null;
+  const funnelPaidActiveRate =
+    totalActiveUsersYesterday > 0
+      ? ((uniquePaidUsersYesterday / totalActiveUsersYesterday) * 100).toFixed(
+          1,
+        )
+      : null;
+  const funnelPurchaseRate =
+    totalActiveUsersYesterday > 0
+      ? ((creditsTodayCount / totalActiveUsersYesterday) * 100).toFixed(1)
+      : null;
+
+  const getFeatureHealthStatus = (
+    current: number,
+    baseline: number,
+  ): '🟢 active' | '🟡 below trend' | '🔴 no usage' => {
+    if (current === 0) return '🔴 no usage';
+    if (baseline > 0 && current < baseline) return '🟡 below trend';
+    return '🟢 active';
+  };
+
+  const featureHealthItems = [
+    {
+      label: 'TTS',
+      status: getFeatureHealthStatus(
+        usageYesterdayBreakdown.get('tts') ?? 0,
+        (usageWeekBreakdown.get('tts') ?? 0) / 7,
+      ),
+      detail: `${formatCompactNumber(usageYesterdayBreakdown.get('tts') ?? 0)} credits`,
+    },
+    {
+      label: 'API TTS',
+      status: getFeatureHealthStatus(
+        apiTtsCreditsYesterday,
+        (usageWeekBreakdown.get('api_tts') ?? 0) / 7,
+      ),
+      detail: `${formatCompactNumber(apiTtsCreditsYesterday)} credits`,
+    },
+    {
+      label: 'Calls',
+      status: getFeatureHealthStatus(callsYesterdayCount, callsWeekCount / 7),
+      detail: `${callsYesterdayCount} calls, ${formatDuration(callsDurationYesterday)}`,
+    },
+    {
+      label: 'Cloning',
+      status: getFeatureHealthStatus(clonePrevCount, cloneWeekCount / 7),
+      detail: `${clonePrevCount} clones`,
+    },
+  ];
+
+  const featureIssues = featureHealthItems.filter(
+    (item) => item.status !== '🟢 active',
+  );
+
+  const featureHealthLines =
+    featureIssues.length === 0
+      ? []
+      : [
+          '',
+          '🧩 Feature Health',
+          ...featureIssues.map(
+            (item) => `- ${item.label}: ${item.status} (${item.detail})`,
+          ),
+        ];
+
+  const burnRateDisplay =
+    revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(2)}x` : '∞';
+
+  const concentrationRiskLines =
+    totalCreditsYesterday === 0
+      ? ['- No paid-user usage yesterday']
+      : [
+          `- Top 3 paid users drove ${top3UsageSharePct}% of yesterday's paid-user usage`,
+          `- Top user drove ${top1UsageSharePct}% of paid-user usage`,
+        ];
+
+  const shouldShowConcentrationRisk =
+    totalCreditsYesterday === 0 || Number.parseFloat(top3UsageSharePct) >= 60;
+
+  const revenueSummaryLines = [
+    `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
+    `  - 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
+    `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
+    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+  ];
+
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
+    '',
+    '🧠 Executive Summary',
+    ...executiveSummaryLines,
+    ...(alerts.length > 0
+      ? ['', '🚨 Alerts', ...alerts.map((alert) => `- ${alert}`)]
+      : []),
+    '',
+    '💸 Money Flow',
+    `- Revenue collected yesterday: $${revenuePurchasedYesterday.toFixed(2)}`,
+    `- Paid-user usage value: ≈ $${usageValueYesterday.toFixed(2)}`,
+    `- Burn/revenue ratio: ${burnRateDisplay}`,
+    '',
+    '🔻 Funnel',
+    `- New profiles: ${profilesTodayCount}`,
+    `- Active users: ${totalActiveUsersYesterday}${funnelActivationRate ? ` (${funnelActivationRate}% of new profiles)` : ''}`,
+    `- Paid active users: ${uniquePaidUsersYesterday}${funnelPaidActiveRate ? ` (${funnelPaidActiveRate}% of active users)` : ''}`,
+    `- Credit transactions: ${creditsTodayCount}${funnelPurchaseRate ? ` (${funnelPurchaseRate}% of active users)` : ''}`,
+    ...featureHealthLines,
+    ...(shouldShowConcentrationRisk
+      ? ['', '⚠️ Concentration Risk', ...concentrationRiskLines]
+      : []),
+    '',
+    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)}${burnRateFlag}`,
+    `  - Mix: ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
+    `  - Top 3: ${topUsageUsersList}`,
+    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day ≈ $${(usageValueWeek / 7).toFixed(2)}/day)`,
+    '',
+    ...revenueSummaryLines,
     '',
     `🎧 Audio Files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioWeekCount / 7)})`,
     `  - 7d: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
@@ -1249,9 +1423,7 @@ export async function GET(request: NextRequest) {
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
     '',
-    '🔌 API:',
-    `  - Used Keys (new): ${usedNewApiKeysCount}`,
-    `  - TTS Usage: ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
+    `🔌 API: ${usedNewApiKeysCount} new key${usedNewApiKeysCount === 1 ? '' : 's'} | ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
     '',
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
@@ -1266,37 +1438,21 @@ export async function GET(request: NextRequest) {
       : [
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
-    '',
-    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% of active users are paid)${burnRateFlag}`,
-    `  - ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
-    `  - Top 3: ${topUsageUsersList}`,
-    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day ≈ $${(usageValueWeek / 7).toFixed(2)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
-    '',
-    '💰 Revenue',
-    `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
-    `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
-    `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
-    '',
     ...(hasInvalidMetadata
-      ? [
-          //
-          '‼️ Info',
-          '  - Invalid Metadata in credit_transactions',
-        ]
+      ? ['', '‼️ Info', '  - Invalid Metadata in credit_transactions']
       : []),
-  ];
+  ].join('\n');
 
   try {
     if (!isProd) {
-      return new NextResponse(message.join('\n'));
+      return new NextResponse(message);
     }
     await fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: '202637584',
-        text: message.join('\n'),
+        text: message,
       }),
     });
     Sentry.captureCheckIn({
