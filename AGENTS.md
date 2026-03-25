@@ -438,6 +438,7 @@ Key environment variables include:
 - **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2 — dashboard audio); `R2_SPEECH_API_BUCKET_NAME`, `R2_SPEECH_API_PUBLIC_URL` (separate bucket + public domain for external API audio)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
 - **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
+- **Homepage Demo CAPTCHA**: `ALTCHA_HMAC_KEY` (required for the local ALTCHA server integration used by the homepage TTS demo; generate with `openssl rand -base64 32`)
 - **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
 - **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
@@ -477,7 +478,7 @@ Based on TODO.md, current priorities include:
 2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
 3. **Internationalization**: Expand voice models to French, German, Korean, Mandarin; translate remaining SEO content
 4. **User Experience**: Share pages for audio files, history page with regeneration
-5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
+5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, ALTCHA protection for the homepage demo
 6. **Analytics**: Add PostHog to auth pages, track paid user status
 7. **Testing**: Expand test coverage, Playwright E2E tests with test database
 8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors

@@ -91,7 +91,7 @@ export default async function LandingPage(props: {
     .eq('is_public', true)
     .order('sort_order');
 
-  const altchaChallengeUrl = process.env.NEXT_PUBLIC_ALTCHA_CHALLENGE_URL ?? '';
+  const altchaChallengeUrl = '/api/altcha/challenge';
 
   const siteUrl = `https://sexyvoice.ai/${lang}`;
 

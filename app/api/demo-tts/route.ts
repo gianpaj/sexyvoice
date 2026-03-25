@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   FinishReason,
   type GenerateContentConfig,
@@ -7,6 +8,7 @@ import {
 } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
+import { verifySolution } from 'altcha-lib';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -23,22 +25,41 @@ const DEMO_LIMIT = 3;
 const DEMO_WINDOW_SECONDS = 60 * 60 * 24; // 24 hours
 const DEMO_IP_LIMIT = 15;
 const MAX_TEXT_LENGTH = 200;
+const ALTCHA_REPLAY_WINDOW_SECONDS = 60 * 10; // 10 minutes
+
+function getAltchaHmacKey(): string | undefined {
+  return process.env.ALTCHA_HMAC_KEY;
+}
+
+function getAltchaPayloadFingerprint(payload: string): string {
+  return createHash('sha256').update(payload).digest('hex');
+}
 
 async function verifyAltcha(payload: string): Promise<boolean> {
-  const sentinelUrl = process.env.ALTCHA_SENTINEL_URL;
-  if (!sentinelUrl) {
-    logger.warn('ALTCHA_SENTINEL_URL not set — skipping captcha verification');
-    return true;
+  const hmacKey = getAltchaHmacKey();
+
+  if (!hmacKey) {
+    logger.error('ALTCHA_HMAC_KEY is not configured');
+    return false;
   }
+
   try {
-    const res = await fetch(`${sentinelUrl}/v1/verify/signature`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload }),
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    return data.verified === true;
+    const verified = await verifySolution(payload, hmacKey);
+
+    if (!verified) {
+      return false;
+    }
+
+    const replayKey = `demo:altcha:${getAltchaPayloadFingerprint(payload)}`;
+    const alreadyUsed = await redis.get(replayKey);
+
+    if (alreadyUsed) {
+      return false;
+    }
+
+    await redis.set(replayKey, '1', { ex: ALTCHA_REPLAY_WINDOW_SECONDS });
+
+    return true;
   } catch (err) {
     captureException(err, { extra: { context: 'altcha-verify' } });
     return false;

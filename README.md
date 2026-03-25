@@ -137,6 +137,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
       - `FAL_KEY` - Your fal.ai API key for voice cloning
       - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+   - ALTCHA demo captcha
+      - `ALTCHA_HMAC_KEY` - Secret used by the local ALTCHA server integration to generate and verify homepage demo captcha challenges. Generate with `openssl rand -base64 32`
    - Stripe
       - `STRIPE_SECRET_KEY`
       - `STRIPE_WEBHOOK_SECRET`
@@ -156,7 +158,21 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-4. **Set up Vercel Edge Config** (optional, for production)
+4. **Generate an ALTCHA HMAC key**
+
+   ```bash
+   openssl rand -base64 32
+   ```
+
+   Add the generated value to your local environment:
+
+   ```bash
+   ALTCHA_HMAC_KEY=your-generated-secret-here
+   ```
+
+   The homepage TTS demo uses a local ALTCHA server integration via `/api/altcha/challenge`, so the same `ALTCHA_HMAC_KEY` must be available anywhere the app generates or verifies captcha payloads.
+
+5. **Set up Vercel Edge Config** (optional, for production)
 
    Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
 
@@ -175,7 +191,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
    The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
 
-5. **Set up Supabase**
+6. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -183,13 +199,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-6. **Start the development server**
+7. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-7. **Open your browser**
+8. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 🧪 Development
@@ -287,7 +303,7 @@ SexyVoice.ai implements multiple security layers:
 
 - **Authentication**: Secure OAuth integration with Supabase Auth
 - **Data Protection**: Row-level security (RLS) policies in PostgreSQL
-- **API Security**: Rate limiting and request validation
+- **API Security**: Rate limiting, request validation, and ALTCHA protection for the public homepage TTS demo
 - **File Security**: Secure R2 storage with access controls
 - **Error Handling**: Comprehensive error tracking with Sentry
 - **Environment Isolation**: Separate configurations for development and production

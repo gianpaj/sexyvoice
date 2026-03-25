@@ -1,9 +1,12 @@
 'use client';
 
 import { Loader2, Play, Sparkles } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-import { AltchaWidget } from '@/components/altcha-widget';
+import {
+  AltchaWidget,
+  type AltchaWidgetHandle,
+} from '@/components/altcha-widget';
 import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
 import {
@@ -69,17 +72,21 @@ export function HomepageTTSDemo({
   const [status, setStatus] = useState<'idle' | 'loading' | 'playing'>('idle');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const altchaRef = useRef<HTMLElement>(null);
+  const [altchaPayload, setAltchaPayload] = useState<string | null>(null);
+  const altchaRef = useRef<AltchaWidgetHandle>(null);
+
+  const handleVerified = useCallback((payload: string) => {
+    setAltchaPayload(payload);
+  }, []);
+
+  const handleExpired = useCallback(() => {
+    setAltchaPayload(null);
+  }, []);
 
   const isExhausted = remaining <= 0;
 
   async function handleGenerate() {
     setError(null);
-
-    const altchaEl = altchaRef.current as
-      | (HTMLElement & { value?: string })
-      | null;
-    const altchaPayload = altchaEl?.value;
 
     if (!altchaPayload) {
       setError('Please wait for the security check to complete.');
@@ -130,10 +137,8 @@ export function HomepageTTSDemo({
       setStatus('playing');
 
       // Reset altcha for next generation
-      const altchaWidget = altchaEl as
-        | (HTMLElement & { reset?: () => void })
-        | null;
-      altchaWidget?.reset?.();
+      setAltchaPayload(null);
+      altchaRef.current?.reset();
     } catch {
       setError('Something went wrong. Please try again.');
       setStatus('idle');
@@ -232,7 +237,12 @@ export function HomepageTTSDemo({
 
         {/* Altcha */}
         <div className="mb-4">
-          <AltchaWidget challengeUrl={challengeUrl} ref={altchaRef} />
+          <AltchaWidget
+            challengeUrl={challengeUrl}
+            onExpired={handleExpired}
+            onVerified={handleVerified}
+            ref={altchaRef}
+          />
         </div>
 
         {/* Error */}
