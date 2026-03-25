@@ -6,7 +6,7 @@ import {
   HarmBlockThreshold,
   HarmCategory,
 } from '@google/genai';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, logger } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { verifySolution } from 'altcha-lib';
 import { cookies } from 'next/headers';
@@ -15,8 +15,6 @@ import { NextResponse } from 'next/server';
 import { convertToWav } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { createAdminClient } from '@/lib/supabase/admin';
-
-const { logger, captureException } = Sentry;
 
 const redis = Redis.fromEnv();
 
@@ -161,6 +159,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'invalid_voice' }, { status: 400 });
     }
 
+    const demoBucket = process.env.R2_DEMO_BUCKET_NAME;
+    const demoPublicUrl = process.env.R2_DEMO_PUBLIC_URL;
+    if (!(demoBucket && demoPublicUrl)) {
+      logger.error('Demo R2 storage is not fully configured');
+      return NextResponse.json({ error: 'generation_failed' }, { status: 500 });
+    }
+
     // Call Gemini 2.5 Flash TTS
     const ai = new GoogleGenAI({
       apiKey:
@@ -207,7 +212,13 @@ export async function POST(request: Request) {
 
     const audioBuffer = convertToWav(audioData, mimeType);
     const filename = `demo-audio/${voice.name}-${Date.now()}.wav`;
-    const audioUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
+    const audioUrl = await uploadFileToR2(
+      filename,
+      audioBuffer,
+      'audio/wav',
+      demoBucket,
+      demoPublicUrl,
+    );
 
     // Build response with Set-Cookie if new session
     const response = NextResponse.json(
