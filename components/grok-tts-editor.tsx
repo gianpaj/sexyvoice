@@ -12,7 +12,10 @@ import {
   useState,
 } from 'react';
 
-import { GrokWrapperMark } from '@/components/grok-tts/extensions/grok-wrapper-mark';
+import {
+  createWrapperBoundaryNode,
+  WrapperBoundary,
+} from '@/components/grok-tts/extensions/grok-wrapper-boundary';
 import {
   createInstantTagNode,
   InstantTag,
@@ -307,7 +310,7 @@ export function GrokTTSEditor({
         strike: false,
       }),
       InstantTag,
-      GrokWrapperMark,
+      WrapperBoundary,
     ],
     content: plainTextToDoc(value),
     editorProps: {
@@ -436,47 +439,51 @@ export function GrokTTSEditor({
         return;
       }
 
-      if (selection.empty) {
-        const tr = editor.state.tr;
-        const insertFrom = selection.from;
-        const wrapperMark = editor.schema.marks.grokWrapper?.create({
-          closeTag: tag.closeTag,
-          openTag: tag.tag,
-        });
+      const openBoundary = createWrapperBoundaryNode(
+        'open',
+        tag.tag,
+        tag.closeTag,
+      );
+      const closeBoundary = createWrapperBoundaryNode(
+        'close',
+        tag.tag,
+        tag.closeTag,
+      );
 
-        tr.insertText(GROK_EMPTY_WRAPPER_TEXT, insertFrom, selection.to);
-        if (wrapperMark) {
-          tr.addMark(
-            insertFrom,
-            insertFrom + GROK_EMPTY_WRAPPER_TEXT.length,
-            wrapperMark,
-          );
-        }
-        const cursorPos = insertFrom + GROK_EMPTY_WRAPPER_TEXT.length;
+      if (selection.empty) {
+        const insertFrom = selection.from;
+        const fragment = editor.schema.nodes.paragraph
+          ? editor.schema.text(GROK_EMPTY_WRAPPER_TEXT)
+          : editor.schema.text(GROK_EMPTY_WRAPPER_TEXT);
+        const tr = editor.state.tr.replaceSelectionWith(
+          editor.schema.nodeFromJSON(openBoundary),
+        );
+
+        tr.insert(insertFrom + 1, fragment);
+        tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
+
+        const cursorPos = insertFrom + 2;
         tr.setSelection(TextSelection.create(tr.doc, cursorPos));
         editor.view.dispatch(tr);
-        editor
-          .chain()
-          .focus()
-          .setTextSelection(cursorPos)
-          .setMark('grokWrapper', {
-            closeTag: tag.closeTag,
-            openTag: tag.tag,
-          })
-          .run();
+        editor.chain().focus().setTextSelection(cursorPos).run();
       } else {
-        editor
-          .chain()
-          .focus()
-          .setTextSelection({
-            from: selection.from,
-            to: selection.to,
-          })
-          .setMark('grokWrapper', {
-            closeTag: tag.closeTag,
-            openTag: tag.tag,
-          })
-          .run();
+        const selectedSlice = editor.state.doc.slice(
+          selection.from,
+          selection.to,
+        );
+        const tr = editor.state.tr.replaceRangeWith(
+          selection.from,
+          selection.to,
+          editor.schema.nodeFromJSON(openBoundary),
+        );
+
+        tr.insert(selection.from + 1, selectedSlice.content);
+        tr.insert(selection.to + 1, editor.schema.nodeFromJSON(closeBoundary));
+
+        const cursorPos = selection.to + 1;
+        tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+        editor.view.dispatch(tr);
+        editor.chain().focus().setTextSelection(cursorPos).run();
       }
 
       setEffectsOpen(false);

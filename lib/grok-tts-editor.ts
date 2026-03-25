@@ -34,6 +34,7 @@ export type GrokInstantTag = (typeof INSTANT_TAGS)[number];
 export type GrokWrapperOpenTag = (typeof WRAPPER_TAGS)[number][0];
 export type GrokWrapperCloseTag = (typeof WRAPPER_TAGS)[number][1];
 export type GrokWrapperTagPair = (typeof WRAPPER_TAGS)[number];
+export type GrokWrapperBoundaryKind = 'open' | 'close';
 export const GROK_EMPTY_WRAPPER_TEXT = '\u00a0';
 export type GrokTagText =
   | GrokInstantTag
@@ -66,18 +67,7 @@ export interface GrokEditorParseResult {
   tokens: GrokEditorToken[];
 }
 
-export interface GrokTipTapWrapperMark {
-  attrs: {
-    closeTag: GrokWrapperCloseTag;
-    openTag: GrokWrapperOpenTag;
-  };
-  type: 'grokWrapper';
-}
-
-export type GrokTipTapMark = GrokTipTapWrapperMark;
-
 export interface GrokTipTapTextNode {
-  marks?: GrokTipTapMark[];
   text: string;
   type: 'text';
 }
@@ -86,13 +76,22 @@ export interface GrokTipTapInstantTagNode {
   attrs: {
     tag: GrokInstantTag;
   };
-  marks?: GrokTipTapMark[];
   type: 'instantTag';
+}
+
+export interface GrokTipTapWrapperBoundaryNode {
+  attrs: {
+    closeTag: GrokWrapperCloseTag;
+    kind: GrokWrapperBoundaryKind;
+    openTag: GrokWrapperOpenTag;
+  };
+  type: 'wrapperBoundary';
 }
 
 export type GrokTipTapInlineNode =
   | GrokTipTapTextNode
-  | GrokTipTapInstantTagNode;
+  | GrokTipTapInstantTagNode
+  | GrokTipTapWrapperBoundaryNode;
 
 export interface GrokTipTapParagraphNode {
   content?: GrokTipTapInlineNode[];
@@ -168,54 +167,19 @@ function getMatchingTagAt(input: string, index: number): string | null {
   return null;
 }
 
-function createWrapperMark(
+function createWrapperBoundaryNode(
+  kind: GrokWrapperBoundaryKind,
   openTag: GrokWrapperOpenTag,
   closeTag: GrokWrapperCloseTag,
-): GrokTipTapWrapperMark {
+): GrokTipTapWrapperBoundaryNode {
   return {
     attrs: {
       closeTag,
+      kind,
       openTag,
     },
-    type: 'grokWrapper',
+    type: 'wrapperBoundary',
   };
-}
-
-function marksEqual(
-  a: GrokTipTapMark[] | undefined,
-  b: GrokTipTapMark[] | undefined,
-) {
-  if (!(a || b)) {
-    return true;
-  }
-
-  if (!(a && b) || a.length !== b.length) {
-    return false;
-  }
-
-  return a.every((mark, index) => {
-    const other = b[index];
-
-    return (
-      other?.type === mark.type &&
-      other.attrs.openTag === mark.attrs.openTag &&
-      other.attrs.closeTag === mark.attrs.closeTag
-    );
-  });
-}
-
-function cloneMarks(marks: readonly GrokTipTapMark[]) {
-  if (marks.length === 0) {
-    return undefined;
-  }
-
-  return marks.map((mark) => ({
-    attrs: {
-      closeTag: mark.attrs.closeTag,
-      openTag: mark.attrs.openTag,
-    },
-    type: mark.type,
-  }));
 }
 
 function appendInlineNode(
@@ -228,11 +192,7 @@ function appendInlineNode(
   }
 
   const previous = currentParagraph.at(-1);
-  if (
-    previous?.type === 'text' &&
-    node.type === 'text' &&
-    marksEqual(previous.marks, node.marks)
-  ) {
+  if (previous?.type === 'text' && node.type === 'text') {
     previous.text += node.text;
     return;
   }
@@ -240,18 +200,12 @@ function appendInlineNode(
   currentParagraph.push(node);
 }
 
-function pushText(
-  paragraphs: GrokTipTapInlineNode[][],
-  value: string,
-  activeMarks: readonly GrokTipTapMark[],
-) {
+function pushText(paragraphs: GrokTipTapInlineNode[][], value: string) {
   const lines = value.split('\n');
-  const marks = cloneMarks(activeMarks);
 
   lines.forEach((line, index) => {
     if (line) {
       appendInlineNode(paragraphs, {
-        ...(marks ? { marks } : {}),
         text: line,
         type: 'text',
       });
@@ -266,19 +220,15 @@ function pushText(
 function appendTokensToParagraphs(
   tokens: GrokEditorToken[],
   paragraphs: GrokTipTapInlineNode[][],
-  activeMarks: readonly GrokTipTapMark[] = [],
 ) {
   for (const token of tokens) {
     if (token.type === 'text') {
-      pushText(paragraphs, token.value, activeMarks);
+      pushText(paragraphs, token.value);
       continue;
     }
 
     if (token.type === 'instant-tag') {
-      const marks = cloneMarks(activeMarks);
-
       appendInlineNode(paragraphs, {
-        ...(marks ? { marks } : {}),
         attrs: {
           tag: token.tag,
         },
@@ -287,18 +237,21 @@ function appendTokensToParagraphs(
       continue;
     }
 
+    appendInlineNode(
+      paragraphs,
+      createWrapperBoundaryNode('open', token.openTag, token.closeTag),
+    );
+
     if (token.children.length === 0) {
-      pushText(paragraphs, GROK_EMPTY_WRAPPER_TEXT, [
-        ...activeMarks,
-        createWrapperMark(token.openTag, token.closeTag),
-      ]);
-      continue;
+      pushText(paragraphs, GROK_EMPTY_WRAPPER_TEXT);
+    } else {
+      appendTokensToParagraphs(token.children, paragraphs);
     }
 
-    appendTokensToParagraphs(token.children, paragraphs, [
-      ...activeMarks,
-      createWrapperMark(token.openTag, token.closeTag),
-    ]);
+    appendInlineNode(
+      paragraphs,
+      createWrapperBoundaryNode('close', token.openTag, token.closeTag),
+    );
   }
 }
 
@@ -321,45 +274,33 @@ function tokensToParagraphs(
   );
 }
 
-function isWrapperMark(mark: unknown): mark is GrokTipTapWrapperMark {
-  if (!mark || typeof mark !== 'object') {
+function isWrapperBoundaryNode(
+  node: unknown,
+): node is GrokTipTapWrapperBoundaryNode {
+  if (!node || typeof node !== 'object') {
     return false;
   }
 
-  const maybeMark = mark as {
+  const maybeNode = node as {
     attrs?: Record<string, unknown>;
     type?: string;
   };
 
-  const openTag = maybeMark.attrs?.openTag;
-  const closeTag = maybeMark.attrs?.closeTag;
+  const openTag = maybeNode.attrs?.openTag;
+  const closeTag = maybeNode.attrs?.closeTag;
+  const kind = maybeNode.attrs?.kind;
 
   return (
-    maybeMark.type === 'grokWrapper' &&
+    maybeNode.type === 'wrapperBoundary' &&
     typeof openTag === 'string' &&
     typeof closeTag === 'string' &&
+    (kind === 'open' || kind === 'close') &&
     isWrapperOpenTag(openTag) &&
     isWrapperCloseTag(closeTag)
   );
 }
 
-function getNodeMarks(node: unknown): GrokTipTapWrapperMark[] {
-  if (!node || typeof node !== 'object') {
-    return [];
-  }
-
-  const maybeNode = node as {
-    marks?: unknown[];
-  };
-
-  if (!Array.isArray(maybeNode.marks)) {
-    return [];
-  }
-
-  return maybeNode.marks.filter(isWrapperMark);
-}
-
-function serializeInlineNodeText(node: unknown): string {
+function serializeInlineNode(node: unknown): string {
   if (!node || typeof node !== 'object') {
     return '';
   }
@@ -381,25 +322,13 @@ function serializeInlineNodeText(node: unknown): string {
     return typeof tag === 'string' && isInstantTag(tag) ? tag : '';
   }
 
-  return '';
-}
-
-function getCommonPrefixLength(
-  current: readonly GrokTipTapWrapperMark[],
-  next: readonly GrokTipTapWrapperMark[],
-) {
-  const max = Math.min(current.length, next.length);
-  let index = 0;
-
-  while (
-    index < max &&
-    current[index]?.attrs.openTag === next[index]?.attrs.openTag &&
-    current[index]?.attrs.closeTag === next[index]?.attrs.closeTag
-  ) {
-    index += 1;
+  if (isWrapperBoundaryNode(maybeNode)) {
+    return maybeNode.attrs.kind === 'open'
+      ? maybeNode.attrs.openTag
+      : maybeNode.attrs.closeTag;
   }
 
-  return index;
+  return '';
 }
 
 function serializeParagraphNode(node: unknown): string {
@@ -416,34 +345,7 @@ function serializeParagraphNode(node: unknown): string {
     return '';
   }
 
-  let result = '';
-  let activeMarks: GrokTipTapWrapperMark[] = [];
-
-  for (const child of maybeNode.content) {
-    const nextMarks = getNodeMarks(child);
-    const prefixLength = getCommonPrefixLength(activeMarks, nextMarks);
-
-    for (
-      let index = activeMarks.length - 1;
-      index >= prefixLength;
-      index -= 1
-    ) {
-      result += activeMarks[index]?.attrs.closeTag ?? '';
-    }
-
-    for (let index = prefixLength; index < nextMarks.length; index += 1) {
-      result += nextMarks[index]?.attrs.openTag ?? '';
-    }
-
-    result += serializeInlineNodeText(child);
-    activeMarks = nextMarks;
-  }
-
-  for (let index = activeMarks.length - 1; index >= 0; index -= 1) {
-    result += activeMarks[index]?.attrs.closeTag ?? '';
-  }
-
-  return result;
+  return maybeNode.content.map(serializeInlineNode).join('');
 }
 
 export function getGrokInstantTags(): readonly GrokInstantTag[] {

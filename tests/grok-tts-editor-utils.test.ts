@@ -186,23 +186,30 @@ describe('grok-tts-editor-utils', () => {
   });
 
   describe('TipTap document conversion', () => {
-    it('converts wrapper tags into text nodes with wrapper marks', () => {
+    it('converts wrapper tags into wrapper boundary nodes', () => {
       expect(grokTextToTipTapDoc('<soft>Hello</soft>')).toEqual({
         content: [
           {
             content: [
               {
-                marks: [
-                  {
-                    attrs: {
-                      closeTag: '</soft>',
-                      openTag: '<soft>',
-                    },
-                    type: 'grokWrapper',
-                  },
-                ],
+                attrs: {
+                  closeTag: '</soft>',
+                  kind: 'open',
+                  openTag: '<soft>',
+                },
+                type: 'wrapperBoundary',
+              },
+              {
                 text: 'Hello',
                 type: 'text',
+              },
+              {
+                attrs: {
+                  closeTag: '</soft>',
+                  kind: 'close',
+                  openTag: '<soft>',
+                },
+                type: 'wrapperBoundary',
               },
             ],
             type: 'paragraph',
@@ -212,23 +219,30 @@ describe('grok-tts-editor-utils', () => {
       });
     });
 
-    it('keeps empty wrapper tags as marked placeholder text', () => {
+    it('keeps empty wrapper tags as boundary nodes with placeholder text', () => {
       expect(grokTextToTipTapDoc('<soft></soft>')).toEqual({
         content: [
           {
             content: [
               {
-                marks: [
-                  {
-                    attrs: {
-                      closeTag: '</soft>',
-                      openTag: '<soft>',
-                    },
-                    type: 'grokWrapper',
-                  },
-                ],
+                attrs: {
+                  closeTag: '</soft>',
+                  kind: 'open',
+                  openTag: '<soft>',
+                },
+                type: 'wrapperBoundary',
+              },
+              {
                 text: GROK_EMPTY_WRAPPER_TEXT,
                 type: 'text',
+              },
+              {
+                attrs: {
+                  closeTag: '</soft>',
+                  kind: 'close',
+                  openTag: '<soft>',
+                },
+                type: 'wrapperBoundary',
               },
             ],
             type: 'paragraph',
@@ -261,22 +275,21 @@ describe('grok-tts-editor-utils', () => {
       });
     });
 
-    it('serializes wrapper marks and instant nodes back to Grok text', () => {
+    it('serializes wrapper boundaries and instant nodes back to Grok text', () => {
       expect(
         grokTipTapDocToText({
           content: [
             {
               content: [
                 {
-                  marks: [
-                    {
-                      attrs: {
-                        closeTag: '</soft>',
-                        openTag: '<soft>',
-                      },
-                      type: 'grokWrapper',
-                    },
-                  ],
+                  attrs: {
+                    closeTag: '</soft>',
+                    kind: 'open',
+                    openTag: '<soft>',
+                  },
+                  type: 'wrapperBoundary',
+                },
+                {
                   text: 'Hello ',
                   type: 'text',
                 },
@@ -284,16 +297,15 @@ describe('grok-tts-editor-utils', () => {
                   attrs: {
                     tag: '[laugh]',
                   },
-                  marks: [
-                    {
-                      attrs: {
-                        closeTag: '</soft>',
-                        openTag: '<soft>',
-                      },
-                      type: 'grokWrapper',
-                    },
-                  ],
                   type: 'instantTag',
+                },
+                {
+                  attrs: {
+                    closeTag: '</soft>',
+                    kind: 'close',
+                    openTag: '<soft>',
+                  },
+                  type: 'wrapperBoundary',
                 },
                 {
                   text: 'there',
@@ -315,17 +327,24 @@ describe('grok-tts-editor-utils', () => {
             {
               content: [
                 {
-                  marks: [
-                    {
-                      attrs: {
-                        closeTag: '</soft>',
-                        openTag: '<soft>',
-                      },
-                      type: 'grokWrapper',
-                    },
-                  ],
+                  attrs: {
+                    closeTag: '</soft>',
+                    kind: 'open',
+                    openTag: '<soft>',
+                  },
+                  type: 'wrapperBoundary',
+                },
+                {
                   text: GROK_EMPTY_WRAPPER_TEXT,
                   type: 'text',
+                },
+                {
+                  attrs: {
+                    closeTag: '</soft>',
+                    kind: 'close',
+                    openTag: '<soft>',
+                  },
+                  type: 'wrapperBoundary',
                 },
               ],
               type: 'paragraph',

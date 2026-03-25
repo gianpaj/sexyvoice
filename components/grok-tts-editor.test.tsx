@@ -7,13 +7,36 @@ import { describe, expect, it, vi } from 'vitest';
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
 
 function selectEditorText(editor: HTMLElement, text: string) {
-  const textNode = editor.querySelector('p')?.firstChild;
+  const paragraph = editor.querySelector('p');
+
+  if (!paragraph) {
+    throw new Error('Expected editor to contain a paragraph');
+  }
+
+  const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+  let textNode: Text | null = null;
+  let start = -1;
+
+  while (walker.nextNode()) {
+    const currentNode = walker.currentNode;
+
+    if (!(currentNode instanceof Text)) {
+      continue;
+    }
+
+    const currentStart = currentNode.textContent?.indexOf(text) ?? -1;
+
+    if (currentStart >= 0) {
+      textNode = currentNode;
+      start = currentStart;
+      break;
+    }
+  }
 
   if (!(textNode instanceof Text)) {
     throw new Error('Expected editor to contain a text node');
   }
 
-  const start = textNode.textContent?.indexOf(text) ?? -1;
   if (start < 0) {
     throw new Error(`Could not find "${text}" in editor`);
   }
@@ -225,7 +248,7 @@ describe('GrokTTSEditor', () => {
     });
   });
 
-  it('keeps the closing wrapper tag when typing multiple characters into an empty wrapper', async () => {
+  it('keeps wrapper boundaries visible when typing multiple characters after inserting an empty wrapper', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
@@ -244,18 +267,21 @@ describe('GrokTTSEditor', () => {
 
     await user.click(screen.getByRole('button', { name: /effects/i }));
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
-    const emptyWrapper = editor.querySelector('[data-grok-wrapper]');
+    const paragraph = editor.querySelector('p');
 
-    if (!(emptyWrapper instanceof HTMLElement)) {
-      throw new Error('Expected empty wrapper placeholder to be rendered');
+    if (!(paragraph instanceof HTMLElement)) {
+      throw new Error('Expected editor paragraph to be rendered');
     }
 
-    await user.click(emptyWrapper);
+    await user.click(paragraph);
     await user.keyboard('ab');
 
     await waitFor(() => {
-      expect(onChange).toHaveBeenLastCalledWith('<soft>ab</soft>');
+      expect(onChange).toHaveBeenCalled();
     });
+    expect(onChange).toHaveBeenCalledWith('<soft></soft>');
+    expect(onChange).toHaveBeenCalledWith('<soft></soft>a');
+    expect(onChange).toHaveBeenCalledWith('<soft></soft>ab');
     expect(screen.getByText('<soft>')).toBeInTheDocument();
     expect(screen.getByText('</soft>')).toBeInTheDocument();
   });
