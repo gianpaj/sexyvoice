@@ -4,6 +4,10 @@
 
 This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
 
+## Rules
+
+Whenever writing a test, run the test suite for that file or the entire suite.
+
 ## Project Overview
 
 SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system.
@@ -407,6 +411,13 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 - Locale-specific posts use `.es.mdx` extension (defaults to English)
 - Contentlayer2 processes content and generates type-safe data
 - Follow SEO best practices for content structure
+
+### Changelog Maintenance
+
+- Keep changelog formatting rules in `docs/changelog-format.md`
+- Treat `Changelog.md` updates as release-only documentation work:
+  no `Unreleased` section, use the documented header/category format,
+  and include only items supported by repo history
 
 ## Environment and Deployment
 

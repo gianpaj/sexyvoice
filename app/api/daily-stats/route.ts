@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/performance/noNamespaceImport: it's fine */
 import * as fs from 'node:fs';
 import { join } from 'node:path';
 import * as Sentry from '@sentry/nextjs';
@@ -13,6 +14,7 @@ import {
 } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserByStripeCustomerId } from '@/lib/supabase/queries';
+import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
   filterByDateRange,
   formatChange,
@@ -27,11 +29,12 @@ import {
 } from './utils';
 
 // Allow up to 5 minutes — the cron does many paginated DB fetches and without
-// this Vercel kills the function at the plan default (10s hobby / 60s pro),
+// this Vercel kills the function depending on the plan,
 // which drops the PostgREST connection and surfaces as a PostgreSQL 57014
 // (query_canceled) error rather than a Vercel timeout.
 export const maxDuration = 300;
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
 
@@ -65,9 +68,10 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
-  const useCache = !isProd && fs.existsSync(CACHE_FILE);
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
+  const cacheReportDate = today.toISOString().slice(0, 10);
+  const useCache = !isProd && fs.existsSync(CACHE_FILE);
   const previousDay = subtractDays(today, 1);
   const twoDaysAgo = subtractDays(today, 2);
   const sevenDaysAgo = subtractDays(today, 7);
@@ -136,7 +140,7 @@ export async function GET(request: NextRequest) {
   let profilesTotalCountResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
-  let allCreditTransactions: CreditTransaction[];
+  let allCreditTransactions: CreditTransaction[] = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -145,29 +149,57 @@ export async function GET(request: NextRequest) {
   let callSessionsWeekResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessionsTotalCountResult: any;
-  let usageEventsWeekResult: { data: UsageEvent[] | null; error: unknown };
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let callSessionsAllTimeDurationResult: any;
+  let usageEventsWeekResult:
+    | { data: UsageEvent[] | null; error: unknown }
+    | undefined;
+  let loadedFromValidCache = false;
 
   if (useCache) {
-    console.log('📦 Loading from cache:', CACHE_FILE);
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    audioYesterdayResult = cached.audioYesterdayResult;
-    audioWeekResult = cached.audioWeekResult;
-    audioTotalCountResult = cached.audioTotalCountResult;
-    clonesResult = cached.clonesResult;
-    profilesRecentResult = cached.profilesRecentResult;
-    profilesTotalCountResult = cached.profilesTotalCountResult;
-    apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
-    allCreditTransactions = cached.allCreditTransactions;
-    activeSubscribersCount = cached.activeSubscribersCount;
-    nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
-    callSessionsWeekResult = cached.callSessionsWeekResult;
-    callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
-    usageEventsWeekResult = cached.usageEventsWeekResult;
-  } else {
+    if (typeof cached.reportDate !== 'string') {
+      console.log(
+        '♻️ Ignoring legacy cache without reportDate:',
+        CACHE_FILE,
+        '(forcing refresh)',
+      );
+    } else if (cached.reportDate === cacheReportDate) {
+      console.log(
+        '📦 Loading from cache:',
+        CACHE_FILE,
+        `(report date: ${cached.reportDate})`,
+      );
+      audioYesterdayResult = cached.audioYesterdayResult;
+      audioWeekResult = cached.audioWeekResult;
+      audioTotalCountResult = cached.audioTotalCountResult;
+      clonesResult = cached.clonesResult;
+      profilesRecentResult = cached.profilesRecentResult;
+      profilesTotalCountResult = cached.profilesTotalCountResult;
+      apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
+      allCreditTransactions = cached.allCreditTransactions;
+      activeSubscribersCount = cached.activeSubscribersCount;
+      nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
+      callSessionsWeekResult = cached.callSessionsWeekResult;
+      callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
+      callSessionsAllTimeDurationResult =
+        cached.callSessionsAllTimeDurationResult;
+      usageEventsWeekResult = cached.usageEventsWeekResult;
+      loadedFromValidCache = true;
+    } else {
+      console.log(
+        '♻️ Ignoring stale cache:',
+        CACHE_FILE,
+        `(cached: ${cached.reportDate}, requested: ${cacheReportDate})`,
+      );
+    }
+  }
+
+  if (!loadedFromValidCache) {
     // Helper to time individual queries
     const _timed = async <T>(
       label: string,
-      promise: Promise<T>,
+      promise: PromiseLike<T>,
     ): Promise<T> => {
       const start = Date.now();
       console.log(`⏱  [daily-stats] START  ${label}`);
@@ -202,44 +234,58 @@ export async function GET(request: NextRequest) {
       // Call sessions - fetch for last 7 days (includes yesterday)
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      callSessionsAllTimeDurationResult,
     ] = await Promise.all([
       // (audioYesterdayResult) Audio files yesterday with voice information
-      supabase
-        .from('audio_files')
-        .select('id, created_at, model, voice_id, voices(name)')
-        .gte('created_at', previousDay.toISOString())
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:yesterday ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        supabase
+          .from('audio_files')
+          .select('id, created_at, model, voice_id, voices(name)')
+          .gte('created_at', previousDay.toISOString())
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
       // (audioWeekResult) Audio files last 7 days
-      supabase
-        .from('audio_files')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:week_count ${sevenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        supabase
+          .from('audio_files')
+          .select('id', { count: 'exact', head: true })
+          .gte('created_at', sevenDaysAgo.toISOString())
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
-      // (audioTotalCountResult) Total audio files count
-      supabase
-        .from('audio_files')
-        .select('id', { count: 'exact', head: true })
-        .lt('created_at', today.toISOString()),
+      // (audioTotalCountResult) Approximate total audio files count
+      _timed(
+        `audio_files:total_count_estimated < ${today.toISOString().slice(0, 10)}`,
+        supabase
+          .from('audio_files')
+          .select('id', { count: 'planned', head: true })
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
       // (clonesResult) Cloned audio files last 7 days (includes yesterday)
-      supabase
-        .from('audio_files')
-        .select('id, created_at')
-        .in('model', [
-          'resemble-ai/chatterbox-multilingual',
-          'resemble-ai/chatterbox',
-        ])
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      _timed(
+        `audio_files:clones ${sevenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        supabase
+          .from('audio_files')
+          .select('id, created_at')
+          .in('model', [
+            'resemble-ai/chatterbox-multilingual',
+            'resemble-ai/chatterbox',
+          ])
+          .gte('created_at', sevenDaysAgo.toISOString())
+          .lt('created_at', today.toISOString())
+          .then((result) => result),
+      ),
 
-      // (profilesRecentResult) Profiles last 7 days (includes yesterday and previous day)
-      supabase
-        .from('profiles')
-        .select('id, created_at, username')
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', today.toISOString()),
+      // (profilesRecentResult) Placeholder; fetched below with pagination because
+      // Supabase caps result sets at 1000 rows per request
+      Promise.resolve({ data: null, error: null }),
 
       // (profilesTotalCountResult) Total profiles count
       supabase
@@ -269,6 +315,12 @@ export async function GET(request: NextRequest) {
       supabase
         .from('call_sessions')
         .select('id', { count: 'exact', head: true })
+        .lt('started_at', today.toISOString()),
+
+      // (callSessionsAllTimeDurationResult) All-time call sessions durations
+      supabase
+        .from('call_sessions')
+        .select('duration_seconds')
         .lt('started_at', today.toISOString()),
     ]);
 
@@ -317,7 +369,57 @@ export async function GET(request: NextRequest) {
     };
 
     // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
-    const fetchAllCreditTransactions = async () => {
+    const fetchAllProfilesInRange = async (
+      start: Date,
+      end: Date,
+    ): Promise<
+      {
+        id: string;
+        created_at: string | null;
+        username: string | null;
+      }[]
+    > => {
+      const allProfiles: {
+        id: string;
+        created_at: string | null;
+        username: string | null;
+      }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, created_at, username')
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
+          .order('created_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allProfiles.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allProfiles;
+    };
+
+    profilesRecentResult = {
+      data: await fetchAllProfilesInRange(sevenDaysAgo, today),
+      error: null,
+    };
+
+    const fetchCreditTransactionsInRange = async (
+      start: Date,
+      end: Date,
+    ): Promise<CreditTransaction[]> => {
       const allTransactions: CreditTransaction[] = [];
       const pageSize = 1000;
       let offset = 0;
@@ -331,7 +433,8 @@ export async function GET(request: NextRequest) {
           )
           .in('type', ['purchase', 'topup', 'refund'])
           .not('description', 'ilike', '%manual%')
-          .lt('created_at', today.toISOString())
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
           .order('created_at', { ascending: true })
           .range(offset, offset + pageSize - 1);
 
@@ -349,7 +452,52 @@ export async function GET(request: NextRequest) {
       return allTransactions;
     };
 
-    allCreditTransactions = await fetchAllCreditTransactions();
+    const [
+      yesterdayCreditTransactions,
+      sevenDayCreditTransactions,
+      thirtyDayCreditTransactions,
+      monthToDateCreditTransactions,
+      previousMonthToDateCreditTransactions,
+      twoMonthsAgoToDateCreditTransactions,
+      threeMonthsAgoToDateCreditTransactions,
+      allTimeRefundTransactions,
+    ] = await Promise.all([
+      fetchCreditTransactionsInRange(previousDay, today),
+      fetchCreditTransactionsInRange(sevenDaysAgo, today),
+      fetchCreditTransactionsInRange(thirtyDaysAgo, today),
+      fetchCreditTransactionsInRange(monthStart, today),
+      fetchCreditTransactionsInRange(
+        previousMonthStart,
+        previousMonthPeriodEnd,
+      ),
+      fetchCreditTransactionsInRange(twoMonthsAgoStart, twoMonthsAgoPeriodEnd),
+      fetchCreditTransactionsInRange(
+        threeMonthsAgoStart,
+        threeMonthsAgoPeriodEnd,
+      ),
+      fetchCreditTransactionsInRange(
+        new Date('1970-01-01T00:00:00.000Z'),
+        today,
+      ),
+    ]);
+
+    allCreditTransactions = [
+      ...new Map(
+        [
+          ...allTimeRefundTransactions,
+          ...yesterdayCreditTransactions,
+          ...sevenDayCreditTransactions,
+          ...thirtyDayCreditTransactions,
+          ...monthToDateCreditTransactions,
+          ...previousMonthToDateCreditTransactions,
+          ...twoMonthsAgoToDateCreditTransactions,
+          ...threeMonthsAgoToDateCreditTransactions,
+        ].map((transaction) => [transaction.id, transaction]),
+      ).values(),
+    ].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -363,12 +511,18 @@ export async function GET(request: NextRequest) {
   if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
+  if (!usageEventsWeekResult) {
+    throw new Error(
+      'usageEventsWeekResult was not loaded after cache validation/fetch',
+    );
+  }
   if (usageEventsWeekResult.error) throw usageEventsWeekResult.error;
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
-  if (!(isProd || useCache)) {
+  if (!isProd) {
     const cacheData = {
+      reportDate: cacheReportDate,
       audioYesterdayResult,
       audioWeekResult,
       audioTotalCountResult,
@@ -381,10 +535,15 @@ export async function GET(request: NextRequest) {
       nextSubscriptionDueForPayment,
       callSessionsWeekResult,
       callSessionsTotalCountResult,
+      callSessionsAllTimeDurationResult,
       usageEventsWeekResult,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
-    console.log('📦 Cached API results to', CACHE_FILE);
+    console.log(
+      '📦 Cached API results to',
+      CACHE_FILE,
+      `(report date: ${cacheReportDate})`,
+    );
   }
 
   const audioYesterdayData = audioYesterdayResult.data ?? [];
@@ -427,6 +586,10 @@ export async function GET(request: NextRequest) {
     })[]
   ).filter((item): item is Tables<'call_sessions'> => item.started_at !== null);
   const callSessionsTotalCount = callSessionsTotalCountResult.count ?? 0;
+  const callSessionsAllTimeDurationData =
+    (callSessionsAllTimeDurationResult.data ?? []) as {
+      duration_seconds: number;
+    }[];
   const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
 
   // Calculate API TTS credits used yesterday
@@ -456,12 +619,35 @@ export async function GET(request: NextRequest) {
     (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
+  const callsAvgDurationYesterday =
+    Math.round(callsDurationYesterday / callsYesterdayCount) || 0;
+  const callsAvgDurationWeek =
+    Math.round(callsDurationWeek / callsWeekCount) || 0;
+  const callsDurationAllTime = callSessionsAllTimeDurationData.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const callsAvgDurationAllTime =
+    Math.round(
+      callSessionsTotalCount > 0
+        ? callsDurationAllTime / callSessionsTotalCount
+        : 0,
+    ) || 0;
 
   // Format duration in minutes
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+  };
+
+  const formatDurationChange = (
+    currentSeconds: number,
+    baselineSeconds: number,
+  ): string => {
+    const diffSeconds = Math.round(currentSeconds - baselineSeconds);
+    const sign = diffSeconds >= 0 ? '+' : '-';
+    return `${sign}${formatDuration(Math.abs(diffSeconds))}`;
   };
 
   // Separate refunds from purchases/top-ups
@@ -538,33 +724,63 @@ export async function GET(request: NextRequest) {
           .join(', ');
 
   // Filter credit transactions by date ranges (purchases/top-ups only)
-  const purchasePrevDayData = filterByDateRange(
-    purchaseTransactions,
-    previousDay,
-    today,
+  const purchasePrevDayData = purchaseTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousDay.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
-  const creditsWeekCount = filterByDateRange<CreditTransaction>(
-    purchaseTransactions,
-    sevenDaysAgo,
-    today,
-  ).length;
-  const creditsMonthCount = filterByDateRange<CreditTransaction>(
-    purchaseTransactions,
-    thirtyDaysAgo,
-    today,
-  ).length;
+  const purchaseWeekData = purchaseTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= sevenDaysAgo.toISOString() &&
+      transaction.created_at < today.toISOString(),
+  );
+  const purchaseThirtyDayData = purchaseTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= thirtyDaysAgo.toISOString() &&
+      transaction.created_at < today.toISOString(),
+  );
+  const newSubscribersTodayCount = purchasePrevDayData.filter((transaction) => {
+    if (transaction.type !== 'purchase') {
+      return false;
+    }
+
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      return false;
+    }
+
+    return (
+      (transaction.metadata as { isFirstSubscription?: boolean })
+        .isFirstSubscription === true
+    );
+  }).length;
+  const newSubscribersWeekCount = purchaseWeekData.filter((transaction) => {
+    if (transaction.type !== 'purchase') {
+      return false;
+    }
+
+    if (!transaction.metadata || typeof transaction.metadata !== 'object') {
+      return false;
+    }
+
+    return (
+      (transaction.metadata as { isFirstSubscription?: boolean })
+        .isFirstSubscription === true
+    );
+  }).length;
+  const creditsWeekCount = purchaseWeekData.length;
+  const creditsMonthCount = purchaseThirtyDayData.length;
   const creditsTotalCount = purchaseTransactions.length;
 
   // Filter refund transactions by date ranges
-  const refundsPrevDayData = filterByDateRange<CreditTransaction>(
-    refundTransactions,
-    previousDay,
-    today,
+  const refundsPrevDayData = refundTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousDay.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
-  const refundsPrevCount = filterByDateRange<CreditTransaction>(
-    refundTransactions,
-    twoDaysAgo,
-    previousDay,
+  const refundsPrevCount = refundTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= twoDaysAgo.toISOString() &&
+      transaction.created_at < previousDay.toISOString(),
   ).length;
   const refundsTotalCount = refundTransactions.length;
 
@@ -670,18 +886,18 @@ export async function GET(request: NextRequest) {
   // Revenue calculations (incl. refund)
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
 
-  const creditsPrevDayData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    previousDay,
-    today,
+  const creditsPrevDayData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousDay.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
   const totalAmountUsdToday = creditsPrevDayData.reduce(reduceAmountUsd, 0);
 
   // 7-day revenue calculations
-  const credits7dData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    sevenDaysAgo,
-    today,
+  const credits7dData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= sevenDaysAgo.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
   const total7dRevenue = credits7dData.reduce(reduceAmountUsd, 0);
   const avg7dRevenue = total7dRevenue / 7;
@@ -694,31 +910,35 @@ export async function GET(request: NextRequest) {
   );
 
   // MTD revenue calculations (purchases/top-ups only)
-  const mtdRevenueData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    monthStart,
-    today,
+  const mtdRevenueData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= monthStart.toISOString() &&
+      transaction.created_at < today.toISOString(),
   );
   const mtdRevenue = mtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const prevMtdRevenueData = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    previousMonthStart,
-    previousMonthPeriodEnd,
+  const prevMtdRevenueData = creditTransactions.filter(
+    (transaction) =>
+      transaction.created_at >= previousMonthStart.toISOString() &&
+      transaction.created_at < previousMonthPeriodEnd.toISOString(),
   );
   const prevMtdRevenue = prevMtdRevenueData.reduce(reduceAmountUsd, 0);
 
-  const twoMonthsAgoMtdRevenue = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    twoMonthsAgoStart,
-    twoMonthsAgoPeriodEnd,
-  ).reduce(reduceAmountUsd, 0);
+  const twoMonthsAgoMtdRevenue = creditTransactions
+    .filter(
+      (transaction) =>
+        transaction.created_at >= twoMonthsAgoStart.toISOString() &&
+        transaction.created_at < twoMonthsAgoPeriodEnd.toISOString(),
+    )
+    .reduce(reduceAmountUsd, 0);
 
-  const threeMonthsAgoMtdRevenue = filterByDateRange<CreditTransaction>(
-    creditTransactions,
-    threeMonthsAgoStart,
-    threeMonthsAgoPeriodEnd,
-  ).reduce(reduceAmountUsd, 0);
+  const threeMonthsAgoMtdRevenue = creditTransactions
+    .filter(
+      (transaction) =>
+        transaction.created_at >= threeMonthsAgoStart.toISOString() &&
+        transaction.created_at < threeMonthsAgoPeriodEnd.toISOString(),
+    )
+    .reduce(reduceAmountUsd, 0);
 
   // Mean of the last 3 months' MTD revenue for comparison
   const avgPrevMtdRevenue =
@@ -815,35 +1035,30 @@ export async function GET(request: NextRequest) {
   }
 
   // Calculate usage breakdown by source_type
-  type UsageSourceType =
-    | 'tts'
-    | 'voice_cloning'
-    | 'live_call'
-    | 'audio_processing';
-  const sourceTypeLabels: Record<UsageSourceType, string> = {
+  const sourceTypeLabels: Partial<Record<UsageSourceType, string>> = {
     tts: 'TTS',
     voice_cloning: 'Cloning',
     live_call: 'Calls',
     audio_processing: 'Processing',
+    api_tts: 'API TTS',
+    api_voice_cloning: 'API Cloning',
   };
+
+  const getSourceTypeLabel = (sourceType: string): string =>
+    sourceTypeLabels[sourceType as UsageSourceType] ?? sourceType;
 
   const calculateUsageBreakdown = (
     events: typeof paidUserUsageEvents,
-  ): Map<UsageSourceType, number> => {
-    const breakdown = new Map<UsageSourceType, number>();
+  ): Map<string, number> => {
+    const breakdown = new Map<string, number>();
     for (const event of events) {
-      const current = breakdown.get(event.source_type as UsageSourceType) ?? 0;
-      breakdown.set(
-        event.source_type as UsageSourceType,
-        current + event.credits_used,
-      );
+      const current = breakdown.get(event.source_type) ?? 0;
+      breakdown.set(event.source_type, current + event.credits_used);
     }
     return breakdown;
   };
 
-  const formatUsageBreakdown = (
-    breakdown: Map<UsageSourceType, number>,
-  ): string => {
+  const formatUsageBreakdown = (breakdown: Map<string, number>): string => {
     const total = [...breakdown.values()].reduce((sum, v) => sum + v, 0);
     if (total === 0) return 'No usage';
 
@@ -851,7 +1066,7 @@ export async function GET(request: NextRequest) {
       .sort(([, a], [, b]) => b - a)
       .map(([type, credits]) => {
         const pct = ((credits / total) * 100).toFixed(0);
-        return `${sourceTypeLabels[type]}: ${formatCompactNumber(credits)} (${pct}%)`;
+        return `${getSourceTypeLabel(type)}: ${formatCompactNumber(credits)} (${pct}%)`;
       })
       .join(' | ');
   };
@@ -910,17 +1125,19 @@ export async function GET(request: NextRequest) {
 
   // Both sides are in dollars: usageValueYesterday vs revenuePurchasedYesterday
   // If purchase is 0, ratio is infinite if usage > 0.
-  const burnRateRatio =
-    revenuePurchasedYesterday > 0
-      ? usageValueYesterday / revenuePurchasedYesterday
-      : usageValueYesterday > 0
-        ? Number.POSITIVE_INFINITY
-        : 0;
+  let burnRateRatio = 0;
+  if (revenuePurchasedYesterday > 0) {
+    burnRateRatio = usageValueYesterday / revenuePurchasedYesterday;
+  } else if (usageValueYesterday > 0) {
+    burnRateRatio = Number.POSITIVE_INFINITY;
+  }
 
-  const burnRateFlag =
-    burnRateRatio > 1.2 // Warn if burning 20% more than buying
-      ? ` ⚠️ Burn rate: ${revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'} vs purchased`
-      : '';
+  let burnRateFlag = '';
+  if (burnRateRatio > 1.2) {
+    const burnRateDisplay =
+      revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞';
+    burnRateFlag = ` ⚠️ Burn rate: ${burnRateDisplay} vs purchased`;
+  }
 
   // DEBUG: Credit calculation verification
   if (!isProd) {
@@ -1014,8 +1231,182 @@ export async function GET(request: NextRequest) {
           })
           .join(', ');
 
+  const revenueDeltaVsAvg = totalAmountUsdToday - avg7dRevenue;
+  const revenueDeltaPctVsAvg =
+    avg7dRevenue > 0 ? (revenueDeltaVsAvg / avg7dRevenue) * 100 : 0;
+  const usageHighlights = [
+    audioYesterdayCount > audioWeekCount / 7
+      ? `Audio strong: ${audioYesterdayCount} vs ${(audioWeekCount / 7).toFixed(
+          1,
+        )} avg`
+      : null,
+    callsYesterdayCount > callsWeekCount / 7
+      ? `Calls above trend: ${callsYesterdayCount} vs ${(
+          callsWeekCount / 7
+        ).toFixed(1)} avg`
+      : null,
+    clonePrevCount > cloneWeekCount / 7
+      ? `Cloning above trend: ${clonePrevCount} vs ${(
+          cloneWeekCount / 7
+        ).toFixed(1)} avg`
+      : null,
+  ].filter(Boolean);
+
+  const executiveSummaryLines = [
+    `- Revenue ${revenueDeltaVsAvg >= 0 ? 'strong' : 'soft'}: $${totalAmountUsdToday.toFixed(2)} yesterday vs $${avg7dRevenue.toFixed(2)} 7d avg (${revenueDeltaVsAvg >= 0 ? '↑' : '↓'}${Math.abs(revenueDeltaPctVsAvg).toFixed(0)}%)`,
+    `- Usage ${usageHighlights.length > 0 ? 'strong' : 'mixed'}: ${audioYesterdayCount} audios, ${callsYesterdayCount} calls, ${clonePrevCount} clones`,
+    `- Monetization ${Number.parseFloat(paidVsTotalActiveRate) < 5 ? 'weak' : 'healthy'}: ${paidVsTotalActiveRate}% of active users are paid (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday})`,
+  ];
+
+  const top3UsageCredits = topUsageUsers.reduce(
+    (sum, [, credits]) => sum + credits,
+    0,
+  );
+  const top3UsageSharePct =
+    totalCreditsYesterday > 0
+      ? ((top3UsageCredits / totalCreditsYesterday) * 100).toFixed(0)
+      : '0';
+  const top1UsageCredits = topUsageUsers[0]?.[1] ?? 0;
+  const top1UsageSharePct =
+    totalCreditsYesterday > 0
+      ? ((top1UsageCredits / totalCreditsYesterday) * 100).toFixed(0)
+      : '0';
+
+  const alerts = [
+    callsYesterdayCount === 0 ? 'Calls had no usage yesterday' : null,
+    clonePrevCount === 0 ? 'Voice cloning had no usage yesterday' : null,
+    apiTtsCreditsYesterday === 0 ? 'API TTS had no usage yesterday' : null,
+    creditsTodayCount === 0 ? 'No purchases yesterday' : null,
+    burnRateRatio > 1.2
+      ? `Paid-user credit burn outpaced purchases (${revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'})`
+      : null,
+    totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
+      ? `Paid usage is concentrated: top 3 users drove ${top3UsageSharePct}%`
+      : null,
+    profilesTodayCount >= 100 && creditsTodayCount === 0
+      ? 'Strong signup day but no purchases'
+      : null,
+  ].filter(Boolean);
+
+  const funnelActivationRate =
+    profilesTodayCount > 0
+      ? ((totalActiveUsersYesterday / profilesTodayCount) * 100).toFixed(1)
+      : null;
+  const funnelPaidActiveRate =
+    totalActiveUsersYesterday > 0
+      ? ((uniquePaidUsersYesterday / totalActiveUsersYesterday) * 100).toFixed(
+          1,
+        )
+      : null;
+  const funnelPurchaseRate =
+    totalActiveUsersYesterday > 0
+      ? ((creditsTodayCount / totalActiveUsersYesterday) * 100).toFixed(1)
+      : null;
+
+  const getFeatureHealthStatus = (
+    current: number,
+    baseline: number,
+  ): '🟢 active' | '🟡 below trend' | '🔴 no usage' => {
+    if (current === 0) return '🔴 no usage';
+    if (baseline > 0 && current < baseline) return '🟡 below trend';
+    return '🟢 active';
+  };
+
+  const featureHealthItems = [
+    {
+      label: 'TTS',
+      status: getFeatureHealthStatus(
+        usageYesterdayBreakdown.get('tts') ?? 0,
+        (usageWeekBreakdown.get('tts') ?? 0) / 7,
+      ),
+      detail: `${formatCompactNumber(usageYesterdayBreakdown.get('tts') ?? 0)} credits`,
+    },
+    {
+      label: 'API TTS',
+      status: getFeatureHealthStatus(
+        apiTtsCreditsYesterday,
+        (usageWeekBreakdown.get('api_tts') ?? 0) / 7,
+      ),
+      detail: `${formatCompactNumber(apiTtsCreditsYesterday)} credits`,
+    },
+    {
+      label: 'Calls',
+      status: getFeatureHealthStatus(callsYesterdayCount, callsWeekCount / 7),
+      detail: `${callsYesterdayCount} calls, ${formatDuration(callsDurationYesterday)}`,
+    },
+    {
+      label: 'Cloning',
+      status: getFeatureHealthStatus(clonePrevCount, cloneWeekCount / 7),
+      detail: `${clonePrevCount} clones`,
+    },
+  ];
+
+  const featureIssues = featureHealthItems.filter(
+    (item) => item.status !== '🟢 active',
+  );
+
+  const featureHealthLines =
+    featureIssues.length === 0
+      ? []
+      : [
+          '',
+          '🧩 Feature Health',
+          ...featureIssues.map(
+            (item) => `- ${item.label}: ${item.status} (${item.detail})`,
+          ),
+        ];
+
+  const burnRateDisplay =
+    revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(2)}x` : '∞';
+
+  const concentrationRiskLines =
+    totalCreditsYesterday === 0
+      ? ['- No paid-user usage yesterday']
+      : [
+          `- Top 3 paid users drove ${top3UsageSharePct}% of yesterday's paid-user usage`,
+          `- Top user drove ${top1UsageSharePct}% of paid-user usage`,
+        ];
+
+  const shouldShowConcentrationRisk =
+    totalCreditsYesterday === 0 || Number.parseFloat(top3UsageSharePct) >= 60;
+
+  const revenueSummaryLines = [
+    `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
+    `  - 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
+    `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
+    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+  ];
+
   const message = [
     `📊 Daily Stats — ${previousDay.toISOString().slice(0, 10)}`,
+    '',
+    '🧠 Executive Summary',
+    ...executiveSummaryLines,
+    ...(alerts.length > 0
+      ? ['', '🚨 Alerts', ...alerts.map((alert) => `- ${alert}`)]
+      : []),
+    '',
+    '💸 Money Flow',
+    `- Revenue collected yesterday: $${revenuePurchasedYesterday.toFixed(2)}`,
+    `- Paid-user usage value: ≈ $${usageValueYesterday.toFixed(2)}`,
+    `- Burn/revenue ratio: ${burnRateDisplay}`,
+    '',
+    '🔻 Funnel',
+    `- New profiles: ${profilesTodayCount}`,
+    `- Active users: ${totalActiveUsersYesterday}${funnelActivationRate ? ` (${funnelActivationRate}% of new profiles)` : ''}`,
+    `- Paid active users: ${uniquePaidUsersYesterday}${funnelPaidActiveRate ? ` (${funnelPaidActiveRate}% of active users)` : ''}`,
+    `- Credit transactions: ${creditsTodayCount}${funnelPurchaseRate ? ` (${funnelPurchaseRate}% of active users)` : ''}`,
+    ...featureHealthLines,
+    ...(shouldShowConcentrationRisk
+      ? ['', '⚠️ Concentration Risk', ...concentrationRiskLines]
+      : []),
+    '',
+    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)}${burnRateFlag}`,
+    `  - Mix: ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
+    `  - Top 3: ${topUsageUsersList}`,
+    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day ≈ $${(usageValueWeek / 7).toFixed(2)}/day)`,
+    '',
+    ...revenueSummaryLines,
     '',
     `🎧 Audio Files: ${audioYesterdayCount} (${formatChange(audioYesterdayCount, audioWeekCount / 7)})`,
     `  - 7d: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
@@ -1025,16 +1416,14 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
     `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(Math.round(callsDurationYesterday / callsYesterdayCount) || 0)}) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(Math.round(callsDurationWeek / callsWeekCount) || 0)})`,
-    `  - All-time: ${callSessionsTotalCount.toLocaleString()}`,
+    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDurationWeek)} vs 7d) | 7d: ${formatDuration(callsDurationWeek)} (avg ${formatDuration(callsAvgDurationWeek)})`,
+    `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profilesWeekCount / 7)})`,
     `  - 7d: ${profilesWeekCount} (avg ${(profilesWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${profilesTotalCount.toLocaleString()}`,
     '',
-    '🔌 API:',
-    `  - Used Keys (new): ${usedNewApiKeysCount}`,
-    `  - TTS Usage: ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
+    `🔌 API: ${usedNewApiKeysCount} new key${usedNewApiKeysCount === 1 ? '' : 's'} | ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
     '',
     `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, creditsWeekCount / 7)}) ${creditsTodayCount > 0 ? '🤑' : '😿'}`,
     `  - 7d: ${creditsWeekCount} (avg ${(creditsWeekCount / 7).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
@@ -1049,37 +1438,21 @@ export async function GET(request: NextRequest) {
       : [
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
-    '',
-    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} (${uniquePaidUsersYesterday}/${totalActiveUsersYesterday} active users, ${paidVsTotalActiveRate}% paid)${burnRateFlag}`,
-    `  - ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
-    `  - Top 3: ${topUsageUsersList}`,
-    `  - 7d: ${formatCompactNumber(totalCreditsWeek)} credits ≈ $${usageValueWeek.toFixed(2)} (${uniquePaidUsersWeek} users, avg ${formatCompactNumber(totalCreditsWeek / 7)}/day) | ${formatUsageBreakdown(usageWeekBreakdown)}`,
-    '',
-    '💰 Revenue',
-    `  - Yesterday: $${totalAmountUsdToday.toFixed(2)} (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
-    `  - All-time: $${totalAmountUsd.toFixed(0)} | 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)})`,
-    `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active - next: ${maskUsername(nextPayingSubscriber?.username)} ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
-    '',
     ...(hasInvalidMetadata
-      ? [
-          //
-          '‼️ Info',
-          '  - Invalid Metadata in credit_transactions',
-        ]
+      ? ['', '‼️ Info', '  - Invalid Metadata in credit_transactions']
       : []),
-  ];
+  ].join('\n');
 
   try {
     if (!isProd) {
-      return new NextResponse(message.join('\n'));
+      return new NextResponse(message);
     }
     await fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: '202637584',
-        text: message.join('\n'),
+        text: message,
       }),
     });
     Sentry.captureCheckIn({

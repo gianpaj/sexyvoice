@@ -42,6 +42,9 @@ import {
 
 const ENDPOINT = '/api/v1/speech';
 
+// https://vercel.com/docs/functions/configuring-functions/duration
+export const maxDuration = 800; // seconds - fluid compute is enabled
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
   const requestId = getExternalApiRequestId();

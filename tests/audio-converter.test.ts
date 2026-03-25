@@ -315,6 +315,30 @@ describe('audio-converter', () => {
       }
     });
 
+    test('should reject decoded audio without channel data', async () => {
+      const mockMPEGDecoder = await import('mpg123-decoder').then(
+        (m) => m.MPEGDecoder,
+      );
+
+      const originalDecode = mockMPEGDecoder.prototype.decode;
+      try {
+        mockMPEGDecoder.prototype.decode = () => ({
+          channelData: [],
+          sampleRate: 44_100,
+          samplesDecoded: 0,
+          errors: [],
+        });
+        const mp3Buffer = Buffer.from([0xff, 0xfb, 0x10, 0x00]);
+        await expect(
+          convertToWav(mp3Buffer, 'audio/mpeg', 'invalid.mp3'),
+        ).rejects.toThrow(
+          'Decoded mp3 audio did not contain valid channel data',
+        );
+      } finally {
+        mockMPEGDecoder.prototype.decode = originalDecode;
+      }
+    });
+
     test('should produce valid PCM data in WAV file', async () => {
       const mp3Buffer = Buffer.from([0xff, 0xfb, 0x10, 0x00]);
       const wavBuffer = await convertToWav(mp3Buffer, 'audio/mpeg');

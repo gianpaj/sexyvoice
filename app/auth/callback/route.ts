@@ -1,9 +1,21 @@
 import * as Sentry from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
+import { i18n } from '@/lib/i18n/i18n-config';
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { createClient } from '@/lib/supabase/server';
+
+const isSafeRedirectPath = (value: string | null) =>
+  Boolean(value?.startsWith('/') && !value.startsWith('//'));
+
+const getLocaleFromRedirectPath = (redirectPath: string | null) => {
+  const locale = redirectPath?.split('/')[1];
+
+  return i18n.locales.includes(locale as (typeof i18n.locales)[number])
+    ? locale
+    : i18n.defaultLocale;
+};
 
 export async function GET(request: Request) {
   // The `/auth/callback` route is required for the server-side auth flow implemented
@@ -12,10 +24,12 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
-  const redirectTo = requestUrl.searchParams.get('redirect_to')?.toString();
+  const redirectTo = requestUrl.searchParams.get('redirect_to');
+  const locale = getLocaleFromRedirectPath(redirectTo);
+  const loginPath = `/${locale}/login`;
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login`);
+    return NextResponse.redirect(`${origin}${loginPath}`);
   }
   const supabase = await createClient();
   const {
@@ -24,7 +38,7 @@ export async function GET(request: Request) {
 
   const email = user?.email;
   if (!email) {
-    return NextResponse.redirect(`${origin}/login`);
+    return NextResponse.redirect(`${origin}${loginPath}`);
   }
 
   // Add Stripe customer creation
@@ -54,10 +68,10 @@ export async function GET(request: Request) {
     await posthog.shutdown();
   }
 
-  if (redirectTo) {
+  if (isSafeRedirectPath(redirectTo)) {
     return NextResponse.redirect(`${origin}${redirectTo}`);
   }
 
   // URL to redirect to after sign up process completes
-  return NextResponse.redirect(`${origin}/dashboard/generate`);
+  return NextResponse.redirect(`${origin}/${i18n.defaultLocale}/dashboard`);
 }

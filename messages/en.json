@@ -112,6 +112,20 @@
           "category": "Voice creation & styles",
           "questions": [
             {
+              "question": "Which languages are supported for Speech Generation?",
+              "answer": "Language support depends on the selected voice.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) support 24 languages including:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\nand 🇮🇳 Telugu (India).\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
+            },
+            {
+              "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
+              "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
+            }
+          ]
+        },
+        {
+          "id": "voiceCloning",
+          "category": "Voice cloning",
+          "questions": [
+            {
               "question": "How does voice cloning work?",
               "answer": "Our AI analyzes your voice sample (10 seconds to 5 mins) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
             },
@@ -120,16 +134,8 @@
               "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
             },
             {
-              "question": "Which languages are supported for Speech Generation?",
-              "answer": "Language support depends on the selected voice.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) support 24 languages including:\n🇪🇬 Arabic (Egyptian),\n🇺🇸 English (US),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇺🇸 Spanish (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇧🇷 Portuguese (Brazil),\n🇷🇺 Russian (Russia),\n🇳🇱 Dutch (Netherlands),\n🇵🇱 Polish (Poland),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇻🇳 Vietnamese (Vietnam),\n🇷🇴 Romanian (Romania),\n🇺🇦 Ukrainian (Ukraine),\n🇧🇩 Bengali (Bangladesh),\n🇮🇳 English/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\nand 🇮🇳 Telugu (India).\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
-            },
-            {
               "question": "Which languages are supported for Voice Cloning?",
               "answer": "Voice cloning supports the following 23 languages:\n\n🇸🇦 Arabic,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\nand 🇹🇷 Turkish."
-            },
-            {
-              "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
-              "answer": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions."
             }
           ]
         },
@@ -139,11 +145,11 @@
           "questions": [
             {
               "question": "How does Live AI Calling work?",
-              "answer": "Tap the call button and you’ll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
+              "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
               "question": "How much does it cost?",
-              "answer": "Live calling costs 2000 credits per minute while you’re connected."
+              "answer": "Live calling costs 2000 credits per minute while you're connected."
             }
           ]
         },
@@ -202,13 +208,20 @@
     "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
     "billing": {
-      "forever": "(forever)"
+      "forever": "(forever)",
+      "monthly": "/month",
+      "oneTime": "One-time"
     },
     "plans": {
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",
+      "subscribe": "Subscribe",
       "x_credits": "{numCredits} credits",
+      "subscriptionBonus": "+15% more credits",
+      "subscriptionBonusCredits": "+{bonusCredits} bonus credits",
+      "toggleMonthly": "Monthly",
+      "toggleOneTime": "One-time",
       "free": {
         "name": "Free",
         "description": "For individuals who want to try out the most advanced AI audio generation.",
@@ -271,7 +284,8 @@
           "value": "Pro Pack"
         }
       },
-      "mostPopular": "Most Popular"
+      "mostPopular": "Most Popular",
+      "cheaperBadge": "{percent} cheaper"
     },
     "status": {
       "success": {
@@ -658,6 +672,10 @@
     }
   },
   "footer": {
+    "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "toolsHeading": "Tools",
+    "companyHeading": "Company",
+    "legalHeading": "Legal",
     "statusPage": "Status page",
     "privacyPolicy": "Privacy Policy",
     "termsAndConditions": "Terms and Conditions",

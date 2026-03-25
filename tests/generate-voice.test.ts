@@ -1,4 +1,5 @@
 import type { GenerateContentResponse } from '@google/genai';
+import * as Sentry from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -659,7 +660,7 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it.skip('should return 403 when freemium user exceeds gpro voice limit', async () => {
+    it('should return 403 when freemium user exceeds gpro voice limit', async () => {
       const queries = await import('@/lib/supabase/queries');
 
       // Mock isFreemiumUserOverLimit to return true
@@ -684,7 +685,7 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it.skip('should allow voice generation when freemium user is under limit', async () => {
+    it('should allow voice generation when freemium user is under limit', async () => {
       const queries = await import('@/lib/supabase/queries');
 
       // Mock isFreemiumUserOverLimit to return false (under limit)
@@ -827,6 +828,7 @@ describe('Generate Voice API Route', () => {
       expect(json.error).toBe(
         getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
 
@@ -1027,7 +1029,7 @@ describe('Integration Tests', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    // TODO: mock here isFreemiumUserOverLimit()
+    // isFreemiumUserOverLimit is already mocked to return false in setup.ts
 
     expect(response.status).toBe(200);
     expect(json.url).toBeTruthy();

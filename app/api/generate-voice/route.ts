@@ -21,6 +21,7 @@ import {
   getVoiceIdByName,
   hasUserPaid,
   insertUsageEvent,
+  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -37,7 +38,7 @@ import {
 const { logger, captureException } = Sentry;
 
 // https://vercel.com/docs/functions/configuring-functions/duration
-export const maxDuration = 320; // seconds - fluid compute is enabled
+export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -196,19 +197,23 @@ export async function POST(request: Request) {
     let uploadUrl = '';
 
     if (isGeminiVoice) {
-      // const isOverLimit = await isFreemiumUserOverLimit(user.id);
-      // if (!userHasPaid && isOverLimit) {
-      //   return NextResponse.json(
-      //     {
-      //       errorCode: 'gproLimitExceeded',
-      //     },
-      //     { status: 403 },
-      //   );
-      // }
+      let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      if (!userHasPaid) {
+        const isOverLimit = await isFreemiumUserOverLimit(user.id);
+        if (isOverLimit) {
+          return NextResponse.json(
+            {
+              errorCode: 'gproLimitExceeded',
+            },
+            { status: 403 },
+          );
+        }
+        apiKey =
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      }
 
-      const ai = new GoogleGenAI({
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      });
+      const ai = new GoogleGenAI({ apiKey });
 
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,
@@ -475,6 +480,16 @@ export async function POST(request: Request) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
+
+    if (Error.isError(error) && error.cause === 'PROHIBITED_CONTENT') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation failed, please retry',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
     const errorObj = {
       text,
       voice,
