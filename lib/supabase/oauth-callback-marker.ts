@@ -5,7 +5,11 @@ import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 export const OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS = 60;
 
 function getOauthCallbackMarkerSecret(): string | null {
-  return process.env.API_KEY_HMAC_SECRET ?? null;
+  return (
+    process.env.OAUTH_CALLBACK_MARKER_SECRET ??
+    process.env.API_KEY_HMAC_SECRET ??
+    null
+  );
 }
 
 function createOauthCallbackMarkerSignature(expiresAt: number): string | null {
