@@ -172,6 +172,19 @@ Notes:
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
   for free-user Gemini flows where configured in code.
 
+### LiveKit real-time calls
+
+- `LIVEKIT_URL`
+- `LIVEKIT_API_KEY`
+- `LIVEKIT_API_SECRET`
+
+Notes:
+- `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
+  and used by the frontend to connect to LiveKit rooms.
+- `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
+  by `app/api/call-token/route.ts` to mint LiveKit access tokens.
+- These secrets must never be exposed to the client.
+
 ### Authentication / auth monitoring
 
 - `API_KEY_HMAC_SECRET`
@@ -341,6 +354,15 @@ Check:
 - `OAUTH_CALLBACK_MARKER_SECRET`
 - redirect URL configuration in Supabase / OAuth provider
 - Sentry events tagged for OAuth callback flow
+
+### LiveKit call issues
+
+Check:
+- `LIVEKIT_URL`
+- `LIVEKIT_API_KEY`
+- `LIVEKIT_API_SECRET`
+- that `/api/call-token` can mint tokens successfully
+- that the LiveKit agent name and room dispatch configuration match the deployed agent setup
 
 ### External API issues
 

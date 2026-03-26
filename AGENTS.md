@@ -428,6 +428,7 @@ See [`docs/devops.md`](docs/devops.md) for the canonical DevOps documentation, i
 - deployment/runtime guidance
 - infrastructure and region notes
 - operational troubleshooting
+- LiveKit call infrastructure and required call token environment variables (`LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`)
 
 Environment variable maintenance rule:
 

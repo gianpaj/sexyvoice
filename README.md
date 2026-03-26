@@ -120,7 +120,10 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    cp .env.example .env.local
    ```
 
-   Fill in the required values from [`.env.example`](.env.example).
+   Fill in the required values from [`.env.example`](.env.example), including the LiveKit call variables:
+   - `LIVEKIT_URL`
+   - `LIVEKIT_API_KEY`
+   - `LIVEKIT_API_SECRET`
 
    For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
 
