@@ -97,6 +97,24 @@ async function checkAndIncrementRateLimit(
 
 export async function POST(request: Request) {
   let text = '';
+  let sessionId: string | undefined;
+  let isNewSession = false;
+  const withSessionCookie = (response: NextResponse) => {
+    if (!(isNewSession && sessionId)) {
+      return response;
+    }
+
+    response.cookies.set(DEMO_COOKIE_NAME, sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
+    });
+
+    return response;
+  };
+
   try {
     const body = await request.json();
     text = (body.text ?? '').trim();
@@ -120,8 +138,8 @@ export async function POST(request: Request) {
 
     // Resolve cookie session ID
     const cookieStore = await cookies();
-    let sessionId = cookieStore.get(DEMO_COOKIE_NAME)?.value;
-    const isNewSession = !sessionId;
+    sessionId = cookieStore.get(DEMO_COOKIE_NAME)?.value;
+    isNewSession = !sessionId;
     if (!sessionId) {
       sessionId = crypto.randomUUID();
     }
@@ -132,16 +150,16 @@ export async function POST(request: Request) {
       request.headers.get('x-real-ip') ||
       '0.0.0.0';
 
-    // Check rate limits (sessionId is always string at this point)
-    const resolvedSessionId = sessionId as string;
     const { allowed, remaining } = await checkAndIncrementRateLimit(
-      resolvedSessionId,
+      sessionId,
       ip,
     );
     if (!allowed) {
-      return NextResponse.json(
-        { error: 'limit_reached', remaining: 0 },
-        { status: 429 },
+      return withSessionCookie(
+        NextResponse.json(
+          { error: 'limit_reached', remaining: 0 },
+          { status: 429 },
+        ),
       );
     }
 
@@ -156,14 +174,18 @@ export async function POST(request: Request) {
       .single();
 
     if (voiceError || !voice) {
-      return NextResponse.json({ error: 'invalid_voice' }, { status: 400 });
+      return withSessionCookie(
+        NextResponse.json({ error: 'invalid_voice' }, { status: 400 }),
+      );
     }
 
     const demoBucket = process.env.R2_DEMO_BUCKET_NAME;
     const demoPublicUrl = process.env.R2_DEMO_PUBLIC_URL;
     if (!(demoBucket && demoPublicUrl)) {
       logger.error('Demo R2 storage is not fully configured');
-      return NextResponse.json({ error: 'generation_failed' }, { status: 500 });
+      return withSessionCookie(
+        NextResponse.json({ error: 'generation_failed' }, { status: 500 }),
+      );
     }
 
     // Call Gemini 2.5 Flash TTS
@@ -207,7 +229,9 @@ export async function POST(request: Request) {
         finishReason,
         hasData: !!audioData,
       });
-      return NextResponse.json({ error: 'generation_failed' }, { status: 500 });
+      return withSessionCookie(
+        NextResponse.json({ error: 'generation_failed' }, { status: 500 }),
+      );
     }
 
     const audioBuffer = convertToWav(audioData, mimeType);
@@ -226,19 +250,12 @@ export async function POST(request: Request) {
       { status: 200 },
     );
 
-    if (isNewSession) {
-      response.cookies.set(DEMO_COOKIE_NAME, resolvedSessionId, {
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/',
-      });
-    }
-
-    return response;
+    return withSessionCookie(response);
   } catch (err) {
     captureException(err, { extra: { text } });
     logger.error('Demo TTS route error', { error: err });
-    return NextResponse.json({ error: 'generation_failed' }, { status: 500 });
+    return withSessionCookie(
+      NextResponse.json({ error: 'generation_failed' }, { status: 500 }),
+    );
   }
 }
