@@ -58,17 +58,22 @@ export const updateSession = async (
       data: { user },
     } = await supabase.auth.getUser();
 
-    console.log('OAuth callback marker middleware check', {
-      pathname,
-      locale,
-      isDashboardPath: isDashboardPath(pathname, locale),
-      hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
-      rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
-      hasOauthCallbackMarker,
-      hasUser: Boolean(user),
-    });
+    const dashboardPath = isDashboardPath(pathname, locale);
+    const hasRawOauthCallbackMarker = Boolean(rawOauthCallbackMarker);
 
-    if (!user && isDashboardPath(pathname, locale)) {
+    if (dashboardPath || hasRawOauthCallbackMarker || hasOauthCallbackMarker) {
+      console.log('OAuth callback marker middleware check', {
+        pathname,
+        locale,
+        isDashboardPath: dashboardPath,
+        hasRawOauthCallbackMarker,
+        rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+        hasOauthCallbackMarker,
+        hasUser: Boolean(user),
+      });
+    }
+
+    if (!user && dashboardPath) {
       const redirectResponse = NextResponse.redirect(
         new URL(`/${locale}/login`, request.url),
       );
@@ -133,7 +138,7 @@ export const updateSession = async (
       );
     }
 
-    if (hasOauthCallbackMarker && isDashboardPath(pathname, locale)) {
+    if (hasOauthCallbackMarker && dashboardPath) {
       console.log(
         'Clearing OAuth callback marker after successful dashboard session check',
         {
