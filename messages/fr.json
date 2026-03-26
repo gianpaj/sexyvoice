@@ -103,6 +103,33 @@
       "trySamplesTitle": "Essayez nos échantillons vocaux",
       "trySamplesSubtitle": "Écoutez des échantillons vocaux créés avec notre technologie IA avancée"
     },
+    "demo": {
+      "title": "Essayez gratuitement",
+      "subtitle": "Aucune inscription requise —",
+      "usedAll": "Vous avez utilisé toutes les générations gratuites",
+      "remainingGenerations": "Il vous reste {remaining} {remaining, plural, one {génération gratuite} other {générations gratuites}} sur {total}",
+      "voiceLabel": "Voix",
+      "voicePlaceholder": "Sélectionnez une voix",
+      "presetsLabel": "Essayez un exemple :",
+      "textPlaceholder": "Ou saisissez votre propre texte…",
+      "generating": "Génération en cours…",
+      "generate": "Générer",
+      "ctaText": "Vous en voulez plus ? Inscrivez-vous gratuitement et obtenez <highlight>{count} générations gratuites</highlight>.",
+      "signUpFreeCta": "Inscrivez-vous gratuitement",
+      "errors": {
+        "securityPending": "Veuillez attendre la fin de la vérification de sécurité.",
+        "securityFailed": "La vérification de sécurité a échoué. Veuillez réessayer.",
+        "generationFailed": "La génération a échoué. Veuillez réessayer.",
+        "unexpected": "Un problème est survenu. Veuillez réessayer."
+      },
+      "presets": {
+        "welcome": "Bienvenue sur SexyVoice, où vos mots prennent vie.",
+        "quickBrownFox": "Le rapide renard brun saute par-dessus le chien paresseux.",
+        "typeAnything": "Écrivez ce que vous voulez et écoutez-le en quelques secondes.",
+        "aiCommunication": "L'intelligence artificielle transforme notre manière de communiquer.",
+        "helloWorld": "Bonjour le monde ! Voilà à quoi votre voix pourrait ressembler."
+      }
+    },
     "faq": {
       "title": "Questions fréquentes",
       "subtitle": "Tout ce que vous devez savoir sur SexyVoice.ai",

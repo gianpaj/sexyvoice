@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2, Play, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useRef, useState } from 'react';
 
 import {
@@ -23,14 +24,6 @@ const MAX_CHARS = 200;
 const TOTAL_GENERATIONS = 3;
 const STORAGE_KEY = 'demo_tts_remaining';
 const DEMO_WINDOW_MS = 24 * 60 * 60 * 1000;
-
-const PRESETS = [
-  'Welcome to SexyVoice — where your words come alive.',
-  'The quick brown fox jumps over the lazy dog.',
-  'Type anything you want and hear it in seconds.',
-  'Artificial intelligence is transforming how we communicate.',
-  'Hello world! This is what your voice could sound like.',
-];
 
 export interface DemoVoice {
   id: string;
@@ -88,7 +81,8 @@ export function HomepageTTSDemo({
   voices,
   challengeUrl,
 }: HomepageTTSDemoProps) {
-  const [text, setText] = useState(PRESETS[0]);
+  const t = useTranslations('landing.demo');
+  const [text, setText] = useState(() => t('presets.welcome'));
   const [selectedVoiceId, setSelectedVoiceId] = useState(voices[0]?.id ?? '');
   const [remaining, setRemaining] = useState<number>(() =>
     getStoredRemaining(),
@@ -113,12 +107,19 @@ export function HomepageTTSDemo({
   }, []);
 
   const isExhausted = remaining <= 0;
+  const presets = [
+    t('presets.welcome'),
+    t('presets.quickBrownFox'),
+    t('presets.typeAnything'),
+    t('presets.aiCommunication'),
+    t('presets.helloWorld'),
+  ];
 
   async function handleGenerate() {
     setError(null);
 
     if (!altchaPayload) {
-      setError('Please wait for the security check to complete.');
+      setError(t('errors.securityPending'));
       return;
     }
 
@@ -150,8 +151,8 @@ export function HomepageTTSDemo({
         resetAltcha();
         setError(
           data.error === 'invalid_captcha'
-            ? 'Security check failed. Please try again.'
-            : 'Generation failed. Please try again.',
+            ? t('errors.securityFailed')
+            : t('errors.generationFailed'),
         );
         setStatus('idle');
         return;
@@ -171,7 +172,7 @@ export function HomepageTTSDemo({
       resetAltcha();
     } catch {
       resetAltcha();
-      setError('Something went wrong. Please try again.');
+      setError(t('errors.unexpected'));
       setStatus('idle');
     }
   }
@@ -181,10 +182,10 @@ export function HomepageTTSDemo({
       <div className="mb-6 text-center">
         <h2 className="flex items-center justify-center gap-2 font-bold text-2xl text-white">
           <Sparkles className="size-5 text-pink-400" />
-          Try it free
+          {t('title')}
         </h2>
         <p className="mt-1 text-gray-400 text-sm">
-          No sign-up required &mdash;{' '}
+          {t('subtitle')}{' '}
           <span
             className={cn(
               'font-medium',
@@ -192,8 +193,11 @@ export function HomepageTTSDemo({
             )}
           >
             {isExhausted
-              ? "You've used all free generations"
-              : `${remaining} of ${TOTAL_GENERATIONS} free generation${remaining === 1 ? '' : 's'} remaining`}
+              ? t('usedAll')
+              : t('remainingGenerations', {
+                  remaining,
+                  total: TOTAL_GENERATIONS,
+                })}
           </span>
         </p>
       </div>
@@ -210,14 +214,14 @@ export function HomepageTTSDemo({
             className="mb-1.5 block font-medium text-gray-300 text-sm"
             htmlFor="demo-voice"
           >
-            Voice
+            {t('voiceLabel')}
           </label>
           <Select onValueChange={setSelectedVoiceId} value={selectedVoiceId}>
             <SelectTrigger
               className="border-white/20 bg-white/10 text-white"
               id="demo-voice"
             >
-              <SelectValue placeholder="Select a voice" />
+              <SelectValue placeholder={t('voicePlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               {voices.map((v) => (
@@ -231,9 +235,9 @@ export function HomepageTTSDemo({
 
         {/* Presets */}
         <div className="mb-3">
-          <p className="mb-1.5 text-gray-400 text-xs">Try a preset:</p>
+          <p className="mb-1.5 text-gray-400 text-xs">{t('presetsLabel')}</p>
           <div className="flex flex-wrap gap-1.5">
-            {PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <button
                 className={cn(
                   'rounded-full border px-3 py-1 text-xs transition-colors',
@@ -257,7 +261,7 @@ export function HomepageTTSDemo({
             className="resize-none border-white/20 bg-white/10 text-white placeholder:text-gray-500"
             maxLength={MAX_CHARS}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Or type your own text…"
+            placeholder={t('textPlaceholder')}
             rows={3}
             value={text}
           />
@@ -289,12 +293,12 @@ export function HomepageTTSDemo({
           {status === 'loading' ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Generating…
+              {t('generating')}
             </>
           ) : (
             <>
               <Play className="mr-2 size-4" />
-              Generate
+              {t('generate')}
             </>
           )}
         </Button>
@@ -311,14 +315,15 @@ export function HomepageTTSDemo({
       {isExhausted && (
         <div className="mt-4 text-center">
           <p className="mb-3 text-gray-300 text-sm">
-            Want more? Sign up free for{' '}
-            <span className="font-medium text-pink-300">
-              10 free generations
-            </span>
-            .
+            {t.rich('ctaText', {
+              count: 10,
+              highlight: (chunks) => (
+                <span className="font-medium text-pink-300">{chunks}</span>
+              ),
+            })}
           </p>
           <Button asChild size="lg">
-            <a href="/signup">Sign up free →</a>
+            <a href="/signup">{t('signUpFreeCta')} →</a>
           </Button>
         </div>
       )}

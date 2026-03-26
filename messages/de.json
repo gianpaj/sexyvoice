@@ -103,6 +103,33 @@
       "trySamplesTitle": "Probieren Sie unsere Sprachmuster",
       "trySamplesSubtitle": "Hören Sie sich Sprachproben an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden"
     },
+    "demo": {
+      "title": "Kostenlos ausprobieren",
+      "subtitle": "Keine Anmeldung erforderlich —",
+      "usedAll": "Sie haben alle kostenlosen Generierungen verbraucht",
+      "remainingGenerations": "{remaining} von {total} kostenlosen {remaining, plural, one {Generierung} other {Generierungen}} übrig",
+      "voiceLabel": "Stimme",
+      "voicePlaceholder": "Wählen Sie eine Stimme",
+      "presetsLabel": "Probieren Sie eine Vorlage:",
+      "textPlaceholder": "Oder geben Sie Ihren eigenen Text ein…",
+      "generating": "Wird generiert…",
+      "generate": "Generieren",
+      "ctaText": "Sie möchten mehr? Registrieren Sie sich kostenlos und erhalten Sie <highlight>{count} kostenlose Generierungen</highlight>.",
+      "signUpFreeCta": "Kostenlos registrieren",
+      "errors": {
+        "securityPending": "Bitte warten Sie, bis die Sicherheitsprüfung abgeschlossen ist.",
+        "securityFailed": "Die Sicherheitsprüfung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "generationFailed": "Die Generierung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "unexpected": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+      },
+      "presets": {
+        "welcome": "Willkommen bei SexyVoice — wo Ihre Worte lebendig werden.",
+        "quickBrownFox": "Der schnelle braune Fuchs springt über den faulen Hund.",
+        "typeAnything": "Schreiben Sie, was Sie möchten, und hören Sie es in Sekunden.",
+        "aiCommunication": "Künstliche Intelligenz verändert, wie wir kommunizieren.",
+        "helloWorld": "Hallo Welt! So könnte Ihre Stimme klingen."
+      }
+    },
     "faq": {
       "title": "Häufig gestellte Fragen",
       "subtitle": "Alles, was Sie über SexyVoice.ai wissen müssen",
