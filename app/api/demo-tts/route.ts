@@ -188,12 +188,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const apiKey =
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+    if (!apiKey) {
+      logger.error('Google Generative AI API key is not configured');
+      return withSessionCookie(
+        NextResponse.json({ error: 'generation_failed' }, { status: 500 }),
+      );
+    }
+
     // Call Gemini 2.5 Flash TTS
-    const ai = new GoogleGenAI({
-      apiKey:
-        process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
-        process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-    });
+    const ai = new GoogleGenAI({ apiKey });
 
     const geminiConfig: GenerateContentConfig = {
       responseModalities: ['AUDIO'],
