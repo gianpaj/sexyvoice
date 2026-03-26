@@ -7,6 +7,7 @@ import {
   HarmCategory,
 } from '@google/genai';
 import { captureException, logger } from '@sentry/nextjs';
+import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { verifySolution } from 'altcha-lib';
 import { cookies } from 'next/headers';
@@ -20,10 +21,24 @@ const redis = Redis.fromEnv();
 
 const DEMO_COOKIE_NAME = 'demo_session_id';
 const DEMO_LIMIT = 3;
-const DEMO_WINDOW_SECONDS = 60 * 60 * 24; // 24 hours
 const DEMO_IP_LIMIT = 15;
 const MAX_TEXT_LENGTH = 200;
 const ALTCHA_REPLAY_WINDOW_SECONDS = 60 * 10; // 10 minutes
+const DEMO_WINDOW_DURATION = '24 h' as const;
+
+const demoCookieRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.fixedWindow(DEMO_LIMIT, DEMO_WINDOW_DURATION),
+  analytics: true,
+  prefix: 'demo_tts:cookie',
+});
+
+const demoIpRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.fixedWindow(DEMO_IP_LIMIT, DEMO_WINDOW_DURATION),
+  analytics: true,
+  prefix: 'demo_tts:ip',
+});
 
 function getAltchaHmacKey(): string | undefined {
   return process.env.ALTCHA_HMAC_KEY;
@@ -68,31 +83,19 @@ async function checkAndIncrementRateLimit(
   cookieId: string,
   ip: string,
 ): Promise<{ allowed: boolean; remaining: number }> {
-  const cookieKey = `demo:cookie:${cookieId}`;
-  const ipKey = `demo:ip:${ip}`;
-
-  const [cookieCount, ipCount] = await Promise.all([
-    redis.get<number>(cookieKey),
-    redis.get<number>(ipKey),
+  const [cookieResult, ipResult] = await Promise.all([
+    demoCookieRatelimit.limit(cookieId),
+    demoIpRatelimit.limit(ip),
   ]);
 
-  const currentCookieCount = cookieCount ?? 0;
-  const currentIpCount = ipCount ?? 0;
-
-  if (currentCookieCount >= DEMO_LIMIT || currentIpCount >= DEMO_IP_LIMIT) {
+  if (!(cookieResult.success && ipResult.success)) {
     return { allowed: false, remaining: 0 };
   }
 
-  // Increment both counters atomically
-  const pipeline = redis.pipeline();
-  pipeline.incr(cookieKey);
-  pipeline.expire(cookieKey, DEMO_WINDOW_SECONDS);
-  pipeline.incr(ipKey);
-  pipeline.expire(ipKey, DEMO_WINDOW_SECONDS);
-  await pipeline.exec();
-
-  const remaining = DEMO_LIMIT - (currentCookieCount + 1);
-  return { allowed: true, remaining: Math.max(0, remaining) };
+  return {
+    allowed: true,
+    remaining: Math.max(0, cookieResult.remaining ?? 0),
+  };
 }
 
 export async function POST(request: Request) {
