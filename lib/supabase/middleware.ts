@@ -37,6 +37,19 @@ const isDashboardPath = (pathname: string, locale: string) =>
   pathname === `/${locale}/dashboard` ||
   pathname.startsWith(`/${locale}/dashboard/`);
 
+const redirectWithSupabaseCookies = (
+  url: URL,
+  supabaseResponse: NextResponse,
+) => {
+  const redirectResponse = NextResponse.redirect(url);
+
+  for (const cookie of supabaseResponse.cookies.getAll()) {
+    redirectResponse.cookies.set(cookie);
+  }
+
+  return redirectResponse;
+};
+
 export const updateSession = async (
   request: NextRequest,
   locale: string,
@@ -61,8 +74,9 @@ export const updateSession = async (
     const dashboardPath = isDashboardPath(pathname, locale);
 
     if (!user && dashboardPath) {
-      const redirectResponse = NextResponse.redirect(
+      const redirectResponse = redirectWithSupabaseCookies(
         new URL(`/${locale}/login`, request.url),
+        supabaseResponse,
       );
 
       if (hasOauthCallbackMarker) {
@@ -103,14 +117,18 @@ export const updateSession = async (
 
     if (!(user || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
-      return NextResponse.redirect(new URL(`/${locale}`, request.url));
+      return redirectWithSupabaseCookies(
+        new URL(`/${locale}`, request.url),
+        supabaseResponse,
+      );
     }
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
 
     if (user && authRoutes.includes(pathname)) {
-      return NextResponse.redirect(
+      return redirectWithSupabaseCookies(
         new URL(`/${locale}/dashboard`, request.url),
+        supabaseResponse,
       );
     }
 
@@ -134,6 +152,9 @@ export const updateSession = async (
     return supabaseResponse;
   } catch (e) {
     console.error('Middleware error:', e);
-    return NextResponse.redirect(new URL(`/${locale}`, request.url));
+    return redirectWithSupabaseCookies(
+      new URL(`/${locale}`, request.url),
+      response,
+    );
   }
 };
