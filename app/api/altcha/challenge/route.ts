@@ -1,3 +1,4 @@
+import { captureException, logger } from '@sentry/nextjs';
 import { createChallenge } from 'altcha-lib';
 import { NextResponse } from 'next/server';
 
@@ -30,7 +31,9 @@ export async function GET() {
         Expires: '0',
       },
     });
-  } catch {
+  } catch (err) {
+    captureException(err, { extra: { context: 'altcha-challenge' } });
+    logger.error('Failed to generate Altcha challenge', { error: err });
     return NextResponse.json(
       { error: 'Failed to generate Altcha challenge' },
       { status: 500 },
