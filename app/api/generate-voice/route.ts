@@ -220,94 +220,102 @@ export async function POST(request: Request) {
           },
         ],
       };
-      try {
-        modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
-
-        genAIResponse = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text }] }],
-          config: geminiTTSConfig,
-        });
-      } catch (error) {
-        console.warn(error);
-        if (Error.isError(error) && error.name === 'AbortError') {
-          console.info('Gemini voice generation aborted');
-          return NextResponse.json(
-            { error: 'Request aborted' },
-            { status: 499 },
-          );
-        }
-
-        const proErrorMessage = Error.isError(error)
-          ? error.message
-          : String(error);
-        const geminiRequestContext = {
-          voice,
-          styleVariant,
-          model: modelUsed,
-          provider,
-          textLength: text.length,
-          textPreview: text.slice(0, 500),
-          requestedOutputCodec: outputCodec || null,
-          responseModalities: geminiTTSConfig.responseModalities,
-          speechConfig: geminiTTSConfig.speechConfig,
-        };
-
-        logger.warn(
-          `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
-          {
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-            extra: {
-              ...geminiRequestContext,
-              errorMessage: proErrorMessage,
-              errorCause: Error.isError(error) ? error.cause : undefined,
-            },
-          },
-        );
-        modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
+      if (userHasPaid) {
         try {
+          modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
             contents: [{ parts: [{ text }] }],
             config: geminiTTSConfig,
           });
+        } catch (error) {
+          console.warn(error);
+          if (error instanceof Error && error.name === 'AbortError') {
+            console.info('Gemini voice generation aborted');
+            return NextResponse.json(
+              { error: 'Request aborted' },
+              { status: 499 },
+            );
+          }
 
-          logger.info('Gemini flash fallback succeeded after pro failure', {
-            user: {
-              id: user.id,
-              email: user.email,
+          const proErrorMessage =
+            error instanceof Error ? error.message : String(error);
+          const geminiRequestContext = {
+            voice,
+            styleVariant,
+            model: modelUsed,
+            provider,
+            textLength: text.length,
+            textPreview: text.slice(0, 500),
+            requestedOutputCodec: outputCodec || null,
+            responseModalities: geminiTTSConfig.responseModalities,
+            speechConfig: geminiTTSConfig.speechConfig,
+          };
+
+          logger.warn(
+            `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
+            {
+              user: {
+                id: user.id,
+                email: user.email,
+              },
+              extra: {
+                ...geminiRequestContext,
+                errorMessage: proErrorMessage,
+                errorCause: error instanceof Error ? error.cause : undefined,
+              },
             },
-            extra: {
-              ...geminiRequestContext,
-              originalModel: 'gemini-2.5-pro-preview-tts',
-              fallbackModel: modelUsed,
-              proErrorMessage,
-            },
-          });
-        } catch (flashError) {
-          logger.error('Gemini flash fallback failed after pro failure', {
-            user: {
-              id: user.id,
-              email: user.email,
-            },
-            extra: {
-              ...geminiRequestContext,
-              originalModel: 'gemini-2.5-pro-preview-tts',
-              fallbackModel: modelUsed,
-              proErrorMessage,
-              flashErrorMessage: Error.isError(flashError)
-                ? flashError.message
-                : String(flashError),
-              flashErrorCause: Error.isError(flashError)
-                ? flashError.cause
-                : undefined,
-            },
-          });
-          throw flashError;
+          );
+          modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
+          try {
+            genAIResponse = await ai.models.generateContent({
+              model: modelUsed,
+              contents: [{ parts: [{ text }] }],
+              config: geminiTTSConfig,
+            });
+
+            logger.info('Gemini flash fallback succeeded after pro failure', {
+              user: {
+                id: user.id,
+                email: user.email,
+              },
+              extra: {
+                ...geminiRequestContext,
+                originalModel: 'gemini-2.5-pro-preview-tts',
+                fallbackModel: modelUsed,
+                proErrorMessage,
+              },
+            });
+          } catch (flashError) {
+            logger.error('Gemini flash fallback failed after pro failure', {
+              user: {
+                id: user.id,
+                email: user.email,
+              },
+              extra: {
+                ...geminiRequestContext,
+                originalModel: 'gemini-2.5-pro-preview-tts',
+                fallbackModel: modelUsed,
+                proErrorMessage,
+                flashErrorMessage:
+                  flashError instanceof Error
+                    ? flashError.message
+                    : String(flashError),
+                flashErrorCause:
+                  flashError instanceof Error ? flashError.cause : undefined,
+              },
+            });
+            throw flashError;
+          }
         }
+      } else {
+        modelUsed = 'gemini-2.5-flash-preview-tts';
+        genAIResponse = await ai.models.generateContent({
+          model: modelUsed,
+          contents: [{ parts: [{ text }] }],
+          config: geminiTTSConfig,
+        });
       }
       const data =
         genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;

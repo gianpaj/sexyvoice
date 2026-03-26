@@ -482,22 +482,15 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('should fallback to flash model when pro model fails', async () => {
+    it('should use flash model directly for free Gemini users', async () => {
       const { saveAudioFile } = await import('@/lib/supabase/queries');
 
       let callCount = 0;
-      const proError = new Error('Pro model failed');
 
       setMockGoogleGenAIFactory(() => ({
         models: {
           generateContent: vi.fn().mockImplementation(() => {
-            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
             callCount++;
-            if (callCount === 1) {
-              // First call (pro model) should throw
-              throw proError;
-            }
-            // Second call (flash model) succeeds
             const mockAudioData =
               'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
             return {
@@ -538,7 +531,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(callCount).toBe(2); // Should have been called twice
+      expect(callCount).toBe(1);
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 23,
         duration: '-1',
@@ -554,6 +547,100 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         predictionId: undefined,
         text: 'Hello world',
         url: 'https://files.sexyvoice.ai/generated-audio-free/poe-9de7f9fe.wav',
+        userId: 'test-user-id',
+        voiceId: 'voice-poe-id',
+      });
+
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        'gemini-2.5-pro-preview-tts failed, retrying with gemini-2.5-flash-preview-tts',
+        expect.anything(),
+      );
+
+      expect(Sentry.logger.info).not.toHaveBeenCalledWith(
+        'Gemini flash fallback succeeded after pro failure',
+        expect.anything(),
+      );
+
+      expect(json.url).toContain('files.sexyvoice.ai');
+    });
+
+    it('should fallback to flash model when pro model fails for paid Gemini users', async () => {
+      const { hasUserPaid, saveAudioFile } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const proError = new Error('Pro model failed');
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            callCount++;
+            if (callCount === 1) {
+              throw proError;
+            }
+            const mockAudioData =
+              'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+            return {
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          data: mockAudioData,
+                          mimeType: 'audio/wav',
+                        },
+                      },
+                    ],
+                  },
+                  finishReason: 'STOP',
+                },
+              ],
+              usageMetadata: {
+                promptTokenCount: 11,
+                candidatesTokenCount: 12,
+                totalTokenCount: 23,
+              },
+            } as GenerateContentResponse;
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(callCount).toBe(2);
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 23,
+        duration: '-1',
+        filename: expect.stringMatching(
+          /^generated-audio\/poe-[a-f0-9]+\.wav$/,
+        ),
+        isPublic: false,
+        model: 'gemini-2.5-flash-preview-tts',
+        usage: {
+          promptTokenCount: '11',
+          candidatesTokenCount: '12',
+          totalTokenCount: '23',
+          userHasPaid: true,
+        },
+        predictionId: undefined,
+        text: 'Hello world',
+        url: expect.stringMatching(
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/poe-[a-f0-9]+\.wav$/,
+        ),
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -604,8 +691,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('should capture both Sentry exceptions when pro and flash Gemini models fail', async () => {
-      const proError = new Error('Pro model failed');
+    it('should return 500 when flash model fails for free Gemini users', async () => {
       const flashError = new Error('Flash model failed');
 
       let callCount = 0;
@@ -613,11 +699,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       setMockGoogleGenAIFactory(() => ({
         models: {
           generateContent: vi.fn().mockImplementation(() => {
-            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
             callCount++;
-            if (callCount === 1) {
-              throw proError;
-            }
             throw flashError;
           }),
         },
@@ -639,13 +721,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(callCount).toBe(2);
-
-      expect(Sentry.captureException).not.toHaveBeenCalledWith(
-        proError,
-        expect.anything(),
-      );
-
+      expect(callCount).toBe(1);
       expect(Sentry.captureException).toHaveBeenCalledTimes(1);
       expect(Sentry.captureException).toHaveBeenCalledWith(
         flashError,
@@ -662,22 +738,14 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         }),
       );
 
-      expect(Sentry.logger.error).toHaveBeenCalledWith(
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        'gemini-2.5-pro-preview-tts failed, retrying with gemini-2.5-flash-preview-tts',
+        expect.anything(),
+      );
+
+      expect(Sentry.logger.error).not.toHaveBeenCalledWith(
         'Gemini flash fallback failed after pro failure',
-        expect.objectContaining({
-          user: {
-            id: 'test-user-id',
-            email: 'test@example.com',
-          },
-          extra: expect.objectContaining({
-            voice: 'poe',
-            styleVariant: 'dramatic',
-            originalModel: 'gemini-2.5-pro-preview-tts',
-            fallbackModel: 'gemini-2.5-flash-preview-tts',
-            proErrorMessage: 'Pro model failed',
-            flashErrorMessage: 'Flash model failed',
-          }),
-        }),
+        expect.anything(),
       );
 
       expect(json.error).toBe('Failed to generate voice');
