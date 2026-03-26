@@ -83,6 +83,11 @@ export function HomepageTTSDemo({
     setAltchaPayload(null);
   }, []);
 
+  const resetAltcha = useCallback(() => {
+    setAltchaPayload(null);
+    altchaRef.current?.reset();
+  }, []);
+
   const isExhausted = remaining <= 0;
 
   async function handleGenerate() {
@@ -112,11 +117,13 @@ export function HomepageTTSDemo({
         const newRemaining = 0;
         setRemaining(newRemaining);
         setStoredRemaining(newRemaining);
+        resetAltcha();
         setStatus('idle');
         return;
       }
 
       if (!res.ok) {
+        resetAltcha();
         setError(
           data.error === 'invalid_captcha'
             ? 'Security check failed. Please try again.'
@@ -137,9 +144,9 @@ export function HomepageTTSDemo({
       setStatus('playing');
 
       // Reset altcha for next generation
-      setAltchaPayload(null);
-      altchaRef.current?.reset();
+      resetAltcha();
     } catch {
+      resetAltcha();
       setError('Something went wrong. Please try again.');
       setStatus('idle');
     }
