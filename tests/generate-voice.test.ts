@@ -486,6 +486,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const { saveAudioFile } = await import('@/lib/supabase/queries');
 
       let callCount = 0;
+      const proError = new Error('Pro model failed');
 
       setMockGoogleGenAIFactory(() => ({
         models: {
@@ -494,8 +495,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
             callCount++;
             if (callCount === 1) {
               // First call (pro model) should throw
-              const error = new Error('Pro model failed');
-              throw error;
+              throw proError;
             }
             // Second call (flash model) succeeds
             const mockAudioData =
@@ -558,7 +558,129 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         voiceId: 'voice-poe-id',
       });
 
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        proError,
+        expect.anything(),
+      );
+
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'gemini-2.5-pro-preview-tts failed, retrying with gemini-2.5-flash-preview-tts',
+        expect.objectContaining({
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+          extra: expect.objectContaining({
+            voice: 'poe',
+            styleVariant: '',
+            model: 'gemini-2.5-pro-preview-tts',
+            provider: 'gemini',
+            textLength: 11,
+            textPreview: 'Hello world',
+            requestedOutputCodec: null,
+            errorMessage: 'Pro model failed',
+          }),
+        }),
+      );
+
+      expect(Sentry.logger.info).toHaveBeenCalledWith(
+        'Gemini flash fallback succeeded after pro failure',
+        expect.objectContaining({
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+          extra: expect.objectContaining({
+            voice: 'poe',
+            styleVariant: '',
+            provider: 'gemini',
+            originalModel: 'gemini-2.5-pro-preview-tts',
+            fallbackModel: 'gemini-2.5-flash-preview-tts',
+            proErrorMessage: 'Pro model failed',
+          }),
+        }),
+      );
+
       expect(json.url).toContain('files.sexyvoice.ai');
+    });
+
+    it('should capture both Sentry exceptions when pro and flash Gemini models fail', async () => {
+      const proError = new Error('Pro model failed');
+      const flashError = new Error('Flash model failed');
+
+      let callCount = 0;
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            // biome-ignore lint/nursery/noIncrementDecrement: it's ok
+            callCount++;
+            if (callCount === 1) {
+              throw proError;
+            }
+            throw flashError;
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'poe',
+          styleVariant: 'dramatic',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(callCount).toBe(2);
+
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        proError,
+        expect.anything(),
+      );
+
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        flashError,
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            text: 'dramatic: Hello world',
+            voice: 'poe',
+            errorData: flashError,
+          }),
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+        }),
+      );
+
+      expect(Sentry.logger.error).toHaveBeenCalledWith(
+        'Gemini flash fallback failed after pro failure',
+        expect.objectContaining({
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+          extra: expect.objectContaining({
+            voice: 'poe',
+            styleVariant: 'dramatic',
+            originalModel: 'gemini-2.5-pro-preview-tts',
+            fallbackModel: 'gemini-2.5-flash-preview-tts',
+            proErrorMessage: 'Pro model failed',
+            flashErrorMessage: 'Flash model failed',
+          }),
+        }),
+      );
+
+      expect(json.error).toBe('Failed to generate voice');
     });
 
     it('should handle Google API quota exceeded error', async () => {

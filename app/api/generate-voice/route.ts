@@ -237,19 +237,77 @@ export async function POST(request: Request) {
             { status: 499 },
           );
         }
+
+        const proErrorMessage = Error.isError(error)
+          ? error.message
+          : String(error);
+        const geminiRequestContext = {
+          voice,
+          styleVariant,
+          model: modelUsed,
+          provider,
+          textLength: text.length,
+          textPreview: text.slice(0, 500),
+          requestedOutputCodec: outputCodec || null,
+          responseModalities: geminiTTSConfig.responseModalities,
+          speechConfig: geminiTTSConfig.speechConfig,
+        };
+
         logger.warn(
           `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
           {
-            error: Error.isError(error) ? error.message : String(error),
-            originalModel: modelUsed,
+            user: {
+              id: user.id,
+              email: user.email,
+            },
+            extra: {
+              ...geminiRequestContext,
+              errorMessage: proErrorMessage,
+              errorCause: Error.isError(error) ? error.cause : undefined,
+            },
           },
         );
         modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
-        genAIResponse = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text }] }],
-          config: geminiTTSConfig,
-        });
+        try {
+          genAIResponse = await ai.models.generateContent({
+            model: modelUsed,
+            contents: [{ parts: [{ text }] }],
+            config: geminiTTSConfig,
+          });
+
+          logger.info('Gemini flash fallback succeeded after pro failure', {
+            user: {
+              id: user.id,
+              email: user.email,
+            },
+            extra: {
+              ...geminiRequestContext,
+              originalModel: 'gemini-2.5-pro-preview-tts',
+              fallbackModel: modelUsed,
+              proErrorMessage,
+            },
+          });
+        } catch (flashError) {
+          logger.error('Gemini flash fallback failed after pro failure', {
+            user: {
+              id: user.id,
+              email: user.email,
+            },
+            extra: {
+              ...geminiRequestContext,
+              originalModel: 'gemini-2.5-pro-preview-tts',
+              fallbackModel: modelUsed,
+              proErrorMessage,
+              flashErrorMessage: Error.isError(flashError)
+                ? flashError.message
+                : String(flashError),
+              flashErrorCause: Error.isError(flashError)
+                ? flashError.cause
+                : undefined,
+            },
+          });
+          throw flashError;
+        }
       }
       const data =
         genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -265,21 +323,37 @@ export async function POST(request: Request) {
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
         if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
-            user: { id: user.id },
-            model: modelUsed,
-            text,
-            blockReason,
-            finishReason,
+            user: { id: user.id, email: user.email },
+            extra: {
+              voice,
+              styleVariant,
+              model: modelUsed,
+              provider,
+              textLength: text.length,
+              textPreview: text.slice(0, 500),
+              responseId: genAIResponse?.responseId,
+              blockReason,
+              finishReason,
+            },
           });
         } else {
           logger.error('Gemini voice generation failed', {
-            error: finishReason,
-            finishReason,
-            blockReason,
-            hasData: !!data,
-            mimeType,
-            response: genAIResponse,
-            model: modelUsed,
+            user: { id: user.id, email: user.email },
+            extra: {
+              voice,
+              styleVariant,
+              model: modelUsed,
+              provider,
+              textLength: text.length,
+              textPreview: text.slice(0, 500),
+              responseId: genAIResponse?.responseId,
+              error: finishReason,
+              finishReason,
+              blockReason,
+              hasData: !!data,
+              mimeType,
+              response: genAIResponse,
+            },
           });
           if (process.env.NODE_ENV === 'development') {
             console.dir(
@@ -309,12 +383,16 @@ export async function POST(request: Request) {
       logger.info('Gemini voice generation succeeded', {
         user: {
           id: user.id,
+          email: user.email,
         },
         extra: {
           voice,
+          styleVariant,
           model: modelUsed,
+          provider,
           responseId: genAIResponse.responseId,
-          text,
+          textLength: text.length,
+          textPreview: text.slice(0, 500),
         },
       });
 
