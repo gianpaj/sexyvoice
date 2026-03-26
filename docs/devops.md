@@ -1,17 +1,388 @@
-# prod server locations
+# DevOps Guide
 
-- supabase: eu-west-3
-- redis upstash: us-west-2 (oregon)
-- livekit python server on fly.io: paris CDG
+This document is the operational reference for environment setup, deployment,
+runtime dependencies, infrastructure locations, and common maintenance tasks
+for SexyVoice.ai.
 
-## Storage
+For local development onboarding, see [`README.md`](../README.md).
+For architecture and product context, see [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-- R2 buckets
-  - `sv-audio-files`: Eastern North America (ENAM) - for Cloned and Generated audio files
-  - `sv-api-speech-audio-files`: Eastern North America (ENAM) - for external API Speech audio files
+## Infrastructure Overview
 
-## Vercel
+### Primary Services
 
-- eu-west-3 - cdg1
-- us-east-1 - iad1
-- us-west-1 - sfo1
+- **Frontend / Hosting**: Vercel
+- **Database / Auth**: Supabase
+- **Audio Storage**: Cloudflare R2
+- **Cache / Rate Limiting**: Upstash Redis
+- **Monitoring**: Sentry
+- **Analytics**: PostHog
+- **Structured Logs**: Axiom
+- **Payments**: Stripe
+- **Voice Generation**:
+  - Replicate
+  - Google Generative AI
+  - fal.ai
+  - xAI
+- **Realtime Calls**: LiveKit
+- **Config Distribution**: Vercel Edge Config
+
+## Runtime / Region Notes
+
+### Production server locations
+
+- **Supabase**: `eu-west-3`
+- **Redis Upstash**: `us-west-2` (Oregon)
+- **LiveKit Python server on Fly.io**: Paris CDG
+
+### Storage
+
+#### R2 buckets
+
+- `sv-audio-files`
+  - Eastern North America (ENAM)
+  - Used for cloned and generated dashboard audio files
+
+- `sv-api-speech-audio-files`
+  - Eastern North America (ENAM)
+  - Used for external API `/api/v1/speech` generated audio files
+
+### Vercel regions
+
+Current known regions for this project:
+
+- `eu-west-3` - `cdg1`
+- `us-east-1` - `iad1`
+- `us-west-1` - `sfo1`
+
+#### How to verify with Vercel CLI
+
+These commands were tested with Vercel CLI `50.37.1`.
+
+Confirmed working commands:
+
+```/dev/null/vercel-project-check.sh#L1-3
+vercel --version
+vercel project inspect sexyvoice
+vercel env ls
+```
+
+Recommended verification flow:
+
+1. Confirm the CLI is available:
+   ```/dev/null/vercel-version.sh#L1-1
+   vercel --version
+   ```
+2. Inspect the linked project and confirm the project identity:
+   ```/dev/null/vercel-project-inspect.sh#L1-1
+   vercel project inspect sexyvoice
+   ```
+3. Inspect configured environment variables for the linked project:
+   ```/dev/null/vercel-env-ls.sh#L1-1
+   vercel env ls
+   ```
+
+Notes:
+- `vercel project inspect sexyvoice` currently returns general project metadata such as project ID, owner, root directory, framework preset, and Node.js version.
+- `vercel env ls` confirms you are operating on `gianpaj-projects/sexyvoice`.
+- The tested CLI output did not expose the runtime region list directly.
+- For the final source of truth on active regions, verify the project in the Vercel dashboard if the CLI output is insufficient.
+
+## Environment Setup
+
+### Local development
+
+1. Copy the example environment file:
+
+   ```/dev/null/.env.example#L1-2
+   cp .env.example .env.local
+   ```
+
+2. Fill in all required values for the services you use.
+3. Install dependencies:
+
+   ```/dev/null/pnpm-install.sh#L1-1
+   pnpm install
+   ```
+
+4. Start development:
+
+   ```/dev/null/pnpm-dev.sh#L1-1
+   pnpm dev
+   ```
+
+### Preview / production deployments
+
+- Configure environment variables in Vercel project settings.
+- Keep production secrets out of local files and version control.
+- Rotate secrets carefully and validate affected flows after rotation.
+- If you add, rename, or remove an environment variable, update:
+  - `AGENTS.md`
+  - `README.md`
+  - `.env.example`
+  - this file (`docs/devops.md`) when the change affects deployment,
+    operations, security, or runtime setup
+
+## Environment Variables
+
+Use [`.env.example`](../.env.example) as the canonical template.
+
+### Core application
+
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### Redis / caching
+
+- `KV_URL`
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
+- `KV_REST_API_READ_ONLY_TOKEN`
+
+Used for:
+- caching
+- rate limiting
+- fast lookups
+
+### Cloudflare R2
+
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_SPEECH_API_BUCKET_NAME`
+- `R2_SPEECH_API_PUBLIC_URL`
+- `R2_ENDPOINT`
+
+Used for:
+- dashboard audio storage
+- external API speech output storage
+
+### AI provider credentials
+
+- `REPLICATE_API_TOKEN`
+- `FAL_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
+- `XAI_API_KEY` if xAI TTS is enabled in the environment
+
+Notes:
+- `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
+- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
+  for free-user Gemini flows where configured in code.
+
+### Authentication / auth monitoring
+
+- `API_KEY_HMAC_SECRET`
+- `OAUTH_CALLBACK_MARKER_SECRET`
+
+Notes:
+- `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
+- `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
+  and verifying the short-lived OAuth callback marker cookie.
+- If `OAUTH_CALLBACK_MARKER_SECRET` is unset, code may fall back to
+  `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
+
+Generate secure secrets with:
+
+```/dev/null/openssl-secret.sh#L1-1
+openssl rand -hex 32
+```
+
+### Stripe
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PUBLISHABLE_KEY`
+- `STRIPE_PRICING_ID`
+- `STRIPE_TOPUP_5_PRICE_ID`
+- `STRIPE_TOPUP_10_PRICE_ID`
+- `STRIPE_TOPUP_99_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_5_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_10_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_99_PRICE_ID`
+
+### Edge Config
+
+- `EDGE_CONFIG`
+
+Used for:
+- dynamic call instructions
+- runtime-configurable behavior without redeploys
+
+### Monitoring / analytics / support
+
+- `SENTRY_AUTH_TOKEN`
+- `SENTRY_ORG`
+- `SENTRY_PROJECT`
+- `AXIOM_TOKEN`
+- `NEXT_PUBLIC_POSTHOG_KEY`
+- `NEXT_PUBLIC_POSTHOG_HOST`
+- `NEXT_PUBLIC_CRISP_WEBSITE_ID`
+
+### Notifications / cron
+
+- `TELEGRAM_WEBHOOK_URL`
+- `CRON_SECRET`
+
+### Promotion / banner configuration
+
+- `NEXT_PUBLIC_PROMO_ENABLED`
+- `NEXT_PUBLIC_PROMO_ID`
+- `NEXT_PUBLIC_PROMO_THEME`
+- `NEXT_PUBLIC_PROMO_TRANSLATIONS`
+- `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`
+- `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+- `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+- `NEXT_PUBLIC_PROMO_BONUS_PRO`
+
+### Inngest
+
+- `INNGEST_EVENT_KEY`
+- `INNGEST_SIGNING_KEY`
+- `INNGEST_BASE_URL`
+
+## Deployment Notes
+
+### Vercel
+
+- Main app is deployed on Vercel.
+- Preview deployments should receive the minimum required secrets for the flows
+  being tested.
+- Production secrets must be managed in project settings, never committed.
+
+### Supabase
+
+- Supabase powers auth and database access.
+- `SUPABASE_SERVICE_ROLE_KEY` is privileged and must remain server-only.
+- Be careful with migrations and generated types.
+
+### Edge Config
+
+If used, create an Edge Config and provide the `call-instructions` payload.
+
+Example structure:
+
+```/dev/null/edge-config.json#L1-10
+{
+  "call-instructions": {
+    "defaultInstructions": "You are a ...",
+    "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
+    "presetInstructions": {
+      "soft-amanda": "You are a ...",
+      "hard-brandi": "You are a ..."
+    }
+  }
+}
+```
+
+## Operational Security Guidelines
+
+- Never expose server-only secrets to the client.
+- Prefer dedicated secrets over shared secrets when the purpose differs.
+- Rotate secrets carefully and document the blast radius before doing so.
+- Validate auth, payments, storage uploads, and API key flows after secret
+  changes.
+- Keep OAuth callback marker signing isolated from API key hashing where
+  possible.
+- Use production-only secure cookies where supported.
+
+## Common Operational Tasks
+
+### Start the app locally
+
+```/dev/null/dev-commands.sh#L1-4
+pnpm install
+pnpm dev
+pnpm build
+pnpm preview
+```
+
+### Validate code quality
+
+```/dev/null/quality-commands.sh#L1-4
+pnpm run fixall
+pnpm run type-check
+pnpm run lint
+pnpm run format
+```
+
+### Run tests
+
+```/dev/null/test-commands.sh#L1-4
+pnpm test
+pnpm test:watch
+pnpm test:coverage
+pnpm test:ui
+```
+
+### Build content and validate translations
+
+```/dev/null/content-commands.sh#L1-2
+pnpm build:content
+pnpm check-translations
+```
+
+### Generate Supabase types
+
+```/dev/null/supabase-types.sh#L1-1
+pnpm run generate-supabase-types
+```
+
+## Troubleshooting Checklist
+
+### OAuth callback/session issues
+
+Check:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OAUTH_CALLBACK_MARKER_SECRET`
+- redirect URL configuration in Supabase / OAuth provider
+- Sentry events tagged for OAuth callback flow
+
+### External API issues
+
+Check:
+- `API_KEY_HMAC_SECRET`
+- `R2_SPEECH_API_BUCKET_NAME`
+- `R2_SPEECH_API_PUBLIC_URL`
+- Axiom logs
+- rate limiting / Redis connectivity
+
+### Gemini / voice generation issues
+
+Check:
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
+- provider quotas
+- request logs
+- R2 upload configuration
+
+### Storage issues
+
+Check:
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_ENDPOINT`
+- bucket CORS configuration if browser fetches are involved
+
+## Documentation Maintenance Rules
+
+When environment or deployment behavior changes:
+
+1. Update [`.env.example`](../.env.example)
+2. Update [`README.md`](../README.md)
+3. Update [`AGENTS.md`](../AGENTS.md)
+4. Update this file if the change affects:
+   - deployment
+   - infra
+   - runtime behavior
+   - secret management
+   - region placement
+   - operational troubleshooting
+
+Keeping these docs synchronized prevents setup drift between development,
+deployment, and operational troubleshooting.

@@ -15,7 +15,8 @@
   <a href="https://sexyvoice.featurebase.app">🗺️ Roadmap</a> •
   <a href="#-getting-started">🚀 Quick Start</a> •
   <a href="#-features">✨ Features</a> •
-  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a>
+  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a> •
+  <a href="./docs/devops.md">⚙️ DevOps Guide</a>
 </p>
 
 ---
@@ -119,64 +120,11 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    cp .env.example .env.local
    ```
 
-   Fill in the required environment variables as defined in [`.env.example`](.env.example):
-   - Supabase
-      - `NEXT_PUBLIC_SUPABASE_URL`
-      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
-   - Your Redis (Upstash)
-      - `KV_REST_API_URL`
-      - `KV_REST_API_TOKEN`
-   - Cloudflare R2 storage
-      - `R2_ACCESS_KEY_ID`
-      - `R2_SECRET_ACCESS_KEY`
-      - `R2_BUCKET_NAME`
-      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
-      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
-   - AI 3rd party services
-      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-      - `FAL_KEY` - Your fal.ai API key for voice cloning
-      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-   - Stripe
-      - `STRIPE_SECRET_KEY`
-      - `STRIPE_WEBHOOK_SECRET`
-      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-      - `STRIPE_TOPUP_5_PRICE_ID`
-      - `STRIPE_TOPUP_10_PRICE_ID`
-      - `STRIPE_TOPUP_99_PRICE_ID`
-   - Telegram cronjob
-      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
-      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
-   - Axiom logging (optional)
-      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
-   - API key security
-      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
-      - `OAUTH_CALLBACK_MARKER_SECRET` - Dedicated HMAC secret for signing the short-lived OAuth callback marker cookie used to detect post-callback session loss. Generate with `openssl rand -hex 32`. If unset, the app falls back to `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
-   - Vercel Edge Config (optional)
-      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
-   - Additional optional variables for analytics and monitoring (Crisp, Posthog)
+   Fill in the required values from [`.env.example`](.env.example).
 
-4. **Set up Vercel Edge Config** (optional, for production)
+   For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
 
-   Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
-
-   ```json
-   {
-     "call-instructions": {
-       "defaultInstructions": "You are a ...",
-       "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
-       "presetInstructions": {
-         "soft-amanda": "You are a ...",
-         "hard-brandi": "You are a ..."
-       }
-     }
-   }
-   ```
-
-   The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
-
-5. **Set up Supabase**
+4. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -184,13 +132,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-6. **Start the development server**
+5. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-7. **Open your browser**
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 🧪 Development
@@ -301,6 +249,7 @@ We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
+- Review the [DevOps Guide](./docs/devops.md) for environment variables, deployment, infrastructure, and operational setup changes
 <!-- - Follow the code of conduct -->
 
 ### Setup
