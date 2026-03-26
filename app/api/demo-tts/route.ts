@@ -49,13 +49,13 @@ async function verifyAltcha(payload: string): Promise<boolean> {
     }
 
     const replayKey = `demo:altcha:${getAltchaPayloadFingerprint(payload)}`;
-    const alreadyUsed = await redis.get(replayKey);
-
-    if (alreadyUsed) {
+    const reserved = await redis.set(replayKey, '1', {
+      ex: ALTCHA_REPLAY_WINDOW_SECONDS,
+      nx: true,
+    });
+    if (!reserved) {
       return false;
     }
-
-    await redis.set(replayKey, '1', { ex: ALTCHA_REPLAY_WINDOW_SECONDS });
 
     return true;
   } catch (err) {
