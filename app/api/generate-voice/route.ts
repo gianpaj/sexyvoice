@@ -21,6 +21,7 @@ import {
   getVoiceIdByName,
   hasUserPaid,
   insertUsageEvent,
+  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -99,6 +100,8 @@ export async function POST(request: Request) {
     }
 
     const isGeminiVoice = voiceObj.model === 'gpro';
+    const provider = isGeminiVoice ? 'gemini' : 'replicate';
+    const outputCodec = '';
 
     userHasPaid = await hasUserPaid(user.id);
 
@@ -189,19 +192,23 @@ export async function POST(request: Request) {
     let uploadUrl = '';
 
     if (isGeminiVoice) {
-      // const isOverLimit = await isFreemiumUserOverLimit(user.id);
-      // if (!userHasPaid && isOverLimit) {
-      //   return NextResponse.json(
-      //     {
-      //       errorCode: 'gproLimitExceeded',
-      //     },
-      //     { status: 403 },
-      //   );
-      // }
+      let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      if (!userHasPaid) {
+        const isOverLimit = await isFreemiumUserOverLimit(user.id);
+        if (isOverLimit) {
+          return NextResponse.json(
+            {
+              errorCode: 'gproLimitExceeded',
+            },
+            { status: 403 },
+          );
+        }
+        apiKey =
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      }
 
-      const ai = new GoogleGenAI({
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      });
+      const ai = new GoogleGenAI({ apiKey });
 
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,

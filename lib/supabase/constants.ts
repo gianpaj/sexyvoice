@@ -1,4 +1,4 @@
-export const MAX_FREE_GENERATIONS = 6;
+export const MAX_FREE_GENERATIONS = 10;
 export const OAUTH_CALLBACK_COOKIE_NAME = 'sv_oauth_callback_ok';
 
 export const MINIMUM_CREDITS_FOR_CALL = 999;

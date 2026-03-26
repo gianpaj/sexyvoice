@@ -1,9 +1,10 @@
 import type { GenerateContentResponse } from '@google/genai';
+import * as Sentry from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as Sentry from '@sentry/nextjs';
 
 import { POST } from '@/app/api/generate-voice/route';
+import { createClient } from '@/lib/supabase/server';
 import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
@@ -109,14 +110,18 @@ describe('Generate Voice API Route', () => {
     });
   });
 
-  describe.skip('Authentication', () => {
+  describe('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
-      // Mock unauthenticated user
-      server.use(
-        http.get('https://*.supabase.co/auth/v1/user', () =>
-          HttpResponse.json({ user: null }),
-        ),
-      );
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: {
+              user: null,
+            },
+            error: null,
+          }),
+        },
+      } as unknown as Awaited<ReturnType<typeof createClient>>);
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -807,7 +812,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       );
     });
 
-    it.skip('should return 403 when freemium user exceeds gpro voice limit', async () => {
+    it('should return 403 when freemium user exceeds gpro voice limit', async () => {
       const queries = await import('@/lib/supabase/queries');
 
       // Mock isFreemiumUserOverLimit to return true
@@ -832,7 +837,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       );
     });
 
-    it.skip('should allow voice generation when freemium user is under limit', async () => {
+    it('should allow voice generation when freemium user is under limit', async () => {
       const queries = await import('@/lib/supabase/queries');
 
       // Mock isFreemiumUserOverLimit to return false (under limit)
@@ -1176,7 +1181,7 @@ describe('Integration Tests', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    // TODO: mock here isFreemiumUserOverLimit()
+    // isFreemiumUserOverLimit is already mocked to return false in setup.ts
 
     expect(response.status).toBe(200);
     expect(json.url).toBeTruthy();
