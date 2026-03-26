@@ -152,6 +152,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
    - API key security
       - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
+      - `OAUTH_CALLBACK_MARKER_SECRET` - Dedicated HMAC secret for signing the short-lived OAuth callback marker cookie used to detect post-callback session loss. Generate with `openssl rand -hex 32`. If unset, the app falls back to `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
    - Vercel Edge Config (optional)
       - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)

@@ -446,6 +446,7 @@ Key environment variables include:
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`); Axiom (`AXIOM_TOKEN`) for structured API request logs
 - **External API**: `API_KEY_HMAC_SECRET` (HMAC-SHA256 secret for hashing API keys — never expose, rotate carefully)
+- **Authentication Monitoring**: `OAUTH_CALLBACK_MARKER_SECRET` (dedicated HMAC secret for signing/verifying the short-lived OAuth callback marker cookie used to detect post-callback session loss; preferred over reusing `API_KEY_HMAC_SECRET`)
 - **Production**: Environment-specific configurations for Sentry and CSP
 - Follow `.env.example` for complete list and setup instructions
 
