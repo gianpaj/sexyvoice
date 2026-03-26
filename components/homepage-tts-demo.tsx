@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 const MAX_CHARS = 200;
 const TOTAL_GENERATIONS = 3;
 const STORAGE_KEY = 'demo_tts_remaining';
+const DEMO_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const PRESETS = [
   'Welcome to SexyVoice — where your words come alive.',
@@ -41,12 +42,31 @@ interface HomepageTTSDemoProps {
   voices: DemoVoice[];
 }
 
+interface StoredRemaining {
+  expiresAt: number;
+  remaining: number;
+}
+
 function getStoredRemaining(): number {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === null) return TOTAL_GENERATIONS;
-    const n = Number.parseInt(stored, 10);
-    return Number.isNaN(n) ? TOTAL_GENERATIONS : Math.max(0, n);
+
+    const parsed = JSON.parse(stored) as StoredRemaining;
+    if (
+      typeof parsed.remaining !== 'number' ||
+      typeof parsed.expiresAt !== 'number'
+    ) {
+      localStorage.removeItem(STORAGE_KEY);
+      return TOTAL_GENERATIONS;
+    }
+
+    if (parsed.expiresAt <= Date.now()) {
+      localStorage.removeItem(STORAGE_KEY);
+      return TOTAL_GENERATIONS;
+    }
+
+    return Math.max(0, parsed.remaining);
   } catch {
     return TOTAL_GENERATIONS;
   }
@@ -54,7 +74,11 @@ function getStoredRemaining(): number {
 
 function setStoredRemaining(n: number) {
   try {
-    localStorage.setItem(STORAGE_KEY, String(n));
+    const stored: StoredRemaining = {
+      remaining: n,
+      expiresAt: Date.now() + DEMO_WINDOW_MS,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
   } catch {
     // ignore
   }
