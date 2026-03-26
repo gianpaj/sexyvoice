@@ -6,7 +6,10 @@ import { i18n } from '@/lib/i18n/i18n-config';
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
-import { createOauthCallbackMarkerValue } from '@/lib/supabase/oauth-callback-marker';
+import {
+  createOauthCallbackMarkerValue,
+  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+} from '@/lib/supabase/oauth-callback-marker';
 import { createClient } from '@/lib/supabase/server';
 
 const isSafeRedirectPath = (value: string | null) =>
@@ -48,7 +51,7 @@ const createOauthRedirectResponse = (url: string) => {
       name: OAUTH_CALLBACK_COOKIE_NAME,
       value: markerValue,
       httpOnly: true,
-      maxAge: 60,
+      maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',

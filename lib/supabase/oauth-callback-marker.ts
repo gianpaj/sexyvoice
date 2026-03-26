@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 
-const OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS = 60;
+export const OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS = 60;
 
 function getOauthCallbackMarkerSecret(): string | null {
   return process.env.API_KEY_HMAC_SECRET ?? null;
