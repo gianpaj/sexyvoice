@@ -59,19 +59,6 @@ export const updateSession = async (
     } = await supabase.auth.getUser();
 
     const dashboardPath = isDashboardPath(pathname, locale);
-    const hasRawOauthCallbackMarker = Boolean(rawOauthCallbackMarker);
-
-    if (dashboardPath || hasRawOauthCallbackMarker || hasOauthCallbackMarker) {
-      console.log('OAuth callback marker middleware check', {
-        pathname,
-        locale,
-        isDashboardPath: dashboardPath,
-        hasRawOauthCallbackMarker,
-        rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
-        hasOauthCallbackMarker,
-        hasUser: Boolean(user),
-      });
-    }
 
     if (!user && dashboardPath) {
       const redirectResponse = NextResponse.redirect(
@@ -79,17 +66,6 @@ export const updateSession = async (
       );
 
       if (hasOauthCallbackMarker) {
-        console.warn(
-          'OAuth callback marker present but dashboard session missing',
-          {
-            pathname,
-            locale,
-            hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
-            rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
-            hasOauthCallbackMarker,
-          },
-        );
-
         captureMessage(
           'OAuth callback completed but dashboard session was missing.',
           {
@@ -139,18 +115,6 @@ export const updateSession = async (
     }
 
     if (hasOauthCallbackMarker && dashboardPath) {
-      console.log(
-        'Clearing OAuth callback marker after successful dashboard session check',
-        {
-          pathname,
-          locale,
-          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
-          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
-          hasOauthCallbackMarker,
-          hasUser: Boolean(user),
-        },
-      );
-
       return clearOauthCallbackCookie(supabaseResponse);
     }
 

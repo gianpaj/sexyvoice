@@ -46,12 +46,6 @@ const createOauthRedirectResponse = (url: string) => {
   const response = NextResponse.redirect(url);
   const markerValue = createOauthCallbackMarkerValue();
 
-  console.log('OAuth callback redirect response created', {
-    redirectUrl: url,
-    hasOauthCallbackMarker: Boolean(markerValue),
-    oauthCallbackMarkerLength: markerValue?.length ?? 0,
-  });
-
   if (markerValue) {
     response.cookies.set({
       name: OAUTH_CALLBACK_COOKIE_NAME,
@@ -61,18 +55,6 @@ const createOauthRedirectResponse = (url: string) => {
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-    });
-
-    console.log('OAuth callback marker cookie set', {
-      redirectUrl: url,
-      cookieName: OAUTH_CALLBACK_COOKIE_NAME,
-      oauthCallbackMarkerLength: markerValue.length,
-      cookieMaxAgeSeconds: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-    });
-  } else {
-    console.warn('OAuth callback marker cookie was not set', {
-      redirectUrl: url,
-      cookieName: OAUTH_CALLBACK_COOKIE_NAME,
     });
   }
 
