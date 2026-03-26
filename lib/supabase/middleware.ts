@@ -45,8 +45,11 @@ export const updateSession = async (
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = response;
+    const rawOauthCallbackMarker = request.cookies.get(
+      OAUTH_CALLBACK_COOKIE_NAME,
+    )?.value;
     const hasOauthCallbackMarker = verifyOauthCallbackMarkerValue(
-      request.cookies.get(OAUTH_CALLBACK_COOKIE_NAME)?.value,
+      rawOauthCallbackMarker,
     );
 
     const supabase = await createClient();
@@ -55,12 +58,33 @@ export const updateSession = async (
       data: { user },
     } = await supabase.auth.getUser();
 
+    console.log('OAuth callback marker middleware check', {
+      pathname,
+      locale,
+      isDashboardPath: isDashboardPath(pathname, locale),
+      hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+      rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+      hasOauthCallbackMarker,
+      hasUser: Boolean(user),
+    });
+
     if (!user && isDashboardPath(pathname, locale)) {
       const redirectResponse = NextResponse.redirect(
         new URL(`/${locale}/login`, request.url),
       );
 
       if (hasOauthCallbackMarker) {
+        console.warn(
+          'OAuth callback marker present but dashboard session missing',
+          {
+            pathname,
+            locale,
+            hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+            rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+            hasOauthCallbackMarker,
+          },
+        );
+
         captureMessage(
           'OAuth callback completed but dashboard session was missing.',
           {
@@ -78,6 +102,17 @@ export const updateSession = async (
 
         return clearOauthCallbackCookie(redirectResponse);
       }
+
+      console.log(
+        'Dashboard request missing user without valid OAuth callback marker',
+        {
+          pathname,
+          locale,
+          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+          hasOauthCallbackMarker,
+        },
+      );
 
       // no user, potentially respond by redirecting the user to the login page
       return redirectResponse;
@@ -99,6 +134,18 @@ export const updateSession = async (
     }
 
     if (hasOauthCallbackMarker && isDashboardPath(pathname, locale)) {
+      console.log(
+        'Clearing OAuth callback marker after successful dashboard session check',
+        {
+          pathname,
+          locale,
+          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+          hasOauthCallbackMarker,
+          hasUser: Boolean(user),
+        },
+      );
+
       return clearOauthCallbackCookie(supabaseResponse);
     }
 

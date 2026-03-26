@@ -61,7 +61,7 @@ These commands were tested with Vercel CLI `50.37.1`.
 
 Confirmed working commands:
 
-```/dev/null/vercel-project-check.sh#L1-3
+```bash
 vercel --version
 vercel project inspect sexyvoice
 vercel env ls
@@ -70,15 +70,15 @@ vercel env ls
 Recommended verification flow:
 
 1. Confirm the CLI is available:
-   ```/dev/null/vercel-version.sh#L1-1
+   ```bash
    vercel --version
    ```
 2. Inspect the linked project and confirm the project identity:
-   ```/dev/null/vercel-project-inspect.sh#L1-1
+   ```bash
    vercel project inspect sexyvoice
    ```
 3. Inspect configured environment variables for the linked project:
-   ```/dev/null/vercel-env-ls.sh#L1-1
+   ```bash
    vercel env ls
    ```
 
@@ -94,20 +94,20 @@ Notes:
 
 1. Copy the example environment file:
 
-   ```/dev/null/.env.example#L1-2
+   ```bash
    cp .env.example .env.local
    ```
 
 2. Fill in all required values for the services you use.
 3. Install dependencies:
 
-   ```/dev/null/pnpm-install.sh#L1-1
+   ```bash
    pnpm install
    ```
 
 4. Start development:
 
-   ```/dev/null/pnpm-dev.sh#L1-1
+   ```bash
    pnpm dev
    ```
 
@@ -199,7 +199,7 @@ Notes:
 
 Generate secure secrets with:
 
-```/dev/null/openssl-secret.sh#L1-1
+```bash
 openssl rand -hex 32
 ```
 
@@ -277,7 +277,7 @@ If used, create an Edge Config and provide the `call-instructions` payload.
 
 Example structure:
 
-```/dev/null/edge-config.json#L1-10
+```json
 {
   "call-instructions": {
     "defaultInstructions": "You are a ...",
@@ -305,7 +305,7 @@ Example structure:
 
 ### Start the app locally
 
-```/dev/null/dev-commands.sh#L1-4
+```bash
 pnpm install
 pnpm dev
 pnpm build
@@ -314,7 +314,7 @@ pnpm preview
 
 ### Validate code quality
 
-```/dev/null/quality-commands.sh#L1-4
+```bash
 pnpm run fixall
 pnpm run type-check
 pnpm run lint
@@ -323,7 +323,7 @@ pnpm run format
 
 ### Run tests
 
-```/dev/null/test-commands.sh#L1-4
+```bash
 pnpm test
 pnpm test:watch
 pnpm test:coverage
@@ -332,14 +332,14 @@ pnpm test:ui
 
 ### Build content and validate translations
 
-```/dev/null/content-commands.sh#L1-2
+```bash
 pnpm build:content
 pnpm check-translations
 ```
 
 ### Generate Supabase types
 
-```/dev/null/supabase-types.sh#L1-1
+```bash
 pnpm run generate-supabase-types
 ```
 
