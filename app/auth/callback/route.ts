@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
@@ -17,6 +18,25 @@ const getLocaleFromRedirectPath = (redirectPath: string | null) => {
   return i18n.locales.includes(locale as (typeof i18n.locales)[number])
     ? locale
     : i18n.defaultLocale;
+};
+
+const getOauthCodeFingerprint = (code: string | null) => {
+  if (!code) {
+    return {
+      hasCode: false,
+      codeLength: 0,
+      codeFingerprint: null,
+    };
+  }
+
+  return {
+    hasCode: true,
+    codeLength: code.length,
+    codeFingerprint: createHash('sha256')
+      .update(code)
+      .digest('hex')
+      .slice(0, 12),
+  };
 };
 
 const createOauthRedirectResponse = (url: string) => {
@@ -48,6 +68,7 @@ export async function GET(request: Request) {
   const redirectTo = requestUrl.searchParams.get('redirect_to');
   const locale = getLocaleFromRedirectPath(redirectTo);
   const loginPath = `/${locale}/login`;
+  const oauthCodeContext = getOauthCodeFingerprint(code);
 
   try {
     if (!code) {
@@ -68,6 +89,7 @@ export async function GET(request: Request) {
         extra: {
           redirectTo,
           locale,
+          ...oauthCodeContext,
         },
       });
 
@@ -136,7 +158,7 @@ export async function GET(request: Request) {
       extra: {
         redirectTo,
         locale,
-        hasCode: Boolean(code),
+        ...oauthCodeContext,
       },
     });
 
