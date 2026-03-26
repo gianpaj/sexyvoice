@@ -251,7 +251,6 @@ export async function POST(request: Request) {
           const geminiRequestContext = {
             voice,
             styleVariant,
-            model: modelUsed,
             provider,
             textLength: text.length,
             textPreview: text.slice(0, 500),
@@ -269,6 +268,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
+                model: modelUsed,
                 errorMessage: proErrorMessage,
                 errorCause: error instanceof Error ? error.cause : undefined,
               },
