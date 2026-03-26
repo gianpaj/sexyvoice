@@ -40,7 +40,12 @@ export function verifyOauthCallbackMarkerValue(
     return false;
   }
 
-  const [rawExpiresAt, providedSignature] = value.split('.');
+  const parts = value.split('.');
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const [rawExpiresAt, providedSignature] = parts;
   const expiresAt = Number(rawExpiresAt);
 
   if (!(providedSignature && Number.isFinite(expiresAt) && expiresAt > now)) {
