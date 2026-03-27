@@ -118,7 +118,6 @@ process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.XAI_API_KEY = 'test-xai-key';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
-process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
 // R2 environment variables
 process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
@@ -401,22 +400,6 @@ export {
   mockRedisSet,
   mockRedisTtl,
 };
-
-// Mock Vercel Blob
-const mockBlobPut = vi.fn().mockImplementation((filename: string) =>
-  Promise.resolve({
-    url: `https://blob.vercel-storage.com/${filename}`,
-  }),
-);
-const mockBlobHead = vi.fn().mockRejectedValue(new Error('Not found'));
-
-vi.mock('@vercel/blob', () => ({
-  put: mockBlobPut,
-  head: mockBlobHead,
-}));
-
-// Export mocks for test access
-export { mockBlobPut, mockBlobHead };
 
 // Mock R2 Storage
 const mockUploadFileToR2 = vi

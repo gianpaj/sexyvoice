@@ -15,7 +15,8 @@
   <a href="https://sexyvoice.featurebase.app">🗺️ Roadmap</a> •
   <a href="#-getting-started">🚀 Quick Start</a> •
   <a href="#-features">✨ Features</a> •
-  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a>
+  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a> •
+  <a href="./docs/devops.md">⚙️ DevOps Guide</a>
 </p>
 
 ---
@@ -139,6 +140,10 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `FAL_KEY` - Your fal.ai API key for voice cloning
       - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
       - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
+   - Real-time Calls (LiveKit)
+      - `LIVEKIT_URL`
+      - `LIVEKIT_API_KEY`
+      - `LIVEKIT_API_SECRET`
    - Stripe
       - `STRIPE_SECRET_KEY`
       - `STRIPE_WEBHOOK_SECRET`
@@ -169,26 +174,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-4. **Set up Vercel Edge Config** (optional, for production)
+   For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
 
-   Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
-
-   ```json
-   {
-     "call-instructions": {
-       "defaultInstructions": "You are a ...",
-       "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
-       "presetInstructions": {
-         "soft-amanda": "You are a ...",
-         "hard-brandi": "You are a ..."
-       }
-     }
-   }
-   ```
-
-   The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
-
-5. **Set up Supabase**
+4. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -196,13 +184,13 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-6. **Start the development server**
+5. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-7. **Open your browser**
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
 
 ### Banner System
@@ -325,6 +313,7 @@ We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
+- Review the [DevOps Guide](./docs/devops.md) for environment variables, deployment, infrastructure, and operational setup changes
 <!-- - Follow the code of conduct -->
 
 ### Setup

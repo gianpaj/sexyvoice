@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { banList } from '@/lib/banlist';
-import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import type langDict from '@/messages/en.json';
 
 export function SignUpForm({
   dict,
@@ -88,10 +88,12 @@ export function SignUpForm({
     setIsLoading(true);
     setError(null);
 
+    const redirectTo = encodeURIComponent(`/${lang}/dashboard`);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect_to=${redirectTo}`,
       },
     });
 
