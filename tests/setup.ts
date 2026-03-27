@@ -67,7 +67,6 @@ process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
-process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
 // R2 environment variables
 process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
@@ -188,7 +187,8 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model: 'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
       if (voiceName === 'poe') {
@@ -207,7 +207,8 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model: 'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
       if (voiceName === 'poe') {
@@ -293,22 +294,6 @@ export {
   mockRedisSet,
   mockRedisTtl,
 };
-
-// Mock Vercel Blob
-const mockBlobPut = vi.fn().mockImplementation((filename: string) =>
-  Promise.resolve({
-    url: `https://blob.vercel-storage.com/${filename}`,
-  }),
-);
-const mockBlobHead = vi.fn().mockRejectedValue(new Error('Not found'));
-
-vi.mock('@vercel/blob', () => ({
-  put: mockBlobPut,
-  head: mockBlobHead,
-}));
-
-// Export mocks for test access
-export { mockBlobPut, mockBlobHead };
 
 // Mock R2 Storage
 const mockUploadFileToR2 = vi
