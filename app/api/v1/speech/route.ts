@@ -175,7 +175,7 @@ export async function POST(request: Request) {
     }
 
     const userHasPaid = await hasUserPaidAdmin(userId);
-    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
+    const maxLength = getCharactersLimit();
     if (finalText.length > maxLength) {
       await log({
         status: 400,

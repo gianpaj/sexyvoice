@@ -342,6 +342,27 @@
       "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)"
+    },
+    "split": {
+      "segmentPreviews": "Segmentvorschauen",
+      "segmentLabel": "Segment __INDEX__",
+      "downloadAll": "Alle herunterladen (WAV)",
+      "joiningWav": "WAV wird zusammengeführt...",
+      "preparingJoiner": "Audio-Verbinder wird vorbereitet...",
+      "retry": "Wiederholen",
+      "segmentCannotBeEmpty": "Segmenttext darf nicht leer sein.",
+      "segmentFailed": "Segment __INDEX__ fehlgeschlagen. Generierung gestoppt.",
+      "segmentGenerated": "Segment __INDEX__ generiert.",
+      "segmentRetryFailed": "Segment __INDEX__ Wiederholung fehlgeschlagen.",
+      "progressTitle": "Audiogenerierung",
+      "progressTitleWithVoice": "__VOICE__ Generierung",
+      "progressSegment": "Segment __CURRENT__/__TOTAL__",
+      "statusGenerated": "Generiert",
+      "statusGenerating": "Wird generiert...",
+      "statusFailed": "Fehlgeschlagen",
+      "statusPending": "Ausstehend",
+      "splitToggleLabel": "Texte aufteilen",
+      "downloadAllFailed": "Alle Segmente konnten nicht als eine WAV-Datei heruntergeladen werden."
     }
   },
   "call": {
