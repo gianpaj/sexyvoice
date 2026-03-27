@@ -5,6 +5,7 @@ Utility scripts for SexyVoice.ai administration, analytics, and data management.
 ## Table of Contents
 
 - [Analyze Call Sessions Script](#analyze-call-sessions-script) - LLM-powered call transcript analysis
+- [Analyze Audio Files Language Script](#analyze-audio-files-language-script) - Gemini-powered `audio_files` language detection
 - [Reset Freeloader Credits Script](#reset-freeloader-credits-script) - Reset credits for users who exploited bugs
 - [Refund Credits Script](#refund-credits-script) - Interactive credit refund processing
 - [Credit Transactions (Supabase)](#credit-transactions-supabase) - Export and manage credit data
@@ -66,6 +67,102 @@ node scripts/analyze-call-sessions.mjs --hours=48 --limit=50
 ```bash
 # Add to crontab
 0 0 * * * cd /path/to/sexyvoice.ai && node scripts/analyze-call-sessions.mjs >> /var/log/call-analysis.log 2>&1
+```
+
+---
+
+## Analyze Audio Files Language Script
+
+Node.js script to analyze `audio_files.text_content` using the Gemini batch API and detect the primary language for generated audio rows.
+
+### Quick Start
+
+```bash
+# Install dependencies first
+cd scripts && pnpm install
+
+# Show help
+node analyze-audio-files-language.mjs --help
+
+# Dry-run without updating the database
+node analyze-audio-files-language.mjs --dry-run
+
+# Analyze last 30 days for all models
+node analyze-audio-files-language.mjs
+
+# Analyze specific models only
+node analyze-audio-files-language.mjs --models=gemini-2.5-pro-preview-tts,gemini-2.5-flash-preview-tts,fal-ai/chatterbox/text-to-speech,resemble-ai/chatterbox-multilingual,lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f
+
+# Limit the run size
+node analyze-audio-files-language.mjs --days=30 --limit=200
+
+# Filter by credits used
+node analyze-audio-files-language.mjs --min-credits-used=20
+
+# Include free users too
+node analyze-audio-files-language.mjs --include-free-users --days=15
+```
+
+### CLI Options
+- `--dry-run` - Run without updating the database
+- `--days=N` or `--days N` - Analyze audio files from the last N days (default: 30)
+- `--limit=N` or `--limit N` - Limit the number of audio files to analyze
+- `--models=a,b,c` or `--models a,b,c` - Only analyze the provided models
+- `--min-credits-used=N` or `--min-credits-used N` - Only analyze rows with `credits_used >= N`
+- `--include-free-users` - Include audio files from free users too
+- `--force` - Reserved for future metadata-based re-analysis
+- `--debug` - Enable verbose logging
+- `--smoke-test` - Run a tiny Gemini request before processing rows
+- `--batch-model=MODEL` or `--batch-model MODEL` - Override the Gemini batch model
+- `-h, --help` - Show help message
+
+### Selection Criteria
+- Only `audio_files` from the last 30 days by default
+- Only rows with non-empty `text_content`
+- Only rows belonging to **paid users** by default
+  - Paid means the user has at least one `credit_transactions.type` in `purchase` or `topup`
+- Can optionally include free users too with `--include-free-users`
+- Optionally filtered to specific `audio_files.model` values
+- Optionally filtered to rows with `credits_used >= N`
+- Metadata-based skipping is currently disabled until the `audio_files.metadata` column exists
+
+### What It Does
+- Sends `audio_files.text_content` to the Gemini batch API
+- Detects the dominant language of each row
+- Normalizes the output to an ISO locale string such as `en`, `es`, `de`, `fr`, or `pt-br`
+- Removes the configured `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN` string from the text before sending it to the model, when that env var is present
+- Produces CSV and JSON analysis outputs
+- Is prepared to write detection data into `audio_files.metadata` once that column exists
+
+### Output Files
+- `audio-files-language-analysis-results-TIMESTAMP.csv` - Per-row detection results
+- `audio-files-language-analysis-results-TIMESTAMP-insights.json` - Aggregated language and model distributions
+
+### Database Updates
+- Database writes are currently disabled until the `audio_files.metadata` column exists
+- Right now the script only analyzes rows and writes local CSV/JSON result files
+
+### Environment Variables Required
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+
+### Example Commands
+```bash
+# Dry-run on Gemini-backed rows only
+node scripts/analyze-audio-files-language.mjs --dry-run --models=gemini-2.5-pro-preview-tts
+
+# Process multilingual Replicate rows
+node scripts/analyze-audio-files-language.mjs --models=resemble-ai/chatterbox-multilingual
+
+# Only analyze higher-cost rows
+node scripts/analyze-audio-files-language.mjs --models=gemini-2.5-pro-preview-tts --min-credits-used=2000 --days=15
+
+# Include free users too
+node scripts/analyze-audio-files-language.mjs --include-free-users --days=15
+
+# Use a different Gemini batch model
+node scripts/analyze-audio-files-language.mjs --batch-model=gemini-3-flash-preview --days=15
 ```
 
 ---

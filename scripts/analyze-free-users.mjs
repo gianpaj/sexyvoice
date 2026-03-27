@@ -8,13 +8,13 @@
  * Or directly: node --env-file=.env scripts/analyze-free-users.mjs
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { writeFileSync } from 'node:fs';
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+if (!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)) {
   console.error('Missing required environment variables:');
   console.error('  - NEXT_PUBLIC_SUPABASE_URL');
   console.error('  - SUPABASE_SERVICE_ROLE_KEY');
@@ -47,7 +47,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Found ${recentProfiles.length} users registered in the last 30 days\n`);
+  console.log(
+    `Found ${recentProfiles.length} users registered in the last 30 days\n`,
+  );
 
   if (recentProfiles.length === 0) {
     console.log('No users found. Exiting.');
@@ -91,7 +93,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Free users with < 300 credits remaining: ${lowCreditUsers.length}\n`);
+  console.log(
+    `Free users with < 300 credits remaining: ${lowCreditUsers.length}\n`,
+  );
 
   if (lowCreditUsers.length === 0) {
     console.log('No free users with low credits found. Exiting.');
@@ -134,7 +138,7 @@ async function main() {
     const currentCredits = creditsMap.get(userId);
 
     // Find freemium transaction (when they got free credits)
-    const freemiumTx = transactions.find((t) => t.type === 'freemium');
+    // const freemiumTx = transactions.find((t) => t.type === 'freemium');
     const usageTransactions = transactions.filter((t) => t.type === 'usage');
 
     // Calculate total credits received and used
@@ -143,12 +147,14 @@ async function main() {
       .reduce((sum, t) => sum + t.amount, 0);
 
     const totalUsed = Math.abs(
-      transactions.filter((t) => t.amount < 0).reduce((sum, t) => sum + t.amount, 0)
+      transactions
+        .filter((t) => t.amount < 0)
+        .reduce((sum, t) => sum + t.amount, 0),
     );
 
     // Find first and last usage
     const firstUsage = usageTransactions[0];
-    const lastUsage = usageTransactions[usageTransactions.length - 1];
+    const lastUsage = usageTransactions.at(-1);
 
     // Calculate time to exhaust credits
     const registrationDate = new Date(profile.created_at);
@@ -181,7 +187,10 @@ async function main() {
   results.sort((a, b) => {
     if (a.timeToExhaustDays === 'N/A') return 1;
     if (b.timeToExhaustDays === 'N/A') return -1;
-    return parseFloat(a.timeToExhaustDays) - parseFloat(b.timeToExhaustDays);
+    return (
+      Number.parseFloat(a.timeToExhaustDays) -
+      Number.parseFloat(b.timeToExhaustDays)
+    );
   });
 
   // Print results
@@ -200,19 +209,23 @@ async function main() {
     console.log(`  Usage Count: ${r.usageCount} generations`);
     console.log(`  First Usage: ${r.firstUsageAt || 'Never'}`);
     console.log(`  Last Usage: ${r.lastUsageAt || 'Never'}`);
-    console.log(`  Time to Exhaust: ${r.timeToExhaustDays} days (${r.timeToExhaustHours} hours)`);
+    console.log(
+      `  Time to Exhaust: ${r.timeToExhaustDays} days (${r.timeToExhaustHours} hours)`,
+    );
     console.log('-'.repeat(100));
   }
 
   // Summary statistics
-  console.log('\n' + '='.repeat(100));
+  console.log(`\n${'='.repeat(100)}`);
   console.log('SUMMARY STATISTICS');
   console.log('='.repeat(100));
 
   const validResults = results.filter((r) => r.timeToExhaustDays !== 'N/A');
 
   if (validResults.length > 0) {
-    const days = validResults.map((r) => parseFloat(r.timeToExhaustDays));
+    const days = validResults.map((r) =>
+      Number.parseFloat(r.timeToExhaustDays),
+    );
     const avgDays = days.reduce((a, b) => a + b, 0) / days.length;
     const minDays = Math.min(...days);
     const maxDays = Math.max(...days);
@@ -223,12 +236,12 @@ async function main() {
 
     console.log(`\nTotal free users analyzed: ${results.length}`);
     console.log(`Users with usage data: ${validResults.length}`);
-    console.log(`\nTime to exhaust free credits:`);
+    console.log('\nTime to exhaust free credits:');
     console.log(`  Average: ${avgDays.toFixed(2)} days`);
     console.log(`  Median: ${medianDays.toFixed(2)} days`);
     console.log(`  Fastest: ${minDays.toFixed(2)} days`);
     console.log(`  Slowest: ${maxDays.toFixed(2)} days`);
-    console.log(`\nUsage statistics:`);
+    console.log('\nUsage statistics:');
     console.log(`  Total generations: ${totalUsageCount}`);
     console.log(`  Average generations per user: ${avgUsageCount.toFixed(1)}`);
   } else {
