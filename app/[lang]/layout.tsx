@@ -36,7 +36,7 @@ export async function generateMetadata(
   if (!i18n.locales.includes(lang)) {
     return {
       title:
-        'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults',
+        'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan',
     };
   }
 
