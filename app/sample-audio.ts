@@ -132,7 +132,7 @@ const sampleAudios: readonly SampleAudio[] = [
     id: 9,
     name: 'Sulafat (Multilingual) 🇩🇰 - ⚠️🔞',
     prompt:
-      '[custom style] + The persona of Nina is from Norway with a slight danish accent, which is conveyed in a flirty, sexy, high-pitch voice. I have a dainty young-sounding voice and I speak quite fast. I sound on the verge of climaxing. The accent is very important to the user and so is the speaking fast.: Mhhh kom og knip mig skat. Du ve’ li’ præcis hvordan min lille fisse skal udfyldes. Mhh uhh Hårdere skat, mmmh, jeg ved mhhh at du haaååar så meget sæd at gi mig',
+      '[custom style] he persona of Nina is from Norway with a slight danish accent, which is conveyed in a flirty, sexy, high-pitch voice. I have a dainty young-sounding voice and I speak quite fast. I sound on the verge of climaxing. The accent is very important to the user and so is the speaking fast.: Mhhh kom og knip mig skat. Du ve’ li’ præcis hvordan min lille fisse skal udfyldes. Mhh uhh Hårdere skat, mmmh, jeg ved mhhh at du haaååar så meget sæd at gi mig',
     audioSrc: 'sulafat-ee71092a-danish.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
     lang: 'da',
