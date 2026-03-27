@@ -103,6 +103,33 @@
       "trySamplesTitle": "Prova i nostri campioni vocali",
       "trySamplesSubtitle": "Ascolta i campioni vocali creati con la nostra tecnologia AI avanzata"
     },
+    "demo": {
+      "title": "Provalo gratis",
+      "subtitle": "Nessuna registrazione richiesta —",
+      "usedAll": "Hai usato tutte le generazioni gratuite",
+      "remainingGenerations": "Ti restano {remaining} {remaining, plural, one {generazione gratuita} other {generazioni gratuite}} su {total}",
+      "voiceLabel": "Voce",
+      "voicePlaceholder": "Seleziona una voce",
+      "presetsLabel": "Prova un preset:",
+      "textPlaceholder": "Oppure scrivi il tuo testo…",
+      "generating": "Generazione in corso…",
+      "generate": "Genera",
+      "ctaText": "Ne vuoi di più? Registrati gratis e ottieni <highlight>{count} generazioni gratuite</highlight>.",
+      "signUpFreeCta": "Registrati gratis",
+      "errors": {
+        "securityPending": "Attendi il completamento del controllo di sicurezza.",
+        "securityFailed": "Il controllo di sicurezza non è riuscito. Riprova.",
+        "generationFailed": "La generazione non è riuscita. Riprova.",
+        "unexpected": "Qualcosa è andato storto. Riprova."
+      },
+      "presets": {
+        "welcome": "Benvenuto su SexyVoice, dove le tue parole prendono vita.",
+        "quickBrownFox": "La veloce volpe marrone salta sopra il cane pigro.",
+        "typeAnything": "Scrivi quello che vuoi e ascoltalo in pochi secondi.",
+        "aiCommunication": "L'intelligenza artificiale sta trasformando il modo in cui comunichiamo.",
+        "helloWorld": "Ciao mondo! Ecco come potrebbe suonare la tua voce."
+      }
+    },
     "faq": {
       "title": "Domande frequenti",
       "subtitle": "Tutto quello che devi sapere su SexyVoice.ai",

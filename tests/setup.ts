@@ -72,9 +72,42 @@ process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
 process.env.R2_SECRET_ACCESS_KEY = 'test-r2-secret-key';
 process.env.R2_BUCKET_NAME = 'test-bucket';
+process.env.R2_DEMO_BUCKET_NAME = 'test-demo-bucket';
+process.env.R2_DEMO_PUBLIC_URL = 'https://demo-files.sexyvoice.ai';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+
+const mockCookieGet = vi.fn();
+const mockCookies = vi.fn(async () => ({
+  get: mockCookieGet,
+}));
+
+const serializeCookie = (
+  name: string,
+  value: string,
+  options: Record<string, unknown> = {},
+) => {
+  const parts = [`${name}=${value}`];
+
+  if (options.maxAge) {
+    parts.push(`Max-Age=${options.maxAge}`);
+  }
+  if (options.path) {
+    parts.push(`Path=${options.path}`);
+  }
+  if (options.sameSite) {
+    parts.push(`SameSite=${options.sameSite}`);
+  }
+  if (options.httpOnly) {
+    parts.push('HttpOnly');
+  }
+  if (options.secure) {
+    parts.push('Secure');
+  }
+
+  return parts.join('; ');
+};
 
 // Mock Axiom so tests never attempt a real network flush
 vi.mock('@axiomhq/js', () => ({
@@ -88,21 +121,37 @@ vi.mock('@axiomhq/js', () => ({
 vi.mock('next/server', () => ({
   NextResponse: {
     json: (data: any, init?: any) => {
+      const headers = new Headers({
+        'content-type': 'application/json',
+        ...(init?.headers || {}),
+      });
       const response = new Response(JSON.stringify(data), {
         ...init,
-        headers: {
-          'content-type': 'application/json',
-          ...(init?.headers || {}),
+        headers,
+      });
+      Object.assign(response, {
+        cookies: {
+          set: (
+            name: string,
+            value: string,
+            options?: Record<string, unknown>,
+          ) =>
+            response.headers.append(
+              'set-cookie',
+              serializeCookie(name, value, options),
+            ),
         },
       });
       return response;
     },
   },
   after: async (fn: () => Promise<void>) => {
-    // In tests, execute immediately and return a promise
-    // This ensures the callback runs before test assertions
     await fn();
   },
+}));
+
+vi.mock('next/headers', () => ({
+  cookies: mockCookies,
 }));
 
 // Mock Sentry
@@ -275,8 +324,7 @@ vi.mock('@upstash/redis', () => ({
 vi.mock('@upstash/ratelimit', () => ({
   Ratelimit: class MockRatelimit {
     static tokenBucket = vi.fn(() => 'token_bucket_limiter');
-    // biome-ignore lint/correctness/noUnusedFunctionParameters: Mirrors SDK constructor shape for tests.
-    constructor(_config: unknown) {}
+    static fixedWindow = vi.fn(() => 'fixed_window_limiter');
     limit(identifier: string) {
       return mockRatelimitLimit(identifier);
     }
@@ -285,6 +333,8 @@ vi.mock('@upstash/ratelimit', () => ({
 
 // Export mocks for test access
 export {
+  mockCookieGet,
+  mockCookies,
   mockRatelimitLimit,
   mockRedisDel,
   mockRedisExpire,
@@ -323,6 +373,14 @@ export { mockCheckUserPaidStatus };
 
 // Mock Google Generative AI module
 export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
+const mockCreateChallenge = vi.fn().mockResolvedValue({
+  algorithm: 'SHA-256',
+  challenge: 'test-challenge',
+  maxnumber: 50_000,
+  salt: 'test-salt',
+  signature: 'test-signature',
+});
+const mockVerifySolution = vi.fn().mockResolvedValue(true);
 
 // Create a configurable mock instance that tests can modify
 const createDefaultGoogleGenAIInstance = () => ({
@@ -365,6 +423,13 @@ export const resetMockGoogleGenAIFactory = () => {
   mockGoogleGenAIFactory = createDefaultGoogleGenAIInstance;
 };
 
+vi.mock('altcha-lib', () => ({
+  createChallenge: mockCreateChallenge,
+  verifySolution: mockVerifySolution,
+}));
+
+export { mockCreateChallenge, mockVerifySolution };
+
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');
   return {
@@ -384,6 +449,7 @@ vi.mock('@google/genai', async () => {
 // Mock crypto.subtle for filename hash generation
 Object.defineProperty(global, 'crypto', {
   value: {
+    randomUUID: vi.fn(() => 'test-demo-session-id'),
     subtle: {
       digest: vi.fn().mockImplementation((_algorithm, data) => {
         // Generate a simple hash based on the input data

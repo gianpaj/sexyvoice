@@ -103,6 +103,33 @@
       "trySamplesTitle": "Prøv vores stemmeprøver",
       "trySamplesSubtitle": "Lyt til stemmeprøver skabt med vores avancerede AI-teknologi"
     },
+    "demo": {
+      "title": "Prøv gratis",
+      "subtitle": "Ingen tilmelding nødvendig —",
+      "usedAll": "Du har brugt alle gratis generationer",
+      "remainingGenerations": "{remaining} af {total} gratis {remaining, plural, one {generation} other {generationer}} tilbage",
+      "voiceLabel": "Stemme",
+      "voicePlaceholder": "Vælg en stemme",
+      "presetsLabel": "Prøv en forudindstilling:",
+      "textPlaceholder": "Eller skriv din egen tekst…",
+      "generating": "Genererer…",
+      "generate": "Generer",
+      "ctaText": "Vil du have mere? Tilmeld dig gratis og få <highlight>{count} gratis generationer</highlight>.",
+      "signUpFreeCta": "Tilmeld dig gratis",
+      "errors": {
+        "securityPending": "Vent venligst, til sikkerhedstjekket er gennemført.",
+        "securityFailed": "Sikkerhedstjekket mislykkedes. Prøv igen.",
+        "generationFailed": "Genereringen mislykkedes. Prøv igen.",
+        "unexpected": "Noget gik galt. Prøv igen."
+      },
+      "presets": {
+        "welcome": "Velkommen til SexyVoice — hvor dine ord bliver levende.",
+        "quickBrownFox": "Den hurtige brune ræv hopper over den dovne hund.",
+        "typeAnything": "Skriv hvad som helst, og hør det på få sekunder.",
+        "aiCommunication": "Kunstig intelligens forandrer den måde, vi kommunikerer på.",
+        "helloWorld": "Hej verden! Sådan kunne din stemme lyde."
+      }
+    },
     "faq": {
       "title": "Ofte stillede spørgsmål",
       "subtitle": "Alt hvad du behøver at vide om SexyVoice.ai",
@@ -234,11 +261,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",

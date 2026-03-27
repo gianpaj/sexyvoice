@@ -462,7 +462,7 @@ Based on TODO.md, current priorities include:
 2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
 3. **Internationalization**: Expand voice models to French, German, Korean, Mandarin; translate remaining SEO content
 4. **User Experience**: Share pages for audio files, history page with regeneration
-5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
+5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, ALTCHA protection for the homepage demo
 6. **Analytics**: Add PostHog to auth pages, track paid user status
 7. **Testing**: Expand test coverage, Playwright E2E tests with test database
 8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors

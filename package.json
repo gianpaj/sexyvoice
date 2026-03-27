@@ -79,6 +79,8 @@
     "@wasm-audio-decoders/ogg-vorbis": "^0.1.20",
     "@wavesurfer/react": "^1.0.12",
     "ai": "^6.0.111",
+    "altcha": "^2.3.0",
+    "altcha-lib": "^1.4.1",
     "babel-plugin-react-compiler": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

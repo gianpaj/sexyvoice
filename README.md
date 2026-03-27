@@ -239,7 +239,7 @@ SexyVoice.ai implements multiple security layers:
 
 - **Authentication**: Secure OAuth integration with Supabase Auth
 - **Data Protection**: Row-level security (RLS) policies in PostgreSQL
-- **API Security**: Rate limiting and request validation
+- **API Security**: Rate limiting, request validation, and ALTCHA protection for the public homepage TTS demo
 - **File Security**: Secure R2 storage with access controls
 - **Error Handling**: Comprehensive error tracking with Sentry
 - **Environment Isolation**: Separate configurations for development and production

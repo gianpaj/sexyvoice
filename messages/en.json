@@ -103,6 +103,33 @@
       "trySamplesTitle": "Try Our Voice Samples",
       "trySamplesSubtitle": "Listen to voice samples created with our advanced AI technology"
     },
+    "demo": {
+      "title": "Try it free",
+      "subtitle": "No sign-up required —",
+      "usedAll": "You've used all free generations",
+      "remainingGenerations": "{remaining} of {total} free {remaining, plural, one {generation} other {generations}} remaining",
+      "voiceLabel": "Voice",
+      "voicePlaceholder": "Select a voice",
+      "presetsLabel": "Try a preset:",
+      "textPlaceholder": "Or type your own text…",
+      "generating": "Generating…",
+      "generate": "Generate",
+      "ctaText": "Want more? Sign up free for <highlight>{count} free generations</highlight>.",
+      "signUpFreeCta": "Sign up free",
+      "errors": {
+        "securityPending": "Please wait for the security check to complete.",
+        "securityFailed": "Security check failed. Please try again.",
+        "generationFailed": "Generation failed. Please try again.",
+        "unexpected": "Something went wrong. Please try again."
+      },
+      "presets": {
+        "welcome": "Welcome to SexyVoice — where your words come alive.",
+        "quickBrownFox": "The quick brown fox jumps over the lazy dog.",
+        "typeAnything": "Type anything you want and hear it in seconds.",
+        "aiCommunication": "Artificial intelligence is transforming how we communicate.",
+        "helloWorld": "Hello world! This is what your voice could sound like."
+      }
+    },
     "faq": {
       "title": "Frequently Asked Questions",
       "subtitle": "Everything you need to know about SexyVoice.ai",
@@ -257,9 +284,7 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": [
-          "Everything in Standard, just cheaper"
-        ]
+        "features": ["Everything in Standard, just cheaper"]
       }
     },
     "topup": {
