@@ -421,8 +421,8 @@ export function AudioGenerator({
                         className={cn(
                           'h-3.5 w-3.5 cursor-default',
                           isPaidUser
-                            ? 'text-yellow-400'
-                            : 'text-muted-foreground/50',
+                            ? 'text-muted-foreground/50'
+                            : 'text-yellow-400',
                         )}
                       />
                     </TooltipTrigger>

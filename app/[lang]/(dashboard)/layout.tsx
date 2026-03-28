@@ -9,6 +9,7 @@ import { getMessages } from 'next-intl/server';
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import {
   getCreditsQuery,
   getCreditTransactions,
@@ -37,10 +38,10 @@ export default async function DashboardLayout(props: {
     placement: 'dashboard',
   });
 
-  const { data: creditTransactions } = await getCreditTransactions(
-    supabase,
-    user.id,
-  );
+  const [{ data: creditTransactions }, isPaidUser] = await Promise.all([
+    getCreditTransactions(supabase, user.id),
+    hasUserPaid(user.id),
+  ]);
   await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
 
   return (
@@ -50,6 +51,7 @@ export default async function DashboardLayout(props: {
           activeBanner={activeBanner}
           creditTransactions={creditTransactions ?? []}
           dict={messages}
+          isPaidUser={isPaidUser}
           lang={lang}
           userId={user.id}
         >

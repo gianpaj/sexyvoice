@@ -630,7 +630,8 @@
   "sidebar": {
     "profile": "Profile",
     "signOut": "Sign Out",
-    "freeTools": "Free Tools"
+    "freeTools": "Free Tools",
+    "subscriptionDiscount": "Get {discount}% extra credits with a subscription"
   },
   "header": {
     "generate": "Generate",

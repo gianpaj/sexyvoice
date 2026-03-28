@@ -268,7 +268,7 @@ export async function POST(request: Request) {
       });
       const config: GenerateContentConfig = {
         responseModalities: ['AUDIO'],
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -495,7 +495,7 @@ export async function POST(request: Request) {
           apiKeyId: authResult.apiKeyId,
           sourceType: 'api_tts',
           dollarAmount,
-          ...(seed !== undefined ? { seed } : {}),
+          ...(seed === undefined ? {} : { seed }),
         },
       }),
       getCreditsAdmin(userId),
@@ -520,7 +520,7 @@ export async function POST(request: Request) {
         model: modelUsed,
         textPreview: finalText.slice(0, 100),
         textLength: finalText.length,
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         isGeminiVoice,
         isGrokVoice,
         userHasPaid,

@@ -12,6 +12,7 @@ import {
   PhoneCallIcon,
   ReceiptText,
   Scissors,
+
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -38,6 +39,7 @@ import {
 } from '@/components/ui/sidebar';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import type { Locale } from '@/lib/i18n/i18n-config';
+
 import type messages from '@/messages/en.json';
 
 interface DashboardUIProps {
@@ -45,6 +47,7 @@ interface DashboardUIProps {
   children: React.ReactNode;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
   dict: typeof messages;
+  isPaidUser: boolean;
   lang: Locale;
   userId: string;
 }
@@ -53,6 +56,7 @@ export default function DashboardUI({
   activeBanner,
   children,
   creditTransactions,
+  isPaidUser,
   userId,
   lang,
   dict,
@@ -79,16 +83,16 @@ export default function DashboardUI({
       current: pathname === `/${lang}/dashboard/call`,
     },
     {
-      name: dict.pages['/dashboard/history'],
-      href: `/${lang}/dashboard/history`,
-      icon: FileClock,
-      current: pathname === `/${lang}/dashboard/history`,
-    },
-    {
       name: dict.pages['/dashboard/credits'],
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
+    },
+    {
+      name: dict.pages['/dashboard/history'],
+      href: `/${lang}/dashboard/history`,
+      icon: FileClock,
+      current: pathname === `/${lang}/dashboard/history`,
     },
     {
       name: dict.pages['/dashboard/usage'],
@@ -102,13 +106,19 @@ export default function DashboardUI({
       icon: KeyRound,
       current: pathname === `/${lang}/dashboard/api-keys`,
     },
-    {
-      name: dict.pages['/dashboard/api-billing'],
-      href: `/${lang}/dashboard/api-billing`,
-      icon: ReceiptText,
-      current: pathname === `/${lang}/dashboard/api-billing`,
-    },
+    ...(isPaidUser
+      ? [
+          {
+            name: dict.pages['/dashboard/api-billing'],
+            href: `/${lang}/dashboard/api-billing`,
+            icon: ReceiptText,
+            current: pathname === `/${lang}/dashboard/api-billing`,
+          },
+        ]
+      : []),
   ];
+
+
 
   const freeTools = [
     {
@@ -171,6 +181,7 @@ export default function DashboardUI({
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
