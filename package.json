@@ -139,7 +139,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@typescript/native-preview": "7.0.0-dev.20260318.1",
-    "@vitest/coverage-v8": "4.1.0",
+    "@vitest/coverage-v8": "4.1.1",
     "autoprefixer": "10.4.27",
     "husky": "^9.1.7",
     "ioredis": "5.10.0",
@@ -152,7 +152,7 @@
     "tsx": "^4.19.3",
     "typescript": "^5.9.2",
     "ultracite": "7.3.2",
-    "vitest": "4.1.0"
+    "vitest": "4.1.1"
   },
   "browserslist": [
     "chrome >0 and last 2.5 years",
