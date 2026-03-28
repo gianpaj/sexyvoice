@@ -380,15 +380,15 @@ export function AudioGenerator({
                   <Crown
                     className={cn('h-3.5 w-3.5 cursor-default', [
                       isPaidUser
-                        ? 'text-yellow-400'
-                        : 'text-muted-foreground/50',
+                        ? 'text-muted-foreground/50'
+                        : 'text-yellow-400',
                     ])}
                   />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
                     {isPaidUser
-                      ? 'Paid users enjoy 2× character limit'
+                      ? 'As a paid user, you enjoy 2× character limit'
                       : 'Upgrade to a paid plan for 2× character limit'}
                   </p>
                 </TooltipContent>

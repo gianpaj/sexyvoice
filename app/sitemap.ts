@@ -28,7 +28,7 @@ function pageFileToPath(file: string): string {
  */
 function getFileLastModified(filePath: string): string {
   try {
-    const fullPath = join(process.cwd(), filePath);
+    const fullPath = join(process.cwd(), 'app', filePath.replace(/^app\//, ''));
     return statSync(fullPath).mtime.toISOString();
   } catch {
     return '2025-01-01T00:00:00.000Z';
