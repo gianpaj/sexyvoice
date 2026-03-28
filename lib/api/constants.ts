@@ -11,6 +11,12 @@ export const EXTERNAL_API_MODELS = {
     maxInputLength: 500,
     supportedFormats: ['mp3'] as const,
   },
+  grok: {
+    id: 'grok',
+    name: 'Grok (xAI)',
+    maxInputLength: 1000,
+    supportedFormats: ['mp3', 'wav'] as const,
+  },
 } as const;
 
 /**
@@ -23,6 +29,7 @@ export const DB_MODEL_TO_EXTERNAL_ID: Record<string, string> = {
     'orpheus',
   'gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650':
     'orpheus',
+  grok: 'grok',
 };
 
 export type ExternalApiModelId = keyof typeof EXTERNAL_API_MODELS;

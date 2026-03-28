@@ -18,6 +18,15 @@ export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
   return model === 'gpro' ? 'wav' : 'mp3';
 }
 
+export function isFormatSupported(
+  model: ExternalApiModelId,
+  format: string,
+): boolean {
+  return (
+    EXTERNAL_API_MODELS[model].supportedFormats as readonly string[]
+  ).includes(format);
+}
+
 export function getModelCatalogResponse() {
   return Object.values(EXTERNAL_API_MODELS).map((model) => ({
     id: model.id,

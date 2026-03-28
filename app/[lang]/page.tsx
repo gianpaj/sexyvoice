@@ -14,15 +14,16 @@ import { Link } from '@/lib/i18n/navigation';
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
 
+import { Banner } from '@/components/banner';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
-import { PromoBanner } from '@/components/promo-banner';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
@@ -40,10 +41,6 @@ export const metadata: Metadata = {
   },
 };
 
-type PromoCountdownLabels = NonNullable<
-  React.ComponentProps<typeof PromoBanner>['countdown']
->['labels'];
-
 export default async function LandingPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
@@ -56,25 +53,15 @@ export default async function LandingPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
-
-  const promoDictKey =
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
-  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
-    ? messages.promos[promoDictKey as keyof typeof messages.promos]
-    : undefined;
+  const activeBanner = resolveActiveBanner({
+    audience: 'loggedOut',
+    lang,
+    messages,
+    placement: 'landing',
+  });
 
   const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
   const titleRestParts = restParts.join(',');
-  const promoCountdown =
-    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
-    promoDict &&
-    'countdown' in promoDict
-      ? ({
-          enabled: true,
-          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-          labels: promoDict.countdown as PromoCountdownLabels,
-        } satisfies React.ComponentProps<typeof PromoBanner>['countdown'])
-      : undefined;
 
   const faqQuestions = dictLanding.faq.groups.flatMap(
     (group) => group.questions,
@@ -143,16 +130,7 @@ export default async function LandingPage(props: {
     <>
       <Script type="application/ld+json">{JSON.stringify(jsonLd)}</Script>
 
-      {promoDict && (
-        <PromoBanner
-          ariaLabelDismiss={promoDict.ariaLabelDismiss}
-          countdown={promoCountdown}
-          ctaLink={`/${lang}/signup`}
-          ctaText={promoDict.ctaLoggedOut}
-          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-          text={promoDict.text}
-        />
-      )}
+      {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
         <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
