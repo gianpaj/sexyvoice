@@ -134,6 +134,10 @@
               "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
             },
             {
+              "question": "Wie wird das Klonen von Stimmen berechnet?",
+              "answer": "Das Klonen von Stimmen wird nach der Menge der erzeugten Sprache berechnet, daher verbrauchen längere Texte mehr Credits. Es kostet mehr als die normale Sprachgenerierung, weil geklonte Stimmen ein teureres Modell verwenden, um eine bestimmte Stimme präzise nachzubilden."
+            },
+            {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
               "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
             }

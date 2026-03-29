@@ -134,6 +134,10 @@
               "answer": "Oui ! Avec seulement quelques secondes d'audio clair, il peut créer une version numérique de votre voix qui sonne naturelle et réaliste."
             },
             {
+              "question": "Comment est tarifé le clonage vocal ?",
+              "answer": "Le clonage vocal est facturé en fonction de la quantité de parole que vous générez, donc les textes plus longs utilisent plus de crédits. Il coûte plus cher que la génération vocale classique, car les voix clonées reposent sur un modèle plus coûteux pour reproduire fidèlement une voix spécifique."
+            },
+            {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",
               "answer": "Le clonage vocal supporte les 23 langues suivantes :\n\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
             }

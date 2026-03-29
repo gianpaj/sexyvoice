@@ -134,6 +134,10 @@
               "answer": "Ja! Med blot få sekunders ren lyd kan den bygge en digital version af din stemme, der lyder naturlig og realistisk."
             },
             {
+              "question": "Hvordan prissættes stemmekloning?",
+              "answer": "Stemmekloning prissættes ud fra mængden af tale, du genererer, så længere tekster bruger flere kreditter. Det koster mere end almindelig stemmegenerering, fordi klonede stemmer bruger en dyrere model til præcist at gengive en bestemt stemme."
+            },
+            {
               "question": "Hvilke sprog understøttes for stemmekloning?",
               "answer": "Stemmekloning understøtter følgende 23 sprog:\n\n🇸🇦 Arabisk,\n🇩🇰 Dansk,\n🇬🇧 Engelsk,\n🇫🇮 Finsk,\n🇫🇷 Fransk,\n🇬🇷 Græsk,\n🇮🇱 Hebraisk,\n🇮🇳 Hindi,\n🇳🇱 Hollandsk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇲🇾 Malajisk,\n🇨🇳 Mandarin-kinesisk,\n🇳🇴 Norsk,\n🇵🇱 Polsk,\n🇵🇹 Portugisisk,\n🇷🇺 Russisk,\n🇪🇸 Spansk,\n🇸🇪 Svensk,\n🇰🇪 Swahili,\n🇹🇷 Tyrkisk,\nog 🇩🇪 Tysk."
             }

@@ -134,6 +134,10 @@
               "answer": "¡Sí! Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
             },
             {
+              "question": "¿Cómo se cobra la clonación de voz?",
+              "answer": "La clonación de voz se cobra según la cantidad de audio que generes, por lo que los textos más largos consumen más créditos. Cuesta más que la generación de voz normal porque las voces clonadas usan un modelo más caro para reproducir una voz específica con precisión."
+            },
+            {
               "question": "¿Qué idiomas soporta la clonación de voz?",
               "answer": "La clonación de voz soporta los siguientes 23 idiomas:\n\n🇩🇪 Alemán,\n🇸🇦 Árabe,\n🇨🇳 Chino mandarín,\n🇰🇷 Coreano,\n🇩🇰 Danés,\n🇪🇸 Español,\n🇫🇮 Finlandés,\n🇫🇷 Francés,\n🇬🇷 Griego,\n🇮🇱 Hebreo,\n🇮🇳 Hindi,\n🇳🇱 Holandés,\n🇬🇧 Inglés,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇲🇾 Malayo,\n🇳🇴 Noruego,\n🇵🇱 Polaco,\n🇵🇹 Portugués,\n🇷🇺 Ruso,\n🇰🇪 Suajili,\n🇸🇪 Sueco,\ny 🇹🇷 Turco."
             }

@@ -134,6 +134,10 @@
               "answer": "Sì! Con solo pochi secondi di audio pulito, può creare una versione digitale della tua voce che suona naturale e realistica."
             },
             {
+              "question": "Come viene calcolato il prezzo della clonazione vocale?",
+              "answer": "La clonazione vocale viene addebitata in base alla quantità di parlato che generi, quindi i testi più lunghi consumano più crediti. Costa più della normale generazione vocale perché le voci clonate usano un modello più costoso per riprodurre con precisione una voce specifica."
+            },
+            {
               "question": "Quali lingue supporta la clonazione vocale?",
               "answer": "La clonazione vocale supporta le seguenti 23 lingue:\n\n🇸🇦 Arabo,\n🇨🇳 Cinese mandarino,\n🇰🇷 Coreano,\n🇩🇰 Danese,\n🇮🇱 Ebraico,\n🇫🇮 Finlandese,\n🇫🇷 Francese,\n🇯🇵 Giapponese,\n🇬🇷 Greco,\n🇮🇳 Hindi,\n🇬🇧 Inglese,\n🇮🇹 Italiano,\n🇲🇾 Malese,\n🇳🇴 Norvegese,\n🇳🇱 Olandese,\n🇵🇱 Polacco,\n🇵🇹 Portoghese,\n🇷🇺 Russo,\n🇪🇸 Spagnolo,\n🇸🇪 Svedese,\n🇰🇪 Swahili,\n🇩🇪 Tedesco,\ne 🇹🇷 Turco."
             }
