@@ -696,6 +696,136 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
+    it('should return retryable 503 when a retryable Gemini failure happens after pro fallback', async () => {
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            callCount++;
+
+            if (callCount === 1) {
+              throw new Error('Pro model failed');
+            }
+
+            if (callCount === 2) {
+              throw new Error(
+                'ApiError: {"error":{"code":500,"message":"An internal error has occurred.","status":"INTERNAL"}}',
+              );
+            }
+
+            return {
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                          mimeType: 'audio/wav',
+                        },
+                      },
+                    ],
+                  },
+                  finishReason: 'STOP',
+                },
+              ],
+              usageMetadata: {
+                promptTokenCount: 11,
+                candidatesTokenCount: 12,
+                totalTokenCount: 23,
+              },
+            } as GenerateContentResponse;
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(response.headers.get('Retry-After')).toBe('2');
+      expect(callCount).toBe(2);
+      expect(json).toEqual({
+        error: getErrorMessage('GEMINI_RETRYABLE_FAILURE', 'voice-generation'),
+        retryable: true,
+      });
+      expect(Sentry.logger.error).toHaveBeenCalledWith(
+        'Gemini flash fallback failed after pro failure',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            originalModel: 'gemini-2.5-pro-preview-tts',
+            fallbackModel: 'gemini-2.5-flash-preview-tts',
+            retryableErrorCode: 500,
+            retryableErrorReason: 'google-api-inline-error',
+            retryableErrorStatus: 'INTERNAL',
+          }),
+        }),
+      );
+    });
+
+    it('should return retryable 503 when retryable Gemini failures persist after pro fallback', async () => {
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            callCount++;
+
+            if (callCount === 1) {
+              throw new Error('Pro model failed');
+            }
+
+            throw new TypeError('fetch failed sending request');
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(response.headers.get('Retry-After')).toBe('2');
+      expect(callCount).toBe(2);
+      expect(json).toEqual({
+        error: getErrorMessage('GEMINI_RETRYABLE_FAILURE', 'voice-generation'),
+        retryable: true,
+      });
+      expect(Sentry.logger.error).toHaveBeenCalledWith(
+        'Gemini flash fallback failed after pro failure',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            fallbackModel: 'gemini-2.5-flash-preview-tts',
+            retryableErrorReason: 'transport-fetch-failed',
+          }),
+        }),
+      );
+    });
+
     it('should return 500 when flash model fails for free Gemini users', async () => {
       const flashError = new Error('Flash model failed');
 

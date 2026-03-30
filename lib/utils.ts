@@ -171,6 +171,7 @@ export function extractMetadata(
 export const ERROR_CODES = {
   THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
+  GEMINI_RETRYABLE_FAILURE: 'GEMINI_RETRYABLE_FAILURE',
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
@@ -186,6 +187,7 @@ export const ERROR_CODES = {
 export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   PROHIBITED_CONTENT: 422,
   FREE_QUOTA_EXCEEDED: 503,
+  GEMINI_RETRYABLE_FAILURE: 503,
   OTHER_GEMINI_BLOCK: 500,
   REPLICATE_ERROR: 500,
   THIRD_P_QUOTA_EXCEEDED: 503,
@@ -220,6 +222,10 @@ export const getErrorMessage = (
     FREE_QUOTA_EXCEEDED: {
       default:
         'Free users have exceeded the quota. Please try tomorrow or upgrade your account to continue',
+    },
+    GEMINI_RETRYABLE_FAILURE: {
+      default:
+        'Voice generation is temporarily unavailable, please retry shortly',
     },
     // UNAUTHORIZED: {
     //   default: 'You are not authorized to perform this action.',

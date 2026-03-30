@@ -34,11 +34,111 @@ import {
   getErrorMessage,
   getErrorStatusCode,
 } from '@/lib/utils';
+import { parseGoogleApiError } from '@/utils/googleErrors';
 
 const { logger, captureException } = Sentry;
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
+
+const RETRYABLE_GEMINI_STATUS_CODES = new Set([500, 502, 503, 504]);
+const GEMINI_RETRY_AFTER_SECONDS = '2';
+
+type RetryableGeminiErrorInfo = {
+  code: number | null;
+  message: string;
+  reason: string;
+  status: string | null;
+};
+
+const parseInlineGoogleApiError = (
+  value: string,
+): {
+  code: number;
+  message: string;
+  status?: string;
+} | null => {
+  const normalizedValue = value.replace(/^[A-Za-z]+Error:\s*/, '');
+
+  try {
+    const parsedValue = JSON.parse(normalizedValue) as {
+      error?: {
+        code?: number;
+        message?: string;
+        status?: string;
+      };
+    };
+
+    if (
+      parsedValue.error &&
+      typeof parsedValue.error.code === 'number' &&
+      typeof parsedValue.error.message === 'string'
+    ) {
+      return {
+        code: parsedValue.error.code,
+        message: parsedValue.error.message,
+        status: parsedValue.error.status,
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const getRetryableGeminiErrorInfo = (
+  error: unknown,
+): RetryableGeminiErrorInfo | null => {
+  const structuredError = parseGoogleApiError(error);
+  if (
+    structuredError &&
+    RETRYABLE_GEMINI_STATUS_CODES.has(structuredError.code)
+  ) {
+    return {
+      code: structuredError.code,
+      message: structuredError.message,
+      reason: 'google-api-structured-error',
+      status: null,
+    };
+  }
+
+  if (!(error instanceof Error)) {
+    return null;
+  }
+
+  const inlineGoogleError = parseInlineGoogleApiError(error.message);
+  if (
+    inlineGoogleError &&
+    RETRYABLE_GEMINI_STATUS_CODES.has(inlineGoogleError.code)
+  ) {
+    return {
+      code: inlineGoogleError.code,
+      message: inlineGoogleError.message,
+      reason: 'google-api-inline-error',
+      status: inlineGoogleError.status ?? null,
+    };
+  }
+
+  if (/fetch failed(?: sending request)?/i.test(error.message)) {
+    return {
+      code: null,
+      message: error.message,
+      reason: 'transport-fetch-failed',
+      status: null,
+    };
+  }
+
+  return null;
+};
+
+const createRetryableGeminiFailure = () =>
+  new Error(
+    getErrorMessage(ERROR_CODES.GEMINI_RETRYABLE_FAILURE, 'voice-generation'),
+    {
+      cause: ERROR_CODES.GEMINI_RETRYABLE_FAILURE,
+    },
+  );
 
 // Initialize Redis
 const redis = Redis.fromEnv();
@@ -228,14 +328,32 @@ export async function POST(request: Request) {
         ],
       };
       if (userHasPaid) {
-        try {
-          modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+        const currentUser = user;
+        if (!currentUser) {
+          throw new Error('User not found');
+        }
 
-          genAIResponse = await ai.models.generateContent({
-            model: modelUsed,
+        const geminiRequestContext = {
+          voice,
+          styleVariant,
+          provider,
+          textLength: text.length,
+          textPreview: text.slice(0, 500),
+          requestedOutputCodec: outputCodec || null,
+          responseModalities: geminiTTSConfig.responseModalities,
+          speechConfig: geminiTTSConfig.speechConfig,
+        };
+        const generateGeminiContent = (model: string) =>
+          ai.models.generateContent({
+            model,
             contents: [{ parts: [{ text }] }],
             config: geminiTTSConfig,
           });
+
+        try {
+          modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+
+          genAIResponse = await generateGeminiContent(modelUsed);
         } catch (error) {
           console.warn(error);
           if (error instanceof Error && error.name === 'AbortError') {
@@ -248,16 +366,6 @@ export async function POST(request: Request) {
 
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
-          const geminiRequestContext = {
-            voice,
-            styleVariant,
-            provider,
-            textLength: text.length,
-            textPreview: text.slice(0, 500),
-            requestedOutputCodec: outputCodec || null,
-            responseModalities: geminiTTSConfig.responseModalities,
-            speechConfig: geminiTTSConfig.speechConfig,
-          };
 
           logger.warn(
             `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
@@ -276,11 +384,7 @@ export async function POST(request: Request) {
           );
           modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
           try {
-            genAIResponse = await ai.models.generateContent({
-              model: modelUsed,
-              contents: [{ parts: [{ text }] }],
-              config: geminiTTSConfig,
-            });
+            genAIResponse = await generateGeminiContent(modelUsed);
 
             logger.info('Gemini flash fallback succeeded after pro failure', {
               user: {
@@ -295,6 +399,8 @@ export async function POST(request: Request) {
               },
             });
           } catch (flashError) {
+            const retryableError = getRetryableGeminiErrorInfo(flashError);
+
             logger.error('Gemini flash fallback failed after pro failure', {
               user: {
                 id: user.id,
@@ -311,18 +417,66 @@ export async function POST(request: Request) {
                     : String(flashError),
                 flashErrorCause:
                   flashError instanceof Error ? flashError.cause : undefined,
+                retryableErrorCode: retryableError?.code ?? null,
+                retryableErrorReason: retryableError?.reason ?? null,
+                retryableErrorStatus: retryableError?.status ?? null,
               },
             });
+
+            if (retryableError) {
+              throw createRetryableGeminiFailure();
+            }
+
             throw flashError;
           }
         }
       } else {
+        const geminiRequestContext = {
+          voice,
+          styleVariant,
+          provider,
+          textLength: text.length,
+          textPreview: text.slice(0, 500),
+          requestedOutputCodec: outputCodec || null,
+          responseModalities: geminiTTSConfig.responseModalities,
+          speechConfig: geminiTTSConfig.speechConfig,
+        };
+        const generateGeminiContent = (model: string) =>
+          ai.models.generateContent({
+            model,
+            contents: [{ parts: [{ text }] }],
+            config: geminiTTSConfig,
+          });
         modelUsed = 'gemini-2.5-flash-preview-tts';
-        genAIResponse = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ parts: [{ text }] }],
-          config: geminiTTSConfig,
-        });
+        try {
+          genAIResponse = await generateGeminiContent(modelUsed);
+        } catch (flashError) {
+          const retryableError = getRetryableGeminiErrorInfo(flashError);
+          if (!retryableError) {
+            throw flashError;
+          }
+
+          logger.error(
+            'Gemini primary flash request failed with retryable upstream failure',
+            {
+              user: {
+                id: user.id,
+                email: user.email,
+              },
+              extra: {
+                ...geminiRequestContext,
+                model: modelUsed,
+                retryableErrorCode: retryableError.code,
+                retryableErrorMessage: retryableError.message,
+                retryableErrorReason: retryableError.reason,
+                retryableErrorStatus: retryableError.status,
+                stage: 'flash-primary',
+              },
+            },
+          );
+
+          throw createRetryableGeminiFailure();
+        }
       }
       const data =
         genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -567,6 +721,24 @@ export async function POST(request: Request) {
           error: error.message || 'Voice generation failed, please retry',
         },
         { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
+    if (
+      Error.isError(error) &&
+      error.cause === ERROR_CODES.GEMINI_RETRYABLE_FAILURE
+    ) {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation failed, please retry',
+          retryable: true,
+        },
+        {
+          status: getErrorStatusCode(error.cause),
+          headers: {
+            'Retry-After': GEMINI_RETRY_AFTER_SECONDS,
+          },
+        },
       );
     }
 
