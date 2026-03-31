@@ -183,6 +183,12 @@ export default async function BlogIndexPage(props: {
           text={promoDict.text}
         />
       )}
+      <a
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
+        href="#main-content"
+      >
+        Skip to content
+      </a>
       <HeaderStatic />
       <main id="main-content">
         <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
