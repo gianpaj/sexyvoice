@@ -88,7 +88,7 @@ export default async function BlogIndexPage(props: {
               </h1>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {posts.map((post) => (
+                {posts.map((post, index) => (
                   <Card
                     className="overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm"
                     key={post._id}
@@ -99,8 +99,8 @@ export default async function BlogIndexPage(props: {
                           alt={post.title}
                           className="h-48 w-full object-cover"
                           height={320}
-                          loading="lazy"
-                          priority={false}
+                          loading={index < 3 ? 'eager' : 'lazy'}
+                          priority={index < 3}
                           src={post.image}
                           width={640}
                         />
