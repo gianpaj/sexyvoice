@@ -60,10 +60,13 @@ export async function generateMetadata({
       images: ['/sexyvoice.ai-og-image.jpg'],
     },
     alternates: {
-      canonical: pageUrl,
-      languages: Object.fromEntries(
-        i18n.locales.map((locale) => [locale, `/${locale}/blog`]),
-      ),
+      canonical: `https://sexyvoice.ai/${i18n.defaultLocale}/blog`,
+      languages: {
+        ...Object.fromEntries(
+          i18n.locales.map((locale) => [locale, `/${locale}/blog`]),
+        ),
+        'x-default': `/${i18n.defaultLocale}/blog`,
+      },
     },
   };
 }
