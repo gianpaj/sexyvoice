@@ -30,8 +30,7 @@ export async function generateMetadata({
   const dictLanding = messages.landing;
 
   const title = `${dictLanding.latestPosts} | SexyVoice.ai Blog`;
-  const description =
-    'Explore the latest articles about AI voice cloning, text-to-speech, and voice synthesis.';
+  const description = dictLanding.blogDescription;
   const pageUrl = `https://sexyvoice.ai/${lang}/blog`;
 
   return {
