@@ -206,7 +206,7 @@ export default async function BlogIndexPage(props: {
                   No posts available yet.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {posts.map((post, index) => (
                     <Card
                       className="overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm"
