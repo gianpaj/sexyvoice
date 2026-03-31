@@ -212,57 +212,106 @@ export default async function BlogIndexPage(props: {
                   No posts available yet.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                  {posts.map((post, index) => (
-                    <Card
-                      className="group overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm transition-colors duration-200 hover:border-white/20 hover:bg-white/10"
-                      key={post._id}
-                    >
-                      <Link className="flex h-full flex-col" href={post.url}>
-                        <CardHeader className="p-0">
-                          <Image
-                            alt={post.title}
-                            className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            height={320}
-                            loading={index < 3 ? 'eager' : 'lazy'}
-                            priority={index < 3}
-                            src={post.image}
-                            width={640}
-                          />
-                        </CardHeader>
-                        <CardContent className="flex grow flex-col gap-3 p-5">
-                          <p className="flex items-center gap-3 text-gray-400 text-sm">
-                            <span className="whitespace-nowrap">
-                              {format(parseISO(post.date), 'MMMM dd, yyyy', {
-                                locale: dateFnsLocales[lang],
-                              })}
-                            </span>
-                            <span aria-hidden="true">·</span>
-                            <span className="whitespace-nowrap">
-                              {Math.max(
-                                1,
-                                Math.round(
-                                  post.body.raw.split(/\s+/).length / 200,
-                                ),
-                              )}
-                              &nbsp;min read
-                            </span>
-                          </p>
-                          <CardTitle className="line-clamp-2 text-gray-100 text-xl leading-7">
-                            {post.title}
-                          </CardTitle>
-                          {post.description && (
-                            <p className="line-clamp-3 text-gray-300 text-sm leading-6">
-                              {post.description}
-                            </p>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {posts.map((post, index) => {
+                    const isFeatured = index === 0;
+                    const readingTime = Math.max(
+                      1,
+                      Math.round(post.body.raw.split(/\s+/).length / 200),
+                    );
+                    const tag = post.keywords?.[0];
+
+                    return (
+                      <Card
+                        className={cn(
+                          'group overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm transition-colors duration-200 hover:border-white/20 hover:bg-white/10',
+                          isFeatured && 'sm:col-span-2 lg:col-span-3',
+                        )}
+                        key={post._id}
+                      >
+                        <Link
+                          className={cn(
+                            'flex h-full flex-col',
+                            isFeatured && 'sm:flex-row',
                           )}
-                          <p className="mt-auto pt-2 text-sm text-white/60 transition-colors duration-200 group-hover:text-white/90">
-                            Read more →
-                          </p>
-                        </CardContent>
-                      </Link>
-                    </Card>
-                  ))}
+                          href={post.url}
+                        >
+                          <CardHeader
+                            className={cn(
+                              'p-0',
+                              isFeatured && 'sm:w-2/5 sm:shrink-0',
+                            )}
+                          >
+                            <Image
+                              alt={post.title}
+                              className={cn(
+                                'w-full object-cover transition-transform duration-300 group-hover:scale-105',
+                                isFeatured ? 'h-56 sm:h-full' : 'h-48',
+                              )}
+                              height={320}
+                              loading={index < 3 ? 'eager' : 'lazy'}
+                              priority={index < 3}
+                              src={post.image}
+                              width={640}
+                            />
+                          </CardHeader>
+                          <CardContent className="flex grow flex-col gap-3 p-5">
+                            {tag && (
+                              <span className="w-fit rounded-full bg-purple-700/30 px-2.5 py-0.5 text-purple-300 text-xs font-medium capitalize">
+                                {tag}
+                              </span>
+                            )}
+                            <p className="flex items-center gap-2 text-gray-400 text-sm">
+                              <svg
+                                aria-hidden="true"
+                                className="size-3.5 shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth={1.5}
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                              <span className="whitespace-nowrap">
+                                {format(parseISO(post.date), 'MMMM dd, yyyy', {
+                                  locale: dateFnsLocales[lang],
+                                })}
+                              </span>
+                              <span aria-hidden="true">·</span>
+                              <span className="whitespace-nowrap">
+                                {readingTime}&nbsp;min read
+                              </span>
+                            </p>
+                            <CardTitle
+                              className={cn(
+                                'line-clamp-2 text-gray-100 leading-7',
+                                isFeatured ? 'text-2xl' : 'text-xl',
+                              )}
+                            >
+                              {post.title}
+                            </CardTitle>
+                            {post.description && (
+                              <p
+                                className={cn(
+                                  'text-gray-300 text-sm leading-6',
+                                  isFeatured ? 'line-clamp-4' : 'line-clamp-3',
+                                )}
+                              >
+                                {post.description}
+                              </p>
+                            )}
+                            <p className="mt-auto pt-2 text-sm text-white/60 transition-colors duration-200 group-hover:text-white/90">
+                              Read more →
+                            </p>
+                          </CardContent>
+                        </Link>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </div>
