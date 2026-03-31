@@ -14,6 +14,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 
+export const dynamicParams = false;
+
+export const generateStaticParams = () =>
+  i18n.locales.map((lang) => ({ lang }));
+
 type PromoCountdownLabels = NonNullable<
   ComponentProps<typeof PromoBanner>['countdown']
 >['labels'];
