@@ -21,6 +21,7 @@ type BlogPostWithImage = (typeof allPosts)[number] & {
 };
 
 const LATEST_POSTS_LIMIT = 20;
+const DEFAULT_PROMO_KEY = 'blackFridayBanner';
 
 const getLatestPostsByLang = (lang: Locale): BlogPostWithImage[] =>
   allPosts
@@ -47,7 +48,7 @@ export default async function BlogIndexPage(props: {
   const dictLanding = messages.landing;
 
   const promoDictKey =
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || 'blackFridayBanner';
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || DEFAULT_PROMO_KEY;
   const promoDict = Object.hasOwn(messages.promos, promoDictKey)
     ? messages.promos[promoDictKey as keyof typeof messages.promos]
     : undefined;
