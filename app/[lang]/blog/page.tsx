@@ -71,7 +71,7 @@ export default async function BlogIndexPage(props: {
         <PromoBanner
           ariaLabelDismiss={promoDict.ariaLabelDismiss}
           countdown={promoCountdown}
-          ctaLink={promoDict.ctaLink || `/${lang}/signup`}
+          ctaLink={`/${lang}/signup`}
           ctaText={promoDict.ctaLoggedOut}
           isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
           text={promoDict.text}
