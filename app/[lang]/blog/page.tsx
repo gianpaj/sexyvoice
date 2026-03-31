@@ -251,6 +251,11 @@ export default async function BlogIndexPage(props: {
                               height={320}
                               loading={index < 3 ? 'eager' : 'lazy'}
                               priority={index < 3}
+                              sizes={
+                                isFeatured
+                                  ? '(max-width: 640px) 100vw, (max-width: 1024px) 40vw, 460px'
+                                  : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                              }
                               src={post.image}
                               width={640}
                             />
