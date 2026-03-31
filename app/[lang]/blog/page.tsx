@@ -87,41 +87,47 @@ export default async function BlogIndexPage(props: {
                 {dictLanding.latestPosts}
               </h1>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {posts.map((post, index) => (
-                  <Card
-                    className="overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm"
-                    key={post._id}
-                  >
-                    <Link className="flex h-full flex-col" href={post.url}>
-                      <CardHeader className="p-0">
-                        <Image
-                          alt={post.title}
-                          className="h-48 w-full object-cover"
-                          height={320}
-                          loading={index < 3 ? 'eager' : 'lazy'}
-                          priority={index < 3}
-                          src={post.image}
-                          width={640}
-                        />
-                      </CardHeader>
-                      <CardContent className="flex grow flex-col gap-3 p-5">
-                        <p className="text-gray-400 text-sm">
-                          {format(parseISO(post.date), 'MMMM dd, yyyy')}
-                        </p>
-                        <CardTitle className="line-clamp-2 text-gray-100 text-xl leading-7">
-                          {post.title}
-                        </CardTitle>
-                        {post.description && (
-                          <p className="line-clamp-3 text-gray-300 text-sm leading-6">
-                            {post.description}
+              {posts.length === 0 ? (
+                <p className="text-center text-gray-400">
+                  No posts available yet.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {posts.map((post, index) => (
+                    <Card
+                      className="overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm"
+                      key={post._id}
+                    >
+                      <Link className="flex h-full flex-col" href={post.url}>
+                        <CardHeader className="p-0">
+                          <Image
+                            alt={post.title}
+                            className="h-48 w-full object-cover"
+                            height={320}
+                            loading={index < 3 ? 'eager' : 'lazy'}
+                            priority={index < 3}
+                            src={post.image}
+                            width={640}
+                          />
+                        </CardHeader>
+                        <CardContent className="flex grow flex-col gap-3 p-5">
+                          <p className="text-gray-400 text-sm">
+                            {format(parseISO(post.date), 'MMMM dd, yyyy')}
                           </p>
-                        )}
-                      </CardContent>
-                    </Link>
-                  </Card>
-                ))}
-              </div>
+                          <CardTitle className="line-clamp-2 text-gray-100 text-xl leading-7">
+                            {post.title}
+                          </CardTitle>
+                          {post.description && (
+                            <p className="line-clamp-3 text-gray-300 text-sm leading-6">
+                              {post.description}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
