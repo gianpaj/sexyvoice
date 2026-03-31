@@ -14,6 +14,7 @@ import { HeaderStatic } from '@/components/header-static';
 import { PromoBanner } from '@/components/promo-banner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { cn } from '@/lib/utils';
 import { Link } from '@/lib/i18n/navigation';
 
 export const dynamicParams = false;
@@ -193,8 +194,11 @@ export default async function BlogIndexPage(props: {
       </a>
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
-          <div className="container mx-auto px-4 py-12 md:py-16">
+        <div className="relative min-h-screen bg-linear-to-br from-background to-gray-800">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute left-1/2 top-0 h-[400px] w-[700px] -translate-x-1/2 rounded-full bg-purple-700/20 blur-[120px]" />
+          </div>
+          <div className="container relative mx-auto px-4 py-12 md:py-16">
             <div className="mx-auto max-w-6xl">
               <h1 className="mb-4 text-balance text-center font-bold text-3xl text-white md:text-4xl">
                 {dictLanding.latestPosts}
@@ -208,7 +212,7 @@ export default async function BlogIndexPage(props: {
                   No posts available yet.
                 </p>
               ) : (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   {posts.map((post, index) => (
                     <Card
                       className="group overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm transition-colors duration-200 hover:border-white/20 hover:bg-white/10"
