@@ -133,8 +133,47 @@ export default async function BlogIndexPage(props: {
 
   const posts = getLatestPostsByLang(lang);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: `https://sexyvoice.ai/${lang}`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Blog',
+            item: `https://sexyvoice.ai/${lang}/blog`,
+          },
+        ],
+      },
+      {
+        '@type': 'ItemList',
+        name: 'SexyVoice.ai Blog',
+        url: `https://sexyvoice.ai/${lang}/blog`,
+        numberOfItems: posts.length,
+        itemListElement: posts.map((post, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          url: `https://sexyvoice.ai${post.url}`,
+          name: post.title,
+        })),
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        type="application/ld+json"
+      />
       {promoDict && (
         <PromoBanner
           ariaLabelDismiss={promoDict.ariaLabelDismiss}
