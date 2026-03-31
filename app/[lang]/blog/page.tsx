@@ -1,5 +1,7 @@
 import { allPosts } from 'contentlayer/generated';
+import type { Locale as DateFnsLocale } from 'date-fns';
 import { format, parseISO } from 'date-fns';
+import { da, de, es, fr, it } from 'date-fns/locale';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages } from 'next-intl/server';
@@ -21,6 +23,14 @@ type BlogPostWithImage = (typeof allPosts)[number] & {
 };
 
 const LATEST_POSTS_LIMIT = 20;
+
+const dateFnsLocales: Partial<Record<Locale, DateFnsLocale>> = {
+  da,
+  de,
+  es,
+  fr,
+  it,
+};
 const DEFAULT_PROMO_KEY = 'blackFridayBanner';
 
 const getLatestPostsByLang = (lang: Locale): BlogPostWithImage[] =>
@@ -112,7 +122,9 @@ export default async function BlogIndexPage(props: {
                         </CardHeader>
                         <CardContent className="flex grow flex-col gap-3 p-5">
                           <p className="text-gray-400 text-sm">
-                            {format(parseISO(post.date), 'MMMM dd, yyyy')}
+                            {format(parseISO(post.date), 'MMMM dd, yyyy', {
+                              locale: dateFnsLocales[lang],
+                            })}
                           </p>
                           <CardTitle className="line-clamp-2 text-gray-100 text-xl leading-7">
                             {post.title}
