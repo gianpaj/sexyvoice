@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { da, de, es, fr, it } from 'date-fns/locale';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
+import Script from 'next/script';
 import type { Metadata } from 'next/types';
 import { getMessages } from 'next-intl/server';
 import type { ComponentProps } from 'react';
@@ -132,47 +133,48 @@ export default async function BlogIndexPage(props: {
 
   const posts = getLatestPostsByLang(lang);
 
-  const jsonLd = {
+  const itemListSchema = {
     '@context': 'https://schema.org',
-    '@graph': [
+    '@type': 'ItemList',
+    name: 'SexyVoice.ai Blog',
+    url: `https://sexyvoice.ai/${lang}/blog`,
+    numberOfItems: posts.length,
+    itemListElement: posts.map((post, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: `https://sexyvoice.ai${post.url}`,
+      name: post.title,
+    })),
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
       {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
-            item: `https://sexyvoice.ai/${lang}`,
-          },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: 'Blog',
-            item: `https://sexyvoice.ai/${lang}/blog`,
-          },
-        ],
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: `https://sexyvoice.ai/${lang}`,
       },
       {
-        '@type': 'ItemList',
-        name: 'SexyVoice.ai Blog',
-        url: `https://sexyvoice.ai/${lang}/blog`,
-        numberOfItems: posts.length,
-        itemListElement: posts.map((post, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          url: `https://sexyvoice.ai${post.url}`,
-          name: post.title,
-        })),
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Blog',
+        item: `https://sexyvoice.ai/${lang}/blog`,
       },
     ],
   };
 
   return (
     <>
-      <script
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        type="application/ld+json"
-      />
+      {/* Structured Data for search engines and LLM understanding */}
+      <Script id="blog-list-schema" type="application/ld+json">
+        {JSON.stringify(itemListSchema)}
+      </Script>
+      <Script id="breadcrumb-schema" type="application/ld+json">
+        {JSON.stringify(breadcrumbSchema)}
+      </Script>
       {promoDict && (
         <PromoBanner
           ariaLabelDismiss={promoDict.ariaLabelDismiss}
@@ -233,7 +235,13 @@ export default async function BlogIndexPage(props: {
                             </span>
                             <span aria-hidden="true">·</span>
                             <span className="whitespace-nowrap">
-                              {Math.max(1, Math.round(post.body.raw.split(/\s+/).length / 200))}&nbsp;min read
+                              {Math.max(
+                                1,
+                                Math.round(
+                                  post.body.raw.split(/\s+/).length / 200,
+                                ),
+                              )}
+                              &nbsp;min read
                             </span>
                           </p>
                           <CardTitle className="line-clamp-2 text-gray-100 text-xl leading-7">
@@ -244,7 +252,7 @@ export default async function BlogIndexPage(props: {
                               {post.description}
                             </p>
                           )}
-                          <p className="mt-auto pt-2 text-sm text-white/60 group-hover:text-white/90 transition-colors duration-200">
+                          <p className="mt-auto pt-2 text-sm text-white/60 transition-colors duration-200 group-hover:text-white/90">
                             Read more →
                           </p>
                         </CardContent>
