@@ -23,12 +23,12 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 1
 
       - name: PR Review with Progress Tracking
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@88c168b39e7e64da0286d812b6e9fbebb6708185 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
@@ -63,13 +63,13 @@ jobs:
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 1
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@88c168b39e7e64da0286d812b6e9fbebb6708185 # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Trigger when specific user is assigned to an issue
