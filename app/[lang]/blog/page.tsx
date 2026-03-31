@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { da, de, es, fr, it } from 'date-fns/locale';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next/types';
 import { getMessages } from 'next-intl/server';
 import type { ComponentProps } from 'react';
 
@@ -18,6 +19,54 @@ export const dynamicParams = false;
 
 export const generateStaticParams = () =>
   i18n.locales.map((lang) => ({ lang }));
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: Locale }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dictLanding = messages.landing;
+
+  const title = `${dictLanding.latestPosts} - SexyVoice.ai`;
+  const description =
+    'Explore the latest articles about AI voice cloning, text-to-speech, and voice synthesis.';
+  const pageUrl = `https://sexyvoice.ai/${lang}/blog`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: 'SexyVoice.ai',
+      images: [
+        {
+          url: '/sexyvoice.ai-og-image.jpg',
+          width: 1200,
+          height: 630,
+          alt: 'SexyVoice.ai Blog',
+        },
+      ],
+      locale: lang,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/sexyvoice.ai-og-image.jpg'],
+    },
+    alternates: {
+      canonical: pageUrl,
+      languages: Object.fromEntries(
+        i18n.locales.map((locale) => [locale, `/${locale}/blog`]),
+      ),
+    },
+  };
+}
 
 type PromoCountdownLabels = NonNullable<
   ComponentProps<typeof PromoBanner>['countdown']
