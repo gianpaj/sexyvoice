@@ -29,15 +29,15 @@ export async function generateMetadata({
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
 
-  const title = `${dictLanding.latestPosts} | SexyVoice.ai Blog`;
+  const titleStr = `${dictLanding.latestPosts} | SexyVoice.ai Blog`;
   const description = dictLanding.blogDescription;
   const pageUrl = `https://sexyvoice.ai/${lang}/blog`;
 
   return {
-    title,
+    title: { absolute: titleStr },
     description,
     openGraph: {
-      title,
+      title: titleStr,
       description,
       url: pageUrl,
       siteName: 'SexyVoice.ai',
@@ -54,7 +54,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: titleStr,
       description,
       images: ['/sexyvoice.ai-og-image.jpg'],
     },
@@ -194,9 +194,12 @@ export default async function BlogIndexPage(props: {
         <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
           <div className="container mx-auto px-4 py-12 md:py-16">
             <div className="mx-auto max-w-6xl">
-              <h1 className="mb-8 text-balance text-center font-bold text-3xl text-white md:mb-12 md:text-4xl">
+              <h1 className="mb-4 text-balance text-center font-bold text-3xl text-white md:text-4xl">
                 {dictLanding.latestPosts}
               </h1>
+              <p className="mx-auto mb-10 max-w-xl text-balance text-center text-base text-gray-300 md:mb-12">
+                {dictLanding.blogDescription}
+              </p>
 
               {posts.length === 0 ? (
                 <p className="text-center text-gray-400">
