@@ -188,7 +188,7 @@ export default async function BlogIndexPage(props: {
         <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
           <div className="container mx-auto px-4 py-12 md:py-16">
             <div className="mx-auto max-w-6xl">
-              <h1 className="mb-8 text-center font-bold text-3xl text-white md:mb-12 md:text-4xl">
+              <h1 className="mb-8 text-balance text-center font-bold text-3xl text-white md:mb-12 md:text-4xl">
                 {dictLanding.latestPosts}
               </h1>
 
