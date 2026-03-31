@@ -28,7 +28,10 @@ const getLatestPostsByLang = (lang: Locale): BlogPostWithImage[] =>
       (post): post is BlogPostWithImage =>
         post.locale === lang && typeof post.image === 'string' && !post.draft,
     )
-    .sort((postA, postB) => postB.date.localeCompare(postA.date))
+    .sort(
+      (postA, postB) =>
+        new Date(postB.date).getTime() - new Date(postA.date).getTime(),
+    )
     .slice(0, LATEST_POSTS_LIMIT);
 
 export default async function BlogIndexPage(props: {
@@ -68,7 +71,7 @@ export default async function BlogIndexPage(props: {
         <PromoBanner
           ariaLabelDismiss={promoDict.ariaLabelDismiss}
           countdown={promoCountdown}
-          ctaLink={`/${lang}/signup`}
+          ctaLink={promoDict.ctaLink || `/${lang}/signup`}
           ctaText={promoDict.ctaLoggedOut}
           isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
           text={promoDict.text}
