@@ -209,14 +209,14 @@ export default async function BlogIndexPage(props: {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {posts.map((post, index) => (
                     <Card
-                      className="overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm"
+                      className="group overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm transition-colors duration-200 hover:border-white/20 hover:bg-white/10"
                       key={post._id}
                     >
                       <Link className="flex h-full flex-col" href={post.url}>
                         <CardHeader className="p-0">
                           <Image
                             alt={post.title}
-                            className="h-48 w-full object-cover"
+                            className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                             height={320}
                             loading={index < 3 ? 'eager' : 'lazy'}
                             priority={index < 3}
@@ -225,10 +225,16 @@ export default async function BlogIndexPage(props: {
                           />
                         </CardHeader>
                         <CardContent className="flex grow flex-col gap-3 p-5">
-                          <p className="text-gray-400 text-sm">
-                            {format(parseISO(post.date), 'MMMM dd, yyyy', {
-                              locale: dateFnsLocales[lang],
-                            })}
+                          <p className="flex items-center gap-3 text-gray-400 text-sm">
+                            <span className="whitespace-nowrap">
+                              {format(parseISO(post.date), 'MMMM dd, yyyy', {
+                                locale: dateFnsLocales[lang],
+                              })}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span className="whitespace-nowrap">
+                              {Math.max(1, Math.round(post.body.raw.split(/\s+/).length / 200))}&nbsp;min read
+                            </span>
                           </p>
                           <CardTitle className="line-clamp-2 text-gray-100 text-xl leading-7">
                             {post.title}
@@ -238,6 +244,9 @@ export default async function BlogIndexPage(props: {
                               {post.description}
                             </p>
                           )}
+                          <p className="mt-auto pt-2 text-sm text-white/60 group-hover:text-white/90 transition-colors duration-200">
+                            Read more →
+                          </p>
                         </CardContent>
                       </Link>
                     </Card>
