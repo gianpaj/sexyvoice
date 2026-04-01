@@ -56,6 +56,7 @@
   },
   "landing": {
     "latestPosts": "Ultimi post",
+    "more": "Altri post",
     "hero": {
       "title": "Voci espressive, senza censura",
       "subtitle": "Generatore IA di sintesi vocale gratuito per adulti.\nPerfetto per creatori di contenuti e narratori. 😉",
@@ -113,7 +114,7 @@
           "questions": [
             {
               "question": "Quali lingue sono supportate per la generazione vocale?",
-              "answer": "Il supporto linguistico dipende dalla voce selezionata.\n\nAlcune delle nostre voci IA (Puck, Zephyr, Gacrux, Kore, Sulafat, ecc.) supportano 24 lingue tra cui:\n🇪🇬 Arabo (egiziano),\n🇺🇸 Inglese (US),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇺🇸 Spagnolo (US),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portoghese (Brasile),\n🇷🇺 Russo (Russia),\n🇳🇱 Olandese (Paesi Bassi),\n🇵🇱 Polacco (Polonia),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumeno (Romania),\n🇺🇦 Ucraino (Ucraina),\n🇧🇩 Bengalese (Bangladesh),\n🇮🇳 Inglese/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\ne 🇮🇳 Telugu (India).\nAltre voci sono specifiche per lingua:\n🇬🇧 Dan (Inglese UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglese US),\n🇪🇸 Javi (Spagnolo),\n🇺🇸 Josh (Inglese US),\n🇺🇸 e Tara (Inglese US).\n\nScegli la tua voce in base alla lingua target per i risultati più naturali."
+              "answer": "Il supporto linguistico dipende dalla voce selezionata.\n\nAlcune delle nostre voci IA (Puck, Zephyr, Gacrux, Kore, Sulafat, ecc.) supportano 24 lingue tra cui:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇫🇷 Francese (Francia),\n🇯🇵 Giapponese (Giappone),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇮🇳 Marathi (India),\n🇳🇱 Olandese (Paesi Bassi),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇹🇭 Tai (Thailandia),\n🇮🇳 Tamil (India),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Telugu (India),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\ne 🇻🇳 Vietnamita (Vietnam).\n\nAltre voci sono specifiche per lingua:\n🇬🇧 Dan (Inglese UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglese US),\n🇪🇸 Javi (Spagnolo),\n🇺🇸 Josh (Inglese US),\n🇺🇸 e Tara (Inglese US).\n\nScegli la tua voce in base alla lingua target per i risultati più naturali."
             },
             {
               "question": "Posso far parlare una voce con un accento o uno stile specifico, come britannico o pirata🏴‍☠️?",
@@ -132,6 +133,10 @@
             {
               "question": "Posso clonare la mia voce?",
               "answer": "Sì! Con solo pochi secondi di audio pulito, può creare una versione digitale della tua voce che suona naturale e realistica."
+            },
+            {
+              "question": "Come viene calcolato il prezzo della clonazione vocale?",
+              "answer": "La clonazione vocale viene addebitata in base alla quantità di parlato che generi, quindi i testi più lunghi consumano più crediti. Costa più della normale generazione vocale perché le voci clonate usano un modello più costoso per riprodurre con precisione una voce specifica."
             },
             {
               "question": "Quali lingue supporta la clonazione vocale?",
@@ -591,7 +596,8 @@
   "sidebar": {
     "profile": "Profilo",
     "signOut": "Esci",
-    "freeTools": "Strumenti Gratuiti"
+    "freeTools": "Strumenti Gratuiti",
+    "subscriptionDiscount": "Ottieni {discount}% di crediti extra con un abbonamento"
   },
   "header": {
     "generate": "Genera",

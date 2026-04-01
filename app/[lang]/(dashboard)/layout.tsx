@@ -8,6 +8,7 @@ import { getMessages } from 'next-intl/server';
 
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import {
   getCreditsQuery,
   getCreditTransactions,
@@ -34,10 +35,10 @@ export default async function DashboardLayout(props: {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: creditTransactions } = await getCreditTransactions(
-    supabase,
-    user.id,
-  );
+  const [{ data: creditTransactions }, isPaidUser] = await Promise.all([
+    getCreditTransactions(supabase, user.id),
+    hasUserPaid(user.id),
+  ]);
   await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
 
   return (
@@ -46,6 +47,7 @@ export default async function DashboardLayout(props: {
         <DashboardUI
           creditTransactions={creditTransactions ?? []}
           dict={messages}
+          isPaidUser={isPaidUser}
           lang={lang}
           promoDict={promoDict}
           userId={user.id}

@@ -1,5 +1,6 @@
 import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import * as Sentry from '@sentry/nextjs';
+import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Script from 'next/script';
 import { getMessages } from 'next-intl/server';
@@ -7,6 +8,7 @@ import type Stripe from 'stripe';
 
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import { getCustomerData } from '@/lib/redis/queries';
 import {
   createCustomerSession,
@@ -113,6 +115,18 @@ export default async function CreditsPage(props: {
           transactions={existingTransactions}
         />
       </div>
+
+      {shouldShowPricingTable && (
+        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
+          <Sparkles className="size-5 shrink-0 text-yellow-500" />
+          <span>
+            {dict.sidebar.subscriptionDiscount.replace(
+              '{discount}',
+              String(Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)),
+            )}
+          </span>
+        </div>
+      )}
 
       {shouldShowPricingTable && clientSecret && (
         <NextStripePricingTable clientSecret={clientSecret} />

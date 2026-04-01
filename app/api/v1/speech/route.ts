@@ -42,6 +42,9 @@ import {
 
 const ENDPOINT = '/api/v1/speech';
 
+// https://vercel.com/docs/functions/configuring-functions/duration
+export const maxDuration = 800; // seconds - fluid compute is enabled
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
   const requestId = getExternalApiRequestId();
@@ -254,7 +257,7 @@ export async function POST(request: Request) {
       });
       const config: GenerateContentConfig = {
         responseModalities: ['AUDIO'],
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -437,7 +440,7 @@ export async function POST(request: Request) {
           apiKeyId: authResult.apiKeyId,
           sourceType: 'api_tts',
           dollarAmount,
-          ...(seed !== undefined ? { seed } : {}),
+          ...(seed === undefined ? {} : { seed }),
         },
       }),
       getCreditsAdmin(userId),
@@ -462,7 +465,7 @@ export async function POST(request: Request) {
         model: modelUsed,
         textPreview: finalText.slice(0, 100),
         textLength: finalText.length,
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         isGeminiVoice,
         userHasPaid,
         predictionId: replicateResponse?.id ?? null,

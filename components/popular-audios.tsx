@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { attemptPlayback } from '@/lib/media-playback';
 
 interface AudioFile {
   created_at: string;
@@ -58,7 +59,7 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
     loadAudioFiles();
   }, [dict.error]);
 
-  const handlePlayPause = (audio: AudioFile) => {
+  const handlePlayPause = async (audio: AudioFile) => {
     if (currentlyPlaying === audio.id) {
       // Pause current audio
       audioElement?.pause();
@@ -70,7 +71,6 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
 
       // Play new audio
       const newAudio = new Audio(audio.url);
-      newAudio.play();
       setCurrentlyPlaying(audio.id);
       setAudioElement(newAudio);
 
@@ -79,6 +79,11 @@ export function PopularAudios({ dict }: PopularAudiosProps) {
         setCurrentlyPlaying(null);
         setAudioElement(null);
       };
+
+      await attemptPlayback(() => newAudio.play(), () => {
+        setCurrentlyPlaying(null);
+        setAudioElement(null);
+      });
     }
   };
 

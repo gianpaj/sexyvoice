@@ -56,6 +56,7 @@
   },
   "landing": {
     "latestPosts": "Neueste Beiträge",
+    "more": "Weitere Beiträge",
     "hero": {
       "title": "Starke Stimmen, frei",
       "subtitle": "Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene.\nPerfekt für Content-Ersteller und Geschichtenerzähler. 😉",
@@ -113,7 +114,7 @@
           "questions": [
             {
               "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
-              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇺🇸 Englisch (US),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Spanisch (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇺 Russisch (Russland),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇻🇳 Vietnamesisch (Vietnam),\n🇷🇴 Rumänisch (Rumänien),\n🇺🇦 Ukrainisch (Ukraine),\n🇧🇩 Bengali (Bangladesch),\n🇮🇳 Englisch/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\nund 🇮🇳 Telugu (Indien).\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK),\n🇮🇹 Pietro (Italienisch),\n🇺🇸 Emma (Englisch US),\n🇪🇸 Javi (Spanisch),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\nund 🇻🇳 Vietnamesisch (Vietnam).\n\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK),\n🇮🇹 Pietro (Italienisch),\n🇺🇸 Emma (Englisch US),\n🇪🇸 Javi (Spanisch),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
             },
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
@@ -132,6 +133,10 @@
             {
               "question": "Kann ich meine eigene Stimme klonen?",
               "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+            },
+            {
+              "question": "Wie wird das Klonen von Stimmen berechnet?",
+              "answer": "Das Klonen von Stimmen wird nach der Menge der erzeugten Sprache berechnet, daher verbrauchen längere Texte mehr Credits. Es kostet mehr als die normale Sprachgenerierung, weil geklonte Stimmen ein teureres Modell verwenden, um eine bestimmte Stimme präzise nachzubilden."
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
@@ -591,7 +596,8 @@
   "sidebar": {
     "profile": "Profil",
     "signOut": "Abmelden",
-    "freeTools": "Kostenlose Tools"
+    "freeTools": "Kostenlose Tools",
+    "subscriptionDiscount": "Erhalte {discount}% zusätzliche Credits mit einem Abonnement"
   },
   "header": {
     "generate": "Generieren",

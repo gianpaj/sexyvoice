@@ -302,7 +302,7 @@ export function ApiKeys({
       </Card>
       <Card>
         <CardContent className="mt-4 text-sm">
-          <h2 className="mb-1 font-semibold text-base text-gray-800 leading-8 dark:text-white">
+          <h2 className="mb-1 font-semibold text-base text-primary leading-8 dark:text-white">
             What can you do with SexyVoice API?
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -312,8 +312,10 @@ export function ApiKeys({
               icon={AudioLines}
               title="Generate"
             >
-              Convert text to natural speech with AI voices. Choose from
-              multiple languages and add emotional expression.
+              <span className="text-sm">
+                Convert text to natural speech with AI voices. Choose from
+                multiple languages and add emotional expression (on supported voices).
+              </span>
             </FeatureCard>
           </div>
           <p className="mt-4 flex items-center gap-1.5 text-muted-foreground">

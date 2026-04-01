@@ -4,6 +4,10 @@
 
 This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
 
+## Rules
+
+Whenever writing a test, run the test suite for that file or the entire suite.
+
 ## Project Overview
 
 SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system.
@@ -417,33 +421,18 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ## Environment and Deployment
 
-### Environment Setup
+See [`docs/devops.md`](docs/devops.md) for the canonical DevOps documentation, including:
 
-```bash
-pnpm install        # Install dependencies
-pnpm run dev        # Start development server
-pnpm run build      # Build for production
-pnpm run preview    # Preview production build
-```
+- environment setup
+- environment variables
+- deployment/runtime guidance
+- infrastructure and region notes
+- operational troubleshooting
+- LiveKit call infrastructure and required call token environment variables (`LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`)
 
-### Environment Variables
+Environment variable maintenance rule:
 
-Key environment variables include:
-
-- **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2 — dashboard audio); `R2_SPEECH_API_BUCKET_NAME`, `R2_SPEECH_API_PUBLIC_URL` (separate bucket + public domain for external API audio)
-- **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
-- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
-- **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
-- **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
-- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
-- **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
-- **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
-- **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
-- **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`); Axiom (`AXIOM_TOKEN`) for structured API request logs
-- **External API**: `API_KEY_HMAC_SECRET` (HMAC-SHA256 secret for hashing API keys — never expose, rotate carefully)
-- **Production**: Environment-specific configurations for Sentry and CSP
-- Follow `.env.example` for complete list and setup instructions
+- When adding, renaming, or removing any environment variable, update `AGENTS.md`, `README.md`, `.env.example`, and `docs/devops.md` in the same change so implementation and setup docs stay in sync.
 
 ## Promotion System
 
@@ -495,10 +484,12 @@ Based on TODO.md, current priorities include:
 2. **Follow the existing code patterns** and architectural decisions
 3. **Run `pnpm run fixall` before committing** to ensure code quality
 4. **Update documentation** when adding new features or changing APIs
-5. **Consider internationalization** for user-facing text — add keys to `messages/en.json` (and all other locale files), use `getMessages()` in server components and `useTranslations()` in client components; never hardcode English strings in UI
-6. **Implement proper error handling** and loading states
-7. **Follow security best practices** for voice-related features
-8. **Use TodoWrite tool** for multi-step tasks to track progress
+5. **Use the dedicated DevOps documentation** — update [`docs/devops.md`](docs/devops.md) when changes affect environment setup, deployment, infrastructure, secret management, or operational troubleshooting
+6. **Keep environment variable documentation synchronized** — if you add, remove, or rename an environment variable, update `AGENTS.md`, `README.md`, `.env.example`, and `docs/devops.md` in the same change
+7. **Consider internationalization** for user-facing text — add keys to `messages/en.json` (and all other locale files), use `getMessages()` in server components and `useTranslations()` in client components; never hardcode English strings in UI
+8. **Implement proper error handling** and loading states
+9. **Follow security best practices** for voice-related features
+10. **Use TodoWrite tool** for multi-step tasks to track progress
 
 ### Pull Request Requirements
 
