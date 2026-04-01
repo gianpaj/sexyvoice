@@ -358,8 +358,8 @@ importers:
         specifier: 9.1.7
         version: 9.1.7
       ioredis:
-        specifier: 5.10.0
-        version: 5.10.0
+        specifier: 5.10.1
+        version: 5.10.1
       jsdom:
         specifier: 28.1.0
         version: 28.1.0
@@ -5235,8 +5235,8 @@ packages:
   intl-messageformat@10.7.18:
     resolution: {integrity: sha512-m3Ofv/X/tV8Y3tHXLohcuVuhWKo7BBq62cqY15etqmLxg2DZ34AGGgQDeR+SCta2+zICb1NX83af0GJmbQ1++g==}
 
-  ioredis@5.10.0:
-    resolution: {integrity: sha512-HVBe9OFuqs+Z6n64q09PQvP1/R4Bm+30PAyyD4wIEqssh3v9L21QjCVk4kRLucMBcDokJTcLjsGeVRlq/nH6DA==}
+  ioredis@5.10.1:
+    resolution: {integrity: sha512-HuEDBTI70aYdx1v6U97SbNx9F1+svQKBDo30o0b9fw055LMepzpOOd0Ccg9Q6tbqmBSJaMuY0fB7yw9/vjBYCA==}
     engines: {node: '>=12.22.0'}
 
   is-alphabetical@2.0.1:
@@ -12836,7 +12836,7 @@ snapshots:
       '@formatjs/icu-messageformat-parser': 2.11.4
       tslib: 2.8.1
 
-  ioredis@5.10.0:
+  ioredis@5.10.1:
     dependencies:
       '@ioredis/commands': 1.5.1
       cluster-key-slot: 1.1.2
