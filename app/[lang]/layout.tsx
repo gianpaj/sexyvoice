@@ -103,13 +103,13 @@ export default async function LangLayout({
   params,
 }: Readonly<Props>) {
   const { lang } = await params;
-  const messages = await getMessages({ locale: lang });
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <html lang={lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
-          Skip to main content
+          {messages.pages.skipToMainContent}
         </a>
         {process.env.NODE_ENV === 'production' && (
           <>

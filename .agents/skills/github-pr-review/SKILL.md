@@ -5,7 +5,7 @@ description: "Use this skill when asked to address, fix, or resolve GitHub PR re
 
 # GitHub PR Review Comment Resolution
 
-A repeatable process for fetching unresolved PR review comments, evaluating their validity, applying fixes one at a time with proper commit messages, and marking threads as resolved on GitHub.
+A repeatable process for fetching unresolved PR review comments, evaluating their validity, applying fixes one at a time with proper commit messages, replying on GitHub with agent attribution, and then marking threads as resolved.
 
 ## Prerequisites
 
@@ -58,7 +58,7 @@ gh api graphql -f query='
 }'
 ```
 
-Map each `databaseId` (from REST) to its `id` (GraphQL `PRRT_*`) so you can resolve it later.
+Map each `databaseId` (from REST) to its `id` (GraphQL `PRRT_*`) so you can reply and resolve it later.
 
 ---
 
@@ -124,7 +124,41 @@ git push origin <branch-name>
 
 ---
 
-## Step 6 — Resolve Threads on GitHub
+## Step 6 — Reply on GitHub Before Resolving
+
+Before resolving an addressed thread, leave a reply on the inline review comment that:
+
+- states the thread was addressed
+- identifies the harness and model that wrote the fix
+- optionally includes the commit SHA or a one-line summary
+
+Use the current runtime's harness + model string exactly as it is known in context, for example:
+
+- `Codex App - GPT-5.4`
+- `Claude Code - Opus 4.6`
+
+### Reply format
+
+```text
+<Harness> - <Model>
+
+Addressed in <commit_sha>: <short summary>
+```
+
+### Reply command
+
+Use the REST `comment_id` / `databaseId` from Steps 1-2:
+
+```sh
+gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies \
+  -f body=$'<Harness> - <Model>\n\nAddressed in <commit_sha>: <short summary>'
+```
+
+For threads that were intentionally deferred, leave the thread open. Add a reply only when that context helps the reviewer understand why it stays open.
+
+---
+
+## Step 7 — Resolve Threads on GitHub
 
 Use the GraphQL `resolveReviewThread` mutation with the `PRRT_*` node ID from Step 2:
 
@@ -159,6 +193,9 @@ For each unresolved thread:
   │                  │
   │                  ▼
   │             git add + git commit (commitlint msg)
+  │                  │
+  │                  ▼
+  │             Reply to inline comment with harness/model attribution
   │                  │
   │                  ▼
   │             Resolve thread via GraphQL mutation
@@ -210,7 +247,11 @@ git add <file> && git commit -m "<type>(<scope>): <description>"
 # 5. Push
 git push origin <branch-name>
 
-# 6. Resolve thread (repeat per addressed comment)
+# 6. Reply before resolving (repeat per addressed comment)
+gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies \
+  -f body=$'<Harness> - <Model>\n\nAddressed in <commit_sha>: <short summary>'
+
+# 7. Resolve thread (repeat per addressed comment)
 gh api graphql -f query='
 mutation {
   resolveReviewThread(input: { threadId: "<PRRT_node_id>" }) {
@@ -225,6 +266,9 @@ mutation {
 
 - **One fix, one commit** — never batch multiple comment fixes into a single commit
 - **Commitlint format always** — `type(scope): description`, lowercase, no period at end
+- **Reply before resolve** — every addressed thread gets a GitHub reply before resolution
+- **Identify the writer** — the reply must include the harness + model string, such as `Codex App - GPT-5.4` or `Claude Code - Opus 4.6`
 - **Resolve only what you fixed** — do not resolve threads for skipped comments
 - **REST IDs ≠ GraphQL IDs** — the `id` from `gh api pulls/{pr}/comments` cannot be used with `resolveReviewThread`; always fetch the `PRRT_*` node ID via GraphQL first
+- **Use REST for replies, GraphQL for resolve** — reply with the review comment `databaseId`, resolve with the thread `PRRT_*` ID
 - **Verify resolution** — check `"isResolved": true` in the mutation response before moving on
