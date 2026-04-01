@@ -30,6 +30,27 @@ export function formatDate(
   });
 }
 
+export function countWords(text: string): number {
+  const trimmedText = text.trim();
+
+  if (!trimmedText) {
+    return 0;
+  }
+
+  return trimmedText.split(/\s+/).filter(Boolean).length;
+}
+
+export function calculateReadingTime(
+  wordCount: number,
+  wordsPerMinute = 200,
+): number {
+  if (wordCount <= 0) {
+    return 0;
+  }
+
+  return Math.ceil(wordCount / wordsPerMinute);
+}
+
 function getCreditMultiplier(voice: string, model?: string): number {
   let multiplier: number;
   switch (voice) {
@@ -81,10 +102,9 @@ export function estimateCredits(
   voice: string,
   model?: string,
 ): number {
-  // Remove extra whitespace and split into words
-  const words = text.trim().split(/\s+/).length;
+  const words = countWords(text);
 
-  if (!text.trim()) {
+  if (words === 0) {
     return 0;
   }
 

@@ -57,6 +57,12 @@
   "landing": {
     "latestPosts": "Ultimi post",
     "blogDescription": "Guide, tutorial e notizie sulla clonazione vocale con IA, sintesi testo-parlato e tecnologia vocale IA.",
+    "homeLabel": "Home",
+    "blogLabel": "Blog",
+    "skipToContent": "Vai al contenuto",
+    "noPostsAvailable": "Nessun articolo disponibile al momento.",
+    "minutesRead": "min di lettura",
+    "readMore": "Leggi di più",
     "more": "Altri post",
     "hero": {
       "title": "Voci espressive, senza censura",

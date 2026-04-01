@@ -57,6 +57,12 @@
   "landing": {
     "latestPosts": "Ultimos Posts",
     "blogDescription": "Guías, tutoriales y noticias sobre clonación de voz con IA, síntesis de texto a voz y tecnología de voz IA.",
+    "homeLabel": "Inicio",
+    "blogLabel": "Blog",
+    "skipToContent": "Saltar al contenido",
+    "noPostsAvailable": "Aún no hay publicaciones disponibles.",
+    "minutesRead": "min de lectura",
+    "readMore": "Leer más",
     "more": "Más publicaciones",
     "hero": {
       "title": "Voces Expresivas, Sin Censura",

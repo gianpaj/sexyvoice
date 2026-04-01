@@ -57,6 +57,12 @@
   "landing": {
     "latestPosts": "Seneste indlæg",
     "blogDescription": "Guides, vejledninger og nyheder om AI-stemmekloning, tekst-til-tale-syntese og AI-stemmeteknologi.",
+    "homeLabel": "Forside",
+    "blogLabel": "Blog",
+    "skipToContent": "Spring til indhold",
+    "noPostsAvailable": "Der er ingen indlæg endnu.",
+    "minutesRead": "min. læsetid",
+    "readMore": "Læs mere",
     "more": "Flere indlæg",
     "hero": {
       "title": "Udtryksfulde stemmer, ucensureret",

@@ -57,6 +57,12 @@
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "blogDescription": "Anleitungen, Tutorials und Neuigkeiten zu KI-Stimmklonen, Text-zu-Sprache-Synthese und Voice-KI-Technologie.",
+    "homeLabel": "Startseite",
+    "blogLabel": "Blog",
+    "skipToContent": "Zum Inhalt springen",
+    "noPostsAvailable": "Noch keine Beiträge verfügbar.",
+    "minutesRead": "Min. Lesezeit",
+    "readMore": "Weiterlesen",
     "more": "Weitere Beiträge",
     "hero": {
       "title": "Starke Stimmen, frei",

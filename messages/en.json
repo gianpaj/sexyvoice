@@ -57,6 +57,12 @@
   "landing": {
     "latestPosts": "Latest Posts",
     "blogDescription": "Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, and voice AI technology.",
+    "homeLabel": "Home",
+    "blogLabel": "Blog",
+    "skipToContent": "Skip to content",
+    "noPostsAvailable": "No posts available yet.",
+    "minutesRead": "min read",
+    "readMore": "Read more",
     "more": "More posts",
     "hero": {
       "title": "Expressive Voices, Uncensored",

@@ -15,7 +15,7 @@ import { PromoBanner } from '@/components/promo-banner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
-import { cn } from '@/lib/utils';
+import { calculateReadingTime, cn, countWords } from '@/lib/utils';
 
 export const dynamicParams = false;
 
@@ -31,7 +31,8 @@ export async function generateMetadata({
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
 
-  const titleStr = `${dictLanding.latestPosts} | SexyVoice.ai Blog`;
+  const blogName = `SexyVoice.ai ${dictLanding.blogLabel}`;
+  const titleStr = `${dictLanding.latestPosts} | ${blogName}`;
   const description = dictLanding.blogDescription;
   const pageUrl = `https://sexyvoice.ai/${lang}/blog`;
 
@@ -61,7 +62,7 @@ export async function generateMetadata({
       images: ['/sexyvoice.ai-og-image.jpg'],
     },
     alternates: {
-      canonical: `https://sexyvoice.ai/${i18n.defaultLocale}/blog`,
+      canonical: pageUrl,
       languages: {
         ...Object.fromEntries(
           i18n.locales.map((locale) => [locale, `/${locale}/blog`]),
@@ -114,6 +115,8 @@ export default async function BlogIndexPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
+  const blogName = `SexyVoice.ai ${dictLanding.blogLabel}`;
+  const pageTitle = `${dictLanding.latestPosts} | ${blogName}`;
 
   const promoDictKey =
     process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || DEFAULT_PROMO_KEY;
@@ -137,13 +140,13 @@ export default async function BlogIndexPage(props: {
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: 'SexyVoice.ai Blog',
+    name: pageTitle,
     url: `https://sexyvoice.ai/${lang}/blog`,
     numberOfItems: posts.length,
     itemListElement: posts.map((post, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: `https://sexyvoice.ai${post.url}`,
+      url: `https://sexyvoice.ai/${lang}${post.url}`,
       name: post.title,
     })),
   };
@@ -155,13 +158,13 @@ export default async function BlogIndexPage(props: {
       {
         '@type': 'ListItem',
         position: 1,
-        name: 'Home',
+        name: dictLanding.homeLabel,
         item: `https://sexyvoice.ai/${lang}`,
       },
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'Blog',
+        name: dictLanding.blogLabel,
         item: `https://sexyvoice.ai/${lang}/blog`,
       },
     ],
@@ -169,6 +172,12 @@ export default async function BlogIndexPage(props: {
 
   return (
     <>
+      <a
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
+        href="#main-content"
+      >
+        {dictLanding.skipToContent}
+      </a>
       {/* Structured Data for search engines and LLM understanding */}
       <Script id="blog-list-schema" type="application/ld+json">
         {JSON.stringify(itemListSchema)}
@@ -186,12 +195,6 @@ export default async function BlogIndexPage(props: {
           text={promoDict.text}
         />
       )}
-      <a
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
-        href="#main-content"
-      >
-        Skip to content
-      </a>
       <HeaderStatic />
       <main id="main-content">
         <div className="relative min-h-screen bg-linear-to-br from-background to-gray-800">
@@ -209,16 +212,14 @@ export default async function BlogIndexPage(props: {
 
               {posts.length === 0 ? (
                 <p className="text-center text-gray-400">
-                  No posts available yet.
+                  {dictLanding.noPostsAvailable}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {posts.map((post, index) => {
                     const isFeatured = index === 0;
-                    const readingTime = Math.max(
-                      1,
-                      Math.round(post.body.raw.split(/\s+/).length / 200),
-                    );
+                    const wordCount = countWords(post.body.raw);
+                    const readingTime = calculateReadingTime(wordCount);
                     const tag = post.keywords?.[0];
 
                     return (
@@ -288,7 +289,7 @@ export default async function BlogIndexPage(props: {
                               </span>
                               <span aria-hidden="true">·</span>
                               <span className="whitespace-nowrap">
-                                {readingTime}&nbsp;min read
+                                {readingTime}&nbsp;{dictLanding.minutesRead}
                               </span>
                             </p>
                             <CardTitle
@@ -310,7 +311,7 @@ export default async function BlogIndexPage(props: {
                               </p>
                             )}
                             <p className="mt-auto pt-2 text-sm text-white/60 transition-colors duration-200 group-hover:text-white/90">
-                              Read more →
+                              {dictLanding.readMore} →
                             </p>
                           </CardContent>
                         </Link>
