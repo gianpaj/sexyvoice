@@ -142,7 +142,7 @@
     "@vitest/coverage-v8": "4.1.0",
     "autoprefixer": "10.4.27",
     "husky": "9.1.7",
-    "ioredis": "5.10.0",
+    "ioredis": "5.10.1",
     "jsdom": "28.1.0",
     "knip": "5.88.0",
     "lint-staged": "16.4.0",
