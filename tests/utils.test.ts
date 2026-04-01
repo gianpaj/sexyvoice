@@ -80,6 +80,15 @@ describe('calculateReadingTime', () => {
   test('returns zero when no words are present', () => {
     expect(calculateReadingTime(0)).toBe(0);
   });
+
+  test('throws when words per minute is zero or negative', () => {
+    expect(() => calculateReadingTime(100, 0)).toThrow(
+      'wordsPerMinute must be greater than 0',
+    );
+    expect(() => calculateReadingTime(100, -1)).toThrow(
+      'wordsPerMinute must be greater than 0',
+    );
+  });
 });
 
 // Tests for cn function

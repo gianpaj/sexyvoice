@@ -59,7 +59,6 @@
     "blogDescription": "Guide, tutorial e notizie sulla clonazione vocale con IA, sintesi testo-parlato e tecnologia vocale IA.",
     "homeLabel": "Home",
     "blogLabel": "Blog",
-    "skipToContent": "Vai al contenuto",
     "noPostsAvailable": "Nessun articolo disponibile al momento.",
     "minutesRead": "min di lettura",
     "readMore": "Leggi di più",
@@ -573,6 +572,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Sintesi vocale IA gratuita & generatore di voci per adulti",
     "description": "Genera voci IA espressive con emozioni per contenuti per adulti in 24+ lingue. Sintesi vocale gratuita con clonazione vocale e supporto NSFW. Inizia con crediti gratuiti – nessuna carta richiesta.",
+    "skipToMainContent": "Vai al contenuto principale",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
     "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",

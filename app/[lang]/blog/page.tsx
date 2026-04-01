@@ -172,12 +172,6 @@ export default async function BlogIndexPage(props: {
 
   return (
     <>
-      <a
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black"
-        href="#main-content"
-      >
-        {dictLanding.skipToContent}
-      </a>
       {/* Structured Data for search engines and LLM understanding */}
       <Script id="blog-list-schema" type="application/ld+json">
         {JSON.stringify(itemListSchema)}

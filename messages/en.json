@@ -59,7 +59,6 @@
     "blogDescription": "Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, and voice AI technology.",
     "homeLabel": "Home",
     "blogLabel": "Blog",
-    "skipToContent": "Skip to content",
     "noPostsAvailable": "No posts available yet.",
     "minutesRead": "min read",
     "readMore": "Read more",
@@ -573,6 +572,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan",
     "description": "Generate expressive AI speech with emotions for adult content in 24+ languages. Free to try text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
+    "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",

@@ -37,7 +37,7 @@ export function countWords(text: string): number {
     return 0;
   }
 
-  return trimmedText.split(/\s+/).filter(Boolean).length;
+  return trimmedText.split(/\s+/).length;
 }
 
 export function calculateReadingTime(
@@ -46,6 +46,10 @@ export function calculateReadingTime(
 ): number {
   if (wordCount <= 0) {
     return 0;
+  }
+
+  if (!(wordsPerMinute > 0)) {
+    throw new RangeError('wordsPerMinute must be greater than 0');
   }
 
   return Math.ceil(wordCount / wordsPerMinute);
