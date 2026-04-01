@@ -41,7 +41,7 @@
     "@google/genai": "1.19.0",
     "@hookform/resolvers": "^5.2.1",
     "@huggingface/transformers": "^3.4.1",
-    "@iconify-json/logos": "1.2.10",
+    "@iconify-json/logos": "1.2.11",
     "@iconify/tailwind": "^1.2.0",
     "@iconify/tailwind4": "^1.2.3",
     "@livekit/components-react": "2.9.20",
