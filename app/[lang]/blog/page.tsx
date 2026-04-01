@@ -14,8 +14,8 @@ import { HeaderStatic } from '@/components/header-static';
 import { PromoBanner } from '@/components/promo-banner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
-import { cn } from '@/lib/utils';
 import { Link } from '@/lib/i18n/navigation';
+import { cn } from '@/lib/utils';
 
 export const dynamicParams = false;
 
@@ -196,7 +196,7 @@ export default async function BlogIndexPage(props: {
       <main id="main-content">
         <div className="relative min-h-screen bg-linear-to-br from-background to-gray-800">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute left-1/2 top-0 h-[400px] w-[700px] -translate-x-1/2 rounded-full bg-purple-700/20 blur-[120px]" />
+            <div className="absolute top-0 left-1/2 h-[400px] w-[700px] -translate-x-1/2 rounded-full bg-purple-700/20 blur-[120px]" />
           </div>
           <div className="container relative mx-auto px-4 py-12 md:py-16">
             <div className="mx-auto max-w-6xl">
@@ -262,7 +262,7 @@ export default async function BlogIndexPage(props: {
                           </CardHeader>
                           <CardContent className="flex grow flex-col gap-3 p-5">
                             {tag && (
-                              <span className="w-fit rounded-full bg-purple-700/30 px-2.5 py-0.5 text-purple-300 text-xs font-medium capitalize">
+                              <span className="w-fit rounded-full bg-purple-700/30 px-2.5 py-0.5 font-medium text-purple-300 text-xs capitalize">
                                 {tag}
                               </span>
                             )}

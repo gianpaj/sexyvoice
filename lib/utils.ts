@@ -92,7 +92,7 @@ export function estimateCredits(
 }
 
 // Credit calculation constants for gpro voices
-const CREDITS_PER_TOKEN = 1;
+const CREDITS_PER_TOKEN = 1.1;
 
 export function calculateCreditsFromTokens(
   tokenCount: number,
