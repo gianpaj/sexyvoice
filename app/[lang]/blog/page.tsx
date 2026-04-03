@@ -123,7 +123,7 @@ export default async function BlogIndexPage(props: {
     dismissedCookieKeys,
     lang,
     messages,
-    placement: 'landing',
+    placement: 'blog',
   });
 
   const posts = getLatestPostsByLang(lang);
