@@ -1,12 +1,13 @@
-# Claude Assistant Guidelines for SexyVoice.ai
+# Coding Assistant Guidelines
 
 - Search: Always run `ck --help` first and use `ck` for codebase search. Prefer `ck --regex` for exact text, `ck --sem`/`--hybrid` for conceptual matches, and `--jsonl` for tooling.
 
-This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
+This file contains repository-specific guidelines and instructions when working on the SexyVoice.ai project.
 
 ## Rules
 
-Whenever writing a test, run the test suite for that file or the entire suite.
+- Whenever writing a test, run the test suite for that file or the entire suite.
+- When I say step by step, I don't mean pausing. Only pause if you're stuck or going on loops
 
 ## Project Overview
 

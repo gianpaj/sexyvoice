@@ -42,6 +42,12 @@ export const handlers = [
       },
     });
   }),
+  // Mistral speech API mock
+  http.post('https://api.mistral.ai/v1/audio/speech', () =>
+    HttpResponse.json({
+      audio_data: Buffer.from(new Uint8Array(1024)).toString('base64'),
+    }),
+  ),
 ];
 
 // Setup MSW server
@@ -65,6 +71,7 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
+process.env.MISTRAL_API_KEY = 'test-mistral-api-key';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 // R2 environment variables
@@ -458,9 +465,30 @@ vi.mock('@fal-ai/client', () => ({
 
 export { mockFalSubscribe };
 
+// Mock Mistral client
+const mockMistralSpeechComplete = vi.fn().mockResolvedValue({
+  audioData: new Uint8Array(1024),
+});
+
+class MockMistral {
+  audio = {
+    speech: {
+      complete: mockMistralSpeechComplete,
+    },
+  };
+
+  constructor(_: { apiKey: string }) {}
+}
+
+vi.mock('@mistralai/mistralai', () => ({
+  Mistral: MockMistral,
+}));
+
+export { mockMistralSpeechComplete };
+
 // Mock music-metadata for audio duration detection
 const mockParseBuffer = vi.fn().mockResolvedValue({
-  format: { duration: 30 }, // Default to 30 seconds (valid duration)
+  format: { duration: 12 }, // Default to 12 seconds (valid for Voxtral)
 });
 
 vi.mock('music-metadata', async () => ({

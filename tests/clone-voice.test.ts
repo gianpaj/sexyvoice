@@ -102,7 +102,7 @@ describe('Clone Voice API Route', () => {
 
     const musicMetadata = await import('music-metadata');
     vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
-      format: { duration: 30 }, // Default valid duration
+      format: { duration: 12 }, // Default valid duration for Voxtral
     } as any);
   });
 
@@ -345,10 +345,10 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toBe(errorMessage);
     });
 
-    it('should return 400 when audio duration is too short', async () => {
+    it('should return 400 when Voxtral reference audio duration is too short', async () => {
       const musicMetadata = await import('music-metadata');
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
-        format: { duration: 3 }, // Less than 10 seconds
+        format: { duration: 2 }, // Less than 3 seconds
       } as any);
 
       const formData = createFormDataWithAudio(
@@ -366,15 +366,14 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe(
-        'Audio must be between 10 seconds and 5 minutes.',
-      );
+      expect(json.serverMessage).toBe('Reference audio duration invalid.');
+      expect(json.code).toBe('clone_audio_duration_invalid_voxtral');
     });
 
-    it('should return 400 when audio duration is too long', async () => {
+    it('should return 400 when Voxtral reference audio duration is too long', async () => {
       const musicMetadata = await import('music-metadata');
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
-        format: { duration: 400 }, // More than 5 minutes (300 seconds)
+        format: { duration: 26 }, // More than 25 seconds
       } as any);
 
       const formData = createFormDataWithAudio(
@@ -392,9 +391,8 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe(
-        'Audio must be between 10 seconds and 5 minutes.',
-      );
+      expect(json.serverMessage).toBe('Reference audio duration invalid.');
+      expect(json.code).toBe('clone_audio_duration_invalid_voxtral');
     });
 
     it('should return 400 when audio duration cannot be determined', async () => {
@@ -419,6 +417,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe('Could not determine audio duration.');
+      expect(json.code).toBe('clone_audio_duration_unknown');
     });
 
     it('should accept valid OGG audio when duration is available via format options', async () => {
@@ -644,11 +643,10 @@ describe('Clone Voice API Route', () => {
 
   describe('Caching', () => {
     it('should return cached result without consuming credits', async () => {
-      const cachedInputUrl =
-        'https://files.sexyvoice.ai/cached-input-audio.mp3';
+      const cachedOutputUrl = 'https://files.sexyvoice.ai/cached-output.wav';
 
-      // Mock Redis.get to return cached input URL for this test
-      mockRedisGet.mockResolvedValueOnce(cachedInputUrl);
+      // Mock Redis.get to return cached generated output URL for this test
+      mockRedisGet.mockResolvedValueOnce(cachedOutputUrl);
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -661,11 +659,14 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      // Should still generate output audio and consume credits
-      expect(json.url).toBeDefined();
-      expect(json.creditsUsed).toBeGreaterThan(0);
-      // But should not re-upload the input audio
-      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1); // Only output upload
+      expect(json).toEqual({
+        url: cachedOutputUrl,
+        creditsUsed: 0,
+        creditsRemaining: 1000,
+      });
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
     it('should generate new audio when cache miss occurs', async () => {
@@ -689,38 +690,14 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).toHaveBeenCalled();
       expect(queries.saveAudioFile).toHaveBeenCalled();
 
-      // Verify input URL was cached
+      // Generated output should still be cached
       expect(mockRedisSet).toHaveBeenCalledWith(
-        expect.stringContaining('clone-voice-input/'),
+        expect.stringMatching(/^cloned-audio-free\/[a-f0-9]+\.wav$/),
         expect.stringContaining('files.sexyvoice.ai'),
       );
     });
 
-    it('should reuse existing uploaded audio file if it exists', async () => {
-      // Mock cache hit - input audio is cached
-      const cachedInputUrl = 'https://files.sexyvoice.ai/cached-input.mp3';
-      mockRedisGet.mockResolvedValueOnce(cachedInputUrl);
-
-      const formData = createFormDataWithAudio('Hello world');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-
-      expect(response.status).toBe(200);
-      // Redis.get should be called for the input audio cache
-      expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringContaining('clone-voice-input/'),
-      );
-      // Should only upload output audio, not input
-      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1); // Only for output audio
-    });
-
-    it('should upload audio file if it does not exist in blob storage', async () => {
-      // Mock cache miss - input audio not cached
+    it('should check generated output cache using deterministic filename', async () => {
       mockRedisGet.mockResolvedValueOnce(null);
 
       const formData = createFormDataWithAudio('Hello world');
@@ -733,18 +710,34 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      // Should upload both input and output audio files
-      expect(mockUploadFileToR2).toHaveBeenCalledTimes(2);
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringMatching(/^cloned-audio-free\/[a-f0-9]+\.wav$/),
+      );
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
+    });
+
+    it('should upload only generated output audio when output cache misses', async () => {
+      // Mock cache miss for generated output
+      mockRedisGet.mockResolvedValueOnce(null);
+
+      const formData = createFormDataWithAudio('Hello world');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      // Reference audio is not uploaded; only generated output is uploaded
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
     });
 
     it('should return cached output without consuming credits or uploading output again', async () => {
-      const cachedInputUrl = 'https://files.sexyvoice.ai/cached-input.mp3';
       const cachedOutputUrl = 'https://files.sexyvoice.ai/cached-output.wav';
 
-      // First Redis lookup is for the input audio cache; second is for the output filename cache.
-      mockRedisGet
-        .mockResolvedValueOnce(cachedInputUrl)
-        .mockResolvedValueOnce(cachedOutputUrl);
+      mockRedisGet.mockResolvedValueOnce(cachedOutputUrl);
 
       const formData = createFormDataWithAudio('Hello world');
 
@@ -765,14 +758,10 @@ describe('Clone Voice API Route', () => {
 
       expect(mockRedisGet).toHaveBeenNthCalledWith(
         1,
-        expect.stringContaining('clone-voice-input/'),
-      );
-      expect(mockRedisGet).toHaveBeenNthCalledWith(
-        2,
-        expect.stringMatching(/^cloned-audio-free\/[a-f0-9]+\.wav$/),
+        expect.stringContaining('cloned-audio-free/'),
       );
 
-      // Should reuse both cached input and cached output, so no uploads occur.
+      // Cached generated output should be reused, so no uploads occur.
       expect(mockUploadFileToR2).not.toHaveBeenCalled();
       expect(queries.reduceCredits).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
@@ -782,7 +771,7 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Voice Cloning Generation', () => {
-    it('should successfully clone voice using fal.ai English model', async () => {
+    it('should successfully clone voice using Mistral Voxtral for English', async () => {
       const formData = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('audio1'),
@@ -803,7 +792,7 @@ describe('Clone Voice API Route', () => {
       expect(json.creditsRemaining).toBeDefined();
     });
 
-    it('should successfully clone voice using Replicate Multilingual model', async () => {
+    it('should successfully clone voice using Mistral Voxtral for supported multilingual locales', async () => {
       const formData = createFormDataWithAudio(
         'Bonjour',
         createMockAudioFile('audio1'),
@@ -823,24 +812,8 @@ describe('Clone Voice API Route', () => {
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
 
-      // Verify Replicate was called with correct parameters
-      expect(mockReplicateRun).toHaveBeenCalledWith(
-        'resemble-ai/chatterbox-multilingual:9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c',
-        {
-          input: {
-            text: 'Bonjour',
-            cfg_weight: 0.5,
-            temperature: 0.8,
-            exaggeration: 0.5,
-            language: 'fr',
-            seed: 0,
-            reference_audio: expect.stringMatching(
-              /^https:\/\/files\.sexyvoice\.ai\/clone-voice-input\/test-user-id-[a-f0-9]+-audio1\.wav$/,
-            ),
-          },
-        },
-        expect.any(Function),
-      );
+      // Supported Voxtral locales should not use the Replicate fallback path
+      expect(mockReplicateRun).not.toHaveBeenCalled();
     });
 
     it('should save audio file with correct metadata', async () => {
@@ -860,11 +833,11 @@ describe('Clone Voice API Route', () => {
         filename: expect.stringContaining('cloned-audio-free/'),
         text: 'Hello world',
         url: expect.stringContaining('files.sexyvoice.ai'),
-        model: 'fal-ai/chatterbox/text-to-speech',
+        model: 'voxtral-mini-tts-2603',
         predictionId: expect.any(String),
         isPublic: false,
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
-        duration: '30.000',
+        duration: '12.000',
         credits_used: expect.any(Number),
         usage: {
           locale: 'en',
@@ -874,36 +847,39 @@ describe('Clone Voice API Route', () => {
       });
 
       // Verify usage event was logged for voice cloning
-      expect(queries.insertUsageEvent).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        sourceType: 'voice_cloning',
-        sourceId: 'test-audio-file-id',
-        unit: 'operation',
-        quantity: 1,
-        creditsUsed: expect.any(Number),
-        metadata: {
-          model: 'fal-ai/chatterbox/text-to-speech',
-          locale: 'en',
-          textPreview: 'Hello world',
-          textLength: 11,
-          audioDuration: 30,
-          referenceAudioFileMimeType: 'audio/wav',
-          requestId: expect.any(String),
-          userHasPaid: false,
-        },
-      });
+      expect(queries.insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'test-user-id',
+          sourceType: 'voice_cloning',
+          sourceId: 'test-audio-file-id',
+          unit: 'operation',
+          quantity: 1,
+          creditsUsed: 132,
+          dollarAmount: -1,
+          metadata: expect.objectContaining({
+            model: 'voxtral-mini-tts-2603',
+            locale: 'en',
+            textPreview: 'Hello world',
+            textLength: 11,
+            audioDuration: 12,
+            referenceAudioFileMimeType: 'audio/wav',
+            requestId: expect.any(String),
+            userHasPaid: false,
+          }),
+        }),
+      );
     });
 
     it('should handle Replicate API errors gracefully', async () => {
-      // Mock Replicate to return an error for multilingual
+      // Mock Replicate to return an error for a fallback locale
       mockReplicateRun.mockResolvedValueOnce({
         error: 'API quota exceeded',
       });
 
       const formData = createFormDataWithAudio(
-        'Hola mundo',
+        'こんにちは',
         createMockAudioFile(),
-        'es',
+        'ja',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -944,8 +920,8 @@ describe('Clone Voice API Route', () => {
   describe('File Name Sanitization', () => {
     it('should sanitize filename with special characters', async () => {
       const fileWithSpecialChars = createMockAudioFile(
-        'tëst-äudio!@#$%.mp3',
-        'audio/mpeg',
+        'tëst-äudio!@#$%.wav',
+        'audio/wav',
       );
       const formData = createFormDataWithAudio(
         'Hello world',
@@ -960,19 +936,16 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      // Verify that sanitized filename is used.
-      // MP3 input is converted to WAV before uploading (server-side), so extension becomes .wav
+      // Only generated output is uploaded; reference audio is never uploaded.
       expect(mockUploadFileToR2).toHaveBeenCalledWith(
-        expect.stringMatching(
-          /^clone-voice-input\/test-user-id-[a-f0-9]+-test-audio_____.mp3$/,
-        ),
+        expect.stringContaining('cloned-audio-free/'),
         expect.any(Buffer),
-        expect.any(String),
+        'audio/wav',
       );
     });
 
     it('should handle filenames with unicode characters', async () => {
-      const unicodeFile = createMockAudioFile('音声ファイル.mp3', 'audio/mpeg');
+      const unicodeFile = createMockAudioFile('音声ファイル.wav', 'audio/wav');
       const formData = createFormDataWithAudio('Hello world', unicodeFile);
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -983,8 +956,12 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      // Verify sanitization occurred
-      expect(mockUploadFileToR2).toHaveBeenCalled();
+      // Unicode filenames should not affect generated output upload.
+      expect(mockUploadFileToR2).toHaveBeenCalledWith(
+        expect.stringContaining('cloned-audio-free/'),
+        expect.any(Buffer),
+        'audio/wav',
+      );
     });
   });
 
@@ -1011,17 +988,15 @@ describe('Clone Voice API Route', () => {
 
       // Both requests should upload to different output files (different hashes)
       const putCalls = mockUploadFileToR2.mock.calls;
-      // Find output file calls (cloned-audio-free path, not input path)
       const outputCalls = putCalls.filter((call) =>
         call[0].includes('cloned-audio-free/'),
       );
-      // Each uncached request uploads one input file and one generated output file.
-      expect(putCalls).toHaveLength(4);
+      expect(putCalls).toHaveLength(2);
       expect(outputCalls).toHaveLength(2);
       expect(outputCalls[0][0]).not.toBe(outputCalls[1][0]);
     });
 
-    it('should use input audio cache key based on audio hash and filename', async () => {
+    it('should use generated output cache key based on audio hash and text', async () => {
       const formData1 = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('audio-1.mp3'),
@@ -1044,17 +1019,13 @@ describe('Clone Voice API Route', () => {
       await POST(request1);
       await POST(request2);
 
-      // Verify different input audio cache keys were used for different filenames
       const calls = mockRedisGet.mock.calls
         .map((call) => call[0])
-        .filter((key) => key.startsWith('clone-voice-input/'));
+        .filter((key) => key.startsWith('cloned-audio-free/'));
 
-      expect(calls[0]).toMatch(
-        /^clone-voice-input\/test-user-id-[a-f0-9]+-audio-1\.wav$/,
-      );
-      expect(calls[1]).toMatch(
-        /^clone-voice-input\/test-user-id-[a-f0-9]+-audio-2\.wav$/,
-      );
+      expect(calls).toHaveLength(2);
+      expect(calls[0]).toMatch(/^cloned-audio-free\/[a-f0-9]+\.wav$/);
+      expect(calls[1]).toMatch(/^cloned-audio-free\/[a-f0-9]+\.wav$/);
       expect(calls[0]).not.toBe(calls[1]);
     });
   });
@@ -1110,15 +1081,15 @@ describe('Clone Voice API Route', () => {
     it('should log errors to Sentry', async () => {
       const { captureException } = await import('@sentry/nextjs');
 
-      // Mock an error scenario with multilingual
+      // Mock an error scenario on the Replicate fallback path
       mockReplicateRun.mockResolvedValueOnce({
         error: 'Test error',
       });
 
       const formData = createFormDataWithAudio(
-        'Hola mundo',
+        'こんにちは',
         createMockAudioFile(),
-        'es',
+        'ja',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
