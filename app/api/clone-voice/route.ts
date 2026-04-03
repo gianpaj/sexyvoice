@@ -694,21 +694,6 @@ async function runBackgroundTasks(
       userHasPaid,
     },
   });
-
-  // const posthog = PostHogClient();
-  // posthog.capture({
-  //   distinctId: userId,
-  //   event: 'clone-voice',
-  //   properties: {
-  //     predictionId: audioFileData.requestId,
-  //     model: audioFileData.modelUsed,
-  //     text: audioFileData.text,
-  //     locale: audioFileData.locale,
-  //     generatedAudioUrl: audioFileData.url,
-  //     credits_used: estimate,
-  //   },
-  // });
-  // await posthog.shutdown();
 }
 
 // ============================================================================
