@@ -14,6 +14,12 @@ Completed releases are documented here in reverse chronological order.
 
 ### Changed
 
+#### Cloning
+
+- Migrated voice cloning from fal.ai to Voxtral and expanded
+  multilingual cloning support.
+  [#329](https://github.com/gianpaj/sexyvoice/pull/329)
+
 #### Internal
 
 - Improved blog index SEO metadata and increased `gpro` voice
@@ -26,6 +32,7 @@ Completed releases are documented here in reverse chronological order.
 
 - Corrected OGG voice uploads so valid files keep their detected
   duration during voice cloning.
+  [#329](https://github.com/gianpaj/sexyvoice/pull/329)
 
 #### Internal
 
