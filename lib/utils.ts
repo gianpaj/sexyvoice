@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
+import type { CloneProvider } from '@/lib/clone/constants';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -284,3 +286,20 @@ export function isWavFormat(buffer: Buffer): boolean {
     buffer.toString('ascii', 8, 12) === 'WAVE'
   );
 }
+
+export const getDollarCost = (
+  provider: CloneProvider,
+  credits?: number,
+  text?: string,
+) => {
+  if (provider === 'mistral') {
+    // $0.016 per 1k characters
+    return text ? (text.length / 1000) * 0.016 : -1;
+  }
+  if (provider === 'replicate') {
+    // resemble-ai/chatterbox-multilingual - model costs approximately $0.0046 to run on Replicate
+    // 0.012 is the average of 11 last predictions - https://replicate.com/predictions
+    return credits ? 0.0121 : -1;
+  }
+  return -1;
+};

@@ -142,6 +142,7 @@ Use [`.env.example`](../.env.example) as the canonical template.
 - `KV_REST_API_READ_ONLY_TOKEN`
 
 Used for:
+
 - caching
 - rate limiting
 - fast lookups
@@ -156,21 +157,26 @@ Used for:
 - `R2_ENDPOINT`
 
 Used for:
+
 - dashboard audio storage
 - external API speech output storage
 
 ### AI provider credentials
 
-- `REPLICATE_API_TOKEN`
 - `FAL_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `MISTRAL_API_KEY`
+- `REPLICATE_API_TOKEN`
 - `XAI_API_KEY` if xAI TTS is enabled in the environment
 
 Notes:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
   for free-user Gemini flows where configured in code.
+- `MISTRAL_API_KEY` is required for voice cloning requests that use the
+  Voxtral/Mistral path in `app/api/clone-voice/route.ts`.
 
 ### LiveKit real-time calls
 
@@ -461,6 +467,7 @@ Check:
 ### Gemini / voice generation issues
 
 Check:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - provider quotas
