@@ -10,6 +10,7 @@ const publicRoutesWithLang = (locales: readonly string[]) =>
     `/${locale}/wrapped`,
     `/${locale}/privacy-policy`,
     `/${locale}/terms`,
+    `/${locale}/blog`,
   ]);
 
 const handleI18nRouting = createMiddleware({

@@ -42,6 +42,12 @@ export const handlers = [
       },
     });
   }),
+  // Mistral speech API mock
+  http.post('https://api.mistral.ai/v1/audio/speech', () =>
+    HttpResponse.json({
+      audio_data: Buffer.from(new Uint8Array(1024)).toString('base64'),
+    }),
+  ),
 ];
 
 // Setup MSW server
@@ -115,6 +121,7 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
+process.env.MISTRAL_API_KEY = 'test-mistral-api-key';
 process.env.XAI_API_KEY = 'test-xai-key';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
@@ -564,9 +571,40 @@ vi.mock('@fal-ai/client', () => ({
 
 export { mockFalSubscribe };
 
+// Mock Mistral client
+const mockMistralSpeechComplete = vi.fn().mockResolvedValue({
+  audioData: new Uint8Array([
+    // "RIFF" chunk descriptor
+    0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00,
+    // "WAVE" format
+    0x57, 0x41, 0x56, 0x45,
+    // "fmt " subchunk
+    0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+    0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
+    // "data" subchunk header
+    0x64, 0x61, 0x74, 0x61,
+  ]),
+});
+
+class MockMistral {
+  audio = {
+    speech: {
+      complete: mockMistralSpeechComplete,
+    },
+  };
+
+  constructor(_: { apiKey: string }) {}
+}
+
+vi.mock('@mistralai/mistralai', () => ({
+  Mistral: MockMistral,
+}));
+
+export { mockMistralSpeechComplete };
+
 // Mock music-metadata for audio duration detection
 const mockParseBuffer = vi.fn().mockResolvedValue({
-  format: { duration: 30 }, // Default to 30 seconds (valid duration)
+  format: { duration: 12 }, // Default to 12 seconds (valid for Voxtral)
 });
 
 vi.mock('music-metadata', async () => ({

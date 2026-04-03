@@ -286,10 +286,11 @@ export default async function LandingPage(props: {
                         <Image
                           alt={post.title}
                           className="mx-auto rounded-lg"
-                          height={100}
+                          height={200}
                           loading="lazy"
                           priority={false}
                           src={post.image}
+                          style={{ width: '100%', height: 'auto' }}
                           width={300}
                         />
                       )}
@@ -300,6 +301,9 @@ export default async function LandingPage(props: {
                   </Link>
                 </Card>
               ))}
+              <Link className="text-center hover:underline" href="/blog">
+                {dictLanding.more}
+              </Link>
             </div>
 
             {/* CTA Section */}

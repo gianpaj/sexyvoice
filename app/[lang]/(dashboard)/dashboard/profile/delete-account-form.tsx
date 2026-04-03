@@ -28,11 +28,9 @@ export function DeleteAccountForm() {
 
   return (
     <div className="space-y-6">
-      <Alert variant="destructive">
-        <div className="flex items-center gap-3">
-          <AlertCircle className="size-4" />
-          <AlertDescription>{t('alertTitle')}</AlertDescription>
-        </div>
+      <Alert className="flex items-center gap-3" variant="destructive">
+        <AlertCircle className="size-4" />
+        <AlertDescription>{t('alertTitle')}</AlertDescription>
       </Alert>
 
       <AlertDialog>
@@ -49,7 +47,7 @@ export function DeleteAccountForm() {
               </div>
               {t('confirmTitle')}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-[15px]">
+            <AlertDialogDescription className="whitespace-break-spaces text-left text-[15px]">
               {t('confirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>

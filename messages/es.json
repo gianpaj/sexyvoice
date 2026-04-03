@@ -56,6 +56,13 @@
   },
   "landing": {
     "latestPosts": "Ultimos Posts",
+    "blogDescription": "Guías, tutoriales y noticias sobre clonación de voz con IA, síntesis de texto a voz y tecnología de voz IA.",
+    "homeLabel": "Inicio",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "Aún no hay publicaciones disponibles.",
+    "minutesRead": "min de lectura",
+    "readMore": "Leer más",
+    "more": "Más publicaciones",
     "hero": {
       "title": "Voces Expresivas, Sin Censura",
       "subtitle": "Generador de IA texto a voz gratis para adultos.\nPerfecto para creadores de contenido y narradores. 😉",
@@ -132,6 +139,10 @@
             {
               "question": "¿Puedo clonar mi propia voz?",
               "answer": "¡Sí! Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
+            },
+            {
+              "question": "¿Cómo se cobra la clonación de voz?",
+              "answer": "La clonación de voz se cobra según la cantidad de audio que generes, por lo que los textos más largos consumen más créditos. Cuesta más que la generación de voz normal porque las voces clonadas usan un modelo más caro para reproducir una voz específica con precisión."
             },
             {
               "question": "¿Qué idiomas soporta la clonación de voz?",
@@ -553,7 +564,7 @@
       "deleteAccount": {
         "button": "Eliminar cuenta",
         "confirmTitle": "¿Estás absolutamente seguro?",
-        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Datos asociados",
+        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Uso de API\n• Personajes de llamada personalizados\n• Todos los datos asociados de nuestros servidores",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar"
@@ -602,6 +613,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis para adultos & texto a voz",
     "description": "Genera voces IA expresivas con emociones para contenido adulto en 24+ idiomas. Texto a voz gratis con clonación de voz y soporte NSFW. Empieza con créditos gratis – sin tarjeta requerida.",
+    "skipToMainContent": "Saltar al contenido principal",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",

@@ -56,6 +56,13 @@
   },
   "landing": {
     "latestPosts": "Seneste indlæg",
+    "blogDescription": "Guides, vejledninger og nyheder om AI-stemmekloning, tekst-til-tale-syntese og AI-stemmeteknologi.",
+    "homeLabel": "Forside",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "Der er ingen indlæg endnu.",
+    "minutesRead": "min. læsetid",
+    "readMore": "Læs mere",
+    "more": "Flere indlæg",
     "hero": {
       "title": "Udtryksfulde stemmer, ucensureret",
       "subtitle": "Gratis AI tekst-til-tale & stemmegenerator til voksne.\nPerfekt til indholdsskabere og historiefortællere. 😉",
@@ -132,6 +139,10 @@
             {
               "question": "Kan jeg klone min egen stemme?",
               "answer": "Ja! Med blot få sekunders ren lyd kan den bygge en digital version af din stemme, der lyder naturlig og realistisk."
+            },
+            {
+              "question": "Hvordan prissættes stemmekloning?",
+              "answer": "Stemmekloning prissættes ud fra mængden af tale, du genererer, så længere tekster bruger flere kreditter. Det koster mere end almindelig stemmegenerering, fordi klonede stemmer bruger en dyrere model til præcist at gengive en bestemt stemme."
             },
             {
               "question": "Hvilke sprog understøttes for stemmekloning?",
@@ -549,7 +560,7 @@
       "deleteAccount": {
         "button": "Slet konto",
         "confirmTitle": "Er du helt sikker?",
-        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• Alle tilknyttede data fra vores servere",
+        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• API-forbrug\n• Brugerdefinerede opkaldskarakterer\n• Alle tilknyttede data fra vores servere",
         "alertTitle": "Bekræft at du vil slette din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt"
@@ -598,6 +609,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator til voksne",
     "description": "Generer udtryksfulde AI-stemmer med følelser til voksenindhold på 24+ sprog. Gratis tekst-til-tale med stemmekloning og NSFW-support. Start med gratis credits – intet kort påkrævet.",
+    "skipToMainContent": "Spring til hovedindhold",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",

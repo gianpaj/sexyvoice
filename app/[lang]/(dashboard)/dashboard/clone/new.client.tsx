@@ -38,12 +38,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import { downloadUrl } from '@/lib/download';
-import type messages from '@/messages/en.json';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
+import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './clone-sample-card';
 import CloneSampleCard from './clone-sample-card';
@@ -108,6 +109,11 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   zh: 'chinese',
 };
 
+const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
+const DEFAULT_MAX_AUDIO_DURATION_SECONDS = 5 * 60;
+const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
+const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
+
 export default function NewVoiceClient({
   dict,
   lang,
@@ -162,9 +168,28 @@ function NewVoiceClientInner({
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
 
-  // Preload FFmpeg when non-English locale is selected
+  const usesVoxtral = useMemo(
+    () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
+    [selectedLocale.code],
+  );
+
+  const audioDurationGuidance = useMemo(
+    () =>
+      usesVoxtral
+        ? {
+            min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
+            max: VOXTRAL_MAX_AUDIO_DURATION_SECONDS,
+          }
+        : {
+            min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
+            max: DEFAULT_MAX_AUDIO_DURATION_SECONDS,
+          },
+    [usesVoxtral],
+  );
+
+  // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
-    if (selectedLocale.code !== 'en') {
+    if (usesVoxtral) {
       setFFmpegError(null);
       ensureLoaded().catch((error) => {
         const errorMsg =
@@ -175,13 +200,13 @@ function NewVoiceClientInner({
         console.error('FFmpeg preload error:', error);
       });
     }
-  }, [selectedLocale.code, ensureLoaded]);
+  }, [usesVoxtral, ensureLoaded]);
 
   const handleStartRecording = async () => {
     try {
       setFFmpegError(null);
       // Preload FFmpeg before recording if needed for this locale
-      if (selectedLocale.code !== 'en') {
+      if (usesVoxtral) {
         await ensureLoaded();
       }
       startRecording();
@@ -240,6 +265,29 @@ function NewVoiceClientInner({
     setStatus('idle');
     setErrorMessage('');
   };
+
+  const localeSpecificReferenceAudioGuidance = usesVoxtral
+    ? `Use a clean single-speaker reference clip between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds. Neutral delivery works best.`
+    : `Use a clear reference clip between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+
+  const getCloneErrorMessage = useCallback(
+    (code?: string, fallbackMessage?: string) => {
+      if (code === 'clone_audio_duration_unknown') {
+        return 'Could not determine audio duration.';
+      }
+
+      if (code === 'clone_audio_duration_invalid_voxtral') {
+        return `Reference audio must be between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds for voice cloning.`;
+      }
+
+      if (code === 'clone_audio_duration_invalid_fallback') {
+        return `Audio must be between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+      }
+
+      return fallbackMessage || dict.errorCloning || 'Failed to clone voice.';
+    },
+    [audioDurationGuidance.max, audioDurationGuidance.min, dict],
+  );
 
   const [
     { files, isDragging, errors },
@@ -370,8 +418,10 @@ function NewVoiceClientInner({
             'File size too large. Please use a smaller audio file.';
         } else {
           const voiceResult = await voiceRes.json();
-          errorMessage =
-            voiceResult.message || voiceResult.error || errorMessage;
+          errorMessage = getCloneErrorMessage(
+            voiceResult.code,
+            voiceResult.message || voiceResult.error || errorMessage,
+          );
         }
 
         setErrorMessage(errorMessage);
@@ -404,14 +454,15 @@ function NewVoiceClientInner({
       setStatus('error');
     }
   }, [
-    dict,
-    file,
-    micBlob,
-    text,
-    selectedLocale,
     clearErrors,
     convertWithFFmpeg,
+    dict,
+    file,
+    getCloneErrorMessage,
     legalConsentChecked,
+    micBlob,
+    selectedLocale,
+    text,
   ]);
 
   const handleCancel = () => {
@@ -550,6 +601,9 @@ function NewVoiceClientInner({
                           formatBytes(CLONING_FILE_MAX_SIZE),
                         )}
                       </p>
+                      <p className="mt-2 text-muted-foreground text-xs">
+                        {localeSpecificReferenceAudioGuidance}
+                      </p>
                     </div>
                   </button>
                 )}
@@ -559,7 +613,7 @@ function NewVoiceClientInner({
                     <p className="text-center text-xs">
                       {dict.orUseMicrophone}
                     </p>
-                    {ffmpegLoading && selectedLocale.code !== 'en' && (
+                    {ffmpegLoading && usesVoxtral && (
                       <div className="flex items-center justify-center gap-2 py-2">
                         <PulsatingDots />
                         <span className="text-muted-foreground text-xs">

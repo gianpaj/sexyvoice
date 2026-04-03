@@ -56,6 +56,13 @@
   },
   "landing": {
     "latestPosts": "Latest Posts",
+    "blogDescription": "Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, and voice AI technology.",
+    "homeLabel": "Home",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "No posts available yet.",
+    "minutesRead": "min read",
+    "readMore": "Read more",
+    "more": "More posts",
     "hero": {
       "title": "Expressive Voices, Uncensored",
       "subtitle": "Free AI Text-to-Speech & Voice Generator for Adults.\nPerfect for content creators and storytellers. 😉",
@@ -132,6 +139,10 @@
             {
               "question": "Can I clone my own voice?",
               "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
+            },
+            {
+              "question": "How is voice cloning priced?",
+              "answer": "Voice cloning is priced based on the amount of speech you generate, so longer scripts use more credits. It costs more than regular voice generation because cloned voices rely on a more expensive model to reproduce a specific voice accurately."
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
@@ -551,7 +562,7 @@
       "deleteAccount": {
         "button": "Delete account",
         "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• All associated data from our servers",
+        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
         "continue": "Continue"
@@ -600,6 +611,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan",
     "description": "Generate expressive AI speech with emotions for adult content in 24+ languages. Free to try text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
+    "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",

@@ -15,6 +15,7 @@ import {
   createArticleSchema,
   createBreadcrumbSchema,
 } from '@/lib/structured-data';
+import { calculateReadingTime, countWords } from '@/lib/utils';
 
 export const dynamicParams = false;
 
@@ -144,10 +145,9 @@ const PostLayout = async (props: {
     },
   ]);
 
-  const wordCount = post.body.raw
-    .split(/\s+/)
-    .filter((word) => word.length > 0).length;
-  const readingTime = Math.ceil(wordCount / 200); // Average reading speed
+  const wordCount = countWords(post.body.raw);
+  const readingTime = calculateReadingTime(wordCount);
+
   return (
     <>
       {/* Enhanced Structured Data for LLM Understanding */}

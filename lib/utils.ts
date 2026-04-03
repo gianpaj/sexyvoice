@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
+import type { CloneProvider } from '@/lib/clone/constants';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -47,6 +49,31 @@ export function getTtsProvider(model?: string): TtsProvider {
   }
 
   return 'replicate';
+}
+
+export function countWords(text: string): number {
+  const trimmedText = text.trim();
+
+  if (!trimmedText) {
+    return 0;
+  }
+
+  return trimmedText.split(/\s+/).length;
+}
+
+export function calculateReadingTime(
+  wordCount: number,
+  wordsPerMinute = 200,
+): number {
+  if (wordCount <= 0) {
+    return 0;
+  }
+
+  if (!(wordsPerMinute > 0)) {
+    throw new RangeError('wordsPerMinute must be greater than 0');
+  }
+
+  return Math.ceil(wordCount / wordsPerMinute);
 }
 
 function getCreditMultiplier(voice: string, model?: string): number {
@@ -108,7 +135,9 @@ export function estimateCredits(
   voice: string,
   model?: string,
 ): number {
-  if (!text.trim()) {
+  const words = countWords(text);
+
+  if (words === 0) {
     return 0;
   }
 
@@ -117,13 +146,13 @@ export function estimateCredits(
   }
 
   // Remove extra whitespace and split into words
-  const words = text.trim().split(/\s+/).length;
+  const wordsSplit = text.trim().split(/\s+/).length;
 
-  return calculateCredits(words, voice, model);
+  return calculateCredits(wordsSplit, voice, model);
 }
 
 // Credit calculation constants for gpro voices
-const CREDITS_PER_TOKEN = 1;
+const CREDITS_PER_TOKEN = 1.1;
 
 export function calculateCreditsFromTokens(
   tokenCount: number,
@@ -296,3 +325,20 @@ export function isWavFormat(buffer: Buffer): boolean {
     buffer.toString('ascii', 8, 12) === 'WAVE'
   );
 }
+
+export const getDollarCost = (
+  provider: CloneProvider,
+  credits?: number,
+  text?: string,
+) => {
+  if (provider === 'mistral') {
+    // $0.016 per 1k characters
+    return text ? (text.length / 1000) * 0.016 : -1;
+  }
+  if (provider === 'replicate') {
+    // resemble-ai/chatterbox-multilingual - model costs approximately $0.0046 to run on Replicate
+    // 0.012 is the average of 11 last predictions - https://replicate.com/predictions
+    return credits ? 0.0121 : -1;
+  }
+  return -1;
+};
