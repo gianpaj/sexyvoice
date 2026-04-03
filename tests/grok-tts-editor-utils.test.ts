@@ -177,6 +177,16 @@ describe('grok-tts-editor-utils', () => {
       expect(serializeGrokTtsDoc(parsed)).toBe(input);
     });
 
+    it('round-trips the singing wrapper tag', () => {
+      const input = '<singing>La la la</singing>';
+      const parsed = parseGrokTtsText(input).tokens;
+
+      expect(parsed).toEqual([
+        wrapper('<singing>', '</singing>', [text('La la la')]),
+      ]);
+      expect(serializeGrokTtsDoc(parsed)).toBe(input);
+    });
+
     it('preserves malformed content by keeping it as text', () => {
       const input = '<soft>Hello</fast> [unknown-tag]';
       const parsed = parseGrokTtsText(input).tokens;

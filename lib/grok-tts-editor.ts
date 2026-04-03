@@ -28,6 +28,7 @@ const WRAPPER_TAGS = [
   ['<decrease-intensity>', '</decrease-intensity>'],
   ['<laugh-speak>', '</laugh-speak>'],
   ['<sing-song>', '</sing-song>'],
+  ['<singing>', '</singing>'],
 ] as const;
 
 export type GrokInstantTag = (typeof INSTANT_TAGS)[number];
