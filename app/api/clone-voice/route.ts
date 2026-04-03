@@ -12,6 +12,10 @@ import {
   isConversionSupported,
   needsConversion,
 } from '@/lib/audio-converter';
+import {
+  type CloneProvider,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
@@ -43,17 +47,6 @@ const FALLBACK_MIN_DURATION = 10;
 const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
 const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
-const VOXTRAL_SUPPORTED_LOCALES = new Set([
-  'ar',
-  'de',
-  'en',
-  'es',
-  'fr',
-  'hi',
-  'it',
-  'nl',
-  'pt',
-]);
 
 // Replicate multilinguage supports the following languages
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
@@ -100,8 +93,6 @@ interface ReplicateError {
 }
 
 type ReplicateResponse = ReplicateOutput | ReplicateError;
-
-export type CloneProvider = 'mistral' | 'replicate';
 
 interface CloneProviderConstraints {
   maxDurationSeconds: number;
@@ -220,7 +211,7 @@ async function getAudioDuration(
 // ============================================================================
 
 function isVoxtralCloneLocale(locale: string): boolean {
-  return VOXTRAL_SUPPORTED_LOCALES.has(locale);
+  return VOXTRAL_SUPPORTED_LOCALE_CODES.has(locale);
 }
 
 function resolveCloneProvider(locale: string): CloneProvider {

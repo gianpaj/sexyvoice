@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -107,18 +108,6 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   tr: 'turkish',
   zh: 'chinese',
 };
-
-const VOXTRAL_SUPPORTED_LOCALE_CODES = new Set([
-  'ar',
-  'de',
-  'en',
-  'es',
-  'fr',
-  'hi',
-  'it',
-  'nl',
-  'pt',
-]);
 
 const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_MAX_AUDIO_DURATION_SECONDS = 5 * 60;

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
-import type { CloneProvider } from '@/app/api/clone-voice/route';
+import type { CloneProvider } from '@/lib/clone/constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
