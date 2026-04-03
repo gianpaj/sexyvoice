@@ -456,6 +456,38 @@ describe('Clone Voice API Route', () => {
       expect(response.status).not.toBe(400);
     });
 
+    it('should accept valid OGG audio when duration is available via format options', async () => {
+      const musicMetadata = await import('music-metadata');
+      vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
+        format: {
+          container: 'Ogg',
+          codec: 'Opus',
+          duration: 12,
+          sampleRate: 48_000,
+          numberOfChannels: 1,
+          hasAudio: true,
+          hasVideo: false,
+        },
+        native: { vorbis: [] },
+        quality: { warnings: [] },
+        common: {},
+      } as any);
+
+      const oggFile = new File(['test'], 'normal-opus-12s.ogg', {
+        type: 'audio/ogg',
+      });
+      const formData = createFormDataWithAudio('Hello world', oggFile, 'en');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).not.toBe(400);
+    });
+
     it('should return 400 when locale is missing', async () => {
       const formData = new FormData();
       formData.append('text', 'Hello world');
