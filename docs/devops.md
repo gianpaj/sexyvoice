@@ -174,6 +174,8 @@ Notes:
 - `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
   for free-user Gemini flows where configured in code.
+- `MISTRAL_API_KEY` is required for voice cloning requests that use the
+  Voxtral/Mistral path in `app/api/clone-voice/route.ts`.
 
 ### LiveKit real-time calls
 
