@@ -1,6 +1,7 @@
 import { fal } from '@fal-ai/client';
 import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
+import { parseBuffer } from 'music-metadata';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -124,8 +125,17 @@ async function getAudioDuration(
   mimeType: string,
 ): Promise<number | null> {
   try {
-    const mm = await import('music-metadata');
-    const metadata = await mm.parseBuffer(fileBuffer, mimeType);
+    const metadata = await parseBuffer(
+      fileBuffer,
+      {
+        mimeType,
+        size: fileBuffer.length,
+      },
+      {
+        duration: true,
+      },
+    );
+
     return metadata.format.duration ?? null;
   } catch (_e) {
     return null;
