@@ -91,6 +91,25 @@ function selectEditorText(editor: HTMLElement, text: string) {
   document.dispatchEvent(new Event('selectionchange'));
 }
 
+function placeCaretAtEnd(editor: HTMLElement) {
+  const paragraph = editor.querySelector('p');
+
+  if (!paragraph) {
+    throw new Error('Expected editor to contain a paragraph');
+  }
+
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(paragraph);
+  range.collapse(false);
+
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  fireEvent.focus(editor);
+  fireEvent.mouseUp(editor);
+  document.dispatchEvent(new Event('selectionchange'));
+}
+
 describe('GrokTTSEditor', () => {
   it('renders the editable content area and effects trigger', async () => {
     const onChange = vi.fn();
@@ -232,6 +251,66 @@ describe('GrokTTSEditor', () => {
 
     expect(screen.queryByText('Type your script')).not.toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello');
+  });
+
+  it('inserts an instant tag at the current caret position', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value="Hello"
+      />,
+    );
+
+    const editor = await screen.findByText(
+      (_, element) => element?.classList.contains('ProseMirror') ?? false,
+    );
+
+    placeCaretAtEnd(editor);
+
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
+    await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('Hello[pause]');
+    });
+  });
+
+  it('replaces the current selection when inserting an instant tag', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value="Hello world"
+      />,
+    );
+
+    const editor = await screen.findByText(
+      (_, element) => element?.classList.contains('ProseMirror') ?? false,
+    );
+
+    selectEditorText(editor, 'world');
+
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
+    await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('Hello [pause]');
+    });
   });
 
   it('wraps selected text with a wrapper tag', async () => {

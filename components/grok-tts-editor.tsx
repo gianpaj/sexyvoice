@@ -453,14 +453,25 @@ export function GrokTTSEditor({
         return;
       }
 
+      const selection = lastSelectionRef.current;
       const serialized = grokTipTapDocToText(editor.getJSON());
-      const nextLength = serialized.length + tag.tag.length;
+      const selectedTextLength = selection.empty
+        ? 0
+        : editor.state.doc.textBetween(selection.from, selection.to, '\n')
+            .length;
+      const nextLength =
+        serialized.length - selectedTextLength + tag.tag.length;
 
       if (nextLength > maxLength) {
         return;
       }
 
-      editor.chain().focus().insertContent(createInstantTagNode(tag.tag)).run();
+      editor
+        .chain()
+        .focus()
+        .setTextSelection({ from: selection.from, to: selection.to })
+        .insertContent(createInstantTagNode(tag.tag))
+        .run();
       setEffectsOpen(false);
     },
     [editor, maxLength],
@@ -493,16 +504,19 @@ export function GrokTTSEditor({
         tag.closeTag,
       );
 
+      editor
+        .chain()
+        .focus()
+        .setTextSelection({ from: selection.from, to: selection.to })
+        .run();
+
       if (selection.empty) {
         const insertFrom = selection.from;
-        const fragment = editor.schema.nodes.paragraph
-          ? editor.schema.text(GROK_EMPTY_WRAPPER_TEXT)
-          : editor.schema.text(GROK_EMPTY_WRAPPER_TEXT);
         const tr = editor.state.tr.replaceSelectionWith(
           editor.schema.nodeFromJSON(openBoundary),
         );
 
-        tr.insert(insertFrom + 1, fragment);
+        tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPER_TEXT));
         tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
 
         const cursorPos = insertFrom + 2;
@@ -514,16 +528,16 @@ export function GrokTTSEditor({
           selection.from,
           selection.to,
         );
-        const tr = editor.state.tr.replaceRangeWith(
-          selection.from,
-          selection.to,
+        const tr = editor.state.tr.replaceSelectionWith(
           editor.schema.nodeFromJSON(openBoundary),
         );
 
         tr.insert(selection.from + 1, selectedSlice.content);
-        tr.insert(selection.to + 1, editor.schema.nodeFromJSON(closeBoundary));
+        const closeBoundaryPos =
+          selection.from + 1 + selectedSlice.content.size;
+        tr.insert(closeBoundaryPos, editor.schema.nodeFromJSON(closeBoundary));
 
-        const cursorPos = selection.to + 1;
+        const cursorPos = closeBoundaryPos + 1;
         tr.setSelection(TextSelection.create(tr.doc, cursorPos));
         editor.view.dispatch(tr);
         editor.chain().focus().setTextSelection(cursorPos).run();
