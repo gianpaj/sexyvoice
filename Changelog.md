@@ -2,6 +2,38 @@
 
 Completed releases are documented here in reverse chronological order.
 
+## [2026.4.3] - 2026-04-03
+
+### Added
+
+#### Internal
+
+- Added a localized blog index with a promo banner and latest posts
+  grid. [#325](https://github.com/gianpaj/sexyvoice/pull/325)
+- Added the voice cloning pricing FAQ to all supported locale files.
+
+### Changed
+
+#### Internal
+
+- Improved blog index SEO metadata and increased `gpro` voice
+  generation pricing by 10%.
+  [#327](https://github.com/gianpaj/sexyvoice/pull/327)
+
+### Fixed
+
+#### Cloning
+
+- Corrected OGG voice uploads so valid files keep their detected
+  duration during voice cloning.
+
+#### Internal
+
+- Fixed the reset-password flow and refreshed the success state in the
+  reset-password form.
+- Account deletion now also removes custom call characters, linked
+  prompts, API keys, and usage events.
+
 ## [2026.3.13] - 2026-03-13
 
 ### Changed
