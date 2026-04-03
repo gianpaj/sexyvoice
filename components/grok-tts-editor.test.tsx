@@ -6,6 +6,44 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
 
+const baseDict = {
+  effects: {
+    breath: '[breath]',
+    chuckle: '[chuckle]',
+    cry: '[cry]',
+    exhale: '[exhale]',
+    giggle: '[giggle]',
+    humTune: '[hum-tune]',
+    inhale: '[inhale]',
+    laugh: '[laugh]',
+    lipSmack: '[lip-smack]',
+    longPause: '[long-pause]',
+    pause: '[pause]',
+    sigh: '[sigh]',
+    tongueClick: '[tongue-click]',
+    tsk: '[tsk]',
+  },
+  helperText:
+    'Insert expressive tags like [laugh] or wrap selected text with tags like <fast>...</fast>.',
+  inlineEffectPlaceholder: 'Insert inline effect',
+  wrappingEffectPlaceholder: 'Wrap with style tag',
+  wrappingTags: {
+    buildIntensity: '<build-intensity>...</build-intensity>',
+    decreaseIntensity: '<decrease-intensity>...</decrease-intensity>',
+    emphasis: '<emphasis>...</emphasis>',
+    fast: '<fast>...</fast>',
+    higherPitch: '<higher-pitch>...</higher-pitch>',
+    laughSpeak: '<laugh-speak>...</laugh-speak>',
+    loud: '<loud>...</loud>',
+    lowerPitch: '<lower-pitch>...</lower-pitch>',
+    singSong: '<sing-song>...</sing-song>',
+    singing: '<singing>...</singing>',
+    slow: '<slow>...</slow>',
+    soft: '<soft>...</soft>',
+    whisper: '<whisper>...</whisper>',
+  },
+} as const;
+
 function selectEditorText(editor: HTMLElement, text: string) {
   const paragraph = editor.querySelector('p');
 
@@ -59,6 +97,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -72,7 +111,7 @@ describe('GrokTTSEditor', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /effects/i }),
+      screen.getByRole('button', { name: /insert inline effect/i }),
     ).toBeInTheDocument();
     expect(screen.getByText('0 / 500')).toBeInTheDocument();
   });
@@ -82,6 +121,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -102,6 +142,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -124,6 +165,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -131,10 +173,12 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /effects/i }));
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
 
     expect(
-      await screen.findByRole('heading', { name: /instant tags/i }),
+      await screen.findByRole('heading', { name: /insert inline effect/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /\[laugh\]/i }),
@@ -148,6 +192,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -155,7 +200,9 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /effects/i }));
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
     expect(onChange).toHaveBeenCalledWith('[pause]');
@@ -167,6 +214,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -192,6 +240,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -205,7 +254,9 @@ describe('GrokTTSEditor', () => {
 
     selectEditorText(editor, 'Hello');
 
-    await user.click(screen.getByRole('button', { name: /effects/i }));
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
 
     await waitFor(() => {
@@ -215,7 +266,7 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('</soft>')).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: /wrapper tags/i }),
+        screen.queryByRole('heading', { name: /wrap with style tag/i }),
       ).not.toBeInTheDocument();
     });
   });
@@ -226,6 +277,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -233,7 +285,9 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /effects/i }));
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
 
     await waitFor(() => {
@@ -243,7 +297,7 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('</soft>')).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: /wrapper tags/i }),
+        screen.queryByRole('heading', { name: /wrap with style tag/i }),
       ).not.toBeInTheDocument();
     });
   });
@@ -254,6 +308,7 @@ describe('GrokTTSEditor', () => {
 
     render(
       <GrokTTSEditor
+        dict={baseDict}
         maxLength={500}
         onChange={onChange}
         placeholder="Type your script"
@@ -265,7 +320,9 @@ describe('GrokTTSEditor', () => {
       (_, element) => element?.classList.contains('ProseMirror') ?? false,
     );
 
-    await user.click(screen.getByRole('button', { name: /effects/i }));
+    await user.click(
+      screen.getByRole('button', { name: /insert inline effect/i }),
+    );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
     const paragraph = editor.querySelector('p');
 

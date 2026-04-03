@@ -199,7 +199,7 @@ describe('AudioGenerator', () => {
     // GrokTTSEditor is loaded dynamically, wait for it
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /effects/i }),
+        screen.getByRole('button', { name: /insert inline effect/i }),
       ).toBeInTheDocument();
     });
     // Should render the Tiptap contenteditable editor
@@ -220,7 +220,7 @@ describe('AudioGenerator', () => {
     });
 
     expect(
-      screen.queryByRole('button', { name: /effects/i }),
+      screen.queryByRole('button', { name: /insert inline effect/i }),
     ).not.toBeInTheDocument();
   });
 });

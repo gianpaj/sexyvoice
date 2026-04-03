@@ -324,6 +324,7 @@ export function AudioGenerator({
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
+              dict={dict.grok}
               maxLength={charactersLimit}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}

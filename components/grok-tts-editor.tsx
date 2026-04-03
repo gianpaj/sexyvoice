@@ -133,6 +133,12 @@ const WRAPPER_TAGS = [
     label: 'sing-song',
     description: 'Melodic delivery',
   },
+  {
+    tag: '<singing>',
+    closeTag: '</singing>',
+    label: 'singing',
+    description: 'Sung delivery',
+  },
 ] as const;
 
 type InstantTagDef = (typeof INSTANT_TAGS)[number];
@@ -146,6 +152,42 @@ function isKnownInstantTag(tag: string): tag is GrokInstantTag {
 }
 
 interface GrokTTSEditorProps {
+  dict: {
+    effects: {
+      breath: string;
+      chuckle: string;
+      cry: string;
+      exhale: string;
+      giggle: string;
+      humTune: string;
+      inhale: string;
+      laugh: string;
+      lipSmack: string;
+      longPause: string;
+      pause: string;
+      sigh: string;
+      tongueClick: string;
+      tsk: string;
+    };
+    helperText: string;
+    inlineEffectPlaceholder: string;
+    wrappingEffectPlaceholder: string;
+    wrappingTags: {
+      buildIntensity: string;
+      decreaseIntensity: string;
+      emphasis: string;
+      fast: string;
+      higherPitch: string;
+      laughSpeak: string;
+      loud: string;
+      lowerPitch: string;
+      singSong: string;
+      singing: string;
+      slow: string;
+      soft: string;
+      whisper: string;
+    };
+  };
   maxLength: number;
   onChange: (text: string) => void;
   placeholder?: string;
@@ -278,6 +320,7 @@ function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
 }
 
 export function GrokTTSEditor({
+  dict,
   maxLength,
   onChange,
   placeholder,
@@ -556,7 +599,7 @@ export function GrokTTSEditor({
                 variant="outline"
               >
                 <Sparkles className="mr-1.5 size-3.5" />
-                Effects
+                {dict.inlineEffectPlaceholder}
                 <ChevronDown className="ml-1 size-3" />
               </Button>
             </PopoverTrigger>
@@ -564,7 +607,9 @@ export function GrokTTSEditor({
             <PopoverContent align="start" className="w-80 bg-background p-0">
               <div className="max-h-[400px] overflow-y-auto">
                 <div className="border-border border-b p-3">
-                  <h4 className="mb-2 font-medium text-sm">Instant Tags</h4>
+                  <h4 className="mb-2 font-medium text-sm">
+                    {dict.inlineEffectPlaceholder}
+                  </h4>
                   <div className="grid grid-cols-2 gap-1">
                     {INSTANT_TAGS.map((tag) => (
                       <button
@@ -580,7 +625,24 @@ export function GrokTTSEditor({
                             : `[${tag.label}]`}
                         </div>
                         <div className="text-muted-foreground">
-                          {tag.description}
+                          {
+                            {
+                              '[pause]': dict.effects.pause,
+                              '[long-pause]': dict.effects.longPause,
+                              '[laugh]': dict.effects.laugh,
+                              '[chuckle]': dict.effects.chuckle,
+                              '[giggle]': dict.effects.giggle,
+                              '[cry]': dict.effects.cry,
+                              '[sigh]': dict.effects.sigh,
+                              '[breath]': dict.effects.breath,
+                              '[inhale]': dict.effects.inhale,
+                              '[exhale]': dict.effects.exhale,
+                              '[tsk]': dict.effects.tsk,
+                              '[tongue-click]': dict.effects.tongueClick,
+                              '[lip-smack]': dict.effects.lipSmack,
+                              '[hum-tune]': dict.effects.humTune,
+                            }[tag.tag]
+                          }
                         </div>
                       </button>
                     ))}
@@ -588,7 +650,9 @@ export function GrokTTSEditor({
                 </div>
 
                 <div className="p-3">
-                  <h4 className="mb-2 font-medium text-sm">Wrapper Tags</h4>
+                  <h4 className="mb-2 font-medium text-sm">
+                    {dict.wrappingEffectPlaceholder}
+                  </h4>
                   <div className="grid grid-cols-2 gap-1">
                     {WRAPPER_TAGS.map((tag) => (
                       <button
@@ -599,12 +663,46 @@ export function GrokTTSEditor({
                         type="button"
                       >
                         <div className="font-medium">
-                          {'<'}
-                          {tag.label}
-                          {'>'}
+                          {
+                            {
+                              '<soft>': dict.wrappingTags.soft,
+                              '<whisper>': dict.wrappingTags.whisper,
+                              '<loud>': dict.wrappingTags.loud,
+                              '<emphasis>': dict.wrappingTags.emphasis,
+                              '<slow>': dict.wrappingTags.slow,
+                              '<fast>': dict.wrappingTags.fast,
+                              '<higher-pitch>': dict.wrappingTags.higherPitch,
+                              '<lower-pitch>': dict.wrappingTags.lowerPitch,
+                              '<build-intensity>':
+                                dict.wrappingTags.buildIntensity,
+                              '<decrease-intensity>':
+                                dict.wrappingTags.decreaseIntensity,
+                              '<laugh-speak>': dict.wrappingTags.laughSpeak,
+                              '<sing-song>': dict.wrappingTags.singSong,
+                              '<singing>': dict.wrappingTags.singing,
+                            }[tag.tag]
+                          }
                         </div>
                         <div className="text-muted-foreground">
-                          {tag.description}
+                          {
+                            {
+                              '<soft>': dict.wrappingTags.soft,
+                              '<whisper>': dict.wrappingTags.whisper,
+                              '<loud>': dict.wrappingTags.loud,
+                              '<emphasis>': dict.wrappingTags.emphasis,
+                              '<slow>': dict.wrappingTags.slow,
+                              '<fast>': dict.wrappingTags.fast,
+                              '<higher-pitch>': dict.wrappingTags.higherPitch,
+                              '<lower-pitch>': dict.wrappingTags.lowerPitch,
+                              '<build-intensity>':
+                                dict.wrappingTags.buildIntensity,
+                              '<decrease-intensity>':
+                                dict.wrappingTags.decreaseIntensity,
+                              '<laugh-speak>': dict.wrappingTags.laughSpeak,
+                              '<sing-song>': dict.wrappingTags.singSong,
+                              '<singing>': dict.wrappingTags.singing,
+                            }[tag.tag]
+                          }
                         </div>
                       </button>
                     ))}
@@ -627,10 +725,7 @@ export function GrokTTSEditor({
         </div>
 
         <div className="mt-1 text-center text-muted-foreground text-xs">
-          Type <kbd className="rounded bg-muted px-1 py-0.5 font-mono">[</kbd>{' '}
-          for instant tags or{' '}
-          <kbd className="rounded bg-muted px-1 py-0.5 font-mono">{'<'}</kbd>{' '}
-          for wrapper tags
+          {dict.helperText}
         </div>
       </div>
     </div>
