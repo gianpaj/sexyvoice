@@ -4,6 +4,7 @@ import {
   HydrationBoundary,
   QueryClient,
 } from '@tanstack/react-query';
+import { cookies } from 'next/headers';
 import { getMessages } from 'next-intl/server';
 
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
@@ -31,8 +32,15 @@ export default async function DashboardLayout(props: {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const cookieStore = await cookies();
+  const dismissedCookieKeys = cookieStore
+    .getAll()
+    .filter((cookie) => cookie.value)
+    .map((cookie) => cookie.name);
+
   const activeBanner = resolveActiveBanner({
     audience: 'loggedIn',
+    dismissedCookieKeys,
     lang,
     messages,
     placement: 'dashboard',

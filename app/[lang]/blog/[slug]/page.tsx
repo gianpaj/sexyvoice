@@ -1,5 +1,6 @@
 import { allPosts } from 'contentlayer/generated';
 import { format, parseISO } from 'date-fns';
+import { cookies } from 'next/headers';
 import Image from 'next/image';
 import Script from 'next/script';
 import type { Metadata } from 'next/types';
@@ -116,8 +117,14 @@ const PostLayout = async (props: {
   const { lang } = params;
   const post = await getPostFromParams(params);
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const cookieStore = await cookies();
+  const dismissedCookieKeys = cookieStore
+    .getAll()
+    .filter((cookie) => cookie.value)
+    .map((cookie) => cookie.name);
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
+    dismissedCookieKeys,
     lang,
     messages,
     placement: 'blog',

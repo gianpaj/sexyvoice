@@ -2,6 +2,7 @@ import { allPosts } from 'contentlayer/generated';
 import type { Locale as DateFnsLocale } from 'date-fns';
 import { format, parseISO } from 'date-fns';
 import { da, de, es, fr, it } from 'date-fns/locale';
+import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
@@ -112,8 +113,14 @@ export default async function BlogIndexPage(props: {
   const dictLanding = messages.landing;
   const blogName = `SexyVoice.ai ${dictLanding.blogLabel}`;
   const pageTitle = `${dictLanding.latestPosts} | ${blogName}`;
+  const cookieStore = await cookies();
+  const dismissedCookieKeys = cookieStore
+    .getAll()
+    .filter((cookie) => cookie.value)
+    .map((cookie) => cookie.name);
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
+    dismissedCookieKeys,
     lang,
     messages,
     placement: 'landing',

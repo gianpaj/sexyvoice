@@ -1,6 +1,7 @@
 import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
@@ -53,8 +54,14 @@ export default async function LandingPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
+  const cookieStore = await cookies();
+  const dismissedCookieKeys = cookieStore
+    .getAll()
+    .filter((cookie) => cookie.value)
+    .map((cookie) => cookie.name);
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
+    dismissedCookieKeys,
     lang,
     messages,
     placement: 'landing',

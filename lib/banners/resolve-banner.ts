@@ -11,6 +11,7 @@ import type {
 
 interface ResolveActiveBannerOptions {
   audience: BannerAudience;
+  dismissedCookieKeys?: Iterable<string>;
   lang: Locale;
   messages: IntlMessages;
   placement: BannerPlacement;
@@ -115,6 +116,7 @@ function resolveBanner(
 export function resolveActiveBanner(
   options: ResolveActiveBannerOptions,
 ): ResolvedBanner | null {
+  const dismissedCookieKeys = new Set(options.dismissedCookieKeys ?? []);
   const activeBannerIds = [
     getActivePromoBannerId(),
     getActiveAnnouncementBannerId(),
@@ -126,6 +128,18 @@ export function resolveActiveBanner(
       (banner): banner is NonNullable<ReturnType<typeof getBannerDefinition>> =>
         Boolean(banner),
     )
+    .filter((banner) => {
+      const bannerCookieKeys = [
+        banner.dismiss.cookieKey,
+        ...('legacyCookieKeys' in banner.dismiss
+          ? banner.dismiss.legacyCookieKeys || []
+          : []),
+      ];
+
+      return bannerCookieKeys.every(
+        (cookieKey) => !dismissedCookieKeys.has(cookieKey),
+      );
+    })
     .map((banner) => ({
       banner: resolveBanner(banner, options),
       priority: banner.priority,
