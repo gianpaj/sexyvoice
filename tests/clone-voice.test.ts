@@ -366,7 +366,9 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe('Reference audio duration invalid.');
+      expect(json.serverMessage).toBe(
+        'Reference audio must be between 3 and 25 seconds for voice cloning.',
+      );
       expect(json.code).toBe('clone_audio_duration_invalid_voxtral');
     });
 
@@ -391,7 +393,9 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe('Reference audio duration invalid.');
+      expect(json.serverMessage).toBe(
+        'Reference audio must be between 3 and 25 seconds for voice cloning.',
+      );
       expect(json.code).toBe('clone_audio_duration_invalid_voxtral');
     });
 
@@ -692,7 +696,7 @@ describe('Clone Voice API Route', () => {
 
       // Generated output should still be cached
       expect(mockRedisSet).toHaveBeenCalledWith(
-        expect.stringMatching(/^cloned-audio-free\/[a-f0-9]+\.wav$/),
+        expect.stringMatching(/^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/),
         expect.stringContaining('files.sexyvoice.ai'),
       );
     });
@@ -711,7 +715,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringMatching(/^cloned-audio-free\/[a-f0-9]+\.wav$/),
+        expect.stringMatching(/^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/),
       );
       expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
     });
@@ -855,7 +859,7 @@ describe('Clone Voice API Route', () => {
           unit: 'operation',
           quantity: 1,
           creditsUsed: 132,
-          dollarAmount: -1,
+          dollarAmount: 0.000_176,
           metadata: expect.objectContaining({
             model: 'voxtral-mini-tts-2603',
             locale: 'en',
@@ -1024,8 +1028,12 @@ describe('Clone Voice API Route', () => {
         .filter((key) => key.startsWith('cloned-audio-free/'));
 
       expect(calls).toHaveLength(2);
-      expect(calls[0]).toMatch(/^cloned-audio-free\/[a-f0-9]+\.wav$/);
-      expect(calls[1]).toMatch(/^cloned-audio-free\/[a-f0-9]+\.wav$/);
+      expect(calls[0]).toMatch(
+        /^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/,
+      );
+      expect(calls[1]).toMatch(
+        /^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/,
+      );
       expect(calls[0]).not.toBe(calls[1]);
     });
   });

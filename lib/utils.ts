@@ -294,10 +294,12 @@ export const getDollarCost = (
 ) => {
   if (provider === 'mistral') {
     // $0.016 per 1k characters
-    return text ? text?.length * 0.016 : -1;
+    return text ? (text.length / 1000) * 0.016 : -1;
   }
   if (provider === 'replicate') {
-    return credits ? credits * 0.016 : -1;
+    // resemble-ai/chatterbox-multilingual - model costs approximately $0.0046 to run on Replicate
+    // 0.012 is the average of 11 last predictions - https://replicate.com/predictions
+    return credits ? 0.0121 : -1;
   }
   return -1;
 };

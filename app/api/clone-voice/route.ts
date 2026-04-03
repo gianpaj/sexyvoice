@@ -128,6 +128,22 @@ class RouteError extends Error {
   }
 }
 
+let mistralClient: Mistral | null = null;
+
+function getMistralClient(): Mistral {
+  const apiKey = process.env.MISTRAL_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('MISTRAL_API_KEY is not configured');
+  }
+
+  if (!mistralClient) {
+    mistralClient = new Mistral({ apiKey });
+  }
+
+  return mistralClient;
+}
+
 function createRouteError(
   serverMessage: string,
   status: number,
@@ -477,13 +493,7 @@ async function generateVoiceWithMistral(
   referenceAudioBuffer: Buffer,
 ): Promise<{ buffer: Buffer; modelUsed: string; requestId: string }> {
   const model = 'voxtral-mini-tts-2603';
-  const apiKey = process.env.MISTRAL_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('MISTRAL_API_KEY is not configured');
-  }
-
-  const client = new Mistral({ apiKey });
+  const client = getMistralClient();
 
   const response = await client.audio.speech.complete({
     model,
@@ -775,21 +785,20 @@ export async function POST(request: Request) {
     );
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
-    const random = Math.random();
-    const path = `${basePath}/${locale}-${provider}-${hash}-${random}`;
+    const path = `${basePath}/${locale}-${provider}-${hash}`;
     const filename = `${path}.wav`;
 
-    // const cachedOutputUrl = await redis.get<string>(filename);
-    // if (cachedOutputUrl) {
-    //   return NextResponse.json(
-    //     {
-    //       url: cachedOutputUrl,
-    //       creditsUsed: 0,
-    //       creditsRemaining: currentAmount || 0,
-    //     },
-    //     { status: 200 },
-    //   );
-    // }
+    const cachedOutputUrl = await redis.get<string>(filename);
+    if (cachedOutputUrl) {
+      return NextResponse.json(
+        {
+          url: cachedOutputUrl,
+          creditsUsed: 0,
+          creditsRemaining: currentAmount || 0,
+        },
+        { status: 200 },
+      );
+    }
 
     // Generate voice
     let outputUrl: string;
@@ -860,8 +869,6 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    console.error('errorerror');
-
     if (error instanceof RouteError) {
       return routeErrorResponse(error.serverMessage, error.status, error.code);
     }
