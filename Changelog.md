@@ -33,6 +33,8 @@ Completed releases are documented here in reverse chronological order.
 - Corrected OGG voice uploads so valid files keep their detected
   duration during voice cloning.
   [#329](https://github.com/gianpaj/sexyvoice/pull/329)
+- Restored hosted clone images from `images.sexyvoice.ai` so sample
+  artwork loads correctly again.
 
 #### Internal
 
