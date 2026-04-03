@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
 import { isFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
@@ -77,17 +77,10 @@ export function VoiceSelector({
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
   dict: (typeof messages)['generate'];
 }) {
-  const provider = useMemo(() => {
-    if (selectedVoice?.model === 'gpro') {
-      return 'gemini';
-    }
-
-    if (selectedVoice?.model === 'grok') {
-      return 'grok';
-    }
-
-    return 'replicate';
-  }, [selectedVoice?.model]);
+  const provider = useMemo(
+    () => getTtsProvider(selectedVoice?.model),
+    [selectedVoice?.model],
+  );
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const voiceSelectorLabels =
