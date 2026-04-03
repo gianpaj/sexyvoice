@@ -16,6 +16,7 @@ import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
@@ -684,6 +685,7 @@ async function runBackgroundTasks(
     creditsUsed: estimate,
     dollarAmount: getDollarCost(provider, estimate, audioFileData.text),
     metadata: {
+      provider,
       model: audioFileData.modelUsed,
       locale: audioFileData.locale,
       textPreview: audioFileData.text.slice(0, 100),
@@ -694,6 +696,24 @@ async function runBackgroundTasks(
       userHasPaid,
     },
   });
+  const posthog = PostHogClient();
+  posthog.capture({
+    distinctId: userId,
+    event: 'clone-voice',
+    properties: {
+      provider,
+      predictionId: audioFileData.requestId,
+      textPreview: audioFileData.text.slice(0, 100),
+      model: audioFileData.modelUsed,
+      audioDuration: audioFileData.duration,
+      text: audioFileData.text,
+      locale: audioFileData.locale,
+      generatedAudioUrl: audioFileData.url,
+      credits_used: estimate,
+      userHasPaid,
+    },
+  });
+  await posthog.shutdown();
 }
 
 // ============================================================================

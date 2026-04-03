@@ -171,6 +171,7 @@ Used for:
 - `XAI_API_KEY` if xAI TTS is enabled in the environment
 
 Notes:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
   for free-user Gemini flows where configured in code.
@@ -466,6 +467,7 @@ Check:
 ### Gemini / voice generation issues
 
 Check:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - provider quotas
