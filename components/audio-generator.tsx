@@ -25,7 +25,7 @@ import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
-import { cn } from '@/lib/utils';
+import { cn, getTtsProvider } from '@/lib/utils';
 import type messages from '@/messages/en.json';
 import {
   type AudioPlayerControls,
@@ -46,8 +46,6 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 
-type Provider = 'gemini' | 'grok' | 'replicate';
-
 interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
@@ -55,18 +53,6 @@ interface AudioGeneratorProps {
   selectedGrokCodec?: string;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
-}
-
-function getProvider(model?: string): Provider {
-  if (model === 'gpro') {
-    return 'gemini';
-  }
-
-  if (model === 'grok') {
-    return 'grok';
-  }
-
-  return 'replicate';
 }
 
 export function AudioGenerator({
@@ -95,7 +81,7 @@ export function AudioGenerator({
   const audio = useAudio();
 
   const provider = useMemo(
-    () => getProvider(selectedVoice?.model),
+    () => getTtsProvider(selectedVoice?.model),
     [selectedVoice?.model],
   );
   const isGeminiVoice = provider === 'gemini';
