@@ -2,35 +2,14 @@
 
 import { XIcon } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
-import { dismissBannerAction } from '@/app/[lang]/actions/promos';
+import { dismissBannerAction } from '@/app/[lang]/actions/banners';
 import { Button } from '@/components/ui/button';
 import { useIsMobileSizes } from '@/hooks/use-mobile';
+import type { ResolvedBanner } from '@/lib/banners/types';
 import { getCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
-
-interface PromoBannerProps {
-  ariaLabelDismiss: string;
-  countdown?: {
-    enabled: boolean;
-    endDate: string; // UTC ISO date string
-    labels: {
-      prefix: string;
-      days: string;
-      hours: string;
-      minutes: string;
-      seconds: string;
-    };
-  };
-  ctaLink: string;
-  ctaText: string;
-  inDashboard?: boolean;
-  isEnabled?: boolean;
-  text: string;
-}
-
-const PROMO_BANNER_COOKIE = `${process.env.NEXT_PUBLIC_PROMO_ID}-dismissed`;
 
 interface TimeRemaining {
   days: number;
@@ -63,44 +42,53 @@ function calculateTimeRemaining(endDate: string): TimeRemaining | null {
   };
 }
 
-export function PromoBanner({
+export function Banner({
+  banner,
   inDashboard,
-  text,
-  ctaLink,
-  ctaText,
-  ariaLabelDismiss,
-  isEnabled = false,
-  countdown,
-}: PromoBannerProps) {
+}: {
+  banner: ResolvedBanner;
+  inDashboard?: boolean;
+}) {
   const [isVisible, setIsVisible] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
+  const { innerWidth } = useIsMobileSizes();
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no need
   useEffect(() => {
-    if (!isEnabled) {
+    let isCancelled = false;
+
+    setIsVisible(false);
+
+    if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
+      setIsVisible(true);
       return;
     }
-    const checkCookie = async () => {
-      const promoBannerCookie = await getCookie(PROMO_BANNER_COOKIE);
 
-      if (!promoBannerCookie) {
+    const checkCookies = async () => {
+      const cookieValues = await Promise.all(
+        banner.dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
+      );
+
+      if (!isCancelled && cookieValues.every((cookieValue) => !cookieValue)) {
         setIsVisible(true);
       }
     };
 
-    checkCookie();
-  }, []);
+    checkCookies();
 
-  // Countdown timer effect
+    return () => {
+      isCancelled = true;
+    };
+  }, [banner.dismissCookieKeys, banner.dismissible]);
+
   useEffect(() => {
-    if (!(countdown?.enabled && countdown?.endDate)) {
+    if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
+      setTimeRemaining(null);
       return;
     }
 
-    // Initialize countdown
-    const initial = calculateTimeRemaining(countdown.endDate);
+    const initial = calculateTimeRemaining(banner.countdown.endDate);
     setTimeRemaining(initial);
 
     if (initial === null) {
@@ -112,9 +100,8 @@ export function PromoBanner({
       return;
     }
 
-    // Update countdown every second
     const interval = setInterval(() => {
-      const remaining = calculateTimeRemaining(countdown.endDate);
+      const remaining = calculateTimeRemaining(banner.countdown?.endDate || '');
 
       if (remaining === null) {
         setTimeRemaining(null);
@@ -124,7 +111,6 @@ export function PromoBanner({
 
       setTimeRemaining(remaining);
 
-      // Hide banner when countdown expires
       if (remaining.expired) {
         setIsVisible(false);
         clearInterval(interval);
@@ -132,27 +118,25 @@ export function PromoBanner({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [countdown?.enabled, countdown?.endDate]);
+  }, [banner.countdown?.enabled, banner.countdown?.endDate]);
 
   const handleDismissBanner = async () => {
-    await dismissBannerAction();
+    await dismissBannerAction(banner.id);
     setIsVisible(false);
   };
-  const { innerWidth } = useIsMobileSizes();
 
   if (!isVisible) {
     return null;
   }
 
-  const isLongText = text.length > 100;
-  const promoTheme = process.env.NEXT_PUBLIC_PROMO_THEME || 'pink'; // 'orange' or 'pink'
+  const isLongText = banner.text.length > 100;
 
   return (
     <div
       className={cn('w-full', {
         'fixed z-50 bg-promo-primary-dark/50 backdrop-blur-sm': inDashboard,
       })}
-      data-promo-theme={promoTheme}
+      data-promo-theme={banner.theme}
     >
       <div
         className={cn(
@@ -169,35 +153,37 @@ export function PromoBanner({
               },
             )}
           >
-            {text}
+            {banner.text}
           </p>
 
-          {countdown?.enabled && timeRemaining && !timeRemaining.expired && (
-            <div className="flex items-center gap-4">
-              <p className="font-semibold text-sm text-white">
-                {countdown.labels.prefix}
-              </p>
-              <div className="flex gap-0 font-mono text-xs sm:text-sm">
-                {[
-                  timeRemaining.days,
-                  timeRemaining.hours,
-                  timeRemaining.minutes,
-                  timeRemaining.seconds,
-                ].map((num, i) => (
-                  <React.Fragment key={i}>
-                    {i !== 0 && (
-                      <span className="font-bold text-lg sm:text-xl">:</span>
-                    )}
-                    <div className="flex flex-col items-center">
-                      <span className="font-bold text-lg sm:text-xl">
-                        {String(num).padStart(2, '0')}
-                      </span>
-                    </div>
-                  </React.Fragment>
-                ))}
+          {banner.countdown?.enabled &&
+            timeRemaining &&
+            !timeRemaining.expired && (
+              <div className="flex items-center gap-4">
+                <p className="font-semibold text-sm text-white">
+                  {banner.countdown.labels.prefix}
+                </p>
+                <div className="flex gap-0 font-mono text-xs sm:text-sm">
+                  {[
+                    timeRemaining.days,
+                    timeRemaining.hours,
+                    timeRemaining.minutes,
+                    timeRemaining.seconds,
+                  ].map((num, index) => (
+                    <Fragment key={`${banner.id}-${index}`}>
+                      {index !== 0 && (
+                        <span className="font-bold text-lg sm:text-xl">:</span>
+                      )}
+                      <div className="flex flex-col items-center">
+                        <span className="font-bold text-lg sm:text-xl">
+                          {String(num).padStart(2, '0')}
+                        </span>
+                      </div>
+                    </Fragment>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 md:absolute md:mt-0">
@@ -208,18 +194,20 @@ export function PromoBanner({
             size="sm"
             variant="outline"
           >
-            <Link href={ctaLink}>{ctaText}</Link>
+            <Link href={banner.ctaLink}>{banner.ctaText}</Link>
           </Button>
 
-          <Button
-            aria-label={ariaLabelDismiss}
-            className="absolute right-0 md:relative"
-            onClick={handleDismissBanner}
-            size="sm"
-            variant="ghost"
-          >
-            <XIcon size={18} strokeWidth={3} />
-          </Button>
+          {banner.dismissible && (
+            <Button
+              aria-label={banner.ariaLabelDismiss}
+              className="absolute right-0 md:relative"
+              onClick={handleDismissBanner}
+              size="sm"
+              variant="ghost"
+            >
+              <XIcon size={18} strokeWidth={3} />
+            </Button>
+          )}
         </div>
       </div>
     </div>

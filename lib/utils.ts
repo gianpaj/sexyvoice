@@ -32,6 +32,25 @@ export function formatDate(
   });
 }
 
+export type TtsProvider = 'gemini' | 'grok' | 'replicate';
+
+const DEFAULT_CREDIT_MULTIPLIER = 4;
+const GEMINI_CREDIT_MULTIPLIER = 1.1;
+const GROK_CHAR_BUCKET = 100;
+const GROK_CREDITS_PER_BUCKET = DEFAULT_CREDIT_MULTIPLIER;
+
+export function getTtsProvider(model?: string): TtsProvider {
+  if (model === 'gpro') {
+    return 'gemini';
+  }
+
+  if (model === 'grok') {
+    return 'grok';
+  }
+
+  return 'replicate';
+}
+
 export function countWords(text: string): number {
   const trimmedText = text.trim();
 
@@ -72,12 +91,12 @@ function getCreditMultiplier(voice: string, model?: string): number {
       multiplier = 11;
       break;
     default:
-      multiplier = 4;
+      multiplier = DEFAULT_CREDIT_MULTIPLIER;
       break;
   }
 
   if (model === 'gpro') {
-    multiplier = 1.1;
+    multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
   return multiplier;
@@ -103,6 +122,14 @@ function calculateCredits(
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
 
+export function estimateGrokCredits(text: string): number {
+  if (!text.trim()) {
+    return 0;
+  }
+
+  return Math.ceil(text.length / GROK_CHAR_BUCKET) * GROK_CREDITS_PER_BUCKET;
+}
+
 export function estimateCredits(
   text: string,
   voice: string,
@@ -114,7 +141,14 @@ export function estimateCredits(
     return 0;
   }
 
-  return calculateCredits(words, voice, model);
+  if (getTtsProvider(model) === 'grok') {
+    return estimateGrokCredits(text);
+  }
+
+  // Remove extra whitespace and split into words
+  const wordsSplit = text.trim().split(/\s+/).length;
+
+  return calculateCredits(wordsSplit, voice, model);
 }
 
 // Credit calculation constants for gpro voices
@@ -200,6 +234,7 @@ export const ERROR_CODES = {
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
+  XAI_TTS_ERROR: 'XAI_TTS_ERROR',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
 
@@ -214,6 +249,7 @@ export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
   REPLICATE_ERROR: 500,
+  XAI_TTS_ERROR: 500,
   THIRD_P_QUOTA_EXCEEDED: 503,
   INTERNAL_SERVER_ERROR: 500,
 };
@@ -263,6 +299,9 @@ export const getErrorMessage = (
       default: 'Voice generation failed, please retry',
     },
     REPLICATE_ERROR: {
+      default: 'Voice generation failed, please retry',
+    },
+    XAI_TTS_ERROR: {
       default: 'Voice generation failed, please retry',
     },
     INTERNAL_SERVER_ERROR: {

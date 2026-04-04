@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Sparkles,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
@@ -24,12 +25,18 @@ import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
-import { cn } from '@/lib/utils';
+import { cn, getTtsProvider } from '@/lib/utils';
 import type messages from '@/messages/en.json';
 import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
 } from './audio-player-with-context';
+
+const GrokTTSEditor = dynamic(
+  () => import('./grok-tts-editor').then((mod) => mod.GrokTTSEditor),
+  { ssr: false },
+);
+
 import PulsatingDots from './PulsatingDots';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -43,17 +50,18 @@ interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
-  locale: string;
+  selectedGrokCodec?: string;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
 }
 
 export function AudioGenerator({
-  selectedVoice,
-  selectedStyle,
+  dict,
   hasEnoughCredits,
   isPaidUser,
-  dict,
+  selectedGrokCodec,
+  selectedStyle,
+  selectedVoice,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -65,48 +73,86 @@ export function AudioGenerator({
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
   const [playerControls, setPlayerControls] =
     useState<AudioPlayerControls | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const abortController = useRef<AbortController | null>(null);
 
   const audio = useAudio();
-  const isGeminiVoice = selectedVoice?.model === 'gpro';
+
+  const provider = useMemo(
+    () => getTtsProvider(selectedVoice?.model),
+    [selectedVoice?.model],
+  );
+  const isGeminiVoice = provider === 'gemini';
+  const isGrokVoice = provider === 'grok';
+  const showEnhanceButton = provider === 'replicate';
+
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
     [selectedVoice, isPaidUser],
   );
 
+  const textareaRightPadding = useMemo(() => {
+    if (isGeminiVoice) {
+      return 'pr-16';
+    }
+
+    if (showEnhanceButton) {
+      return 'pr-30';
+    }
+
+    return 'pr-16';
+  }, [isGeminiVoice, showEnhanceButton]);
+
+  const textIsOverLimit = text.length > charactersLimit;
+
   useEffect(() => {
-    // Check if running on Mac for keyboard shortcut display
     const isMac =
       navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
       navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
     setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
   }, []);
 
-  const abortController = useRef<AbortController | null>(null);
+  const requestBody = useMemo(
+    () => ({
+      text,
+      voice: selectedVoice?.name,
+      styleVariant: isGeminiVoice ? selectedStyle : '',
+      outputCodec: isGrokVoice ? selectedGrokCodec : undefined,
+    }),
+    [
+      isGeminiVoice,
+      isGrokVoice,
+      selectedGrokCodec,
+      selectedStyle,
+      selectedVoice?.name,
+      text,
+    ],
+  );
 
-  const handleGenerate = async () => {
+  const handleCancel = useCallback(() => {
+    setIsGenerating(false);
+    abortController.current?.abort();
+  }, []);
+
+  const handleGenerate = useCallback(async () => {
     setIsGenerating(true);
     try {
       abortController.current = new AbortController();
-
-      const styleVariant = isGeminiVoice ? selectedStyle : '';
 
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text,
-          voice: selectedVoice?.name,
-          styleVariant,
-        }),
+        body: JSON.stringify(requestBody),
         signal: abortController.current.signal,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if we have an error code for translation
         if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
           const errorMessage = dict[
             data.errorCode as keyof typeof dict
@@ -117,28 +163,16 @@ export function AudioGenerator({
           );
         }
 
-        // Fallback to the default English error message from API
         throw new APIError(data.error || data.serverMessage, response);
       }
 
-      const { url } = data;
-
-      // FIXME: this doesn't work
-      // refetch credits after generating audio
-      // setTimeout(() => {
-      // await queryClient.refetchQueries({
-      //   queryKey: ['credits'],
-      // });
-      // console.log('Credits refetched');
-      // }, 1000);
-
-      setAudioURL(url);
-
+      setAudioURL(data.url);
       toast.success(dict.success);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         return;
       }
+
       if (error instanceof APIError) {
         toast.error(error.message || dict.error);
       } else {
@@ -147,55 +181,42 @@ export function AudioGenerator({
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [dict, requestBody]);
 
-  const handleCancel = () => {
-    setIsGenerating(false);
-    abortController.current?.abort();
-  };
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: it's grand
   useEffect(() => {
-    // Keyboard shortcut handler
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();
 
-        // Only trigger if form can be submitted
         if (!isGenerating && text.trim() && selectedVoice && hasEnoughCredits) {
-          handleGenerate();
+          handleGenerate().catch((error) => {
+            console.error('Keyboard shortcut generation failed:', error);
+          });
         }
       }
     };
 
-    // Add event listener to document
     document.addEventListener('keydown', handleKeyDown);
 
-    // Cleanup
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isGenerating, text, selectedVoice, hasEnoughCredits]);
+  }, [handleGenerate, hasEnoughCredits, isGenerating, selectedVoice, text]);
 
   const resetPlayer = () => {
-    // Reset wavesurfer player if available (waveform mode)
     if (playerControls) {
       playerControls.reset();
       return;
     }
 
-    // Fallback to audio provider reset (non-waveform mode)
     if (audio) {
       audio.reset();
     }
   };
 
   const downloadAudio = async () => {
-    // Check if there's an audio URL to download
     if (!audioURL) return;
 
-    // Prepare the anchor element once in a closure scope
     const anchorElement = document.createElement('a');
     document.body.appendChild(anchorElement);
     anchorElement.style.display = 'none';
@@ -217,6 +238,7 @@ export function AudioGenerator({
 
     setIsEnhancingText(true);
     setPreviousText(text);
+
     try {
       const enhancedText = await complete(text, {
         body: { selectedVoiceLanguage: selectedVoice.language },
@@ -238,27 +260,22 @@ export function AudioGenerator({
       setIsEnhancingText(false);
     }
   };
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const handleControlsReady = useCallback((controls: AudioPlayerControls) => {
     setPlayerControls(controls);
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: needed
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset estimate when voice or text changes
   useEffect(() => {
     setEstimatedCredits(null);
   }, [selectedVoice, text]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we need text
+  // biome-ignore lint/correctness/useExhaustiveDependencies: textarea should resize when text or fullscreen changes
   useEffect(() => {
-    // Auto-resize textarea when content changes
     if (textareaRef.current && !isFullscreen) {
       resizeTextarea(textareaRef.current, 6);
     }
   }, [text, isFullscreen]);
-
-  const textIsOverLimit = text.length > charactersLimit;
 
   const handleEstimateCredits = async () => {
     if (!(selectedVoice && isGeminiVoice && text.trim())) return;
@@ -283,9 +300,9 @@ export function AudioGenerator({
         throw new APIError(data.error || dict.error, response);
       }
 
-      const estimatedCredits = Number(data.estimatedCredits);
-      if (Number.isFinite(estimatedCredits)) {
-        setEstimatedCredits(estimatedCredits);
+      const nextEstimatedCredits = Number(data.estimatedCredits);
+      if (Number.isFinite(nextEstimatedCredits)) {
+        setEstimatedCredits(nextEstimatedCredits);
       }
     } catch (error) {
       if (error instanceof APIError) {
@@ -305,96 +322,110 @@ export function AudioGenerator({
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
         <div className="space-y-2">
-          <div className="relative">
-            <Textarea
-              className={cn(
-                'textarea-2 transition-[height] duration-200 ease-in-out',
-                [isGeminiVoice ? 'pr-16' : 'pr-30'],
-              )}
-              maxLength={charactersLimit + 10}
-              onChange={(e) => setText(e.target.value)}
+          {isGrokVoice ? (
+            <GrokTTSEditor
+              dict={dict.grok}
+              maxLength={charactersLimit}
+              onChange={setText}
               placeholder={dict.textAreaPlaceholder}
-              ref={textareaRef}
-              style={
-                {
-                  '--ta2-height': isFullscreen ? '30vh' : '8rem',
-                } as React.CSSProperties
-              }
               value={text}
             />
-            {!isGeminiVoice && (
-              <>
+          ) : (
+            <>
+              <div className="relative">
+                <Textarea
+                  className={cn(
+                    'textarea-2 transition-[height] duration-200 ease-in-out',
+                    textareaRightPadding,
+                  )}
+                  maxLength={charactersLimit + 10}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder={dict.textAreaPlaceholder}
+                  ref={textareaRef}
+                  style={
+                    {
+                      '--ta2-height': isFullscreen ? '30vh' : '8rem',
+                    } as React.CSSProperties
+                  }
+                  value={text}
+                />
+
+                {showEnhanceButton && (
+                  <>
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100} supportMobileTap>
+                        <TooltipTrigger asChild>
+                          <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This model supports emotion tags</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button
+                      className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
+                      disabled={!text.trim() || isEnhancingText || isGenerating}
+                      onClick={handleEnhanceText}
+                      size="icon"
+                      title="Enhance text with AI emotion tags"
+                      variant="ghost"
+                    >
+                      {isEnhancingText ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-yellow-300" />
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                <Button
+                  className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  size="icon"
+                  title="Fullscreen"
+                  variant="ghost"
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+
+              <div
+                className={cn(
+                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+                  textIsOverLimit ? 'font-bold text-red-500' : '',
+                )}
+              >
+                {text.length} / {charactersLimit}
                 <TooltipProvider>
                   <Tooltip delayDuration={100} supportMobileTap>
                     <TooltipTrigger asChild>
-                      <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
+                      <Crown
+                        className={cn(
+                          'h-3.5 w-3.5 cursor-default',
+                          isPaidUser
+                            ? 'text-muted-foreground/50'
+                            : 'text-yellow-400',
+                        )}
+                      />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>This model supports emotion tags</p>
+                      <p>
+                        {isPaidUser
+                          ? 'Paid users enjoy 2× character limit'
+                          : 'Upgrade to a paid plan for 2× character limit'}
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <Button
-                  className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-                  disabled={!text.trim() || isEnhancingText || isGenerating}
-                  onClick={handleEnhanceText}
-                  size="icon"
-                  title="Enhance text with AI emotion tags"
-                  variant="ghost"
-                >
-                  {isEnhancingText ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 text-yellow-300" />
-                  )}
-                </Button>
-              </>
-            )}
-            <Button
-              className={
-                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-              }
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              size="icon"
-              title="Fullscreen"
-              variant="ghost"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+              </div>
+            </>
+          )}
 
-          <div
-            className={cn(
-              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-              [textIsOverLimit ? 'font-bold text-red-500' : ''],
-            )}
-          >
-            {text.length} / {charactersLimit}
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Crown
-                    className={cn('h-3.5 w-3.5 cursor-default', [
-                      isPaidUser
-                        ? 'text-muted-foreground/50'
-                        : 'text-yellow-400',
-                    ])}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isPaidUser
-                      ? 'As a paid user, you enjoy 2× character limit'
-                      : 'Upgrade to a paid plan for 2× character limit'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
           {isGeminiVoice && (
             <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
               <Button

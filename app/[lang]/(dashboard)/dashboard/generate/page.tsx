@@ -1,5 +1,5 @@
-import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { getMessages } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';

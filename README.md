@@ -54,6 +54,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **International Support**: Full i18n implementation powered by `next-intl` for global accessibility (EN/ES/DE/DA/IT/FR)
+- **Localized Site Banners**: Shared banner system for promos and announcements across landing, blog, and dashboard with independent dismiss state and one visible banner at a time
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
 - **Public Tools**: Free utility tools including audio transcription and format conversion
@@ -120,10 +121,58 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    cp .env.example .env.local
    ```
 
-   Fill in the required values from [`.env.example`](.env.example), including the LiveKit call variables:
-   - `LIVEKIT_URL`
-   - `LIVEKIT_API_KEY`
-   - `LIVEKIT_API_SECRET`
+   Fill in the required environment variables as defined in [`.env.example`](.env.example):
+   - Supabase
+      - `NEXT_PUBLIC_SUPABASE_URL`
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+   - Your Redis (Upstash)
+      - `KV_REST_API_URL`
+      - `KV_REST_API_TOKEN`
+   - Cloudflare R2 storage
+      - `R2_ACCESS_KEY_ID`
+      - `R2_SECRET_ACCESS_KEY`
+      - `R2_BUCKET_NAME`
+      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
+      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+   - AI 3rd party services
+      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+      - `FAL_KEY` - Your fal.ai API key for voice cloning
+      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
+   - Real-time Calls (LiveKit)
+      - `LIVEKIT_URL`
+      - `LIVEKIT_API_KEY`
+      - `LIVEKIT_API_SECRET`
+   - Stripe
+      - `STRIPE_SECRET_KEY`
+      - `STRIPE_WEBHOOK_SECRET`
+      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
+      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
+      - `STRIPE_TOPUP_5_PRICE_ID`
+      - `STRIPE_TOPUP_10_PRICE_ID`
+      - `STRIPE_TOPUP_99_PRICE_ID`
+   - Banner and promotion configuration
+      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
+      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
+      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
+      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
+      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
+      - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+      - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
+   - Telegram cronjob
+      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Axiom logging (optional)
+      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+   - API key security
+      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
+   - Vercel Edge Config (optional)
+      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
+   - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
    For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
 
@@ -143,6 +192,18 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+
+### Banner System
+
+The app uses a shared banner system for both promotions and announcements:
+
+- `components/banner.tsx` renders the banner UI
+- `lib/banners/registry.ts` defines supported banners
+- `lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `app/[lang]/actions/banners.ts` handles dismissal cookies
+
+Banner copy is localized in `messages.promos.*` and `messages.announcements.*`.
+Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 ## 🧪 Development
 
