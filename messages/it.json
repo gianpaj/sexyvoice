@@ -388,7 +388,7 @@
     "grokImagineIncluded": "Istruzioni di Grok Imagine incluse",
     "addCustomCharacter": "Aggiungi personaggio personalizzato",
     "addCharacterLabel": "Aggiungi",
-    "upgradePremiumTooltip": "Aggiorna per creare personaggi personalizzati",
+    "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Aggiungi una descrizione...",
     "clickToAddDescription": "Clicca per aggiungere una descrizione...",
     "characterInstructions": "Istruzioni di __NAME__",
@@ -439,6 +439,7 @@
       "creatingButton": "Creazione...",
       "errorNameRequired": "Il nome è obbligatorio",
       "errorVoiceRequired": "Seleziona una voce",
+      "paidUserOnly": "Upgrade feature",
       "playVoiceSample": "Riproduci campione vocale",
       "stopVoiceSample": "Ferma campione vocale",
       "previewVoice": "Anteprima della voce di __VOICE__"
