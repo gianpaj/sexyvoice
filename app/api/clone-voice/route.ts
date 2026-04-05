@@ -829,7 +829,11 @@ export async function POST(request: Request) {
 
       const blobUrl = `clone-voice-input/${user.id}-${processedAudio.audioHash}-${processedFilename}`;
 
-      const referenceAudioUrl = `https://files.sexyvoice.ai/${blobUrl}`;
+      const referenceAudioUrl = await uploadFileToR2(
+        blobUrl,
+        processedAudio.buffer,
+        processedAudio.mimeType,
+      );
 
       const result = await generateVoiceWithReplicate(
         text,
