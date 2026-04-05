@@ -287,7 +287,7 @@ function validateFileType(file: File): string {
 
   if (!ALLOWED_TYPES.includes(normalizedFileType)) {
     throw createRouteError(
-      'Invalid file type. Only MP3, OGG, Opus, M4A, or WAV allowed.',
+      'Invalid file type. Only MP3, OGG, Opus, M4A, WAV, or WebM allowed.',
       400,
     );
   }
