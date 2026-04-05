@@ -454,7 +454,7 @@
     "errorCloning": "Kunne ikke klone stemme",
     "errorTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
     "errorTitle": "Fejl",
-    "fileFormatsText": "MP3, WAV, M4A eller OGG (maks. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG eller OPUS (WhatsApp) (maks. __SIZE__)",
     "generating": "Genererer",
     "languageLabel": "Sprog",
     "languageSelectPlaceholder": "Vælg et sprog",

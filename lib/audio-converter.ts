@@ -113,14 +113,16 @@ async function decodeMp3(audioData: Uint8Array): Promise<DecodedAudio> {
   const decoder = new MPEGDecoder();
   await decoder.ready;
 
-  const result = decoder.decode(audioData);
-  decoder.free();
-
-  return {
-    channelData: result.channelData,
-    sampleRate: result.sampleRate,
-    samplesDecoded: result.samplesDecoded,
-  };
+  try {
+    const result = decoder.decode(audioData);
+    return {
+      channelData: result.channelData,
+      sampleRate: result.sampleRate,
+      samplesDecoded: result.samplesDecoded,
+    };
+  } finally {
+    decoder.free();
+  }
 }
 
 /**
@@ -131,17 +133,14 @@ async function decodeOggOpus(audioData: Uint8Array): Promise<DecodedAudio> {
   await decoder.ready;
 
   try {
-    const result = decoder.decode(audioData);
-    decoder.free();
-
+    const result = await decoder.decodeFile(audioData);
     return {
       channelData: result.channelData,
       sampleRate: result.sampleRate,
       samplesDecoded: result.samplesDecoded,
     };
-  } catch (error) {
+  } finally {
     decoder.free();
-    throw error;
   }
 }
 
@@ -152,15 +151,16 @@ async function decodeOggVorbis(audioData: Uint8Array): Promise<DecodedAudio> {
   const decoder = new OggVorbisDecoder();
   await decoder.ready;
 
-  // OggVorbisDecoder.decode() returns a Promise
-  const result = await decoder.decode(audioData);
-  decoder.free();
-
-  return {
-    channelData: result.channelData,
-    sampleRate: result.sampleRate,
-    samplesDecoded: result.samplesDecoded,
-  };
+  try {
+    const result = await decoder.decodeFile(audioData);
+    return {
+      channelData: result.channelData,
+      sampleRate: result.sampleRate,
+      samplesDecoded: result.samplesDecoded,
+    };
+  } finally {
+    decoder.free();
+  }
 }
 
 /**

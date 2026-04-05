@@ -454,7 +454,7 @@
     "errorCloning": "Échec du clonage vocal",
     "errorTooLarge": "Fichier trop volumineux. Veuillez utiliser un fichier audio plus petit.",
     "errorTitle": "Erreur",
-    "fileFormatsText": "MP3, WAV, M4A ou OGG (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG ou OPUS (WhatsApp) (max. __SIZE__)",
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",
