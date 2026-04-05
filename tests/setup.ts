@@ -56,6 +56,23 @@ export const server = setupServer(...handlers);
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia !== 'function'
+  ) {
+    window.matchMedia = (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as MediaQueryList;
+  }
+
   if (typeof document !== 'undefined') {
     if (typeof document.elementFromPoint !== 'function') {
       document.elementFromPoint = () => document.body;

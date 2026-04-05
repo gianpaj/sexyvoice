@@ -9,6 +9,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -41,62 +42,53 @@ import { MobileToolbar } from './grok-tts/notion-like-editor-mobile-toolbar';
 import { NotionToolbarFloating } from './grok-tts/notion-like-editor-toolbar-floating';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
+import type { SuggestionItem } from './tiptap/tiptap-ui-utils/suggestion-menu';
+
+import './grok-tts-editor.css';
 
 const INSTANT_TAGS = [
-  { tag: '[pause]', label: 'pause', description: 'Brief pause' },
-  { tag: '[long-pause]', label: 'long-pause', description: 'Extended pause' },
-  { tag: '[laugh]', label: 'laugh', description: 'Laughter' },
-  { tag: '[chuckle]', label: 'chuckle', description: 'Soft laughter' },
-  { tag: '[giggle]', label: 'giggle', description: 'Light laughter' },
-  { tag: '[cry]', label: 'cry', description: 'Crying sound' },
-  { tag: '[sigh]', label: 'sigh', description: 'Sighing' },
   { tag: '[breath]', label: 'breath', description: 'Breath sound' },
-  { tag: '[inhale]', label: 'inhale', description: 'Inhalation' },
+  { tag: '[chuckle]', label: 'chuckle', description: 'Soft laughter' },
+  { tag: '[cry]', label: 'cry', description: 'Crying sound' },
   { tag: '[exhale]', label: 'exhale', description: 'Exhalation' },
-  { tag: '[tsk]', label: 'tsk', description: 'Disapproving tsk' },
-  {
-    tag: '[tongue-click]',
-    label: 'tongue-click',
-    description: 'Tongue click',
-  },
-  { tag: '[lip-smack]', label: 'lip-smack', description: 'Lip smacking' },
+  { tag: '[giggle]', label: 'giggle', description: 'Light laughter' },
   {
     tag: '[hum-tune]',
     label: 'hum-tune',
     description: 'Humming vocalization',
   },
+  { tag: '[inhale]', label: 'inhale', description: 'Inhalation' },
+  { tag: '[laugh]', label: 'laugh', description: 'Laughter' },
+  { tag: '[lip-smack]', label: 'lip-smack', description: 'Lip smacking' },
+  { tag: '[long-pause]', label: 'long-pause', description: 'Extended pause' },
+  { tag: '[pause]', label: 'pause', description: 'Brief pause' },
+  { tag: '[sigh]', label: 'sigh', description: 'Sighing' },
+  {
+    tag: '[tongue-click]',
+    label: 'tongue-click',
+    description: 'Tongue click',
+  },
+  { tag: '[tsk]', label: 'tsk', description: 'Disapproving tsk' },
 ] as const;
 
 const WRAPPER_TAGS = [
   {
-    tag: '<soft>',
-    closeTag: '</soft>',
-    label: 'soft',
-    description: 'Reduced volume',
+    tag: '<build-intensity>',
+    closeTag: '</build-intensity>',
+    label: 'build-intensity',
+    description: 'Crescendo effect',
   },
   {
-    tag: '<whisper>',
-    closeTag: '</whisper>',
-    label: 'whisper',
-    description: 'Whispered delivery',
-  },
-  {
-    tag: '<loud>',
-    closeTag: '</loud>',
-    label: 'loud',
-    description: 'Increased volume',
+    tag: '<decrease-intensity>',
+    closeTag: '</decrease-intensity>',
+    label: 'decrease-intensity',
+    description: 'Diminuendo',
   },
   {
     tag: '<emphasis>',
     closeTag: '</emphasis>',
     label: 'emphasis',
     description: 'Emphasized word/phrase',
-  },
-  {
-    tag: '<slow>',
-    closeTag: '</slow>',
-    label: 'slow',
-    description: 'Slower delivery',
   },
   {
     tag: '<fast>',
@@ -111,28 +103,22 @@ const WRAPPER_TAGS = [
     description: 'Raised pitch',
   },
   {
-    tag: '<lower-pitch>',
-    closeTag: '</lower-pitch>',
-    label: 'lower-pitch',
-    description: 'Lowered pitch',
-  },
-  {
-    tag: '<build-intensity>',
-    closeTag: '</build-intensity>',
-    label: 'build-intensity',
-    description: 'Crescendo effect',
-  },
-  {
-    tag: '<decrease-intensity>',
-    closeTag: '</decrease-intensity>',
-    label: 'decrease-intensity',
-    description: 'Diminuendo',
-  },
-  {
     tag: '<laugh-speak>',
     closeTag: '</laugh-speak>',
     label: 'laugh-speak',
     description: 'Speaking while laughing',
+  },
+  {
+    tag: '<loud>',
+    closeTag: '</loud>',
+    label: 'loud',
+    description: 'Increased volume',
+  },
+  {
+    tag: '<lower-pitch>',
+    closeTag: '</lower-pitch>',
+    label: 'lower-pitch',
+    description: 'Lowered pitch',
   },
   {
     tag: '<sing-song>',
@@ -145,6 +131,24 @@ const WRAPPER_TAGS = [
     closeTag: '</singing>',
     label: 'singing',
     description: 'Sung delivery',
+  },
+  {
+    tag: '<slow>',
+    closeTag: '</slow>',
+    label: 'slow',
+    description: 'Slower delivery',
+  },
+  {
+    tag: '<soft>',
+    closeTag: '</soft>',
+    label: 'soft',
+    description: 'Reduced volume',
+  },
+  {
+    tag: '<whisper>',
+    closeTag: '</whisper>',
+    label: 'whisper',
+    description: 'Whispered delivery',
   },
 ] as const;
 
@@ -326,10 +330,44 @@ function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
   console.debug('[grok-tts-debug]', entry);
 }
 
+interface GrokSlashMenuConfig {
+  customItems: SuggestionItem[];
+  pluginKey: string;
+  triggerChar: '[' | '<';
+}
+
+interface EditorContentAreaProps {
+  slashMenus: GrokSlashMenuConfig[];
+}
+
+function createInstantTagSuggestionItem(
+  tag: InstantTagDef,
+  onSelect: () => void,
+): SuggestionItem {
+  return {
+    title: tag.label,
+    subtext: tag.description,
+    keywords: [tag.label, tag.tag, tag.description],
+    onSelect,
+  };
+}
+
+function createWrapperTagSuggestionItem(
+  tag: WrapperTagDef,
+  onSelect: () => void,
+): SuggestionItem {
+  return {
+    title: tag.label,
+    subtext: tag.description,
+    keywords: [tag.label, tag.tag, tag.closeTag, tag.description],
+    onSelect,
+  };
+}
+
 /**
  * EditorContent component that renders the actual editor
  */
-export function EditorContentArea() {
+export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
   const { editor } = useContext(EditorContext)!;
   const { isDragging } = useUiEditorState(editor);
 
@@ -341,14 +379,25 @@ export function EditorContentArea() {
 
   return (
     <EditorContent
-      className="notion-like-editor-content mx-auto flex h-full w-full max-w-3xl flex-1 flex-col"
+      className="editor-content mx-auto flex h-full w-full max-w-3xl flex-1 flex-col"
       editor={editor}
       role="presentation"
       style={{
         cursor: isDragging ? 'grabbing' : 'auto',
       }}
     >
-      <SlashDropdownMenu />
+      {slashMenus.map((menu) => (
+        <SlashDropdownMenu
+          char={menu.triggerChar}
+          config={{
+            customItems: menu.customItems,
+            enabledItems: [],
+            showGroups: false,
+          }}
+          key={menu.pluginKey}
+          pluginKey={menu.pluginKey}
+        />
+      ))}
       <NotionToolbarFloating />
 
       {createPortal(<MobileToolbar />, document.body)}
@@ -620,6 +669,26 @@ export function GrokTTSEditor({
     [insertInstantTag, insertWrapperTag],
   );
 
+  const slashMenus = useMemo<GrokSlashMenuConfig[]>(
+    () => [
+      {
+        customItems: INSTANT_TAGS.map((tag) =>
+          createInstantTagSuggestionItem(tag, () => handleInsertTag(tag)),
+        ),
+        pluginKey: 'grokInstantTagMenu',
+        triggerChar: '[',
+      },
+      {
+        customItems: WRAPPER_TAGS.map((tag) =>
+          createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
+        ),
+        pluginKey: 'grokWrapperTagMenu',
+        triggerChar: '<',
+      },
+    ],
+    [handleInsertTag],
+  );
+
   if (!editor) {
     return (
       <div className="w-full">
@@ -631,16 +700,16 @@ export function GrokTTSEditor({
   return (
     <div className="w-full">
       <div className="space-y-2">
-        <div className="relative min-h-[8rem] rounded-md border border-input bg-background p-3 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <div className="editor-wrapper relative min-h-[8rem] rounded-md border border-input bg-background p-3 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
           <EditorContext.Provider value={{ editor }}>
-            <EditorContentArea />
+            <EditorContentArea slashMenus={slashMenus} />
           </EditorContext.Provider>
 
-          {currentLength === 0 && placeholder && (
+          {/*{currentLength === 0 && placeholder && (
             <div className="pointer-events-none absolute top-3 left-3 text-muted-foreground text-sm">
               {placeholder}
             </div>
-          )}
+          )}*/}
         </div>
 
         <div className="mt-2 flex items-center gap-2">

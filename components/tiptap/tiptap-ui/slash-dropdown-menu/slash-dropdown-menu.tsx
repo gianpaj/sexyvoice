@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef } from 'react';
 // --- Hooks ---
 import type { SlashMenuConfig } from '@/components/tiptap/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu';
 import { useSlashDropdownMenu } from '@/components/tiptap/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu';
-// --- UI Primitives ---
 import {
   Button,
   ButtonGroup,
@@ -25,6 +24,8 @@ import {
   filterSuggestionItems,
   SuggestionMenu,
 } from '@/components/tiptap/tiptap-ui-utils/suggestion-menu';
+// --- UI Primitives ---
+// import { Button, ButtonGroup } from '@/components/ui/button';
 // --- Lib ---
 import { cn, getElementOverflowPosition } from '@/lib/tiptap-utils';
 
@@ -33,28 +34,34 @@ type SlashDropdownMenuProps = Omit<
   'items' | 'children'
 > & {
   config?: SlashMenuConfig;
+  selector?: string;
+  triggerChar?: string;
+  pluginKey?: string;
 };
 
 export const SlashDropdownMenu = (props: SlashDropdownMenuProps) => {
-  const { config, ...restProps } = props;
+  const {
+    config,
+    pluginKey = 'slashDropdownMenu',
+    selector = 'tiptap-slash-dropdown-menu',
+    triggerChar = '/',
+    ...restProps
+  } = props;
   const { getSlashMenuItems } = useSlashDropdownMenu(config);
 
   return (
     <SuggestionMenu
-      char="/"
-      decorationClass="inline-block bg-gray-100 dark:bg-gray-800 rounded-sm outline-[5.5px] outline-gray-100 dark:outline-gray-800 [&.is-empty]:after:content-[attr(data-decoration-content)] [&.is-empty]:after:text-gray-400 dark:[&.is-empty]:after:text-gray-500"
+      char={triggerChar}
+      decorationClass="inline-block bg-gray-800 rounded-sm outline-[5.5px] outline-gray-800 [&.is-empty]:after:content-[attr(data-decoration-content)] [&.is-empty]:after:text-gray-500"
       decorationContent="Filter..."
-      items={({ query, editor }) => {
-        const items = filterSuggestionItems(getSlashMenuItems(editor), query);
-        console.log({ items });
-
-        return items;
-      }}
-      pluginKey="slashDropdownMenu"
-      selector="tiptap-slash-dropdown-menu"
+      items={({ query, editor }) =>
+        filterSuggestionItems(getSlashMenuItems(editor), query)
+      }
+      pluginKey={pluginKey}
+      selector={selector}
       {...restProps}
     >
-      {(props) => <List {...props} config={config} />}
+      {(props) => <List {...props} config={config} selector={selector} />}
     </SuggestionMenu>
   );
 };
@@ -63,13 +70,14 @@ const Item = (props: {
   item: SuggestionItem;
   isSelected: boolean;
   onSelect: () => void;
+  selector?: string;
 }) => {
   const { item, isSelected, onSelect } = props;
   const itemRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const selector = document.querySelector(
-      '[data-selector="tiptap-slash-dropdown-menu"]',
+      `[data-selector="${props.selector ?? 'tiptap-slash-dropdown-menu'}"]`,
     ) as HTMLElement;
     if (!(itemRef.current && isSelected && selector)) return;
 
@@ -80,7 +88,7 @@ const Item = (props: {
     } else if (overflow === 'bottom') {
       itemRef.current.scrollIntoView(false);
     }
-  }, [isSelected]);
+  }, [isSelected, props.selector]);
 
   const BadgeIcon = item.badge;
 
@@ -88,7 +96,7 @@ const Item = (props: {
     <Button
       className={cn(
         'w-full justify-start text-left',
-        isSelected && 'bg-gray-100 dark:bg-gray-800',
+        isSelected && 'bg-gray-800',
       )}
       onClick={onSelect}
       ref={itemRef}
@@ -105,7 +113,11 @@ const List = ({
   selectedIndex,
   onSelect,
   config,
-}: SuggestionMenuRenderProps & { config?: SlashMenuConfig }) => {
+  selector,
+}: SuggestionMenuRenderProps & {
+  config?: SlashMenuConfig;
+  selector?: string;
+}) => {
   const renderedItems = useMemo(() => {
     const rendered: React.ReactElement[] = [];
     const showGroups = config?.showGroups !== false;
@@ -118,6 +130,7 @@ const List = ({
             item={item}
             key={`item-${index}-${item.title}`}
             onSelect={() => onSelect(item)}
+            selector={selector}
           />,
         );
       });
@@ -156,6 +169,7 @@ const List = ({
             item={item}
             key={`item-${originalIndex}-${item.title}`}
             onSelect={() => onSelect(item)}
+            selector={selector}
           />
         );
       });
@@ -178,7 +192,7 @@ const List = ({
     });
 
     return rendered;
-  }, [items, selectedIndex, onSelect, config?.showGroups]);
+  }, [items, selectedIndex, onSelect, config?.showGroups, selector]);
 
   if (!renderedItems.length) {
     return null;

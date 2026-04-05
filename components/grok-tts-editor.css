@@ -1,0 +1,44 @@
+.editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: var(--tt-bg-color);
+}
+
+@media screen and (max-width: 480px) {
+  .editor-wrapper {
+    width: 100vw;
+    height: 100%;
+    overflow: auto;
+  }
+}
+
+.editor-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  grid-column: content-start / content-end;
+  width: 100%;
+  height: 100%;
+  background-color: var(--tt-bg-color);
+}
+
+@media screen and (max-width: 768px) {
+  .editor-content {
+    max-width: 768px;
+    margin: 0 auto;
+  }
+}
+
+.editor-content .tiptap.ProseMirror.editor {
+  flex: 1;
+  padding: 3rem 3rem 30vh;
+}
+
+@media screen and (max-width: 480px) {
+  .editor-content .tiptap.ProseMirror.editor {
+    padding: 1.5rem 1.5rem 30vh;
+  }
+}

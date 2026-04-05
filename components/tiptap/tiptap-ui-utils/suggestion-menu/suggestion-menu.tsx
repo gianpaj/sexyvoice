@@ -5,12 +5,13 @@ import type { Range } from '@tiptap/react';
 // --- Tiptap UI ---
 // --- UI Primitives ---
 import {
+  exitSuggestion,
   Suggestion,
   type SuggestionKeyDownProps,
   SuggestionPluginKey,
   type SuggestionProps,
 } from '@tiptap/suggestion';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type {
   SuggestionItem,
@@ -91,14 +92,46 @@ export const SuggestionMenu = ({
   );
 
   const internalSuggestionPropsRef = useRef(internalSuggestionProps);
+  const normalizedPluginKey = useMemo(
+    () =>
+      pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey),
+    [pluginKey],
+  );
 
   useEffect(() => {
     internalSuggestionPropsRef.current = internalSuggestionProps;
   }, [internalSuggestionProps]);
 
   const closePopup = useCallback(() => {
+    if (editor && !editor.isDestroyed) {
+      const triggerChar = internalSuggestionPropsRef.current.char;
+      const { selection } = editor.state;
+      const previousNode = selection.$head?.nodeBefore;
+      const cursorPosition = selection.$from.pos;
+
+      if (triggerChar) {
+        const startPosition = previousNode
+          ? calculateStartPosition(cursorPosition, previousNode, triggerChar)
+          : selection.$from.start();
+
+        if (startPosition < cursorPosition) {
+          editor.view.dispatch(
+            editor.state.tr.deleteRange(startPosition, cursorPosition),
+          );
+        }
+      }
+
+      exitSuggestion(editor.view, normalizedPluginKey);
+      return;
+    }
+
+    setInternalDecorationNode(null);
+    setInternalCommand(null);
+    setInternalItems([]);
+    setInternalQuery('');
+    setInternalRange(null);
     setShow(false);
-  }, []);
+  }, [editor, normalizedPluginKey]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {
@@ -113,8 +146,7 @@ export const SuggestionMenu = ({
     }
 
     const suggestion = Suggestion({
-      pluginKey:
-        pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey),
+      pluginKey: normalizedPluginKey,
       editor,
 
       allow(props) {
@@ -231,10 +263,10 @@ export const SuggestionMenu = ({
 
     return () => {
       if (!editor.isDestroyed) {
-        editor.unregisterPlugin(pluginKey);
+        editor.unregisterPlugin(normalizedPluginKey);
       }
     };
-  }, [editor, pluginKey, closePopup]);
+  }, [editor, normalizedPluginKey, closePopup]);
 
   const onSelect = useCallback(
     (item: SuggestionItem) => {
@@ -252,6 +284,7 @@ export const SuggestionMenu = ({
     query: internalQuery,
     items: internalItems,
     onSelect,
+    onClose: closePopup,
   });
 
   if (!(isMounted && show && editor)) {

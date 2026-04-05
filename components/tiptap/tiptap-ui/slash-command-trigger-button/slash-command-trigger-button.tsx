@@ -1,43 +1,40 @@
-import { forwardRef, useCallback } from "react"
-
-// --- Lib ---
-import { parseShortcutKeys } from "@/lib/tiptap-utils"
-
-// --- Hooks ---
-import { useTiptapEditor } from "@/hooks/tiptap/use-tiptap-editor"
+import { forwardRef, useCallback } from 'react';
 
 // --- Tiptap UI ---
-import type { UseSlashCommandTriggerConfig } from "@/components/tiptap/tiptap-ui/slash-command-trigger-button"
+import type { UseSlashCommandTriggerConfig } from '@/components/tiptap/tiptap-ui/slash-command-trigger-button';
 import {
   SLASH_COMMAND_TRIGGER_SHORTCUT_KEY,
   useSlashCommandTrigger,
-} from "@/components/tiptap/tiptap-ui/slash-command-trigger-button"
-
+} from '@/components/tiptap/tiptap-ui/slash-command-trigger-button';
+import { Badge } from '@/components/tiptap/tiptap-ui-primitive/badge';
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap/tiptap-ui-primitive/button"
-import { Badge } from "@/components/tiptap/tiptap-ui-primitive/badge"
+import type { ButtonProps } from '@/components/tiptap/tiptap-ui-primitive/button';
+import { Button } from '@/components/tiptap/tiptap-ui-primitive/button';
+// --- Hooks ---
+import { useTiptapEditor } from '@/hooks/tiptap/use-tiptap-editor';
+// --- Lib ---
+import { parseShortcutKeys } from '@/lib/tiptap-utils';
 
 export interface SlashCommandTriggerButtonProps
-  extends Omit<ButtonProps, "type">,
-  UseSlashCommandTriggerConfig {
-  /**
-   * Optional text to display alongside the icon.
-   */
-  text?: string
+  extends Omit<ButtonProps, 'type'>,
+    UseSlashCommandTriggerConfig {
   /**
    * Optional show shortcut keys in the button.
    * @default false
    */
-  showShortcut?: boolean
+  showShortcut?: boolean;
+  /**
+   * Optional text to display alongside the icon.
+   */
+  text?: string;
 }
 
 export function SlashCommandShortcutBadge({
   shortcutKeys = SLASH_COMMAND_TRIGGER_SHORTCUT_KEY,
 }: {
-  shortcutKeys?: string
+  shortcutKeys?: string;
 }) {
-  return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>
+  return <Badge>{parseShortcutKeys({ shortcutKeys })}</Badge>;
 }
 
 /**
@@ -55,7 +52,7 @@ export const SlashCommandTriggerButton = forwardRef<
       node,
       nodePos,
       text,
-      trigger = "/",
+      trigger = '/',
       hideWhenUnavailable = false,
       onTriggered,
       showShortcut = false,
@@ -63,9 +60,9 @@ export const SlashCommandTriggerButton = forwardRef<
       children,
       ...buttonProps
     },
-    ref
+    ref,
   ) => {
-    const { editor } = useTiptapEditor(providedEditor)
+    const { editor } = useTiptapEditor(providedEditor);
     const {
       isVisible,
       canInsert,
@@ -80,32 +77,32 @@ export const SlashCommandTriggerButton = forwardRef<
       trigger,
       hideWhenUnavailable,
       onTriggered,
-    })
+    });
 
     const handleClick = useCallback(
       (event: React.MouseEvent<HTMLButtonElement>) => {
-        onClick?.(event)
-        if (event.defaultPrevented) return
-        handleSlashCommand()
+        onClick?.(event);
+        if (event.defaultPrevented) return;
+        handleSlashCommand();
       },
-      [handleSlashCommand, onClick]
-    )
+      [handleSlashCommand, onClick],
+    );
 
     if (!isVisible) {
-      return null
+      return null;
     }
 
     return (
       <Button
-        type="button"
+        aria-label={label}
+        data-disabled={!canInsert}
         data-style="ghost"
+        disabled={!canInsert}
+        onClick={handleClick}
         role="button"
         tabIndex={-1}
-        disabled={!canInsert}
-        data-disabled={!canInsert}
-        aria-label={label}
         tooltip={label}
-        onClick={handleClick}
+        type="button"
         {...buttonProps}
         ref={ref}
       >
@@ -119,8 +116,8 @@ export const SlashCommandTriggerButton = forwardRef<
           </>
         )}
       </Button>
-    )
-  }
-)
+    );
+  },
+);
 
-SlashCommandTriggerButton.displayName = "SlashCommandTriggerButton"
+SlashCommandTriggerButton.displayName = 'SlashCommandTriggerButton';

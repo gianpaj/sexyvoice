@@ -63,19 +63,19 @@ function organizeItemsByGroups(
   const groups: { [groupLabel: string]: SuggestionItem[] } = {};
 
   // Group items
-  items.forEach((item) => {
+  for (const item of items) {
     const groupLabel = item.group || '';
     if (!groups[groupLabel]) {
       groups[groupLabel] = [];
     }
     groups[groupLabel].push(item);
-  });
+  }
 
   // Flatten groups in order (this maintains the visual order for keyboard navigation)
   const organizedItems: SuggestionItem[] = [];
-  Object.entries(groups).forEach(([, groupItems]) => {
+  for (const [, groupItems] of Object.entries(groups)) {
     organizedItems.push(...groupItems);
-  });
+  }
 
   return organizedItems;
 }
@@ -89,12 +89,12 @@ export function useSlashDropdownMenu(config?: SlashMenuConfig) {
       const items: SuggestionItem[] = [];
 
       const enabledItems =
-        config?.enabledItems || (Object.keys(texts) as SlashMenuItemType[]);
+        config?.enabledItems ?? (Object.keys(texts) as SlashMenuItemType[]);
       const showGroups = config?.showGroups !== false;
 
       const itemImplementations = getItemImplementations();
 
-      enabledItems.forEach((itemType) => {
+      for (const itemType of enabledItems) {
         const itemImpl = itemImplementations[itemType];
         const itemText = texts[itemType];
 
@@ -112,7 +112,7 @@ export function useSlashDropdownMenu(config?: SlashMenuConfig) {
 
           items.push(item);
         }
-      });
+      }
 
       if (config?.customItems) {
         items.push(...config.customItems);

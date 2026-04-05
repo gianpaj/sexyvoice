@@ -1,10 +1,35 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
+
+function findEditor() {
+  return screen.findByText(
+    (_, element) => element?.classList.contains('ProseMirror') ?? false,
+  );
+}
+
+async function openSuggestionMenu(
+  user: ReturnType<typeof userEvent.setup>,
+  editor: HTMLElement,
+  trigger: '[' | '<',
+) {
+  await user.click(editor);
+  await user.keyboard(trigger === '[' ? '[[' : '<');
+}
+
+function getSuggestionDecoration(editor: HTMLElement) {
+  return editor.querySelector('[data-decoration-content="Filter..."]');
+}
 
 const baseDict = {
   effects: {
@@ -124,11 +149,7 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    expect(
-      await screen.findByText(
-        (_, element) => element?.classList.contains('ProseMirror') ?? false,
-      ),
-    ).toBeInTheDocument();
+    expect(await findEditor()).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /insert inline effect/i }),
     ).toBeInTheDocument();
@@ -148,9 +169,7 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    const editor = await screen.findByText(
-      (_, element) => element?.classList.contains('ProseMirror') ?? false,
-    );
+    const editor = await findEditor();
 
     expect(editor).toHaveTextContent('Hello');
     expect(editor).toHaveTextContent('world');
@@ -169,9 +188,7 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    const editor = await screen.findByText(
-      (_, element) => element?.classList.contains('ProseMirror') ?? false,
-    );
+    const editor = await findEditor();
 
     expect(editor).toHaveTextContent('Line one');
     expect(editor).toHaveTextContent('Line two');
@@ -241,11 +258,11 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    const editor = await screen.findByText(
-      (_, element) => element?.classList.contains('ProseMirror') ?? false,
-    );
+    const editor = await findEditor();
 
-    expect(screen.getByText('Type your script')).toBeInTheDocument();
+    expect(
+      screen.getByRole('textbox', { name: 'Type your script' }),
+    ).toBeInTheDocument();
 
     await user.type(editor, 'Hello');
 
@@ -267,9 +284,7 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    const editor = await screen.findByText(
-      (_, element) => element?.classList.contains('ProseMirror') ?? false,
-    );
+    const editor = await findEditor();
 
     placeCaretAtEnd(editor);
 
@@ -297,9 +312,7 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    const editor = await screen.findByText(
-      (_, element) => element?.classList.contains('ProseMirror') ?? false,
-    );
+    const editor = await findEditor();
 
     selectEditorText(editor, 'world');
 
@@ -395,9 +408,7 @@ describe('GrokTTSEditor', () => {
       />,
     );
 
-    const editor = await screen.findByText(
-      (_, element) => element?.classList.contains('ProseMirror') ?? false,
-    );
+    const editor = await findEditor();
 
     await user.click(
       screen.getByRole('button', { name: /insert inline effect/i }),
@@ -420,5 +431,169 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenCalledWith('<soft></soft>ab');
     expect(screen.getByText('<soft>')).toBeInTheDocument();
     expect(screen.getByText('</soft>')).toBeInTheDocument();
+  });
+
+  it('opens the instant tag suggestion menu when typing [', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '[');
+
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'pause' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'laugh' })).toBeInTheDocument();
+  });
+
+  it('inserts an instant tag from the [ suggestion menu', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '[');
+    await user.click(await screen.findByRole('button', { name: 'pause' }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('[pause]');
+    });
+  });
+
+  it('opens the wrapper tag suggestion menu when typing <', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '<');
+
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'soft' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'whisper' })).toBeInTheDocument();
+  });
+
+  it('wraps selected text from the < suggestion menu', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value="Hello"
+      />,
+    );
+
+    const editor = await findEditor();
+
+    placeCaretAtEnd(editor);
+    await openSuggestionMenu(user, editor, '<');
+    await user.click(await screen.findByRole('button', { name: 'soft' }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('<soft></soft>Hello');
+    });
+    expect(screen.getByText('<soft>')).toBeInTheDocument();
+    expect(screen.getByText('</soft>')).toBeInTheDocument();
+  });
+
+  it('dismisses the [ suggestion menu and Filter decoration on Escape', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '[');
+
+    const listbox = await screen.findByRole('listbox');
+    expect(
+      within(listbox).getByRole('button', { name: 'pause' }),
+    ).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('');
+  });
+
+  it('keeps page focus in the suggestion menu when navigating with ArrowDown', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+    const scrollToSpy = vi
+      .spyOn(window, 'scrollTo')
+      .mockImplementation(() => undefined);
+
+    await openSuggestionMenu(user, editor, '[');
+
+    const listbox = await screen.findByRole('listbox');
+    expect(
+      within(listbox).getByRole('button', { name: 'pause' }),
+    ).toBeInTheDocument();
+
+    await user.keyboard('{ArrowDown}');
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(scrollToSpy).not.toHaveBeenCalled();
+
+    scrollToSpy.mockRestore();
   });
 });

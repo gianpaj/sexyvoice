@@ -20,12 +20,9 @@ export interface ButtonProps
 }
 
 const buttonVariants = {
-  primary:
-    'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-500 dark:hover:bg-brand-600',
-  ghost:
-    'bg-transparent hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
-  secondary:
-    'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700',
+  primary: 'bg-primary text-white hover:bg-primary-active',
+  ghost: 'bg-transparent hover:bg-gray-800 text-gray-300 hover:text-white',
+  secondary: 'bg-gray-800 text-gray-100 hover:bg-gray-700',
 };
 
 const buttonSizes = {
@@ -90,7 +87,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       buttonSizes[finalSize as keyof typeof buttonSizes] || buttonSizes.medium;
 
     const buttonClass = cn(
-      'inline-flex items-center justify-center gap-1 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-50',
+      'inline-flex items-center justify-center gap-1 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50',
       computedVariantClass,
       computedSizeClass,
       className,

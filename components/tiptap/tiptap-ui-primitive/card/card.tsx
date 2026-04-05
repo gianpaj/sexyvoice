@@ -1,100 +1,109 @@
-import { forwardRef } from "react"
-import { cn } from "@/lib/tiptap-utils"
+import { forwardRef } from 'react';
 
+import { cn } from '@/lib/tiptap-utils';
 
-const Card = forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
+const Card = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
     return (
       <div
-        ref={ref}
         className={cn(
-          "relative flex flex-col min-w-0 break-words bg-white dark:bg-gray-950 bg-clip-border border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm outline-none",
-          className
+          'wrap-break-word relative flex min-w-0 flex-col rounded-lg border border-gray-800 bg-gray-950 bg-clip-border shadow-sm outline-none',
+          className,
         )}
+        ref={ref}
         {...props}
       />
-    )
-  }
-)
-Card.displayName = "Card"
+    );
+  },
+);
+Card.displayName = 'Card';
 
-const CardHeader = forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
+const CardHeader = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
     return (
       <div
-        ref={ref}
         className={cn(
-          "flex items-center justify-between flex-shrink-0 w-full p-1.5 border-b border-gray-200 dark:border-gray-800",
-          className
+          'flex w-full shrink-0 items-center justify-between border-gray-800 border-b p-1.5',
+          className,
         )}
+        ref={ref}
         {...props}
       />
-    )
-  }
-)
-CardHeader.displayName = "CardHeader"
+    );
+  },
+);
+CardHeader.displayName = 'CardHeader';
 
-const CardBody = forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
+const CardBody = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
     return (
       <div
+        className={cn('flex-auto overflow-y-auto p-1.5', className)}
         ref={ref}
-        className={cn("flex-auto p-1.5 overflow-y-auto", className)}
         {...props}
       />
-    )
-  }
-)
-CardBody.displayName = "CardBody"
+    );
+  },
+);
+CardBody.displayName = 'CardBody';
 
 const CardItemGroup = forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    orientation?: "horizontal" | "vertical"
+  React.ComponentProps<'div'> & {
+    orientation?: 'horizontal' | 'vertical';
   }
->(({ className, orientation = "vertical", ...props }, ref) => {
+>(({ className, orientation = 'vertical', ...props }, ref) => {
   return (
     <div
-      ref={ref}
-      data-orientation={orientation}
       className={cn(
-        "relative flex min-w-max align-middle",
-        orientation === "vertical" ? "flex-col justify-center" : "flex-row items-center gap-1",
-        className
+        'relative flex min-w-max align-middle',
+        orientation === 'vertical'
+          ? 'flex-col justify-center'
+          : 'flex-row items-center gap-1',
+        className,
       )}
+      data-orientation={orientation}
+      ref={ref}
       {...props}
     />
-  )
-})
-CardItemGroup.displayName = "CardItemGroup"
+  );
+});
+CardItemGroup.displayName = 'CardItemGroup';
 
-const CardGroupLabel = forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
+const CardGroupLabel = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
     return (
       <div
-        ref={ref}
         className={cn(
-          "pt-3 pl-2 pr-2 pb-1 text-xs font-semibold capitalize text-gray-800 dark:text-gray-200 leading-normal",
-          className
+          'pt-3 pr-2 pb-1 pl-2 font-semibold text-gray-200 text-xs capitalize leading-normal',
+          className,
         )}
+        ref={ref}
         {...props}
       />
-    )
-  }
-)
-CardGroupLabel.displayName = "CardGroupLabel"
+    );
+  },
+);
+CardGroupLabel.displayName = 'CardGroupLabel';
 
-const CardFooter = forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
+const CardFooter = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
     return (
       <div
+        className={cn('border-gray-800 border-t p-1.5', className)}
         ref={ref}
-        className={cn("border-t border-gray-200 dark:border-gray-800 p-1.5", className)}
         {...props}
       />
-    )
-  }
-)
-CardFooter.displayName = "CardFooter"
+    );
+  },
+);
+CardFooter.displayName = 'CardFooter';
 
-export { Card, CardHeader, CardFooter, CardBody, CardItemGroup, CardGroupLabel }
+export {
+  Card,
+  CardBody,
+  CardFooter,
+  CardGroupLabel,
+  CardHeader,
+  CardItemGroup,
+};

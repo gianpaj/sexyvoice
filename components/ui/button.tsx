@@ -3,6 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+import { forwardRef } from 'react';
 
 // https://enhanced-button.vercel.app/
 const buttonVariants = cva(
@@ -116,4 +117,31 @@ const Button = React.forwardRef<
 );
 Button.displayName = 'Button';
 
-export { Button, buttonVariants };
+
+const ButtonGroup = forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<'div'> & {
+    orientation?: 'horizontal' | 'vertical';
+  }
+>(({ className, children, orientation = 'vertical', ...props }, ref) => {
+  return (
+    <div
+      className={cn(
+        'flex',
+        orientation === 'vertical'
+          ? 'min-w-max flex-col items-start [&>button]:w-full'
+          : 'flex-row items-center gap-0.5',
+        className,
+      )}
+      data-orientation={orientation}
+      ref={ref}
+      role="group"
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+ButtonGroup.displayName = 'ButtonGroup';
+
+export { Button, buttonVariants, ButtonGroup };
