@@ -52,7 +52,7 @@ import CloneSampleCard from './clone-sample-card';
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,video/webm';
+  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm';
 
 const sampleAudios: readonly SampleAudio[] = [
   {

@@ -37,6 +37,9 @@ const ALLOWED_TYPES = [
   'audio/x-wav',
   'audio/m4a',
   'audio/x-m4a',
+  // Opus files (.opus) use audio/opus or audio/x-opus MIME types
+  'audio/opus',
+  'audio/x-opus',
   // Microphone recordings often come in as WebM/Opus (sometimes reported as octet-stream)
   'audio/webm',
   'application/octet-stream',
@@ -283,7 +286,7 @@ function validateFileType(file: File): string {
 
   if (!ALLOWED_TYPES.includes(normalizedFileType)) {
     throw createRouteError(
-      'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
+      'Invalid file type. Only MP3, OGG, Opus, M4A, or WAV allowed.',
       400,
     );
   }
@@ -459,7 +462,7 @@ async function processAudioFile(
       const errorMsg =
         normalizedMimeType === 'audio/webm'
           ? 'WebM audio must be converted to WAV on the client before uploading. Please try recording again.'
-          : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, or WAV';
+          : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, Opus, or WAV';
 
       throw createRouteError(errorMsg, 500);
     }
