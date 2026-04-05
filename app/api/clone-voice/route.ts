@@ -461,7 +461,7 @@ async function processAudioFile(
       });
 
       const errorMsg =
-        normalizedMimeType === 'audio/webm'
+        normalizedMimeType === 'audio/webm' || normalizedMimeType === 'video/webm'
           ? 'WebM audio must be converted to WAV on the client before uploading. Please try recording again.'
           : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, Opus, or WAV';
 
