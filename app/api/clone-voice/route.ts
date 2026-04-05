@@ -511,7 +511,7 @@ async function processAudioFile(
     duration > constraints.maxDurationSeconds &&
     processedMimeType === 'audio/wav'
   ) {
-    processedBuffer = trimWavAudio(processedBuffer, constraints.maxDurationSeconds);
+    processedBuffer = trimWavAudio(processedBuffer, constraints.maxDurationSeconds) as Buffer<ArrayBuffer>;
   }
 
   const audioHash = await generateBufferHash(processedBuffer);
