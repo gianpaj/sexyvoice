@@ -131,7 +131,7 @@ async function decodeOggOpus(audioData: Uint8Array): Promise<DecodedAudio> {
   await decoder.ready;
 
   try {
-    const result = decoder.decode(audioData);
+    const result = await decoder.decodeFile(audioData);
     decoder.free();
 
     return {
@@ -152,8 +152,7 @@ async function decodeOggVorbis(audioData: Uint8Array): Promise<DecodedAudio> {
   const decoder = new OggVorbisDecoder();
   await decoder.ready;
 
-  // OggVorbisDecoder.decode() returns a Promise
-  const result = await decoder.decode(audioData);
+  const result = await decoder.decodeFile(audioData);
   decoder.free();
 
   return {
