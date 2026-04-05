@@ -110,9 +110,7 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
 };
 
 const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
-const DEFAULT_MAX_AUDIO_DURATION_SECONDS = 5 * 60;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
-const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
 
 export default function NewVoiceClient({
   dict,
@@ -174,16 +172,11 @@ function NewVoiceClientInner({
   );
 
   const audioDurationGuidance = useMemo(
-    () =>
-      usesVoxtral
-        ? {
-            min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
-            max: VOXTRAL_MAX_AUDIO_DURATION_SECONDS,
-          }
-        : {
-            min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
-            max: DEFAULT_MAX_AUDIO_DURATION_SECONDS,
-          },
+    () => ({
+      min: usesVoxtral
+        ? VOXTRAL_MIN_AUDIO_DURATION_SECONDS
+        : DEFAULT_MIN_AUDIO_DURATION_SECONDS,
+    }),
     [usesVoxtral],
   );
 
@@ -267,8 +260,8 @@ function NewVoiceClientInner({
   };
 
   const localeSpecificReferenceAudioGuidance = usesVoxtral
-    ? `Use a clean single-speaker reference clip between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds. Neutral delivery works best.`
-    : `Use a clear reference clip between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+    ? `Use a clean single-speaker reference clip of at least ${audioDurationGuidance.min} seconds. Neutral delivery works best.`
+    : `Use a clear reference clip of at least ${audioDurationGuidance.min} seconds.`;
 
   const getCloneErrorMessage = useCallback(
     (code?: string, fallbackMessage?: string) => {
@@ -276,17 +269,16 @@ function NewVoiceClientInner({
         return 'Could not determine audio duration.';
       }
 
-      if (code === 'clone_audio_duration_invalid_voxtral') {
-        return `Reference audio must be between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds for voice cloning.`;
-      }
-
-      if (code === 'clone_audio_duration_invalid_fallback') {
-        return `Audio must be between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+      if (
+        code === 'clone_audio_duration_invalid_voxtral' ||
+        code === 'clone_audio_duration_invalid_fallback'
+      ) {
+        return `Reference audio must be at least ${audioDurationGuidance.min} seconds.`;
       }
 
       return fallbackMessage || dict.errorCloning || 'Failed to clone voice.';
     },
-    [audioDurationGuidance.max, audioDurationGuidance.min, dict],
+    [audioDurationGuidance.min, dict],
   );
 
   const [

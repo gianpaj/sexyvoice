@@ -51,7 +51,7 @@ const MAX_LENGTH_MULTILANGUAGE = 300;
 const FALLBACK_MIN_DURATION = 10;
 const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
 const VOXTRAL_MIN_DURATION = 3;
-const VOXTRAL_MAX_DURATION = 25;
+const VOXTRAL_MAX_DURATION = 35;
 
 // Replicate multilinguage supports the following languages
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
@@ -317,14 +317,11 @@ function validateAudioDuration(
 
   const constraints = getCloneProviderConstraints(provider);
 
-  if (
-    duration < constraints.minDurationSeconds ||
-    duration > constraints.maxDurationSeconds
-  ) {
+  if (duration < constraints.minDurationSeconds) {
     const errorMessage =
       provider === 'mistral'
-        ? `Reference audio must be between ${constraints.minDurationSeconds} and ${constraints.maxDurationSeconds} seconds for voice cloning.`
-        : `Audio must be between ${constraints.minDurationSeconds} seconds and ${constraints.maxDurationSeconds / 60} minutes.`;
+        ? `Reference audio must be at least ${constraints.minDurationSeconds} seconds for voice cloning.`
+        : `Audio must be at least ${constraints.minDurationSeconds} seconds.`;
 
     throw createRouteError(
       errorMessage,
@@ -334,6 +331,41 @@ function validateAudioDuration(
         : 'clone_audio_duration_invalid_fallback',
     );
   }
+}
+
+/**
+ * Trim a WAV buffer to a maximum duration.
+ * Handles standard PCM WAV files (44-byte header).
+ * Returns the original buffer if it is not a valid WAV or no trimming is needed.
+ */
+function trimWavAudio(wavBuffer: Buffer, maxDurationSeconds: number): Buffer {
+  if (wavBuffer.length < 44) return wavBuffer;
+  if (wavBuffer.toString('ascii', 0, 4) !== 'RIFF') return wavBuffer;
+  if (wavBuffer.toString('ascii', 8, 12) !== 'WAVE') return wavBuffer;
+
+  const sampleRate = wavBuffer.readUInt32LE(24);
+  const numChannels = wavBuffer.readUInt16LE(22);
+  const bitsPerSample = wavBuffer.readUInt16LE(34);
+
+  if (sampleRate <= 0 || numChannels <= 0 || bitsPerSample <= 0) return wavBuffer;
+
+  const blockAlign = numChannels * (bitsPerSample / 8);
+  const bytesPerSecond = sampleRate * blockAlign;
+  const maxAudioBytes =
+    Math.floor((maxDurationSeconds * bytesPerSecond) / blockAlign) * blockAlign;
+
+  const dataSize = wavBuffer.readUInt32LE(40);
+  if (dataSize <= maxAudioBytes) return wavBuffer;
+
+  const newDataSize = maxAudioBytes;
+  const newBuffer = Buffer.alloc(44 + newDataSize);
+
+  wavBuffer.copy(newBuffer, 0, 0, 44);
+  newBuffer.writeUInt32LE(36 + newDataSize, 4);
+  newBuffer.writeUInt32LE(newDataSize, 40);
+  wavBuffer.copy(newBuffer, 44, 44, 44 + newDataSize);
+
+  return newBuffer;
 }
 
 function validateLocale(locale: string): void {
@@ -471,13 +503,24 @@ async function processAudioFile(
   }
 
   const duration = await getAudioDuration(processedBuffer, processedMimeType);
+
+  // Auto-trim audio to the maximum duration for the provider instead of rejecting it
+  const constraints = getCloneProviderConstraints(provider);
+  if (
+    duration !== null &&
+    duration > constraints.maxDurationSeconds &&
+    processedMimeType === 'audio/wav'
+  ) {
+    processedBuffer = trimWavAudio(processedBuffer, constraints.maxDurationSeconds);
+  }
+
   const audioHash = await generateBufferHash(processedBuffer);
 
   return {
     audioHash,
     buffer: processedBuffer,
     mimeType: processedMimeType,
-    duration,
+    duration: Math.min(duration ?? constraints.maxDurationSeconds, constraints.maxDurationSeconds),
   };
 }
 
