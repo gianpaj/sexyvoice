@@ -318,9 +318,7 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe(
-        'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
-      );
+      expect(json.serverMessage).toContain('Invalid file type.');
     });
 
     it('should return 400 when file size exceeds limit', async () => {

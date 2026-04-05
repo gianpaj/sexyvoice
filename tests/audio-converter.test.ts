@@ -38,6 +38,15 @@ vi.mock('ogg-opus-decoder', () => ({
       };
     }
 
+    decodeFile() {
+      return {
+        channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        sampleRate: 48_000,
+        samplesDecoded: 3,
+        errors: [],
+      };
+    }
+
     free() {}
   },
 }));
@@ -47,6 +56,16 @@ vi.mock('@wasm-audio-decoders/ogg-vorbis', () => ({
     ready = Promise.resolve();
 
     async decode() {
+      return {
+        channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        sampleRate: 44_100,
+        samplesDecoded: 3,
+        bitDepth: 16 as const,
+        errors: [],
+      };
+    }
+
+    async decodeFile() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
         sampleRate: 44_100,

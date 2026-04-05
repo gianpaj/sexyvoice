@@ -52,7 +52,7 @@ import CloneSampleCard from './clone-sample-card';
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
 const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm';
+  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
 
 const sampleAudios: readonly SampleAudio[] = [
   {
@@ -601,7 +601,7 @@ function NewVoiceClientInner({
                           formatBytes(CLONING_FILE_MAX_SIZE),
                         )}
                       </p>
-                      <p className="mt-2 text-muted-foreground text-xs">
+                      <p className="mt-2 text-muted-foreground text-xs italic">
                         {localeSpecificReferenceAudioGuidance}
                       </p>
                     </div>
