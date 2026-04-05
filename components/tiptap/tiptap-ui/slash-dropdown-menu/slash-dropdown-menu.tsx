@@ -70,25 +70,28 @@ const Item = (props: {
   item: SuggestionItem;
   isSelected: boolean;
   onSelect: () => void;
-  selector?: string;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }) => {
-  const { item, isSelected, onSelect } = props;
+  const { item, isSelected, onSelect, scrollContainerRef } = props;
   const itemRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const selector = document.querySelector(
-      `[data-selector="${props.selector ?? 'tiptap-slash-dropdown-menu'}"]`,
-    ) as HTMLElement;
-    if (!(itemRef.current && isSelected && selector)) return;
+    const scrollContainer = scrollContainerRef.current;
+    if (!(itemRef.current && isSelected && scrollContainer)) return;
 
-    const overflow = getElementOverflowPosition(itemRef.current, selector);
+    const overflow = getElementOverflowPosition(
+      itemRef.current,
+      scrollContainer,
+    );
+    const itemRect = itemRef.current.getBoundingClientRect();
+    const containerRect = scrollContainer.getBoundingClientRect();
 
     if (overflow === 'top') {
-      itemRef.current.scrollIntoView(true);
+      scrollContainer.scrollTop -= containerRect.top - itemRect.top;
     } else if (overflow === 'bottom') {
-      itemRef.current.scrollIntoView(false);
+      scrollContainer.scrollTop += itemRect.bottom - containerRect.bottom;
     }
-  }, [isSelected, props.selector]);
+  }, [isSelected, scrollContainerRef]);
 
   const BadgeIcon = item.badge;
 
@@ -96,7 +99,7 @@ const Item = (props: {
     <Button
       className={cn(
         'w-full justify-start text-left',
-        isSelected && 'bg-gray-800',
+        isSelected && 'bg-gray-800! text-white',
       )}
       onClick={onSelect}
       ref={itemRef}
@@ -113,11 +116,12 @@ const List = ({
   selectedIndex,
   onSelect,
   config,
-  selector,
 }: SuggestionMenuRenderProps & {
   config?: SlashMenuConfig;
   selector?: string;
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const renderedItems = useMemo(() => {
     const rendered: React.ReactElement[] = [];
     const showGroups = config?.showGroups !== false;
@@ -130,7 +134,7 @@ const List = ({
             item={item}
             key={`item-${index}-${item.title}`}
             onSelect={() => onSelect(item)}
-            selector={selector}
+            scrollContainerRef={scrollContainerRef}
           />,
         );
       });
@@ -169,7 +173,7 @@ const List = ({
             item={item}
             key={`item-${originalIndex}-${item.title}`}
             onSelect={() => onSelect(item)}
-            selector={selector}
+            scrollContainerRef={scrollContainerRef}
           />
         );
       });
@@ -192,7 +196,7 @@ const List = ({
     });
 
     return rendered;
-  }, [items, selectedIndex, onSelect, config?.showGroups, selector]);
+  }, [items, selectedIndex, onSelect, config?.showGroups]);
 
   if (!renderedItems.length) {
     return null;
@@ -205,7 +209,9 @@ const List = ({
         maxHeight: 'var(--suggestion-menu-max-height)',
       }}
     >
-      <CardBody className="w-full p-2">{renderedItems}</CardBody>
+      <CardBody className="w-full p-2" ref={scrollContainerRef}>
+        {renderedItems}
+      </CardBody>
     </Card>
   );
 };

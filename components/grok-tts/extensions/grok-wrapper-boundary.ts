@@ -72,7 +72,6 @@ export const WrapperBoundary = Node.create({
     } & Record<string, unknown>;
     const isOpen = kind === 'open';
     const text = isOpen ? openTag : closeTag;
-
     return [
       'span',
       mergeAttributes(rest, {

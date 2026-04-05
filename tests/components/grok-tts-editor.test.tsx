@@ -12,6 +12,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
 
+const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
+  'rounded',
+  'bg-red-950',
+  'px-0.5',
+  'text-red-100',
+] as const;
+const SUPPORTED_GROK_TAG_CHIP_SELECTOR =
+  '[data-grok-instant-tag], [data-grok-wrapper-boundary-node]';
+
 function findEditor() {
   return screen.findByText(
     (_, element) => element?.classList.contains('ProseMirror') ?? false,
@@ -133,6 +142,19 @@ function placeCaretAtEnd(editor: HTMLElement) {
   fireEvent.focus(editor);
   fireEvent.mouseUp(editor);
   document.dispatchEvent(new Event('selectionchange'));
+}
+
+function pasteIntoEditor(editor: HTMLElement, text: string) {
+  fireEvent.focus(editor);
+
+  const clipboardData = {
+    getData: (type: string) => (type === 'text/plain' ? text : ''),
+    types: ['text/plain'],
+  };
+
+  fireEvent.paste(editor, {
+    clipboardData,
+  });
 }
 
 describe('GrokTTSEditor', () => {
@@ -595,5 +617,192 @@ describe('GrokTTSEditor', () => {
     expect(scrollToSpy).not.toHaveBeenCalled();
 
     scrollToSpy.mockRestore();
+  });
+
+  it('auto-closes the [ suggestion menu when typing ]', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '[');
+
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+
+    await user.keyboard('unknown-tag]');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('[unknown-tag]');
+  });
+
+  it('auto-closes the < suggestion menu when typing >', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '<');
+
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+
+    await user.keyboard('mystery>');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('<mystery>');
+  });
+
+  it('visually highlights unsupported Grok tags in dark red', async () => {
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value={'Hello [unknown-tag] <mystery>world</mystery>'}
+      />,
+    );
+
+    const editor = await findEditor();
+
+    expect(editor).toHaveTextContent(
+      'Hello [unknown-tag] <mystery>world</mystery>',
+    );
+
+    const highlightedTags = Array.from(editor.querySelectorAll('span')).filter(
+      (element) =>
+        UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES.every((className) =>
+          element.classList.contains(className),
+        ),
+    );
+
+    expect(highlightedTags).toHaveLength(3);
+    expect(
+      Array.from(highlightedTags).map((element) => element.textContent),
+    ).toEqual(['[unknown-tag]', '<mystery>', '</mystery>']);
+  });
+
+  it('keeps the [ suggestion flow active while narrowing to a supported instant tag', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await user.click(editor);
+    await user.keyboard('Hello ');
+    await user.keyboard('{[}breath');
+
+    const listbox = await screen.findByRole('listbox');
+    expect(
+      within(listbox).getByRole('button', { name: 'breath' }),
+    ).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('Hello [breath');
+  });
+
+  it('closes the [ suggestion flow when typing the closing bracket for a supported instant tag', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await user.click(editor);
+    await user.keyboard('Hello ');
+    await user.keyboard('{[}breath');
+    await user.keyboard('{]}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('Hello [breath]');
+  });
+
+  it('auto-converts pasted supported Grok tags into chips', async () => {
+    const onChange = vi.fn();
+    const pastedText =
+      '<soft>Oh baby... </soft> [inhale] [sigh] <build-intensity>yes</build-intensity>';
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    pasteIntoEditor(editor, pastedText);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith(pastedText);
+    });
+
+    const chips = Array.from(
+      editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
+    ).map((element) => element.textContent);
+
+    expect(chips).toEqual([
+      '<soft>',
+      '</soft>',
+      '[inhale]',
+      '[sigh]',
+      '<build-intensity>',
+      '</build-intensity>',
+    ]);
+    expect(editor).toHaveTextContent('Oh baby... ');
+    expect(editor).toHaveTextContent('yes');
   });
 });

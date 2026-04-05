@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 
+import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
 import {
   createWrapperBoundaryNode,
   WrapperBoundary,
@@ -23,6 +24,7 @@ import {
   createInstantTagNode,
   InstantTag,
 } from '@/components/grok-tts/extensions/instant-tag';
+import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -274,61 +276,61 @@ function getDomSelectionSnapshot(
   }
 }
 
-function snapshotSelection(selection: {
-  empty: boolean;
-  from: number;
-  to: number;
-}): EditorSelectionSnapshot {
-  return {
-    empty: selection.empty,
-    from: selection.from,
-    to: selection.to,
-  };
-}
+// function snapshotSelection(selection: {
+//   empty: boolean;
+//   from: number;
+//   to: number;
+// }): EditorSelectionSnapshot {
+//   return {
+//     empty: selection.empty,
+//     from: selection.from,
+//     to: selection.to,
+//   };
+// }
 
-function snapshotMarks(
-  marks:
-    | readonly {
-        attrs: Record<string, unknown>;
-        type: { name: string };
-      }[]
-    | null
-    | undefined,
-) {
-  if (!marks) {
-    return [];
-  }
+// function snapshotMarks(
+//   marks:
+//     | readonly {
+//         attrs: Record<string, unknown>;
+//         type: { name: string };
+//       }[]
+//     | null
+//     | undefined,
+// ) {
+//   if (!marks) {
+//     return [];
+//   }
 
-  return marks.map((mark) => ({
-    attrs: mark.attrs,
-    type: mark.type.name,
-  }));
-}
+//   return marks.map((mark) => ({
+//     attrs: mark.attrs,
+//     type: mark.type.name,
+//   }));
+// }
 
-function isGrokDebugEnabled() {
-  return typeof window !== 'undefined' && window.__SV_GROK_DEBUG === true;
-}
+// function isGrokDebugEnabled() {
+//   return typeof window !== 'undefined' && window.__SV_GROK_DEBUG === true;
+// }
 
-function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
-  if (!isGrokDebugEnabled()) {
-    return;
-  }
+// function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
+//   if (!isGrokDebugEnabled()) {
+//     return;
+//   }
 
-  const doc = editor.getJSON();
-  const entry: GrokDebugEntry = {
-    doc,
-    dom: editor.view.dom.innerHTML,
-    phase,
-    selection: snapshotSelection(editor.state.selection),
-    serialized: grokTipTapDocToText(doc),
-    storedMarks: snapshotMarks(editor.state.storedMarks),
-    timestamp: new Date().toISOString(),
-  };
+//   const doc = editor.getJSON();
+//   const entry: GrokDebugEntry = {
+//     doc,
+//     dom: editor.view.dom.innerHTML,
+//     phase,
+//     selection: snapshotSelection(editor.state.selection),
+//     serialized: grokTipTapDocToText(doc),
+//     storedMarks: snapshotMarks(editor.state.storedMarks),
+//     timestamp: new Date().toISOString(),
+//   };
 
-  window.__SV_DEBUG_LOGS ??= [];
-  window.__SV_DEBUG_LOGS.push(entry);
-  console.debug('[grok-tts-debug]', entry);
-}
+//   window.__SV_DEBUG_LOGS ??= [];
+//   window.__SV_DEBUG_LOGS.push(entry);
+//   console.debug('[grok-tts-debug]', entry);
+// }
 
 interface GrokSlashMenuConfig {
   customItems: SuggestionItem[];
@@ -440,6 +442,8 @@ export function GrokTTSEditor({
       }),
       InstantTag,
       WrapperBoundary,
+      UnsupportedGrokTagHighlight,
+      AutoConvertGrokTags,
       UiState,
     ],
     content: plainTextToDoc(value),
@@ -450,37 +454,22 @@ export function GrokTTSEditor({
         'aria-multiline': 'true',
         class:
           'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
+        autoCorrect: 'false',
+        spellCheck: 'false',
       },
       handleDOMEvents: {
-        keydown: (_view) => {
+        keydown: () => {
           if (editor) {
-            recordGrokDebug('handleKeyDown', editor);
+            // recordGrokDebug('handleKeyDown', editor);
           }
 
           return false;
         },
       },
-      handleTextInput: (view) => {
+      handleTextInput: () => {
         if (editor) {
-          recordGrokDebug('handleTextInput', editor);
+          // recordGrokDebug('handleTextInput', editor);
           return false;
-        }
-
-        const fallbackDoc = view.state.doc.toJSON();
-        if (isGrokDebugEnabled()) {
-          const entry: GrokDebugEntry = {
-            doc: fallbackDoc,
-            dom: view.dom.innerHTML,
-            phase: 'handleTextInput',
-            selection: snapshotSelection(view.state.selection),
-            serialized: grokTipTapDocToText(fallbackDoc),
-            storedMarks: snapshotMarks(view.state.storedMarks),
-            timestamp: new Date().toISOString(),
-          };
-
-          window.__SV_DEBUG_LOGS ??= [];
-          window.__SV_DEBUG_LOGS.push(entry);
-          console.debug('[tts-debug]', entry);
         }
 
         return false;
@@ -489,16 +478,16 @@ export function GrokTTSEditor({
     onCreate: ({ editor: nextEditor }) => {
       const { empty, from, to } = nextEditor.state.selection;
       lastSelectionRef.current = { empty, from, to };
-      recordGrokDebug('create', nextEditor);
+      // recordGrokDebug('create', nextEditor);
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
       const { empty, from, to } = nextEditor.state.selection;
       lastSelectionRef.current = { empty, from, to };
-      recordGrokDebug('selection', nextEditor);
+      // recordGrokDebug('selection', nextEditor);
     },
-    onTransaction: ({ editor: nextEditor }) => {
-      recordGrokDebug('transaction', nextEditor);
-    },
+    // onTransaction: ({ editor: nextEditor }) => {
+    //   recordGrokDebug('transaction', nextEditor);
+    // },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
       const text = fullText.slice(0, maxLength);
@@ -509,7 +498,7 @@ export function GrokTTSEditor({
 
       setCurrentLength(text.length);
       onChange(text);
-      recordGrokDebug('update', nextEditor);
+      // recordGrokDebug('update', nextEditor);
     },
   });
 

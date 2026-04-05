@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { findUnsupportedGrokTagMatches } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
 import {
   GROK_EMPTY_WRAPPER_TEXT,
   type GrokInstantTag,
@@ -40,6 +41,47 @@ function wrapper(
 }
 
 describe('grok-tts-editor-utils', () => {
+  describe('findUnsupportedGrokTagMatches', () => {
+    it('finds unsupported instant tags', () => {
+      expect(
+        findUnsupportedGrokTagMatches('Hello [unknown-tag] world'),
+      ).toEqual([
+        {
+          end: 19,
+          start: 6,
+          text: '[unknown-tag]',
+        },
+      ]);
+    });
+
+    it('finds unsupported wrapper tags', () => {
+      expect(findUnsupportedGrokTagMatches('<mystery>Hello</mystery>')).toEqual(
+        [
+          {
+            end: 9,
+            start: 0,
+            text: '<mystery>',
+          },
+          {
+            end: 24,
+            start: 14,
+            text: '</mystery>',
+          },
+        ],
+      );
+    });
+
+    it('ignores supported Grok tags', () => {
+      expect(
+        findUnsupportedGrokTagMatches('[pause] <soft>Hello</soft>'),
+      ).toEqual([]);
+    });
+
+    it('preserves malformed but tag-like text as unsupported matches only when complete', () => {
+      expect(findUnsupportedGrokTagMatches('[oops <oops')).toEqual([]);
+    });
+  });
+
   describe('parseGrokTtsText', () => {
     it('returns a single text token for plain text', () => {
       expect(parseGrokTtsText('Hello world').tokens).toEqual([
@@ -192,6 +234,12 @@ describe('grok-tts-editor-utils', () => {
       const parsed = parseGrokTtsText(input).tokens;
 
       expect(serializeGrokTtsDoc(parsed)).toBe(input);
+    });
+
+    it('round-trips unsupported tags as plain text', () => {
+      const input = 'Hello [unknown-tag] <mystery>x</mystery>';
+
+      expect(grokTipTapDocToText(grokTextToTipTapDoc(input))).toBe(input);
     });
   });
 

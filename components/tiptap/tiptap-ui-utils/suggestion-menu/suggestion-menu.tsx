@@ -1,9 +1,6 @@
 import { flip, offset, shift, size } from '@floating-ui/react';
 import { PluginKey } from '@tiptap/pm/state';
-// --- Tiptap Editor ---
 import type { Range } from '@tiptap/react';
-// --- Tiptap UI ---
-// --- UI Primitives ---
 import {
   exitSuggestion,
   Suggestion,
@@ -18,10 +15,28 @@ import type {
   SuggestionMenuProps,
 } from '@/components/tiptap/tiptap-ui-utils/suggestion-menu/suggestion-menu-types';
 import { calculateStartPosition } from '@/components/tiptap/tiptap-ui-utils/suggestion-menu/suggestion-menu-utils';
-// --- Hooks ---
 import { useFloatingElement } from '@/hooks/tiptap/use-floating-element';
 import { useMenuNavigation } from '@/hooks/tiptap/use-menu-navigation';
 import { useTiptapEditor } from '@/hooks/tiptap/use-tiptap-editor';
+
+function shouldCloseSuggestionForQuery(
+  char: string | undefined,
+  query: string,
+): boolean {
+  if (!query) {
+    return false;
+  }
+
+  if (char === '[') {
+    return query.includes(']');
+  }
+
+  if (char === '<') {
+    return query.includes('>');
+  }
+
+  return false;
+}
 
 /**
  * A component that renders a suggestion menu for Tiptap editors.
@@ -100,7 +115,16 @@ export const SuggestionMenu = ({
 
   useEffect(() => {
     internalSuggestionPropsRef.current = internalSuggestionProps;
-  }, [internalSuggestionProps]);
+  });
+
+  const resetMenuState = useCallback(() => {
+    setInternalDecorationNode(null);
+    setInternalCommand(null);
+    setInternalItems([]);
+    setInternalQuery('');
+    setInternalRange(null);
+    setShow(false);
+  }, []);
 
   const closePopup = useCallback(() => {
     if (editor && !editor.isDestroyed) {
@@ -125,13 +149,8 @@ export const SuggestionMenu = ({
       return;
     }
 
-    setInternalDecorationNode(null);
-    setInternalCommand(null);
-    setInternalItems([]);
-    setInternalQuery('');
-    setInternalRange(null);
-    setShow(false);
-  }, [editor, normalizedPluginKey]);
+    resetMenuState();
+  }, [editor, normalizedPluginKey, resetMenuState]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {
@@ -148,19 +167,6 @@ export const SuggestionMenu = ({
     const suggestion = Suggestion({
       pluginKey: normalizedPluginKey,
       editor,
-
-      allow(props) {
-        const $from = editor.state.doc.resolve(props.range.from);
-
-        // Check if we're inside an image node
-        for (let depth = $from.depth; depth > 0; depth--) {
-          if ($from.node(depth).type.name === 'image') {
-            return false; // Don't allow slash command inside image (since we support captions)
-          }
-        }
-
-        return true;
-      },
 
       command({ editor, range, props }) {
         if (!range) {
@@ -202,7 +208,6 @@ export const SuggestionMenu = ({
 
         const nodeAfter = view.state.selection.$to.nodeAfter;
         const overrideSpace = nodeAfter?.text?.startsWith(' ');
-
         const rangeToUse = { ...range };
 
         if (overrideSpace) {
@@ -222,11 +227,20 @@ export const SuggestionMenu = ({
             setInternalItems(props.items);
             setInternalQuery(props.query);
             setInternalRange(props.range);
-            // setInternalClientRect(props.clientRect?.() ?? null)
             setShow(true);
           },
 
           onUpdate: (props: SuggestionProps<SuggestionItem>) => {
+            if (
+              shouldCloseSuggestionForQuery(
+                internalSuggestionPropsRef.current.char,
+                props.query,
+              )
+            ) {
+              exitSuggestion(editor.view, normalizedPluginKey);
+              return;
+            }
+
             setInternalDecorationNode(
               (props.decorationNode as HTMLElement) ?? null,
             );
@@ -234,7 +248,6 @@ export const SuggestionMenu = ({
             setInternalItems(props.items);
             setInternalQuery(props.query);
             setInternalRange(props.range);
-            // setInternalClientRect(props.clientRect?.() ?? null)
           },
 
           onKeyDown: (props: SuggestionKeyDownProps) => {
@@ -246,13 +259,7 @@ export const SuggestionMenu = ({
           },
 
           onExit: () => {
-            setInternalDecorationNode(null);
-            setInternalCommand(null);
-            setInternalItems([]);
-            setInternalQuery('');
-            setInternalRange(null);
-            // setInternalClientRect(null)
-            setShow(false);
+            resetMenuState();
           },
         };
       },
@@ -266,7 +273,7 @@ export const SuggestionMenu = ({
         editor.unregisterPlugin(normalizedPluginKey);
       }
     };
-  }, [editor, normalizedPluginKey, closePopup]);
+  }, [editor, pluginKey, normalizedPluginKey, closePopup, resetMenuState]);
 
   const onSelect = useCallback(
     (item: SuggestionItem) => {
