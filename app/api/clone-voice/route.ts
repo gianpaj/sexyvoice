@@ -40,8 +40,9 @@ const ALLOWED_TYPES = [
   // Opus files (.opus) use audio/opus or audio/x-opus MIME types
   'audio/opus',
   'audio/x-opus',
-  // Microphone recordings often come in as WebM/Opus (sometimes reported as octet-stream)
+  // Microphone recordings often come in as WebM/Opus and may be reported as audio/webm or video/webm
   'audio/webm',
+  'video/webm',
   'application/octet-stream',
 ];
 
