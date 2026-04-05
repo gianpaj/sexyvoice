@@ -5,7 +5,7 @@ import type {
   GrokWrapperBoundaryKind,
   GrokWrapperCloseTag,
   GrokWrapperOpenTag,
-} from '@/lib/grok-tts-editor';
+} from '@/lib/tts-editor';
 
 export const WrapperBoundary = Node.create({
   addAttributes() {

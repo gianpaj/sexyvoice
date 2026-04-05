@@ -1,16 +1,18 @@
 'use client';
 
 import { TextSelection } from '@tiptap/pm/state';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import {
   type MouseEvent,
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 import {
   createWrapperBoundaryNode,
@@ -26,14 +28,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
 import {
   GROK_EMPTY_WRAPPER_TEXT,
   type GrokInstantTag,
   getGrokInstantTags,
   grokTextToTipTapDoc,
   grokTipTapDocToText,
-} from '@/lib/grok-tts-editor';
+} from '@/lib/tts-editor';
 import { cn } from '@/lib/utils';
+import { MobileToolbar } from './grok-tts/notion-like-editor-mobile-toolbar';
+import { NotionToolbarFloating } from './grok-tts/notion-like-editor-toolbar-floating';
+import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
+import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
 
 const INSTANT_TAGS = [
   { tag: '[pause]', label: 'pause', description: 'Brief pause' },
@@ -222,8 +229,8 @@ interface GrokDebugEntry {
 
 declare global {
   interface Window {
+    __SV_DEBUG_LOGS?: GrokDebugEntry[];
     __SV_GROK_DEBUG?: boolean;
-    __SV_GROK_DEBUG_LOGS?: GrokDebugEntry[];
   }
 }
 
@@ -314,9 +321,39 @@ function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
     timestamp: new Date().toISOString(),
   };
 
-  window.__SV_GROK_DEBUG_LOGS ??= [];
-  window.__SV_GROK_DEBUG_LOGS.push(entry);
+  window.__SV_DEBUG_LOGS ??= [];
+  window.__SV_DEBUG_LOGS.push(entry);
   console.debug('[grok-tts-debug]', entry);
+}
+
+/**
+ * EditorContent component that renders the actual editor
+ */
+export function EditorContentArea() {
+  const { editor } = useContext(EditorContext)!;
+  const { isDragging } = useUiEditorState(editor);
+
+  // useScrollToHash()
+
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <EditorContent
+      className="notion-like-editor-content mx-auto flex h-full w-full max-w-3xl flex-1 flex-col"
+      editor={editor}
+      role="presentation"
+      style={{
+        cursor: isDragging ? 'grabbing' : 'auto',
+      }}
+    >
+      <SlashDropdownMenu />
+      <NotionToolbarFloating />
+
+      {createPortal(<MobileToolbar />, document.body)}
+    </EditorContent>
+  );
 }
 
 export function GrokTTSEditor({
@@ -354,18 +391,19 @@ export function GrokTTSEditor({
       }),
       InstantTag,
       WrapperBoundary,
+      UiState,
     ],
     content: plainTextToDoc(value),
     editorProps: {
       attributes: {
-        'aria-label': placeholder ?? 'Grok TTS editor',
+        'aria-label': placeholder ?? 'TTS editor',
         role: 'textbox',
         'aria-multiline': 'true',
         class:
           'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
       },
       handleDOMEvents: {
-        keydown: (_view, event) => {
+        keydown: (_view) => {
           if (editor) {
             recordGrokDebug('handleKeyDown', editor);
           }
@@ -391,9 +429,9 @@ export function GrokTTSEditor({
             timestamp: new Date().toISOString(),
           };
 
-          window.__SV_GROK_DEBUG_LOGS ??= [];
-          window.__SV_GROK_DEBUG_LOGS.push(entry);
-          console.debug('[grok-tts-debug]', entry);
+          window.__SV_DEBUG_LOGS ??= [];
+          window.__SV_DEBUG_LOGS.push(entry);
+          console.debug('[tts-debug]', entry);
         }
 
         return false;
@@ -428,7 +466,7 @@ export function GrokTTSEditor({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.__SV_GROK_DEBUG_LOGS ??= [];
+      window.__SV_DEBUG_LOGS ??= [];
     }
   }, []);
 
@@ -594,7 +632,9 @@ export function GrokTTSEditor({
     <div className="w-full">
       <div className="space-y-2">
         <div className="relative min-h-[8rem] rounded-md border border-input bg-background p-3 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-          <EditorContent editor={editor} />
+          <EditorContext.Provider value={{ editor }}>
+            <EditorContentArea />
+          </EditorContext.Provider>
 
           {currentLength === 0 && placeholder && (
             <div className="pointer-events-none absolute top-3 left-3 text-muted-foreground text-sm">

@@ -10,7 +10,7 @@ import {
   grokTipTapDocToText,
   parseGrokTtsText,
   serializeGrokEditorTokens as serializeGrokTtsDoc,
-} from '@/lib/grok-tts-editor';
+} from '@/lib/tts-editor';
 
 function text(value: string): GrokTtsToken {
   return {
