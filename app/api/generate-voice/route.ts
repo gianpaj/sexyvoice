@@ -29,6 +29,7 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
+  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
@@ -403,28 +404,22 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Capture with rich context so we can diagnose WHY Gemini returned 200
-        // but produced no audio (MAX_TOKENS, SAFETY block, empty inlineData, etc.)
-        captureException(
-          new Error(
-            isProhibitedContent
-              ? 'Gemini 200 — prohibited content'
-              : 'Gemini 200 — no audio data',
-          ),
-          {
+        // Only capture non-PROHIBITED_CONTENT errors to Sentry.
+        // PROHIBITED_CONTENT is an expected user input block, not an error to report.
+        if (!isProhibitedContent) {
+          captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
               finishReason,
               blockReason,
               hasData: !!data,
               mimeType,
               model: modelUsed,
-              isProhibitedContent,
               textPreview: text.slice(0, 200),
               voice,
             },
             user: { id: user.id },
-          },
-        );
+          });
+        }
         throw new Error(
           isProhibitedContent
             ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
@@ -571,6 +566,10 @@ export async function POST(request: Request) {
         );
       }
 
+      const grokDollarAmount = isGrokVoice
+        ? calculateGrokTtsDollarAmount(text)
+        : undefined;
+
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const audioFileDBResult = await saveAudioFile({
@@ -612,6 +611,9 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
+        ...(grokDollarAmount === undefined
+          ? {}
+          : { dollarAmount: grokDollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
@@ -674,6 +676,24 @@ export async function POST(request: Request) {
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
+
+    // Check for transient errors (INTERNAL status) from Google API
+    if (Error.isError(error)) {
+      try {
+        const message = JSON.parse(error.message);
+        if (message.error?.status === 'INTERNAL') {
+          return NextResponse.json(
+            {
+              error:
+                'Voice generation service temporarily unavailable. Please retry.',
+            },
+            { status: 503 },
+          );
+        }
+      } catch {
+        // Not JSON or doesn't have the expected structure, continue to next check
+      }
+    }
 
     // if Gemini error
     if (Error.isError(error) && error.message.includes('googleapis')) {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  calculateGrokTtsDollarAmount,
   calculateReadingTime,
   capitalizeFirstLetter,
   cn,
@@ -66,13 +67,13 @@ describe('estimateCredits', () => {
   test('should estimate Grok credits by character buckets', () => {
     const text = 'a'.repeat(101);
     const credits = estimateCredits(text, 'eve', 'grok');
-    expect(credits).toBe(8); // 2 buckets at 4 credits each
+    expect(credits).toBe(200); // 2 buckets at 100 credits each
   });
 
   test('should count Grok tags toward billing estimate', () => {
     const text = '<fast>Hello</fast> [laugh]';
     const credits = estimateCredits(text, 'eve', 'grok');
-    expect(credits).toBe(4); // 27 characters = 1 bucket
+    expect(credits).toBe(100); // 27 characters = 1 bucket
   });
 });
 
@@ -82,11 +83,21 @@ describe('estimateGrokCredits', () => {
   });
 
   test('should charge one bucket for short text', () => {
-    expect(estimateGrokCredits('Hello world')).toBe(4);
+    expect(estimateGrokCredits('Hello world')).toBe(100);
   });
 
   test('should charge multiple buckets for longer text', () => {
-    expect(estimateGrokCredits('a'.repeat(250))).toBe(12);
+    expect(estimateGrokCredits('a'.repeat(250))).toBe(300);
+  });
+});
+
+describe('calculateGrokTtsDollarAmount', () => {
+  test('returns zero for empty text', () => {
+    expect(calculateGrokTtsDollarAmount('')).toBe(0);
+  });
+
+  test('calculates Grok TTS cost per character', () => {
+    expect(calculateGrokTtsDollarAmount('Hello [laugh]')).toBe(0.000055);
   });
 });
 
