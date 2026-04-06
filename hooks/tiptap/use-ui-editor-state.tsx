@@ -26,5 +26,3 @@ export function useUiEditorState(editor: Editor | null): UiState {
     }) ?? defaultUiState
   );
 }
-
-export default useUiEditorState;

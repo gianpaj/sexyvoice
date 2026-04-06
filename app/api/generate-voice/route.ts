@@ -26,11 +26,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import {
-  generateXaiTts,
-  getXaiFileExtension,
-  normalizeXaiTtsCodec,
-} from '@/lib/tts/xai';
+import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -173,12 +169,8 @@ export async function POST(request: Request) {
       abortController.abort();
     });
 
-    const requestedGrokCodec = normalizeXaiTtsCodec(outputCodec);
-    const fileExtension = isGeminiVoice
-      ? 'wav'
-      : isGrokVoice
-        ? getXaiFileExtension(requestedGrokCodec)
-        : 'wav';
+    // const requestedGrokCodec = normalizeXaiTtsCodec(outputCodec);
+    const fileExtension = isGeminiVoice ? 'wav' : isGrokVoice ? 'mp3' : 'wav';
     const filename = `${path}.${fileExtension}`;
     const result = await redis.get<string>(filename);
 
@@ -204,7 +196,7 @@ export async function POST(request: Request) {
     let genAIResponse: GenerateContentResponse | null = null;
     let modelUsed = '';
     let uploadUrl = '';
-    let selectedGrokCodec = requestedGrokCodec;
+    let selectedGrokCodec = outputCodec;
 
     if (isGeminiVoice) {
       let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -436,7 +428,7 @@ export async function POST(request: Request) {
           text,
           voiceId: voiceObj.name,
           language: voiceObj.language,
-          codec: requestedGrokCodec,
+          codec: outputCodec,
           signal: abortController.signal,
         });
         selectedGrokCodec = codec;
@@ -446,7 +438,7 @@ export async function POST(request: Request) {
           text,
           voice,
           model: voiceObj.model,
-          codec: requestedGrokCodec,
+          codec: outputCodec,
           language: voiceObj.language,
           errorData: error,
         };
@@ -459,7 +451,7 @@ export async function POST(request: Request) {
             voice,
             text,
             model: voiceObj.model,
-            codec: requestedGrokCodec,
+            codec: outputCodec,
             language: voiceObj.language,
             errorMessage: Error.isError(error) ? error.message : String(error),
             errorCause: Error.isError(error) ? error.cause : undefined,

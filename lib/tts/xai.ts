@@ -55,7 +55,7 @@ export function getXaiContentType(codec: XaiTtsCodec): string {
   switch (codec) {
     case 'wav':
       return 'audio/wav';
-    case 'mp3':
+    // case 'mp3':
     default:
       return 'audio/mpeg';
   }

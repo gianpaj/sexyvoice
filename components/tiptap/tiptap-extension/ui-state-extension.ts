@@ -35,7 +35,7 @@ export const UiState = Extension.create<UiState>({
 
   addStorage() {
     return {
-      uiState: { ...defaultUiState },
+      ...defaultUiState,
     };
   },
 
@@ -71,6 +71,6 @@ export const UiState = Extension.create<UiState>({
   },
 
   onCreate() {
-    this.storage = { ...defaultUiState };
+    Object.assign(this.storage, { ...defaultUiState });
   },
 });

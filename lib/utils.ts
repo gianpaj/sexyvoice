@@ -145,10 +145,7 @@ export function estimateCredits(
     return estimateGrokCredits(text);
   }
 
-  // Remove extra whitespace and split into words
-  const wordsSplit = text.trim().split(/\s+/).length;
-
-  return calculateCredits(wordsSplit, voice, model);
+  return calculateCredits(words, voice, model);
 }
 
 // Credit calculation constants for gpro voices

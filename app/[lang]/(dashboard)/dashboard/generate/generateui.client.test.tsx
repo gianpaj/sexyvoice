@@ -156,7 +156,6 @@ describe('GenerateUI', () => {
       expect.objectContaining({
         selectedVoice: geminiVoice,
         selectedStyle: expect.anything(),
-        selectedGrokCodec: undefined,
       }),
     );
   });
@@ -181,7 +180,6 @@ describe('GenerateUI', () => {
       expect.objectContaining({
         selectedVoice: grokVoice,
         selectedStyle: undefined,
-        selectedGrokCodec: 'mp3',
       }),
     );
   });
@@ -207,7 +205,6 @@ describe('GenerateUI', () => {
       expect.objectContaining({
         selectedVoice: replicateVoice,
         selectedStyle: undefined,
-        selectedGrokCodec: undefined,
       }),
     );
   });
@@ -287,7 +284,6 @@ describe('GenerateUI', () => {
       expect.objectContaining({
         selectedVoice: undefined,
         selectedStyle: undefined,
-        selectedGrokCodec: undefined,
       }),
     );
   });

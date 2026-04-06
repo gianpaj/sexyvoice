@@ -31,9 +31,7 @@ const buttonSizes = {
   large: 'h-10 px-2.5 text-base rounded-lg [&_svg]:h-5 [&_svg]:w-5',
 };
 
-export const ShortcutDisplay: React.FC<{ shortcuts: string[] }> = ({
-  shortcuts,
-}) => {
+const ShortcutDisplay: React.FC<{ shortcuts: string[] }> = ({ shortcuts }) => {
   if (shortcuts.length === 0) return null;
 
   return (
@@ -152,5 +150,3 @@ export const ButtonGroup = forwardRef<
   );
 });
 ButtonGroup.displayName = 'ButtonGroup';
-
-export default Button;

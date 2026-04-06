@@ -18,22 +18,6 @@ const Card = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
 );
 Card.displayName = 'Card';
 
-const CardHeader = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
-  ({ className, ...props }, ref) => {
-    return (
-      <div
-        className={cn(
-          'flex w-full shrink-0 items-center justify-between border-gray-800 border-b p-1.5',
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-CardHeader.displayName = 'CardHeader';
-
 const CardBody = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   ({ className, ...props }, ref) => {
     return (
@@ -86,24 +70,4 @@ const CardGroupLabel = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
 );
 CardGroupLabel.displayName = 'CardGroupLabel';
 
-const CardFooter = forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
-  ({ className, ...props }, ref) => {
-    return (
-      <div
-        className={cn('border-gray-800 border-t p-1.5', className)}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-CardFooter.displayName = 'CardFooter';
-
-export {
-  Card,
-  CardBody,
-  CardFooter,
-  CardGroupLabel,
-  CardHeader,
-  CardItemGroup,
-};
+export { Card, CardBody, CardGroupLabel, CardItemGroup };

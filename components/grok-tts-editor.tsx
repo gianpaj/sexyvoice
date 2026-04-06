@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 
 import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
 import {
@@ -42,7 +41,6 @@ import {
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
 import { cn } from '@/lib/utils';
-import { MobileToolbar } from './grok-tts/notion-like-editor-mobile-toolbar';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
 import type {
@@ -229,8 +227,6 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
           pluginKey={menu.pluginKey}
         />
       ))}
-
-      {createPortal(<MobileToolbar />, document.body)}
     </EditorContent>
   );
 }
@@ -517,12 +513,6 @@ export function GrokTTSEditor({
           <EditorContext.Provider value={{ editor }}>
             <EditorContentArea slashMenus={slashMenus} />
           </EditorContext.Provider>
-
-          {/*{currentLength === 0 && placeholder && (
-            <div className="pointer-events-none absolute top-3 left-3 text-muted-foreground text-sm">
-              {placeholder}
-            </div>
-          )}*/}
         </div>
 
         <div className="mt-2 flex items-center gap-2">
@@ -560,26 +550,6 @@ export function GrokTTSEditor({
                             ? tag.tag
                             : `[${tag.label}]`}
                         </div>
-                        <div className="text-muted-foreground">
-                          {
-                            {
-                              '[pause]': dict.effects.pause,
-                              '[long-pause]': dict.effects.longPause,
-                              '[laugh]': dict.effects.laugh,
-                              '[chuckle]': dict.effects.chuckle,
-                              '[giggle]': dict.effects.giggle,
-                              '[cry]': dict.effects.cry,
-                              '[sigh]': dict.effects.sigh,
-                              '[breath]': dict.effects.breath,
-                              '[inhale]': dict.effects.inhale,
-                              '[exhale]': dict.effects.exhale,
-                              '[tsk]': dict.effects.tsk,
-                              '[tongue-click]': dict.effects.tongueClick,
-                              '[lip-smack]': dict.effects.lipSmack,
-                              '[hum-tune]': dict.effects.humTune,
-                            }[tag.tag]
-                          }
-                        </div>
                       </button>
                     ))}
                   </div>
@@ -599,27 +569,6 @@ export function GrokTTSEditor({
                         type="button"
                       >
                         <div className="font-medium">
-                          {
-                            {
-                              '<soft>': dict.wrappingTags.soft,
-                              '<whisper>': dict.wrappingTags.whisper,
-                              '<loud>': dict.wrappingTags.loud,
-                              '<emphasis>': dict.wrappingTags.emphasis,
-                              '<slow>': dict.wrappingTags.slow,
-                              '<fast>': dict.wrappingTags.fast,
-                              '<higher-pitch>': dict.wrappingTags.higherPitch,
-                              '<lower-pitch>': dict.wrappingTags.lowerPitch,
-                              '<build-intensity>':
-                                dict.wrappingTags.buildIntensity,
-                              '<decrease-intensity>':
-                                dict.wrappingTags.decreaseIntensity,
-                              '<laugh-speak>': dict.wrappingTags.laughSpeak,
-                              '<sing-song>': dict.wrappingTags.singSong,
-                              '<singing>': dict.wrappingTags.singing,
-                            }[tag.tag]
-                          }
-                        </div>
-                        <div className="text-muted-foreground">
                           {
                             {
                               '<soft>': dict.wrappingTags.soft,

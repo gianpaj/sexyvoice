@@ -118,7 +118,7 @@ export function AudioGenerator({
       voice: selectedVoice?.name,
       styleVariant: isGeminiVoice ? selectedStyle : '',
     }),
-    [isGeminiVoice, isGrokVoice, selectedStyle, selectedVoice?.name, text],
+    [isGeminiVoice, selectedStyle, selectedVoice?.name, text],
   );
 
   const handleCancel = useCallback(() => {
