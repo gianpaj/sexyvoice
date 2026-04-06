@@ -38,7 +38,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
-import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import {
+  getCloneCharactersLimit,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -116,32 +119,35 @@ export default function NewVoiceClient({
   dict,
   lang,
   hasEnoughCredits,
+  isPaidUser,
 }: {
   dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
+  isPaidUser: boolean;
 }) {
   return (
     <AudioProvider>
       <NewVoiceClientInner
         dict={dict}
         hasEnoughCredits={hasEnoughCredits}
+        isPaidUser={isPaidUser}
         lang={lang}
       />
     </AudioProvider>
   );
 }
 
-const MAX_LENGTH = 500;
-
 function NewVoiceClientInner({
   dict,
   lang,
   hasEnoughCredits,
+  isPaidUser,
 }: {
   dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
+  isPaidUser: boolean;
 }) {
   const {
     convert: convertWithFFmpeg,
@@ -169,6 +175,10 @@ function NewVoiceClientInner({
   const usesVoxtral = useMemo(
     () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
     [selectedLocale.code],
+  );
+  const charactersLimit = useMemo(
+    () => getCloneCharactersLimit(selectedLocale.code, isPaidUser),
+    [isPaidUser, selectedLocale.code],
   );
 
   const audioDurationGuidance = useMemo(
@@ -529,7 +539,7 @@ function NewVoiceClientInner({
     setFFmpegError(null);
   };
 
-  const textIsOverLimit = text.length > MAX_LENGTH;
+  const textIsOverLimit = text.length > charactersLimit;
 
   return (
     <Card>
@@ -761,7 +771,7 @@ function NewVoiceClientInner({
                 <Textarea
                   disabled={status === 'generating'}
                   id="text-to-convert"
-                  maxLength={MAX_LENGTH + 30}
+                  maxLength={charactersLimit + 30}
                   onChange={(e) => setText(e.target.value)}
                   placeholder={dict.textAreaPlaceholder}
                   rows={5}
@@ -774,7 +784,7 @@ function NewVoiceClientInner({
                   [textIsOverLimit ? 'font-bold text-red-500' : ''],
                 )}
               >
-                {text.length} / {MAX_LENGTH}
+                {text.length} / {charactersLimit}
               </div>
             </div>
 

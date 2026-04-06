@@ -14,6 +14,7 @@ import {
 } from '@/lib/audio-converter';
 import {
   type CloneProvider,
+  getCloneCharactersLimit,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import PostHogClient from '@/lib/posthog';
@@ -46,8 +47,6 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
-const MAX_LENGTH_EN = 500;
-const MAX_LENGTH_MULTILANGUAGE = 300;
 const FALLBACK_MIN_DURATION = 10;
 const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
 const VOXTRAL_MIN_DURATION = 3;
@@ -270,14 +269,17 @@ async function parseFormData(request: Request): Promise<FormInput> {
   return { text, file: audioFile, locale: localeStr };
 }
 
-function validateTextLength(text: string, locale: string): void {
-  const maxLength = locale === 'en' ? MAX_LENGTH_EN : MAX_LENGTH_MULTILANGUAGE;
+function validateTextLength(
+  text: string,
+  locale: string,
+  isPaidUser: boolean,
+): void {
+  const maxLength = getCloneCharactersLimit(locale, isPaidUser);
 
   if (text.length > maxLength) {
-    const errorMessage =
-      locale === 'en'
-        ? 'Text exceeds the maximum length of 500 characters'
-        : `Text exceeds the maximum length of ${MAX_LENGTH_MULTILANGUAGE} characters for multilingual voice cloning`;
+    const errorMessage = VOXTRAL_SUPPORTED_LOCALE_CODES.has(locale)
+      ? `Text exceeds the maximum length of ${maxLength} characters for Voxtral voice cloning`
+      : `Text exceeds the maximum length of ${maxLength} characters for multilingual voice cloning`;
     throw createRouteError(errorMessage, 400);
   }
 }
@@ -358,7 +360,11 @@ function trimWavAudio(wavBuffer: Buffer, maxDurationSeconds: number): Buffer {
     const chunkId = wavBuffer.toString('ascii', offset, offset + 4);
     const chunkSize = wavBuffer.readUInt32LE(offset + 4);
 
-    if (chunkId === 'fmt ' && chunkSize >= 16 && offset + 8 + chunkSize <= wavBuffer.length) {
+    if (
+      chunkId === 'fmt ' &&
+      chunkSize >= 16 &&
+      offset + 8 + chunkSize <= wavBuffer.length
+    ) {
       numChannels = wavBuffer.readUInt16LE(offset + 10);
       sampleRate = wavBuffer.readUInt32LE(offset + 12);
       bitsPerSample = wavBuffer.readUInt16LE(offset + 22);
@@ -369,10 +375,15 @@ function trimWavAudio(wavBuffer: Buffer, maxDurationSeconds: number): Buffer {
     }
 
     // Advance; RIFF chunks are padded to even byte boundaries
-    offset += 8 + chunkSize + (chunkSize % 2 !== 0 ? 1 : 0);
+    offset += 8 + chunkSize + (chunkSize % 2 === 0 ? 0 : 1);
   }
 
-  if (dataOffset === -1 || sampleRate <= 0 || numChannels <= 0 || bitsPerSample <= 0) {
+  if (
+    dataOffset === -1 ||
+    sampleRate <= 0 ||
+    numChannels <= 0 ||
+    bitsPerSample <= 0
+  ) {
     return wavBuffer;
   }
 
@@ -579,9 +590,9 @@ async function processAudioFile(
     // Preserve null so validateAudioDuration can catch unknown-duration uploads.
     // When trimmed, cap at maxDurationSeconds since we know the file was shortened.
     duration:
-      duration !== null
-        ? Math.min(duration, constraints.maxDurationSeconds)
-        : null,
+      duration === null
+        ? null
+        : Math.min(duration, constraints.maxDurationSeconds),
   };
 }
 
@@ -861,7 +872,9 @@ export async function POST(request: Request) {
     referenceAudioFile = formInput.file;
 
     // Validate inputs
-    validateTextLength(text, locale);
+    const userHasPaid = await hasUserPaid(user.id);
+
+    validateTextLength(text, locale, userHasPaid);
     validateFileType(referenceAudioFile);
     validateFileSize(referenceAudioFile);
     validateLocale(locale);
@@ -888,7 +901,6 @@ export async function POST(request: Request) {
     const hash = await generateHash(
       `${locale}-${provider}-${text}-${processedAudio.audioHash}`,
     );
-    const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
     const path = `${basePath}/${locale}-${provider}-${hash}`;
     const filename = `${path}.wav`;

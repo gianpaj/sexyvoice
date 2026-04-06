@@ -99,6 +99,7 @@ const createFormDataWithAudio = (
 describe('Clone Voice API Route', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(queries.hasUserPaid).mockResolvedValue(false);
 
     const musicMetadata = await import('music-metadata');
     vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
@@ -164,8 +165,8 @@ describe('Clone Voice API Route', () => {
       );
     });
 
-    it('should return 400 when text exceeds maximum length for English', async () => {
-      const longText = 'a'.repeat(501); // Exceeds 500 char limit for English
+    it('should return 400 when free Voxtral text exceeds 1000 characters', async () => {
+      const longText = 'a'.repeat(1001);
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
@@ -182,16 +183,42 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toContain(
-        'Text exceeds the maximum length of 500 characters',
+        'Text exceeds the maximum length of 1000 characters',
       );
+      expect(json.serverMessage).toContain('Voxtral');
     });
 
-    it('should return 400 when text exceeds multilingual maximum length (300 chars)', async () => {
-      const longText = 'a'.repeat(301); // Exceeds 300 char limit for multilingual
+    it('should return 400 when paid Voxtral text exceeds 4000 characters', async () => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+
+      const longText = 'a'.repeat(4001);
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
-        'es',
+        'fr',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain(
+        'Text exceeds the maximum length of 4000 characters',
+      );
+      expect(json.serverMessage).toContain('Voxtral');
+    });
+
+    it('should return 400 when non-Voxtral text exceeds 300 characters', async () => {
+      const longText = 'a'.repeat(301);
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'ja',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -209,33 +236,8 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toContain('multilingual');
     });
 
-    it('should accept text up to 300 chars for multilingual locales', async () => {
-      const validText = 'a'.repeat(300); // Exactly 300 chars - at the limit
-      const formData = createFormDataWithAudio(
-        validText,
-        createMockAudioFile(),
-        'de',
-      );
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-
-      // Should not return 400 for text length validation
-      // Text validation should pass; other status codes (402, 500, etc.) are acceptable
-      if (response.status === 400) {
-        const json = await response.json();
-        expect(json.serverMessage).not.toContain(
-          'Text exceeds the maximum length of 300 characters',
-        );
-      }
-    });
-
-    it('should accept text up to 500 chars for English locale', async () => {
-      const validText = 'a'.repeat(500); // Exactly 500 chars - at the limit
+    it('should accept text up to 1000 chars for free Voxtral locales', async () => {
+      const validText = 'a'.repeat(1000);
       const formData = createFormDataWithAudio(
         validText,
         createMockAudioFile(),
@@ -254,15 +256,17 @@ describe('Clone Voice API Route', () => {
       if (response.status === 400) {
         const json = await response.json();
         expect(json.serverMessage).not.toContain(
-          'Text exceeds the maximum length of 500 characters',
+          'Text exceeds the maximum length of 1000 characters',
         );
       }
     });
 
-    it('should enforce 300 char limit for French multilingual', async () => {
-      const longText = 'Bonjour '.repeat(50); // Exceeds 300 chars
+    it('should accept text up to 4000 chars for paid Voxtral locales', async () => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+
+      const validText = 'Bonjour '.repeat(500);
       const formData = createFormDataWithAudio(
-        longText,
+        validText,
         createMockAudioFile(),
         'fr',
       );
@@ -273,14 +277,17 @@ describe('Clone Voice API Route', () => {
       });
 
       const response = await POST(request);
-      const json = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(json.serverMessage).toContain('300 characters');
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Text exceeds the maximum length of 4000 characters',
+        );
+      }
     });
 
-    it('should enforce 300 char limit for Japanese multilingual', async () => {
-      const longText = 'こんにちは'.repeat(100); // Exceeds 300 chars
+    it('should enforce 300 char limit for non-Voxtral multilingual locales', async () => {
+      const longText = 'こんにちは'.repeat(100);
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
@@ -440,7 +447,7 @@ describe('Clone Voice API Route', () => {
       wav.write('WAVE', 8);
       wav.write('fmt ', 12);
       wav.writeUInt32LE(16, 16);
-      wav.writeUInt16LE(1, 20);         // PCM
+      wav.writeUInt16LE(1, 20); // PCM
       wav.writeUInt16LE(numChannels, 22);
       wav.writeUInt32LE(sampleRate, 24);
       wav.writeUInt32LE(sampleRate * blockAlign, 28);
@@ -454,7 +461,8 @@ describe('Clone Voice API Route', () => {
       // reproduces the trimming logic inline to keep it self-contained.
       const maxSec = 35;
       const maxAudioBytes =
-        Math.floor((maxSec * sampleRate * blockAlign) / blockAlign) * blockAlign;
+        Math.floor((maxSec * sampleRate * blockAlign) / blockAlign) *
+        blockAlign;
       const expected = Buffer.alloc(44 + maxAudioBytes);
       wav.copy(expected, 0, 0, 44);
       expected.writeUInt32LE(36 + maxAudioBytes, 4);
@@ -486,38 +494,58 @@ describe('Clone Voice API Route', () => {
       const buf = Buffer.alloc(totalSize);
       let pos = 0;
 
-      buf.write('RIFF', pos); pos += 4;
-      buf.writeUInt32LE(totalSize - 8, pos); pos += 4;
-      buf.write('WAVE', pos); pos += 4;
+      buf.write('RIFF', pos);
+      pos += 4;
+      buf.writeUInt32LE(totalSize - 8, pos);
+      pos += 4;
+      buf.write('WAVE', pos);
+      pos += 4;
 
-      buf.write('fmt ', pos); pos += 4;
-      buf.writeUInt32LE(16, pos); pos += 4;
-      buf.writeUInt16LE(1, pos); pos += 2;           // PCM
-      buf.writeUInt16LE(numChannels, pos); pos += 2;
-      buf.writeUInt32LE(sampleRate, pos); pos += 4;
-      buf.writeUInt32LE(sampleRate * blockAlign, pos); pos += 4;
-      buf.writeUInt16LE(blockAlign, pos); pos += 2;
-      buf.writeUInt16LE(bitsPerSample, pos); pos += 2;
+      buf.write('fmt ', pos);
+      pos += 4;
+      buf.writeUInt32LE(16, pos);
+      pos += 4;
+      buf.writeUInt16LE(1, pos);
+      pos += 2; // PCM
+      buf.writeUInt16LE(numChannels, pos);
+      pos += 2;
+      buf.writeUInt32LE(sampleRate, pos);
+      pos += 4;
+      buf.writeUInt32LE(sampleRate * blockAlign, pos);
+      pos += 4;
+      buf.writeUInt16LE(blockAlign, pos);
+      pos += 2;
+      buf.writeUInt16LE(bitsPerSample, pos);
+      pos += 2;
 
-      buf.write('LIST', pos); pos += 4;
-      buf.writeUInt32LE(listChunkSize, pos); pos += 4;
-      listPayload.copy(buf, pos); pos += listChunkSize;
+      buf.write('LIST', pos);
+      pos += 4;
+      buf.writeUInt32LE(listChunkSize, pos);
+      pos += 4;
+      listPayload.copy(buf, pos);
+      pos += listChunkSize;
 
       const dataChunkHeaderOffset = pos;
-      buf.write('data', pos); pos += 4;
-      buf.writeUInt32LE(dataSize, pos); pos += 4;
+      buf.write('data', pos);
+      pos += 4;
+      buf.writeUInt32LE(dataSize, pos);
+      pos += 4;
 
       // The data samples start here
       const dataStart = pos;
       expect(dataStart).toBe(dataChunkHeaderOffset + 8);
 
       // Verify the chunk-walker would find the data chunk at the right offset
-      expect(buf.toString('ascii', dataChunkHeaderOffset, dataChunkHeaderOffset + 4)).toBe('data');
+      expect(
+        buf.toString('ascii', dataChunkHeaderOffset, dataChunkHeaderOffset + 4),
+      ).toBe('data');
       expect(buf.readUInt32LE(dataChunkHeaderOffset + 4)).toBe(dataSize);
 
       // The trimmed length should be less than the full buffer
       const maxSec = 35;
-      const maxBytes = Math.floor((maxSec * sampleRate * blockAlign) / blockAlign) * blockAlign;
+      const maxBytes =
+        Math.floor((maxSec * sampleRate * blockAlign) / blockAlign) *
+        blockAlign;
       expect(maxBytes).toBeLessThan(dataSize);
     });
 
