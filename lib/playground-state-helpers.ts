@@ -20,9 +20,8 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
     encodeToUrlParams: (state: PlaygroundState): string => {
       // Preserve existing search params from the current URL
       const existingParams =
-        typeof window !== 'undefined'
-          ? new URLSearchParams(window.location.search)
-          : new URLSearchParams();
+        typeof window === 'undefined'
+          ? new URLSearchParams() : new URLSearchParams(window.location.search);
       const params = new URLSearchParams(existingParams);
 
       let isDefaultPreset = false;

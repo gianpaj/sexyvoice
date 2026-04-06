@@ -15,7 +15,8 @@
   <a href="https://sexyvoice.featurebase.app">🗺️ Roadmap</a> •
   <a href="#-getting-started">🚀 Quick Start</a> •
   <a href="#-features">✨ Features</a> •
-  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a>
+  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a> •
+  <a href="./docs/devops.md">⚙️ DevOps Guide</a>
 </p>
 
 ---
@@ -53,6 +54,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **International Support**: Full i18n implementation powered by `next-intl` for global accessibility (EN/ES/DE/DA/IT/FR)
+- **Localized Site Banners**: Shared banner system for promos and announcements across landing, blog, and dashboard with independent dismiss state and one visible banner at a time
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
 - **Public Tools**: Free utility tools including audio transcription and format conversion
@@ -137,6 +139,11 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
       - `FAL_KEY` - Your fal.ai API key for voice cloning
       - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
+   - Real-time Calls (LiveKit)
+      - `LIVEKIT_URL`
+      - `LIVEKIT_API_KEY`
+      - `LIVEKIT_API_SECRET`
    - Stripe
       - `STRIPE_SECRET_KEY`
       - `STRIPE_WEBHOOK_SECRET`
@@ -145,6 +152,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `STRIPE_TOPUP_5_PRICE_ID`
       - `STRIPE_TOPUP_10_PRICE_ID`
       - `STRIPE_TOPUP_99_PRICE_ID`
+   - Banner and promotion configuration
+      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
+      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
+      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
+      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
+      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
+      - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+      - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
    - Telegram cronjob
       - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
@@ -156,26 +174,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-4. **Set up Vercel Edge Config** (optional, for production)
+   For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
 
-   Create an Edge Config in your Vercel project and add the `call-instructions` key with the following JSON structure:
-
-   ```json
-   {
-     "call-instructions": {
-       "defaultInstructions": "You are a ...",
-       "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
-       "presetInstructions": {
-         "soft-amanda": "You are a ...",
-         "hard-brandi": "You are a ..."
-       }
-     }
-   }
-   ```
-
-   The `presetInstructions` field is optional and allows overriding instructions for specific preset IDs.
-
-5. **Set up Supabase**
+4. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
@@ -183,14 +184,26 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    supabase db push
    ```
 
-6. **Start the development server**
+5. **Start the development server**
 
    ```bash
    pnpm dev
    ```
 
-7. **Open your browser**
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+
+### Banner System
+
+The app uses a shared banner system for both promotions and announcements:
+
+- `components/banner.tsx` renders the banner UI
+- `lib/banners/registry.ts` defines supported banners
+- `lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `app/[lang]/actions/banners.ts` handles dismissal cookies
+
+Banner copy is localized in `messages.promos.*` and `messages.announcements.*`.
+Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 ## 🧪 Development
 
@@ -300,6 +313,7 @@ We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
+- Review the [DevOps Guide](./docs/devops.md) for environment variables, deployment, infrastructure, and operational setup changes
 <!-- - Follow the code of conduct -->
 
 ### Setup

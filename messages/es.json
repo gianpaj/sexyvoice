@@ -56,6 +56,13 @@
   },
   "landing": {
     "latestPosts": "Ultimos Posts",
+    "blogDescription": "Guías, tutoriales y noticias sobre clonación de voz con IA, síntesis de texto a voz y tecnología de voz IA.",
+    "homeLabel": "Inicio",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "Aún no hay publicaciones disponibles.",
+    "minutesRead": "min de lectura",
+    "readMore": "Leer más",
+    "more": "Más publicaciones",
     "hero": {
       "title": "Voces Expresivas, Sin Censura",
       "subtitle": "Generador de IA texto a voz gratis para adultos.\nPerfecto para creadores de contenido y narradores. 😉",
@@ -78,7 +85,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Comienza con 10,000 créditos gratis (5 min de llamada) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Comienza con 10,000 créditos gratis ( ͡° ͜ʖ ͡°)",
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
       "action": "Crea tu primera voz"
@@ -113,7 +120,7 @@
           "questions": [
             {
               "question": "¿Qué idiomas soportan tus voces de IA?",
-              "answer": "El soporte de idiomas depende de la voz seleccionada.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:\n🇪🇬 Árabe (Egipcio),\n🇺🇸 Inglés (EE.UU.),\n🇫🇷 Francés (Francia),\n🇩🇪 Alemán (Alemania),\n🇺🇸 Español (EE.UU.),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesio (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇰🇷 Coreano (Corea),\n🇧🇷 Portugués (Brasil),\n🇷🇺 Ruso (Rusia),\n🇳🇱 Holandés (Países Bajos),\n🇵🇱 Polaco (Polonia),\n🇹🇭 Tailandés (Tailandia),\n🇹🇷 Turco (Turquía),\n🇻🇳 Vietnamita (Vietnam),\n🇷🇴 Rumano (Rumania),\n🇺🇦 Ucraniano (Ucrania),\n🇧🇩 Bengalí (Bangladesh),\n🇮🇳 Inglés/Hindi (India),\n🇮🇳 Marathi (India),\n🇮🇳 Tamil (India),\ny 🇮🇳 Telugu (India).\nOtras voces son específicas del idioma:\n🇬🇧 Dan (Inglés UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglés EE.UU.),\n🇪🇸 Javi (Español),\n🇺🇸 Josh (Inglés EE.UU.),\n🇺🇸 y Tara (Inglés EE.UU.).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
+              "answer": "El soporte de idiomas depende de la voz seleccionada.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\ny 🇻🇳 Vietnamita (Vietnam).\n\nOtras voces son específicas del idioma:\n🇬🇧 Dan (Inglés UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglés EE.UU.),\n🇪🇸 Javi (Español),\n🇺🇸 Josh (Inglés EE.UU.),\n🇺🇸 y Tara (Inglés EE.UU.).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
             },
             {
               "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
@@ -132,6 +139,10 @@
             {
               "question": "¿Puedo clonar mi propia voz?",
               "answer": "¡Sí! Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
+            },
+            {
+              "question": "¿Cómo se cobra la clonación de voz?",
+              "answer": "La clonación de voz se cobra según la cantidad de audio que generes, por lo que los textos más largos consumen más créditos. Cuesta más que la generación de voz normal porque las voces clonadas usan un modelo más caro para reproducir una voz específica con precisión."
             },
             {
               "question": "¿Qué idiomas soporta la clonación de voz?",
@@ -336,12 +347,52 @@
     "success": "Audio generado con éxito!",
     "textAreaPlaceholder": "Ingresa el texto que deseas convertir en voz...",
     "title": "Generar Audio",
+    "grok": {
+      "inlineEffectPlaceholder": "Insertar efecto en línea",
+      "wrappingEffectPlaceholder": "Envolver con etiqueta de estilo",
+      "formatPlaceholder": "Selecciona formato",
+      "effects": {
+        "pause": "[pause]",
+        "longPause": "[long-pause]",
+        "humTune": "[hum-tune]",
+        "laugh": "[laugh]",
+        "chuckle": "[chuckle]",
+        "giggle": "[giggle]",
+        "cry": "[cry]",
+        "tsk": "[tsk]",
+        "tongueClick": "[tongue-click]",
+        "lipSmack": "[lip-smack]",
+        "breath": "[breath]",
+        "inhale": "[inhale]",
+        "exhale": "[exhale]",
+        "sigh": "[sigh]"
+      },
+      "wrappingTags": {
+        "soft": "<soft>...</soft>",
+        "whisper": "<whisper>...</whisper>",
+        "loud": "<loud>...</loud>",
+        "buildIntensity": "<build-intensity>...</build-intensity>",
+        "decreaseIntensity": "<decrease-intensity>...</decrease-intensity>",
+        "higherPitch": "<higher-pitch>...</higher-pitch>",
+        "lowerPitch": "<lower-pitch>...</lower-pitch>",
+        "slow": "<slow>...</slow>",
+        "fast": "<fast>...</fast>",
+        "singSong": "<sing-song>...</sing-song>",
+        "singing": "<singing>...</singing>",
+        "laughSpeak": "<laugh-speak>...</laugh-speak>",
+        "emphasis": "<emphasis>...</emphasis>"
+      }
+    },
     "voiceSelector": {
       "title": "Seleccionar Voz",
       "description": "Elige entre las voces disponibles",
+      "featuredGroupLabel": "Destacadas",
+      "multilingualGroupLabel": "Multilingüe 🌍",
       "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
-      "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam)."
+      "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).",
+      "grokInfo": "Admite etiquetas expresivas en línea como [laugh] y etiquetas envolventes como <fast>...</fast>.",
+      "featuredBadge": "Destacada"
     }
   },
   "call": {
@@ -377,7 +428,7 @@
     "grokImagineIncluded": "Instrucciones de Grok Imagine incluidas",
     "addCustomCharacter": "Agregar personaje personalizado",
     "addCharacterLabel": "Agregar",
-    "upgradePremiumTooltip": "Actualiza para crear personajes personalizados",
+    "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Agregar una descripción...",
     "clickToAddDescription": "Haz clic para agregar una descripción...",
     "characterInstructions": "Instrucciones de __NAME__",
@@ -426,6 +477,7 @@
       "cancelButton": "Cancelar",
       "createButton": "Crear Personaje",
       "creatingButton": "Creando...",
+      "paidUserOnly": "Upgrade feature",
       "errorNameRequired": "El nombre es obligatorio",
       "errorVoiceRequired": "Por favor selecciona una voz",
       "playVoiceSample": "Reproducir muestra de voz",
@@ -442,7 +494,7 @@
     "errorCloning": "Error al clonar la voz",
     "errorTitle": "Error",
     "errorTooLarge": "El tamaño del archivo es demasiado grande. Por favor utiliza un archivo de audio más pequeño.",
-    "fileFormatsText": "MP3, WAV, M4A u OGG (máx. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG u OPUS (WhatsApp) (máx. __SIZE__)",
     "generating": "Generating",
     "languageLabel": "Idioma",
     "languageSelectPlaceholder": "Selecciona un idioma",
@@ -512,7 +564,7 @@
       "deleteAccount": {
         "button": "Eliminar cuenta",
         "confirmTitle": "¿Estás absolutamente seguro?",
-        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Datos asociados",
+        "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Uso de API\n• Personajes de llamada personalizados\n• Todos los datos asociados de nuestros servidores",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
         "continue": "Continuar"
@@ -561,6 +613,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis para adultos & texto a voz",
     "description": "Genera voces IA expresivas con emociones para contenido adulto en 24+ idiomas. Texto a voz gratis con clonación de voz y soporte NSFW. Empieza con créditos gratis – sin tarjeta requerida.",
+    "skipToMainContent": "Saltar al contenido principal",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
@@ -591,7 +644,8 @@
   "sidebar": {
     "profile": "Perfil",
     "signOut": "Cerrar sesión",
-    "freeTools": "Herramientas Gratuitas"
+    "freeTools": "Herramientas Gratuitas",
+    "subscriptionDiscount": "Obtén {discount}% de créditos extra con una suscripción"
   },
   "header": {
     "generate": "Generar",
@@ -697,6 +751,14 @@
       "pricing": {
         "bannerText": "❄️ Oferta de Invierno"
       }
+    }
+  },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "Las nuevas voces para generacion de voz ya estan disponibles, con mas control sobre el ritmo, las respiraciones, el tono, la velocidad y la intensidad.",
+      "ctaLoggedIn": "Probar voces",
+      "ctaLoggedOut": "Iniciar sesion",
+      "ariaLabelDismiss": "Cerrar anuncio de voces expresivas"
     }
   },
   "audioConverter": {

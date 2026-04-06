@@ -203,7 +203,7 @@ agent-browser snapshot -i  # Check result
 
 ```bash
 # Login once
-agent-browser open https://app.example.com/login
+agent-browser open https://localhost:3000/login
 agent-browser snapshot -i
 agent-browser fill @e1 "username"
 agent-browser fill @e2 "password"
@@ -213,7 +213,7 @@ agent-browser state save auth.json
 
 # Later sessions: load saved state
 agent-browser state load auth.json
-agent-browser open https://app.example.com/dashboard
+agent-browser open https://localhost:3000/dashboard
 ```
 
 ## Sessions (parallel browsers)

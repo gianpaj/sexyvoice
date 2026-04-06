@@ -19,7 +19,7 @@ describe('/api/v1 metadata endpoints', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.data).toHaveLength(2);
+    expect(json.data).toHaveLength(3);
     expect(json.data[0].id).toBe('gpro');
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
     expect(response.headers.get('request-id')).toBeTruthy();

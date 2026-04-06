@@ -1,12 +1,13 @@
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { NextIntlClientProvider } from 'next-intl';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import '../globals.css';
+
 import { Providers } from '../providers';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -34,7 +35,8 @@ export async function generateMetadata(
 
   if (!i18n.locales.includes(lang)) {
     return {
-      title: 'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults',
+      title:
+        'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan',
     };
   }
 
@@ -96,15 +98,18 @@ export async function generateMetadata(
   };
 }
 
-export default async function LangLayout({ children, params }: Readonly<Props>) {
+export default async function LangLayout({
+  children,
+  params,
+}: Readonly<Props>) {
   const { lang } = await params;
-  const messages = await getMessages({ locale: lang });
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
     <html lang={lang}>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
-          Skip to main content
+          {messages.pages.skipToMainContent}
         </a>
         {process.env.NODE_ENV === 'production' && (
           <>

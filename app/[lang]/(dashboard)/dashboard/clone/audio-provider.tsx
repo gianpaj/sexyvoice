@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
+import { attemptPlayback } from '@/lib/media-playback';
+
 interface AudioContextType {
   isPlaying: boolean;
   pause: () => void;
@@ -28,7 +30,7 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
   const [url, setUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  const setUrlAndPlay = (url: string) => {
+  const setUrlAndPlay = async (url: string) => {
     // Properly cleanup previous audio
     if (audioRef.current) {
       audioRef.current.pause();
@@ -46,20 +48,10 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
     });
 
     // Handle play promise to catch AbortError
-    const playPromise = newAudio.play();
     setIsPlaying(true);
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          // newAudio.pause();
-        })
-        .catch((error) => {
-          // Handle abort error silently or log if needed
-          if (error.name !== 'AbortError') {
-            console.error('Audio play error:', error);
-          }
-        });
-    }
+    await attemptPlayback(() => newAudio.play(), () => {
+      setIsPlaying(false);
+    });
   };
 
   const pause = () => {
@@ -67,25 +59,15 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
     setIsPlaying(false);
   };
 
-  const play = () => {
-    if (url && audioRef.current) {
-      const promise = audioRef.current.play();
+  const play = async () => {
+    if (url) {
+      const audio = audioRef.current;
+      if (!audio) return;
+
       setIsPlaying(true);
-      if (promise !== undefined) {
-        promise.catch((error: unknown) => {
-          if (error instanceof Error && error.name === 'AbortError') {
-            // Expected when pause() is called before play() resolves — ignore silently
-            return;
-          }
-          if (error instanceof Error && error.name === 'NotAllowedError') {
-            // iOS blocks autoplay when the user gesture context is lost — reset state silently
-            setIsPlaying(false);
-            return;
-          }
-          console.error('Audio play error:', error);
-          setIsPlaying(false);
-        });
-      }
+      await attemptPlayback(() => audio.play(), () => {
+        setIsPlaying(false);
+      });
     }
   };
 

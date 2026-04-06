@@ -1,6 +1,8 @@
-import { fal } from '@fal-ai/client';
+import { randomUUID } from 'node:crypto';
+import { Mistral } from '@mistralai/mistralai';
 import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
+import { parseBuffer } from 'music-metadata';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
@@ -10,7 +12,10 @@ import {
   isConversionSupported,
   needsConversion,
 } from '@/lib/audio-converter';
-import { APIError, APIErrorResponse } from '@/lib/error-ts';
+import {
+  type CloneProvider,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -22,7 +27,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits } from '@/lib/utils';
+import { estimateCredits, getDollarCost } from '@/lib/utils';
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -32,15 +37,21 @@ const ALLOWED_TYPES = [
   'audio/x-wav',
   'audio/m4a',
   'audio/x-m4a',
-  // Microphone recordings often come in as WebM/Opus (sometimes reported as octet-stream)
+  // Opus files (.opus) use audio/opus or audio/x-opus MIME types
+  'audio/opus',
+  'audio/x-opus',
+  // Microphone recordings often come in as WebM/Opus and may be reported as audio/webm or video/webm
   'audio/webm',
+  'video/webm',
   'application/octet-stream',
 ];
 
 const MAX_LENGTH_EN = 500;
 const MAX_LENGTH_MULTILANGUAGE = 300;
-const MIN_DURATION = 10;
-const MAX_DURATION = 5 * 60; // 5 minutes
+const FALLBACK_MIN_DURATION = 10;
+const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
+const VOXTRAL_MIN_DURATION = 3;
+const VOXTRAL_MAX_DURATION = 25;
 
 // Replicate multilinguage supports the following languages
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
@@ -71,7 +82,7 @@ const SUPPORTED_LOCALE_CODES = [
   { code: 'zh', value: 'chinese' },
 ];
 
-export const maxDuration = 320; // seconds - fluid compute is enabled
+export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // ============================================================================
 // Types
@@ -88,10 +99,69 @@ interface ReplicateError {
 
 type ReplicateResponse = ReplicateOutput | ReplicateError;
 
+interface CloneProviderConstraints {
+  maxDurationSeconds: number;
+  minDurationSeconds: number;
+}
+
 interface FormInput {
   file: File;
   locale: string;
   text: string;
+}
+
+class RouteError extends Error {
+  code?: string;
+  status: number;
+  serverMessage: string;
+
+  constructor(serverMessage: string, status: number, code?: string) {
+    super(`${serverMessage} (${status})`);
+    this.name = 'RouteError';
+    this.status = status;
+    this.serverMessage = serverMessage;
+    this.code = code;
+  }
+}
+
+let mistralClient: Mistral | null = null;
+
+function getMistralClient(): Mistral {
+  const apiKey = process.env.MISTRAL_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('MISTRAL_API_KEY is not configured');
+  }
+
+  if (!mistralClient) {
+    mistralClient = new Mistral({ apiKey });
+  }
+
+  return mistralClient;
+}
+
+function createRouteError(
+  serverMessage: string,
+  status: number,
+  code?: string,
+): RouteError {
+  return new RouteError(serverMessage, status, code);
+}
+
+function routeErrorResponse(
+  serverMessage: string,
+  status: number,
+  code?: string,
+) {
+  return NextResponse.json(
+    {
+      error: `${serverMessage} (${status})`,
+      serverMessage,
+      status,
+      code,
+    },
+    { status },
+  );
 }
 
 // ============================================================================
@@ -107,13 +177,34 @@ const sanitizeFilename = (filename: string): string => {
     .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
 };
 
+async function generateBufferHash(buffer: Buffer): Promise<string> {
+  // Use a content-based SHA-256 hash so identical uploads produce the same cache key.
+  // This allows R2/Redis entries to be reused deterministically instead of depending on timestamps.
+  // `new Uint8Array(buffer)` creates a view over the existing Buffer data here, so it does not
+  // materially increase memory usage beyond hashing the already in-memory upload.
+  const data = new Uint8Array(buffer);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function getAudioDuration(
   fileBuffer: Buffer,
   mimeType: string,
 ): Promise<number | null> {
   try {
-    const mm = await import('music-metadata');
-    const metadata = await mm.parseBuffer(fileBuffer, mimeType);
+    const metadata = await parseBuffer(
+      fileBuffer,
+      {
+        mimeType,
+        size: fileBuffer.length,
+      },
+      {
+        duration: true,
+      },
+    );
+
     return metadata.format.duration ?? null;
   } catch (_e) {
     return null;
@@ -124,14 +215,33 @@ async function getAudioDuration(
 // Validation Functions
 // ============================================================================
 
+function isVoxtralCloneLocale(locale: string): boolean {
+  return VOXTRAL_SUPPORTED_LOCALE_CODES.has(locale);
+}
+
+function resolveCloneProvider(locale: string): CloneProvider {
+  return isVoxtralCloneLocale(locale) ? 'mistral' : 'replicate';
+}
+
+function getCloneProviderConstraints(
+  provider: CloneProvider,
+): CloneProviderConstraints {
+  if (provider === 'mistral') {
+    return {
+      minDurationSeconds: VOXTRAL_MIN_DURATION,
+      maxDurationSeconds: VOXTRAL_MAX_DURATION,
+    };
+  }
+
+  return {
+    minDurationSeconds: FALLBACK_MIN_DURATION,
+    maxDurationSeconds: FALLBACK_MAX_DURATION,
+  };
+}
+
 function validateContentType(contentType: string): void {
   if (!contentType.startsWith('multipart/form-data')) {
-    throw new APIError(
-      'Content-Type must be multipart/form-data',
-      new Response('Content-Type must be multipart/form-data', {
-        status: 400,
-      }),
-    );
+    throw createRouteError('Content-Type must be multipart/form-data', 400);
   }
 }
 
@@ -147,19 +257,14 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const localeStr = typeof locale === 'string' ? locale : '';
 
   if (!(text && audioFile)) {
-    throw new APIError(
+    throw createRouteError(
       'Missing required parameters: text and audio file',
-      new Response('Missing required parameters: text and audio file', {
-        status: 400,
-      }),
+      400,
     );
   }
 
   if (!localeStr) {
-    throw new APIError(
-      'Missing required parameter: locale',
-      new Response('Missing required parameter: locale', { status: 400 }),
-    );
+    throw createRouteError('Missing required parameter: locale', 400);
   }
 
   return { text, file: audioFile, locale: localeStr };
@@ -173,10 +278,7 @@ function validateTextLength(text: string, locale: string): void {
       locale === 'en'
         ? 'Text exceeds the maximum length of 500 characters'
         : `Text exceeds the maximum length of ${MAX_LENGTH_MULTILANGUAGE} characters for multilingual voice cloning`;
-    throw new APIError(
-      errorMessage,
-      new Response(errorMessage, { status: 400 }),
-    );
+    throw createRouteError(errorMessage, 400);
   }
 }
 
@@ -184,11 +286,9 @@ function validateFileType(file: File): string {
   const normalizedFileType = file.type.split(';')[0]?.trim().toLowerCase();
 
   if (!ALLOWED_TYPES.includes(normalizedFileType)) {
-    throw new APIError(
-      'Invalid file type. Only MP3, OGG, M4A, or WAV allowed.',
-      new Response('Invalid file type. Only MP3, OGG, M4A, or WAV allowed.', {
-        status: 400,
-      }),
+    throw createRouteError(
+      'Invalid file type. Only MP3, OGG, Opus, M4A, WAV, or WebM allowed.',
+      400,
     );
   }
 
@@ -199,45 +299,49 @@ function validateFileSize(file: File): void {
   if (file.size > CLONING_FILE_MAX_SIZE) {
     const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
     const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
-    throw new APIError(
-      errorMessage,
-      new Response(errorMessage, { status: 413 }),
-    );
+    throw createRouteError(errorMessage, 413);
   }
 }
 
-function validateAudioDuration(duration: number | null): void {
+function validateAudioDuration(
+  duration: number | null,
+  provider: CloneProvider,
+): void {
   if (duration === null) {
-    throw new APIError(
+    throw createRouteError(
       'Could not determine audio duration.',
-      new Response('Could not determine audio duration.', { status: 400 }),
+      400,
+      'clone_audio_duration_unknown',
     );
   }
 
-  if (duration < MIN_DURATION || duration > MAX_DURATION) {
-    throw new APIError(
-      `Audio must be between ${MIN_DURATION} seconds and ${MAX_DURATION / 60} minutes.`,
-      new Response(
-        `Audio must be between ${MIN_DURATION} seconds and ${MAX_DURATION / 60} minutes.`,
-        { status: 400 },
-      ),
+  const constraints = getCloneProviderConstraints(provider);
+
+  if (
+    duration < constraints.minDurationSeconds ||
+    duration > constraints.maxDurationSeconds
+  ) {
+    const errorMessage =
+      provider === 'mistral'
+        ? `Reference audio must be between ${constraints.minDurationSeconds} and ${constraints.maxDurationSeconds} seconds for voice cloning.`
+        : `Audio must be between ${constraints.minDurationSeconds} seconds and ${constraints.maxDurationSeconds / 60} minutes.`;
+
+    throw createRouteError(
+      errorMessage,
+      400,
+      provider === 'mistral'
+        ? 'clone_audio_duration_invalid_voxtral'
+        : 'clone_audio_duration_invalid_fallback',
     );
   }
 }
 
 function validateLocale(locale: string): void {
-  if (locale === 'en') {
-    return; // English is always supported (uses fal.ai)
-  }
-
   const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
   if (!localeConfig) {
-    throw new APIError(
+    throw createRouteError(
       `Unsupported language for voice cloning: ${locale}. Supported languages are: ${SUPPORTED_LOCALE_CODES.map((l) => l.code).join(', ')}`,
-      new Response(
-        `Unsupported language for voice cloning: ${locale}. Supported languages are: ${SUPPORTED_LOCALE_CODES.map((l) => l.code).join(', ')}`,
-        { status: 400 },
-      ),
+      400,
     );
   }
 }
@@ -255,12 +359,9 @@ async function validateCredits(
       user: { id: userId, email: userEmail },
       extra: { text, estimate, currentCreditsAmount: currentAmount },
     });
-    throw new APIError(
+    throw createRouteError(
       `Insufficient credits. You need ${estimate} credits to generate this audio`,
-      new Response(
-        `Insufficient credits. You need ${estimate} credits to generate this audio`,
-        { status: 402 },
-      ),
+      402,
     );
   }
 
@@ -271,11 +372,17 @@ async function validateCredits(
 // Audio Processing Functions
 // ============================================================================
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: large
 async function processAudioFile(
   file: File,
   locale: string,
   userId: string,
-): Promise<{ buffer: Buffer; mimeType: string; duration: number }> {
+): Promise<{
+  audioHash: string;
+  buffer: Buffer;
+  duration: number | null;
+  mimeType: string;
+}> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
@@ -301,15 +408,14 @@ async function processAudioFile(
   let processedBuffer = buffer;
   let processedMimeType = normalizedMimeType;
 
-  // Convert to WAV for non-English locales if needed
-  if (locale !== 'en' && needsConversion(normalizedMimeType)) {
+  const provider = resolveCloneProvider(locale);
+
+  // Convert to WAV for providers that need normalized reference audio
+  if (provider === 'mistral' && needsConversion(normalizedMimeType)) {
     if (!(isMicAudio || isConversionSupported(normalizedMimeType, file.name))) {
-      throw new APIError(
+      throw createRouteError(
         'Unsupported audio format for non-English voice cloning. Please use MP3, OGG/OPUS, WEBM, or WAV.',
-        new Response(
-          'Unsupported audio format for non-English voice cloning. Please use MP3, OGG/OPUS, WEBM, or WAV.',
-          { status: 400 },
-        ),
+        400,
       );
     }
 
@@ -355,60 +461,73 @@ async function processAudioFile(
       });
 
       const errorMsg =
-        normalizedMimeType === 'audio/webm'
+        normalizedMimeType === 'audio/webm' ||
+        normalizedMimeType === 'video/webm'
           ? 'WebM audio must be converted to WAV on the client before uploading. Please try recording again.'
-          : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, or WAV';
+          : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, Opus, or WAV';
 
-      throw new APIError(errorMsg, new Response(errorMsg, { status: 500 }));
+      throw createRouteError(errorMsg, 500);
     }
   }
 
   const duration = await getAudioDuration(processedBuffer, processedMimeType);
-  validateAudioDuration(duration);
+  const audioHash = await generateBufferHash(processedBuffer);
 
   return {
+    audioHash,
     buffer: processedBuffer,
     mimeType: processedMimeType,
-    duration: duration as number,
+    duration,
   };
-}
-
-async function uploadReferenceAudio(
-  file: File,
-  processedBuffer: Buffer,
-  processedMimeType: string,
-  userId: string,
-): Promise<{ url: string; blobUrl: string }> {
-  const isMicAudio = file.name
-    .toLowerCase()
-    .startsWith('microphone-recording.');
-  const referenceAudioFilename = sanitizeFilename(file.name);
-
-  const processedFilename =
-    processedMimeType === 'audio/wav' &&
-    !referenceAudioFilename.endsWith('.wav')
-      ? `${referenceAudioFilename.replace(/\.[^/.]+$/, '')}.wav`
-      : referenceAudioFilename;
-
-  const timestamp = isMicAudio ? `-${Date.now().toString()}` : '';
-  const blobUrl = `clone-voice-input/${userId}${timestamp}-${processedFilename}`;
-
-  // Check if already uploaded
-  const existingAudio = await redis.get<string>(blobUrl);
-  if (existingAudio) {
-    return { url: existingAudio, blobUrl };
-  }
-
-  // Upload to R2
-  const url = await uploadFileToR2(blobUrl, processedBuffer, processedMimeType);
-  await redis.set(blobUrl, url);
-
-  return { url, blobUrl };
 }
 
 // ============================================================================
 // Voice Generation Functions
 // ============================================================================
+
+async function generateVoiceWithMistral(
+  text: string,
+  referenceAudioBuffer: Buffer,
+): Promise<{ buffer: Buffer; modelUsed: string; requestId: string }> {
+  const model = 'voxtral-mini-tts-2603';
+  const client = getMistralClient();
+
+  const response = await client.audio.speech.complete({
+    model,
+    input: text,
+    refAudio: referenceAudioBuffer.toString('base64'),
+    responseFormat: 'wav',
+  });
+
+  const audioData = response.audioData;
+  if (!audioData) {
+    throw new Error('Mistral Voxtral response did not include audio data');
+  }
+
+  let buffer: Buffer;
+  if (typeof audioData === 'string') {
+    buffer = Buffer.from(audioData, 'base64');
+  } else {
+    buffer = Buffer.from(audioData);
+  }
+
+  if (buffer.length === 0) {
+    throw new Error('Mistral Voxtral response returned empty audio data');
+  }
+
+  const riffHeader = buffer.subarray(0, 4).toString('ascii');
+  const waveHeader = buffer.subarray(8, 12).toString('ascii');
+
+  if (riffHeader !== 'RIFF' || waveHeader !== 'WAVE') {
+    throw new Error('Mistral Voxtral response did not return a valid WAV file');
+  }
+
+  return {
+    buffer,
+    modelUsed: model,
+    requestId: randomUUID(),
+  };
+}
 
 async function generateVoiceWithReplicate(
   text: string,
@@ -510,6 +629,7 @@ async function uploadGeneratedAudio(
 async function runBackgroundTasks(
   userId: string,
   estimate: number,
+  provider: CloneProvider,
   audioFileData: {
     filename: string;
     text: string;
@@ -546,8 +666,8 @@ async function runBackgroundTasks(
   if (audioFileDBResult.error) {
     const errorObj = {
       text: audioFileData.text,
-      audioReferenceUrl: audioFileData.url,
-      model: 'chatterbox-tts',
+      generatedAudioUrl: audioFileData.url,
+      model: audioFileData.modelUsed,
       errorData: audioFileDBResult.error,
     };
     const error = new Error(
@@ -568,7 +688,9 @@ async function runBackgroundTasks(
     unit: 'operation',
     quantity: 1,
     creditsUsed: estimate,
+    dollarAmount: getDollarCost(provider, estimate, audioFileData.text),
     metadata: {
+      provider,
       model: audioFileData.modelUsed,
       locale: audioFileData.locale,
       textPreview: audioFileData.text.slice(0, 100),
@@ -579,18 +701,21 @@ async function runBackgroundTasks(
       userHasPaid,
     },
   });
-
   const posthog = PostHogClient();
   posthog.capture({
     distinctId: userId,
     event: 'clone-voice',
     properties: {
+      provider,
       predictionId: audioFileData.requestId,
+      textPreview: audioFileData.text.slice(0, 100),
       model: audioFileData.modelUsed,
+      audioDuration: audioFileData.duration,
       text: audioFileData.text,
       locale: audioFileData.locale,
-      audioReferenceUrl: audioFileData.url,
+      generatedAudioUrl: audioFileData.url,
       credits_used: estimate,
+      userHasPaid,
     },
   });
   await posthog.shutdown();
@@ -602,7 +727,6 @@ async function runBackgroundTasks(
 
 export async function POST(request: Request) {
   let text = '';
-  let audioReferenceUrl: string | null = '';
   let locale = '';
   let duration: number | null = null;
   let modelUsed = '';
@@ -615,7 +739,7 @@ export async function POST(request: Request) {
     const user = data?.user;
 
     if (!user) {
-      return APIErrorResponse('User not found', 401);
+      return routeErrorResponse('User not found', 401);
     }
 
     setUser({
@@ -646,79 +770,75 @@ export async function POST(request: Request) {
     );
 
     // Process audio file
+    const provider = resolveCloneProvider(locale);
+
     const processedAudio = await processAudioFile(
       referenceAudioFile,
       locale,
       user.id,
     );
+    validateAudioDuration(processedAudio.duration, provider);
     duration = processedAudio.duration;
 
-    // Upload reference audio
-    const { url: referenceUrl, blobUrl } = await uploadReferenceAudio(
-      referenceAudioFile,
-      processedAudio.buffer,
-      processedAudio.mimeType,
-      user.id,
-    );
-    audioReferenceUrl = referenceUrl;
-
-    // Generate output filename
+    // Generate deterministic cache key by audio hash, text, and locale
     const hash = await generateHash(
-      `${locale}-${text}-${blobUrl}-${Date.now()}`,
+      `${locale}-${provider}-${text}-${processedAudio.audioHash}`,
     );
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
-    const path = `${basePath}/${hash}`;
+    const path = `${basePath}/${locale}-${provider}-${hash}`;
     const filename = `${path}.wav`;
+
+    const cachedOutputUrl = await redis.get<string>(filename);
+    if (cachedOutputUrl) {
+      return NextResponse.json(
+        {
+          url: cachedOutputUrl,
+          creditsUsed: 0,
+          creditsRemaining: currentAmount || 0,
+        },
+        { status: 200 },
+      );
+    }
 
     // Generate voice
     let outputUrl: string;
     let requestId: string;
 
-    if (locale === 'en') {
-      // English: Use fal.ai
-      const model = 'fal-ai/chatterbox/text-to-speech' as `${string}/${string}`;
-      const input = {
-        seed: 0,
+    if (provider === 'mistral') {
+      const result = await generateVoiceWithMistral(
         text,
-        cfg_weight: 0.5,
-        temperature: 0.8,
-        exaggeration: 0.5,
-        audio_url: audioReferenceUrl,
-      };
-
-      const falResult = await fal.subscribe(model, {
-        input,
-        logs: false,
-        abortSignal: request.signal,
-      });
-
-      const falData = falResult.data as {
-        audio: {
-          url: string;
-          content_type: string;
-          file_name: string;
-          file_size: number;
-        };
-      };
-
-      const audioResponse = await fetch(falData.audio.url);
-      const audioBuffer = await audioResponse.arrayBuffer();
-
-      outputUrl = await uploadGeneratedAudio(
-        Buffer.from(audioBuffer),
-        filename,
-        'audio/mpeg',
+        processedAudio.buffer,
       );
 
-      modelUsed = model;
-      requestId = falResult.requestId;
+      outputUrl = await uploadGeneratedAudio(
+        result.buffer,
+        filename,
+        'audio/wav',
+      );
+
+      modelUsed = result.modelUsed;
+      requestId = result.requestId;
     } else {
-      // Non-English: Use Replicate
+      const referenceAudioFilename = sanitizeFilename(referenceAudioFile.name);
+      const processedFilename =
+        processedAudio.mimeType === 'audio/wav' &&
+        !referenceAudioFilename.endsWith('.wav')
+          ? `${referenceAudioFilename.replace(/\.[^/.]+$/, '')}.wav`
+          : referenceAudioFilename;
+
+      const blobUrl = `clone-voice-input/${user.id}-${processedAudio.audioHash}-${processedFilename}`;
+
+      const referenceAudioUrl = await uploadFileToR2(
+        blobUrl,
+        processedAudio.buffer,
+        processedAudio.mimeType,
+      );
+
       const result = await generateVoiceWithReplicate(
         text,
         locale,
-        audioReferenceUrl,
+        referenceAudioUrl,
       );
 
       outputUrl = await uploadGeneratedAudio(
@@ -733,7 +853,7 @@ export async function POST(request: Request) {
 
     // Background tasks
     after(async () => {
-      await runBackgroundTasks(user.id, estimate, {
+      await runBackgroundTasks(user.id, estimate, provider, {
         filename,
         text,
         url: outputUrl,
@@ -754,21 +874,13 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    // Handle APIError with proper status code
-    if (error instanceof APIError) {
-      return NextResponse.json(
-        {
-          error: error.message,
-          serverMessage: error.serverMessage,
-          status: error.status,
-        },
-        { status: error.status },
-      );
+    if (error instanceof RouteError) {
+      return routeErrorResponse(error.serverMessage, error.status, error.code);
     }
 
     const errorObj = {
       text,
-      audioReferenceUrl,
+      locale,
       errorData: error,
     };
     captureException(error, {

@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  calculateReadingTime,
   capitalizeFirstLetter,
   cn,
+  countWords,
   estimateCredits,
+  estimateGrokCredits,
   formatDate,
+  getTtsProvider,
   nanoid,
 } from '../lib/utils';
 
@@ -57,6 +61,79 @@ describe('estimateCredits', () => {
       'Oh my, <pants> <moaning> oh <gasp> <moaning> oh oh <breathing> <moaning> oh oh oh <sigh> <moaning> wow. that was hot';
     const credits = estimateCredits(text, 'tara');
     expect(credits).toBe(480); // 20 words with 4x multiplier
+  });
+
+  test('should estimate Grok credits by character buckets', () => {
+    const text = 'a'.repeat(101);
+    const credits = estimateCredits(text, 'eve', 'grok');
+    expect(credits).toBe(8); // 2 buckets at 4 credits each
+  });
+
+  test('should count Grok tags toward billing estimate', () => {
+    const text = '<fast>Hello</fast> [laugh]';
+    const credits = estimateCredits(text, 'eve', 'grok');
+    expect(credits).toBe(4); // 27 characters = 1 bucket
+  });
+});
+
+describe('estimateGrokCredits', () => {
+  test('should return 0 for empty text', () => {
+    expect(estimateGrokCredits('')).toBe(0);
+  });
+
+  test('should charge one bucket for short text', () => {
+    expect(estimateGrokCredits('Hello world')).toBe(4);
+  });
+
+  test('should charge multiple buckets for longer text', () => {
+    expect(estimateGrokCredits('a'.repeat(250))).toBe(12);
+  });
+});
+
+describe('getTtsProvider', () => {
+  test('returns gemini for gpro', () => {
+    expect(getTtsProvider('gpro')).toBe('gemini');
+  });
+
+  test('returns grok for grok', () => {
+    expect(getTtsProvider('grok')).toBe('grok');
+  });
+
+  test('returns replicate for unknown models', () => {
+    expect(getTtsProvider('some-owner/some-model')).toBe('replicate');
+  });
+
+  test('returns replicate when model is undefined', () => {
+    expect(getTtsProvider()).toBe('replicate');
+  });
+});
+
+describe('countWords', () => {
+  test('returns zero for blank text', () => {
+    expect(countWords('   \n\t  ')).toBe(0);
+  });
+
+  test('counts words across repeated whitespace', () => {
+    expect(countWords('Hello     world\nfrom\tSexyVoice')).toBe(4);
+  });
+});
+
+describe('calculateReadingTime', () => {
+  test('rounds up to the next minute', () => {
+    expect(calculateReadingTime(201)).toBe(2);
+  });
+
+  test('returns zero when no words are present', () => {
+    expect(calculateReadingTime(0)).toBe(0);
+  });
+
+  test('throws when words per minute is zero or negative', () => {
+    expect(() => calculateReadingTime(100, 0)).toThrow(
+      'wordsPerMinute must be greater than 0',
+    );
+    expect(() => calculateReadingTime(100, -1)).toThrow(
+      'wordsPerMinute must be greater than 0',
+    );
   });
 });
 

@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
+import type { CloneProvider } from '@/lib/clone/constants';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -30,6 +32,50 @@ export function formatDate(
   });
 }
 
+export type TtsProvider = 'gemini' | 'grok' | 'replicate';
+
+const DEFAULT_CREDIT_MULTIPLIER = 4;
+const GEMINI_CREDIT_MULTIPLIER = 1.1;
+const GROK_CHAR_BUCKET = 100;
+const GROK_CREDITS_PER_BUCKET = 100;
+
+export function getTtsProvider(model?: string): TtsProvider {
+  if (model === 'gpro') {
+    return 'gemini';
+  }
+
+  if (model === 'grok') {
+    return 'grok';
+  }
+
+  return 'replicate';
+}
+
+export function countWords(text: string): number {
+  const trimmedText = text.trim();
+
+  if (!trimmedText) {
+    return 0;
+  }
+
+  return trimmedText.split(/\s+/).length;
+}
+
+export function calculateReadingTime(
+  wordCount: number,
+  wordsPerMinute = 200,
+): number {
+  if (wordCount <= 0) {
+    return 0;
+  }
+
+  if (!(wordsPerMinute > 0)) {
+    throw new RangeError('wordsPerMinute must be greater than 0');
+  }
+
+  return Math.ceil(wordCount / wordsPerMinute);
+}
+
 function getCreditMultiplier(voice: string, model?: string): number {
   let multiplier: number;
   switch (voice) {
@@ -45,12 +91,12 @@ function getCreditMultiplier(voice: string, model?: string): number {
       multiplier = 11;
       break;
     default:
-      multiplier = 4;
+      multiplier = DEFAULT_CREDIT_MULTIPLIER;
       break;
   }
 
   if (model === 'gpro') {
-    multiplier = 1.1;
+    multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
   return multiplier;
@@ -76,23 +122,36 @@ function calculateCredits(
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
 
+// $4.20 / 1M characters
+// ~1 credit per character (~1,000 credits per minute of audio)
+export function estimateGrokCredits(text: string): number {
+  if (!text.trim()) {
+    return 0;
+  }
+
+  return Math.ceil(text.length / GROK_CHAR_BUCKET) * GROK_CREDITS_PER_BUCKET;
+}
+
 export function estimateCredits(
   text: string,
   voice: string,
   model?: string,
 ): number {
-  // Remove extra whitespace and split into words
-  const words = text.trim().split(/\s+/).length;
+  const words = countWords(text);
 
-  if (!text.trim()) {
+  if (words === 0) {
     return 0;
+  }
+
+  if (getTtsProvider(model) === 'grok') {
+    return estimateGrokCredits(text);
   }
 
   return calculateCredits(words, voice, model);
 }
 
 // Credit calculation constants for gpro voices
-const CREDITS_PER_TOKEN = 1;
+const CREDITS_PER_TOKEN = 1.1;
 
 export function calculateCreditsFromTokens(
   tokenCount: number,
@@ -174,6 +233,7 @@ export const ERROR_CODES = {
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
+  XAI_TTS_ERROR: 'XAI_TTS_ERROR',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
 
@@ -188,6 +248,7 @@ export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
   REPLICATE_ERROR: 500,
+  XAI_TTS_ERROR: 500,
   THIRD_P_QUOTA_EXCEEDED: 503,
   INTERNAL_SERVER_ERROR: 500,
 };
@@ -239,6 +300,9 @@ export const getErrorMessage = (
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',
     },
+    XAI_TTS_ERROR: {
+      default: 'Voice generation failed, please retry',
+    },
     INTERNAL_SERVER_ERROR: {
       default: 'An internal server error occurred. Please try again later.',
     },
@@ -260,3 +324,20 @@ export function isWavFormat(buffer: Buffer): boolean {
     buffer.toString('ascii', 8, 12) === 'WAVE'
   );
 }
+
+export const getDollarCost = (
+  provider: CloneProvider,
+  credits?: number,
+  text?: string,
+) => {
+  if (provider === 'mistral') {
+    // $0.016 per 1k characters
+    return text ? (text.length / 1000) * 0.016 : -1;
+  }
+  if (provider === 'replicate') {
+    // resemble-ai/chatterbox-multilingual - model costs approximately $0.0046 to run on Replicate
+    // 0.012 is the average of 11 last predictions - https://replicate.com/predictions
+    return credits ? 0.0121 : -1;
+  }
+  return -1;
+};

@@ -14,6 +14,7 @@ export interface LogFields {
   error?: string;
   errorCode?: string;
   isGeminiVoice?: boolean;
+  isGrokVoice?: boolean;
   model?: string;
   provider?: string;
   status: number;

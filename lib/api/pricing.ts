@@ -1,5 +1,5 @@
 type ExternalSourceType = 'api_tts' | 'api_voice_cloning';
-type ExternalProvider = 'google' | 'replicate';
+type ExternalProvider = 'google' | 'replicate' | 'xai';
 type ExternalModel = 'gpro' | 'orpheus' | string;
 
 interface PricingInput {
@@ -34,6 +34,12 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perRequest: 0,
   },
   'api_tts:replicate:orpheus': {
+    perInputChar: 0.000_015,
+    perOutputChar: 0,
+    perMinute: 0,
+    perRequest: 0,
+  },
+  'api_tts:xai:grok': {
     perInputChar: 0.000_015,
     perOutputChar: 0,
     perMinute: 0,

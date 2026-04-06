@@ -61,7 +61,7 @@ export function TrackRow({
   onReady,
   onSeek,
 }: TrackRowProps) {
-  const containerRef = useRef<HTMLButtonElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const dragTypeRef = useRef<'start' | 'end' | null>(null);
   // Track whether the pointer moved enough to be considered a drag vs a click.
   const didDragRef = useRef(false);
@@ -140,6 +140,9 @@ export function TrackRow({
         return;
       }
 
+      // Prevent the button from gaining focus so Space always triggers
+      // the global play/pause handler instead of the button's click event.
+      event.preventDefault();
       // Stop propagation so the event doesn't bubble to the waveform container
       // and reset didDragRef to false via handleWaveformPointerDown.
       event.stopPropagation();
@@ -156,6 +159,9 @@ export function TrackRow({
         return;
       }
 
+      // Prevent the button from gaining focus so Space always triggers
+      // the global play/pause handler instead of the button's click event.
+      event.preventDefault();
       // Stop propagation so the event doesn't bubble to the waveform container
       // and reset didDragRef to false via handleWaveformPointerDown.
       event.stopPropagation();
@@ -174,6 +180,12 @@ export function TrackRow({
   const handleWaveformClick = useCallback(
     (event: React.MouseEvent) => {
       if (disabled || didDragRef.current || !onSeek || durationSec <= 0) {
+        return;
+      }
+
+      // Ignore keyboard-triggered clicks (Space/Enter on a focused child) which
+      // report clientX/clientY as 0 and would incorrectly seek to the start.
+      if (event.detail === 0) {
         return;
       }
 
@@ -204,61 +216,65 @@ export function TrackRow({
       <p className="mb-2 truncate text-muted-foreground text-sm">{name}</p>
 
       <div className="flex gap-3">
-        <button
-          aria-label="Seek playback position"
+        {/** biome-ignore lint/a11y/noNoninteractiveElementInteractions: needed */}
+        {/** biome-ignore lint/a11y/useKeyWithClickEvents: needed */}
+        {/** biome-ignore lint/a11y/noStaticElementInteractions: needed */}
+        <div
           className={cn(
             'relative flex-1 cursor-default text-left',
             onSeek && !disabled && 'cursor-pointer',
           )}
-          disabled={disabled}
           onClick={handleWaveformClick}
           onPointerDown={handleWaveformPointerDown}
           ref={containerRef}
-          type="button"
         >
-          <WavesurferPlayer
-            barGap={2}
-            barRadius={3}
-            barWidth={2}
-            cursorColor="transparent"
-            dragToSeek={false}
-            height={84}
-            interact={false}
-            onReady={handleWaveReady}
-            progressColor="#10b981"
-            url={url}
-            waveColor="#94a3b8"
-          />
+          <div className="pointer-events-none">
+            <WavesurferPlayer
+              barGap={2}
+              barRadius={3}
+              barWidth={2}
+              cursorColor="transparent"
+              dragToSeek={false}
+              // height={84}
+              interact={false}
+              onReady={handleWaveReady}
+              progressColor="#10b981"
+              url={url}
+              waveColor="#94a3b8"
+            />
+          </div>
 
           <div
-            className="absolute top-0 h-full border-cyan-300 border-l-2"
+            className="absolute top-0 z-10 h-full border-cyan-300 border-l-2"
             style={{ left: `${startPct}%` }}
           />
           <button
             aria-label="Trim start"
             className={cn(
-              'absolute top-0 flex h-full w-7 -translate-x-1/2 touch-none flex-col items-center justify-center',
+              'absolute top-0 z-10 flex h-full w-7 -translate-x-1/2 touch-none flex-col items-center justify-center',
               disabled && 'cursor-not-allowed opacity-50',
             )}
             onPointerDown={handleStartPointerDown}
             style={{ left: `${startPct}%` }}
+            tabIndex={-1}
             type="button"
           >
             <GripVertical className="h-4 w-4 text-cyan-200" />
           </button>
 
           <div
-            className="absolute top-0 h-full border-cyan-300 border-l-2"
+            className="absolute top-0 z-10 h-full border-cyan-300 border-l-2"
             style={{ left: `${endPct}%` }}
           />
           <button
             aria-label="Trim end"
             className={cn(
-              'absolute top-0 flex h-full w-7 -translate-x-1/2 touch-none flex-col items-center justify-center',
+              'absolute top-0 z-10 flex h-full w-7 -translate-x-1/2 touch-none flex-col items-center justify-center',
               disabled && 'cursor-not-allowed opacity-50',
             )}
             onPointerDown={handleEndPointerDown}
             style={{ left: `${endPct}%` }}
+            tabIndex={-1}
             type="button"
           >
             <GripVertical className="h-4 w-4 text-cyan-200" />
@@ -281,7 +297,7 @@ export function TrackRow({
               style={{ left: `${playheadPct}%` }}
             />
           )}
-        </button>
+        </div>
 
         <div className="flex w-12 flex-col gap-2">
           <Button

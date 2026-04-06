@@ -1,6 +1,9 @@
+import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { i18n } from '@/lib/i18n/i18n-config';
+import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] =>
@@ -10,11 +13,42 @@ const routesPerLocale = (routes: string[]): string[] =>
     ),
   );
 
+const clearOauthCallbackCookie = (response: NextResponse) => {
+  response.cookies.set({
+    name: OAUTH_CALLBACK_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  return response;
+};
+
 const publicRoutes = [
   '/api/health',
   '/auth/callback',
   ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
 ];
+
+const isDashboardPath = (pathname: string, locale: string) =>
+  pathname === `/${locale}/dashboard` ||
+  pathname.startsWith(`/${locale}/dashboard/`);
+
+const redirectWithSupabaseCookies = (
+  url: URL,
+  supabaseResponse: NextResponse,
+) => {
+  const redirectResponse = NextResponse.redirect(url);
+
+  for (const cookie of supabaseResponse.cookies.getAll()) {
+    redirectResponse.cookies.set(cookie);
+  }
+
+  return redirectResponse;
+};
 
 export const updateSession = async (
   request: NextRequest,
@@ -24,6 +58,12 @@ export const updateSession = async (
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = response;
+    const rawOauthCallbackMarker = request.cookies.get(
+      OAUTH_CALLBACK_COOKIE_NAME,
+    )?.value;
+    const hasOauthCallbackMarker = verifyOauthCallbackMarkerValue(
+      rawOauthCallbackMarker,
+    );
 
     const supabase = await createClient();
 
@@ -31,26 +71,69 @@ export const updateSession = async (
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user && pathname.includes('/dashboard')) {
+    const dashboardPath = isDashboardPath(pathname, locale);
+
+    if (!user && dashboardPath) {
+      const redirectResponse = redirectWithSupabaseCookies(
+        new URL(`/${locale}/login`, request.url),
+        supabaseResponse,
+      );
+
+      if (hasOauthCallbackMarker) {
+        captureMessage(
+          'OAuth callback completed but dashboard session was missing.',
+          {
+            level: 'error',
+            tags: {
+              area: 'auth',
+              flow: 'oauth-callback',
+            },
+            extra: {
+              pathname,
+              locale,
+            },
+          },
+        );
+
+        return clearOauthCallbackCookie(redirectResponse);
+      }
+
+      console.log(
+        'Dashboard request missing user without valid OAuth callback marker',
+        {
+          pathname,
+          locale,
+          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+          hasOauthCallbackMarker,
+        },
+      );
+
       // no user, potentially respond by redirecting the user to the login page
-      const url = request.nextUrl.clone();
-      url.pathname = `/${locale}/login`;
-      return NextResponse.redirect(url);
+      return redirectResponse;
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);
 
     if (!(user || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
-      return NextResponse.redirect(new URL(`/${locale}`, request.url));
+      return redirectWithSupabaseCookies(
+        new URL(`/${locale}`, request.url),
+        supabaseResponse,
+      );
     }
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
 
     if (user && authRoutes.includes(pathname)) {
-      return NextResponse.redirect(
+      return redirectWithSupabaseCookies(
         new URL(`/${locale}/dashboard`, request.url),
+        supabaseResponse,
       );
+    }
+
+    if (hasOauthCallbackMarker && dashboardPath) {
+      return clearOauthCallbackCookie(supabaseResponse);
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
@@ -69,6 +152,9 @@ export const updateSession = async (
     return supabaseResponse;
   } catch (e) {
     console.error('Middleware error:', e);
-    return NextResponse.redirect(new URL(`/${locale}`, request.url));
+    return redirectWithSupabaseCookies(
+      new URL(`/${locale}`, request.url),
+      response,
+    );
   }
 };

@@ -38,6 +38,15 @@ vi.mock('ogg-opus-decoder', () => ({
       };
     }
 
+    decodeFile() {
+      return {
+        channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        sampleRate: 48_000,
+        samplesDecoded: 3,
+        errors: [],
+      };
+    }
+
     free() {}
   },
 }));
@@ -47,6 +56,16 @@ vi.mock('@wasm-audio-decoders/ogg-vorbis', () => ({
     ready = Promise.resolve();
 
     async decode() {
+      return {
+        channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        sampleRate: 44_100,
+        samplesDecoded: 3,
+        bitDepth: 16 as const,
+        errors: [],
+      };
+    }
+
+    async decodeFile() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
         sampleRate: 44_100,
@@ -312,6 +331,30 @@ describe('audio-converter', () => {
       } catch (error) {
         // Error handling is expected
         expect(error).toBeDefined();
+      }
+    });
+
+    test('should reject decoded audio without channel data', async () => {
+      const mockMPEGDecoder = await import('mpg123-decoder').then(
+        (m) => m.MPEGDecoder,
+      );
+
+      const originalDecode = mockMPEGDecoder.prototype.decode;
+      try {
+        mockMPEGDecoder.prototype.decode = () => ({
+          channelData: [],
+          sampleRate: 44_100,
+          samplesDecoded: 0,
+          errors: [],
+        });
+        const mp3Buffer = Buffer.from([0xff, 0xfb, 0x10, 0x00]);
+        await expect(
+          convertToWav(mp3Buffer, 'audio/mpeg', 'invalid.mp3'),
+        ).rejects.toThrow(
+          'Decoded mp3 audio did not contain valid channel data',
+        );
+      } finally {
+        mockMPEGDecoder.prototype.decode = originalDecode;
       }
     });
 

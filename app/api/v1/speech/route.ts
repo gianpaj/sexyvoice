@@ -17,12 +17,17 @@ import {
   getExternalApiRequestId,
 } from '@/lib/api/external-errors';
 import { createLogger } from '@/lib/api/logger';
-import { getDefaultFormat, resolveExternalModelId } from '@/lib/api/model';
+import {
+  getDefaultFormat,
+  isFormatSupported,
+  resolveExternalModelId,
+} from '@/lib/api/model';
 import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { convertToWav } from '@/lib/audio';
+import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -41,6 +46,9 @@ import {
 } from '@/lib/utils';
 
 const ENDPOINT = '/api/v1/speech';
+
+// https://vercel.com/docs/functions/configuring-functions/duration
+export const maxDuration = 800; // seconds - fluid compute is enabled
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Single entrypoint orchestrates validation, billing, generation and persistence.
 export async function POST(request: Request) {
@@ -195,7 +203,8 @@ export async function POST(request: Request) {
     }
 
     const defaultFormat = getDefaultFormat(resolvedModel);
-    if (response_format && response_format !== defaultFormat) {
+    const chosenFormat = response_format ?? defaultFormat;
+    if (!isFormatSupported(resolvedModel, chosenFormat)) {
       await log({
         status: 400,
         errorCode: 'unsupported_response_format',
@@ -206,7 +215,7 @@ export async function POST(request: Request) {
       });
       return respond(
         createApiError({
-          message: `Model "${model}" only supports "${defaultFormat}" output`,
+          message: `Model "${model}" does not support "${chosenFormat}" format`,
           type: 'invalid_request_error',
           code: 'unsupported_response_format',
           param: 'response_format',
@@ -238,11 +247,16 @@ export async function POST(request: Request) {
     }
 
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
-    const extension = defaultFormat;
+    const extension = chosenFormat;
     const filename = `${folder}/${voice}-${Date.now()}.${extension}`;
 
     const isGeminiVoice = voiceObj.model === 'gpro';
-    const provider = isGeminiVoice ? 'google' : 'replicate';
+    const isGrokVoice = voiceObj.model === 'grok';
+    const provider = isGeminiVoice
+      ? 'google'
+      : isGrokVoice
+        ? 'xai'
+        : 'replicate';
     let modelUsed = voiceObj.model;
     let uploadUrl: string;
     let replicateResponse: Prediction | undefined;
@@ -254,7 +268,7 @@ export async function POST(request: Request) {
       });
       const config: GenerateContentConfig = {
         responseModalities: ['AUDIO'],
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -341,6 +355,50 @@ export async function POST(request: Request) {
         speechApiBucket,
         process.env.R2_SPEECH_API_PUBLIC_URL,
       );
+    } else if (isGrokVoice) {
+      modelUsed = voiceObj.model;
+      const codec = normalizeXaiTtsCodec(chosenFormat);
+
+      try {
+        const { audioBuffer, contentType } = await generateXaiTts({
+          text: finalText,
+          voiceId: voice,
+          language: voiceObj.language ?? 'en',
+          codec,
+        });
+        uploadUrl = await uploadFileToR2(
+          filename,
+          audioBuffer,
+          contentType,
+          speechApiBucket,
+          process.env.R2_SPEECH_API_PUBLIC_URL,
+        );
+      } catch (error) {
+        captureException(error, {
+          extra: { requestId, voice, model: modelUsed, codec },
+        });
+        const message = getErrorMessage('XAI_TTS_ERROR', 'voice-generation');
+        await log({
+          status: 500,
+          errorCode: 'xai_tts_error',
+          error: message,
+          userId,
+          apiKeyId: authResult.apiKeyId,
+          voice,
+          model: modelUsed,
+          textLength: finalText.length,
+          provider,
+          isGrokVoice,
+        });
+        return respond(
+          createApiError({
+            message,
+            type: 'server_error',
+            code: 'server_error',
+          }),
+          { status: 500 },
+        );
+      }
     } else {
       const replicate = new Replicate();
       const output = (await replicate.run(
@@ -437,7 +495,7 @@ export async function POST(request: Request) {
           apiKeyId: authResult.apiKeyId,
           sourceType: 'api_tts',
           dollarAmount,
-          ...(seed !== undefined ? { seed } : {}),
+          ...(seed === undefined ? {} : { seed }),
         },
       }),
       getCreditsAdmin(userId),
@@ -462,8 +520,9 @@ export async function POST(request: Request) {
         model: modelUsed,
         textPreview: finalText.slice(0, 100),
         textLength: finalText.length,
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         isGeminiVoice,
+        isGrokVoice,
         userHasPaid,
         predictionId: replicateResponse?.id ?? null,
       },
@@ -483,6 +542,7 @@ export async function POST(request: Request) {
       creditsUsed,
       dollarAmount,
       isGeminiVoice,
+      isGrokVoice,
       userHasPaid,
     }).catch((err) => {
       console.error('[speech] success-path log failed:', err);

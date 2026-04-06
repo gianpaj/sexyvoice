@@ -42,6 +42,12 @@ export const handlers = [
       },
     });
   }),
+  // Mistral speech API mock
+  http.post('https://api.mistral.ai/v1/audio/speech', () =>
+    HttpResponse.json({
+      audio_data: Buffer.from(new Uint8Array(1024)).toString('base64'),
+    }),
+  ),
 ];
 
 // Setup MSW server
@@ -49,6 +55,73 @@ export const server = setupServer(...handlers);
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
+
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia !== 'function'
+  ) {
+    window.matchMedia = (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as MediaQueryList;
+  }
+
+  if (typeof document !== 'undefined') {
+    if (typeof document.elementFromPoint !== 'function') {
+      document.elementFromPoint = () => document.body;
+    }
+
+    const rangePrototype = globalThis.Range?.prototype as
+      | (Range & {
+          getClientRects?: () => DOMRectList;
+          getBoundingClientRect?: () => DOMRect;
+        })
+      | undefined;
+
+    if (rangePrototype) {
+      if (typeof rangePrototype.getClientRects !== 'function') {
+        rangePrototype.getClientRects = () =>
+          ({
+            length: 0,
+            item: () => null,
+            *[Symbol.iterator]() {},
+          }) as DOMRectList;
+      }
+
+      if (typeof rangePrototype.getBoundingClientRect !== 'function') {
+        rangePrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+    }
+
+    const elementPrototype = globalThis.HTMLElement?.prototype as
+      | (HTMLElement & {
+          getClientRects?: () => DOMRectList;
+          getBoundingClientRect?: () => DOMRect;
+        })
+      | undefined;
+
+    if (elementPrototype) {
+      if (typeof elementPrototype.getClientRects !== 'function') {
+        elementPrototype.getClientRects = () =>
+          ({
+            length: 0,
+            item: () => null,
+            *[Symbol.iterator]() {},
+          }) as DOMRectList;
+      }
+
+      if (typeof elementPrototype.getBoundingClientRect !== 'function') {
+        elementPrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+    }
+  }
 });
 
 afterEach(() => {
@@ -65,9 +138,10 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
+process.env.MISTRAL_API_KEY = 'test-mistral-api-key';
+process.env.XAI_API_KEY = 'test-xai-key';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
-process.env.BLOB_READ_WRITE_TOKEN = 'test-blob-token';
 // R2 environment variables
 process.env.R2_ENDPOINT = 'https://test-account.r2.cloudflarestorage.com';
 process.env.R2_ACCESS_KEY_ID = 'test-r2-access-key';
@@ -82,6 +156,29 @@ vi.mock('@axiomhq/js', () => ({
   Axiom: class MockAxiom {
     ingest = vi.fn();
     flush = vi.fn().mockResolvedValue(undefined);
+  },
+}));
+
+// Mock next/dynamic to render the component directly in tests
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: (loader: () => Promise<any>) => {
+    const { lazy, Suspense, createElement } = require('react');
+    const LazyComp = lazy(() =>
+      loader().then((resolved: any) => ({
+        default:
+          typeof resolved === 'function'
+            ? resolved
+            : resolved.default || resolved,
+      })),
+    );
+    return function DynamicMock(props: any) {
+      return createElement(
+        Suspense,
+        { fallback: null },
+        createElement(LazyComp, props),
+      );
+    };
   },
 }));
 
@@ -188,7 +285,8 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model: 'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
       if (voiceName === 'poe') {
@@ -197,6 +295,22 @@ vi.mock('@/lib/supabase/queries', async () => {
           name: 'poe',
           language: 'en',
           model: 'gpro',
+        });
+      }
+      if (voiceName === 'eve') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'grok',
+        });
+      }
+      if (voiceName === 'sal') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          name: 'sal',
+          language: 'es-ES',
+          model: 'grok',
         });
       }
       return Promise.resolve(null);
@@ -207,7 +321,8 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',
-          model: 'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
       if (voiceName === 'poe') {
@@ -216,6 +331,22 @@ vi.mock('@/lib/supabase/queries', async () => {
           name: 'poe',
           language: 'en',
           model: 'gpro',
+        });
+      }
+      if (voiceName === 'eve') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'grok',
+        });
+      }
+      if (voiceName === 'sal') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          name: 'sal',
+          language: 'es-ES',
+          model: 'grok',
         });
       }
       return Promise.resolve(null);
@@ -293,22 +424,6 @@ export {
   mockRedisSet,
   mockRedisTtl,
 };
-
-// Mock Vercel Blob
-const mockBlobPut = vi.fn().mockImplementation((filename: string) =>
-  Promise.resolve({
-    url: `https://blob.vercel-storage.com/${filename}`,
-  }),
-);
-const mockBlobHead = vi.fn().mockRejectedValue(new Error('Not found'));
-
-vi.mock('@vercel/blob', () => ({
-  put: mockBlobPut,
-  head: mockBlobHead,
-}));
-
-// Export mocks for test access
-export { mockBlobPut, mockBlobHead };
 
 // Mock R2 Storage
 const mockUploadFileToR2 = vi
@@ -473,9 +588,40 @@ vi.mock('@fal-ai/client', () => ({
 
 export { mockFalSubscribe };
 
+// Mock Mistral client
+const mockMistralSpeechComplete = vi.fn().mockResolvedValue({
+  audioData: new Uint8Array([
+    // "RIFF" chunk descriptor
+    0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00,
+    // "WAVE" format
+    0x57, 0x41, 0x56, 0x45,
+    // "fmt " subchunk
+    0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+    0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
+    // "data" subchunk header
+    0x64, 0x61, 0x74, 0x61,
+  ]),
+});
+
+class MockMistral {
+  audio = {
+    speech: {
+      complete: mockMistralSpeechComplete,
+    },
+  };
+
+  constructor(_: { apiKey: string }) {}
+}
+
+vi.mock('@mistralai/mistralai', () => ({
+  Mistral: MockMistral,
+}));
+
+export { mockMistralSpeechComplete };
+
 // Mock music-metadata for audio duration detection
 const mockParseBuffer = vi.fn().mockResolvedValue({
-  format: { duration: 30 }, // Default to 30 seconds (valid duration)
+  format: { duration: 12 }, // Default to 12 seconds (valid for Voxtral)
 });
 
 vi.mock('music-metadata', async () => ({

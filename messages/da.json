@@ -56,6 +56,13 @@
   },
   "landing": {
     "latestPosts": "Seneste indlæg",
+    "blogDescription": "Guides, vejledninger og nyheder om AI-stemmekloning, tekst-til-tale-syntese og AI-stemmeteknologi.",
+    "homeLabel": "Forside",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "Der er ingen indlæg endnu.",
+    "minutesRead": "min. læsetid",
+    "readMore": "Læs mere",
+    "more": "Flere indlæg",
     "hero": {
       "title": "Udtryksfulde stemmer, ucensureret",
       "subtitle": "Gratis AI tekst-til-tale & stemmegenerator til voksne.\nPerfekt til indholdsskabere og historiefortællere. 😉",
@@ -78,7 +85,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start med 10.000 gratis kreditter (5 min stemmeopkald) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start med 10.000 gratis kreditter ( ͡° ͜ʖ ͡°)",
       "title": "Klar til at finde din stemme?",
       "subtitle": "Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.",
       "action": "Opret din første stemme"
@@ -113,7 +120,7 @@
           "questions": [
             {
               "question": "Hvilke sprog understøttes for talesyntese?",
-              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇺🇸 Engelsk (US),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇺🇸 Spansk (US),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇺 Russisk (Rusland),\n🇳🇱 Hollandsk (Holland),\n🇵🇱 Polsk (Polen),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇻🇳 Vietnamesisk (Vietnam),\n🇷🇴 Rumænsk (Rumænien),\n🇺🇦 Ukrainsk (Ukraine),\n🇧🇩 Bengalsk (Bangladesh),\n🇮🇳 Engelsk/Hindi (Indien),\n🇮🇳 Marathi (Indien),\n🇮🇳 Tamil (Indien),\nog 🇮🇳 Telugu (Indien).\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK),\n🇮🇹 Pietro (Italiensk),\n🇺🇸 Emma (Engelsk US),\n🇪🇸 Javi (Spansk),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇮🇳 Hindi (Indien),\n🇳🇱 Hollandsk (Holland),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇩🇪 Tysk (Tyskland),\n🇺🇦 Ukrainsk (Ukraine),\nog 🇻🇳 Vietnamesisk (Vietnam).\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK),\n🇮🇹 Pietro (Italiensk),\n🇺🇸 Emma (Engelsk US),\n🇪🇸 Javi (Spansk),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -132,6 +139,10 @@
             {
               "question": "Kan jeg klone min egen stemme?",
               "answer": "Ja! Med blot få sekunders ren lyd kan den bygge en digital version af din stemme, der lyder naturlig og realistisk."
+            },
+            {
+              "question": "Hvordan prissættes stemmekloning?",
+              "answer": "Stemmekloning prissættes ud fra mængden af tale, du genererer, så længere tekster bruger flere kreditter. Det koster mere end almindelig stemmegenerering, fordi klonede stemmer bruger en dyrere model til præcist at gengive en bestemt stemme."
             },
             {
               "question": "Hvilke sprog understøttes for stemmekloning?",
@@ -234,11 +245,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -323,25 +330,65 @@
     "ctaButton": "Generer lyd",
     "downloadAudio": "Download lyd",
     "error": "Kunne ikke generere lyd",
-    "errorEstimating": "Kunne ikke estimere kreditter",
-    "estimateCreditsButton": "Estimer kreditter",
+    "errorEstimating": "Kunne ikke estimere credits",
+    "estimateCreditsButton": "Estimér credits",
     "generating": "Genererer",
-    "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegeneringer som gratis bruger. Prøv venligst en anden stemme eller opgrader din plan for ubegrænset adgang.",
+    "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
     "languageLabel": "Sprog",
     "languageSelectPlaceholder": "Vælg et sprog",
-    "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
+    "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
     "subtitle": "Vælg en stemme og generer lyd fra tekst",
     "success": "Lyd genereret!",
-    "textAreaPlaceholder": "Indtast den tekst, du vil konvertere til tale...",
+    "textAreaPlaceholder": "Indtast teksten, du vil omdanne til tale...",
     "title": "Generer lyd",
+    "grok": {
+      "inlineEffectPlaceholder": "Indsæt inline-effekt",
+      "wrappingEffectPlaceholder": "Omslut med stil-tag",
+      "formatPlaceholder": "Vælg format",
+      "effects": {
+        "pause": "[pause]",
+        "longPause": "[long-pause]",
+        "humTune": "[hum-tune]",
+        "laugh": "[laugh]",
+        "chuckle": "[chuckle]",
+        "giggle": "[giggle]",
+        "cry": "[cry]",
+        "tsk": "[tsk]",
+        "tongueClick": "[tongue-click]",
+        "lipSmack": "[lip-smack]",
+        "breath": "[breath]",
+        "inhale": "[inhale]",
+        "exhale": "[exhale]",
+        "sigh": "[sigh]"
+      },
+      "wrappingTags": {
+        "soft": "<soft>...</soft>",
+        "whisper": "<whisper>...</whisper>",
+        "loud": "<loud>...</loud>",
+        "buildIntensity": "<build-intensity>...</build-intensity>",
+        "decreaseIntensity": "<decrease-intensity>...</decrease-intensity>",
+        "higherPitch": "<higher-pitch>...</higher-pitch>",
+        "lowerPitch": "<lower-pitch>...</lower-pitch>",
+        "slow": "<slow>...</slow>",
+        "fast": "<fast>...</fast>",
+        "singSong": "<sing-song>...</sing-song>",
+        "singing": "<singing>...</singing>",
+        "laughSpeak": "<laugh-speak>...</laugh-speak>",
+        "emphasis": "<emphasis>...</emphasis>"
+      }
+    },
     "voiceSelector": {
       "title": "Vælg stemme",
       "description": "Vælg blandt tilgængelige stemmer",
+      "featuredGroupLabel": "Fremhævede",
+      "multilingualGroupLabel": "Flersprogede 🌍",
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
-      "geminiInfo": "Understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇳🇱 Hollandsk (Holland),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)"
+      "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
+      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og omsluttende tags som <fast>...</fast>.",
+      "featuredBadge": "Fremhævet"
     }
   },
   "call": {
@@ -377,7 +424,7 @@
     "grokImagineIncluded": "Grok Imagine-instruktioner inkluderet",
     "addCustomCharacter": "Tilføj brugerdefineret karakter",
     "addCharacterLabel": "Tilføj",
-    "upgradePremiumTooltip": "Opgrader for at oprette brugerdefinerede karakterer",
+    "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Tilføj en beskrivelse...",
     "clickToAddDescription": "Klik for at tilføje en beskrivelse...",
     "characterInstructions": "__NAME__-instruktioner",
@@ -424,6 +471,7 @@
       "instructionsPlaceholder": "Beskriv din karakters personlighed, talemønstre, baggrund...",
       "characterCount": "__COUNT__/5000 tegn",
       "cancelButton": "Annuller",
+      "paidUserOnly": "Upgrade feature",
       "createButton": "Opret karakter",
       "creatingButton": "Opretter...",
       "errorNameRequired": "Navn er påkrævet",
@@ -442,7 +490,7 @@
     "errorCloning": "Kunne ikke klone stemme",
     "errorTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
     "errorTitle": "Fejl",
-    "fileFormatsText": "MP3, WAV, M4A eller OGG (maks. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG eller OPUS (WhatsApp) (maks. __SIZE__)",
     "generating": "Genererer",
     "languageLabel": "Sprog",
     "languageSelectPlaceholder": "Vælg et sprog",
@@ -512,7 +560,7 @@
       "deleteAccount": {
         "button": "Slet konto",
         "confirmTitle": "Er du helt sikker?",
-        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• Alle tilknyttede data fra vores servere",
+        "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• API-forbrug\n• Brugerdefinerede opkaldskarakterer\n• Alle tilknyttede data fra vores servere",
         "alertTitle": "Bekræft at du vil slette din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt"
@@ -561,6 +609,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator til voksne",
     "description": "Generer udtryksfulde AI-stemmer med følelser til voksenindhold på 24+ sprog. Gratis tekst-til-tale med stemmekloning og NSFW-support. Start med gratis credits – intet kort påkrævet.",
+    "skipToMainContent": "Spring til hovedindhold",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",
@@ -591,7 +640,8 @@
   "sidebar": {
     "profile": "Profil",
     "signOut": "Log ud",
-    "freeTools": "Gratis værktøjer"
+    "freeTools": "Gratis værktøjer",
+    "subscriptionDiscount": "Få {discount}% ekstra kreditter med et abonnement"
   },
   "header": {
     "generate": "Generer",
@@ -697,6 +747,14 @@
       "pricing": {
         "bannerText": "❄️ Vinterudsalg"
       }
+    }
+  },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "Nye stemmer til stemmegenerering er nu live, med mere kontrol over tempo, aandedraet, toneleje, hastighed og intensitet.",
+      "ctaLoggedIn": "Proev stemmer",
+      "ctaLoggedOut": "Log ind",
+      "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
     }
   },
   "audioConverter": {

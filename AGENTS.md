@@ -1,8 +1,13 @@
-# Claude Assistant Guidelines for SexyVoice.ai
+# Coding Assistant Guidelines
 
 - Search: Always run `ck --help` first and use `ck` for codebase search. Prefer `ck --regex` for exact text, `ck --sem`/`--hybrid` for conceptual matches, and `--jsonl` for tooling.
 
-This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
+This file contains repository-specific guidelines and instructions when working on the SexyVoice.ai project.
+
+## Rules
+
+- Whenever writing a test, run the test suite for that file or the entire suite.
+- When I say step by step, I don't mean pausing. Only pause if you're stuck or going on loops
 
 ## Project Overview
 
@@ -11,7 +16,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 ### Key Technologies
 
 - **Frontend**: Next.js 16 with App Router, React 19, TypeScript 5
-- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
+- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning), xAI (Grok TTS)
 - **Database**: Supabase PostgreSQL
 - **Storage**: Cloudflare R2 for audio files (`R2_BUCKET_NAME` for dashboard, `R2_SPEECH_API_BUCKET_NAME` for external API)
 - **Caching**: Upstash Redis for audio URL caching (dashboard/clone flows only; external API always generates fresh audio)
@@ -20,7 +25,7 @@ SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, 
 - **Content**: Contentlayer2 for MDX blog processing
 - **Payments**: Stripe integration with promotional bonus system
 - **Monitoring**: Sentry error tracking and PostHog analytics; Axiom for structured API request logging
-- **AI Services**: Google Generative AI for text-to-speech (Gemini 2.5 Pro/Flash TTS) and text enhancement
+- **AI Services**: Google Generative AI for text-to-speech (Gemini 2.5 Pro/Flash TTS) and text enhancement; xAI Grok TTS for multi-language voice generation
 - **Configuration**: Vercel Edge Config for dynamic call instructions
 - **External API**: REST API (`/api/v1/*`) with HMAC-keyed API keys, rate limiting, OpenAPI 3.1 spec
 - **Code Quality**: Biome for linting and formatting
@@ -90,7 +95,7 @@ lib/
 │   ├── errors.ts              # createApiError(), zodErrorToApiError()
 │   ├── external-errors.ts     # Structured error definitions + externalApiErrorResponse()
 │   ├── logger.ts              # Axiom-backed per-request structured logger
-│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), getModelCatalogResponse()
+│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), isFormatSupported(), getModelCatalogResponse()
 │   ├── openapi.ts             # createExternalApiOpenApiDocument() via zod-openapi
 │   ├── pricing.ts             # calculateExternalApiDollarAmount()
 │   ├── rate-limit.ts          # consumeRateLimit() using Upstash Ratelimit
@@ -176,7 +181,7 @@ Shared enum types:
 5. Voice looked up by name in `voices` table (admin client, bypasses RLS)
 6. Model compatibility, text length, and format validated
 7. User credit balance fetched via admin client; 402 returned if insufficient
-8. Audio generated fresh every time (no cache) — Gemini TTS for `gpro`, Replicate for `kokoro`
+8. Audio generated fresh every time (no cache) — Gemini TTS for `gpro`, xAI TTS for `grok`, Replicate for `orpheus`
 9. Audio uploaded to `R2_SPEECH_API_BUCKET_NAME` with public URL from `R2_SPEECH_API_PUBLIC_URL`
 10. Credits deducted, audio file saved, usage event inserted — all via admin client
 11. Response includes `url`, `credits_used`, `credits_remaining`, and `usage` object
@@ -417,27 +422,27 @@ When creating database functions, follow Cursor rules in `.cursor/rules/`:
 
 ## Environment and Deployment
 
-### Environment Setup
+See [`docs/devops.md`](docs/devops.md) for the canonical DevOps documentation, including:
 
-```bash
-pnpm install        # Install dependencies
-pnpm run dev        # Start development server
-pnpm run build      # Build for production
-pnpm run preview    # Preview production build
-```
+- environment setup
+- environment variables
+- deployment/runtime guidance
+- infrastructure and region notes
+- operational troubleshooting
+- LiveKit call infrastructure and required call token environment variables (`LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`)
 
-### Environment Variables
+Environment variable maintenance rule:
 
 Key environment variables include:
 
 - **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
 - **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2 — dashboard audio); `R2_SPEECH_API_BUCKET_NAME`, `R2_SPEECH_API_PUBLIC_URL` (separate bucket + public domain for external API audio)
 - **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
-- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
+- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `XAI_API_KEY` (xAI Grok TTS)
 - **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
 - **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
 - **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
-- **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
+- **Banners & Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`, `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER`, `NEXT_PUBLIC_PROMO_TRANSLATIONS` (legacy promo fallback), `NEXT_PUBLIC_PROMO_THEME`, `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`); Axiom (`AXIOM_TOKEN`) for structured API request logs
@@ -445,25 +450,30 @@ Key environment variables include:
 - **Production**: Environment-specific configurations for Sentry and CSP
 - Follow `.env.example` for complete list and setup instructions
 
-## Promotion System
+When adding, renaming, or removing any environment variable, update `AGENTS.md`, `README.md`, `.env.example`, and `docs/devops.md` in the same change so implementation and setup docs stay in sync.
 
-### Generic Promotion Framework
+## Banner System
 
-The platform includes a flexible promotion system for credit bonuses:
+### Shared Banner Framework
 
-- **Configuration**: Environment variables control promotion state and bonus amounts
-- **Banner Component**: `promo-banner.tsx` displays dismissible promotion banners
-- **Server Actions**: `app/[lang]/actions/promos.ts` handles banner dismissal with cookie tracking
-- **Pricing Integration**: `lib/stripe/pricing.ts` calculates credit bonuses based on promotion status
-- **Client-side State**: Cookie-based dismissal tracking (30-day expiry)
+The platform includes a shared banner system for promotions and announcements:
+
+- **Renderer**: `components/banner.tsx` renders the shared dismissible banner UI
+- **Registry**: `lib/banners/registry.ts` defines supported promo and announcement banners
+- **Resolver**: `lib/banners/resolve-banner.ts` chooses the single visible banner for landing, blog, or dashboard
+- **Server Actions**: `app/[lang]/actions/banners.ts` handles banner dismissal with per-banner cookies
+- **Localization**: Banner copy lives in `messages.promos.*` and `messages.announcements.*`
+- **Visibility Model**: Only one banner is visible at a time; dismiss state is independent per banner
 
 ### Implementation Pattern
 
-1. Enable promotion via `NEXT_PUBLIC_PROMO_ENABLED=true`
-2. Set promotion ID (e.g., `halloween_2025`) and bonus amounts
-3. Banner displays on landing and dashboard pages with CTA
-4. Users can dismiss banner (stored in cookies)
-5. Credit packages automatically include bonus credits when enabled
+1. Define the banner in `lib/banners/registry.ts`
+2. Add localized copy to all `messages/*.json` files under `promos` or `announcements`
+3. Activate a promo via `NEXT_PUBLIC_PROMO_ENABLED=true` plus `NEXT_PUBLIC_ACTIVE_PROMO_BANNER=<id>`
+4. Activate an announcement via `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER=<id>`
+5. The resolver selects the highest-priority banner valid for the current placement
+6. Users can dismiss a banner without affecting other banners
+7. Credit packages still use the existing promo bonus env vars when promos are enabled
 
 ## Feature Development Priorities
 
@@ -495,10 +505,12 @@ Based on TODO.md, current priorities include:
 2. **Follow the existing code patterns** and architectural decisions
 3. **Run `pnpm run fixall` before committing** to ensure code quality
 4. **Update documentation** when adding new features or changing APIs
-5. **Consider internationalization** for user-facing text — add keys to `messages/en.json` (and all other locale files), use `getMessages()` in server components and `useTranslations()` in client components; never hardcode English strings in UI
-6. **Implement proper error handling** and loading states
-7. **Follow security best practices** for voice-related features
-8. **Use TodoWrite tool** for multi-step tasks to track progress
+5. **Use the dedicated DevOps documentation** — update [`docs/devops.md`](docs/devops.md) when changes affect environment setup, deployment, infrastructure, secret management, or operational troubleshooting
+6. **Keep environment variable documentation synchronized** — if you add, remove, or rename an environment variable, update `AGENTS.md`, `README.md`, `.env.example`, and `docs/devops.md` in the same change
+7. **Consider internationalization** for user-facing text — add keys to `messages/en.json` (and all other locale files), use `getMessages()` in server components and `useTranslations()` in client components; never hardcode English strings in UI
+8. **Implement proper error handling** and loading states
+9. **Follow security best practices** for voice-related features
+10. **Use TodoWrite tool** for multi-step tasks to track progress
 
 ### Pull Request Requirements
 

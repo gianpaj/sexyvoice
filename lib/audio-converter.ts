@@ -22,6 +22,41 @@ interface DecodedAudio {
   samplesDecoded: number;
 }
 
+function isValidChannelData(
+  channelData: Float32Array[] | undefined,
+): channelData is [Float32Array, ...Float32Array[]] {
+  if (!Array.isArray(channelData) || channelData.length === 0) {
+    return false;
+  }
+
+  const firstChannel = channelData[0];
+  if (!(firstChannel instanceof Float32Array) || firstChannel.length === 0) {
+    return false;
+  }
+
+  return channelData.every(
+    (channel) =>
+      channel instanceof Float32Array && channel.length === firstChannel.length,
+  );
+}
+
+function validateDecodedAudio(
+  decoded: DecodedAudio,
+  format: SupportedAudioFormat,
+): asserts decoded is DecodedAudio & {
+  channelData: [Float32Array, ...Float32Array[]];
+} {
+  if (!isValidChannelData(decoded.channelData)) {
+    throw new Error(
+      `Decoded ${format} audio did not contain valid channel data`,
+    );
+  }
+
+  if (!Number.isFinite(decoded.sampleRate) || decoded.sampleRate <= 0) {
+    throw new Error(`Decoded ${format} audio did not contain a valid sample rate`);
+  }
+}
+
 /**
  * Detect audio format from MIME type or file extension
  */
@@ -78,14 +113,16 @@ async function decodeMp3(audioData: Uint8Array): Promise<DecodedAudio> {
   const decoder = new MPEGDecoder();
   await decoder.ready;
 
-  const result = decoder.decode(audioData);
-  decoder.free();
-
-  return {
-    channelData: result.channelData,
-    sampleRate: result.sampleRate,
-    samplesDecoded: result.samplesDecoded,
-  };
+  try {
+    const result = decoder.decode(audioData);
+    return {
+      channelData: result.channelData,
+      sampleRate: result.sampleRate,
+      samplesDecoded: result.samplesDecoded,
+    };
+  } finally {
+    decoder.free();
+  }
 }
 
 /**
@@ -96,17 +133,14 @@ async function decodeOggOpus(audioData: Uint8Array): Promise<DecodedAudio> {
   await decoder.ready;
 
   try {
-    const result = decoder.decode(audioData);
-    decoder.free();
-
+    const result = await decoder.decodeFile(audioData);
     return {
       channelData: result.channelData,
       sampleRate: result.sampleRate,
       samplesDecoded: result.samplesDecoded,
     };
-  } catch (error) {
+  } finally {
     decoder.free();
-    throw error;
   }
 }
 
@@ -117,15 +151,16 @@ async function decodeOggVorbis(audioData: Uint8Array): Promise<DecodedAudio> {
   const decoder = new OggVorbisDecoder();
   await decoder.ready;
 
-  // OggVorbisDecoder.decode() returns a Promise
-  const result = await decoder.decode(audioData);
-  decoder.free();
-
-  return {
-    channelData: result.channelData,
-    sampleRate: result.sampleRate,
-    samplesDecoded: result.samplesDecoded,
-  };
+  try {
+    const result = await decoder.decodeFile(audioData);
+    return {
+      channelData: result.channelData,
+      sampleRate: result.sampleRate,
+      samplesDecoded: result.samplesDecoded,
+    };
+  } finally {
+    decoder.free();
+  }
 }
 
 /**
@@ -285,6 +320,8 @@ export async function convertToWav(
       `Failed to decode ${format} audio: ${error instanceof Error ? error.message : 'Unknown error'}`,
     );
   }
+
+  validateDecodedAudio(decoded, format);
 
   // Interleave channels if stereo/multi-channel
   const interleaved = interleaveChannels(decoded.channelData);
