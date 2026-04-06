@@ -26,6 +26,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -33,6 +34,7 @@ import {
   extractMetadata,
   getErrorMessage,
   getErrorStatusCode,
+  getTtsProvider,
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
   try {
@@ -99,9 +102,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
-    const isGeminiVoice = voiceObj.model === 'gpro';
-    const provider = isGeminiVoice ? 'gemini' : 'replicate';
-    const outputCodec = '';
+    const provider = getTtsProvider(voiceObj.model);
+    const isGeminiVoice = provider === 'gemini';
+    const isGrokVoice = provider === 'grok';
 
     userHasPaid = await hasUserPaid(user.id);
 
@@ -136,11 +139,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+    const finalText =
+      isGeminiVoice && styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice
-    const hash = await generateHash(`${text}-${voice}`);
+    // Generate hash for the combination of text, voice and model
+    const hash = await generateHash(`${text}-${voice}-${voiceObj.model}`);
 
     const abortController = new AbortController();
 
@@ -165,7 +169,9 @@ export async function POST(request: Request) {
       abortController.abort();
     });
 
-    const filename = `${path}.wav`;
+    // const requestedGrokCodec = normalizeXaiTtsCodec(outputCodec);
+    const fileExtension = isGeminiVoice ? 'wav' : isGrokVoice ? 'mp3' : 'wav';
+    const filename = `${path}.${fileExtension}`;
     const result = await redis.get<string>(filename);
 
     if (result) {
@@ -190,6 +196,7 @@ export async function POST(request: Request) {
     let genAIResponse: GenerateContentResponse | null = null;
     let modelUsed = '';
     let uploadUrl = '';
+    let selectedGrokCodec = outputCodec;
 
     if (isGeminiVoice) {
       let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -413,6 +420,52 @@ export async function POST(request: Request) {
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
+    } else if (isGrokVoice) {
+      modelUsed = voiceObj.model;
+
+      try {
+        const { audioBuffer, codec, contentType } = await generateXaiTts({
+          text,
+          voiceId: voiceObj.name,
+          language: voiceObj.language,
+          codec: outputCodec,
+          signal: abortController.signal,
+        });
+        selectedGrokCodec = codec;
+        uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
+      } catch (error) {
+        const errorObj = {
+          text,
+          voice,
+          model: voiceObj.model,
+          codec: outputCodec,
+          language: voiceObj.language,
+          errorData: error,
+        };
+        logger.error('Grok TTS generation failed', {
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+          extra: {
+            voice,
+            text,
+            model: voiceObj.model,
+            codec: outputCodec,
+            language: voiceObj.language,
+            errorMessage: Error.isError(error) ? error.message : String(error),
+            errorCause: Error.isError(error) ? error.cause : undefined,
+          },
+        });
+        captureException(error, {
+          extra: errorObj,
+          user: { id: user.id, email: user.email },
+        });
+        console.error('Grok TTS generation failed', errorObj);
+        throw new Error(getErrorMessage('XAI_TTS_ERROR', 'voice-generation'), {
+          cause: 'XAI_TTS_ERROR',
+        });
+      }
     } else {
       // uses REPLICATE_API_TOKEN
       modelUsed = voiceObj.model;
@@ -529,11 +582,13 @@ export async function POST(request: Request) {
           voiceId: voiceObj.id,
           voiceName: voice,
           model: modelUsed,
+          provider,
           textPreview: text.slice(0, 100),
           textLength: text.length,
           isGeminiVoice,
           userHasPaid,
           predictionId: replicateResponse?.id ?? null,
+          ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
       });
 

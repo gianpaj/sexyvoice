@@ -30,8 +30,8 @@ export default defineConfig({
     include: [
       'tests/*.test.ts',
       'tests/*.test.tsx',
+      'tests/**/*.test.ts',
       'tests/**/*.test.tsx',
-      'components/**/*.test.tsx',
     ],
     coverage: {
       provider: 'v8',

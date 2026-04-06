@@ -1,5 +1,5 @@
-import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { getMessages } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -39,7 +39,11 @@ export default async function GeneratePage(props: {
         .eq('user_id', userId)
         .order('created_at', { ascending: false }),
       hasUserPaid(userId),
-      supabase.from('voices').select('*').eq('feature', 'tts').eq('is_public', true),
+      supabase
+        .from('voices')
+        .select('*')
+        .eq('feature', 'tts')
+        .eq('is_public', true),
     ]);
 
   if (!publicVoices) {
@@ -69,7 +73,6 @@ export default async function GeneratePage(props: {
           dict={dict.generate}
           hasEnoughCredits={credits.amount >= 10}
           isPaidUser={isPaidUser}
-          locale={lang}
           publicVoices={publicVoices}
         />
       </div>

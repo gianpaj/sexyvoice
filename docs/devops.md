@@ -247,7 +247,9 @@ Used for:
 
 ### Promotion / banner configuration
 
-- `NEXT_PUBLIC_PROMO_ENABLED`
+- `NEXT_PUBLIC_PROMO_ENABLED` — enables promo campaign behavior: promo banners, bonus-credit pricing, and promo metadata; does not control announcement banners
+- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` — active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`; only used when `NEXT_PUBLIC_PROMO_ENABLED=true`
+- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` — active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`; works independently of `NEXT_PUBLIC_PROMO_ENABLED`
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
 - `NEXT_PUBLIC_PROMO_TRANSLATIONS`

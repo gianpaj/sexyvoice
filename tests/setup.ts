@@ -55,6 +55,73 @@ export const server = setupServer(...handlers);
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
+
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia !== 'function'
+  ) {
+    window.matchMedia = (query: string) =>
+      ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as MediaQueryList;
+  }
+
+  if (typeof document !== 'undefined') {
+    if (typeof document.elementFromPoint !== 'function') {
+      document.elementFromPoint = () => document.body;
+    }
+
+    const rangePrototype = globalThis.Range?.prototype as
+      | (Range & {
+          getClientRects?: () => DOMRectList;
+          getBoundingClientRect?: () => DOMRect;
+        })
+      | undefined;
+
+    if (rangePrototype) {
+      if (typeof rangePrototype.getClientRects !== 'function') {
+        rangePrototype.getClientRects = () =>
+          ({
+            length: 0,
+            item: () => null,
+            *[Symbol.iterator]() {},
+          }) as DOMRectList;
+      }
+
+      if (typeof rangePrototype.getBoundingClientRect !== 'function') {
+        rangePrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+    }
+
+    const elementPrototype = globalThis.HTMLElement?.prototype as
+      | (HTMLElement & {
+          getClientRects?: () => DOMRectList;
+          getBoundingClientRect?: () => DOMRect;
+        })
+      | undefined;
+
+    if (elementPrototype) {
+      if (typeof elementPrototype.getClientRects !== 'function') {
+        elementPrototype.getClientRects = () =>
+          ({
+            length: 0,
+            item: () => null,
+            *[Symbol.iterator]() {},
+          }) as DOMRectList;
+      }
+
+      if (typeof elementPrototype.getBoundingClientRect !== 'function') {
+        elementPrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+    }
+  }
 });
 
 afterEach(() => {
@@ -72,6 +139,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.MISTRAL_API_KEY = 'test-mistral-api-key';
+process.env.XAI_API_KEY = 'test-xai-key';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
 // R2 environment variables
@@ -88,6 +156,29 @@ vi.mock('@axiomhq/js', () => ({
   Axiom: class MockAxiom {
     ingest = vi.fn();
     flush = vi.fn().mockResolvedValue(undefined);
+  },
+}));
+
+// Mock next/dynamic to render the component directly in tests
+vi.mock('next/dynamic', () => ({
+  __esModule: true,
+  default: (loader: () => Promise<any>) => {
+    const { lazy, Suspense, createElement } = require('react');
+    const LazyComp = lazy(() =>
+      loader().then((resolved: any) => ({
+        default:
+          typeof resolved === 'function'
+            ? resolved
+            : resolved.default || resolved,
+      })),
+    );
+    return function DynamicMock(props: any) {
+      return createElement(
+        Suspense,
+        { fallback: null },
+        createElement(LazyComp, props),
+      );
+    };
   },
 }));
 
@@ -206,6 +297,22 @@ vi.mock('@/lib/supabase/queries', async () => {
           model: 'gpro',
         });
       }
+      if (voiceName === 'eve') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'grok',
+        });
+      }
+      if (voiceName === 'sal') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          name: 'sal',
+          language: 'es-ES',
+          model: 'grok',
+        });
+      }
       return Promise.resolve(null);
     }),
     getVoiceIdByNameAdmin: vi.fn((voiceName: string) => {
@@ -224,6 +331,22 @@ vi.mock('@/lib/supabase/queries', async () => {
           name: 'poe',
           language: 'en',
           model: 'gpro',
+        });
+      }
+      if (voiceName === 'eve') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'grok',
+        });
+      }
+      if (voiceName === 'sal') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          name: 'sal',
+          language: 'es-ES',
+          model: 'grok',
         });
       }
       return Promise.resolve(null);

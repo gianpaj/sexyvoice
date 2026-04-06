@@ -2,17 +2,18 @@ import { allPosts } from 'contentlayer/generated';
 import type { Locale as DateFnsLocale } from 'date-fns';
 import { format, parseISO } from 'date-fns';
 import { da, de, es, fr, it } from 'date-fns/locale';
+import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
 import type { Metadata } from 'next/types';
 import { getMessages } from 'next-intl/server';
-import type { ComponentProps } from 'react';
 
+import { Banner } from '@/components/banner';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
-import { PromoBanner } from '@/components/promo-banner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { calculateReadingTime, cn, countWords } from '@/lib/utils';
@@ -73,10 +74,6 @@ export async function generateMetadata({
   };
 }
 
-type PromoCountdownLabels = NonNullable<
-  ComponentProps<typeof PromoBanner>['countdown']
->['labels'];
-
 type BlogPostWithImage = (typeof allPosts)[number] & {
   image: string;
 };
@@ -90,7 +87,6 @@ const dateFnsLocales: Partial<Record<Locale, DateFnsLocale>> = {
   fr,
   it,
 };
-const DEFAULT_PROMO_KEY = 'blackFridayBanner';
 
 const getLatestPostsByLang = (lang: Locale): BlogPostWithImage[] =>
   allPosts
@@ -117,23 +113,18 @@ export default async function BlogIndexPage(props: {
   const dictLanding = messages.landing;
   const blogName = `SexyVoice.ai ${dictLanding.blogLabel}`;
   const pageTitle = `${dictLanding.latestPosts} | ${blogName}`;
-
-  const promoDictKey =
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS || DEFAULT_PROMO_KEY;
-  const promoDict = Object.hasOwn(messages.promos, promoDictKey)
-    ? messages.promos[promoDictKey as keyof typeof messages.promos]
-    : undefined;
-
-  const promoCountdown =
-    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE &&
-    promoDict &&
-    'countdown' in promoDict
-      ? ({
-          enabled: true,
-          endDate: process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE,
-          labels: promoDict.countdown as PromoCountdownLabels,
-        } satisfies ComponentProps<typeof PromoBanner>['countdown'])
-      : undefined;
+  const cookieStore = await cookies();
+  const dismissedCookieKeys = cookieStore
+    .getAll()
+    .filter((cookie) => cookie.value)
+    .map((cookie) => cookie.name);
+  const activeBanner = resolveActiveBanner({
+    audience: 'loggedOut',
+    dismissedCookieKeys,
+    lang,
+    messages,
+    placement: 'blog',
+  });
 
   const posts = getLatestPostsByLang(lang);
 
@@ -179,16 +170,7 @@ export default async function BlogIndexPage(props: {
       <Script id="breadcrumb-schema" type="application/ld+json">
         {JSON.stringify(breadcrumbSchema)}
       </Script>
-      {promoDict && (
-        <PromoBanner
-          ariaLabelDismiss={promoDict.ariaLabelDismiss}
-          countdown={promoCountdown}
-          ctaLink={`/${lang}/signup`}
-          ctaText={promoDict.ctaLoggedOut}
-          isEnabled={process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true'}
-          text={promoDict.text}
-        />
-      )}
+      {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
         <div className="relative min-h-screen bg-linear-to-br from-background to-gray-800">

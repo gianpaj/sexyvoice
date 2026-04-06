@@ -86,11 +86,10 @@ export const MultibandAudioVisualizer = ({
               // transform,
               borderRadius: `${borderRadius}px`,
               boxShadow:
-                state !== 'idle'
-                  ? `${0.1 * barWidth}px ${
+                state === 'idle'
+                  ? 'none' : `${0.1 * barWidth}px ${
                       0.1 * barWidth
-                    }px 0px 0px rgba(0, 0, 0, 0.1)`
-                  : 'none',
+                    }px 0px 0px rgba(0, 0, 0, 0.1)`,
             }}
           />
         );

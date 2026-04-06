@@ -31,10 +31,10 @@ const storageHelper = {
   getStoredSelectedPresetId: (): string =>
     localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || '',
   setStoredSelectedPresetId: (presetId: string | null): void => {
-    if (presetId !== null) {
-      localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
-    } else {
+    if (presetId === null) {
       localStorage.removeItem(LS_SELECTED_PRESET_ID_KEY);
+    } else {
+      localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
     }
   },
   setStoredCharacterOverrides: (

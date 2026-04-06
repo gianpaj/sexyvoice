@@ -52,7 +52,7 @@ export function SessionControls() {
           <div className="flex items-center gap-2">
             <TrackToggle
               className={
-                'hover:!bg-bg3 hover:rounded-l-md! px-3! border-r! !border-separator1 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-l-md font-medium text-foreground text-sm shadow-none transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
+                'hover:!bg-bg3 !border-separator1 inline-flex h-9 items-center justify-center whitespace-nowrap rounded-l-md border-r! px-3! font-medium text-foreground text-sm shadow-none transition-colors hover:rounded-l-md! focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50'
               }
               showIcon={false}
               source={Track.Source.Microphone}

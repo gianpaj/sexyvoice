@@ -16,6 +16,7 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
 - **fal.ai** – Alternative voice cloning service *(optional)*
 - **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS, text enhancement, and automatic emotion tagging
+- **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output)
 - **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
 - **Cloudflare R2** – Scalable storage for generated audio files; two buckets: `R2_BUCKET_NAME` (dashboard) and `R2_SPEECH_API_BUCKET_NAME` (external API)
 - **Upstash Redis** – High-performance caching for audio URLs (dashboard/clone flows); rate limiting for external API keys
@@ -88,8 +89,10 @@ flowchart TD
     G -->|Insufficient| Z6[402 insufficient_credits]
     G -->|Sufficient| H{Model?}
     H -->|gpro| I[Gemini 2.5 Pro TTS → fallback Flash]
-    H -->|kokoro| J[Replicate kokoro model]
-    I --> K[Convert to WAV + Upload to R2_SPEECH_API_BUCKET]
+    H -->|grok| J2[xAI Grok TTS — mp3 or wav]
+    H -->|orpheus| J[Replicate Orpheus model]
+    I --> K[Upload to R2_SPEECH_API_BUCKET]
+    J2 --> K
     J --> K
     K --> L[Deduct credits — admin client]
     L --> M[Save audio_file + insert usage_event]
@@ -105,7 +108,7 @@ flowchart TD
 | `errors.ts` | `createApiError()`, `zodErrorToApiError()` |
 | `external-errors.ts` | Structured error key map + `externalApiErrorResponse()` |
 | `logger.ts` | Axiom-backed per-request structured logger via `createLogger()` |
-| `model.ts` | `resolveExternalModelId()`, `getDefaultFormat()`, `getModelCatalogResponse()` |
+| `model.ts` | `resolveExternalModelId()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
 | `openapi.ts` | `createExternalApiOpenApiDocument()` using `zod-openapi` |
 | `pricing.ts` | `calculateExternalApiDollarAmount()` |
 | `rate-limit.ts` | `consumeRateLimit()` via Upstash Ratelimit (token bucket) |
@@ -367,7 +370,7 @@ lib/
 │   ├── errors.ts              # createApiError(), zodErrorToApiError()
 │   ├── external-errors.ts     # Structured error definitions + externalApiErrorResponse()
 │   ├── logger.ts              # Axiom-backed per-request structured logger
-│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat()
+│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), isFormatSupported()
 │   ├── openapi.ts             # createExternalApiOpenApiDocument() via zod-openapi
 │   ├── pricing.ts             # calculateExternalApiDollarAmount()
 │   ├── rate-limit.ts          # consumeRateLimit() — Upstash token bucket
@@ -407,7 +410,7 @@ components/
 
 tests/
 ├── setup.ts                   # Global Vitest setup — env vars, vi.mock() for all external deps
-├── api-v1-speech.test.ts      # External speech API — auth, validation, generation, credits
+├── v1-speech.test.ts           # External speech API — auth, validation, Grok/Gemini/Replicate generation, credits
 ├── api-v1-meta.test.ts        # External models/voices/openapi endpoints
 ├── api-v1-billing.test.ts     # External billing endpoint
 ├── api-keys-routes.test.ts    # API key CRUD routes
