@@ -7,6 +7,14 @@
   background-color: var(--tt-bg-color);
 }
 
+.editor-content .tiptap.ProseMirror p.is-empty:first-child::before {
+  float: left;
+  height: 0;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  content: attr(data-placeholder);
+}
+
 @media screen and (max-width: 480px) {
   .editor-wrapper {
     width: 100%;

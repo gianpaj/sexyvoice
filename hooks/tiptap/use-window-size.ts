@@ -1,31 +1,32 @@
-"use client"
+'use client';
 
-import { useEffect, useState } from "react"
-import { useThrottledCallback } from "@/hooks/tiptap/use-throttled-callback"
+import { useEffect, useState } from 'react';
+
+import { useThrottledCallback } from '@/hooks/tiptap/use-throttled-callback';
 
 export interface WindowSizeState {
   /**
-   * The width of the window's visual viewport in pixels.
-   */
-  width: number
-  /**
    * The height of the window's visual viewport in pixels.
    */
-  height: number
+  height: number;
+  /**
+   * The distance from the left of the visual viewport to the left of the layout viewport.
+   */
+  offsetLeft: number;
   /**
    * The distance from the top of the visual viewport to the top of the layout viewport.
    * Particularly useful for handling mobile keyboard appearance.
    */
-  offsetTop: number
-  /**
-   * The distance from the left of the visual viewport to the left of the layout viewport.
-   */
-  offsetLeft: number
+  offsetTop: number;
   /**
    * The scale factor of the visual viewport.
    * This is useful for scaling elements based on the current zoom level.
    */
-  scale: number
+  scale: number;
+  /**
+   * The width of the window's visual viewport in pixels.
+   */
+  width: number;
 }
 
 /**
@@ -45,13 +46,13 @@ export function useWindowSize(): WindowSizeState {
     offsetTop: 0,
     offsetLeft: 0,
     scale: 0,
-  })
+  });
 
   const handleViewportChange = useThrottledCallback(() => {
-    if (typeof window === "undefined") return
+    if (typeof window === 'undefined') return;
 
-    const vp = window.visualViewport
-    if (!vp) return
+    const vp = window.visualViewport;
+    if (!vp) return;
 
     const {
       width = 0,
@@ -59,7 +60,7 @@ export function useWindowSize(): WindowSizeState {
       offsetTop = 0,
       offsetLeft = 0,
       scale = 0,
-    } = vp
+    } = vp;
 
     setWindowSize((prevState) => {
       if (
@@ -69,25 +70,25 @@ export function useWindowSize(): WindowSizeState {
         offsetLeft === prevState.offsetLeft &&
         scale === prevState.scale
       ) {
-        return prevState
+        return prevState;
       }
 
-      return { width, height, offsetTop, offsetLeft, scale }
-    })
-  }, 200)
+      return { width, height, offsetTop, offsetLeft, scale };
+    });
+  }, 200);
 
   useEffect(() => {
-    const visualViewport = window.visualViewport
-    if (!visualViewport) return
+    const visualViewport = window.visualViewport;
+    if (!visualViewport) return;
 
-    visualViewport.addEventListener("resize", handleViewportChange)
+    visualViewport.addEventListener('resize', handleViewportChange);
 
-    handleViewportChange()
+    handleViewportChange();
 
     return () => {
-      visualViewport.removeEventListener("resize", handleViewportChange)
-    }
-  }, [handleViewportChange])
+      visualViewport.removeEventListener('resize', handleViewportChange);
+    };
+  }, [handleViewportChange]);
 
-  return windowSize
+  return windowSize;
 }

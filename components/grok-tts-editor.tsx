@@ -1,5 +1,6 @@
 'use client';
 
+import { Placeholder } from '@tiptap/extensions';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -263,6 +264,10 @@ export function GrokTTSEditor({
         listItem: false,
         orderedList: false,
         strike: false,
+      }),
+      Placeholder.configure({
+        placeholder,
+        emptyNodeClass: 'is-empty with-slash',
       }),
       InstantTag,
       WrapperBoundary,
