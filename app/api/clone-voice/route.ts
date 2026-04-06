@@ -51,7 +51,7 @@ const MAX_LENGTH_MULTILANGUAGE = 300;
 const FALLBACK_MIN_DURATION = 10;
 const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
 const VOXTRAL_MIN_DURATION = 3;
-const VOXTRAL_MAX_DURATION = 35;
+const VOXTRAL_MAX_DURATION = 25;
 
 // Replicate multilinguage supports the following languages
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
