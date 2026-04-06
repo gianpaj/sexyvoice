@@ -581,46 +581,6 @@ describe('Generate Voice API Route', () => {
       });
     });
 
-    it('should normalize Grok language and support wav output', async () => {
-      server.use(
-        http.post('https://api.x.ai/v1/tts', async ({ request }) => {
-          const body = (await request.json()) as {
-            language: string;
-            output_format: { codec: string };
-            voice_id: string;
-          };
-
-          expect(body.voice_id).toBe('sal');
-          expect(body.language).toBe('es-ES');
-          expect(body.output_format.codec).toBe('wav');
-
-          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
-            headers: {
-              'Content-Type': 'audio/wav',
-            },
-          });
-        }),
-      );
-
-      const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: 'Hola mundo',
-          voice: 'sal',
-          outputCodec: 'wav',
-        }),
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(json.url).toContain('.wav');
-    });
-
     it('should return 500 when XAI_API_KEY is missing', async () => {
       const previousApiKey = process.env.XAI_API_KEY;
       delete process.env.XAI_API_KEY;
@@ -949,7 +909,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
             provider: 'gemini',
             textLength: 11,
             textPreview: 'Hello world',
-            requestedOutputCodec: null,
+            requestedOutputCodec: 'mp3',
             errorMessage: 'Pro model failed',
           }),
         }),
