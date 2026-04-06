@@ -268,7 +268,8 @@ export function AudioGenerator({
   }, [text, isFullscreen]);
 
   const handleEstimateCredits = async () => {
-    if (!(selectedVoice && isGeminiVoice && text.trim())) return;
+    if (!(selectedVoice && (isGeminiVoice || isGrokVoice) && text.trim()))
+      return;
 
     setIsEstimating(true);
     try {
@@ -315,6 +316,7 @@ export function AudioGenerator({
           {isGrokVoice ? (
             <GrokTTSEditor
               dict={dict.grok}
+              isPaidUser={isPaidUser}
               maxLength={charactersLimit}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}
@@ -416,7 +418,7 @@ export function AudioGenerator({
             </>
           )}
 
-          {isGeminiVoice && (
+          {(isGeminiVoice || isGrokVoice) && (
             <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
               <Button
                 className="h-8 bg-secondary text-xs"

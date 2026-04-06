@@ -4,7 +4,11 @@ import { NextResponse } from 'next/server';
 import { getCharactersLimit } from '@/lib/ai';
 import { getVoiceIdByName, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { calculateCreditsFromTokens } from '@/lib/utils';
+import {
+  calculateCreditsFromTokens,
+  estimateGrokCredits,
+  getTtsProvider,
+} from '@/lib/utils';
 
 type ValidationResult<T> =
   | { ok: true; data: T }
@@ -86,11 +90,16 @@ async function validateVoice(
     };
   }
 
-  if (voiceObj.model !== 'gpro') {
+  const provider = getTtsProvider(voiceObj.model);
+
+  if (!(provider === 'gemini' || provider === 'grok')) {
     return {
       ok: false,
       response: NextResponse.json(
-        { error: 'Credit estimation currently supports only gpro voices' },
+        {
+          error:
+            'Credit estimation currently supports only gpro and grok voices',
+        },
         { status: 400 },
       ),
     };
@@ -165,6 +174,14 @@ export async function POST(request: Request) {
     );
     if (!textError.ok) {
       return textError.response;
+    }
+
+    if (getTtsProvider(voiceResult.data.model) === 'grok') {
+      const credits = estimateGrokCredits(text);
+
+      return NextResponse.json({
+        estimatedCredits: credits,
+      });
     }
 
     const apiKeyResult = validateApiKey();

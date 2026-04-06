@@ -85,7 +85,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start with 10,000 free credits (5 min voice call) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start with 10,000 free credits ( ͡° ͜ʖ ͡°)",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
@@ -268,7 +268,9 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": ["Everything in Standard, just cheaper"]
+        "features": [
+          "Everything in Standard, just cheaper"
+        ]
       }
     },
     "topup": {

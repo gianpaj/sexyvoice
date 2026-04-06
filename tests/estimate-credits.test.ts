@@ -77,7 +77,7 @@ describe('Estimate Credits API Route', () => {
     expect(json.error).toBe('Voice not found');
   });
 
-  it('returns 400 when the voice model is not gpro', async () => {
+  it('returns 400 when the voice model is not supported for estimation', async () => {
     const request = new Request('http://localhost/api/estimate-credits', {
       method: 'POST',
       headers: {
@@ -91,7 +91,7 @@ describe('Estimate Credits API Route', () => {
 
     expect(response.status).toBe(400);
     expect(json.error).toBe(
-      'Credit estimation currently supports only gpro voices',
+      'Credit estimation currently supports only gpro and grok voices',
     );
   });
 
@@ -124,7 +124,27 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
     expect(mockCountTokens).toHaveBeenCalledOnce();
   });
 
-  it('returns 400 when text exceeds character limit', async () => {
+  it('returns estimated credits for grok voices', async () => {
+    mockCountTokens.mockClear();
+
+    const request = new Request('http://localhost/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ text: 'Hello world', voice: 'eve' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.estimatedCredits).toBe(4);
+    expect(json.tokens).toBeUndefined();
+    expect(mockCountTokens).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when gpro text exceeds character limit', async () => {
     // Free users have a 500 char limit (hasUserPaid defaults to false in tests)
     const excessiveText = 'a'.repeat(501);
 
@@ -134,6 +154,25 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         'content-type': 'application/json',
       },
       body: JSON.stringify({ text: excessiveText, voice: 'poe' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toContain('Text exceeds the maximum length');
+    expect(json.error).toContain('500 characters');
+  });
+
+  it('returns 400 when grok text exceeds character limit', async () => {
+    const excessiveText = 'a'.repeat(501);
+
+    const request = new Request('http://localhost/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ text: excessiveText, voice: 'eve' }),
     });
 
     const response = await POST(request);

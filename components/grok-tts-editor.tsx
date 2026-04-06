@@ -4,7 +4,7 @@ import { Placeholder } from '@tiptap/extensions';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Crown, Sparkles } from 'lucide-react';
 import {
   type MouseEvent,
   useCallback,
@@ -31,6 +31,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
 import {
   GROK_EMPTY_WRAPPING_TEXT,
@@ -108,6 +114,7 @@ interface GrokTTSEditorProps {
       whisper: string;
     };
   };
+  isPaidUser?: boolean;
   maxLength: number;
   onChange: (text: string) => void;
   placeholder?: string;
@@ -234,6 +241,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 
 export function GrokTTSEditor({
   dict,
+  isPaidUser,
   maxLength,
   onChange,
   placeholder,
@@ -511,6 +519,8 @@ export function GrokTTSEditor({
     );
   }
 
+  console.log({ isPaidUser });
+
   return (
     <div className="w-full">
       <div className="space-y-2">
@@ -604,14 +614,35 @@ export function GrokTTSEditor({
 
           <div className="flex-1" />
 
-          <span
+          <div
             className={cn(
-              'text-muted-foreground text-xs',
-              currentLength > maxLength && 'font-bold text-red-500',
+              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+              currentLength > maxLength ? 'font-bold text-red-500' : '',
             )}
           >
             {currentLength} / {maxLength}
-          </span>
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Crown
+                    className={cn(
+                      'h-3.5 w-3.5 cursor-default',
+                      isPaidUser
+                        ? 'text-muted-foreground/50'
+                        : 'text-yellow-400',
+                    )}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isPaidUser
+                      ? 'Paid users enjoy 2× character limit'
+                      : 'Upgrade to a paid plan for 2× character limit'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
     </div>
