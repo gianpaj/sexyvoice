@@ -57,8 +57,6 @@ const baseDict = {
     tongueClick: '[tongue-click]',
     tsk: '[tsk]',
   },
-  helperText:
-    'Insert expressive tags like [laugh] or wrap selected text with tags like <fast>...</fast>.',
   inlineEffectPlaceholder: 'Insert inline effect',
   wrappingEffectPlaceholder: 'Wrap with style tag',
   wrappingTags: {
@@ -348,7 +346,7 @@ describe('GrokTTSEditor', () => {
     });
   });
 
-  it('wraps selected text with a wrapper tag', async () => {
+  it('wraps selected text with a wrapping tag', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
@@ -502,7 +500,7 @@ describe('GrokTTSEditor', () => {
     });
   });
 
-  it('opens the wrapper tag suggestion menu when typing <', async () => {
+  it('opens the wrapping tag suggestion menu when typing <', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
@@ -739,7 +737,7 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenLastCalledWith('Hello [breath');
   });
 
-  it('closes the [ suggestion flow when typing the closing bracket for a supported instant tag', async () => {
+  it('auto-converts a completed supported instant tag when typing the closing bracket', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
 
@@ -764,7 +762,95 @@ describe('GrokTTSEditor', () => {
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
     expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(
+      editor.querySelector('[data-grok-instant-tag][tag="[breath]"]'),
+    ).toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello [breath]');
+  });
+
+  it('shows the < suggestion menu for a partial wrapper query typed after <', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await user.click(editor);
+    await user.keyboard('Hello <emphasis');
+
+    const listbox = await screen.findByRole('listbox');
+    expect(
+      within(listbox).getByRole('button', { name: 'emphasis' }),
+    ).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('Hello <emphasis');
+  });
+
+  it('auto-converts a completed standalone opening wrapper tag when typing >', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value=""
+      />,
+    );
+
+    const editor = await findEditor();
+
+    await user.click(editor);
+    await user.keyboard('Hello <emphasis');
+    await user.keyboard('>');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(
+      editor.querySelector(
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<emphasis>"]',
+      ),
+    ).toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('Hello <emphasis>');
+  });
+
+  it('does not open the < suggestion flow when typing < before existing partial wrapper text', async () => {
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const onChange = vi.fn();
+
+    render(
+      <GrokTTSEditor
+        dict={baseDict}
+        maxLength={500}
+        onChange={onChange}
+        placeholder="Type your script"
+        value="emphasis>"
+      />,
+    );
+
+    const editor = await findEditor();
+
+    placeCaretAtEnd(editor);
+    await user.keyboard(
+      '{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}{ArrowLeft}',
+    );
+    await user.keyboard('<');
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
   });
 
   it('auto-converts pasted supported Grok tags into chips', async () => {
@@ -787,22 +873,39 @@ describe('GrokTTSEditor', () => {
     pasteIntoEditor(editor, pastedText);
 
     await waitFor(() => {
-      expect(onChange).toHaveBeenLastCalledWith(pastedText);
+      expect(
+        editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
+      ).toHaveLength(6);
     });
 
-    const chips = Array.from(
-      editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
-    ).map((element) => element.textContent);
-
-    expect(chips).toEqual([
-      '<soft>',
-      '</soft>',
-      '[inhale]',
-      '[sigh]',
-      '<build-intensity>',
-      '</build-intensity>',
-    ]);
-    expect(editor).toHaveTextContent('Oh baby... ');
-    expect(editor).toHaveTextContent('yes');
+    expect(
+      editor.querySelector(
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<soft>"]',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      editor.querySelector(
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="close"][data-grok-wrapper-close-tag="</soft>"]',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      editor.querySelector('[data-grok-instant-tag][tag="[inhale]"]'),
+    ).toBeInTheDocument();
+    expect(
+      editor.querySelector('[data-grok-instant-tag][tag="[sigh]"]'),
+    ).toBeInTheDocument();
+    expect(
+      editor.querySelector(
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<build-intensity>"]',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      editor.querySelector(
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="close"][data-grok-wrapper-close-tag="</build-intensity>"]',
+      ),
+    ).toBeInTheDocument();
+    expect(editor).toHaveTextContent(
+      '<soft>Oh baby... </soft> [inhale] [sigh] <build-intensity>yes</build-intensity>',
+    );
   });
 });

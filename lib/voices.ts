@@ -13,8 +13,9 @@ export function isFeaturedVoice(
   matcher: FeaturedVoiceMatcher = FEATURED_TTS_VOICE,
 ): boolean {
   return (
-    voice.name.toLowerCase() === matcher.name.toLowerCase() &&
-    (matcher.model === undefined || voice.model === matcher.model)
+    voice.name.toLowerCase() === matcher.name.toLowerCase() ||
+    matcher.model === undefined ||
+    voice.model === matcher.model
   );
 }
 

@@ -69,18 +69,6 @@ export function useMenuNavigation<T>({
         return false;
       }
 
-      const targetElement =
-        event.target instanceof HTMLElement ? event.target : null;
-      const activeElement =
-        document.activeElement instanceof HTMLElement
-          ? document.activeElement
-          : null;
-      const isEditorEvent = !!(
-        editor &&
-        targetElement &&
-        editor.view.dom.contains(targetElement)
-      );
-
       const moveNext = () =>
         setSelectedIndex((currentIndex) =>
           currentIndex === -1 ? 0 : (currentIndex + 1) % items.length,

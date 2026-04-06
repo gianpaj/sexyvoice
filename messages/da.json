@@ -347,7 +347,6 @@
       "inlineEffectPlaceholder": "Indsæt inline-effekt",
       "wrappingEffectPlaceholder": "Omslut med stil-tag",
       "formatPlaceholder": "Vælg format",
-      "helperText": "Indsæt udtryksfulde tags som [laugh], eller omslut markeret tekst med tags som <fast>...</fast>.",
       "effects": {
         "pause": "[pause]",
         "longPause": "[long-pause]",
@@ -388,7 +387,7 @@
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
-      "grokInfo": "xAI Grok TTS understøtter udtryksfulde inline-tags som [laugh] og omsluttende tags som <fast>...</fast>.",
+      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og omsluttende tags som <fast>...</fast>.",
       "featuredBadge": "Fremhævet"
     }
   },
@@ -751,7 +750,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "De nye ekspressive stemmer er nu live. Oplev mere naturlig rytme, tone og foelelse i det nyeste stemmeudvalg.",
+      "text": "Nye stemmer til stemmegenerering er nu live, med mere kontrol over tempo, aandedraet, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"

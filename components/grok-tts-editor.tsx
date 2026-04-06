@@ -33,132 +33,41 @@ import {
 } from '@/components/ui/popover';
 import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
 import {
-  GROK_EMPTY_WRAPPER_TEXT,
+  GROK_EMPTY_WRAPPING_TEXT,
+  GROK_INSTANT_TAG_DEFINITIONS,
+  GROK_INSTANT_TAGS,
+  GROK_WRAPPING_TAG_DEFINITIONS,
   type GrokInstantTag,
-  getGrokInstantTags,
   grokTextToTipTapDoc,
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
 import { cn } from '@/lib/utils';
 import { MobileToolbar } from './grok-tts/notion-like-editor-mobile-toolbar';
-import { NotionToolbarFloating } from './grok-tts/notion-like-editor-toolbar-floating';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
-import type { SuggestionItem } from './tiptap/tiptap-ui-utils/suggestion-menu';
+import type {
+  SuggestionItem,
+  SuggestionMenuProps,
+} from './tiptap/tiptap-ui-utils/suggestion-menu';
 
 import './grok-tts-editor.css';
 
-const INSTANT_TAGS = [
-  { tag: '[breath]', label: 'breath', description: 'Breath sound' },
-  { tag: '[chuckle]', label: 'chuckle', description: 'Soft laughter' },
-  { tag: '[cry]', label: 'cry', description: 'Crying sound' },
-  { tag: '[exhale]', label: 'exhale', description: 'Exhalation' },
-  { tag: '[giggle]', label: 'giggle', description: 'Light laughter' },
-  {
-    tag: '[hum-tune]',
-    label: 'hum-tune',
-    description: 'Humming vocalization',
-  },
-  { tag: '[inhale]', label: 'inhale', description: 'Inhalation' },
-  { tag: '[laugh]', label: 'laugh', description: 'Laughter' },
-  { tag: '[lip-smack]', label: 'lip-smack', description: 'Lip smacking' },
-  { tag: '[long-pause]', label: 'long-pause', description: 'Extended pause' },
-  { tag: '[pause]', label: 'pause', description: 'Brief pause' },
-  { tag: '[sigh]', label: 'sigh', description: 'Sighing' },
-  {
-    tag: '[tongue-click]',
-    label: 'tongue-click',
-    description: 'Tongue click',
-  },
-  { tag: '[tsk]', label: 'tsk', description: 'Disapproving tsk' },
-] as const;
+const INSTANT_TAGS = GROK_INSTANT_TAG_DEFINITIONS;
 
-const WRAPPER_TAGS = [
-  {
-    tag: '<build-intensity>',
-    closeTag: '</build-intensity>',
-    label: 'build-intensity',
-    description: 'Crescendo effect',
-  },
-  {
-    tag: '<decrease-intensity>',
-    closeTag: '</decrease-intensity>',
-    label: 'decrease-intensity',
-    description: 'Diminuendo',
-  },
-  {
-    tag: '<emphasis>',
-    closeTag: '</emphasis>',
-    label: 'emphasis',
-    description: 'Emphasized word/phrase',
-  },
-  {
-    tag: '<fast>',
-    closeTag: '</fast>',
-    label: 'fast',
-    description: 'Faster delivery',
-  },
-  {
-    tag: '<higher-pitch>',
-    closeTag: '</higher-pitch>',
-    label: 'higher-pitch',
-    description: 'Raised pitch',
-  },
-  {
-    tag: '<laugh-speak>',
-    closeTag: '</laugh-speak>',
-    label: 'laugh-speak',
-    description: 'Speaking while laughing',
-  },
-  {
-    tag: '<loud>',
-    closeTag: '</loud>',
-    label: 'loud',
-    description: 'Increased volume',
-  },
-  {
-    tag: '<lower-pitch>',
-    closeTag: '</lower-pitch>',
-    label: 'lower-pitch',
-    description: 'Lowered pitch',
-  },
-  {
-    tag: '<sing-song>',
-    closeTag: '</sing-song>',
-    label: 'sing-song',
-    description: 'Melodic delivery',
-  },
-  {
-    tag: '<singing>',
-    closeTag: '</singing>',
-    label: 'singing',
-    description: 'Sung delivery',
-  },
-  {
-    tag: '<slow>',
-    closeTag: '</slow>',
-    label: 'slow',
-    description: 'Slower delivery',
-  },
-  {
-    tag: '<soft>',
-    closeTag: '</soft>',
-    label: 'soft',
-    description: 'Reduced volume',
-  },
-  {
-    tag: '<whisper>',
-    closeTag: '</whisper>',
-    label: 'whisper',
-    description: 'Whispered delivery',
-  },
-] as const;
+const WRAPPING_TAGS = GROK_WRAPPING_TAG_DEFINITIONS.map(
+  ({ closeTag, description, label, openTag }) => ({
+    closeTag,
+    description,
+    label,
+    tag: openTag,
+  }),
+);
 
 type InstantTagDef = (typeof INSTANT_TAGS)[number];
-type WrapperTagDef = (typeof WRAPPER_TAGS)[number];
+type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
 type TagDef = InstantTagDef | WrapperTagDef;
 
-const KNOWN_INSTANT_TAGS = new Set(getGrokInstantTags());
+const KNOWN_INSTANT_TAGS = new Set(GROK_INSTANT_TAGS);
 
 function isKnownInstantTag(tag: string): tag is GrokInstantTag {
   return KNOWN_INSTANT_TAGS.has(tag as GrokInstantTag);
@@ -182,7 +91,6 @@ interface GrokTTSEditorProps {
       tongueClick: string;
       tsk: string;
     };
-    helperText: string;
     inlineEffectPlaceholder: string;
     wrappingEffectPlaceholder: string;
     wrappingTags: {
@@ -214,31 +122,6 @@ interface EditorSelectionSnapshot {
 }
 
 type EditorInstance = NonNullable<ReturnType<typeof useEditor>>;
-
-type GrokDebugPhase =
-  | 'create'
-  | 'handleKeyDown'
-  | 'handleTextInput'
-  | 'selection'
-  | 'transaction'
-  | 'update';
-
-interface GrokDebugEntry {
-  doc: unknown;
-  dom: string;
-  phase: GrokDebugPhase;
-  selection: EditorSelectionSnapshot;
-  serialized: string;
-  storedMarks: { attrs: Record<string, unknown>; type: string }[];
-  timestamp: string;
-}
-
-declare global {
-  interface Window {
-    __SV_DEBUG_LOGS?: GrokDebugEntry[];
-    __SV_GROK_DEBUG?: boolean;
-  }
-}
 
 function plainTextToDoc(value: string) {
   return grokTextToTipTapDoc(value);
@@ -276,63 +159,8 @@ function getDomSelectionSnapshot(
   }
 }
 
-// function snapshotSelection(selection: {
-//   empty: boolean;
-//   from: number;
-//   to: number;
-// }): EditorSelectionSnapshot {
-//   return {
-//     empty: selection.empty,
-//     from: selection.from,
-//     to: selection.to,
-//   };
-// }
-
-// function snapshotMarks(
-//   marks:
-//     | readonly {
-//         attrs: Record<string, unknown>;
-//         type: { name: string };
-//       }[]
-//     | null
-//     | undefined,
-// ) {
-//   if (!marks) {
-//     return [];
-//   }
-
-//   return marks.map((mark) => ({
-//     attrs: mark.attrs,
-//     type: mark.type.name,
-//   }));
-// }
-
-// function isGrokDebugEnabled() {
-//   return typeof window !== 'undefined' && window.__SV_GROK_DEBUG === true;
-// }
-
-// function recordGrokDebug(phase: GrokDebugPhase, editor: EditorInstance) {
-//   if (!isGrokDebugEnabled()) {
-//     return;
-//   }
-
-//   const doc = editor.getJSON();
-//   const entry: GrokDebugEntry = {
-//     doc,
-//     dom: editor.view.dom.innerHTML,
-//     phase,
-//     selection: snapshotSelection(editor.state.selection),
-//     serialized: grokTipTapDocToText(doc),
-//     storedMarks: snapshotMarks(editor.state.storedMarks),
-//     timestamp: new Date().toISOString(),
-//   };
-
-//   window.__SV_DEBUG_LOGS ??= [];
-//   window.__SV_DEBUG_LOGS.push(entry);
-//   console.debug('[grok-tts-debug]', entry);
-// }
-
 interface GrokSlashMenuConfig {
+  allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
   pluginKey: string;
   triggerChar: '[' | '<';
@@ -390,6 +218,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
     >
       {slashMenus.map((menu) => (
         <SlashDropdownMenu
+          allow={menu.allow}
           char={menu.triggerChar}
           config={{
             customItems: menu.customItems,
@@ -400,7 +229,6 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
           pluginKey={menu.pluginKey}
         />
       ))}
-      <NotionToolbarFloating />
 
       {createPortal(<MobileToolbar />, document.body)}
     </EditorContent>
@@ -458,36 +286,18 @@ export function GrokTTSEditor({
         spellCheck: 'false',
       },
       handleDOMEvents: {
-        keydown: () => {
-          if (editor) {
-            // recordGrokDebug('handleKeyDown', editor);
-          }
-
-          return false;
-        },
+        keydown: () => false,
       },
-      handleTextInput: () => {
-        if (editor) {
-          // recordGrokDebug('handleTextInput', editor);
-          return false;
-        }
-
-        return false;
-      },
+      handleTextInput: () => false,
     },
     onCreate: ({ editor: nextEditor }) => {
       const { empty, from, to } = nextEditor.state.selection;
       lastSelectionRef.current = { empty, from, to };
-      // recordGrokDebug('create', nextEditor);
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
       const { empty, from, to } = nextEditor.state.selection;
       lastSelectionRef.current = { empty, from, to };
-      // recordGrokDebug('selection', nextEditor);
     },
-    // onTransaction: ({ editor: nextEditor }) => {
-    //   recordGrokDebug('transaction', nextEditor);
-    // },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
       const text = fullText.slice(0, maxLength);
@@ -498,15 +308,8 @@ export function GrokTTSEditor({
 
       setCurrentLength(text.length);
       onChange(text);
-      // recordGrokDebug('update', nextEditor);
     },
   });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.__SV_DEBUG_LOGS ??= [];
-    }
-  }, []);
 
   useEffect(() => {
     if (!editor) {
@@ -592,7 +395,7 @@ export function GrokTTSEditor({
           editor.schema.nodeFromJSON(openBoundary),
         );
 
-        tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPER_TEXT));
+        tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPING_TEXT));
         tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
 
         const cursorPos = insertFrom + 2;
@@ -668,7 +471,28 @@ export function GrokTTSEditor({
         triggerChar: '[',
       },
       {
-        customItems: WRAPPER_TAGS.map((tag) =>
+        allow: ({
+          editor,
+          range,
+        }: Parameters<NonNullable<SuggestionMenuProps['allow']>>[0]) => {
+          const resolvedPosition = editor.state.doc.resolve(range.to);
+          const nodeAfter = resolvedPosition.nodeAfter;
+          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? '') : '';
+          const previousNode = resolvedPosition.nodeBefore;
+          const previousText = previousNode?.isText
+            ? (previousNode.text ?? '')
+            : '';
+          const combinedTagText = `${previousText}${nextText}`;
+
+          return !WRAPPING_TAGS.some((tag) => {
+            const partialOpenTag = tag.tag.slice(1);
+            return (
+              combinedTagText.startsWith(partialOpenTag) ||
+              combinedTagText.startsWith(tag.tag)
+            );
+          });
+        },
+        customItems: WRAPPING_TAGS.map((tag) =>
           createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
         pluginKey: 'grokWrapperTagMenu',
@@ -766,7 +590,7 @@ export function GrokTTSEditor({
                     {dict.wrappingEffectPlaceholder}
                   </h4>
                   <div className="grid grid-cols-2 gap-1">
-                    {WRAPPER_TAGS.map((tag) => (
+                    {WRAPPING_TAGS.map((tag) => (
                       <button
                         className="rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
                         key={tag.tag}
@@ -834,10 +658,6 @@ export function GrokTTSEditor({
           >
             {currentLength} / {maxLength}
           </span>
-        </div>
-
-        <div className="mt-1 text-center text-muted-foreground text-xs">
-          {dict.helperText}
         </div>
       </div>
     </div>

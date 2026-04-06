@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useHotkeys } from "react-hotkeys-hook"
-import { type Editor } from "@tiptap/react"
+import type { Editor } from "@tiptap/react"
 import type { Transaction } from "@tiptap/pm/state"
 
 // --- Hooks ---
@@ -115,7 +115,7 @@ export function canResetFormatting(
   editor: Editor | null,
   preserveMarks?: string[]
 ): boolean {
-  if (!editor || !editor.isEditable) return false
+  if (!(editor && editor.isEditable)) return false
 
   const tr = editor.state.tr
   return canResetMarks(tr, preserveMarks)
@@ -128,7 +128,7 @@ export function resetFormatting(
   editor: Editor | null,
   preserveMarks?: string[]
 ): boolean {
-  if (!editor || !editor.isEditable) return false
+  if (!(editor && editor.isEditable)) return false
 
   try {
     const { view, state } = editor
@@ -153,7 +153,7 @@ export function shouldShowButton(props: {
 }): boolean {
   const { editor, hideWhenUnavailable, preserveMarks } = props
 
-  if (!editor || !editor.isEditable) return false
+  if (!(editor && editor.isEditable)) return false
 
   if (hideWhenUnavailable && !editor.isActive("code")) {
     return canResetFormatting(editor, preserveMarks)

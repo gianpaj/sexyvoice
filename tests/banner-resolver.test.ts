@@ -20,7 +20,7 @@ const messages = {
       ariaLabelDismiss: 'Dismiss announcement',
       ctaLoggedIn: 'Try voices',
       ctaLoggedOut: 'Log in',
-      text: 'New expressive voices are live.',
+      text: 'Generate with new expressive voices.',
     },
   },
   promos: {

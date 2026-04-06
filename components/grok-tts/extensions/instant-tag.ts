@@ -1,8 +1,8 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 
-import { type GrokInstantTag, getGrokInstantTags } from '@/lib/tts-editor';
+import { GROK_INSTANT_TAGS, type GrokInstantTag } from '@/lib/tts-editor';
 
-const INSTANT_TAGS = new Set(getGrokInstantTags());
+const INSTANT_TAGS = new Set(GROK_INSTANT_TAGS);
 export const GROK_TAG_CHIP_CLASS =
   'inline-flex rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground';
 

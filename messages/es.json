@@ -351,7 +351,6 @@
       "inlineEffectPlaceholder": "Insertar efecto en línea",
       "wrappingEffectPlaceholder": "Envolver con etiqueta de estilo",
       "formatPlaceholder": "Selecciona formato",
-      "helperText": "Inserta etiquetas expresivas como [laugh] o envuelve el texto seleccionado con etiquetas como <fast>...</fast>.",
       "effects": {
         "pause": "[pause]",
         "longPause": "[long-pause]",
@@ -392,7 +391,7 @@
       "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
       "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).",
-      "grokInfo": "xAI Grok TTS admite etiquetas expresivas en línea como [laugh] y etiquetas envolventes como <fast>...</fast>.",
+      "grokInfo": "Admite etiquetas expresivas en línea como [laugh] y etiquetas envolventes como <fast>...</fast>.",
       "featuredBadge": "Destacada"
     }
   },
@@ -755,7 +754,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Las nuevas voces expresivas ya estan disponibles. Escucha una entonacion, ritmo y emocion mas naturales en la nueva seleccion de voces.",
+      "text": "Las nuevas voces para generacion de voz ya estan disponibles, con mas control sobre el ritmo, las respiraciones, el tono, la velocidad y la intensidad.",
       "ctaLoggedIn": "Probar voces",
       "ctaLoggedOut": "Iniciar sesion",
       "ariaLabelDismiss": "Cerrar anuncio de voces expresivas"

@@ -7,7 +7,7 @@ This design supersedes the wrapper-tag portion of:
 - `docs/plans/2026-03-23-grok-tiptap-schema-design.md`
 - `docs/plans/2026-03-23-grok-tiptap-schema-implementation-plan.md`
 
-Instant tags remain inline atom nodes. Wrapper tags stop using a mark plus
+Instant tags remain inline atom nodes. Wrapping tags stop using a mark plus
 decorations and instead become real inline editor content with explicit opening
 and closing boundary nodes.
 
@@ -35,7 +35,7 @@ Users need wrapper boundaries to behave more like HTML tags:
 
 1. Model `<soft>...</soft>` and related wrappers as actual document nodes
 2. Keep wrapped text directly editable between visible opening and closing chips
-3. Let opening and closing wrapper tags behave as independent editor units
+3. Let opening and closing wrapping tags behave as independent editor units
 4. Preserve deterministic Grok-text parsing and serialization
 5. Keep nested wrappers and instant tags working inside wrappers
 6. Support empty wrappers with stable caret placement and typing behavior
@@ -50,9 +50,9 @@ No change:
 - it stores the Grok tag in `attrs.tag`
 - it renders as a non-editable chip
 
-### Wrapper tags
+### Wrapping tags
 
-Wrapper tags become a boundary-based inline structure.
+Wrapping tags become a boundary-based inline structure.
 
 Properties:
 
@@ -84,7 +84,7 @@ That anchor:
 
 ### Wrap selection
 
-If the user selects text and chooses a wrapper tag:
+If the user selects text and chooses a wrapping tag:
 
 1. build an opening `wrapperBoundary` node
 2. keep the selected inline content as normal inline content

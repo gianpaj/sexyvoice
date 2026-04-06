@@ -50,7 +50,6 @@ interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
-  selectedGrokCodec?: string;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
 }
@@ -59,7 +58,6 @@ export function AudioGenerator({
   dict,
   hasEnoughCredits,
   isPaidUser,
-  selectedGrokCodec,
   selectedStyle,
   selectedVoice,
 }: AudioGeneratorProps) {
@@ -119,16 +117,8 @@ export function AudioGenerator({
       text,
       voice: selectedVoice?.name,
       styleVariant: isGeminiVoice ? selectedStyle : '',
-      outputCodec: isGrokVoice ? selectedGrokCodec : undefined,
     }),
-    [
-      isGeminiVoice,
-      isGrokVoice,
-      selectedGrokCodec,
-      selectedStyle,
-      selectedVoice?.name,
-      text,
-    ],
+    [isGeminiVoice, isGrokVoice, selectedStyle, selectedVoice?.name, text],
   );
 
   const handleCancel = useCallback(() => {

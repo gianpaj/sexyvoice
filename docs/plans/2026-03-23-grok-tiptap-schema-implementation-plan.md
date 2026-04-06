@@ -3,7 +3,7 @@
 ## Objective
 
 Implement a proper TipTap schema for the Grok TTS editor so instant tags and
-wrapper tags are represented as registered editor extensions instead of
+wrapping tags are represented as registered editor extensions instead of
 unregistered JSON node types.
 
 ## Phase 1: Add TipTap extensions
@@ -62,7 +62,7 @@ Run:
 
 ## Notes
 
-- Wrapper tags are intentionally modeled as a mark because they behave like
+- Wrapping tags are intentionally modeled as a mark because they behave like
   formatting over text
 - Instant tags remain explicit inline tokens because they behave like atomic
   insertable units

@@ -351,7 +351,6 @@
       "inlineEffectPlaceholder": "Inserisci effetto inline",
       "wrappingEffectPlaceholder": "Avvolgi con tag di stile",
       "formatPlaceholder": "Seleziona formato",
-      "helperText": "Inserisci tag espressivi come [laugh] oppure avvolgi il testo selezionato con tag come <fast>...</fast>.",
       "effects": {
         "pause": "[pause]",
         "longPause": "[long-pause]",
@@ -392,7 +391,7 @@
       "selectStyleTextareaPlaceholder": "Descrivi lo stile del tuo dialogo, es. \"Leggi questo in un sussurro drammatico\"",
       "toolTipEmotionTags": "Tag emotivi supportati:",
       "geminiInfo": "Supporta 24 lingue:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇳🇱 Olandese (Paesi Bassi),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇮🇳 Marathi (India),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\n🇻🇳 Vietnamita (Vietnam)",
-      "grokInfo": "xAI Grok TTS supporta tag inline espressivi come [laugh] e tag di stile avvolgenti come <fast>...</fast>.",
+      "grokInfo": "Supporta tag inline espressivi come [laugh] e tag di stile avvolgenti come <fast>...</fast>.",
       "featuredBadge": "In evidenza"
     }
   },
@@ -755,7 +754,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Le nuove voci espressive sono ora disponibili. Ascolta un ritmo, un tono e un'emozione piu naturali nella nuova selezione di voci.",
+      "text": "Le nuove voci per la generazione vocale sono ora disponibili, con piu controllo su ritmo, respiri, tono, velocita e intensita.",
       "ctaLoggedIn": "Prova le voci",
       "ctaLoggedOut": "Accedi",
       "ariaLabelDismiss": "Chiudi annuncio sulle voci espressive"

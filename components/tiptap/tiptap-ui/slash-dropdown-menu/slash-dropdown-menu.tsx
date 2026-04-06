@@ -52,7 +52,7 @@ export const SlashDropdownMenu = (props: SlashDropdownMenuProps) => {
   return (
     <SuggestionMenu
       char={triggerChar}
-      decorationClass="inline-block bg-gray-800 rounded-sm outline-[5.5px] outline-gray-800 [&.is-empty]:after:content-[attr(data-decoration-content)] [&.is-empty]:after:text-gray-500"
+      decorationClass="inline-block bg-gray-800 p-0 rounded-sm outline-[3.5px] md:outline-[5px] outline-gray-800 [&.is-empty]:after:content-[attr(data-decoration-content)] [&.is-empty]:after:text-gray-500"
       decorationContent="Filter..."
       items={({ query, editor }) =>
         filterSuggestionItems(getSlashMenuItems(editor), query)

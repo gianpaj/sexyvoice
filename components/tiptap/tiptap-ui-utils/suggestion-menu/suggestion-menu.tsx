@@ -176,35 +176,19 @@ export const SuggestionMenu = ({
         const { view, state } = editor;
         const { selection } = state;
 
-        const isMention = editor.extensionManager.extensions.some(
-          (extension) => {
-            const name = extension.name;
-            return (
-              name === 'mention' &&
-              extension.options?.suggestion?.char ===
-                internalSuggestionPropsRef.current.char
-            );
-          },
-        );
+        const cursorPosition = selection.$from.pos;
+        const previousNode = selection.$head?.nodeBefore;
 
-        if (!isMention) {
-          const cursorPosition = selection.$from.pos;
-          const previousNode = selection.$head?.nodeBefore;
+        const startPosition = previousNode
+          ? calculateStartPosition(
+              cursorPosition,
+              previousNode,
+              internalSuggestionPropsRef.current.char,
+            )
+          : selection.$from.start();
 
-          const startPosition = previousNode
-            ? calculateStartPosition(
-                cursorPosition,
-                previousNode,
-                internalSuggestionPropsRef.current.char,
-              )
-            : selection.$from.start();
-
-          const transaction = state.tr.deleteRange(
-            startPosition,
-            cursorPosition,
-          );
-          view.dispatch(transaction);
-        }
+        const transaction = state.tr.deleteRange(startPosition, cursorPosition);
+        view.dispatch(transaction);
 
         const nodeAfter = view.state.selection.$to.nodeAfter;
         const overrideSpace = nodeAfter?.text?.startsWith(' ');

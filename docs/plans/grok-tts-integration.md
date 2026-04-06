@@ -714,6 +714,49 @@ When selected voice is Grok:
 
 Allow users to insert Grok-supported expressive tags into the text area without manually typing them all.
 
+### Final implementation direction
+
+The editor ended up using a **Tiptap-based rich text surface with plain-text serialization**, not a raw textarea and not a full semantic AST editor.
+
+That means:
+
+- users edit inside a ProseMirror/Tiptap editor
+- supported Grok tags are rendered as chips / boundaries in the editor UI
+- the persisted and submitted value is still plain text such as:
+  - `[breath]`
+  - `<soft>Hello</soft>`
+  - `<emphasis>`
+- unsupported tags remain plain text and are visually highlighted rather than normalized into chips
+
+This gives us a better editing experience without changing the backend request contract.
+
+### Shared tag source of truth
+
+Long term, the supported Grok tag catalog should live in one shared place.
+
+The implementation now centralizes tag definitions in `lib/tts-editor.ts` and exports:
+
+- `GROK_INSTANT_TAGS`
+- `GROK_WRAPPING_TAGS`
+- `GROK_INSTANT_TAG_DEFINITIONS`
+- `GROK_WRAPPING_TAG_DEFINITIONS`
+
+These shared constants are intended to be reused by:
+
+- parser / serializer logic
+- editor suggestion menus
+- auto-convert normalization
+- tests
+
+Preferred convention for future work:
+
+- use constants directly for static Grok tag catalogs
+- use `*_DEFINITIONS` constants for UI/editor metadata
+- avoid thin accessor functions that only return static constants
+- keep functions only for behavior, parsing, serialization, or computed transformations
+
+This is the preferred long-term architecture because future tag additions should require updating one shared module instead of multiple duplicated arrays across editor code, normalization code, and tests.
+
 ### UI components
 
 Add a Grok-only control near the text area such as:
@@ -766,6 +809,17 @@ Examples from xAI docs:
 - `<laugh-speak>`
 - `<emphasis>`
 
+### Final editor behavior notes
+
+The implemented editor behavior is more specific than the original plan:
+
+- supported instant tags auto-convert into chips
+- supported wrapper tags auto-convert into wrapper boundary chips
+- a completed standalone opening wrapper tag such as `<emphasis>` is preserved as a standalone opening boundary chip
+- pasted supported Grok tags are normalized into chips / boundaries
+- unsupported tags remain text and are highlighted
+- the visible editor model is richer than the submitted text model, but serialization remains plain text
+
 ---
 
 ## 20. Tag insertion behavior
@@ -810,6 +864,30 @@ Example insertion:
 ```
 
 with cursor placed between tags.
+
+### Suggestion and normalization behavior
+
+The implemented editor also supports typed-entry flows, not just button insertion.
+
+Current behavior to preserve:
+
+- typing `[` opens the instant-tag suggestion flow
+- typing `<` opens the wrapper-tag suggestion flow
+- typing a supported instant tag and then `]` closes the suggestion flow and auto-converts the tag into a chip
+- typing a supported wrapper opening tag and then `>` closes the suggestion flow and auto-converts the opening tag into a standalone opening boundary chip
+- typing unsupported completed tags closes the suggestion flow but leaves the text as plain text
+- typing `<` before existing partial wrapper text should not incorrectly open the wrapper suggestion flow
+
+### Auto-convert behavior
+
+The editor includes an auto-convert normalization layer that reparses the current plain-text serialization and replaces the document only when the normalized ProseMirror document is structurally different.
+
+Important implementation notes:
+
+- structural equality should use ProseMirror node equality, not `JSON.stringify()`
+- document replacement should use a valid ProseMirror replace operation for the full document slice
+- selection offsets should be preserved across normalization
+- partial supported instant tags and partial supported wrapper opening tags should normalize into supported tags when completed
 
 ### UX importance
 
@@ -902,7 +980,6 @@ Add new keys to `messages/en.json` and all locale files.
 - `generate.grok.inlineEffects`
 - `generate.grok.wrappingEffects`
 - `generate.grok.format`
-- `generate.grok.helperText`
 
 ### Requirement
 
@@ -1144,9 +1221,13 @@ Use this checklist as the execution order for the actual implementation work.
 - [ ] Test missing `XAI_API_KEY`
 - [ ] Test xAI failure handling
 - [ ] Test Grok JSON response contract
-- [ ] Test that Grok hides the sparkle / AI enhancement button
-- [ ] Add utility tests for helpers
-- [ ] Add component tests for Grok UI behavior if feasible
+- [x] Test that Grok hides the sparkle / AI enhancement button
+- [x] Add utility tests for helpers
+- [x] Add component tests for Grok UI behavior if feasible
+- [x] Add parser / serializer tests for supported instant tags, wrapper tags, and standalone opening wrapper tags
+- [x] Add normalization tests for partial instant tags and partial wrapper opening tags
+- [x] Add suggestion lifecycle tests for `[` and `<` flows
+- [x] Add paste normalization coverage for supported Grok tags
 
 ### Phase 11 — deferred work for later
 
@@ -1155,6 +1236,113 @@ Use this checklist as the execution order for the actual implementation work.
 - [ ] Evaluate direct binary or inline-audio response mode later
 - [ ] Evaluate server-side PCM-to-WAV conversion later
 - [ ] Evaluate Grok-compatible AI text enhancement later
+- [ ] Add Playwright coverage for caret-sensitive mid-text editing flows that jsdom does not model faithfully
+
+---
+
+## Debugging and maintenance notes
+
+### What we ended up implementing
+
+The Grok editor work evolved beyond the original plan in a few important ways:
+
+- the editor is Tiptap / ProseMirror based
+- supported tags are represented visually as chips / wrapper boundaries
+- serialization remains plain text
+- normalization is handled by an append-transaction auto-convert extension
+- standalone opening wrapper tags are first-class supported tokens
+- unsupported tags are highlighted instead of rejected
+
+### Shared source of truth
+
+For future maintenance, treat `lib/tts-editor.ts` as the canonical Grok tag module.
+
+It should own:
+
+- raw supported instant tags
+- raw supported wrapper tag pairs
+- shared tag metadata definitions
+- parser / serializer behavior
+- constant exports reused by editor code and tests
+
+When adding or removing a supported Grok tag in the future:
+
+1. update the shared constants in `lib/tts-editor.ts`
+2. keep editor suggestion menus derived from those shared constants
+3. keep normalization logic derived from those shared constants
+4. update tests that intentionally assert the supported catalog
+
+Avoid reintroducing duplicated tag arrays in:
+
+- editor components
+- normalization extensions
+- tests
+
+Also avoid reintroducing accessor helpers that only return static tag constants. In this area, direct constant imports are the preferred pattern.
+
+### Recommended debugging workflow
+
+When debugging future Grok editor issues, prefer this order:
+
+1. verify the plain-text serialization you expect
+2. verify the parsed token model in `parseGrokTtsText()`
+3. verify the generated Tiptap document from `grokTextToTipTapDoc()`
+4. verify whether auto-convert normalization is replacing the document
+5. verify whether the issue is editor rendering, serialization, or suggestion lifecycle
+
+This helps separate:
+
+- parser bugs
+- normalization bugs
+- suggestion-menu bugs
+- jsdom test limitations
+
+### Specific lessons learned
+
+#### 1. Use structural document equality
+
+Do not compare ProseMirror documents with `JSON.stringify()`.
+
+Use ProseMirror structural equality instead, because JSON key ordering can produce false negatives and trigger unnecessary document replacement.
+
+#### 2. Preserve selection through normalization
+
+If normalization replaces the document, preserve selection by converting selection positions to text offsets and then resolving them back into document positions after replacement.
+
+#### 3. Standalone opening wrapper tags are valid editor state
+
+Do not flatten an unclosed supported opening wrapper tag back into plain text during parser unwind.
+
+Treat it as a dedicated token and render it as a standalone opening boundary chip.
+
+#### 4. Suggestion behavior is easier to test at the Tiptap layer
+
+For suggestion lifecycle behavior, Tiptap-style tests are more reliable than browser-like key navigation in jsdom contenteditable tests.
+
+Prefer focused suggestion tests for:
+
+- open
+- update
+- close
+- explicit `exitSuggestion(...)` behavior
+
+#### 5. jsdom is not a browser for caret movement
+
+Arrow-key and mid-text caret editing behavior inside ProseMirror contenteditable is not fully browser-faithful in jsdom.
+
+If a bug depends on exact caret movement or DOM selection fidelity, add or prefer Playwright coverage.
+
+### Practical debugging checklist
+
+If a future Grok editor regression appears:
+
+- check whether the plain-text output changed
+- check whether a supported tag stopped being part of the shared tag catalog
+- check whether normalization is firing on every transaction
+- check whether selection restoration is moving the caret unexpectedly
+- check whether a suggestion menu is reopening immediately after close
+- check whether the failure is only reproducible in jsdom
+- add targeted parser / normalization tests before changing editor behavior
 
 ---
 

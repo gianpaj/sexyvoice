@@ -1,6 +1,6 @@
 import type { Attrs, Node } from "@tiptap/pm/model"
 import { findNodePosition, isValidPosition } from "@/lib/tiptap-utils"
-import { type Editor } from "@tiptap/react"
+import type { Editor } from "@tiptap/react"
 import { NodeSelection, TextSelection } from "@tiptap/pm/state"
 
 /**
@@ -291,7 +291,7 @@ export function getAllMatchingNodes(
  */
 export function getAnchorNodeAndPos(
   editor: Editor | null,
-  allowEmptySelection: boolean = true
+  allowEmptySelection = true
 ): { node: Node; pos: number } | null {
   if (!editor) return null
 

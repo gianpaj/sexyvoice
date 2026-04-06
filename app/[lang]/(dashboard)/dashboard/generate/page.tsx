@@ -39,7 +39,8 @@ export default async function GeneratePage(props: {
         .eq('user_id', userId)
         .order('created_at', { ascending: false }),
       hasUserPaid(userId),
-      supabase.from('voices').select('*').eq('feature', 'tts').eq('is_public', true),
+      supabase.from('voices').select('*').eq('feature', 'tts'),
+      // .eq('is_public', true),
     ]);
 
   if (!publicVoices) {

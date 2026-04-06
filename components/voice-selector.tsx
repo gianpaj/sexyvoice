@@ -41,10 +41,10 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 
-type VoiceGroup = {
+interface VoiceGroup {
   label: string;
   voices: Tables<'voices'>[];
-};
+}
 
 function isMultilingualVoice(voice: Tables<'voices'>) {
   return voice.model === 'grok' || voice.language === 'multiple';
@@ -91,7 +91,7 @@ export function VoiceSelector({
     };
   const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? 'Featured';
   const featuredGroupLabel =
-    voiceSelectorLabels.featuredGroupLabel ?? 'Featured';
+    voiceSelectorLabels.featuredGroupLabel ?? 'Featured  ✨';
   const multilingualGroupLabel =
     voiceSelectorLabels.multilingualGroupLabel ?? 'Multilingual 🌍';
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -189,8 +189,16 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger className="md:w-1/2">
-            <SelectValue placeholder="Select a voice" />
+          <SelectTrigger>
+            <span className="flex! items-center gap-2">
+              <SelectValue placeholder="Select a voice" />
+              {selectedVoice && isFeaturedVoice(selectedVoice) && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 font-semibold text-[10px] text-primary uppercase tracking-wide">
+                  <Sparkles className="h-3 w-3" />
+                  {featuredBadgeLabel}
+                </span>
+              )}
+            </span>
           </SelectTrigger>
           <SelectContent>
             {publicVoices.length > 0 &&
@@ -211,12 +219,6 @@ export function VoiceSelector({
                       >
                         <span className="flex items-center gap-2">
                           <span>{capitalizeFirstLetter(voice.name)}</span>
-                          {isFeatured && (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 font-semibold text-[10px] text-primary uppercase tracking-wide">
-                              <Sparkles className="h-3 w-3" />
-                              {featuredBadgeLabel}
-                            </span>
-                          )}
                         </span>
                       </SelectItem>
                     );
@@ -234,7 +236,7 @@ export function VoiceSelector({
                 url={selectedVoice.sample_url}
                 waveformClassName="h-5!"
               />
-              <div className="flex items-center gap-3">
+              <div>
                 <p className="text-muted-foreground text-sm">
                   <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
                   prompt: <i>{selectedVoice.sample_prompt}</i>

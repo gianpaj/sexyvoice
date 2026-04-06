@@ -8,7 +8,7 @@ of generating custom JSON node types that are not registered with the editor.
 The new model should:
 
 - represent instant tags like `[pause]` as TipTap inline atom nodes
-- represent wrapper tags like `<soft>...</soft>` as a TipTap mark
+- represent wrapping tags like `<soft>...</soft>` as a TipTap mark
 - keep parsing and serialization centralized in `lib/grok-tts-editor.ts`
 - use editor-native commands for insert and apply operations
 - preserve plain-text round-tripping to Grok tag syntax
@@ -30,7 +30,7 @@ operation to the selected text.
 
 1. Fix the schema mismatch permanently
 2. Model instant tags as structured inline content
-3. Model wrapper tags as formatting over selected text
+3. Model wrapping tags as formatting over selected text
 4. Keep Grok text import/export deterministic
 5. Reduce document-wide `setContent()` usage during normal editing
 
@@ -58,19 +58,19 @@ Properties:
 This makes instant tags behave like a single insertable token inside the text
 flow.
 
-### Wrapper tags
+### Wrapping tags
 
-Wrapper tags such as `<soft>...</soft>` and `<fast>...</fast>` should be
+Wrapping tags such as `<soft>...</soft>` and `<fast>...</fast>` should be
 represented as a custom mark named `grokWrapper`.
 
 Properties:
 
 - applies over selected text
-- stores the wrapper tag pair in attrs
+- stores the wrapping tag pair in attrs
 - serializes back to explicit open/close Grok tags
 
-This matches the semantics of wrapper tags more closely than using a custom
-inline container node. Wrapper tags behave like formatting applied to text, not
+This matches the semantics of wrapping tags more closely than using a custom
+inline container node. Wrapping tags behave like formatting applied to text, not
 like self-contained embedded content.
 
 ## Interaction Model
@@ -83,9 +83,9 @@ When the user chooses an instant tag from the effects popover:
 2. preserve surrounding text
 3. do not rebuild the full document string
 
-### Apply wrapper tag
+### Apply wrapping tag
 
-When the user chooses a wrapper tag:
+When the user chooses a wrapping tag:
 
 1. require a non-empty text selection
 2. apply the `grokWrapper` mark to the selected text
@@ -120,7 +120,7 @@ The serializer should walk the document JSON and emit:
 
 - plain text for text nodes
 - bracket syntax for `instantTag`
-- open/close wrapper tags around marked text
+- open/close wrapping tags around marked text
 
 Serialization must preserve line breaks and produce valid Grok text output.
 

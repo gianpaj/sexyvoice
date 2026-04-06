@@ -4,7 +4,7 @@ export const isElementWithinEditor = (
   editor: Editor | null,
   element: Node | null
 ) => {
-  if (!element || !editor) {
+  if (!(element && editor)) {
     return false
   }
 

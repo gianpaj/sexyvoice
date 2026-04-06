@@ -3,12 +3,18 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 
 import {
+  GROK_INSTANT_TAGS,
+  GROK_WRAPPING_TAGS,
   type GrokTipTapDocNode,
   grokTextToTipTapDoc,
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
 
 const AUTO_CONVERT_GROK_TAGS_PLUGIN_KEY = new PluginKey('autoConvertGrokTags');
+
+const INSTANT_TAGS = GROK_INSTANT_TAGS;
+
+const WRAPPER_OPEN_TAGS = GROK_WRAPPING_TAGS.map(([openTag]) => openTag);
 
 function getTextOffsetFromSelection(doc: ProseMirrorNode, position: number) {
   let offset = 0;
@@ -71,7 +77,31 @@ function docsAreEqual(
   currentDoc: ProseMirrorNode,
   normalizedDoc: GrokTipTapDocNode,
 ) {
-  return JSON.stringify(currentDoc.toJSON()) === JSON.stringify(normalizedDoc);
+  return currentDoc.eq(currentDoc.type.schema.nodeFromJSON(normalizedDoc));
+}
+
+export function normalizePartialInstantTags(input: string) {
+  let normalized = input;
+
+  for (const instantTag of INSTANT_TAGS) {
+    const partialTag = instantTag.slice(1);
+
+    normalized = normalized.replaceAll(`[${partialTag}`, instantTag);
+  }
+
+  return normalized;
+}
+
+export function normalizePartialWrapperOpeningTags(input: string) {
+  let normalized = input;
+
+  for (const openTag of WRAPPER_OPEN_TAGS) {
+    const partialTag = openTag.slice(1);
+
+    normalized = normalized.replaceAll(`<${partialTag}`, openTag);
+  }
+
+  return normalized;
 }
 
 export const AutoConvertGrokTags = Extension.create({
@@ -84,9 +114,14 @@ export const AutoConvertGrokTags = Extension.create({
           }
 
           const currentText = grokTipTapDocToText(newState.doc.toJSON());
-          const normalizedDoc = grokTextToTipTapDoc(currentText);
+          const normalizedText = normalizePartialWrapperOpeningTags(
+            normalizePartialInstantTags(currentText),
+          );
+          const normalizedDoc = grokTextToTipTapDoc(normalizedText);
 
-          if (docsAreEqual(newState.doc, normalizedDoc)) {
+          const docsEqual = docsAreEqual(newState.doc, normalizedDoc);
+
+          if (docsEqual) {
             return null;
           }
 
@@ -97,10 +132,10 @@ export const AutoConvertGrokTags = Extension.create({
           );
 
           const replacement = newState.schema.nodeFromJSON(normalizedDoc);
-          const transaction = newState.tr.replaceWith(
+          const transaction = newState.tr.replace(
             0,
             newState.doc.content.size,
-            replacement.content,
+            replacement.slice(0),
           );
 
           const nextFrom = resolveTextOffsetToDocPosition(

@@ -1,44 +1,44 @@
-"use client"
+'use client';
 
 import type {
   AutoUpdateOptions,
   UseDismissProps,
   UseFloatingOptions,
-} from "@floating-ui/react"
+} from '@floating-ui/react';
 import {
   autoUpdate,
   useDismiss,
   useFloating,
   useInteractions,
   useTransitionStyles,
-} from "@floating-ui/react"
-import { useEffect, useMemo } from "react"
+} from '@floating-ui/react';
+import { useEffect, useMemo } from 'react';
 
 interface FloatingElementReturn {
-  /**
-   * Whether the floating element is currently mounted in the DOM.
-   */
-  isMounted: boolean
-  /**
-   * Ref function to attach to the floating element DOM node.
-   */
-  ref: (node: HTMLElement | null) => void
-  /**
-   * Combined styles for positioning, transitions, and z-index.
-   */
-  style: React.CSSProperties
   /**
    * Returns props that should be spread onto the floating element.
    */
   getFloatingProps: (
-    userProps?: React.HTMLProps<HTMLElement>
-  ) => Record<string, unknown>
+    userProps?: React.HTMLProps<HTMLElement>,
+  ) => Record<string, unknown>;
   /**
    * Returns props that should be spread onto the reference element.
    */
   getReferenceProps: (
-    userProps?: React.HTMLProps<Element>
-  ) => Record<string, unknown>
+    userProps?: React.HTMLProps<Element>,
+  ) => Record<string, unknown>;
+  /**
+   * Whether the floating element is currently mounted in the DOM.
+   */
+  isMounted: boolean;
+  /**
+   * Ref function to attach to the floating element DOM node.
+   */
+  ref: (node: HTMLElement | null) => void;
+  /**
+   * Combined styles for positioning, transitions, and z-index.
+   */
+  style: React.CSSProperties;
 }
 
 /**
@@ -55,9 +55,9 @@ export function useFloatingElement(
   reference: HTMLElement | DOMRect | (() => DOMRect | null) | null,
   zIndex: number,
   options?: Partial<UseFloatingOptions & { dismissOptions?: UseDismissProps }>,
-  autoUpdateOptions?: AutoUpdateOptions
+  autoUpdateOptions?: AutoUpdateOptions,
 ): FloatingElementReturn {
-  const { dismissOptions, ...floatingOptions } = options || {}
+  const { dismissOptions, ...floatingOptions } = options || {};
 
   const { refs, context, floatingStyles } = useFloating({
     open: show,
@@ -66,42 +66,42 @@ export function useFloatingElement(
         referenceEl,
         floatingEl,
         update,
-        autoUpdateOptions
-      )
-      return cleanup
+        autoUpdateOptions,
+      );
+      return cleanup;
     },
     ...floatingOptions,
-  })
+  });
 
-  const { isMounted, styles } = useTransitionStyles(context)
+  const { isMounted, styles } = useTransitionStyles(context);
 
-  const dismiss = useDismiss(context, dismissOptions)
+  const dismiss = useDismiss(context, dismissOptions);
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss])
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss]);
 
   useEffect(() => {
     if (reference === null) {
-      refs.setReference(null)
-      return
+      refs.setReference(null);
+      return;
     }
 
     // If reference is an actual DOM element, use it directly
     // autoUpdate will automatically observe it for scroll/resize
     if (reference instanceof HTMLElement) {
-      refs.setReference(reference)
+      refs.setReference(reference);
 
-      return
+      return;
     }
 
     const getBoundingClientRect = () => {
-      const rect = typeof reference === "function" ? reference() : reference
-      return rect || new DOMRect()
-    }
+      const rect = typeof reference === 'function' ? reference() : reference;
+      return rect || new DOMRect();
+    };
 
     refs.setReference({
       getBoundingClientRect,
-    })
-  }, [reference, refs])
+    });
+  }, [reference, refs]);
 
   return useMemo(
     () => ({
@@ -123,6 +123,6 @@ export function useFloatingElement(
       zIndex,
       getFloatingProps,
       getReferenceProps,
-    ]
-  )
+    ],
+  );
 }

@@ -351,7 +351,6 @@
       "inlineEffectPlaceholder": "Insérer un effet inline",
       "wrappingEffectPlaceholder": "Entourer avec une balise de style",
       "formatPlaceholder": "Sélectionner le format",
-      "helperText": "Insérez des balises expressives comme [laugh] ou entourez le texte sélectionné avec des balises comme <fast>...</fast>.",
       "effects": {
         "pause": "[pause]",
         "longPause": "[long-pause]",
@@ -392,7 +391,7 @@
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un chuchotement dramatique\"",
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
       "geminiInfo": "Il prend en charge 24 langues :\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Néerlandais (Pays-Bas),\n🇺🇸 Anglais (États-Unis),\n🇮🇳 Anglais/Hindi (Inde),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇺🇸 Espagnol (États-Unis),\n🇮🇳 Tamil (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)",
-      "grokInfo": "xAI Grok TTS prend en charge des balises inline expressives comme [laugh] et des balises englobantes comme <fast>...</fast>.",
+      "grokInfo": "Prend en charge des balises inline expressives comme [laugh] et des balises englobantes comme <fast>...</fast>.",
       "featuredBadge": "En vedette"
     }
   },
@@ -755,7 +754,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Les nouvelles voix expressives sont disponibles. Decouvrez un rythme, un ton et une emotion plus naturels dans la nouvelle selection de voix.",
+      "text": "Les nouvelles voix pour la generation vocale sont disponibles, avec plus de controle sur le rythme, les respirations, la hauteur, la vitesse et l'intensite.",
       "ctaLoggedIn": "Essayer les voix",
       "ctaLoggedOut": "Se connecter",
       "ariaLabelDismiss": "Fermer l'annonce des voix expressives"

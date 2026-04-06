@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
-  let outputCodec = '';
+  const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
   try {
@@ -68,7 +68,6 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
-    outputCodec = body.outputCodec || '';
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
