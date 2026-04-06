@@ -202,15 +202,16 @@ async function handleCheckoutSessionCompleted(
         `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
       );
     } else if (session.mode === 'subscription') {
-      // Handle initial subscription checkout
+      // Handle initial subscription checkout - only sync Redis.
+      // Credits are awarded via invoice.payment_succeeded (billing_reason: 'subscription_create')
+      // to avoid double-crediting, since Stripe fires both events for initial subscription payments.
       const customerId = session.customer as string | null;
-      const subscriptionId = session.subscription as string | null;
 
-      if (!(customerId && subscriptionId)) {
-        const error = new Error('Missing customer or subscription ID');
+      if (!customerId) {
+        const error = new Error('Missing customer ID in subscription checkout');
         console.error(
-          '[STRIPE HOOK] Missing customer or subscription ID in subscription checkout',
-          { customerId, subscriptionId },
+          '[STRIPE HOOK] Missing customer ID in subscription checkout',
+          { session_id: session.id },
         );
         Sentry.captureException(error, {
           tags: {
@@ -224,77 +225,7 @@ async function handleCheckoutSessionCompleted(
         return;
       }
 
-      // Sync subscription data to Redis
       await syncStripeDataToKV(customerId);
-
-      // Award initial subscription credits
-      const userId = await getUserIdByStripeCustomerId(customerId);
-      if (!userId) {
-        const error = new Error(
-          `User not found with stripe_id: "${customerId}"`,
-        );
-        console.error(`User not found with stripe_id: "${customerId}"`);
-        Sentry.captureException(error, {
-          tags: {
-            section: 'stripe_webhook',
-            event_type: 'checkout_session_completed',
-          },
-          extra: {
-            customer_id: customerId,
-          },
-        });
-        return;
-      }
-
-      // Get subscription details to determine credit amount
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      const priceId = subscription.items.data[0].price.id;
-
-      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
-      let credits = 0;
-      let dollarAmount = 0;
-
-      switch (priceId) {
-        case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.starter.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
-          break;
-        case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.standard.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
-          break;
-        // TODO: use `pro_monthly` look up key
-        case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.pro.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
-          break;
-        default:
-          console.error('[STRIPE HOOK] Invalid subscription price ID', {
-            priceId,
-          });
-          return;
-      }
-
-      // Get payment intent from the session (for initial subscription payment)
-      const paymentIntentId = session.payment_intent as string | null;
-      if (!paymentIntentId) {
-        console.error(
-          '[STRIPE HOOK] No payment intent in subscription checkout session',
-        );
-        return;
-      }
-
-      await insertSubscriptionCreditTransaction(
-        userId,
-        paymentIntentId,
-        subscriptionId,
-        credits,
-        dollarAmount,
-      );
-
-      console.log(
-        `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
-      );
     }
   } catch (error) {
     const extra = {

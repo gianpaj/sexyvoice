@@ -225,10 +225,8 @@ describe('Stripe Webhook Route', () => {
   });
 
   describe('Checkout Session - Subscription', () => {
-    it('should sync subscription data to Redis and award initial credits on checkout', async () => {
+    it('should sync subscription data to Redis on checkout and NOT award credits (credits come from invoice.payment_succeeded)', async () => {
       const customerId = 'cus_test123';
-      const subscriptionId = 'sub_test123';
-      const paymentIntentId = 'pi_initial_test123';
 
       const subscription = createMockSubscription(
         process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
@@ -238,19 +236,13 @@ describe('Stripe Webhook Route', () => {
         data: [subscription],
       } as any);
 
-      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
-
-      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
-
       const session = createMockCheckoutSession('subscription');
-      // Add payment_intent to session for initial subscription payment
-      session.payment_intent = paymentIntentId;
 
       const request = createMockRequest('checkout.session.completed', session);
 
       await POST(request);
 
-      // Verify Redis sync was called
+      // Verify Redis was synced
       expect(stripe.subscriptions.list).toHaveBeenCalledWith({
         customer: customerId,
         limit: 1,
@@ -258,7 +250,6 @@ describe('Stripe Webhook Route', () => {
         expand: ['data.default_payment_method'],
       });
 
-      // Verify Redis has the correct data
       const customerData = await getCustomerData(customerId);
       expect(customerData).toMatchObject({
         subscriptionId: 'sub_test123',
@@ -266,38 +257,7 @@ describe('Stripe Webhook Route', () => {
         priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
       });
 
-      // Verify credits were inserted with payment_intent as reference_id
-      expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
-        'user_789',
-        paymentIntentId, // payment_intent, not subscription_id
-        subscriptionId,
-        28_750, // 25,000 * 1.15 (subscription bonus)
-        10,
-      );
-    });
-
-    it('should handle subscription checkout without payment_intent gracefully', async () => {
-      const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
-      );
-
-      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
-        data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-      } as any);
-
-      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
-      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
-
-      const session = createMockCheckoutSession('subscription');
-      session.payment_intent = null; // No payment intent
-
-      const request = createMockRequest('checkout.session.completed', session);
-
-      const response = await POST(request);
-
-      // Should still return 200 but not insert credits
-      expect(response.status).toBe(200);
+      // Credits must NOT be awarded here — invoice.payment_succeeded handles that
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
   });
@@ -414,7 +374,10 @@ describe('Stripe Webhook Route', () => {
   });
 
   describe('Complete Subscription Payment Flow', () => {
-    it('should process multiple events from a real subscription payment without duplicating credits', async () => {
+    it('should process the real initial subscription event sequence and award credits exactly once', async () => {
+      // Reproduces the prod event sequence from 2026-04-06:
+      // checkout.session.completed → invoice.paid → invoice.payment_succeeded → customer.subscription.created
+      // Credits must be awarded exactly once, by invoice.payment_succeeded only.
       const customerId = 'cus_real_test';
       const subscriptionId = 'sub_real_test';
       const paymentIntentId = 'pi_unique_payment_123';
@@ -429,52 +392,53 @@ describe('Stripe Webhook Route', () => {
       } as any);
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_real');
 
-      // Simulate the sequence of events from a real Stripe subscription payment
-      // Based on the user's actual webhook log:
-
-      // 1. customer.subscription.updated
-      const subUpdatedEvent = createMockEvent(
-        'customer.subscription.updated',
-        subscription,
+      // 1. checkout.session.completed - must only sync Redis, no credits
+      const session = createMockCheckoutSession('subscription');
+      // session.payment_intent is null for subscription mode (Stripe behaviour)
+      session.payment_intent = null;
+      const checkoutRequest = createMockRequest(
+        'checkout.session.completed',
+        session,
       );
-      const subUpdatedRequest = createWebhookRequest(subUpdatedEvent);
-      await POST(subUpdatedRequest);
+      await POST(checkoutRequest);
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
 
-      // 2. invoice.payment_succeeded - THIS should award credits
+      // 2. invoice.paid - only syncs Redis
       const invoice = createMockInvoice(
         subscriptionId,
         customerId,
         paymentIntentId,
         priceId,
-        'subscription_cycle',
+        'subscription_create',
       );
-      const invoiceRequest = createMockRequest(
+      const invoicePaidRequest = createMockRequest('invoice.paid', invoice);
+      await POST(invoicePaidRequest);
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+
+      // 3. invoice.payment_succeeded - THIS awards credits
+      const invoicePaymentRequest = createMockRequest(
         'invoice.payment_succeeded',
         invoice,
       );
-      await POST(invoiceRequest);
+      await POST(invoicePaymentRequest);
 
-      // 3. invoice.paid - just updates Redis, no credits
-      const invoicePaidRequest = createMockRequest('invoice.paid', invoice);
-      await POST(invoicePaidRequest);
+      // 4. customer.subscription.created - only syncs Redis
+      const subCreatedEvent = createMockEvent(
+        'customer.subscription.created',
+        subscription,
+      );
+      const subCreatedRequest = createWebhookRequest(subCreatedEvent);
+      await POST(subCreatedRequest);
 
-      // 4. customer.subscription.updated again
-      const subUpdated2Request = createWebhookRequest(subUpdatedEvent);
-      await POST(subUpdated2Request);
-
-      // Verify insertSubscriptionCreditTransaction was called exactly ONCE
-      // even though multiple events fired
+      // Credits awarded exactly once, by invoice.payment_succeeded
       expect(insertSubscriptionCreditTransaction).toHaveBeenCalledTimes(1);
       expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
         'user_real',
-        paymentIntentId, // Uses payment_intent as reference_id
+        paymentIntentId,
         subscriptionId,
         28_750, // 25,000 * 1.15 (subscription bonus)
         10,
       );
-
-      // Verify Redis sync was called multiple times (for each subscription event)
-      expect(stripe.subscriptions.list).toHaveBeenCalled();
     });
 
     it('should handle different payment_intents for recurring payments separately', async () => {
