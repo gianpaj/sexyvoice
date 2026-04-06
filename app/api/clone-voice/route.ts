@@ -335,35 +335,70 @@ function validateAudioDuration(
 
 /**
  * Trim a WAV buffer to a maximum duration.
- * Handles standard PCM WAV files (44-byte header).
- * Returns the original buffer if it is not a valid WAV or no trimming is needed.
+ * Walks the RIFF chunk list to locate the 'data' chunk, so it handles
+ * non-canonical WAVs that contain extra chunks (LIST, fact, JUNK, etc.)
+ * between the 'fmt ' and 'data' chunks.
+ * Returns the original buffer unchanged if it cannot be parsed or trimming
+ * is not needed.
  */
 function trimWavAudio(wavBuffer: Buffer, maxDurationSeconds: number): Buffer {
-  if (wavBuffer.length < 44) return wavBuffer;
+  if (wavBuffer.length < 12) return wavBuffer;
   if (wavBuffer.toString('ascii', 0, 4) !== 'RIFF') return wavBuffer;
   if (wavBuffer.toString('ascii', 8, 12) !== 'WAVE') return wavBuffer;
 
-  const sampleRate = wavBuffer.readUInt32LE(24);
-  const numChannels = wavBuffer.readUInt16LE(22);
-  const bitsPerSample = wavBuffer.readUInt16LE(34);
+  let sampleRate = 0;
+  let numChannels = 0;
+  let bitsPerSample = 0;
+  let dataOffset = -1;
+  let dataSize = 0;
 
-  if (sampleRate <= 0 || numChannels <= 0 || bitsPerSample <= 0) return wavBuffer;
+  // Walk RIFF sub-chunks starting after the 12-byte RIFF/WAVE header
+  let offset = 12;
+  while (offset + 8 <= wavBuffer.length) {
+    const chunkId = wavBuffer.toString('ascii', offset, offset + 4);
+    const chunkSize = wavBuffer.readUInt32LE(offset + 4);
+
+    if (chunkId === 'fmt ' && chunkSize >= 16 && offset + 8 + chunkSize <= wavBuffer.length) {
+      numChannels = wavBuffer.readUInt16LE(offset + 10);
+      sampleRate = wavBuffer.readUInt32LE(offset + 12);
+      bitsPerSample = wavBuffer.readUInt16LE(offset + 22);
+    } else if (chunkId === 'data') {
+      dataOffset = offset + 8;
+      dataSize = chunkSize;
+      break;
+    }
+
+    // Advance; RIFF chunks are padded to even byte boundaries
+    offset += 8 + chunkSize + (chunkSize % 2 !== 0 ? 1 : 0);
+  }
+
+  if (dataOffset === -1 || sampleRate <= 0 || numChannels <= 0 || bitsPerSample <= 0) {
+    return wavBuffer;
+  }
+
+  // Guard against a dataSize that exceeds the actual buffer contents
+  const safeDataSize = Math.min(dataSize, wavBuffer.length - dataOffset);
 
   const blockAlign = numChannels * (bitsPerSample / 8);
   const bytesPerSecond = sampleRate * blockAlign;
   const maxAudioBytes =
     Math.floor((maxDurationSeconds * bytesPerSecond) / blockAlign) * blockAlign;
 
-  const dataSize = wavBuffer.readUInt32LE(40);
-  if (dataSize <= maxAudioBytes) return wavBuffer;
+  if (safeDataSize <= maxAudioBytes) return wavBuffer;
 
   const newDataSize = maxAudioBytes;
-  const newBuffer = Buffer.alloc(44 + newDataSize);
 
-  wavBuffer.copy(newBuffer, 0, 0, 44);
-  newBuffer.writeUInt32LE(36 + newDataSize, 4);
-  newBuffer.writeUInt32LE(newDataSize, 40);
-  wavBuffer.copy(newBuffer, 44, 44, 44 + newDataSize);
+  // Preserve every byte up to (and including) the data chunk header, then
+  // append only the trimmed samples.  This keeps any extra chunks intact.
+  const newBuffer = Buffer.alloc(dataOffset + newDataSize);
+
+  wavBuffer.copy(newBuffer, 0, 0, dataOffset);
+
+  // Patch RIFF chunk size (offset 4) and data chunk size (4 bytes before dataOffset)
+  newBuffer.writeUInt32LE(newBuffer.length - 8, 4);
+  newBuffer.writeUInt32LE(newDataSize, dataOffset - 4);
+
+  wavBuffer.copy(newBuffer, dataOffset, dataOffset, dataOffset + newDataSize);
 
   return newBuffer;
 }
@@ -504,14 +539,35 @@ async function processAudioFile(
 
   const duration = await getAudioDuration(processedBuffer, processedMimeType);
 
-  // Auto-trim audio to the maximum duration for the provider instead of rejecting it
+  // Auto-trim audio to the provider's maximum duration instead of rejecting it.
   const constraints = getCloneProviderConstraints(provider);
-  if (
-    duration !== null &&
-    duration > constraints.maxDurationSeconds &&
-    processedMimeType === 'audio/wav'
-  ) {
-    processedBuffer = trimWavAudio(processedBuffer, constraints.maxDurationSeconds) as Buffer<ArrayBuffer>;
+  if (duration !== null && duration > constraints.maxDurationSeconds) {
+    if (processedMimeType === 'audio/wav') {
+      processedBuffer = trimWavAudio(
+        processedBuffer,
+        constraints.maxDurationSeconds,
+      ) as Buffer<ArrayBuffer>;
+    } else if (isConversionSupported(processedMimeType)) {
+      // For non-WAV formats we can decode (MP3, OGG/Opus/Vorbis), convert to
+      // WAV first so we can trim by sample count.  WebM throws inside
+      // convertToWav on the server — the catch below leaves those files
+      // untrimmed (Replicate's 5-minute window is generous enough in practice).
+      try {
+        const wavBuffer = await convertToWav(
+          processedBuffer,
+          processedMimeType,
+        );
+        if (wavBuffer) {
+          processedBuffer = trimWavAudio(
+            wavBuffer as Buffer<ArrayBuffer>,
+            constraints.maxDurationSeconds,
+          ) as Buffer<ArrayBuffer>;
+          processedMimeType = 'audio/wav';
+        }
+      } catch {
+        // Conversion unsupported or failed — leave the buffer untrimmed.
+      }
+    }
   }
 
   const audioHash = await generateBufferHash(processedBuffer);
@@ -520,7 +576,12 @@ async function processAudioFile(
     audioHash,
     buffer: processedBuffer,
     mimeType: processedMimeType,
-    duration: Math.min(duration ?? constraints.maxDurationSeconds, constraints.maxDurationSeconds),
+    // Preserve null so validateAudioDuration can catch unknown-duration uploads.
+    // When trimmed, cap at maxDurationSeconds since we know the file was shortened.
+    duration:
+      duration !== null
+        ? Math.min(duration, constraints.maxDurationSeconds)
+        : null,
   };
 }
 
