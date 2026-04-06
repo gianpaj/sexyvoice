@@ -70,7 +70,6 @@ export default async function GeneratePage(props: {
           dict={dict.generate}
           hasEnoughCredits={credits.amount >= 10}
           isPaidUser={isPaidUser}
-          locale={lang}
           publicVoices={publicVoices}
         />
       </div>

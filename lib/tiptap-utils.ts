@@ -371,7 +371,6 @@ type ProtocolOptions = {
 type ProtocolConfig = Array<ProtocolOptions | string>;
 
 const ATTR_WHITESPACE =
-  // eslint-disable-next-line no-control-regex
   /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g;
 
 export function isAllowedUri(
@@ -492,7 +491,7 @@ export function selectCurrentBlockContent(editor: Editor) {
   if (!selection.empty) return;
 
   const $pos = selection.$from;
-  let blockNode = null;
+  let blockNode: PMNode | null = null;
   let blockPos = -1;
 
   for (let depth = $pos.depth; depth >= 0; depth--) {
@@ -606,8 +605,10 @@ export const getAvatar = (name: string) => {
 
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
+    // biome-ignore lint/suspicious/noBitwiseOperators: needed
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash;
+    // biome-ignore lint/suspicious/noBitwiseOperators: needed
+    hash &= hash;
   }
 
   const randomFraction = (Math.abs(hash) % 1_000_000) / 1_000_000;

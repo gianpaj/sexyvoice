@@ -127,7 +127,6 @@ function renderGenerateUI(publicVoices: Tables<'voices'>[]) {
       }
       hasEnoughCredits
       isPaidUser
-      locale="en"
       publicVoices={publicVoices}
     />,
   );

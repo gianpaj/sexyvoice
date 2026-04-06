@@ -142,7 +142,6 @@ function renderAudioGenerator(
     isPaidUser: true,
     selectedStyle: 'moan softly',
     selectedVoice: createVoice(),
-    selectedGrokCodec: undefined,
   };
 
   return render(<AudioGenerator {...defaultProps} {...overrides} />);
@@ -162,7 +161,6 @@ describe('AudioGenerator', () => {
         name: 'eve',
         model: 'grok',
       }),
-      selectedGrokCodec: 'mp3',
     });
 
     expect(
@@ -176,7 +174,6 @@ describe('AudioGenerator', () => {
         name: 'eve',
         model: 'grok',
       }),
-      selectedGrokCodec: 'mp3',
     });
 
     expect(
@@ -193,7 +190,6 @@ describe('AudioGenerator', () => {
         name: 'eve',
         model: 'grok',
       }),
-      selectedGrokCodec: 'wav',
     });
 
     // GrokTTSEditor is loaded dynamically, wait for it

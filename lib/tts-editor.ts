@@ -391,14 +391,6 @@ function serializeParagraphNode(node: unknown): string {
   return maybeNode.content.map(serializeInlineNode).join('');
 }
 
-export function getGrokInstantTagDefinitions(): readonly GrokInstantTagDefinition[] {
-  return GROK_INSTANT_TAG_DEFINITIONS;
-}
-
-export function getGrokWrappingTagDefinitions(): readonly GrokWrappingTagDefinition[] {
-  return GROK_WRAPPING_TAG_DEFINITIONS;
-}
-
 export function isKnownGrokTag(tag: string): tag is GrokTagText {
   return isInstantTag(tag) || isWrapperOpenTag(tag) || isWrapperCloseTag(tag);
 }
