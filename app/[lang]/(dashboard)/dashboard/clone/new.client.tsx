@@ -542,7 +542,7 @@ function NewVoiceClientInner({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{dict.title}</CardTitle>
+        <CardTitle data-testid="clone-page-title">{dict.title}</CardTitle>
         <CardDescription>
           <p className="mb-4">{dict.subtitle}</p>
         </CardDescription>
@@ -566,6 +566,7 @@ function NewVoiceClientInner({
                   <button
                     className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
                     data-dragging={isDragging || undefined}
+                    data-testid="clone-upload-dropzone"
                     disabled={Boolean(micRecording)}
                     onClick={openFileDialog}
                     onDragEnter={handleDragEnter}
@@ -730,7 +731,10 @@ function NewVoiceClientInner({
                   }
                   value={selectedLocale.code}
                 >
-                  <SelectTrigger id="language">
+                  <SelectTrigger
+                    data-testid="clone-language-select"
+                    id="language"
+                  >
                     <SelectValue placeholder={dict.languageSelectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
@@ -767,6 +771,7 @@ function NewVoiceClientInner({
                   {dict.textToConvertLabel}
                 </Label>
                 <Textarea
+                  data-testid="clone-text-input"
                   disabled={status === 'generating'}
                   id="text-to-convert"
                   maxLength={MAX_LENGTH + 30}
@@ -781,6 +786,7 @@ function NewVoiceClientInner({
                   '-mt-2 text-right text-muted-foreground text-sm',
                   [textIsOverLimit ? 'font-bold text-red-500' : ''],
                 )}
+                data-testid="clone-character-count"
               >
                 {text.length} / {MAX_LENGTH}
               </div>
@@ -803,6 +809,7 @@ function NewVoiceClientInner({
             <div className="flex items-start space-x-2">
               <Checkbox
                 checked={legalConsentChecked}
+                data-testid="clone-legal-consent"
                 id="legal-consent"
                 onCheckedChange={(checked) =>
                   setLegalConsentChecked(checked === true)
@@ -810,6 +817,7 @@ function NewVoiceClientInner({
               />
               <Label
                 className="font-normal text-muted-foreground text-sm leading-tight"
+                data-testid="clone-legal-consent-label"
                 htmlFor="legal-consent"
               >
                 {dict.legalConsentCheckbox}
@@ -818,6 +826,7 @@ function NewVoiceClientInner({
 
             <Button
               className="w-full"
+              data-testid="clone-generate-button"
               disabled={
                 !((file || micBlob) && text.trim()) ||
                 status === 'generating' ||

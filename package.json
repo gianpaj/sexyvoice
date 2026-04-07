@@ -9,6 +9,10 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
     "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && pnpm run format:write",
     "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
     "build:content": "contentlayer2 build",
@@ -95,6 +99,7 @@
     "contentlayer2": "^0.5.7",
     "crisp-sdk-web": "^1.0.26",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.4.1",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "12.38.0",
     "globby": "^14.1.0",
@@ -140,7 +145,9 @@
     "zod-openapi": "^5.4.6"
   },
   "devDependencies": {
+    "@argos-ci/playwright": "6.6.1",
     "@biomejs/biome": "2.4.9",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "4.2.2",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
