@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { generateApiKey } from '@/lib/api/auth';
 import {
   buildCliCallbackRedirectUrl,
   CLI_LOGIN_SESSION_TTL_MS,
@@ -9,10 +10,11 @@ import {
   hashCliExchangeToken,
   isAllowedCliCallbackUrl,
 } from '@/lib/api/cli-login';
-import { generateApiKey } from '@/lib/api/auth';
-import { hasUserPaid } from '@/lib/supabase/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+
+const MAX_ACTIVE_API_KEYS = 10;
 
 const CreateCliLoginSessionSchema = z
   .object({
@@ -41,7 +43,10 @@ export async function POST(request: Request) {
   const payload = await request.json().catch(() => null);
   const parsed = CreateCliLoginSessionSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid request body' },
+      { status: 400 },
+    );
   }
 
   const { api_key_id, callback_url, name, state } = parsed.data;
@@ -53,12 +58,10 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  let selectedKey:
-    | Pick<
-        Database['public']['Tables']['api_keys']['Row'],
-        'expires_at' | 'id' | 'is_active' | 'metadata' | 'name' | 'permissions'
-      >
-    | null = null;
+  let selectedKey: Pick<
+    Database['public']['Tables']['api_keys']['Row'],
+    'expires_at' | 'id' | 'is_active' | 'metadata' | 'name' | 'permissions'
+  > | null = null;
 
   if (api_key_id) {
     const { data, error } = await admin
@@ -87,6 +90,26 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+
+    const { count, error: countError } = await admin
+      .from('api_keys')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_active', true);
+
+    if (countError) {
+      return NextResponse.json(
+        { error: 'Failed to count API keys' },
+        { status: 500 },
+      );
+    }
+
+    if ((count ?? 0) >= MAX_ACTIVE_API_KEYS) {
+      return NextResponse.json(
+        { error: `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed` },
+        { status: 400 },
+      );
+    }
   }
 
   const generated = generateApiKey();
@@ -101,6 +124,7 @@ export async function POST(request: Request) {
       name: replacementName,
       permissions: selectedKey?.permissions ?? { scopes: ['voice:generate'] },
       metadata: selectedKey?.metadata ?? {},
+      expires_at: selectedKey?.expires_at ?? null,
       is_active: true,
     })
     .select('id')
@@ -113,36 +137,26 @@ export async function POST(request: Request) {
     );
   }
 
-  if (selectedKey) {
-    const { error: deactivateError } = await admin
-      .from('api_keys')
-      .update({ is_active: false })
-      .eq('id', selectedKey.id)
-      .eq('user_id', user.id);
-
-    if (deactivateError) {
-      return NextResponse.json(
-        { error: 'Failed to rotate selected API key' },
-        { status: 500 },
-      );
-    }
-  }
-
   const exchangeToken = generateCliExchangeToken();
-  const expiresAt = new Date(Date.now() + CLI_LOGIN_SESSION_TTL_MS).toISOString();
+  const expiresAt = new Date(
+    Date.now() + CLI_LOGIN_SESSION_TTL_MS,
+  ).toISOString();
 
-  const { error: sessionError } = await admin.from('cli_login_sessions').insert({
-    user_id: user.id,
-    old_api_key_id: selectedKey?.id ?? null,
-    new_api_key_id: newKey.id,
-    token_hash: hashCliExchangeToken(exchangeToken),
-    encrypted_api_key: encryptCliApiKey(generated.key),
-    callback_url,
-    state,
-    expires_at: expiresAt,
-  });
+  const { error: sessionError } = await admin
+    .from('cli_login_sessions')
+    .insert({
+      user_id: user.id,
+      old_api_key_id: selectedKey?.id ?? null,
+      new_api_key_id: newKey.id,
+      token_hash: hashCliExchangeToken(exchangeToken),
+      encrypted_api_key: encryptCliApiKey(generated.key),
+      callback_url,
+      state,
+      expires_at: expiresAt,
+    });
 
   if (sessionError) {
+    await admin.from('api_keys').delete().eq('id', newKey.id);
     return NextResponse.json(
       { error: 'Failed to create CLI login session' },
       { status: 500 },
