@@ -5,6 +5,16 @@
       "source": "obra/superpowers",
       "sourceType": "github",
       "computedHash": "efddfd0efbd0e7b5075c5a66ff91a706ac506c88c7b5ddd7fd45a351cb3fe3af"
+    },
+    "tiptap": {
+      "source": "ueberdosis/tiptap",
+      "sourceType": "github",
+      "computedHash": "992391aaf81dc4b76427d77e6f40f3ab45c6af37de972202d9206376970f1984"
+    },
+    "writing-clearly-and-concisely": {
+      "source": "obra/the-elements-of-style",
+      "sourceType": "github",
+      "computedHash": "c702d9db967bc320da26630c1bb2b6794ec7d058bc535818f72e2d3301c2448a"
     }
   }
 }
