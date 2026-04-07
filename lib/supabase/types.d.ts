@@ -129,6 +129,63 @@ declare type Database = {
         };
         Relationships: [];
       };
+      cli_login_sessions: {
+        Row: {
+          callback_url: string;
+          created_at: string;
+          encrypted_api_key: string | null;
+          expires_at: string;
+          id: string;
+          new_api_key_id: string;
+          old_api_key_id: string | null;
+          redeemed_at: string | null;
+          state: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Insert: {
+          callback_url: string;
+          created_at?: string;
+          encrypted_api_key?: string | null;
+          expires_at: string;
+          id?: string;
+          new_api_key_id: string;
+          old_api_key_id?: string | null;
+          redeemed_at?: string | null;
+          state: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          callback_url?: string;
+          created_at?: string;
+          encrypted_api_key?: string | null;
+          expires_at?: string;
+          id?: string;
+          new_api_key_id?: string;
+          old_api_key_id?: string | null;
+          redeemed_at?: string | null;
+          state?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cli_login_sessions_new_api_key_id_fkey';
+            columns: ['new_api_key_id'];
+            isOneToOne: false;
+            referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'cli_login_sessions_old_api_key_id_fkey';
+            columns: ['old_api_key_id'];
+            isOneToOne: false;
+            referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       call_sessions: {
         Row: {
           billed_minutes: number;

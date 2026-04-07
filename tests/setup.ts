@@ -150,6 +150,8 @@ process.env.R2_BUCKET_NAME = 'test-bucket';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+process.env.CLI_LOGIN_ENCRYPTION_SECRET =
+  'test-cli-login-secret-do-not-use-in-production';
 
 // Mock Axiom so tests never attempt a real network flush
 vi.mock('@axiomhq/js', () => ({
