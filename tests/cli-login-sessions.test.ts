@@ -1,11 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { POST as createSession } from '@/app/api/cli-login-sessions/route';
 import { POST as redeemSession } from '@/app/api/cli-login-sessions/redeem/route';
+import { POST as createSession } from '@/app/api/cli-login-sessions/route';
 import { decryptCliApiKey, encryptCliApiKey } from '@/lib/api/cli-login';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+
+vi.mock('@/lib/api/rate-limit', () => ({
+  consumeRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    limit: 60,
+    remaining: 59,
+    resetAt: new Date().toISOString(),
+  }),
+  createRateLimitHeaders: vi.fn().mockReturnValue(new Headers()),
+}));
 
 describe('/api/cli-login-sessions routes', () => {
   it('creates a localhost-bound CLI login session from an existing API key', async () => {
@@ -42,10 +52,6 @@ describe('/api/cli-login-sessions routes', () => {
           data: { id: 'new-key-id' },
           error: null,
         }),
-      }))
-      .mockImplementationOnce(() => ({
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
       }))
       .mockImplementationOnce(() => ({
         insert: vi.fn().mockResolvedValue({ error: null }),
@@ -88,6 +94,11 @@ describe('/api/cli-login-sessions routes', () => {
 
     const adminFrom = vi
       .fn()
+      .mockImplementationOnce(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({ count: 5, error: null })),
+      }))
       .mockImplementationOnce(() => ({
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
@@ -150,7 +161,7 @@ describe('/api/cli-login-sessions routes', () => {
 
   it('redeems a CLI login session once and clears the stored secret', async () => {
     const encrypted = encryptCliApiKey(
-      'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq',
+      'sk_test_Abc123Def456Ghi789Jkl012Mno345Pq',
     );
 
     const adminFrom = vi
@@ -165,13 +176,26 @@ describe('/api/cli-login-sessions routes', () => {
             expires_at: new Date(Date.now() + 60_000).toISOString(),
             redeemed_at: null,
             new_api_key_id: 'new-key-id',
+            old_api_key_id: 'old-key-id',
+            user_id: 'test-user-id',
           },
           error: null,
         }),
       }))
       .mockImplementationOnce(() => ({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ error: null }),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
+          data: { id: 'session-id' },
+          error: null,
+        }),
+      }))
+      .mockImplementationOnce(() => ({
+        update: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        then: vi.fn((resolve) => resolve({ error: null })),
       }));
 
     vi.mocked(createAdminClient).mockReturnValueOnce({
@@ -192,7 +216,7 @@ describe('/api/cli-login-sessions routes', () => {
 
     expect(response.status).toBe(200);
     expect(json.api_key_id).toBe('new-key-id');
-    expect(json.key).toMatch(/^sk_live_/);
+    expect(json.key).toMatch(/^sk_test_/);
     expect(decryptCliApiKey(encrypted)).toBe(json.key);
   });
 });
