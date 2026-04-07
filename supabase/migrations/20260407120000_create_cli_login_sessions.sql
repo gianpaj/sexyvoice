@@ -15,10 +15,8 @@ create table if not exists public.cli_login_sessions (
 create index if not exists cli_login_sessions_user_id_idx
   on public.cli_login_sessions (user_id);
 
-create index if not exists cli_login_sessions_token_hash_idx
-  on public.cli_login_sessions (token_hash);
-
 create index if not exists cli_login_sessions_expires_at_idx
   on public.cli_login_sessions (expires_at);
 
+-- RLS enabled with no policies: all access must go through the admin/service-role client
 alter table public.cli_login_sessions enable row level security;
