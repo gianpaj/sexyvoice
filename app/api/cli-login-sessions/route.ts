@@ -66,16 +66,11 @@ export async function POST(request: Request) {
       .select('id, name, expires_at, is_active, permissions, metadata')
       .eq('id', api_key_id)
       .eq('user_id', user.id)
+      .eq('is_active', true)
       .maybeSingle();
 
     if (error || !data) {
       return NextResponse.json({ error: 'API key not found' }, { status: 404 });
-    }
-    if (!data.is_active) {
-      return NextResponse.json(
-        { error: 'Selected API key is inactive' },
-        { status: 400 },
-      );
     }
     if (data.expires_at && new Date(data.expires_at) <= new Date()) {
       return NextResponse.json(

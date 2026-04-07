@@ -54,6 +54,33 @@
       }
     }
   },
+  "cliLogin": {
+    "title": "Forbind CLI",
+    "description": "Vælg en eksisterende API-nøgle, der skal roteres til din CLI, eller opret en ny, hvis kontoen endnu ikke har en.",
+    "invalidRequest": {
+      "title": "Ugyldig CLI-loginanmodning",
+      "description": "Callback-URL'en mangler eller er ikke en localhost-adresse."
+    },
+    "existingKeys": {
+      "label": "Eksisterende API-nøgler",
+      "description": "Når du vælger en nøgle, roteres den. Din CLI modtager erstatningshemmeligheden én gang, og den gamle hemmelighed deaktiveres.",
+      "lastUsedLabel": "Senest brugt:",
+      "never": "Aldrig"
+    },
+    "createNew": {
+      "label": "Opret ny nøgle i stedet",
+      "description": "Brug dette, hvis du ikke vil rotere en eksisterende nøgle.",
+      "placeholder": "CLI",
+      "paidOnly": "Oprettelse af nye API-nøgler kræver stadig en betalt konto."
+    },
+    "actions": {
+      "connecting": "Forbinder...",
+      "continue": "Fortsæt i CLI"
+    },
+    "errors": {
+      "startFailed": "Kunne ikke starte CLI-login"
+    }
+  },
   "landing": {
     "latestPosts": "Seneste indlæg",
     "blogDescription": "Guides, vejledninger og nyheder om AI-stemmekloning, tekst-til-tale-syntese og AI-stemmeteknologi.",

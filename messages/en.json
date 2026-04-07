@@ -54,6 +54,33 @@
       }
     }
   },
+  "cliLogin": {
+    "title": "Connect CLI",
+    "description": "Pick an existing API key to rotate into your CLI, or create a fresh one if this account does not have one yet.",
+    "invalidRequest": {
+      "title": "Invalid CLI login request",
+      "description": "The callback URL is missing or is not a localhost address."
+    },
+    "existingKeys": {
+      "label": "Existing API keys",
+      "description": "Selecting a key rotates it. Your CLI receives the replacement secret once, and the old secret is deactivated.",
+      "lastUsedLabel": "Last used:",
+      "never": "Never"
+    },
+    "createNew": {
+      "label": "Create new key instead",
+      "description": "Use this if you do not want to rotate an existing key.",
+      "placeholder": "CLI",
+      "paidOnly": "Creating new API keys still requires a paid account."
+    },
+    "actions": {
+      "connecting": "Connecting...",
+      "continue": "Continue in CLI"
+    },
+    "errors": {
+      "startFailed": "Failed to start CLI login"
+    }
+  },
   "landing": {
     "latestPosts": "Latest Posts",
     "blogDescription": "Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, and voice AI technology.",

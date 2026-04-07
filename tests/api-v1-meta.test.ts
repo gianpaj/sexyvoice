@@ -33,8 +33,8 @@ describe('/api/v1 metadata endpoints', () => {
         order: vi.fn().mockResolvedValue({
           data: [
             {
-              id: 'voice-poe-id',
-              name: 'poe',
+              id: 'voice-kore-id',
+              name: 'kore',
               language: 'en',
               model: 'gpro',
               feature: 'tts',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,25 +10,29 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import type langDict from '@/messages/en.json';
 
-type ApiKeyRow = {
+interface ApiKeyRow {
   created_at: string;
   expires_at: string | null;
   id: string;
   key_prefix: string;
   last_used_at: string | null;
   name: string;
-};
+}
 
 export function CliLoginClient({
   callbackUrl,
+  dict,
   hasCreateAccess,
   keys,
   state,
 }: {
   callbackUrl: string;
+  dict: (typeof langDict)['cliLogin'];
   hasCreateAccess: boolean;
   keys: ApiKeyRow[];
   state: string;
@@ -38,6 +42,17 @@ export function CliLoginClient({
   const [isCreatingNew, setIsCreatingNew] = useState(keys.length === 0);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   const canContinue = isCreatingNew
     ? hasCreateAccess && newKeyName.trim().length > 0
@@ -60,14 +75,14 @@ export function CliLoginClient({
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? 'Failed to start CLI login');
+        throw new Error(json.error ?? dict.errors.startFailed);
       }
       window.location.assign(json.redirect_url);
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : 'Failed to start CLI login',
+          : dict.errors.startFailed,
       );
       setIsLoading(false);
     }
@@ -76,20 +91,16 @@ export function CliLoginClient({
   return (
     <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Connect CLI</CardTitle>
-        <CardDescription>
-          Pick an existing API key to rotate into your CLI, or create a fresh
-          one if this account does not have one yet.
-        </CardDescription>
+        <CardTitle>{dict.title}</CardTitle>
+        <CardDescription>{dict.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {keys.length > 0 ? (
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Existing API keys</Label>
+              <Label>{dict.existingKeys.label}</Label>
               <p className="text-muted-foreground text-sm">
-                Selecting a key rotates it. Your CLI receives the replacement
-                secret once, and the old secret is deactivated.
+                {dict.existingKeys.description}
               </p>
             </div>
             <div className="space-y-2">
@@ -116,10 +127,10 @@ export function CliLoginClient({
                       {key.key_prefix}...
                     </div>
                     <div className="text-muted-foreground text-xs">
-                      Last used:{' '}
+                      {dict.existingKeys.lastUsedLabel}{' '}
                       {key.last_used_at
                         ? new Date(key.last_used_at).toLocaleString()
-                        : 'Never'}
+                        : dict.existingKeys.never}
                     </div>
                   </div>
                 </label>
@@ -129,39 +140,53 @@ export function CliLoginClient({
         ) : null}
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Label htmlFor="create-new-cli-key">Create new key instead</Label>
-              <p className="text-muted-foreground text-sm">
-                Use this if you do not want to rotate an existing key.
-              </p>
-            </div>
-            <input
+          <div className="flex items-start gap-3">
+            <Checkbox
               checked={isCreatingNew}
+              className="mt-1"
               disabled={!hasCreateAccess}
               id="create-new-cli-key"
-              onChange={() => setIsCreatingNew(true)}
-              type="radio"
+              onCheckedChange={(checked) => {
+                const next = checked === true;
+
+                if (!next && keys.length === 0) {
+                  return;
+                }
+
+                setIsCreatingNew(next);
+
+                if (!next && selectedKeyId.length === 0 && keys[0]?.id) {
+                  setSelectedKeyId(keys[0].id);
+                }
+              }}
             />
+            <div className="space-y-1">
+              <Label htmlFor="create-new-cli-key">
+                {dict.createNew.label}
+              </Label>
+              <p className="text-muted-foreground text-sm">
+                {dict.createNew.description}
+              </p>
+            </div>
           </div>
           <Input
-            disabled={!isCreatingNew || !hasCreateAccess}
+            disabled={!(isCreatingNew && hasCreateAccess)}
             onChange={(event) => setNewKeyName(event.target.value)}
-            placeholder="CLI"
+            placeholder={dict.createNew.placeholder}
             value={newKeyName}
           />
-          {!hasCreateAccess ? (
+          {hasCreateAccess ? null : (
             <p className="text-muted-foreground text-sm">
-              Creating new API keys still requires a paid account.
+              {dict.createNew.paidOnly}
             </p>
-          ) : null}
+          )}
         </div>
 
         {error ? <p className="text-red-500 text-sm">{error}</p> : null}
 
         <div className="flex justify-end">
           <Button disabled={isLoading || !canContinue} onClick={handleContinue}>
-            {isLoading ? 'Connecting...' : 'Continue in CLI'}
+            {isLoading ? dict.actions.connecting : dict.actions.continue}
           </Button>
         </div>
       </CardContent>

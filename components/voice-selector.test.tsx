@@ -73,7 +73,7 @@ function renderVoiceSelector(
     }),
     createVoice({
       id: 'voice-gemini',
-      name: 'poe',
+      name: 'kore',
       language: 'en',
       model: 'gpro',
     }),
@@ -102,7 +102,7 @@ describe('VoiceSelector', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-gemini',
-        name: 'poe',
+        name: 'kore',
         model: 'gpro',
       }),
       selectedStyle: 'warm and intimate',
@@ -177,7 +177,7 @@ describe('VoiceSelector', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-gemini',
-        name: 'poe',
+        name: 'kore',
         model: 'gpro',
       }),
     });

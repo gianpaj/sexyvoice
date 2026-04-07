@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -14,6 +15,8 @@ export default async function CliLoginPage(props: {
 }) {
   const { lang } = await props.params;
   const { callback_url, state } = await props.searchParams;
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dict = messages.cliLogin;
 
   if (!(callback_url && state && isAllowedCliCallbackUrl(callback_url))) {
     return (
@@ -21,9 +24,9 @@ export default async function CliLoginPage(props: {
         <HeaderStatic />
         <main className="mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12">
           <div className="rounded-2xl border bg-background p-8 shadow-sm">
-            <h1 className="font-bold text-2xl">Invalid CLI login request</h1>
+            <h1 className="font-bold text-2xl">{dict.invalidRequest.title}</h1>
             <p className="mt-3 text-muted-foreground">
-              The callback URL is missing or is not a localhost address.
+              {dict.invalidRequest.description}
             </p>
           </div>
         </main>
@@ -45,12 +48,21 @@ export default async function CliLoginPage(props: {
   const [{ data: keys }, isPaidUser] = await Promise.all([
     supabase
       .from('api_keys')
-      .select('id, name, key_prefix, created_at, last_used_at, expires_at')
+      .select(
+        'id, name, key_prefix, created_at, last_used_at, expires_at, is_active',
+      )
       .eq('user_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
     hasUserPaid(user.id),
   ]);
+
+  const visibleKeys =
+    keys?.filter(
+      (key) =>
+        key.is_active &&
+        !(key.expires_at && new Date(key.expires_at) <= new Date()),
+    ) ?? [];
 
   return (
     <>
@@ -58,8 +70,9 @@ export default async function CliLoginPage(props: {
       <main className="mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12">
         <CliLoginClient
           callbackUrl={callback_url}
+          dict={dict}
           hasCreateAccess={isPaidUser}
-          keys={keys ?? []}
+          keys={visibleKeys}
           state={state}
         />
       </main>

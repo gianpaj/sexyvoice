@@ -49,7 +49,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
     });
 
     const response = await POST(request);
@@ -111,7 +111,7 @@ describe('Estimate Credits API Route', () => {
 And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
 
 As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`,
-        voice: 'poe',
+        voice: 'kore',
       }),
     });
 
@@ -153,7 +153,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voice: 'poe' }),
+      body: JSON.stringify({ text: excessiveText, voice: 'kore' }),
     });
 
     const response = await POST(request);

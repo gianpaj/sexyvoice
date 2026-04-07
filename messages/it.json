@@ -54,6 +54,33 @@
       }
     }
   },
+  "cliLogin": {
+    "title": "Collega CLI",
+    "description": "Scegli una chiave API esistente da ruotare verso la CLI oppure creane una nuova se questo account non ne ha ancora una.",
+    "invalidRequest": {
+      "title": "Richiesta di accesso CLI non valida",
+      "description": "L'URL di callback manca oppure non è un indirizzo localhost."
+    },
+    "existingKeys": {
+      "label": "Chiavi API esistenti",
+      "description": "Selezionando una chiave la ruoti. La tua CLI riceve il nuovo segreto una sola volta e il vecchio segreto viene disattivato.",
+      "lastUsedLabel": "Ultimo utilizzo:",
+      "never": "Mai"
+    },
+    "createNew": {
+      "label": "Crea invece una nuova chiave",
+      "description": "Usa questa opzione se non vuoi ruotare una chiave esistente.",
+      "placeholder": "CLI",
+      "paidOnly": "La creazione di nuove chiavi API richiede ancora un account a pagamento."
+    },
+    "actions": {
+      "connecting": "Connessione in corso...",
+      "continue": "Continua nella CLI"
+    },
+    "errors": {
+      "startFailed": "Impossibile avviare l'accesso CLI"
+    }
+  },
   "landing": {
     "latestPosts": "Ultimi post",
     "blogDescription": "Guide, tutorial e notizie sulla clonazione vocale con IA, sintesi testo-parlato e tecnologia vocale IA.",
