@@ -87,7 +87,10 @@ export class GeneratePage {
       () => {
         const el = document.querySelector('[data-testid="generate-textarea"]');
         if (!el) return false;
-        return Object.keys(el).some((key) => key.startsWith('__react'));
+        return (
+          (el instanceof HTMLElement && el.isContentEditable) ||
+          Object.keys(el).some((key) => key.startsWith('__react'))
+        );
       },
       { timeout: 15_000 },
     );
@@ -103,9 +106,11 @@ export class GeneratePage {
 
     // Wait for the dropdown content to appear (Radix UI portals the content)
     // SelectItem elements have role="option" in Radix Select
-    const option = this.page.getByRole('option', {
-      name: new RegExp(voiceName, 'i'),
-    });
+    const option = this.page
+      .getByRole('option', {
+        name: new RegExp(voiceName, 'i'),
+      })
+      .first();
     await option.waitFor({ state: 'visible', timeout: 5000 });
     await option.click();
   }
@@ -121,7 +126,16 @@ export class GeneratePage {
     // React's internal value tracker, so React never calls onChange and state
     // stays empty even though the DOM shows the value.
     await this.textInput.fill(text);
-    await expect(this.textInput).toHaveValue(text);
+    const isContentEditable = await this.textInput.evaluate(
+      (element) => element instanceof HTMLElement && element.isContentEditable,
+    );
+
+    if (isContentEditable) {
+      await expect(this.textInput).toContainText(text);
+    } else {
+      await expect(this.textInput).toHaveValue(text);
+    }
+
     // Wait for React state to propagate to the character count display
     if (text.length > 0) {
       await expect(this.characterCountContainer).not.toHaveText(/^0 \//);
