@@ -52,3 +52,5 @@ scripts/venv
 
 .daily-stats-cache.json
 .ck/
+
+agent-browser*.json

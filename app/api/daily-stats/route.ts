@@ -34,6 +34,12 @@ import {
 // (query_canceled) error rather than a Vercel timeout.
 export const maxDuration = 300;
 
+const VOICE_CLONING_MODELS = [
+  'resemble-ai/chatterbox-multilingual',
+  'resemble-ai/chatterbox',
+  'voxtral-mini-tts-2603',
+];
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
@@ -274,10 +280,7 @@ export async function GET(request: NextRequest) {
         supabase
           .from('audio_files')
           .select('id, created_at')
-          .in('model', [
-            'resemble-ai/chatterbox-multilingual',
-            'resemble-ai/chatterbox',
-          ])
+          .in('model', VOICE_CLONING_MODELS)
           .gte('created_at', sevenDaysAgo.toISOString())
           .lt('created_at', today.toISOString())
           .then((result) => result),
@@ -703,25 +706,58 @@ export async function GET(request: NextRequest) {
       nextSubscriptionDueForPayment?.customerId,
     ));
 
-  // Top voices calculation
-  const voiceCounts = new Map<string, number>();
+  // Top models calculation
+  const normalizeModelName = (modelName: string | null | undefined) => {
+    const trimmedModelName = modelName?.trim();
+    if (!trimmedModelName) return 'Unknown';
+
+    const modelWithoutVersion =
+      trimmedModelName.split(':')[0] ?? trimmedModelName;
+    const modelWithoutOwner =
+      modelWithoutVersion.split('/').pop() ?? modelWithoutVersion;
+    const normalizedModelName = modelWithoutOwner
+      .replace('-preview-tts', '')
+      .replace('-multilingual', '');
+
+    const friendlyModelLabels: Record<string, string> = {
+      chatterbox: 'Chatterbox',
+      'gemini-2.5-flash': 'Gemini Flash',
+      'gemini-2.5-pro': 'Gemini Pro',
+      grok: 'Grok',
+      'orpheus-3b-0.1-ft': 'Orpheus',
+      'voxtral-mini-tts-2603': 'Voxtral Clone',
+    };
+
+    return friendlyModelLabels[normalizedModelName] ?? normalizedModelName;
+  };
+
+  const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
+  const modelCounts = new Map<string, number>();
   for (const audio of audioYesterdayData) {
-    if (audio.voices?.name && audio.voices.name !== 'Cloned voice') {
-      voiceCounts.set(
-        audio.voices.name,
-        (voiceCounts.get(audio.voices.name) ?? 0) + 1,
-      );
+    const modelName = normalizeModelName(audio.model);
+    if (cloneModelLabels.has(modelName)) {
+      continue;
     }
+    modelCounts.set(modelName, (modelCounts.get(modelName) ?? 0) + 1);
   }
 
+  const sortedModelCounts = [...modelCounts.entries()].sort(
+    ([, countA], [, countB]) => countB - countA,
+  );
+  const topModels = sortedModelCounts.slice(0, 3);
+  const otherModels = sortedModelCounts.slice(3);
+  const otherModelsCount = otherModels.reduce(
+    (sum, [, count]) => sum + count,
+    0,
+  );
+
   const topVoiceList =
-    voiceCounts.size === 0
+    modelCounts.size === 0
       ? 'N/A'
-      : [...voiceCounts.entries()]
-          .sort(([, countA], [, countB]) => countB - countA)
-          .slice(0, 3)
-          .map(([voiceName, count]) => `${voiceName} (${count})`)
-          .join(', ');
+      : [
+          ...topModels.map(([modelName, count]) => `${modelName} (${count})`),
+          `other models ${otherModelsCount}`,
+        ].join(', ');
 
   // Filter credit transactions by date ranges (purchases/top-ups only)
   const purchasePrevDayData = purchaseTransactions.filter(
@@ -1412,7 +1448,7 @@ export async function GET(request: NextRequest) {
     `  - 7d: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
     `  - Cloned: ${clonePrevCount} (${formatChange(clonePrevCount, cloneWeekCount / 7)}) | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
     `  - All-time: ${audioTotalCount.toLocaleString()}`,
-    `  - Top voices: ${topVoiceList}`,
+    `  - Top models: ${topVoiceList}`,
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, callsWeekCount / 7)})`,
     `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,
