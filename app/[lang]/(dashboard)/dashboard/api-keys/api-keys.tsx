@@ -6,6 +6,7 @@ import {
   ExternalLink,
   KeyRound,
   Plus,
+  Terminal,
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -316,6 +317,14 @@ export function ApiKeys({
                 {dict.infoCard.generateDescription}
               </span>
             </FeatureCard>
+            <FeatureCard
+              external
+              href="https://github.com/gianpaj/sexyvoice-cli"
+              icon={Terminal}
+              title={dict.infoCard.cliTitle}
+            >
+              <span className="text-sm">{dict.infoCard.cliDescription}</span>
+            </FeatureCard>
           </div>
           <p className="mt-4 flex items-center gap-1.5 text-muted-foreground">
             {dict.infoCard.moreInfo}
@@ -325,6 +334,15 @@ export function ApiKeys({
               target="_blank"
             >
               {dict.infoCard.docsLinkLabel}
+              <ExternalLink className="size-3" />
+            </Link>
+            <span>·</span>
+            <Link
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+              href="https://github.com/gianpaj/sexyvoice-cli"
+              target="_blank"
+            >
+              {dict.infoCard.cliLinkLabel}
               <ExternalLink className="size-3" />
             </Link>
           </p>

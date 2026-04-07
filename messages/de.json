@@ -630,8 +630,11 @@
         "title": "Was können Sie mit der SexyVoice API machen?",
         "generateTitle": "Generieren",
         "generateDescription": "Wandeln Sie Text mit KI-Stimmen in natürlich klingende Sprache um. Wählen Sie aus mehreren Sprachen und fügen Sie emotionale Ausdrucksformen hinzu (bei unterstützten Stimmen).",
+        "cliTitle": "CLI",
+        "cliDescription": "Verwenden Sie die SexyVoice-CLI für browserbasierten Login, Stimmenübersicht, Sprachgenerierung, Curl-Ausgabe und lokale Wiedergabe direkt im Terminal.",
         "moreInfo": "Mehr Infos:",
-        "docsLinkLabel": "docs.sexyvoice.ai"
+        "docsLinkLabel": "docs.sexyvoice.ai",
+        "cliLinkLabel": "github.com/gianpaj/sexyvoice-cli"
       },
       "revokeConfirm": {
         "title": "API-Schlüssel widerrufen?",
