@@ -77,6 +77,10 @@ export function CliLoginClient({
       if (!response.ok) {
         throw new Error(json.error ?? dict.errors.startFailed);
       }
+      const redirectUrl = new URL(json.redirect_url);
+      if (!['127.0.0.1', 'localhost'].includes(redirectUrl.hostname)) {
+        throw new Error('Invalid redirect target');
+      }
       window.location.assign(json.redirect_url);
     } catch (caughtError) {
       setError(
@@ -161,9 +165,7 @@ export function CliLoginClient({
               }}
             />
             <div className="space-y-1">
-              <Label htmlFor="create-new-cli-key">
-                {dict.createNew.label}
-              </Label>
+              <Label htmlFor="create-new-cli-key">{dict.createNew.label}</Label>
               <p className="text-muted-foreground text-sm">
                 {dict.createNew.description}
               </p>
