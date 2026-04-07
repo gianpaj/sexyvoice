@@ -303,29 +303,28 @@ export function ApiKeys({
       <Card>
         <CardContent className="mt-4 text-sm">
           <h2 className="mb-1 font-semibold text-base text-primary leading-8 dark:text-white">
-            What can you do with SexyVoice API?
+            {dict.infoCard.title}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <FeatureCard
               external
               href="https://docs.sexyvoice.ai/api-reference/endpoint/speech"
               icon={AudioLines}
-              title="Generate"
+              title={dict.infoCard.generateTitle}
             >
               <span className="text-sm">
-                Convert text to natural speech with AI voices. Choose from
-                multiple languages and add emotional expression (on supported voices).
+                {dict.infoCard.generateDescription}
               </span>
             </FeatureCard>
           </div>
           <p className="mt-4 flex items-center gap-1.5 text-muted-foreground">
-            More info:
+            {dict.infoCard.moreInfo}
             <Link
               className="inline-flex items-center gap-1 text-primary hover:underline"
               href="https://docs.sexyvoice.ai"
               target="_blank"
             >
-              docs.sexyvoice.ai
+              {dict.infoCard.docsLinkLabel}
               <ExternalLink className="size-3" />
             </Link>
           </p>

@@ -57,7 +57,8 @@ export interface SizingData {
 
 const isIE =
   typeof window === 'undefined'
-    ? false : !!(document.documentElement as any).currentStyle;
+    ? false
+    : !!(document.documentElement as any).currentStyle;
 
 const getSizingData = (node: HTMLElement): SizingData | null => {
   const style = window.getComputedStyle(node);

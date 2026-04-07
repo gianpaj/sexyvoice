@@ -62,11 +62,7 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
           {/* <LanguageSelector isMobile currentLang={lang} /> */}
           {user ? (
             <Button asChild variant="default">
-              <Link
-                className="w-full"
-                href="/dashboard/generate"
-                prefetch
-              >
+              <Link className="w-full" href="/dashboard/generate" prefetch>
                 {dict.header.generate}
               </Link>
             </Button>

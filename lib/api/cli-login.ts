@@ -63,10 +63,9 @@ export function decryptCliApiKey(payload: string): string {
   const decipher = createDecipheriv('aes-256-gcm', getEncryptionKey(), iv);
   decipher.setAuthTag(tag);
 
-  return Buffer.concat([
-    decipher.update(encrypted),
-    decipher.final(),
-  ]).toString('utf8');
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString(
+    'utf8',
+  );
 }
 
 export function isAllowedCliCallbackUrl(raw: string): boolean {

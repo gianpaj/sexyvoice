@@ -626,6 +626,13 @@
       "failedToLoad": "API-Schlüssel konnten nicht geladen werden",
       "failedToCreate": "API-Schlüssel konnte nicht erstellt werden",
       "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden",
+      "infoCard": {
+        "title": "Was können Sie mit der SexyVoice API machen?",
+        "generateTitle": "Generieren",
+        "generateDescription": "Wandeln Sie Text mit KI-Stimmen in natürlich klingende Sprache um. Wählen Sie aus mehreren Sprachen und fügen Sie emotionale Ausdrucksformen hinzu (bei unterstützten Stimmen).",
+        "moreInfo": "Mehr Infos:",
+        "docsLinkLabel": "docs.sexyvoice.ai"
+      },
       "revokeConfirm": {
         "title": "API-Schlüssel widerrufen?",
         "description": "Diese Aktion kann nicht rückgängig gemacht werden. Der Schlüssel wird sofort deaktiviert und alle Anfragen damit schlagen fehl.",

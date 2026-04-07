@@ -272,7 +272,11 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
+        "features": [
+          "Alt i Gratis",
+          "2× længere tekstgenerering",
+          "API-adgang"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -622,6 +626,13 @@
       "failedToLoad": "Kunne ikke indlæse API-nøgler",
       "failedToCreate": "Kunne ikke oprette API-nøgle",
       "failedToRevoke": "Kunne ikke tilbagekalde API-nøgle",
+      "infoCard": {
+        "title": "Hvad kan du gøre med SexyVoice API?",
+        "generateTitle": "Generer",
+        "generateDescription": "Konverter tekst til naturlig tale med AI-stemmer. Vælg mellem flere sprog og tilføj følelsesmæssigt udtryk (på understøttede stemmer).",
+        "moreInfo": "Mere info:",
+        "docsLinkLabel": "docs.sexyvoice.ai"
+      },
       "revokeConfirm": {
         "title": "Tilbagekald API-nøgle?",
         "description": "Denne handling kan ikke fortrydes. Nøglen vil øjeblikkeligt holde op med at fungere.",

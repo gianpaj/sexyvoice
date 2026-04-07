@@ -16,9 +16,11 @@ export default async function ProfilePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const profileDict = ((await getMessages({
-    locale: lang,
-  })) as IntlMessages).profile;
+  const profileDict = (
+    (await getMessages({
+      locale: lang,
+    })) as IntlMessages
+  ).profile;
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;

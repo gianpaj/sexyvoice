@@ -626,6 +626,13 @@
       "failedToLoad": "Failed to load API keys",
       "failedToCreate": "Failed to create API key",
       "failedToRevoke": "Failed to revoke API key",
+      "infoCard": {
+        "title": "What can you do with SexyVoice API?",
+        "generateTitle": "Generate",
+        "generateDescription": "Convert text to natural speech with AI voices. Choose from multiple languages and add emotional expression (on supported voices).",
+        "moreInfo": "More info:",
+        "docsLinkLabel": "docs.sexyvoice.ai"
+      },
       "revokeConfirm": {
         "title": "Revoke API Key",
         "description": "Are you sure you want to revoke this key? This action cannot be undone and any applications using it will stop working.",

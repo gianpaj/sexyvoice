@@ -87,7 +87,8 @@ export const MultibandAudioVisualizer = ({
               borderRadius: `${borderRadius}px`,
               boxShadow:
                 state === 'idle'
-                  ? 'none' : `${0.1 * barWidth}px ${
+                  ? 'none'
+                  : `${0.1 * barWidth}px ${
                       0.1 * barWidth
                     }px 0px 0px rgba(0, 0, 0, 0.1)`,
             }}

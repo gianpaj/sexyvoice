@@ -626,6 +626,13 @@
       "failedToLoad": "Échec du chargement des clés API",
       "failedToCreate": "Échec de la création de la clé API",
       "failedToRevoke": "Échec de la révocation de la clé API",
+      "infoCard": {
+        "title": "Que pouvez-vous faire avec l'API SexyVoice ?",
+        "generateTitle": "Générer",
+        "generateDescription": "Convertissez du texte en parole naturelle avec des voix IA. Choisissez parmi plusieurs langues et ajoutez de l'expression émotionnelle (sur les voix compatibles).",
+        "moreInfo": "Plus d'infos :",
+        "docsLinkLabel": "docs.sexyvoice.ai"
+      },
       "revokeConfirm": {
         "title": "Révoquer la clé API ?",
         "description": "Cette action est irréversible. La clé sera immédiatement désactivée et ne pourra plus être utilisée.",
