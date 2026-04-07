@@ -540,7 +540,7 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('.mp3');
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 4,
+        credits_used: 100,
         duration: '-1',
         filename: expect.stringMatching(
           /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
@@ -565,7 +565,7 @@ describe('Generate Voice API Route', () => {
         sourceId: 'test-audio-file-id',
         unit: 'chars',
         quantity: 13,
-        creditsUsed: 4,
+        creditsUsed: 100,
         metadata: {
           voiceId: 'voice-eve-id',
           voiceName: 'eve',

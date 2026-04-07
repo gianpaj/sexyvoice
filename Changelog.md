@@ -2,6 +2,23 @@
 
 Completed releases are documented here in reverse chronological order.
 
+## [2026.4.7] - 2026-04-07
+
+### Added
+
+#### External API
+
+- `GET /api/v1/voices` now returns a `supports_style` flag so you can
+  detect whether a voice accepts the freeform `style` parameter.
+
+### Fixed
+
+#### External API
+
+- `POST /api/v1/speech` now ignores `style` for non-Gemini voices when
+  validating input length and charging credits, so Grok and Orpheus
+  requests use the raw `input` text instead of a prefixed style prompt.
+
 ## [2026.4.3] - 2026-04-03
 
 ### Added

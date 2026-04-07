@@ -2,11 +2,8 @@
 
 set -euo pipefail
 
-VERSION=2026.3.13
-TAG=2026-03-13
-
-git checkout main
-git pull --ff-only
+VERSION=2026.4.7
+TAG=2026-04-07
 
 test "$(node -p "require('./package.json').version")" = "$VERSION"
 
