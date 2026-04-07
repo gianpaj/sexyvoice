@@ -65,6 +65,7 @@ export async function GET(request: Request) {
               language: voice.language,
               model,
               formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
+              styles: [],
             },
           ];
         }),

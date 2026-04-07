@@ -371,11 +371,11 @@ describe('V1 Speech API Route', () => {
       );
     });
 
-    it('should prepend style to text when provided', async () => {
+    it('should ignore style prompts for Grok voices', async () => {
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {
           const body = (await request.json()) as { text: string };
-          expect(body.text).toBe('happy: Hello world');
+          expect(body.text).toBe('Hello world');
 
           return HttpResponse.arrayBuffer(
             new Uint8Array([1, 2, 3, 4]).buffer,

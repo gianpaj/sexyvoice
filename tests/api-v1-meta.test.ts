@@ -49,6 +49,14 @@ describe('/api/v1 metadata endpoints', () => {
               feature: 'tts',
               is_public: true,
             },
+            {
+              id: 'voice-eve-id',
+              name: 'eve',
+              language: 'en',
+              model: 'grok',
+              feature: 'tts',
+              is_public: true,
+            },
           ],
           error: null,
         }),
@@ -64,9 +72,15 @@ describe('/api/v1 metadata endpoints', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.data).toHaveLength(2);
+    expect(json.data).toHaveLength(3);
     expect(json.data[0].model).toBe('gpro');
     expect(json.data[1].model).toBe('orpheus');
+    expect(json.data[2]).toMatchObject({
+      model: 'grok',
+      formats: ['mp3', 'wav'],
+      styles: [],
+    });
+    expect(json.data[0].styles).toEqual([]);
     expect(response.headers.get('request-id')).toBeTruthy();
   });
 

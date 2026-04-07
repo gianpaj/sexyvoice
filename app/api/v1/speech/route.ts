@@ -43,6 +43,7 @@ import {
   estimateCredits,
   extractMetadata,
   getErrorMessage,
+  getTtsProvider,
 } from '@/lib/utils';
 
 const ENDPOINT = '/api/v1/speech';
@@ -126,7 +127,6 @@ export async function POST(request: Request) {
     }
 
     const { model, input, voice, response_format, style, seed } = parsed.data;
-    const finalText = style ? `${style}: ${input}` : input;
 
     const userId = authResult.userId;
 
@@ -158,6 +158,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const ttsProvider = getTtsProvider(voiceObj.model);
+    const isGeminiVoice = ttsProvider === 'gemini';
+    const isGrokVoice = ttsProvider === 'grok';
+    const finalText = isGeminiVoice && style ? `${style}: ${input}` : input;
+
     const resolvedModel = resolveExternalModelId(voiceObj.model);
     if (model !== resolvedModel) {
       await log({
@@ -182,6 +187,10 @@ export async function POST(request: Request) {
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (finalText.length > maxLength) {
+      const lengthErrorMessage =
+        isGeminiVoice && style
+          ? `The input text exceeds the maximum length of ${maxLength} characters after applying style`
+          : `The input text exceeds the maximum length of ${maxLength} characters`;
       await log({
         status: 400,
         errorCode: 'input_too_long',
@@ -193,7 +202,7 @@ export async function POST(request: Request) {
       });
       return respond(
         createApiError({
-          message: `The input text exceeds the maximum length of ${maxLength} characters after applying style`,
+          message: lengthErrorMessage,
           type: 'invalid_request_error',
           code: 'input_too_long',
           param: 'input',
@@ -250,8 +259,6 @@ export async function POST(request: Request) {
     const extension = chosenFormat;
     const filename = `${folder}/${voice}-${Date.now()}.${extension}`;
 
-    const isGeminiVoice = voiceObj.model === 'gpro';
-    const isGrokVoice = voiceObj.model === 'grok';
     const provider = isGeminiVoice
       ? 'google'
       : isGrokVoice
