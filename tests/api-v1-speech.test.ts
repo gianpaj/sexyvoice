@@ -203,7 +203,7 @@ describe('/api/v1/speech', () => {
     expect(json.error.param).toBe('response_format');
   });
 
-  it('validates max length against styled text', async () => {
+  it('returns input_too_long for overly long raw input on non-Gemini models', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
@@ -212,7 +212,7 @@ describe('/api/v1/speech', () => {
       },
       body: JSON.stringify({
         model: 'orpheus',
-        input: 'x'.repeat(498),
+        input: 'x'.repeat(501),
         style: 'aa',
         voice: 'tara',
       }),
@@ -223,12 +223,39 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(400);
     expect(json.error.code).toBe('input_too_long');
+    expect(json.error.message).toBe(
+      'The input text exceeds the maximum length of 500 characters',
+    );
   });
 
-  it('charges credits based on full styled text length', async () => {
+  it('validates max length against styled text for Gemini models', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'x'.repeat(497),
+        style: 'aa',
+        voice: 'poe',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('input_too_long');
+    expect(json.error.message).toBe(
+      'The input text exceeds the maximum length of 500 characters after applying style',
+    );
+  });
+
+  it('ignores style when charging credits for non-Gemini models', async () => {
     const input = 'hello';
     const style = 'calm and slow';
-    const finalText = `${style}: ${input}`;
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
@@ -247,11 +274,11 @@ describe('/api/v1/speech', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.usage.input_characters).toBe(finalText.length);
+    expect(json.usage.input_characters).toBe(input.length);
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
       userId: 'test-user-id',
       amount: estimateCredits(
-        finalText,
+        input,
         'tara',
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
       ),

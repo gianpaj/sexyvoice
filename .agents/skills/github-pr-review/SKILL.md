@@ -7,6 +7,8 @@ description: "Use this skill when asked to address, fix, or resolve GitHub PR re
 
 A repeatable process for fetching unresolved PR review comments, evaluating their validity, applying fixes one at a time with proper commit messages, replying on GitHub with agent attribution, and then marking threads as resolved.
 
+Important: if a thread was addressed, you must leave a GitHub reply on that thread before resolving it. Do not resolve addressed threads silently.
+
 ## Prerequisites
 
 - `gh` CLI authenticated (`gh auth status`)
@@ -126,16 +128,22 @@ git push origin <branch-name>
 
 ## Step 6 — Reply on GitHub Before Resolving
 
+This step is required for every addressed thread. If you fixed the issue, you must post a reply on the GitHub thread before resolving it.
+
 Before resolving an addressed thread, leave a reply on the inline review comment that:
 
 - states the thread was addressed
 - identifies the harness and model that wrote the fix
-- optionally includes the commit SHA or a one-line summary
+- includes the commit SHA or a one-line summary whenever possible
+
+Do not skip this reply step for addressed threads. The reply is part of the workflow, not an optional courtesy.
 
 Use the current runtime's harness + model string exactly as it is known in context, for example:
 
+- `Zed - GPT-5.4`
 - `Codex App - GPT-5.4`
 - `Claude Code - Opus 4.6`
+- `GPT-5.4` if the harness or software agent is not known
 
 ### Reply format
 
@@ -156,11 +164,21 @@ gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies \
 
 For threads that were intentionally deferred, leave the thread open. Add a reply only when that context helps the reviewer understand why it stays open.
 
+Rule of thumb:
+- addressed thread → reply first, then resolve
+- deferred thread → usually leave open, optionally reply with context
+- skipped thread → leave open
+
 ---
 
 ## Step 7 — Resolve Threads on GitHub
 
-Use the GraphQL `resolveReviewThread` mutation with the `PRRT_*` node ID from Step 2:
+Use the GraphQL `resolveReviewThread` mutation with the `PRRT_*` node ID from Step 2.
+
+Only do this after Step 6 has been completed for that addressed thread:
+- fix committed
+- GitHub reply posted on the thread
+- then resolve
 
 ```sh
 gh api graphql -f query='
@@ -196,6 +214,7 @@ For each unresolved thread:
   │                  │
   │                  ▼
   │             Reply to inline comment with harness/model attribution
+  │             (required before resolving)
   │                  │
   │                  ▼
   │             Resolve thread via GraphQL mutation

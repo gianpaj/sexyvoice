@@ -83,6 +83,7 @@ Recommended verification flow:
    ```
 
 Notes:
+
 - `vercel project inspect sexyvoice` currently returns general project metadata such as project ID, owner, root directory, framework preset, and Node.js version.
 - `vercel env ls` confirms you are operating on `gianpaj-projects/sexyvoice`.
 - The tested CLI output did not expose the runtime region list directly.

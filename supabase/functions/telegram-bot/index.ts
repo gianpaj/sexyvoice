@@ -196,6 +196,7 @@ async function generateTodayStats(): Promise<string> {
         .in('model', [
           'resemble-ai/chatterbox-multilingual',
           'resemble-ai/chatterbox',
+          'voxtral-mini-tts-2603',
         ])
         .gte('created_at', sevenDaysAgo.toISOString())
         .lt('created_at', now.toISOString()),
@@ -567,24 +568,65 @@ async function generateTodayStats(): Promise<string> {
         ? ` ⚠️ Burn rate: ${revenuePurchasedToday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'} vs purchased`
         : '';
 
-    // Top Voices
-    const voiceCounts = new Map<string, number>();
+    // Top non-clone models
+    const normalizeModelName = (modelName: string | null | undefined) => {
+      const trimmedModelName = modelName?.trim();
+      if (!trimmedModelName) return 'Unknown';
+
+      const modelWithoutVersion =
+        trimmedModelName.split(':')[0] ?? trimmedModelName;
+      const modelWithoutOwner =
+        modelWithoutVersion.split('/').pop() ?? modelWithoutVersion;
+      const normalizedModelName = modelWithoutOwner
+        .replace('-preview-tts', '')
+        .replace('-multilingual', '');
+
+      const friendlyModelLabels: Record<string, string> = {
+        chatterbox: 'Chatterbox',
+        'gemini-2.5-flash': 'Gemini Flash',
+        'gemini-2.5-pro': 'Gemini Pro',
+        grok: 'Grok',
+        'orpheus-3b-0.1-ft': 'Orpheus',
+        'voxtral-mini-tts-2603': 'Voxtral Clone',
+      };
+
+      return friendlyModelLabels[normalizedModelName] ?? normalizedModelName;
+    };
+
+    const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
+    const modelCounts = new Map<string, number>();
     for (const audio of audioTodayData) {
-      if (audio.voices?.name && audio.voices.name !== 'Cloned voice') {
-        voiceCounts.set(
-          audio.voices.name,
-          (voiceCounts.get(audio.voices.name) ?? 0) + 1,
-        );
+      const modelName = normalizeModelName(audio.model);
+      if (cloneModelLabels.has(modelName)) {
+        continue;
       }
+      modelCounts.set(modelName, (modelCounts.get(modelName) ?? 0) + 1);
     }
-    const topVoiceList =
-      voiceCounts.size === 0
-        ? 'N/A'
-        : [...voiceCounts.entries()]
-          .sort(([, countA], [, countB]) => countB - countA)
-          .slice(0, 3)
-          .map(([voiceName, count]) => `${voiceName} (${count})`)
+
+    const sortedModelCounts = [...modelCounts.entries()].sort(
+      ([, countA], [, countB]) => countB - countA,
+    );
+    const topModels = sortedModelCounts.slice(0, 3);
+    const otherModels = sortedModelCounts.slice(3);
+    const otherModelsCount = otherModels.reduce(
+      (sum, [, count]) => sum + count,
+      0,
+    );
+    const otherModelsPreview =
+      otherModels.length === 0
+        ? 'none'
+        : otherModels
+          .slice(0, 10)
+          .map(([modelName, count]) => `${modelName} (${count})`)
           .join(', ');
+
+    const topModelList =
+      modelCounts.size === 0
+        ? 'N/A'
+        : [
+          ...topModels.map(([modelName, count]) => `${modelName} (${count})`),
+          `other models (${otherModelsCount}: ${otherModelsPreview})`,
+        ].join(', ');
 
     // Top Customers
     let hasInvalidMetadata = false;
@@ -702,7 +744,7 @@ async function generateTodayStats(): Promise<string> {
       `  - 7d: ${audioWeekCount} (avg ${(audioWeekCount / 7).toFixed(1)})`,
       `  - Cloned: ${cloneTodayCount} (${formatChange(cloneTodayCount, cloneWeekCount / 7)}) | 7d: ${cloneWeekCount} (avg ${(cloneWeekCount / 7).toFixed(1)})`,
       `  - All-time: ${audioTotalCount.toLocaleString()}`,
-      `  - Top voices: ${topVoiceList}`,
+      `  - Top models: ${topModelList}`,
       '',
       `📞 Calls: ${callsTodayCount} (${formatChange(callsTodayCount, callsWeekCount / 7)})`,
       `  - 7d: ${callsWeekCount} (avg ${(callsWeekCount / 7).toFixed(1)})`,

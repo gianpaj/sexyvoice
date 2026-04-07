@@ -36,10 +36,11 @@ The test setup includes comprehensive mocks for all external services:
 #### AI Services
 - **Replicate API**: Voice generation with prediction handling
 - **Google Generative AI**: TTS with pro/flash model fallback
-- **fal.ai**: Voice cloning with chatterbox-tts model
+- **Mistral**: Voice cloning with `voxtral-mini-tts-2603` for supported locales
+- **Replicate**: Voice cloning with `resemble-ai/chatterbox-multilingual` for other supported locales
 
 #### Storage
-- **Vercel Blob**: Audio file upload and storage
+- **Cloudflare R2**: Audio file upload and storage
 
 #### Analytics & Monitoring
 - **PostHog**: Event tracking
@@ -145,20 +146,21 @@ The voice cloning tests cover:
 - Credit transaction logging
 
 ### Voice Cloning
-- fal.ai API integration (chatterbox-tts model)
+- Mistral API integration (`voxtral-mini-tts-2603`) for supported locales
+- Replicate API integration (`resemble-ai/chatterbox-multilingual`) for other supported locales
 - Audio file upload and processing
-- Generated audio storage
-- Request parameter handling (cfg_weight, temperature, exaggeration)
+- Generated audio storage in Cloudflare R2
+- Request parameter handling for Replicate cloning inputs (`cfg_weight`, `temperature`, `exaggeration`)
 - Error handling for AI service failures
 
 ### Caching
 - Redis cache hits/misses for generated audio
-- Hash generation based on text + audio filename
+- Hash generation based on locale + text + audio blob URL
 - Cache invalidation
-- Reuse of existing uploaded audio files (via blob.head check)
+- Reuse of existing uploaded audio files
 
 ### Audio File Management
-- Audio file upload to Vercel Blob storage
+- Audio file upload to Cloudflare R2 storage
 - Input audio file caching and reuse
 - Output audio file generation and storage
 - Filename sanitization (special characters, unicode)
@@ -170,8 +172,8 @@ The voice cloning tests cover:
 
 ### Error Handling
 - Network failures
-- API errors from fal.ai
-- Blob storage failures
+- API errors from Mistral or Replicate
+- Cloudflare R2 storage failures
 - General server errors (500s)
 - Request abortion handling
 
