@@ -78,6 +78,8 @@ releases only.
 ## Checklist for future updates
 
 - Confirm the release version in `package.json`.
+- If the public API changed, also update the API version in
+  `lib/api/openapi.ts`.
 - Confirm every item is supported by merged PRs or direct commits.
 - Group items into `Added`, `Changed`, and `Fixed`, then by the
   relevant feature areas.
