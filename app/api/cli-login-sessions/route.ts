@@ -29,6 +29,7 @@ const CreateCliLoginSessionSchema = z
     path: ['api_key_id'],
   });
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this is a complex endpoint
 export async function POST(request: Request) {
   const supabase = await createClient();
   const {
