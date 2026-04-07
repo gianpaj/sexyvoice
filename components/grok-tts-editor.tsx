@@ -519,8 +519,6 @@ export function GrokTTSEditor({
     );
   }
 
-  console.log({ isPaidUser });
-
   return (
     <div className="w-full">
       <div className="space-y-2">
