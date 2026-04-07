@@ -163,7 +163,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: '03925a20-4e15-4745-b86c-2c2e9d7de870',
@@ -171,7 +171,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: '5797178d-c047-44ea-aef4-94e97fb48663',
@@ -179,7 +179,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: 'cd71a399-9c9a-4384-b76e-14e96a45fc8a',
@@ -187,7 +187,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: 'c38d0c52-e8c1-404b-9cb1-56d4cf252b9f',
@@ -195,7 +195,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: '3da76670-6fca-435b-b097-eed8cc6f37a5',
@@ -203,7 +203,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: 'f586bd2c-909f-4bf3-a859-4e45e45a22d6',
@@ -211,7 +211,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: '530c8354-bb32-4231-a9c9-3c05fcdd220b',
@@ -219,7 +219,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: '0111e4dd-a38a-48e0-a8bb-a0a057f4cceb',
@@ -227,7 +227,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: 'a68482ea-c14e-43cf-bf8c-16074bff9f8d',
@@ -235,7 +235,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                           {
                             id: '5a2bffef-5e60-4fe6-b989-9ed3e68b6c48',
@@ -243,7 +243,7 @@ export function createExternalApiOpenApiDocument() {
                             language: 'multiple',
                             model: 'gpro',
                             formats: ['wav'],
-                            styles: [],
+                            supports_style: true,
                           },
                         ],
                       },

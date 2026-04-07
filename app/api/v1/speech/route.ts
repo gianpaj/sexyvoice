@@ -27,7 +27,6 @@ import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { convertToWav } from '@/lib/audio';
-import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -37,6 +36,7 @@ import {
   reduceCreditsAdmin,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
+import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,

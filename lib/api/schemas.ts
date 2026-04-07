@@ -76,7 +76,9 @@ export const VoiceInfoSchema = z.object({
   language: z.string(),
   model: z.enum(['gpro', 'orpheus', 'grok']),
   formats: z.array(z.enum(['wav', 'mp3'])),
-  styles: z.array(z.string()),
+  supports_style: z
+    .boolean()
+    .describe('Whether this voice accepts the freeform `style` parameter'),
 });
 
 export const VoicesResponseSchema = z.object({

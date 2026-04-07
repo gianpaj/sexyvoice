@@ -203,7 +203,7 @@ describe('/api/v1/speech', () => {
     expect(json.error.param).toBe('response_format');
   });
 
-  it('ignores style when validating max length for non-Gemini models', async () => {
+  it('returns input_too_long for overly long raw input on non-Gemini models', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
@@ -212,15 +212,45 @@ describe('/api/v1/speech', () => {
       },
       body: JSON.stringify({
         model: 'orpheus',
-        input: 'x'.repeat(498),
+        input: 'x'.repeat(501),
         style: 'aa',
         voice: 'tara',
       }),
     });
 
     const response = await POST(request);
+    const json = await response.json();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('input_too_long');
+    expect(json.error.message).toBe(
+      'The input text exceeds the maximum length of 500 characters',
+    );
+  });
+
+  it('validates max length against styled text for Gemini models', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'x'.repeat(497),
+        style: 'aa',
+        voice: 'poe',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('input_too_long');
+    expect(json.error.message).toBe(
+      'The input text exceeds the maximum length of 500 characters after applying style',
+    );
   });
 
   it('ignores style when charging credits for non-Gemini models', async () => {

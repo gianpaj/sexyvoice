@@ -75,12 +75,13 @@ describe('/api/v1 metadata endpoints', () => {
     expect(json.data).toHaveLength(3);
     expect(json.data[0].model).toBe('gpro');
     expect(json.data[1].model).toBe('orpheus');
+    expect(json.data[0].supports_style).toBe(true);
+    expect(json.data[1].supports_style).toBe(false);
     expect(json.data[2]).toMatchObject({
       model: 'grok',
       formats: ['mp3', 'wav'],
-      styles: [],
+      supports_style: false,
     });
-    expect(json.data[0].styles).toEqual([]);
     expect(response.headers.get('request-id')).toBeTruthy();
   });
 
