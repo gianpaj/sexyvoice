@@ -336,15 +336,6 @@ export function ApiKeys({
               {dict.infoCard.docsLinkLabel}
               <ExternalLink className="size-3" />
             </Link>
-            <span>·</span>
-            <Link
-              className="inline-flex items-center gap-1 text-primary hover:underline"
-              href="https://github.com/gianpaj/sexyvoice-cli"
-              target="_blank"
-            >
-              {dict.infoCard.cliLinkLabel}
-              <ExternalLink className="size-3" />
-            </Link>
           </p>
         </CardContent>
       </Card>
