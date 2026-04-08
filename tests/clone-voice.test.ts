@@ -876,6 +876,41 @@ describe('Clone Voice API Route', () => {
       );
     });
 
+    it('should apply a hard timeout to reference audio enhancement requests', async () => {
+      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+      const anySpy = vi.spyOn(AbortSignal, 'any');
+      const controller = new AbortController();
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1.wav'),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(timeoutSpy).toHaveBeenCalledWith(60_000);
+      expect(anySpy).toHaveBeenCalledTimes(1);
+      const combinedSignals = anySpy.mock.calls[0]?.[0];
+      expect(combinedSignals).toHaveLength(2);
+      expect(combinedSignals?.[0]).toBe(request.signal);
+      expect(combinedSignals?.[1]).toBeInstanceOf(AbortSignal);
+      expect(mockFalSubscribe).toHaveBeenCalledWith(
+        'fal-ai/deepfilternet3',
+        expect.objectContaining({
+          abortSignal: expect.any(AbortSignal),
+        }),
+      );
+    });
+
     it('should successfully clone voice using Mistral Voxtral for supported multilingual locales', async () => {
       const formData = createFormDataWithAudio(
         'Bonjour',

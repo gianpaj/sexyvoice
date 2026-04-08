@@ -2,6 +2,7 @@ import { fal } from '@fal-ai/client';
 
 const REFERENCE_AUDIO_ENHANCEMENT_MODEL =
   'fal-ai/deepfilternet3' as `${string}/${string}`;
+const REFERENCE_AUDIO_ENHANCEMENT_TIMEOUT_MS = 60_000;
 
 interface FalEnhancedAudioResponse {
   audio_file?: {
@@ -20,6 +21,18 @@ export interface EnhancedReferenceAudioResult {
   requestId: string;
 }
 
+function createReferenceAudioEnhancementSignal(
+  abortSignal?: AbortSignal,
+): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(
+    REFERENCE_AUDIO_ENHANCEMENT_TIMEOUT_MS,
+  );
+
+  return abortSignal
+    ? AbortSignal.any([abortSignal, timeoutSignal])
+    : timeoutSignal;
+}
+
 export async function enhanceReferenceAudio({
   abortSignal,
   buffer,
@@ -31,6 +44,7 @@ export async function enhanceReferenceAudio({
   filename: string;
   mimeType: string;
 }): Promise<EnhancedReferenceAudioResult> {
+  const requestSignal = createReferenceAudioEnhancementSignal(abortSignal);
   const inputFile = new File([new Uint8Array(buffer)], filename, {
     type: mimeType || 'audio/wav',
   });
@@ -41,7 +55,7 @@ export async function enhanceReferenceAudio({
       audio_url: inputFile,
     },
     logs: false,
-    abortSignal,
+    abortSignal: requestSignal,
   });
 
   const falData = falResult.data as FalEnhancedAudioResponse;
@@ -54,7 +68,7 @@ export async function enhanceReferenceAudio({
   }
 
   const enhancedAudioResponse = await fetch(enhancedAudioUrl, {
-    signal: abortSignal,
+    signal: requestSignal,
   });
 
   if (!enhancedAudioResponse.ok) {
