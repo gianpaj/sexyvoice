@@ -682,9 +682,9 @@ async function runBackgroundTasks(
       locale: audioFileData.locale,
       referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
       referenceAudioEnhancementModel:
-        audioFileData.referenceAudioEnhancementModel,
+        audioFileData.referenceAudioEnhancementModel ?? '',
       referenceAudioEnhancementRequestId:
-        audioFileData.referenceAudioEnhancementRequestId,
+        audioFileData.referenceAudioEnhancementRequestId ?? '',
       userHasPaid,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
     },

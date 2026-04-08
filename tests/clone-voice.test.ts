@@ -960,8 +960,8 @@ describe('Clone Voice API Route', () => {
         usage: {
           locale: 'en',
           referenceAudioEnhanced: false,
-          referenceAudioEnhancementModel: null,
-          referenceAudioEnhancementRequestId: null,
+          referenceAudioEnhancementModel: '',
+          referenceAudioEnhancementRequestId: '',
           userHasPaid: false,
           referenceAudioFileMimeType: 'audio/wav',
         },
@@ -980,6 +980,7 @@ describe('Clone Voice API Route', () => {
           metadata: expect.objectContaining({
             model: 'voxtral-mini-tts-2603',
             locale: 'en',
+            provider: 'mistral',
             textPreview: 'Hello world',
             textLength: 11,
             audioDuration: 12,

@@ -31,7 +31,7 @@ export async function enhanceReferenceAudio({
   filename: string;
   mimeType: string;
 }): Promise<EnhancedReferenceAudioResult> {
-  const inputFile = new File([buffer], filename, {
+  const inputFile = new File([new Uint8Array(buffer)], filename, {
     type: mimeType || 'audio/wav',
   });
 
