@@ -7,6 +7,7 @@ import {
   HarmCategory,
 } from '@google/genai';
 import { captureException } from '@sentry/nextjs';
+import { after } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
@@ -559,14 +560,16 @@ export async function POST(request: Request) {
     // been generated and credits have already been deducted.
     const creditsRemaining = Math.max(0, updatedCredits);
 
-    try {
-      await maybeSendSpeechCreditAllowanceAlert({
-        userId,
-        creditsRemaining,
-      });
-    } catch (alertError) {
-      console.error('[speech] credit alert email failed:', alertError);
-    }
+    after(async () => {
+      try {
+        await maybeSendSpeechCreditAllowanceAlert({
+          userId,
+          creditsRemaining,
+        });
+      } catch (alertError) {
+        console.error('[speech] credit alert email failed:', alertError);
+      }
+    });
 
     log({
       status: 200,
