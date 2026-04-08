@@ -27,6 +27,7 @@ import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { maybeSendSpeechCreditAllowanceAlert } from '@/lib/api/speech-credit-alerts';
+import { emitGenerationSucceededEvent } from '@/lib/notifications/events';
 import { convertToWav } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -535,6 +536,23 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id ?? null,
       },
     });
+
+    if (audioFileResult.data?.id) {
+      try {
+        await emitGenerationSucceededEvent({
+          userId,
+          sourceType: 'api_tts',
+          sourceId: audioFileResult.data.id,
+          model: modelUsed,
+          voiceName: voice,
+        });
+      } catch (notificationError) {
+        console.error(
+          '[speech] generation notification event failed:',
+          notificationError,
+        );
+      }
+    }
 
     // Fire-and-forget: do not await the log call on the success path.
     // A flush failure must never return a 500 to the client after audio has

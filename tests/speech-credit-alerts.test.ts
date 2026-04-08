@@ -1,16 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { maybeSendSpeechCreditAllowanceAlert } from '@/lib/api/speech-credit-alerts';
-import { sendCreditAllowanceAlertEmail } from '@/lib/email/send-credit-allowance-alert-email';
 import {
-  getLatestCreditAllowanceTransactionAdmin,
-  getUserEmailAdmin,
-  markCreditAllowanceAlertEmailAdmin,
-  reserveCreditAllowanceAlertEmailAdmin,
-} from '@/lib/supabase/queries';
+  maybeSendSpeechCreditAllowanceAlert,
+  resolveThreshold,
+} from '@/lib/api/speech-credit-alerts';
+import { emitCreditAllowanceThresholdReachedEvent } from '@/lib/notifications/events';
+import { getLatestCreditAllowanceTransactionAdmin } from '@/lib/supabase/queries';
 
 vi.mock('@/lib/supabase/queries');
-vi.mock('@/lib/email/send-credit-allowance-alert-email');
+vi.mock('@/lib/notifications/events');
 
 describe('maybeSendSpeechCreditAllowanceAlert', () => {
   beforeEach(() => {
@@ -19,45 +17,50 @@ describe('maybeSendSpeechCreditAllowanceAlert', () => {
       id: 'txn_1',
       amount: 1000,
     });
-    vi.mocked(getUserEmailAdmin).mockResolvedValue('user@example.com');
-    vi.mocked(reserveCreditAllowanceAlertEmailAdmin).mockResolvedValue(true);
-    vi.mocked(sendCreditAllowanceAlertEmail).mockResolvedValue({
-      sent: true,
-      messageId: 'msg_1',
-    });
-    vi.mocked(markCreditAllowanceAlertEmailAdmin).mockResolvedValue(undefined);
+    vi.mocked(emitCreditAllowanceThresholdReachedEvent).mockResolvedValue(
+      undefined,
+    );
   });
 
-  it('sends an alert at 80% consumption', async () => {
+  it('resolves thresholds correctly', () => {
+    expect(resolveThreshold(1000, 200)).toBe(80);
+    expect(resolveThreshold(1000, 50)).toBe(95);
+    expect(resolveThreshold(1000, 0)).toBe(100);
+    expect(resolveThreshold(1000, 500)).toBeNull();
+  });
+
+  it('emits an event at 80% consumption', async () => {
     await maybeSendSpeechCreditAllowanceAlert({
       userId: 'user_1',
       creditsRemaining: 200,
     });
 
-    expect(sendCreditAllowanceAlertEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ thresholdPercent: 80 }),
-    );
+    expect(emitCreditAllowanceThresholdReachedEvent).toHaveBeenCalledWith({
+      userId: 'user_1',
+      creditTransactionId: 'txn_1',
+      thresholdPercent: 80,
+      creditsRemaining: 200,
+      allowanceAmount: 1000,
+    });
   });
 
-  it('sends the highest threshold reached (100%)', async () => {
+  it('does not emit an event when no threshold is reached', async () => {
+    await maybeSendSpeechCreditAllowanceAlert({
+      userId: 'user_1',
+      creditsRemaining: 600,
+    });
+
+    expect(emitCreditAllowanceThresholdReachedEvent).not.toHaveBeenCalled();
+  });
+
+  it('does not emit an event when the user has no allowance transaction', async () => {
+    vi.mocked(getLatestCreditAllowanceTransactionAdmin).mockResolvedValue(null);
+
     await maybeSendSpeechCreditAllowanceAlert({
       userId: 'user_1',
       creditsRemaining: 0,
     });
 
-    expect(sendCreditAllowanceAlertEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ thresholdPercent: 100 }),
-    );
-  });
-
-  it('does not send if already reserved for the threshold', async () => {
-    vi.mocked(reserveCreditAllowanceAlertEmailAdmin).mockResolvedValue(false);
-
-    await maybeSendSpeechCreditAllowanceAlert({
-      userId: 'user_1',
-      creditsRemaining: 50,
-    });
-
-    expect(sendCreditAllowanceAlertEmail).not.toHaveBeenCalled();
+    expect(emitCreditAllowanceThresholdReachedEvent).not.toHaveBeenCalled();
   });
 });

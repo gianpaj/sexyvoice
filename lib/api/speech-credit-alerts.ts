@@ -1,15 +1,14 @@
-import { sendCreditAllowanceAlertEmail } from '@/lib/email/send-credit-allowance-alert-email';
+import { emitCreditAllowanceThresholdReachedEvent } from '@/lib/notifications/events';
 import {
-  getLatestCreditAllowanceTransactionAdmin,
-  getUserEmailAdmin,
-  markCreditAllowanceAlertEmailAdmin,
-  reserveCreditAllowanceAlertEmailAdmin,
-} from '@/lib/supabase/queries';
+  buildCreditAllowanceThresholdDedupeKey,
+  type CreditAllowanceThresholdPercent,
+} from '@/lib/notifications/types';
+import { getLatestCreditAllowanceTransactionAdmin } from '@/lib/supabase/queries';
 
 function resolveThreshold(
   allowanceAmount: number,
   creditsRemaining: number,
-): 80 | 95 | 100 | null {
+): CreditAllowanceThresholdPercent | null {
   if (allowanceAmount <= 0) {
     return null;
   }
@@ -49,42 +48,13 @@ export async function maybeSendSpeechCreditAllowanceAlert(params: {
     return;
   }
 
-  const email = await getUserEmailAdmin(params.userId);
-  if (!email) {
-    return;
-  }
-
-  const reserved = await reserveCreditAllowanceAlertEmailAdmin({
+  await emitCreditAllowanceThresholdReachedEvent({
     userId: params.userId,
     creditTransactionId: latestAllowance.id,
     thresholdPercent: threshold,
-    email,
+    creditsRemaining: params.creditsRemaining,
+    allowanceAmount: latestAllowance.amount,
   });
-
-  if (!reserved) {
-    return;
-  }
-
-  try {
-    const result = await sendCreditAllowanceAlertEmail({
-      to: email,
-      thresholdPercent: threshold,
-      creditsRemaining: params.creditsRemaining,
-    });
-
-    await markCreditAllowanceAlertEmailAdmin({
-      creditTransactionId: latestAllowance.id,
-      thresholdPercent: threshold,
-      status: result.sent ? 'sent' : 'failed',
-      resendMessageId: result.sent ? result.messageId : null,
-      errorMessage: result.sent ? null : result.reason,
-    });
-  } catch (error) {
-    await markCreditAllowanceAlertEmailAdmin({
-      creditTransactionId: latestAllowance.id,
-      thresholdPercent: threshold,
-      status: 'failed',
-      errorMessage: error instanceof Error ? error.message : String(error),
-    });
-  }
 }
+
+export { buildCreditAllowanceThresholdDedupeKey, resolveThreshold };

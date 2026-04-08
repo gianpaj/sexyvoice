@@ -13,6 +13,7 @@ import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
+import { emitGenerationSucceededEvent } from '@/lib/notifications/events';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -591,6 +592,29 @@ export async function POST(request: Request) {
           ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
       });
+
+      if (audioFileDBResult.data?.id) {
+        try {
+          await emitGenerationSucceededEvent({
+            userId: user.id,
+            sourceType: 'tts',
+            sourceId: audioFileDBResult.data.id,
+            model: modelUsed,
+            voiceName: voice,
+          });
+        } catch (notificationError) {
+          captureException(notificationError, {
+            user: { id: user.id, email: user.email },
+            extra: {
+              context: 'emitGenerationSucceededEvent',
+              sourceType: 'tts',
+              sourceId: audioFileDBResult.data.id,
+              model: modelUsed,
+              voice,
+            },
+          });
+        }
+      }
 
       await sendPosthogEvent({
         userId: user.id,

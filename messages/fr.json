@@ -585,8 +585,57 @@
         "updateFailed": "Échec de la mise à jour du mot de passe",
         "currentPasswordIncorrect": "Le mot de passe actuel est incorrect"
       }
+  },
+  "preferences": {
+    "title": "Préférences",
+    "description": "Choisissez la langue du tableau de bord et vos préférences pour les e-mails transactionnels.",
+    "localeLabel": "Langue préférée",
+    "localeDescription": "Cela met à jour l'URL actuelle du tableau de bord et définit la langue par défaut pour les futurs e-mails du compte.",
+    "localePlaceholder": "Sélectionnez une langue",
+    "optionalEmailsTitle": "E-mails facultatifs",
+    "optionalEmailsDescription": "Vous pouvez activer ou désactiver ces e-mails à tout moment.",
+    "requiredEmailsTitle": "E-mails de compte toujours actifs",
+    "requiredEmailsDescription": "Ces e-mails restent activés car ils sont importants pour la facturation et l'activité du compte.",
+    "save": "Enregistrer les préférences",
+    "saving": "Enregistrement...",
+    "saveSuccess": "Préférences mises à jour",
+    "saveError": "Impossible de mettre à jour les préférences",
+    "localeOptions": {
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "da": "Dansk",
+      "it": "Italiano",
+      "fr": "Français"
     },
-    "dangerZone": {
+    "items": {
+      "welcomeEmail": {
+        "label": "E-mail de bienvenue",
+        "description": "Envoyé lorsque votre inscription est entièrement finalisée via confirmation e-mail ou inscription avec Google."
+      },
+      "firstGenerationEmail": {
+        "label": "E-mail de première création",
+        "description": "Envoyé une seule fois après votre première génération ou clonage réussi."
+      },
+      "topupSuccess": {
+        "label": "Confirmation de recharge",
+        "description": "Confirme qu'une recharge de crédits a bien été ajoutée."
+      },
+      "subscriptionSuccess": {
+        "label": "Confirmation d'abonnement",
+        "description": "Confirme que votre abonnement a bien été démarré."
+      },
+      "subscriptionCancellation": {
+        "label": "Annulation d'abonnement",
+        "description": "Confirme que votre abonnement a été annulé."
+      },
+      "lowCreditAlert": {
+        "label": "Alertes API de crédit faible",
+        "description": "Vous avertit lorsque votre dernier quota de crédits API est presque épuisé."
+      }
+    }
+  },
+  "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
         "button": "Supprimer le compte",

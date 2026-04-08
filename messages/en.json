@@ -585,8 +585,57 @@
         "updateFailed": "Failed to update password",
         "currentPasswordIncorrect": "Current password is incorrect"
       }
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "Choose your dashboard language and transactional email preferences.",
+    "localeLabel": "Preferred language",
+    "localeDescription": "This updates the current dashboard URL and sets the default locale for future account emails.",
+    "localePlaceholder": "Select a language",
+    "optionalEmailsTitle": "Optional emails",
+    "optionalEmailsDescription": "You can turn these emails on or off at any time.",
+    "requiredEmailsTitle": "Always-on account emails",
+    "requiredEmailsDescription": "These emails stay enabled because they are important for billing and account activity.",
+    "save": "Save preferences",
+    "saving": "Saving...",
+    "saveSuccess": "Preferences updated",
+    "saveError": "Failed to update preferences",
+    "localeOptions": {
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "da": "Dansk",
+      "it": "Italiano",
+      "fr": "Français"
     },
-    "dangerZone": {
+    "items": {
+      "welcomeEmail": {
+        "label": "Welcome email",
+        "description": "Sent after your signup is fully completed through email confirmation or Google sign-up."
+      },
+      "firstGenerationEmail": {
+        "label": "First creation email",
+        "description": "Sent once after your first successful generation or clone."
+      },
+      "topupSuccess": {
+        "label": "Top-up confirmation",
+        "description": "Confirms that a credit top-up was added successfully."
+      },
+      "subscriptionSuccess": {
+        "label": "Subscription confirmation",
+        "description": "Confirms that your subscription was started successfully."
+      },
+      "subscriptionCancellation": {
+        "label": "Subscription cancellation",
+        "description": "Confirms that your subscription has been canceled."
+      },
+      "lowCreditAlert": {
+        "label": "Low-credit API alerts",
+        "description": "Warns you when your latest API credit allowance is close to being depleted."
+      }
+    }
+  },
+  "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
         "button": "Delete account",

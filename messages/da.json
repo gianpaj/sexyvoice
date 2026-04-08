@@ -585,8 +585,57 @@
         "updateFailed": "Kunne ikke opdatere adgangskode",
         "currentPasswordIncorrect": "Nuværende adgangskode er forkert"
       }
+  },
+  "preferences": {
+    "title": "Præferencer",
+    "description": "Vælg dit dashboardsprog og dine præferencer for transaktionelle e-mails.",
+    "localeLabel": "Foretrukket sprog",
+    "localeDescription": "Dette opdaterer den aktuelle dashboard-URL og angiver standardsproget for fremtidige konto-e-mails.",
+    "localePlaceholder": "Vælg et sprog",
+    "optionalEmailsTitle": "Valgfrie e-mails",
+    "optionalEmailsDescription": "Du kan slå disse e-mails til eller fra når som helst.",
+    "requiredEmailsTitle": "Altid aktive konto-e-mails",
+    "requiredEmailsDescription": "Disse e-mails forbliver aktive, fordi de er vigtige for fakturering og kontoaktivitet.",
+    "save": "Gem præferencer",
+    "saving": "Gemmer...",
+    "saveSuccess": "Præferencer opdateret",
+    "saveError": "Kunne ikke opdatere præferencer",
+    "localeOptions": {
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "da": "Dansk",
+      "it": "Italiano",
+      "fr": "Français"
     },
-    "dangerZone": {
+    "items": {
+      "welcomeEmail": {
+        "label": "Velkomstmail",
+        "description": "Sendes når din tilmelding er fuldt gennemført via e-mailbekræftelse eller Google-tilmelding."
+      },
+      "firstGenerationEmail": {
+        "label": "Mail om første oprettelse",
+        "description": "Sendes én gang efter din første succesfulde generering eller kloning."
+      },
+      "topupSuccess": {
+        "label": "Bekræftelse på opfyldning",
+        "description": "Bekræfter at en kreditopfyldning blev tilføjet korrekt."
+      },
+      "subscriptionSuccess": {
+        "label": "Bekræftelse på abonnement",
+        "description": "Bekræfter at dit abonnement er startet korrekt."
+      },
+      "subscriptionCancellation": {
+        "label": "Opsigelse af abonnement",
+        "description": "Bekræfter at dit abonnement er blevet opsagt."
+      },
+      "lowCreditAlert": {
+        "label": "API-advarsler ved lav saldo",
+        "description": "Advarer dig når din seneste API-kreditpulje er tæt på at være brugt op."
+      }
+    }
+  },
+  "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {
         "button": "Slet konto",

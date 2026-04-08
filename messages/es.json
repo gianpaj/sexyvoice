@@ -585,8 +585,57 @@
         "updateFailed": "Error al actualizar la contraseña",
         "currentPasswordIncorrect": "La contraseña actual es incorrecta"
       }
+  },
+  "preferences": {
+    "title": "Preferencias",
+    "description": "Elige el idioma del panel y tus preferencias de correos transaccionales.",
+    "localeLabel": "Idioma preferido",
+    "localeDescription": "Esto actualiza la URL actual del panel y establece el idioma predeterminado para futuros correos de tu cuenta.",
+    "localePlaceholder": "Selecciona un idioma",
+    "optionalEmailsTitle": "Correos opcionales",
+    "optionalEmailsDescription": "Puedes activar o desactivar estos correos en cualquier momento.",
+    "requiredEmailsTitle": "Correos de cuenta siempre activos",
+    "requiredEmailsDescription": "Estos correos permanecen activados porque son importantes para la facturación y la actividad de tu cuenta.",
+    "save": "Guardar preferencias",
+    "saving": "Guardando...",
+    "saveSuccess": "Preferencias actualizadas",
+    "saveError": "No se pudieron actualizar las preferencias",
+    "localeOptions": {
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "da": "Dansk",
+      "it": "Italiano",
+      "fr": "Français"
     },
-    "dangerZone": {
+    "items": {
+      "welcomeEmail": {
+        "label": "Correo de bienvenida",
+        "description": "Se envía cuando tu registro se completa por confirmación de correo o alta con Google."
+      },
+      "firstGenerationEmail": {
+        "label": "Correo de primera creación",
+        "description": "Se envía una vez tras tu primera generación o clonación correcta."
+      },
+      "topupSuccess": {
+        "label": "Confirmación de recarga",
+        "description": "Confirma que una recarga de créditos se ha aplicado correctamente."
+      },
+      "subscriptionSuccess": {
+        "label": "Confirmación de suscripción",
+        "description": "Confirma que tu suscripción se ha activado correctamente."
+      },
+      "subscriptionCancellation": {
+        "label": "Cancelación de suscripción",
+        "description": "Confirma que tu suscripción se ha cancelado."
+      },
+      "lowCreditAlert": {
+        "label": "Alertas de créditos bajos de la API",
+        "description": "Te avisa cuando tu última bolsa de créditos de API está cerca de agotarse."
+      }
+    }
+  },
+  "dangerZone": {
       "title": "Zona de Peligro",
       "deleteAccount": {
         "button": "Eliminar cuenta",

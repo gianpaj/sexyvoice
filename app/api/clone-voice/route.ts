@@ -16,6 +16,7 @@ import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { emitGenerationSucceededEvent } from '@/lib/notifications/events';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -701,6 +702,29 @@ async function runBackgroundTasks(
       userHasPaid,
     },
   });
+
+  if (audioFileDBResult.data?.id) {
+    try {
+      await emitGenerationSucceededEvent({
+        userId,
+        sourceType: 'voice_cloning',
+        sourceId: audioFileDBResult.data.id,
+        model: audioFileData.modelUsed,
+        voiceName: null,
+      });
+    } catch (notificationError) {
+      captureException(notificationError, {
+        user: { id: userId },
+        extra: {
+          context: 'emitGenerationSucceededEvent',
+          sourceType: 'voice_cloning',
+          sourceId: audioFileDBResult.data.id,
+          model: audioFileData.modelUsed,
+        },
+      });
+    }
+  }
+
   const posthog = PostHogClient();
   posthog.capture({
     distinctId: userId,
