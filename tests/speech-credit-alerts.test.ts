@@ -29,6 +29,11 @@ describe('maybeSendSpeechCreditAllowanceAlert', () => {
     expect(resolveThreshold(1000, 500)).toBeNull();
   });
 
+  it('uses integer comparisons at exact percentage boundaries', () => {
+    expect(resolveThreshold(95, 19)).toBe(80);
+    expect(resolveThreshold(20, 1)).toBe(95);
+  });
+
   it('emits an event at 80% consumption', async () => {
     await maybeSendSpeechCreditAllowanceAlert({
       userId: 'user_1',

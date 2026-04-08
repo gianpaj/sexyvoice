@@ -14,15 +14,14 @@ function resolveThreshold(
   }
 
   const consumed = Math.max(0, allowanceAmount - creditsRemaining);
-  const consumedPercent = (consumed / allowanceAmount) * 100;
 
-  if (consumedPercent >= 100) {
+  if (consumed >= allowanceAmount) {
     return 100;
   }
-  if (consumedPercent >= 95) {
+  if (consumed * 100 >= allowanceAmount * 95) {
     return 95;
   }
-  if (consumedPercent >= 80) {
+  if (consumed * 100 >= allowanceAmount * 80) {
     return 80;
   }
 
