@@ -557,7 +557,7 @@ export async function POST(request: Request) {
     // Fire-and-forget: do not await the log call on the success path.
     // A flush failure must never return a 500 to the client after audio has
     // been generated and credits have already been deducted.
-    const creditsRemaining = Math.max(0, updatedCredits - creditsUsed);
+    const creditsRemaining = Math.max(0, updatedCredits);
 
     try {
       await maybeSendSpeechCreditAllowanceAlert({
