@@ -553,6 +553,92 @@ export const isFreeUserOverCallLimit = async (
 // API routes where the userId is resolved from a trusted API key, not a
 // session cookie.
 
+export async function getLatestCreditAllowanceTransactionAdmin(
+  userId: string,
+): Promise<{
+  id: string;
+  amount: number;
+} | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_transactions')
+    .select('id, amount')
+    .eq('user_id', userId)
+    .gt('amount', 0)
+    .in('type', ['purchase', 'topup', 'freemium', 'refund'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function reserveCreditAllowanceAlertEmailAdmin(params: {
+  userId: string;
+  creditTransactionId: string;
+  thresholdPercent: 80 | 95 | 100;
+  email: string;
+}): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_allowance_alert_emails')
+    .upsert(
+      [
+        {
+          user_id: params.userId,
+          credit_transaction_id: params.creditTransactionId,
+          threshold_percent: params.thresholdPercent,
+          email: params.email,
+        },
+      ],
+      {
+        onConflict: 'credit_transaction_id,threshold_percent',
+        ignoreDuplicates: true,
+      },
+    )
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return Boolean(data?.id);
+}
+
+export async function markCreditAllowanceAlertEmailAdmin(params: {
+  creditTransactionId: string;
+  thresholdPercent: 80 | 95 | 100;
+  status: 'sent' | 'failed';
+  resendMessageId?: string | null;
+  errorMessage?: string | null;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('credit_allowance_alert_emails')
+    .update({
+      status: params.status,
+      resend_message_id: params.resendMessageId ?? null,
+      error_message: params.errorMessage ?? null,
+      sent_at: params.status === 'sent' ? new Date().toISOString() : null,
+    })
+    .eq('credit_transaction_id', params.creditTransactionId)
+    .eq('threshold_percent', params.thresholdPercent);
+
+  if (error) throw error;
+}
+
+export async function getUserEmailAdmin(
+  userId: string,
+): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+
+  if (error) throw error;
+
+  return data.user?.email ?? null;
+}
+
 export async function getCreditsAdmin(userId: string): Promise<number> {
   const admin = createAdminClient();
   const { data, error } = await admin

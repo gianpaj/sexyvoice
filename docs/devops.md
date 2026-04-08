@@ -155,6 +155,8 @@ Used for:
 - `R2_BUCKET_NAME`
 - `R2_SPEECH_API_BUCKET_NAME`
 - `R2_SPEECH_API_PUBLIC_URL`
+- `RESEND_API_KEY` (if low-credit emails are expected)
+- `RESEND_FROM_EMAIL` (if low-credit emails are expected)
 - `R2_ENDPOINT`
 
 Used for:
@@ -209,6 +211,16 @@ Generate secure secrets with:
 ```bash
 openssl rand -hex 32
 ```
+
+
+### Email notifications (Resend)
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+
+Used for:
+
+- low-credit threshold alerts (80%, 95%, 100%) for `/api/v1/speech`
 
 ### Stripe
 

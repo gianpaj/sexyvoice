@@ -367,6 +367,10 @@ vi.mock('@/lib/supabase/queries', async () => {
     isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
     hasUserPaid: vi.fn().mockResolvedValue(false),
     hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
+    getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
+    reserveCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(true),
+    markCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(undefined),
+    getUserEmailAdmin: vi.fn().mockResolvedValue('test@example.com'),
   };
 });
 

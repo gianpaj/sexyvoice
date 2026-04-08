@@ -26,6 +26,7 @@ import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
+import { maybeSendSpeechCreditAllowanceAlert } from '@/lib/api/speech-credit-alerts';
 import { convertToWav } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -538,6 +539,17 @@ export async function POST(request: Request) {
     // Fire-and-forget: do not await the log call on the success path.
     // A flush failure must never return a 500 to the client after audio has
     // been generated and credits have already been deducted.
+    const creditsRemaining = Math.max(0, updatedCredits - creditsUsed);
+
+    try {
+      await maybeSendSpeechCreditAllowanceAlert({
+        userId,
+        creditsRemaining,
+      });
+    } catch (alertError) {
+      console.error('[speech] credit alert email failed:', alertError);
+    }
+
     log({
       status: 200,
       userId,
@@ -558,7 +570,7 @@ export async function POST(request: Request) {
       {
         url: uploadUrl,
         credits_used: creditsUsed,
-        credits_remaining: Math.max(0, updatedCredits - creditsUsed),
+        credits_remaining: creditsRemaining,
         usage: {
           input_characters: finalText.length,
           model: modelUsed,

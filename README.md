@@ -168,6 +168,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Axiom logging (optional)
       - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+   - Email notifications (optional)
+      - `RESEND_API_KEY` - Resend API key used for low-credit emails from `/api/v1/speech`
+      - `RESEND_FROM_EMAIL` - Verified sender used for low-credit allowance alerts
    - API key security
       - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
    - Vercel Edge Config (optional)

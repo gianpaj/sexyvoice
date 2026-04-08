@@ -263,6 +263,60 @@ declare type Database = {
           },
         ];
       };
+      credit_allowance_alert_emails: {
+        Row: {
+          created_at: string;
+          credit_transaction_id: string;
+          email: string;
+          error_message: string | null;
+          id: string;
+          resend_message_id: string | null;
+          sent_at: string | null;
+          status: string;
+          threshold_percent: number;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          credit_transaction_id: string;
+          email: string;
+          error_message?: string | null;
+          id?: string;
+          resend_message_id?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          threshold_percent: number;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          credit_transaction_id?: string;
+          email?: string;
+          error_message?: string | null;
+          id?: string;
+          resend_message_id?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          threshold_percent?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'credit_allowance_alert_emails_credit_transaction_id_fkey';
+            columns: ['credit_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'credit_transactions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'credit_allowance_alert_emails_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       credit_transactions: {
         Row: {
           amount: number;
