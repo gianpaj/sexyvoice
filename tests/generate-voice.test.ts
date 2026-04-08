@@ -99,7 +99,7 @@ describe('Generate Voice API Route', () => {
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: longText, voice: 'poe' }),
+        body: JSON.stringify({ text: longText, voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -278,7 +278,7 @@ describe('Generate Voice API Route', () => {
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -293,7 +293,7 @@ describe('Generate Voice API Route', () => {
 
       // Verify Redis.get was called with correct filename
       expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringContaining('generated-audio-free/poe-'),
+        expect.stringContaining('generated-audio-free/kore-'),
       );
     });
 
@@ -660,7 +660,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text, voice: 'poe' }),
+        body: JSON.stringify({ text, voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -680,7 +680,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         credits_used: 26,
         duration: '-1',
         filename: expect.stringMatching(
-          /^generated-audio\/poe-[a-f0-9]+\.wav$/,
+          /^generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
@@ -693,10 +693,10 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         predictionId: undefined,
         text,
         url: expect.stringMatching(
-          /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/poe-[a-f0-9]+\.wav$/,
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
         userId: 'test-user-id',
-        voiceId: 'voice-poe-id',
+        voiceId: 'voice-kore-id',
       });
 
       // Verify usage event was logged for Gemini voice
@@ -708,8 +708,8 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         quantity: text.length,
         creditsUsed: 26,
         metadata: {
-          voiceId: 'voice-poe-id',
-          voiceName: 'poe',
+          voiceId: 'voice-kore-id',
+          voiceName: 'kore',
           model: 'gemini-2.5-pro-preview-tts',
           provider: 'gemini',
           textPreview: text.slice(0, 100),
@@ -765,7 +765,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -777,7 +777,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         credits_used: 26,
         duration: '-1',
         filename: expect.stringMatching(
-          /^generated-audio-free\/poe-[a-f0-9]+\.wav$/,
+          /^generated-audio-free\/kore-[a-f0-9]+\.wav$/,
         ),
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
@@ -790,10 +790,10 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
-          /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/poe-[a-f0-9]+\.wav$/,
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/kore-[a-f0-9]+\.wav$/,
         ),
         userId: 'test-user-id',
-        voiceId: 'voice-poe-id',
+        voiceId: 'voice-kore-id',
       });
 
       expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
@@ -859,7 +859,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -871,7 +871,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         credits_used: 26,
         duration: '-1',
         filename: expect.stringMatching(
-          /^generated-audio\/poe-[a-f0-9]+\.wav$/,
+          /^generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
@@ -884,10 +884,10 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
-          /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/poe-[a-f0-9]+\.wav$/,
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
         userId: 'test-user-id',
-        voiceId: 'voice-poe-id',
+        voiceId: 'voice-kore-id',
       });
 
       expect(Sentry.captureException).not.toHaveBeenCalledWith(
@@ -903,7 +903,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
             email: 'test@example.com',
           },
           extra: expect.objectContaining({
-            voice: 'poe',
+            voice: 'kore',
             styleVariant: '',
             model: 'gemini-2.5-pro-preview-tts',
             provider: 'gemini',
@@ -923,7 +923,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
             email: 'test@example.com',
           },
           extra: expect.objectContaining({
-            voice: 'poe',
+            voice: 'kore',
             styleVariant: '',
             provider: 'gemini',
             originalModel: 'gemini-2.5-pro-preview-tts',
@@ -957,7 +957,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         },
         body: JSON.stringify({
           text: 'Hello world',
-          voice: 'poe',
+          voice: 'kore',
           styleVariant: 'dramatic',
         }),
       });
@@ -973,7 +973,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         expect.objectContaining({
           extra: expect.objectContaining({
             text: 'dramatic: Hello world',
-            voice: 'poe',
+            voice: 'kore',
             errorData: flashError,
           }),
           user: {
@@ -1040,7 +1040,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1064,7 +1064,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1095,7 +1095,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1136,7 +1136,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1176,7 +1176,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1210,7 +1210,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1415,7 +1415,7 @@ describe('Integration Tests', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
     });
 
     const response = await POST(request);

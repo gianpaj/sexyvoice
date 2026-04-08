@@ -54,6 +54,33 @@
       }
     }
   },
+  "cliLogin": {
+    "title": "Conectar CLI",
+    "description": "Elige una clave API existente para rotarla hacia tu CLI, o crea una nueva si esta cuenta todavía no tiene una.",
+    "invalidRequest": {
+      "title": "Solicitud de inicio de sesión de CLI no válida",
+      "description": "Falta la URL de callback o no es una dirección localhost."
+    },
+    "existingKeys": {
+      "label": "Claves API existentes",
+      "description": "Seleccionar una clave la rota. Tu CLI recibe el secreto de reemplazo una sola vez y el secreto anterior se desactiva.",
+      "lastUsedLabel": "Último uso:",
+      "never": "Nunca"
+    },
+    "createNew": {
+      "label": "Crear una clave nueva en su lugar",
+      "description": "Usa esto si no quieres rotar una clave existente.",
+      "placeholder": "CLI",
+      "paidOnly": "Crear nuevas claves API todavía requiere una cuenta de pago."
+    },
+    "actions": {
+      "connecting": "Conectando...",
+      "continue": "Continuar en CLI"
+    },
+    "errors": {
+      "startFailed": "No se pudo iniciar el acceso de CLI"
+    }
+  },
   "landing": {
     "latestPosts": "Ultimos Posts",
     "blogDescription": "Guías, tutoriales y noticias sobre clonación de voz con IA, síntesis de texto a voz y tecnología de voz IA.",
@@ -599,6 +626,16 @@
       "failedToLoad": "Error al cargar las claves API",
       "failedToCreate": "Error al crear la clave API",
       "failedToRevoke": "Error al revocar la clave API",
+      "infoCard": {
+        "title": "¿Qué puedes hacer con la API de SexyVoice?",
+        "generateTitle": "Generar",
+        "generateDescription": "Convierte texto en voz natural con voces de IA. Elige entre varios idiomas y añade expresión emocional (en las voces compatibles).",
+        "cliTitle": "CLI",
+        "cliDescription": "Usa la CLI de SexyVoice para iniciar sesión desde el navegador, descubrir voces, generar audio, obtener comandos curl y reproducir audio localmente desde tu terminal.",
+        "moreInfo": "Más información:",
+        "docsLinkLabel": "docs.sexyvoice.ai",
+        "cliLinkLabel": "github.com/gianpaj/sexyvoice-cli"
+      },
       "revokeConfirm": {
         "title": "¿Revocar clave API?",
         "description": "Esta acción es permanente. La clave quedará desactivada de inmediato y no podrá utilizarse más.",

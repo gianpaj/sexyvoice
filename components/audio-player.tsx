@@ -30,9 +30,12 @@ export function AudioPlayer({
       if (!audio) return;
 
       setIsPlaying(true);
-      await attemptPlayback(() => audio.play(), () => {
-        setIsPlaying(false);
-      });
+      await attemptPlayback(
+        () => audio.play(),
+        () => {
+          setIsPlaying(false);
+        },
+      );
     }
   };
 

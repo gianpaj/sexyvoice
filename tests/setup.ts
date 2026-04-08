@@ -150,6 +150,8 @@ process.env.R2_BUCKET_NAME = 'test-bucket';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+process.env.CLI_LOGIN_ENCRYPTION_SECRET =
+  'test-cli-login-secret-do-not-use-in-production';
 
 // Mock Axiom so tests never attempt a real network flush
 vi.mock('@axiomhq/js', () => ({
@@ -289,10 +291,10 @@ vi.mock('@/lib/supabase/queries', async () => {
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
-      if (voiceName === 'poe') {
+      if (voiceName === 'kore') {
         return Promise.resolve({
-          id: 'voice-poe-id',
-          name: 'poe',
+          id: 'voice-kore-id',
+          name: 'kore',
           language: 'en',
           model: 'gpro',
         });
@@ -325,10 +327,10 @@ vi.mock('@/lib/supabase/queries', async () => {
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         });
       }
-      if (voiceName === 'poe') {
+      if (voiceName === 'kore') {
         return Promise.resolve({
-          id: 'voice-poe-id',
-          name: 'poe',
+          id: 'voice-kore-id',
+          name: 'kore',
           language: 'en',
           model: 'gpro',
         });

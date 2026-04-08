@@ -54,6 +54,33 @@
       }
     }
   },
+  "cliLogin": {
+    "title": "Forbind CLI",
+    "description": "Vælg en eksisterende API-nøgle, der skal roteres til din CLI, eller opret en ny, hvis kontoen endnu ikke har en.",
+    "invalidRequest": {
+      "title": "Ugyldig CLI-loginanmodning",
+      "description": "Callback-URL'en mangler eller er ikke en localhost-adresse."
+    },
+    "existingKeys": {
+      "label": "Eksisterende API-nøgler",
+      "description": "Når du vælger en nøgle, roteres den. Din CLI modtager erstatningshemmeligheden én gang, og den gamle hemmelighed deaktiveres.",
+      "lastUsedLabel": "Senest brugt:",
+      "never": "Aldrig"
+    },
+    "createNew": {
+      "label": "Opret ny nøgle i stedet",
+      "description": "Brug dette, hvis du ikke vil rotere en eksisterende nøgle.",
+      "placeholder": "CLI",
+      "paidOnly": "Oprettelse af nye API-nøgler kræver stadig en betalt konto."
+    },
+    "actions": {
+      "connecting": "Forbinder...",
+      "continue": "Fortsæt i CLI"
+    },
+    "errors": {
+      "startFailed": "Kunne ikke starte CLI-login"
+    }
+  },
   "landing": {
     "latestPosts": "Seneste indlæg",
     "blogDescription": "Guides, vejledninger og nyheder om AI-stemmekloning, tekst-til-tale-syntese og AI-stemmeteknologi.",
@@ -245,7 +272,11 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
+        "features": [
+          "Alt i Gratis",
+          "2× længere tekstgenerering",
+          "API-adgang"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -595,6 +626,16 @@
       "failedToLoad": "Kunne ikke indlæse API-nøgler",
       "failedToCreate": "Kunne ikke oprette API-nøgle",
       "failedToRevoke": "Kunne ikke tilbagekalde API-nøgle",
+      "infoCard": {
+        "title": "Hvad kan du gøre med SexyVoice API?",
+        "generateTitle": "Generer",
+        "generateDescription": "Konverter tekst til naturlig tale med AI-stemmer. Vælg mellem flere sprog og tilføj følelsesmæssigt udtryk (på understøttede stemmer).",
+        "cliTitle": "CLI",
+        "cliDescription": "Brug SexyVoice CLI til browserbaseret login, stemmeopdagelse, talegenerering, curl-output og lokal afspilning direkte fra din terminal.",
+        "moreInfo": "Mere info:",
+        "docsLinkLabel": "docs.sexyvoice.ai",
+        "cliLinkLabel": "github.com/gianpaj/sexyvoice-cli"
+      },
       "revokeConfirm": {
         "title": "Tilbagekald API-nøgle?",
         "description": "Denne handling kan ikke fortrydes. Nøglen vil øjeblikkeligt holde op med at fungere.",

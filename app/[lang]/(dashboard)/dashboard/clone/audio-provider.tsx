@@ -49,9 +49,12 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
     // Handle play promise to catch AbortError
     setIsPlaying(true);
-    await attemptPlayback(() => newAudio.play(), () => {
-      setIsPlaying(false);
-    });
+    await attemptPlayback(
+      () => newAudio.play(),
+      () => {
+        setIsPlaying(false);
+      },
+    );
   };
 
   const pause = () => {
@@ -65,9 +68,12 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
       if (!audio) return;
 
       setIsPlaying(true);
-      await attemptPlayback(() => audio.play(), () => {
-        setIsPlaying(false);
-      });
+      await attemptPlayback(
+        () => audio.play(),
+        () => {
+          setIsPlaying(false);
+        },
+      );
     }
   };
 

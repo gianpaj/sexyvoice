@@ -30,7 +30,13 @@ const clearOauthCallbackCookie = (response: NextResponse) => {
 const publicRoutes = [
   '/api/health',
   '/auth/callback',
-  ...routesPerLocale(['/', '/signup', '/login', '/reset-password']),
+  ...routesPerLocale([
+    '/',
+    '/signup',
+    '/login',
+    '/reset-password',
+    '/cli/login',
+  ]),
 ];
 
 const isDashboardPath = (pathname: string, locale: string) =>

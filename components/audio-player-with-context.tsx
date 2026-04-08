@@ -74,9 +74,12 @@ export function AudioPlayerWithContext({
       setWavesurfer(ws);
       setIsWaveformPlaying(false);
       if (autoPlay) {
-        void attemptPlayback(() => ws.play(), () => {
-          setIsWaveformPlaying(false);
-        });
+        void attemptPlayback(
+          () => ws.play(),
+          () => {
+            setIsWaveformPlaying(false);
+          },
+        );
       }
     },
     [autoPlay],
@@ -99,9 +102,12 @@ export function AudioPlayerWithContext({
     }
 
     setIsWaveformPlaying(true);
-    await attemptPlayback(() => wavesurfer.play(), () => {
-      setIsWaveformPlaying(false);
-    });
+    await attemptPlayback(
+      () => wavesurfer.play(),
+      () => {
+        setIsWaveformPlaying(false);
+      },
+    );
   }, [isWaveformPlaying, wavesurfer]);
 
   const handlePlayWithContext = useCallback(() => {

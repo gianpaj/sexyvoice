@@ -136,7 +136,7 @@ describe('GenerateUI', () => {
   it('passes Gemini style state to both child components for Gemini voices', () => {
     const geminiVoice = createVoice({
       id: 'voice-gemini',
-      name: 'poe',
+      name: 'kore',
       model: 'gpro',
     });
 
@@ -223,7 +223,7 @@ describe('GenerateUI', () => {
     });
     const thirdVoice = createVoice({
       id: 'voice-third',
-      name: 'poe',
+      name: 'kore',
       model: 'gpro',
     });
 
@@ -251,7 +251,7 @@ describe('GenerateUI', () => {
     });
     const secondVoice = createVoice({
       id: 'voice-second',
-      name: 'poe',
+      name: 'kore',
       model: 'gpro',
     });
 

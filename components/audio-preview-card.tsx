@@ -44,10 +44,13 @@ export function AudioPreviewCard({
       // Play and store the reference
       setIsPlaying(true);
       setAudioElement(audio);
-      await attemptPlayback(() => audio.play(), () => {
-        setIsPlaying(false);
-        setAudioElement(null);
-      });
+      await attemptPlayback(
+        () => audio.play(),
+        () => {
+          setIsPlaying(false);
+          setAudioElement(null);
+        },
+      );
     }
   };
 

@@ -117,8 +117,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
         numCredits: subscriptionPackages.pro.baseCreditsLocale,
       }),
       subscriptionBonusCredits: (
-        subscriptionPackages.pro.credits -
-        subscriptionPackages.pro.baseCredits
+        subscriptionPackages.pro.credits - subscriptionPackages.pro.baseCredits
       ).toLocaleString(lang),
       features: pPlans.pro.features,
     },

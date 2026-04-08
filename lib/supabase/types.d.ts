@@ -15,6 +15,48 @@ declare type Database = {
   };
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string;
+          expires_at: string | null;
+          id: string;
+          is_active: boolean;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at: string | null;
+          metadata: Json;
+          name: string;
+          permissions: Json;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          key_hash: string;
+          key_prefix: string;
+          last_used_at?: string | null;
+          metadata?: Json;
+          name: string;
+          permissions?: Json;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          key_hash?: string;
+          key_prefix?: string;
+          last_used_at?: string | null;
+          metadata?: Json;
+          name?: string;
+          permissions?: Json;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       audio_files: {
         Row: {
           created_at: string | null;
@@ -86,48 +128,6 @@ declare type Database = {
             referencedColumns: ['id'];
           },
         ];
-      };
-      api_keys: {
-        Row: {
-          created_at: string;
-          expires_at: string | null;
-          id: string;
-          is_active: boolean;
-          key_hash: string;
-          key_prefix: string;
-          last_used_at: string | null;
-          metadata: Json;
-          name: string;
-          permissions: Json;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          expires_at?: string | null;
-          id?: string;
-          is_active?: boolean;
-          key_hash: string;
-          key_prefix: string;
-          last_used_at?: string | null;
-          metadata?: Json;
-          name: string;
-          permissions?: Json;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          expires_at?: string | null;
-          id?: string;
-          is_active?: boolean;
-          key_hash?: string;
-          key_prefix?: string;
-          last_used_at?: string | null;
-          metadata?: Json;
-          name?: string;
-          permissions?: Json;
-          user_id?: string;
-        };
-        Relationships: [];
       };
       call_sessions: {
         Row: {
@@ -317,6 +317,63 @@ declare type Database = {
           },
         ];
       };
+      cli_login_sessions: {
+        Row: {
+          callback_url: string;
+          created_at: string;
+          encrypted_api_key: string | null;
+          expires_at: string;
+          id: string;
+          new_api_key_id: string;
+          old_api_key_id: string | null;
+          redeemed_at: string | null;
+          state: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Insert: {
+          callback_url: string;
+          created_at?: string;
+          encrypted_api_key?: string | null;
+          expires_at: string;
+          id?: string;
+          new_api_key_id: string;
+          old_api_key_id?: string | null;
+          redeemed_at?: string | null;
+          state: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          callback_url?: string;
+          created_at?: string;
+          encrypted_api_key?: string | null;
+          expires_at?: string;
+          id?: string;
+          new_api_key_id?: string;
+          old_api_key_id?: string | null;
+          redeemed_at?: string | null;
+          state?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cli_login_sessions_new_api_key_id_fkey';
+            columns: ['new_api_key_id'];
+            isOneToOne: false;
+            referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'cli_login_sessions_old_api_key_id_fkey';
+            columns: ['old_api_key_id'];
+            isOneToOne: false;
+            referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       credit_transactions: {
         Row: {
           amount: number;
@@ -460,6 +517,7 @@ declare type Database = {
         Row: {
           api_key_id: string | null;
           created_at: string;
+          credit_transaction_id: string | null;
           credits_used: number;
           dollar_amount: number | null;
           duration_seconds: number | null;
@@ -479,6 +537,7 @@ declare type Database = {
         Insert: {
           api_key_id?: string | null;
           created_at?: string;
+          credit_transaction_id?: string | null;
           credits_used: number;
           dollar_amount?: number | null;
           duration_seconds?: number | null;
@@ -498,6 +557,7 @@ declare type Database = {
         Update: {
           api_key_id?: string | null;
           created_at?: string;
+          credit_transaction_id?: string | null;
           credits_used?: number;
           dollar_amount?: number | null;
           duration_seconds?: number | null;
@@ -520,6 +580,13 @@ declare type Database = {
             columns: ['api_key_id'];
             isOneToOne: false;
             referencedRelation: 'api_keys';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
+            columns: ['credit_transaction_id'];
+            isOneToOne: false;
+            referencedRelation: 'credit_transactions';
             referencedColumns: ['id'];
           },
           {
@@ -557,7 +624,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model: string;
+          model?: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -788,9 +855,6 @@ declare type CompositeTypes<
     : never;
 
 declare const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],
@@ -800,6 +864,8 @@ declare const Constants = {
         'voice_cloning',
         'live_call',
         'audio_processing',
+        'api_tts',
+        'api_voice_cloning',
       ],
       usage_unit_type: ['chars', 'mins', 'secs', 'operation'],
     },
