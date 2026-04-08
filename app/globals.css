@@ -118,7 +118,6 @@
   }
 
   @keyframes bounce-subtle {
-
     0%,
     100% {
       transform: translateY(0);
@@ -154,7 +153,6 @@
   }
 
   @keyframes float {
-
     0%,
     100% {
       transform: translateY(0px) rotate(0deg);
@@ -166,7 +164,6 @@
   }
 
   @keyframes pulse-slow {
-
     0%,
     100% {
       opacity: 1;
@@ -196,7 +193,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
   *,
   ::after,
   ::before,
@@ -531,7 +527,6 @@
 
 /* Added incoming call animation */
 @keyframes incoming-call {
-
   0%,
   100% {
     transform: scale(1) rotate(0deg);

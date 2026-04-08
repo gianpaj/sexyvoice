@@ -54,6 +54,33 @@
       }
     }
   },
+  "cliLogin": {
+    "title": "CLI verbinden",
+    "description": "Wählen Sie einen vorhandenen API-Schlüssel aus, den Sie für Ihre CLI rotieren möchten, oder erstellen Sie einen neuen, wenn dieses Konto noch keinen hat.",
+    "invalidRequest": {
+      "title": "Ungültige CLI-Anmeldeanforderung",
+      "description": "Die Callback-URL fehlt oder ist keine localhost-Adresse."
+    },
+    "existingKeys": {
+      "label": "Vorhandene API-Schlüssel",
+      "description": "Wenn Sie einen Schlüssel auswählen, wird er rotiert. Ihre CLI erhält das neue Geheimnis genau einmal, und das alte Geheimnis wird deaktiviert.",
+      "lastUsedLabel": "Zuletzt verwendet:",
+      "never": "Nie"
+    },
+    "createNew": {
+      "label": "Stattdessen neuen Schlüssel erstellen",
+      "description": "Verwenden Sie dies, wenn Sie keinen vorhandenen Schlüssel rotieren möchten.",
+      "placeholder": "CLI",
+      "paidOnly": "Das Erstellen neuer API-Schlüssel erfordert weiterhin ein kostenpflichtiges Konto."
+    },
+    "actions": {
+      "connecting": "Verbindung wird hergestellt...",
+      "continue": "In CLI fortfahren"
+    },
+    "errors": {
+      "startFailed": "CLI-Anmeldung konnte nicht gestartet werden"
+    }
+  },
   "landing": {
     "latestPosts": "Neueste Beiträge",
     "blogDescription": "Anleitungen, Tutorials und Neuigkeiten zu KI-Stimmklonen, Text-zu-Sprache-Synthese und Voice-KI-Technologie.",
@@ -599,6 +626,16 @@
       "failedToLoad": "API-Schlüssel konnten nicht geladen werden",
       "failedToCreate": "API-Schlüssel konnte nicht erstellt werden",
       "failedToRevoke": "API-Schlüssel konnte nicht widerrufen werden",
+      "infoCard": {
+        "title": "Was können Sie mit der SexyVoice API machen?",
+        "generateTitle": "Generieren",
+        "generateDescription": "Wandeln Sie Text mit KI-Stimmen in natürlich klingende Sprache um. Wählen Sie aus mehreren Sprachen und fügen Sie emotionale Ausdrucksformen hinzu (bei unterstützten Stimmen).",
+        "cliTitle": "CLI",
+        "cliDescription": "Verwenden Sie die SexyVoice-CLI für browserbasierten Login, Stimmenübersicht, Sprachgenerierung, Curl-Ausgabe und lokale Wiedergabe direkt im Terminal.",
+        "moreInfo": "Mehr Infos:",
+        "docsLinkLabel": "docs.sexyvoice.ai",
+        "cliLinkLabel": "github.com/gianpaj/sexyvoice-cli"
+      },
       "revokeConfirm": {
         "title": "API-Schlüssel widerrufen?",
         "description": "Diese Aktion kann nicht rückgängig gemacht werden. Der Schlüssel wird sofort deaktiviert und alle Anfragen damit schlagen fehl.",

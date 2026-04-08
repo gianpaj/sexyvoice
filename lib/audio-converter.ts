@@ -53,7 +53,9 @@ function validateDecodedAudio(
   }
 
   if (!Number.isFinite(decoded.sampleRate) || decoded.sampleRate <= 0) {
-    throw new Error(`Decoded ${format} audio did not contain a valid sample rate`);
+    throw new Error(
+      `Decoded ${format} audio did not contain a valid sample rate`,
+    );
   }
 }
 

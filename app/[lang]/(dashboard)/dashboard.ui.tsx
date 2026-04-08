@@ -12,7 +12,6 @@ import {
   PhoneCallIcon,
   ReceiptText,
   Scissors,
-
   Wand2,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -118,8 +117,6 @@ export default function DashboardUI({
       : []),
   ];
 
-
-
   const freeTools = [
     {
       name: dict.pages['/tools/audio-converter'],
@@ -181,7 +178,6 @@ export default function DashboardUI({
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

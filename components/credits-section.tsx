@@ -63,10 +63,7 @@ function CreditsSection({
 
     const sendUserAnalyticsData = (
       user: User,
-      credits:
-        | Pick<Tables<'credits'>, 'amount'>
-        | null
-        | undefined,
+      credits: Pick<Tables<'credits'>, 'amount'> | null | undefined,
       userHasPaid: boolean,
     ) => {
       posthog.identify(user.id, {

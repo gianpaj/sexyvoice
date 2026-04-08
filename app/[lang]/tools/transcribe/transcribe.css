@@ -20,7 +20,6 @@
 
 /* Waveform bars — used in header decoration and progress display */
 @keyframes waveform-pulse {
-
   0%,
   100% {
     transform: scaleY(0.25);

@@ -239,7 +239,7 @@ describe('/api/v1/speech', () => {
         model: 'gpro',
         input: 'x'.repeat(497),
         style: 'aa',
-        voice: 'poe',
+        voice: 'kore',
       }),
     });
 
@@ -349,7 +349,7 @@ describe('/api/v1/speech', () => {
       body: JSON.stringify({
         model: 'gpro',
         input: 'Hello world',
-        voice: 'poe',
+        voice: 'kore',
         seed: 1234,
       }),
     });

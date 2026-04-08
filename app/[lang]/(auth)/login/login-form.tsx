@@ -22,6 +22,7 @@ export function LoginForm({
   lang: Locale;
 }) {
   const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect_to');
   const [lastUsedAuth, setLastUsedAuth] = useLocalStorage('lastUsedAuth', '');
   const lastUsedAuthFixed = useRef(lastUsedAuth);
 
@@ -31,6 +32,10 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+  const nextPath =
+    redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')
+      ? redirectTo
+      : `/${lang}/dashboard/generate`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +54,7 @@ export function LoginForm({
     }
     setLastUsedAuth('email');
 
-    router.push(`/${lang}/dashboard/generate`);
+    router.push(nextPath);
     router.refresh();
   };
 
@@ -57,8 +62,7 @@ export function LoginForm({
     setIsLoading(true);
     setError(null);
 
-    const redirectTo = encodeURIComponent(`/${lang}/dashboard`);
-    const callbackUrl = `${window.location.origin}/auth/callback?redirect_to=${redirectTo}`;
+    const callbackUrl = `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
