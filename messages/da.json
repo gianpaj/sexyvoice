@@ -272,11 +272,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -553,7 +549,10 @@
       "description": "Klon en stemme på ét sprog og få den til at tale flydende på et af de andre 23 understøttede sprog, mens talerens unikke karakteristika bevares.",
       "example": "Eksempel: Upload en engelsktalende persons stemmeprøve → Generer fransk tale med deres stemme"
     },
-    "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål."
+    "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål.",
+    "referenceAudioEnhancementLabel": "Forbedring af referenceaudio",
+    "referenceAudioEnhancementHelp": "Støjreducer og rens referenceklippet valgfrit før kloning. Bedst til støjende eller ujævne optagelser.",
+    "errorEnhancingReferenceAudio": "Referenceaudio kunne ikke forbedres. Prøv igen, eller slå forbedring af referenceaudio fra."
   },
   "profile": {
     "title": "Profilindstillinger",

@@ -6,6 +6,7 @@ import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,
+  mockFalSubscribe,
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
@@ -88,11 +89,13 @@ const createFormDataWithAudio = (
   text: string,
   audioFile: File = createMockAudioFile(),
   locale = 'en',
+  enhanceReferenceAudio = false,
 ) => {
   const formData = new FormData();
   formData.append('text', text);
   formData.append('file', audioFile);
   formData.append('locale', locale);
+  formData.append('enhanceReferenceAudio', String(enhanceReferenceAudio));
   return formData;
 };
 
@@ -826,6 +829,53 @@ describe('Clone Voice API Route', () => {
       expect(json.creditsRemaining).toBeDefined();
     });
 
+    it('should optionally enhance reference audio before cloning with Mistral', async () => {
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1.wav'),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      await flushPromises();
+
+      expect(response.status).toBe(200);
+      expect(mockFalSubscribe).toHaveBeenCalledWith(
+        'fal-ai/deepfilternet3',
+        expect.objectContaining({
+          input: expect.objectContaining({
+            audio_format: 'wav',
+            audio_url: expect.any(File),
+          }),
+        }),
+      );
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
+      expect(queries.saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usage: expect.objectContaining({
+            referenceAudioEnhanced: true,
+            referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
+            referenceAudioEnhancementRequestId: 'test-fal-request-id',
+          }),
+        }),
+      );
+      expect(queries.insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            referenceAudioEnhanced: true,
+            referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
+            referenceAudioEnhancementRequestId: 'test-fal-request-id',
+          }),
+        }),
+      );
+    });
+
     it('should successfully clone voice using Mistral Voxtral for supported multilingual locales', async () => {
       const formData = createFormDataWithAudio(
         'Bonjour',
@@ -848,6 +898,40 @@ describe('Clone Voice API Route', () => {
 
       // Supported Voxtral locales should not use the Replicate fallback path
       expect(mockReplicateRun).not.toHaveBeenCalled();
+    });
+
+    it('should optionally enhance reference audio before cloning with Replicate fallback locales', async () => {
+      const formData = createFormDataWithAudio(
+        'こんにちは',
+        createMockAudioFile('audio1.wav'),
+        'ja',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(mockFalSubscribe).toHaveBeenCalledTimes(1);
+      expect(mockReplicateRun).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          input: expect.objectContaining({
+            reference_audio: 'https://fal-cdn.com/test-enhanced-audio.wav',
+          }),
+        },
+        expect.any(Function),
+      );
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
+      expect(mockUploadFileToR2).toHaveBeenCalledWith(
+        expect.stringContaining('cloned-audio-free/'),
+        expect.anything(),
+        'audio/wav',
+      );
     });
 
     it('should save audio file with correct metadata', async () => {
@@ -875,6 +959,9 @@ describe('Clone Voice API Route', () => {
         credits_used: expect.any(Number),
         usage: {
           locale: 'en',
+          referenceAudioEnhanced: false,
+          referenceAudioEnhancementModel: null,
+          referenceAudioEnhancementRequestId: null,
           userHasPaid: false,
           referenceAudioFileMimeType: 'audio/wav',
         },
@@ -896,6 +983,9 @@ describe('Clone Voice API Route', () => {
             textPreview: 'Hello world',
             textLength: 11,
             audioDuration: 12,
+            referenceAudioEnhanced: false,
+            referenceAudioEnhancementModel: null,
+            referenceAudioEnhancementRequestId: null,
             referenceAudioFileMimeType: 'audio/wav',
             requestId: expect.any(String),
             userHasPaid: false,
@@ -1066,6 +1156,41 @@ describe('Clone Voice API Route', () => {
       );
       expect(calls[0]).not.toBe(calls[1]);
     });
+
+    it('should use a different cache key when reference audio enhancement is enabled', async () => {
+      const formData1 = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio-1.wav'),
+        'en',
+        false,
+      );
+      const formData2 = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio-1.wav'),
+        'en',
+        true,
+      );
+
+      const request1 = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData1,
+      });
+
+      const request2 = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData2,
+      });
+
+      await POST(request1);
+      await POST(request2);
+
+      const calls = mockRedisGet.mock.calls
+        .map((call) => call[0])
+        .filter((key) => key.startsWith('cloned-audio-free/'));
+
+      expect(calls).toHaveLength(2);
+      expect(calls[0]).not.toBe(calls[1]);
+    });
   });
 
   describe('Error Handling', () => {
@@ -1158,6 +1283,31 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBeDefined();
+    });
+
+    it('should return 502 when reference audio enhancement fails', async () => {
+      mockFalSubscribe.mockRejectedValueOnce(new Error('enhancer unavailable'));
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(502);
+      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
+      expect(json.serverMessage).toBe('Failed to enhance reference audio.');
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
   });
 
