@@ -63,7 +63,7 @@ export function AudioGenerator({
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [audioURL, setAudioURL] = useState('');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
@@ -452,7 +452,7 @@ export function AudioGenerator({
           )}
           <div className="flex grow-0 gap-2">
             <GenerateButton
-              className="h-10 w-full disabled:bg-primary/60 disabled:opacity-100 sm:w-fit"
+              className="h-10 w-full sm:w-fit"
               ctaText={dict.ctaButton}
               data-testid="generate-button"
               disabled={

@@ -5,6 +5,9 @@
     "source.fixAll.biome": true,
     "source.organizeImports.biome": true
   },
+  "file_scan_exclusions": [
+    ".agents/"
+  ],
   "format_on_save": "on",
   "languages": {
     "JavaScript": {

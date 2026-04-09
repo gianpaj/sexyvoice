@@ -28,7 +28,6 @@ export function GenerateButton({
     <Button
       {...rest}
       className={cn('disabled:bg-primary/60 disabled:opacity-100', className)}
-      data-testid="generate-button"
       disabled={disabled}
     >
       {isGenerating ? (
@@ -39,7 +38,6 @@ export function GenerateButton({
           >
             {generatingText}
           </TextShimmer>
-          {/*<PulsatingDots />*/}
         </span>
       ) : (
         <span className="flex items-center gap-2">

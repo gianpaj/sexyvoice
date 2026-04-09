@@ -32,10 +32,6 @@ vi.mock('@/components/audio-player-with-context', () => ({
   AudioPlayerWithContext: () => null,
 }));
 
-vi.mock('@/components/PulsatingDots', () => ({
-  default: () => <span data-testid="pulsating-dots" />,
-}));
-
 vi.mock('@/lib/ai', () => ({
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
     if (model === 'gpro') {
