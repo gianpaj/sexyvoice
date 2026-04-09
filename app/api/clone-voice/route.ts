@@ -14,6 +14,7 @@ import {
 } from '@/lib/audio-converter';
 import {
   type CloneProvider,
+  getCloneCharactersLimit,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import PostHogClient from '@/lib/posthog';
@@ -46,8 +47,6 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
-const MAX_LENGTH_EN = 500;
-const MAX_LENGTH_MULTILANGUAGE = 300;
 const FALLBACK_MIN_DURATION = 10;
 const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
 const VOXTRAL_MIN_DURATION = 3;
@@ -270,14 +269,17 @@ async function parseFormData(request: Request): Promise<FormInput> {
   return { text, file: audioFile, locale: localeStr };
 }
 
-function validateTextLength(text: string, locale: string): void {
-  const maxLength = locale === 'en' ? MAX_LENGTH_EN : MAX_LENGTH_MULTILANGUAGE;
+function validateTextLength(
+  text: string,
+  locale: string,
+  isPaidUser: boolean,
+): void {
+  const maxLength = getCloneCharactersLimit(locale, isPaidUser);
 
   if (text.length > maxLength) {
-    const errorMessage =
-      locale === 'en'
-        ? 'Text exceeds the maximum length of 500 characters'
-        : `Text exceeds the maximum length of ${MAX_LENGTH_MULTILANGUAGE} characters for multilingual voice cloning`;
+    const errorMessage = VOXTRAL_SUPPORTED_LOCALE_CODES.has(locale)
+      ? `Text exceeds the maximum length of ${maxLength} characters for Voxtral voice cloning`
+      : `Text exceeds the maximum length of ${maxLength} characters for multilingual voice cloning`;
     throw createRouteError(errorMessage, 400);
   }
 }
@@ -317,14 +319,11 @@ function validateAudioDuration(
 
   const constraints = getCloneProviderConstraints(provider);
 
-  if (
-    duration < constraints.minDurationSeconds ||
-    duration > constraints.maxDurationSeconds
-  ) {
+  if (duration < constraints.minDurationSeconds) {
     const errorMessage =
       provider === 'mistral'
-        ? `Reference audio must be between ${constraints.minDurationSeconds} and ${constraints.maxDurationSeconds} seconds for voice cloning.`
-        : `Audio must be between ${constraints.minDurationSeconds} seconds and ${constraints.maxDurationSeconds / 60} minutes.`;
+        ? `Reference audio must be at least ${constraints.minDurationSeconds} seconds for voice cloning.`
+        : `Audio must be at least ${constraints.minDurationSeconds} seconds.`;
 
     throw createRouteError(
       errorMessage,
@@ -334,6 +333,85 @@ function validateAudioDuration(
         : 'clone_audio_duration_invalid_fallback',
     );
   }
+}
+
+/**
+ * Trim a WAV buffer to a maximum duration.
+ * Walks the RIFF chunk list to locate the 'data' chunk, so it handles
+ * non-canonical WAVs that contain extra chunks (LIST, fact, JUNK, etc.)
+ * between the 'fmt ' and 'data' chunks.
+ * Returns the original buffer unchanged if it cannot be parsed or trimming
+ * is not needed.
+ */
+function trimWavAudio(wavBuffer: Buffer, maxDurationSeconds: number): Buffer {
+  if (wavBuffer.length < 12) return wavBuffer;
+  if (wavBuffer.toString('ascii', 0, 4) !== 'RIFF') return wavBuffer;
+  if (wavBuffer.toString('ascii', 8, 12) !== 'WAVE') return wavBuffer;
+
+  let sampleRate = 0;
+  let numChannels = 0;
+  let bitsPerSample = 0;
+  let dataOffset = -1;
+  let dataSize = 0;
+
+  // Walk RIFF sub-chunks starting after the 12-byte RIFF/WAVE header
+  let offset = 12;
+  while (offset + 8 <= wavBuffer.length) {
+    const chunkId = wavBuffer.toString('ascii', offset, offset + 4);
+    const chunkSize = wavBuffer.readUInt32LE(offset + 4);
+
+    if (
+      chunkId === 'fmt ' &&
+      chunkSize >= 16 &&
+      offset + 8 + chunkSize <= wavBuffer.length
+    ) {
+      numChannels = wavBuffer.readUInt16LE(offset + 10);
+      sampleRate = wavBuffer.readUInt32LE(offset + 12);
+      bitsPerSample = wavBuffer.readUInt16LE(offset + 22);
+    } else if (chunkId === 'data') {
+      dataOffset = offset + 8;
+      dataSize = chunkSize;
+      break;
+    }
+
+    // Advance; RIFF chunks are padded to even byte boundaries
+    offset += 8 + chunkSize + (chunkSize % 2 === 0 ? 0 : 1);
+  }
+
+  if (
+    dataOffset === -1 ||
+    sampleRate <= 0 ||
+    numChannels <= 0 ||
+    bitsPerSample <= 0
+  ) {
+    return wavBuffer;
+  }
+
+  // Guard against a dataSize that exceeds the actual buffer contents
+  const safeDataSize = Math.min(dataSize, wavBuffer.length - dataOffset);
+
+  const blockAlign = numChannels * (bitsPerSample / 8);
+  const bytesPerSecond = sampleRate * blockAlign;
+  const maxAudioBytes =
+    Math.floor((maxDurationSeconds * bytesPerSecond) / blockAlign) * blockAlign;
+
+  if (safeDataSize <= maxAudioBytes) return wavBuffer;
+
+  const newDataSize = maxAudioBytes;
+
+  // Preserve every byte up to (and including) the data chunk header, then
+  // append only the trimmed samples.  This keeps any extra chunks intact.
+  const newBuffer = Buffer.alloc(dataOffset + newDataSize);
+
+  wavBuffer.copy(newBuffer, 0, 0, dataOffset);
+
+  // Patch RIFF chunk size (offset 4) and data chunk size (4 bytes before dataOffset)
+  newBuffer.writeUInt32LE(newBuffer.length - 8, 4);
+  newBuffer.writeUInt32LE(newDataSize, dataOffset - 4);
+
+  wavBuffer.copy(newBuffer, dataOffset, dataOffset, dataOffset + newDataSize);
+
+  return newBuffer;
 }
 
 function validateLocale(locale: string): void {
@@ -471,13 +549,50 @@ async function processAudioFile(
   }
 
   const duration = await getAudioDuration(processedBuffer, processedMimeType);
+
+  // Auto-trim audio to the provider's maximum duration instead of rejecting it.
+  const constraints = getCloneProviderConstraints(provider);
+  if (duration !== null && duration > constraints.maxDurationSeconds) {
+    if (processedMimeType === 'audio/wav') {
+      processedBuffer = trimWavAudio(
+        processedBuffer,
+        constraints.maxDurationSeconds,
+      ) as Buffer<ArrayBuffer>;
+    } else if (isConversionSupported(processedMimeType)) {
+      // For non-WAV formats we can decode (MP3, OGG/Opus/Vorbis), convert to
+      // WAV first so we can trim by sample count.  WebM throws inside
+      // convertToWav on the server — the catch below leaves those files
+      // untrimmed (Replicate's 5-minute window is generous enough in practice).
+      try {
+        const wavBuffer = await convertToWav(
+          processedBuffer,
+          processedMimeType,
+        );
+        if (wavBuffer) {
+          processedBuffer = trimWavAudio(
+            wavBuffer as Buffer<ArrayBuffer>,
+            constraints.maxDurationSeconds,
+          ) as Buffer<ArrayBuffer>;
+          processedMimeType = 'audio/wav';
+        }
+      } catch {
+        // Conversion unsupported or failed — leave the buffer untrimmed.
+      }
+    }
+  }
+
   const audioHash = await generateBufferHash(processedBuffer);
 
   return {
     audioHash,
     buffer: processedBuffer,
     mimeType: processedMimeType,
-    duration,
+    // Preserve null so validateAudioDuration can catch unknown-duration uploads.
+    // When trimmed, cap at maxDurationSeconds since we know the file was shortened.
+    duration:
+      duration === null
+        ? null
+        : Math.min(duration, constraints.maxDurationSeconds),
   };
 }
 
@@ -757,7 +872,9 @@ export async function POST(request: Request) {
     referenceAudioFile = formInput.file;
 
     // Validate inputs
-    validateTextLength(text, locale);
+    const userHasPaid = await hasUserPaid(user.id);
+
+    validateTextLength(text, locale, userHasPaid);
     validateFileType(referenceAudioFile);
     validateFileSize(referenceAudioFile);
     validateLocale(locale);
@@ -784,7 +901,6 @@ export async function POST(request: Request) {
     const hash = await generateHash(
       `${locale}-${provider}-${text}-${processedAudio.audioHash}`,
     );
-    const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
     const path = `${basePath}/${locale}-${provider}-${hash}`;
     const filename = `${path}.wav`;

@@ -2,6 +2,7 @@ import { getMessages } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
 
@@ -19,21 +20,26 @@ export default async function NewVoicePage(props: {
     return <div>Not logged in</div>;
   }
 
-  const [{ data: creditsData }, { data: creditTransactions }, messages] =
-    await Promise.all([
-      supabase
-        .from('credits')
-        .select('amount')
-        .eq('user_id', user.id)
-        .single()
-        .then((res) => res ?? { data: { amount: 0 } }),
-      supabase
-        .from('credit_transactions')
-        .select('amount')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
-      getMessages({ locale: lang }),
-    ]);
+  const [
+    { data: creditsData },
+    { data: creditTransactions },
+    isPaidUser,
+    messages,
+  ] = await Promise.all([
+    supabase
+      .from('credits')
+      .select('amount')
+      .eq('user_id', user.id)
+      .single()
+      .then((res) => res ?? { data: { amount: 0 } }),
+    supabase
+      .from('credit_transactions')
+      .select('amount')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    hasUserPaid(user.id),
+    getMessages({ locale: lang }),
+  ]);
 
   const dict = messages as IntlMessages;
   const credits = creditsData || { amount: 0 };
@@ -51,6 +57,7 @@ export default async function NewVoicePage(props: {
       <NewVoiceClient
         dict={dict.clone}
         hasEnoughCredits={credits.amount >= 10}
+        isPaidUser={isPaidUser}
         lang={lang}
       />
     </div>
