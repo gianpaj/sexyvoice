@@ -106,6 +106,7 @@
     "lodash.throttle": "^4.1.1",
     "lucide-react": "^0.523.0",
     "mdx-bundler": "^10.1.1",
+    "motion": "^12.38.0",
     "mpg123-decoder": "^1.0.3",
     "music-metadata": "11.12.3",
     "nanoid": "5.1.7",

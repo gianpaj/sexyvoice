@@ -37,7 +37,7 @@ const GrokTTSEditor = dynamic(
   { ssr: false },
 );
 
-import PulsatingDots from './PulsatingDots';
+import { GenerateButton } from './generate-button';
 import { Alert, AlertDescription } from './ui/alert';
 import {
   Tooltip,
@@ -63,9 +63,8 @@ export function AudioGenerator({
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(true);
   const [audioURL, setAudioURL] = useState('');
-  const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
@@ -104,13 +103,6 @@ export function AudioGenerator({
   }, [isGeminiVoice, showEnhanceButton]);
 
   const textIsOverLimit = text.length > charactersLimit;
-
-  useEffect(() => {
-    const isMac =
-      navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
-      navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
-    setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
-  }, []);
 
   const requestBody = useMemo(
     () => ({
@@ -459,8 +451,9 @@ export function AudioGenerator({
             </Alert>
           )}
           <div className="flex grow-0 gap-2">
-            <Button
-              className="h-10 w-full sm:w-fit"
+            <GenerateButton
+              className="h-10 w-full disabled:bg-primary/60 disabled:opacity-100 sm:w-fit"
+              ctaText={dict.ctaButton}
               data-testid="generate-button"
               disabled={
                 isGenerating ||
@@ -469,23 +462,11 @@ export function AudioGenerator({
                 !hasEnoughCredits ||
                 textIsOverLimit
               }
+              generatingText={`${dict.generating}...`}
+              isGenerating={isGenerating}
               onClick={handleGenerate}
               size="lg"
-            >
-              {isGenerating ? (
-                <span className="flex items-center">
-                  {dict.generating}
-                  <PulsatingDots />
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  {dict.ctaButton}
-                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
-                    {shortcutKey}
-                  </span>
-                </span>
-              )}
-            </Button>
+            />
             {isGenerating && (
               <Button
                 aria-label={dict.cancel}
