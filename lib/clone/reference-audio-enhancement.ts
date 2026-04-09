@@ -3,6 +3,7 @@ import { fal } from '@fal-ai/client';
 const REFERENCE_AUDIO_ENHANCEMENT_MODEL =
   'fal-ai/deepfilternet3' as `${string}/${string}`;
 const REFERENCE_AUDIO_ENHANCEMENT_TIMEOUT_MS = 60_000;
+const MAX_ENHANCED_AUDIO_BYTES = 50 * 1024 * 1024;
 
 interface FalEnhancedAudioResponse {
   audio_file?: {
@@ -77,19 +78,38 @@ export async function enhanceReferenceAudio({
     );
   }
 
-  const enhancedAudioArrayBuffer = await enhancedAudioResponse.arrayBuffer();
-  const enhancedAudioBuffer = Buffer.from(enhancedAudioArrayBuffer);
-
-  if (enhancedAudioBuffer.length === 0) {
-    throw new Error('Reference audio enhancement returned empty audio data');
-  }
-
   const responseMimeType =
     enhancedAudioResponse.headers.get('content-type') ||
     falData.audio_file?.content_type ||
     'audio/wav';
   const normalizedMimeType =
     responseMimeType.split(';')[0]?.trim().toLowerCase() || 'audio/wav';
+
+  if (!normalizedMimeType.startsWith('audio/')) {
+    throw new Error(
+      `Reference audio enhancement returned unsupported content type: ${normalizedMimeType}`,
+    );
+  }
+
+  const contentLength = enhancedAudioResponse.headers.get('content-length');
+  if (
+    contentLength &&
+    Number.isFinite(Number(contentLength)) &&
+    Number(contentLength) > MAX_ENHANCED_AUDIO_BYTES
+  ) {
+    throw new Error('Reference audio enhancement audio exceeds size limit');
+  }
+
+  const enhancedAudioArrayBuffer = await enhancedAudioResponse.arrayBuffer();
+  const enhancedAudioBuffer = Buffer.from(enhancedAudioArrayBuffer);
+
+  if (enhancedAudioBuffer.length > MAX_ENHANCED_AUDIO_BYTES) {
+    throw new Error('Reference audio enhancement audio exceeds size limit');
+  }
+
+  if (enhancedAudioBuffer.length === 0) {
+    throw new Error('Reference audio enhancement returned empty audio data');
+  }
 
   return {
     buffer: enhancedAudioBuffer,

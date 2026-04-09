@@ -1345,6 +1345,71 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
+
+    it('should return 502 when enhanced audio download exceeds the size limit', async () => {
+      server.use(
+        http.get('https://fal-cdn.com/test-enhanced-audio.wav', () =>
+          HttpResponse.arrayBuffer(new ArrayBuffer(1024), {
+            headers: {
+              'Content-Length': String(51 * 1024 * 1024),
+              'Content-Type': 'audio/wav',
+            },
+          }),
+        ),
+      );
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(502);
+      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+    });
+
+    it('should return 502 when enhanced audio download is not an audio content type', async () => {
+      server.use(
+        http.get('https://fal-cdn.com/test-enhanced-audio.wav', () =>
+          HttpResponse.text('not audio', {
+            headers: {
+              'Content-Type': 'text/plain',
+            },
+          }),
+        ),
+      );
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(502);
+      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+    });
   });
 
   describe('Analytics Integration', () => {
