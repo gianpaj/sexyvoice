@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneMain } from '@/components/audio/microphone-main';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
+import { GenerateButton } from '@/components/generate-button';
 import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
 import { Accordion } from '@/components/ui/accordion';
@@ -154,7 +155,6 @@ function NewVoiceClientInner({
   const [activeTab, setActiveTab] = useState('upload');
   const [errorMessage, setErrorMessage] = useState('');
   const [text, setText] = useState('');
-  const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
   const [selectedLocale, setSelectedLocale] = useState({
     code: 'en',
     value: 'english',
@@ -310,14 +310,6 @@ function NewVoiceClientInner({
   });
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
-
-  useEffect(() => {
-    // Check if running on Mac for keyboard shortcut display
-    const isMac =
-      navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
-      navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
-    setShortcutKey(isMac ? '⌘+Enter' : 'Ctrl+Enter');
-  }, []);
 
   // Clear custom error message when file upload errors change
   useEffect(() => {
@@ -816,8 +808,9 @@ function NewVoiceClientInner({
               </Label>
             </div>
 
-            <Button
+            <GenerateButton
               className="w-full"
+              ctaText={dict.ctaButton}
               disabled={
                 !((file || micBlob) && text.trim()) ||
                 status === 'generating' ||
@@ -826,32 +819,15 @@ function NewVoiceClientInner({
                 textIsOverLimit ||
                 !legalConsentChecked
               }
+              generatingText={
+                status === 'generating'
+                  ? `${dict.generating}...`
+                  : // TODO: translate
+                    'Converting audio...'
+              }
+              isGenerating={status === 'generating' || convertingMicAudio}
               onClick={handleGenerate}
-            >
-              {convertingMicAudio ? (
-                <span className="flex items-center">
-                  {/* TODO translate */}
-                  Converting audio...
-                  <span className="ml-1 inline-flex">
-                    <PulsatingDots />
-                  </span>
-                </span>
-              ) : status === 'generating' ? (
-                <span className="flex items-center">
-                  {dict.generating}
-                  <span className="ml-1 inline-flex">
-                    <PulsatingDots />
-                  </span>
-                </span>
-              ) : (
-                <>
-                  <span>{dict.ctaButton}</span>
-                  <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
-                    {shortcutKey}
-                  </span>
-                </>
-              )}
-            </Button>
+            />
             {status === 'generating' && (
               <Button
                 className="mx-auto"
