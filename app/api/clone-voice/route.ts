@@ -425,8 +425,7 @@ async function processAudioFile(
 
   const provider = resolveCloneProvider(locale);
   const shouldNormalizeToWav =
-    provider === 'mistral' ||
-    (enhancementEnabled && needsConversion(normalizedMimeType));
+    provider === 'mistral' || enhancementEnabled;
 
   // Convert to WAV for providers that need normalized reference audio
   if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
