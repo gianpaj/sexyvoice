@@ -1,4 +1,3 @@
-import { Trigger as AccordionPrimitiveTrigger } from '@radix-ui/react-accordion';
 import {
   ChevronRightIcon,
   Coins,
@@ -18,7 +17,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { Accordion, AccordionContent, AccordionItem } from './ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from './ui/accordion';
 
 const faqIconMap: Record<string, LucideIcon> = {
   liveCalling: PhoneCall,
@@ -78,7 +82,7 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
               key={group.id}
               value={`item-${group.id}`}
             >
-              <AccordionPrimitiveTrigger
+              <AccordionTrigger
                 className="flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:-rotate-45"
                 data-slot="accordion-trigger"
               >
@@ -87,7 +91,7 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
                   <span>{group.category}</span>
                 </span>
                 <PlusIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
-              </AccordionPrimitiveTrigger>
+              </AccordionTrigger>
               <AccordionContent className="pb-0">
                 {group.questions.map((faq, i) => (
                   <Collapsible

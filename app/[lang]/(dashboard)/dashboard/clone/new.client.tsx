@@ -18,13 +18,7 @@ import { toast } from '@/components/services/toast';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
@@ -541,13 +535,7 @@ function NewVoiceClientInner({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{dict.title}</CardTitle>
-        <CardDescription>
-          <p className="mb-4">{dict.subtitle}</p>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
@@ -730,7 +718,7 @@ function NewVoiceClientInner({
                   }
                   value={selectedLocale.code}
                 >
-                  <SelectTrigger id="language">
+                  <SelectTrigger className="w-32" id="language">
                     <SelectValue placeholder={dict.languageSelectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
@@ -741,9 +729,8 @@ function NewVoiceClientInner({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
 
-              {/*{selectedLocale.code !== 'en' && (
+                {/*{selectedLocale.code !== 'en' && (
                 <Card className="border-blue-800">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -762,10 +749,6 @@ function NewVoiceClientInner({
                 </Card>
               )}*/}
 
-              <div className="grid w-full gap-2">
-                <Label htmlFor="text-to-convert">
-                  {dict.textToConvertLabel}
-                </Label>
                 <Textarea
                   disabled={status === 'generating'}
                   id="text-to-convert"

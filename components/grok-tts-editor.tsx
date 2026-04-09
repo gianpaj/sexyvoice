@@ -620,7 +620,7 @@ export function GrokTTSEditor({
           >
             {currentLength} / {maxLength}
             <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
+              <Tooltip delayDuration={100} /*supportMobileTap*/>
                 <TooltipTrigger asChild>
                   <Crown
                     className={cn(

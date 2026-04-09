@@ -1,6 +1,5 @@
-import { ArrowTopRightIcon } from '@radix-ui/react-icons';
 import * as Sentry from '@sentry/nextjs';
-import { Sparkles } from 'lucide-react';
+import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Script from 'next/script';
 import { getMessages } from 'next-intl/server';
@@ -8,8 +7,8 @@ import type Stripe from 'stripe';
 
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import { getCustomerData } from '@/lib/redis/queries';
+import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
   createCustomerSession,
   createOrRetrieveCustomer,
@@ -91,7 +90,7 @@ export default async function CreditsPage(props: {
             {dict.credits.topup.description}
           </p>
         </div>
-        <Button asChild icon={ArrowTopRightIcon} iconPlacement="right">
+        <Button asChild icon={ExternalLink} iconPlacement="right">
           <Link
             href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
             target="_blank"

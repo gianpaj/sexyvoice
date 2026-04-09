@@ -35,7 +35,7 @@ export function CreditHistory({
     <div className="mb-8 rounded-lg border">
       <Table>
         <TableHeader>
-          <TableRow isHead>
+          <TableRow className="[&>th]:px-4 [&>th]:text-muted-foreground">
             {/* TODO: translate */}
             <TableHead>Date</TableHead>
             <TableHead>Description</TableHead>
@@ -45,7 +45,10 @@ export function CreditHistory({
         </TableHeader>
         <TableBody>
           {transactions.map((transaction) => (
-            <TableRow key={transaction.id}>
+            <TableRow
+              className="[&>td]:whitespace-break-spaces [&>td]:p-4"
+              key={transaction.id}
+            >
               <TableCell className="font-medium">
                 {format(new Date(transaction.created_at), 'MMM d, yyyy')}
               </TableCell>

@@ -23,7 +23,7 @@ export function FeatureCard({
   return (
     <Link
       className={cn(
-        'group relative my-2 block w-full cursor-pointer overflow-hidden rounded-2xl border font-normal ring-2 ring-transparent transition-colors border-white/10 bg-card hover:border-primary',
+        'group relative my-2 block w-full cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-card font-normal ring-2 ring-transparent transition-colors hover:border-primary',
         className,
       )}
       href={href}
@@ -32,18 +32,18 @@ export function FeatureCard({
     >
       <div className="relative px-6 py-5">
         {/* Arrow icon — visible on hover */}
-        <ArrowUpRight className="absolute right-5 top-5 h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 text-gray-500" />
+        <ArrowUpRight className="absolute top-5 right-5 h-4 w-4 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100" />
 
         {/* Lucide icon */}
-        <Icon className="h-6 w-6 transition-colors  text-gray-100" />
+        <Icon className="h-6 w-6 text-gray-100 transition-colors" />
 
         {/* Title */}
-        <h3 className="mt-4 text-base font-semibold text-gray-800 text-white">
+        <h3 className="mt-4 font-semibold text-base text-gray-800 text-white">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="mt-1 text-base font-normal leading-6 text-gray-400">
+        <p className="mt-1 font-normal text-base text-gray-400 leading-6">
           {children}
         </p>
       </div>

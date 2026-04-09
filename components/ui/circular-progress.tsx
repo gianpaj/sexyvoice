@@ -72,7 +72,7 @@ export const ProgressCircle = ({
         y={halfSize}
         textAnchor="middle"
         dominantBaseline="central"
-        className="text-[0.4rem] font-medium"
+        className="font-medium text-[0.4rem]"
       >
         {Math.round(normalizedValue)}%
       </text>

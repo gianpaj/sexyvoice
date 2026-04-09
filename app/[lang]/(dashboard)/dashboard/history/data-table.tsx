@@ -31,12 +31,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/messages/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
   getMyAudioFiles,
 } from '@/lib/supabase/queries.client';
+import type langDict from '@/messages/en.json';
 import { createColumns } from './columns';
 
 interface DataTableProps {
@@ -128,11 +128,14 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
           </DropdownMenu>
         </div>
       </div>
-      <div className="rounded-md border">
+      <div className="mb-8 rounded-lg border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                className="[&>th]:px-4 [&>th]:text-muted-foreground"
+                key={headerGroup.id}
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder
@@ -150,6 +153,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
+                  className="[&>td]:whitespace-break-spaces [&>td]:p-4"
                   data-state={row.getIsSelected() && 'selected'}
                   key={row.id}
                 >

@@ -162,7 +162,7 @@ export function VoiceSelector({
         <CardTitle className="flex flex-row">
           {dict.voiceSelector.title}
           <TooltipProvider>
-            <Tooltip delayDuration={100} supportMobileTap>
+            <Tooltip delayDuration={100} /*supportMobileTap*/>
               <TooltipTrigger asChild>
                 <Button
                   className="h-auto w-auto self-end pb-[2px]"
@@ -243,7 +243,7 @@ export function VoiceSelector({
                 </p>
                 {getEmotionTags(selectedVoice.language) && (
                   <TooltipProvider>
-                    <Tooltip delayDuration={100} supportMobileTap>
+                    <Tooltip delayDuration={100} /*supportMobileTap*/>
                       <TooltipTrigger asChild>
                         <Button
                           className="h-auto w-auto p-1"

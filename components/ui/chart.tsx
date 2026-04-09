@@ -62,7 +62,7 @@ export const ChartContainer = React.forwardRef<
     <ChartContext.Provider value={{ config }}>
       <div
         className={cn(
-          'flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke="#ccc"]]:stroke-border/50 [&_.recharts-tooltip-cursor]:stroke-border [&_.recharts-reference-line_[stroke="#ccc"]]:stroke-border [&_.recharts-sector[stroke="#fff"]]:stroke-transparent [&_.recharts-surface]:outline-hidden',
+          'flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke="#ccc"]]:stroke-border/50 [&_.recharts-reference-line_[stroke="#ccc"]]:stroke-border [&_.recharts-sector[stroke="#fff"]]:stroke-transparent [&_.recharts-surface]:outline-hidden [&_.recharts-tooltip-cursor]:stroke-border',
           className,
         )}
         data-chart={safeId}
@@ -90,7 +90,7 @@ export function ChartTooltipContent({
 }) {
   const { config } = useChart();
 
-  if (!active || !payload?.length) {
+  if (!(active && payload?.length)) {
     return null;
   }
 
@@ -107,7 +107,7 @@ export function ChartTooltipContent({
         return (
           <div className="flex items-center justify-between gap-2" key={key}>
             <span className="text-muted-foreground">{label}</span>
-            <span className="font-mono font-medium">{item.value}</span>
+            <span className="font-medium font-mono">{item.value}</span>
           </div>
         );
       })}

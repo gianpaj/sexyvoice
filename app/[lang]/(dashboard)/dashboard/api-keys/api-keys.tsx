@@ -151,7 +151,7 @@ export function ApiKeys({
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <div>
+          <div className="flex flex-col gap-2">
             <CardTitle>{dict.title}</CardTitle>
             <CardDescription>{dict.description}</CardDescription>
           </div>
@@ -220,7 +220,7 @@ export function ApiKeys({
 
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="[&>th]:px-4 [&>th]:text-muted-foreground">
                 <TableHead>{dict.table.name}</TableHead>
                 <TableHead>{dict.table.prefix}</TableHead>
                 <TableHead>{dict.table.created}</TableHead>
@@ -240,7 +240,7 @@ export function ApiKeys({
                 </TableRow>
               ) : (
                 apiKeys.map((key) => (
-                  <TableRow key={key.id}>
+                  <TableRow className="[&>td]:p-4" key={key.id}>
                     <TableCell>{key.name}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-2">

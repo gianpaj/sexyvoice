@@ -76,7 +76,7 @@ const PremiumActionButton = React.forwardRef<
     // Wrap with a tooltip for free users so they know why it's disabled
       return (
         <TooltipProvider>
-          <Tooltip delayDuration={200} supportMobileTap>
+          <Tooltip delayDuration={200} /*supportMobileTap*/>
             <TooltipTrigger asChild>
               {/* Wrap in a span so the tooltip still triggers on a disabled button */}
               <span className="inline-flex" tabIndex={0}>

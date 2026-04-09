@@ -1,3 +1,4 @@
+import { Mic2 } from 'lucide-react';
 import { getMessages } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
@@ -19,7 +20,7 @@ export default async function NewVoicePage(props: {
     return <div>Not logged in</div>;
   }
 
-  const [{ data: creditsData }, { data: creditTransactions }, messages] =
+  const [{ data: creditsData }, { data: creditTransactions }, dict] =
     await Promise.all([
       supabase
         .from('credits')
@@ -35,11 +36,16 @@ export default async function NewVoicePage(props: {
       getMessages({ locale: lang }),
     ]);
 
-  const dict = messages as IntlMessages;
   const credits = creditsData || { amount: 0 };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div>
+        <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
+          <Mic2 size={26} /> {dict.clone.title}
+        </h2>
+        <p className="text-muted-foreground">{dict.clone.subtitle}</p>
+      </div>
       <div className="mb-6 lg:hidden">
         <CreditsSection
           creditTransactions={creditTransactions}
