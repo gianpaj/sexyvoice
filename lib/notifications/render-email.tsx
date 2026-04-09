@@ -128,7 +128,9 @@ function NotificationEmailLayout({
   );
 }
 
-export function renderNotificationEmail<TTemplateKey extends EmailTemplateKey>(params: {
+export function renderNotificationEmail<
+  TTemplateKey extends EmailTemplateKey,
+>(params: {
   locale: Locale | null | undefined;
   payload: EmailTemplatePayload<TTemplateKey>;
   templateKey: TTemplateKey;
@@ -186,7 +188,8 @@ export function renderNotificationEmail<TTemplateKey extends EmailTemplateKey>(p
                   been added to your account.
                 </Text>
                 <Text style={{ fontSize: '14px', margin: 0 }}>
-                  Charged amount: <strong>${payload.dollarAmount.toFixed(2)}</strong>
+                  Charged amount:{' '}
+                  <strong>${payload.dollarAmount.toFixed(2)}</strong>
                 </Text>
               </>
             }
@@ -215,11 +218,14 @@ export function renderNotificationEmail<TTemplateKey extends EmailTemplateKey>(p
                 </Text>
                 <Text style={{ fontSize: '14px', margin: '0 0 12px' }}>
                   You have received{' '}
-                  <strong>{formatCredits(payload.credits)} monthly credits</strong>
+                  <strong>
+                    {formatCredits(payload.credits)} monthly credits
+                  </strong>
                   .
                 </Text>
                 <Text style={{ fontSize: '14px', margin: 0 }}>
-                  Charged amount: <strong>${payload.dollarAmount.toFixed(2)}</strong>
+                  Charged amount:{' '}
+                  <strong>${payload.dollarAmount.toFixed(2)}</strong>
                 </Text>
               </>
             }

@@ -33,7 +33,10 @@ export const resolveOptionalEmailNotificationPreferences = (
   const resolved = getDefaultOptionalEmailNotificationPreferences();
 
   for (const row of rows) {
-    if (row.channel !== 'email' || !isOptionalEmailPreferenceKey(row.preference_key)) {
+    if (
+      row.channel !== 'email' ||
+      !isOptionalEmailPreferenceKey(row.preference_key)
+    ) {
       continue;
     }
 

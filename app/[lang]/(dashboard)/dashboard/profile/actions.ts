@@ -2,9 +2,7 @@
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { i18n } from '@/lib/i18n/i18n-config';
-import {
-  upsertNotificationEmailPreferences,
-} from '@/lib/supabase/queries';
+import { upsertNotificationEmailPreferences } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function updateProfilePreferencesAction(params: {

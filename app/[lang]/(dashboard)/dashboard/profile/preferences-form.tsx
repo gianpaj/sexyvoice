@@ -74,7 +74,9 @@ export function PreferencesForm({
       <div className="space-y-3">
         <div className="space-y-1">
           <Label htmlFor="profile-locale">{dict.localeLabel}</Label>
-          <p className="text-muted-foreground text-sm">{dict.localeDescription}</p>
+          <p className="text-muted-foreground text-sm">
+            {dict.localeDescription}
+          </p>
         </div>
         <Select
           onValueChange={(value) => setSelectedLocale(value as Locale)}

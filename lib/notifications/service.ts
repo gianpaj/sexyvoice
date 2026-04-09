@@ -1,8 +1,6 @@
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { sendNotificationEmail } from '@/lib/notifications/email';
-import {
-  resolveOptionalEmailNotificationPreferences,
-} from '@/lib/notifications/preferences';
+import { resolveOptionalEmailNotificationPreferences } from '@/lib/notifications/preferences';
 import { renderNotificationEmail } from '@/lib/notifications/render-email';
 import type {
   EmailTemplateKey,
@@ -147,7 +145,8 @@ export async function syncNotificationDeliveryFromResendEvent(params: {
     id?: string;
   };
 }) {
-  const providerMessageId = params.payload.email_id ?? params.payload.id ?? null;
+  const providerMessageId =
+    params.payload.email_id ?? params.payload.id ?? null;
   const status = mapResendWebhookEventToDeliveryStatus(params.eventName);
 
   if (!(providerMessageId && status)) {
@@ -158,7 +157,6 @@ export async function syncNotificationDeliveryFromResendEvent(params: {
     provider: 'resend',
     providerMessageId,
     status,
-    lastProviderEventAt:
-      params.payload.created_at ?? new Date().toISOString(),
+    lastProviderEventAt: params.payload.created_at ?? new Date().toISOString(),
   });
 }
