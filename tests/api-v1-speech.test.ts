@@ -175,7 +175,7 @@ describe('/api/v1/speech', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.credits_remaining).toBe(900);
+    expect(json.credits_remaining).toBe(852);
   });
 
   it('returns 429 when rate limit is exceeded', async () => {

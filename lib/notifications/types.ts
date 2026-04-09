@@ -6,8 +6,7 @@ export const APP_NOTIFICATION_EVENT_NAMES = {
   billingSubscriptionStarted: 'app/billing.subscription.started',
   billingSubscriptionCanceled: 'app/billing.subscription.canceled',
   generationSucceeded: 'app/generation.succeeded',
-  creditAllowanceThresholdReached:
-    'app/credits.allowance-threshold.reached',
+  creditAllowanceThresholdReached: 'app/credits.allowance-threshold.reached',
 } as const;
 
 export const RESEND_WEBHOOK_EVENT_NAMES = {
@@ -98,8 +97,8 @@ export interface GenerationSucceededEventData {
 
 export interface CreditAllowanceThresholdReachedEventData {
   allowanceAmount: number;
-  creditTransactionId: string;
   creditsRemaining: number;
+  creditTransactionId: string;
   thresholdPercent: CreditAllowanceThresholdPercent;
   userId: string;
 }
@@ -111,14 +110,14 @@ export interface ResendWebhookEventData {
   to?: string[];
 }
 
-export type EmailTemplatePayloadMap = {
+export interface EmailTemplatePayloadMap {
   [EMAIL_TEMPLATE_KEYS.registrationSuccess]: UserRegistrationCompletedEventData;
   [EMAIL_TEMPLATE_KEYS.topupSuccess]: BillingTopupSucceededEventData;
   [EMAIL_TEMPLATE_KEYS.subscriptionStarted]: BillingSubscriptionStartedEventData;
   [EMAIL_TEMPLATE_KEYS.subscriptionCanceled]: BillingSubscriptionCanceledEventData;
   [EMAIL_TEMPLATE_KEYS.firstGeneration]: GenerationSucceededEventData;
   [EMAIL_TEMPLATE_KEYS.creditAllowanceThreshold]: CreditAllowanceThresholdReachedEventData;
-};
+}
 
 export type EmailTemplatePayload<
   TTemplateKey extends EmailTemplateKey = EmailTemplateKey,

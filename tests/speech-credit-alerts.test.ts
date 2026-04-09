@@ -23,10 +23,10 @@ describe('maybeSendSpeechCreditAllowanceAlert', () => {
   });
 
   it('resolves thresholds correctly', () => {
-    expect(resolveThreshold(1000, 200)).toBe(80);
-    expect(resolveThreshold(1000, 50)).toBe(95);
-    expect(resolveThreshold(1000, 0)).toBe(100);
-    expect(resolveThreshold(1000, 500)).toBeNull();
+    expect(resolveThreshold(10_000, 2000)).toBe(80);
+    expect(resolveThreshold(10_000, 500)).toBe(95);
+    expect(resolveThreshold(10_000, 0)).toBe(100);
+    expect(resolveThreshold(10_000, 5000)).toBeNull();
   });
 
   it('uses integer comparisons at exact percentage boundaries', () => {

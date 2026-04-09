@@ -1,11 +1,8 @@
 import { emitCreditAllowanceThresholdReachedEvent } from '@/lib/notifications/events';
-import {
-  buildCreditAllowanceThresholdDedupeKey,
-  type CreditAllowanceThresholdPercent,
-} from '@/lib/notifications/types';
+import type { CreditAllowanceThresholdPercent } from '@/lib/notifications/types';
 import { getLatestCreditAllowanceTransactionAdmin } from '@/lib/supabase/queries';
 
-function resolveThreshold(
+export function resolveThreshold(
   allowanceAmount: number,
   creditsRemaining: number,
 ): CreditAllowanceThresholdPercent | null {
@@ -55,5 +52,3 @@ export async function maybeSendSpeechCreditAllowanceAlert(params: {
     allowanceAmount: latestAllowance.amount,
   });
 }
-
-export { buildCreditAllowanceThresholdDedupeKey, resolveThreshold };

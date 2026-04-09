@@ -7,7 +7,6 @@ import type {
   NotificationDeliveryStatus,
   OptionalEmailPreferenceKey,
 } from '@/lib/notifications/types';
-
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
 import {
@@ -610,26 +609,25 @@ export async function upsertNotificationEmailPreferences(params: {
   userId: string;
 }) {
   const supabase = await createClient();
-  const rows = Object.entries(params.preferences).map(([preferenceKey, enabled]) => ({
-    user_id: params.userId,
-    channel: 'email',
-    preference_key: preferenceKey,
-    enabled,
-  }));
-
-  const { error } = await supabase.from('notification_preferences').upsert(
-    rows,
-    {
-      onConflict: 'user_id,channel,preference_key',
-    },
+  const rows = Object.entries(params.preferences).map(
+    ([preferenceKey, enabled]) => ({
+      user_id: params.userId,
+      channel: 'email',
+      preference_key: preferenceKey,
+      enabled,
+    }),
   );
+
+  const { error } = await supabase
+    .from('notification_preferences')
+    .upsert(rows, {
+      onConflict: 'user_id,channel,preference_key',
+    });
 
   if (error) throw error;
 }
 
-export async function getUserNotificationContextAdmin(
-  userId: string,
-): Promise<{
+export async function getUserNotificationContextAdmin(userId: string): Promise<{
   email: string | null;
   locale: string | null;
   preferences: Awaited<ReturnType<typeof getNotificationPreferenceRowsAdmin>>;
@@ -637,7 +635,11 @@ export async function getUserNotificationContextAdmin(
 }> {
   const admin = createAdminClient();
   const [profileResult, userResult, preferenceRows] = await Promise.all([
-    admin.from('profiles').select('locale, username').eq('id', userId).maybeSingle(),
+    admin
+      .from('profiles')
+      .select('locale, username')
+      .eq('id', userId)
+      .maybeSingle(),
     admin.auth.admin.getUserById(userId),
     getNotificationPreferenceRowsAdmin(userId),
   ]);
