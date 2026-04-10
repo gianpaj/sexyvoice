@@ -2,6 +2,24 @@
 
 Completed releases are documented here in reverse chronological order.
 
+## [2026.4.10] - 2026-04-10
+
+### Added
+
+#### Internal
+
+- Added a `/cli/login` exchange flow so SexyVoice CLI can open a browser,
+  let you choose or rotate an API key, and redeem the new key without
+  manual copy/paste. [#337](https://github.com/gianpaj/sexyvoice/pull/337)
+
+### Changed
+
+#### Internal
+
+- Refreshed the shared Generate button with a shimmer loading state and
+  keyboard shortcut hint across dashboard voice generation and cloning
+  flows. [#340](https://github.com/gianpaj/sexyvoice/pull/340)
+
 ## [2026.4.7] - 2026-04-07
 
 ### Added

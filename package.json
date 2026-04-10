@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "2026.4.7",
+  "version": "2026.4.10",
   "scripts": {
     "dev": "next dev",
     "prebuild": "pnpm run check-translations && pnpm run build:content",
