@@ -153,6 +153,31 @@ describe('/api/v1/speech', () => {
     expect(json.error.code).toBe('insufficient_credits');
   });
 
+  it('returns the post-deduction credit balance on success', async () => {
+    vi.mocked(getCreditsAdmin)
+      .mockResolvedValueOnce(1000)
+      .mockResolvedValueOnce(900);
+
+    const response = await POST(
+      new Request('http://localhost/api/v1/speech', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: TEST_AUTH_HEADER,
+        },
+        body: JSON.stringify({
+          model: 'orpheus',
+          input: 'Hello world',
+          voice: 'tara',
+        }),
+      }),
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.credits_remaining).toBe(852);
+  });
+
   it('returns 429 when rate limit is exceeded', async () => {
     mockRatelimitLimit.mockResolvedValueOnce({
       success: false,

@@ -152,6 +152,8 @@ process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
 process.env.CLI_LOGIN_ENCRYPTION_SECRET =
   'test-cli-login-secret-do-not-use-in-production';
+process.env.RESEND_API_KEY = 'test-resend-api-key';
+process.env.RESEND_FROM_EMAIL = 'alerts@example.com';
 
 // Mock Axiom so tests never attempt a real network flush
 vi.mock('@axiomhq/js', () => ({
@@ -369,8 +371,39 @@ vi.mock('@/lib/supabase/queries', async () => {
     isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
     hasUserPaid: vi.fn().mockResolvedValue(false),
     hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
+    getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
+    getNotificationPreferenceRows: vi.fn().mockResolvedValue([]),
+    getNotificationPreferenceRowsAdmin: vi.fn().mockResolvedValue([]),
+    upsertNotificationEmailPreferences: vi.fn().mockResolvedValue(undefined),
+    getUserNotificationContextAdmin: vi.fn().mockResolvedValue({
+      email: 'test@example.com',
+      locale: 'en',
+      username: 'test-user',
+      preferences: [],
+    }),
+    createNotificationEventAdmin: vi.fn().mockResolvedValue('test-event-id'),
+    createNotificationDeliveryAdmin: vi.fn().mockResolvedValue(
+      'test-delivery-id',
+    ),
+    updateNotificationDeliveryAdmin: vi.fn().mockResolvedValue(undefined),
+    updateNotificationDeliveryByProviderMessageIdAdmin: vi.fn().mockResolvedValue(
+      undefined,
+    ),
   };
 });
+
+export const mockInngestSend = vi.fn().mockResolvedValue({
+  ids: ['evt_test_123'],
+});
+
+vi.mock('@/lib/inngest/client', () => ({
+  inngest: {
+    send: mockInngestSend,
+    createFunction: vi.fn(
+      (_config: unknown, _trigger: unknown, handler: unknown) => handler,
+    ),
+  },
+}));
 
 // Mock Upstash Redis with reconfigurable functions
 const mockRedisGet = vi.fn().mockResolvedValue(null);
@@ -642,14 +675,3 @@ vi.mock('@/lib/posthog', () => ({
     shutdown: vi.fn().mockResolvedValue(undefined),
   })),
 }));
-
-// Mock Inngest client
-const mockInngestSend = vi.fn().mockResolvedValue({ ids: ['test-event-id'] });
-
-vi.mock('@/lib/inngest/client', () => ({
-  inngest: {
-    send: mockInngestSend,
-  },
-}));
-
-export { mockInngestSend };

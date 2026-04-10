@@ -34,6 +34,9 @@ export function SignUpForm({
     setError(null);
 
     try {
+      const signupRedirectPath = encodeURIComponent(`/${lang}/dashboard`);
+      const signupCallbackUrl = `${window.location.origin}/auth/callback?flow=signup&redirect_to=${signupRedirectPath}`;
+
       // Check if email is Gmail with + sign and block it
       // Block email if it's in the ban list
       if (
@@ -51,7 +54,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: signupCallbackUrl,
           // data: {
           //   username,
           // },
@@ -87,13 +90,13 @@ export function SignUpForm({
   const loginWithGoogle = async () => {
     setIsLoading(true);
     setError(null);
-
-    const redirectTo = encodeURIComponent(`/${lang}/dashboard`);
+    const signupRedirectPath = encodeURIComponent(`/${lang}/dashboard`);
+    const signupCallbackUrl = `${window.location.origin}/auth/callback?flow=signup&redirect_to=${signupRedirectPath}`;
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect_to=${redirectTo}`,
+        redirectTo: signupCallbackUrl,
       },
     });
 

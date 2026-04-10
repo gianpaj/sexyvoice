@@ -585,8 +585,57 @@
         "updateFailed": "Passwort konnte nicht aktualisiert werden",
         "currentPasswordIncorrect": "Aktuelles Passwort ist falsch"
       }
+  },
+  "preferences": {
+    "title": "Einstellungen",
+    "description": "Wähle deine Dashboard-Sprache und deine Präferenzen für transaktionale E-Mails.",
+    "localeLabel": "Bevorzugte Sprache",
+    "localeDescription": "Dies aktualisiert die aktuelle Dashboard-URL und legt die Standardsprache für zukünftige Konto-E-Mails fest.",
+    "localePlaceholder": "Sprache auswählen",
+    "optionalEmailsTitle": "Optionale E-Mails",
+    "optionalEmailsDescription": "Du kannst diese E-Mails jederzeit ein- oder ausschalten.",
+    "requiredEmailsTitle": "Immer aktive Konto-E-Mails",
+    "requiredEmailsDescription": "Diese E-Mails bleiben aktiviert, weil sie für Abrechnung und Kontoaktivität wichtig sind.",
+    "save": "Einstellungen speichern",
+    "saving": "Wird gespeichert...",
+    "saveSuccess": "Einstellungen aktualisiert",
+    "saveError": "Einstellungen konnten nicht aktualisiert werden",
+    "localeOptions": {
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "da": "Dansk",
+      "it": "Italiano",
+      "fr": "Français"
     },
-    "dangerZone": {
+    "items": {
+      "welcomeEmail": {
+        "label": "Willkommens-E-Mail",
+        "description": "Wird gesendet, sobald deine Registrierung per E-Mail-Bestätigung oder Google-Sign-up vollständig abgeschlossen ist."
+      },
+      "firstGenerationEmail": {
+        "label": "E-Mail zur ersten Erstellung",
+        "description": "Wird einmal nach deiner ersten erfolgreichen Generierung oder Klonung gesendet."
+      },
+      "topupSuccess": {
+        "label": "Top-up-Bestätigung",
+        "description": "Bestätigt, dass dein Guthaben-Top-up erfolgreich hinzugefügt wurde."
+      },
+      "subscriptionSuccess": {
+        "label": "Abo-Bestätigung",
+        "description": "Bestätigt, dass dein Abo erfolgreich gestartet wurde."
+      },
+      "subscriptionCancellation": {
+        "label": "Abo-Kündigung",
+        "description": "Bestätigt, dass dein Abo gekündigt wurde."
+      },
+      "lowCreditAlert": {
+        "label": "API-Warnungen bei niedrigem Guthaben",
+        "description": "Warnt dich, wenn dein letztes API-Guthaben fast aufgebraucht ist."
+      }
+    }
+  },
+  "dangerZone": {
       "title": "Gefahrenzone",
       "deleteAccount": {
         "button": "Konto löschen",

@@ -399,11 +399,160 @@ declare type Database = {
           },
         ];
       };
+      notification_deliveries: {
+        Row: {
+          channel: string;
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          last_provider_event_at: string | null;
+          metadata: Json;
+          notification_event_id: string;
+          provider: string | null;
+          provider_message_id: string | null;
+          recipient: string | null;
+          sent_at: string | null;
+          status: string;
+          template_key: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          channel: string;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          last_provider_event_at?: string | null;
+          metadata?: Json;
+          notification_event_id: string;
+          provider?: string | null;
+          provider_message_id?: string | null;
+          recipient?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          template_key: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          channel?: string;
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          last_provider_event_at?: string | null;
+          metadata?: Json;
+          notification_event_id?: string;
+          provider?: string | null;
+          provider_message_id?: string | null;
+          recipient?: string | null;
+          sent_at?: string | null;
+          status?: string;
+          template_key?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notification_deliveries_notification_event_id_fkey';
+            columns: ['notification_event_id'];
+            isOneToOne: false;
+            referencedRelation: 'notification_events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'notification_deliveries_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      notification_events: {
+        Row: {
+          created_at: string;
+          dedupe_key: string;
+          event_name: string;
+          id: string;
+          payload: Json;
+          source_id: string | null;
+          source_type: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          dedupe_key: string;
+          event_name: string;
+          id?: string;
+          payload?: Json;
+          source_id?: string | null;
+          source_type: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          dedupe_key?: string;
+          event_name?: string;
+          id?: string;
+          payload?: Json;
+          source_id?: string | null;
+          source_type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notification_events_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      notification_preferences: {
+        Row: {
+          channel: string;
+          created_at: string;
+          enabled: boolean;
+          id: string;
+          preference_key: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          channel: string;
+          created_at?: string;
+          enabled?: boolean;
+          id?: string;
+          preference_key: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          channel?: string;
+          created_at?: string;
+          enabled?: boolean;
+          id?: string;
+          preference_key?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notification_preferences_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
           created_at: string | null;
           id: string;
+          locale: string;
           stripe_id: string | null;
           updated_at: string | null;
           username: string;
@@ -412,6 +561,7 @@ declare type Database = {
           avatar_url?: string | null;
           created_at?: string | null;
           id: string;
+          locale?: string;
           stripe_id?: string | null;
           updated_at?: string | null;
           username: string;
@@ -420,6 +570,7 @@ declare type Database = {
           avatar_url?: string | null;
           created_at?: string | null;
           id?: string;
+          locale?: string;
           stripe_id?: string | null;
           updated_at?: string | null;
           username?: string;
@@ -570,7 +721,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model?: string;
+          model: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;

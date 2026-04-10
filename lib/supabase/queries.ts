@@ -2,6 +2,11 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+import type {
+  NotificationChannel,
+  NotificationDeliveryStatus,
+  OptionalEmailPreferenceKey,
+} from '@/lib/notifications/types';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
 import {
@@ -552,6 +557,212 @@ export const isFreeUserOverCallLimit = async (
 // These bypass RLS using the service role key. Use only in server-side
 // API routes where the userId is resolved from a trusted API key, not a
 // session cookie.
+
+export async function getLatestCreditAllowanceTransactionAdmin(
+  userId: string,
+): Promise<{
+  id: string;
+  amount: number;
+} | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('credit_transactions')
+    .select('id, amount')
+    .eq('user_id', userId)
+    .gt('amount', 0)
+    .in('type', ['purchase', 'topup', 'freemium', 'refund'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function getNotificationPreferenceRowsAdmin(userId: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('notification_preferences')
+    .select('channel, preference_key, enabled')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  return data ?? [];
+}
+
+export async function getNotificationPreferenceRows(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('notification_preferences')
+    .select('channel, preference_key, enabled')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  return data ?? [];
+}
+
+export async function upsertNotificationEmailPreferences(params: {
+  preferences: Record<OptionalEmailPreferenceKey, boolean>;
+  userId: string;
+}) {
+  const supabase = await createClient();
+  const rows = Object.entries(params.preferences).map(
+    ([preferenceKey, enabled]) => ({
+      user_id: params.userId,
+      channel: 'email',
+      preference_key: preferenceKey,
+      enabled,
+    }),
+  );
+
+  const { error } = await supabase
+    .from('notification_preferences')
+    .upsert(rows, {
+      onConflict: 'user_id,channel,preference_key',
+    });
+
+  if (error) throw error;
+}
+
+export async function getUserNotificationContextAdmin(userId: string): Promise<{
+  email: string | null;
+  locale: string | null;
+  preferences: Awaited<ReturnType<typeof getNotificationPreferenceRowsAdmin>>;
+  username: string | null;
+}> {
+  const admin = createAdminClient();
+  const [profileResult, userResult, preferenceRows] = await Promise.all([
+    admin
+      .from('profiles')
+      .select('locale, username')
+      .eq('id', userId)
+      .maybeSingle(),
+    admin.auth.admin.getUserById(userId),
+    getNotificationPreferenceRowsAdmin(userId),
+  ]);
+
+  if (profileResult.error) throw profileResult.error;
+  if (userResult.error) throw userResult.error;
+
+  return {
+    email: userResult.data.user?.email ?? null,
+    locale: profileResult.data?.locale ?? null,
+    preferences: preferenceRows,
+    username: profileResult.data?.username ?? null,
+  };
+}
+
+export async function createNotificationEventAdmin(params: {
+  dedupeKey: string;
+  eventName: string;
+  payload: Json;
+  sourceId?: string | null;
+  sourceType: string;
+  userId: string;
+}): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('notification_events')
+    .upsert(
+      [
+        {
+          user_id: params.userId,
+          event_name: params.eventName,
+          source_type: params.sourceType,
+          source_id: params.sourceId ?? null,
+          dedupe_key: params.dedupeKey,
+          payload: params.payload,
+        },
+      ],
+      {
+        onConflict: 'event_name,dedupe_key',
+        ignoreDuplicates: true,
+      },
+    )
+    .select('id')
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.id ?? null;
+}
+
+export async function createNotificationDeliveryAdmin(params: {
+  channel: NotificationChannel;
+  metadata?: Json;
+  notificationEventId: string;
+  provider?: string | null;
+  recipient?: string | null;
+  status?: NotificationDeliveryStatus;
+  templateKey: string;
+  userId: string;
+}): Promise<string> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('notification_deliveries')
+    .insert({
+      notification_event_id: params.notificationEventId,
+      user_id: params.userId,
+      channel: params.channel,
+      template_key: params.templateKey,
+      provider: params.provider ?? null,
+      recipient: params.recipient ?? null,
+      status: params.status ?? 'pending',
+      metadata: params.metadata ?? {},
+    })
+    .select('id')
+    .single();
+
+  if (error) throw error;
+
+  return data.id;
+}
+
+export async function updateNotificationDeliveryAdmin(params: {
+  deliveryId: string;
+  errorMessage?: string | null;
+  lastProviderEventAt?: string | null;
+  providerMessageId?: string | null;
+  sentAt?: string | null;
+  status: NotificationDeliveryStatus;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('notification_deliveries')
+    .update({
+      status: params.status,
+      error_message: params.errorMessage ?? null,
+      provider_message_id: params.providerMessageId ?? null,
+      sent_at: params.sentAt ?? null,
+      last_provider_event_at: params.lastProviderEventAt ?? null,
+    })
+    .eq('id', params.deliveryId);
+
+  if (error) throw error;
+}
+
+export async function updateNotificationDeliveryByProviderMessageIdAdmin(params: {
+  lastProviderEventAt?: string | null;
+  provider: string;
+  providerMessageId: string;
+  status: NotificationDeliveryStatus;
+}) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('notification_deliveries')
+    .update({
+      status: params.status,
+      last_provider_event_at:
+        params.lastProviderEventAt ?? new Date().toISOString(),
+    })
+    .eq('provider', params.provider)
+    .eq('provider_message_id', params.providerMessageId);
+
+  if (error) throw error;
+}
 
 export async function getCreditsAdmin(userId: string): Promise<number> {
   const admin = createAdminClient();

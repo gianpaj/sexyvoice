@@ -7,6 +7,7 @@ import {
   HarmCategory,
 } from '@google/genai';
 import { captureException } from '@sentry/nextjs';
+import { after } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { getCharactersLimit } from '@/lib/ai';
@@ -26,7 +27,9 @@ import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
+import { maybeSendSpeechCreditAllowanceAlert } from '@/lib/api/speech-credit-alerts';
 import { convertToWav } from '@/lib/audio';
+import { emitGenerationSucceededEvent } from '@/lib/notifications/events';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -484,29 +487,26 @@ export async function POST(request: Request) {
       model,
       inputChars: finalText.length,
     });
-    const [audioFileResult, updatedCredits] = await Promise.all([
-      saveAudioFileAdmin({
-        userId,
-        filename,
-        text: finalText,
-        url: uploadUrl,
-        model: modelUsed,
-        predictionId: replicateResponse?.id,
-        isPublic: false,
-        voiceId: voiceObj.id,
-        duration: '-1',
-        credits_used: creditsUsed,
-        usage: {
-          ...(usageMetadata ?? {}),
-          userHasPaid,
-          apiKeyId: authResult.apiKeyId,
-          sourceType: 'api_tts',
-          dollarAmount,
-          ...(seed === undefined ? {} : { seed }),
-        },
-      }),
-      getCreditsAdmin(userId),
-    ]);
+    const audioFileResult = await saveAudioFileAdmin({
+      userId,
+      filename,
+      text: finalText,
+      url: uploadUrl,
+      model: modelUsed,
+      predictionId: replicateResponse?.id,
+      isPublic: false,
+      voiceId: voiceObj.id,
+      duration: '-1',
+      credits_used: creditsUsed,
+      usage: {
+        ...(usageMetadata ?? {}),
+        userHasPaid,
+        apiKeyId: authResult.apiKeyId,
+        sourceType: 'api_tts',
+        dollarAmount,
+        ...(seed === undefined ? {} : { seed }),
+      },
+    });
 
     await insertUsageEvent({
       userId,
@@ -535,9 +535,40 @@ export async function POST(request: Request) {
       },
     });
 
+    const currentCreditsAfter = await getCreditsAdmin(userId);
+
     // Fire-and-forget: do not await the log call on the success path.
     // A flush failure must never return a 500 to the client after audio has
     // been generated and credits have already been deducted.
+    const creditsRemaining = Math.max(0, currentCreditsAfter - creditsUsed);
+
+    after(async () => {
+      try {
+        if (audioFileResult.data?.id) {
+          try {
+            await emitGenerationSucceededEvent({
+              userId,
+              sourceType: 'api_tts',
+              sourceId: audioFileResult.data.id,
+              model: modelUsed,
+              voiceName: voice,
+            });
+          } catch (notificationError) {
+            console.error(
+              '[speech] generation notification event failed:',
+              notificationError,
+            );
+          }
+        }
+        await maybeSendSpeechCreditAllowanceAlert({
+          userId,
+          creditsRemaining,
+        });
+      } catch (alertError) {
+        console.error('[speech] credit alert email failed:', alertError);
+      }
+    });
+
     log({
       status: 200,
       userId,
@@ -558,7 +589,7 @@ export async function POST(request: Request) {
       {
         url: uploadUrl,
         credits_used: creditsUsed,
-        credits_remaining: Math.max(0, updatedCredits - creditsUsed),
+        credits_remaining: creditsRemaining,
         usage: {
           input_characters: finalText.length,
           model: modelUsed,

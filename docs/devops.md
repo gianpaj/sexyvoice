@@ -210,6 +210,26 @@ Generate secure secrets with:
 openssl rand -hex 32
 ```
 
+
+### Email notifications (Resend)
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+
+Used for:
+
+- transactional emails including registration completion, top-up success,
+  subscription start, subscription cancellation, first generation success, and
+  low-credit threshold alerts for `/api/v1/speech`
+
+Delivery tracking setup:
+
+- Configure Resend email webhooks in Inngest using the official
+  [Resend webhook events guide](https://www.inngest.com/docs/guides/resend-webhook-events).
+- This integration sends Resend delivery events directly into Inngest, so no
+  app-local Resend webhook endpoint or `RESEND_WEBHOOK_SECRET` is required in
+  this repo for the current setup.
+
 ### Stripe
 
 - `STRIPE_SECRET_KEY`
@@ -264,6 +284,12 @@ Used for:
 - `INNGEST_EVENT_KEY`
 - `INNGEST_SIGNING_KEY`
 - `INNGEST_BASE_URL`
+
+Used for:
+
+- queued background jobs
+- transactional notification orchestration
+- receiving provider delivery events via Inngest webhook sources
 
 ## Deployment Notes
 

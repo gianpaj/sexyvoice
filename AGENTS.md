@@ -446,6 +446,7 @@ Key environment variables include:
 - **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
 - **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
 - **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`); Axiom (`AXIOM_TOKEN`) for structured API request logs
+- **Email Notifications**: Resend (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`) for queued transactional emails (registration, billing, first-generation, low-credit) orchestrated via Inngest
 - **External API**: `API_KEY_HMAC_SECRET` (HMAC-SHA256 secret for hashing API keys — never expose, rotate carefully)
 - **Production**: Environment-specific configurations for Sentry and CSP
 - Follow `.env.example` for complete list and setup instructions

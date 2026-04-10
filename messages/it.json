@@ -585,8 +585,57 @@
         "updateFailed": "Impossibile aggiornare la password",
         "currentPasswordIncorrect": "La password attuale non è corretta"
       }
+  },
+  "preferences": {
+    "title": "Preferenze",
+    "description": "Scegli la lingua della dashboard e le tue preferenze per le email transazionali.",
+    "localeLabel": "Lingua preferita",
+    "localeDescription": "Questo aggiorna l'URL attuale della dashboard e imposta la lingua predefinita per le future email dell'account.",
+    "localePlaceholder": "Seleziona una lingua",
+    "optionalEmailsTitle": "Email opzionali",
+    "optionalEmailsDescription": "Puoi attivare o disattivare queste email in qualsiasi momento.",
+    "requiredEmailsTitle": "Email di account sempre attive",
+    "requiredEmailsDescription": "Queste email restano attive perché sono importanti per fatturazione e attività dell'account.",
+    "save": "Salva preferenze",
+    "saving": "Salvataggio...",
+    "saveSuccess": "Preferenze aggiornate",
+    "saveError": "Impossibile aggiornare le preferenze",
+    "localeOptions": {
+      "en": "English",
+      "es": "Español",
+      "de": "Deutsch",
+      "da": "Dansk",
+      "it": "Italiano",
+      "fr": "Français"
     },
-    "dangerZone": {
+    "items": {
+      "welcomeEmail": {
+        "label": "Email di benvenuto",
+        "description": "Inviata quando la registrazione è completata tramite conferma email o registrazione con Google."
+      },
+      "firstGenerationEmail": {
+        "label": "Email della prima creazione",
+        "description": "Inviata una sola volta dopo la tua prima generazione o clonazione riuscita."
+      },
+      "topupSuccess": {
+        "label": "Conferma ricarica",
+        "description": "Conferma che una ricarica crediti è stata aggiunta correttamente."
+      },
+      "subscriptionSuccess": {
+        "label": "Conferma abbonamento",
+        "description": "Conferma che il tuo abbonamento è stato attivato correttamente."
+      },
+      "subscriptionCancellation": {
+        "label": "Cancellazione abbonamento",
+        "description": "Conferma che il tuo abbonamento è stato annullato."
+      },
+      "lowCreditAlert": {
+        "label": "Avvisi API per crediti bassi",
+        "description": "Ti avvisa quando il tuo ultimo plafond di crediti API è vicino all'esaurimento."
+      }
+    }
+  },
+  "dangerZone": {
       "title": "Zona pericolosa",
       "deleteAccount": {
         "button": "Elimina account",
