@@ -5,7 +5,8 @@ import type { Graph } from 'schema-dts';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 import TranscribeClient from './transcribe.client';
 
 interface Props {
@@ -68,7 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: url,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [
+        routing.locales.map((locale) => [
           locale,
           `https://sexyvoice.ai/${locale}/tools/transcribe`,
         ]),

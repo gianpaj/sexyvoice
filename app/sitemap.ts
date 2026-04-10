@@ -5,7 +5,7 @@ import { allPosts } from 'contentlayer/generated';
 import { globby } from 'globby';
 import type { MetadataRoute } from 'next';
 
-import { i18n } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 
 const BASE_URL = 'https://sexyvoice.ai';
 
@@ -73,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     allPosts.map((post) => [`${post.locale}:${post.slugAsParams}`, post]),
   );
 
-  i18n.locales.forEach((lang) => {
+  routing.locales.forEach((lang) => {
     // Static pages discovered from the filesystem
     pageFiles.forEach((file) => {
       const path = pageFileToPath(file);
@@ -91,7 +91,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           ? {
               alternates: {
                 languages: Object.fromEntries(
-                  i18n.locales
+                  routing.locales
                     .filter((locale) => locale !== lang)
                     .map((locale) => [locale, `${BASE_URL}/${locale}`]),
                 ),
@@ -112,14 +112,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           lastModified: new Date(post.date).toISOString(),
           priority: getPriority(postUrl),
           // For default-locale posts, link to any available translations
-          ...(lang === i18n.defaultLocale
+          ...(lang === routing.defaultLocale
             ? {
                 alternates: {
                   languages: Object.fromEntries(
-                    i18n.locales
+                    routing.locales
                       .filter(
                         (locale) =>
-                          locale !== i18n.defaultLocale &&
+                          locale !== routing.defaultLocale &&
                           translatedPostSlugs.has(
                             `${locale}:${post.slugAsParams}`,
                           ),

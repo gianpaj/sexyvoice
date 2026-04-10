@@ -5,11 +5,11 @@ import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import Script from 'next/script';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
@@ -25,6 +25,7 @@ import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import { routing } from '@/src/i18n/routing';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
 const get3PostsByLang = (lang: Locale) =>
@@ -48,9 +49,12 @@ export default async function LandingPage(props: {
   const { lang } = await props.params;
 
   // Validate that the language is a supported locale
-  if (!i18n.locales.includes(lang as Locale)) {
-    redirect(`/${i18n.defaultLocale}`);
+  if (!routing.locales.includes(lang as Locale)) {
+    redirect(`/${routing.defaultLocale}`);
   }
+
+  // Enable static rendering
+  setRequestLocale(lang);
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;

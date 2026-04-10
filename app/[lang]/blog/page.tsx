@@ -17,11 +17,12 @@ import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { calculateReadingTime, cn, countWords } from '@/lib/utils';
+import { routing } from '@/src/i18n/routing';
 
 export const dynamicParams = false;
 
 export const generateStaticParams = () =>
-  i18n.locales.map((lang) => ({ lang }));
+  routing.locales.map((lang) => ({ lang }));
 
 export async function generateMetadata({
   params,
@@ -66,7 +67,7 @@ export async function generateMetadata({
       canonical: pageUrl,
       languages: {
         ...Object.fromEntries(
-          i18n.locales.map((locale) => [locale, `/${locale}/blog`]),
+          routing.locales.map((locale) => [locale, `/${locale}/blog`]),
         ),
         'x-default': `/${i18n.defaultLocale}/blog`,
       },
@@ -105,7 +106,7 @@ export default async function BlogIndexPage(props: {
 }) {
   const { lang } = await props.params;
 
-  if (!i18n.locales.includes(lang as Locale)) {
+  if (!routing.locales.includes(lang as Locale)) {
     redirect(`/${i18n.defaultLocale}`);
   }
 

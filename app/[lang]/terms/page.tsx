@@ -1,12 +1,13 @@
 import { allPolicyPages } from 'contentlayer/generated';
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 
 const TERMS_SLUG = 'terms';
 
@@ -19,14 +20,14 @@ const getPolicyByLocale = (lang: Locale) => {
 
   return allPolicyPages.find(
     (policy) =>
-      policy.slug === TERMS_SLUG && policy.locale === i18n.defaultLocale,
+      policy.slug === TERMS_SLUG && policy.locale === routing.defaultLocale,
   );
 };
 
 export const dynamicParams = false;
 
 export const generateStaticParams = () =>
-  i18n.locales.map((lang) => ({
+  routing.locales.map((lang) => ({
     lang,
   }));
 
@@ -50,7 +51,7 @@ export async function generateMetadata({
     alternates: {
       canonical: `https://sexyvoice.ai/${lang}/${TERMS_SLUG}`,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [locale, `/${locale}/${TERMS_SLUG}`]),
+        routing.locales.map((locale) => [locale, `/${locale}/${TERMS_SLUG}`]),
       ),
     },
   } satisfies Metadata;
@@ -62,14 +63,14 @@ export default async function TermsPolicyPage(props: {
   const { lang } = await props.params;
   await getMessages({ locale: lang });
 
-  if (!i18n.locales.includes(lang)) {
-    redirect(`/${i18n.defaultLocale}/${TERMS_SLUG}`);
+  if (!routing.locales.includes(lang)) {
+    redirect(`/${routing.defaultLocale}/${TERMS_SLUG}`);
   }
 
   const policy = getPolicyByLocale(lang);
 
   if (!policy) {
-    redirect(`/${i18n.defaultLocale}/${TERMS_SLUG}`);
+    redirect(`/${routing.defaultLocale}/${TERMS_SLUG}`);
   }
 
   return (

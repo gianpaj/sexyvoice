@@ -1,8 +1,8 @@
 import { createNavigation } from 'next-intl/navigation';
 
-import { i18n } from './i18n-config';
+import { routing } from '@/src/i18n/routing';
 
-export const { Link, redirect, usePathname, useRouter } = createNavigation({
-  locales: i18n.locales,
-  localePrefix: i18n.localePrefix,
-});
+// Lightweight wrappers around Next.js' navigation
+// APIs that consider the routing configuration
+export const { Link, redirect, usePathname, useRouter } =
+  createNavigation(routing);

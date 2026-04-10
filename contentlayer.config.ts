@@ -3,15 +3,16 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeHighlightLines from 'rehype-highlight-code-lines';
 import remarkGfm from 'remark-gfm';
 
-import { i18n, type Locale } from './lib/i18n/i18n-config';
+import type { Locale } from './lib/i18n/i18n-config';
+import { routing } from './src/i18n/routing';
 
 const isLocale = (value: string | undefined): value is Locale =>
-  Boolean(value && i18n.locales.includes(value as Locale));
+  Boolean(value && routing.locales.includes(value as Locale));
 
 const getLocale = (path: string) => {
   const pathArray = path.split('.');
   const potentialLocale = pathArray.length > 1 ? pathArray.at(-2) : undefined;
-  return isLocale(potentialLocale) ? potentialLocale : i18n.defaultLocale;
+  return isLocale(potentialLocale) ? potentialLocale : routing.defaultLocale;
 };
 
 const getBasePath = (path: string) => {

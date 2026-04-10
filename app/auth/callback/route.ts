@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
-import { i18n } from '@/lib/i18n/i18n-config';
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
@@ -11,6 +10,7 @@ import {
   OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
 } from '@/lib/supabase/oauth-callback-marker';
 import { createClient } from '@/lib/supabase/server';
+import { routing } from '@/src/i18n/routing';
 
 const isSafeRedirectPath = (value: string | null) =>
   Boolean(value?.startsWith('/') && !value.startsWith('//'));
@@ -18,9 +18,9 @@ const isSafeRedirectPath = (value: string | null) =>
 const getLocaleFromRedirectPath = (redirectPath: string | null) => {
   const locale = redirectPath?.split('/')[1];
 
-  return i18n.locales.includes(locale as (typeof i18n.locales)[number])
+  return routing.locales.includes(locale as (typeof routing.locales)[number])
     ? locale
-    : i18n.defaultLocale;
+    : routing.defaultLocale;
 };
 
 const getOauthCodeFingerprint = (code: string | null) => {
@@ -150,7 +150,7 @@ export async function GET(request: Request) {
 
     // URL to redirect to after sign up process completes
     return createOauthRedirectResponse(
-      `${origin}/${i18n.defaultLocale}/dashboard`,
+      `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {
     captureException(error, {

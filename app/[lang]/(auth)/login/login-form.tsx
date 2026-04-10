@@ -33,7 +33,7 @@ export function LoginForm({
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const nextPath =
-    redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')
+    redirectTo?.startsWith('/') && !redirectTo.startsWith('//')
       ? redirectTo
       : `/${lang}/dashboard/generate`;
 
