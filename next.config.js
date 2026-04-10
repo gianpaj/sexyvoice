@@ -1,6 +1,13 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
-const withNextIntl = require('next-intl/plugin')('./src/i18n/request.ts');
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin({
+  experimental: {
+    // Enable precompilation
+    precompile: true,
+  },
+});
 
 // TODO: generate CSP Header and add policy domains to on the the needed routes
 /**

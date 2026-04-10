@@ -2,13 +2,14 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { Inter } from 'next/font/google';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import { Providers } from '@/app/providers';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 import '../globals.css';
-
-import { Providers } from '../providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,7 +19,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  return i18n.locales.map((lang) => ({ lang }));
+  return routing.locales.map((lang) => ({ lang }));
 }
 
 export async function generateMetadata(
@@ -33,7 +34,7 @@ export async function generateMetadata(
     : '/';
   const pagePath = pathname.replace(`/${lang}`, '') || '/';
 
-  if (!i18n.locales.includes(lang)) {
+  if (!routing.locales.includes(lang)) {
     return {
       title:
         'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan',
@@ -91,7 +92,7 @@ export async function generateMetadata(
       languages: {
         'x-default': './',
         ...Object.fromEntries(
-          i18n.locales.map((locale) => [locale, `./${locale}`]),
+          routing.locales.map((locale) => [locale, `./${locale}`]),
         ),
       },
     },
@@ -102,7 +103,15 @@ export default async function LangLayout({
   children,
   params,
 }: Readonly<Props>) {
+  // Ensure that the incoming `lang` is valid
   const { lang } = await params;
+  if (!hasLocale(routing.locales, lang)) {
+    notFound();
+  }
+
+  // Enable static rendering
+  setRequestLocale(lang);
+
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (

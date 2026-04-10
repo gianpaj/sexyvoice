@@ -1,13 +1,13 @@
 import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { i18n } from '@/lib/i18n/i18n-config';
+import { routing } from '@/src/i18n/routing';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] =>
-  i18n.locales.flatMap((locale) =>
+  routing.locales.flatMap((locale) =>
     routes.flatMap((route) =>
       route === '/' ? [`/${locale}`, `/${locale}/`] : `/${locale}${route}`,
     ),

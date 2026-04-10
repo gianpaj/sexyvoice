@@ -11,12 +11,13 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   createArticleSchema,
   createBreadcrumbSchema,
 } from '@/lib/structured-data';
 import { calculateReadingTime, countWords } from '@/lib/utils';
+import { routing } from '@/src/i18n/routing';
 
 export const dynamicParams = false;
 
@@ -104,7 +105,10 @@ export async function generateMetadata({
     alternates: {
       canonical: postUrl,
       languages: Object.fromEntries(
-        i18n.locales.map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
+        routing.locales.map((locale) => [
+          locale,
+          `/${locale}/blog/${post.slug}`,
+        ]),
       ),
     },
   };
