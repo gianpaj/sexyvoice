@@ -275,25 +275,6 @@ Used for:
 
 ## Deployment Notes
 
-### Vercel
-
-- Main app is deployed on Vercel from `apps/web`.
-- Keep the existing Vercel project, custom domains, environment variables,
-  Edge Config connection, cron job, and Sentry/PostHog/Axiom settings attached
-  to the web app project.
-- Set the Vercel project Root Directory to `apps/web`.
-- Keep the Framework Preset as Next.js.
-- If the project is configured to install and build from `apps/web`, use the
-  default Next.js build command or set `pnpm build`.
-- If the project is configured from the repository root instead, use
-  `pnpm turbo run build --filter=@sexyvoice/web` as the build command and keep
-  the web app output owned by the filtered package.
-- Enable Vercel's monorepo "skip deployments for unaffected projects" setting
-  when available so docs-only commits do not redeploy the web app.
-- Preview deployments should receive the minimum required secrets for the flows
-  being tested.
-- Production secrets must be managed in project settings, never committed.
-
 ### Mintlify
 
 - Docs are deployed from `apps/docs`.

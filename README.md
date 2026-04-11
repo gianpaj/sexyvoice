@@ -283,23 +283,6 @@ export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgr
 sh ./scripts/db_backups.sh
 ```
 
-## Deployment Connections
-
-### Vercel
-
-The main web app remains the Vercel project for `sexyvoice.ai`.
-
-- Keep the existing Vercel project, domains, environment variables, Edge Config
-  connection, cron configuration, Sentry settings, and analytics integrations.
-- Set the Vercel project Root Directory to `apps/web`.
-- Keep the Framework Preset as Next.js.
-- Use the default install/build behavior from `apps/web`, or set the build
-  command to `pnpm build` if the project is configured to install from the app
-  root.
-- If you instead configure Vercel from the repository root, use
-  `pnpm turbo run build --filter=@sexyvoice/web` as the build command and keep
-  the output owned by the Next.js app.
-
 ### Mintlify
 
 The docs site remains the Mintlify project for `docs.sexyvoice.ai`.

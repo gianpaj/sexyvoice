@@ -22,7 +22,10 @@
         "groups": [
           {
             "group": "Getting started",
-            "pages": ["index", "guides/api"]
+            "pages": [
+              "index",
+              "guides/api"
+            ]
           },
           {
             "group": "Features",
@@ -39,7 +42,10 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["api-reference/introduction", "api-reference/errors"]
+            "pages": [
+              "api-reference/introduction",
+              "api-reference/errors"
+            ]
           },
           {
             "group": "Endpoints",
@@ -72,12 +78,18 @@
     }
   },
   "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude", "cursor"]
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "cursor"
+    ]
   },
   "footer": {
     "socials": {
       "x": "https://x.com/sexyvoiceai",
-      "github": "https://github.com/gianpaj/sexyvoice.ai",
+      "github": "https://github.com/gianpaj/sexyvoice",
       "instagram": "https://www.instagram.com/sexyvoice_ai"
     }
   }

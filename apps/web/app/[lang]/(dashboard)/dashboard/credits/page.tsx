@@ -19,6 +19,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 import { CreditTopup } from './credit-topup';
 import { TopupStatus } from './topup-status';
+import Script from 'next/script';
 
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -146,7 +147,11 @@ const NextStripePricingTable = ({
 
   return (
     <>
-      <script async src="https://js.stripe.com/v3/pricing-table.js" />
+      <Script
+        async
+        src="https://js.stripe.com/v3/pricing-table.js"
+        strategy="lazyOnload"
+      />
       {/* @ts-ignore */}
       <stripe-pricing-table
         customer-session-client-secret={clientSecret.client_secret}

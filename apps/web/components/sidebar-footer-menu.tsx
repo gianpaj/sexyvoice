@@ -27,7 +27,7 @@ export function SidebarFooterMenu({
   lang: Locale;
   dict: (typeof langDict)['sidebar'];
 }) {
-  // Safely access the sidebar context without throwing an error
+  // Read sidebar state from context; this component must be rendered within SidebarProvider.
   const { isMobile, toggleSidebar } = useSidebar();
 
   const supabase = getSupabaseBrowserClient();
