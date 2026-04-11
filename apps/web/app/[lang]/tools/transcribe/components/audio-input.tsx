@@ -5,8 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
+import type langDict from '@/messages/en.json';
 
 interface Props {
   dict: (typeof langDict)['transcribe']['audioInput'];

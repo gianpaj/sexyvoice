@@ -16,6 +16,7 @@ import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { GenerateButton } from '@/components/generate-button';
 import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
+import { SpotlightField } from '@/components/spotlight-field';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,6 @@ import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './clone-sample-card';
 import CloneSampleCard from './clone-sample-card';
-import { SpotlightField } from '@/components/spotlight-field';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 

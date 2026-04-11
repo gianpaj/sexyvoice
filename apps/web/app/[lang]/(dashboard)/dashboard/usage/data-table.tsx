@@ -28,11 +28,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/messages/en.json';
 import type {
   MonthlyUsageSummary,
   PaginatedUsageEventsResponse,
 } from '@/lib/supabase/usage-queries';
+import type langDict from '@/messages/en.json';
 import { createColumns } from './columns';
 
 interface DataTableProps {

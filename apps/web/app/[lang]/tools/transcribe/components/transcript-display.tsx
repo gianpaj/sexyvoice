@@ -4,8 +4,8 @@ import { Check, ClipboardCopy } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
+import type langDict from '@/messages/en.json';
 import type { TranscriptionResult } from '../hooks/use-transcriber';
 
 interface Props {

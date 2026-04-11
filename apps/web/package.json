@@ -10,11 +10,11 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && pnpm run format:write",
+    "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && biome format lib/supabase/types.d.ts --write",
     "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
     "build:content": "contentlayer2 build",
     "dev:content": "contentlayer2 dev",
-    "fixall": "pnpm run lint:write && pnpm run format:write && pnpm run check:fix",
+    "fixall": "pnpm run lint:write; pnpm run format:write; pnpm run check:fix",
     "lint:write": "pnpm run lint --write",
     "lint": "biome lint ./app components hooks lib proxy.ts",
     "format:write": "pnpm run format --write",
@@ -158,7 +158,6 @@
     "redis-memory-server": "0.16.0",
     "tsx": "4.19.3",
     "typescript": "5.9.3",
-    "ultracite": "7.3.2",
     "vitest": "4.1.0"
   },
   "browserslist": [

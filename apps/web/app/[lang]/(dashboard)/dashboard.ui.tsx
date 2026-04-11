@@ -38,7 +38,6 @@ import {
 } from '@/components/ui/sidebar';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import type { Locale } from '@/lib/i18n/i18n-config';
-
 import type messages from '@/messages/en.json';
 
 interface DashboardUIProps {

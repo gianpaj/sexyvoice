@@ -11,9 +11,9 @@ import {
   isInstructionsDirty,
   saveCharacter,
 } from '@/lib/characters';
-import type langDict from '@/messages/en.json';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
+import type langDict from '@/messages/en.json';
 import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;

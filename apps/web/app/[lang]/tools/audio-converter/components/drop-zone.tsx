@@ -3,8 +3,8 @@
 import { FileAudio, Music, Upload } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
-import type langDict from '@/messages/en.json';
 import { cn } from '@/lib/utils';
+import type langDict from '@/messages/en.json';
 
 interface Props {
   dict: (typeof langDict)['audioConverter']['dropZone'];

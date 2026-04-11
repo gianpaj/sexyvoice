@@ -1,4 +1,5 @@
 import { getMessages } from 'next-intl/server';
+
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { BillingUsageChart } from './billing-usage-chart';
 

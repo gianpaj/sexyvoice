@@ -1,6 +1,5 @@
-import { Suspense } from 'react';
-
 import { getMessages } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';

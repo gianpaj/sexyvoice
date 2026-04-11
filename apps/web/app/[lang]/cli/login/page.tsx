@@ -3,8 +3,8 @@ import { getMessages } from 'next-intl/server';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
-import type { Locale } from '@/lib/i18n/i18n-config';
 import { isAllowedCliCallbackUrl } from '@/lib/api/cli-login';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CliLoginClient } from './cli-login-client';

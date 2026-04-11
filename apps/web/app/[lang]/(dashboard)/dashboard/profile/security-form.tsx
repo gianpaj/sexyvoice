@@ -8,8 +8,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type langDict from '@/messages/en.json';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import type langDict from '@/messages/en.json';
 
 export function SecurityForm({
   email,
