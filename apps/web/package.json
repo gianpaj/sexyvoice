@@ -150,7 +150,7 @@
     "@typescript/native-preview": "7.0.0-dev.20260318.1",
     "@vitest/coverage-v8": "4.1.0",
     "autoprefixer": "10.4.27",
-    "ioredis": "5.10.0",
+    "ioredis": "5.10.1",
     "jsdom": "28.1.0",
     "knip": "6.3.0",
     "msw": "2.12.13",
