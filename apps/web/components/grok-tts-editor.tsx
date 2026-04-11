@@ -25,6 +25,7 @@ import {
   InstantTag,
 } from '@/components/grok-tts/extensions/instant-tag';
 import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
+import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -522,11 +523,13 @@ export function GrokTTSEditor({
   return (
     <div className="w-full">
       <div className="space-y-2">
-        <div className="editor-wrapper relative min-h-[8rem] rounded-md border border-input bg-background p-3 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-          <EditorContext.Provider value={{ editor }}>
-            <EditorContentArea slashMenus={slashMenus} />
-          </EditorContext.Provider>
-        </div>
+        <SpotlightField>
+          <div className="editor-wrapper relative min-h-[8rem] rounded-md bg-transparent p-3 text-sm ring-offset-background">
+            <EditorContext.Provider value={{ editor }}>
+              <EditorContentArea slashMenus={slashMenus} />
+            </EditorContext.Provider>
+          </div>
+        </SpotlightField>
 
         <div className="mt-2 flex items-center gap-2">
           <Popover onOpenChange={setEffectsOpen} open={effectsOpen}>

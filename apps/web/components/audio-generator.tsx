@@ -13,10 +13,22 @@ import {
   Sparkles,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ComponentPropsWithoutRef,
+  type CSSProperties,
+  forwardRef,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { toast } from '@/components/services/toast';
+import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,6 +57,204 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+
+interface AnimatedPromptTextareaProps
+  extends ComponentPropsWithoutRef<typeof Textarea> {
+  children?: ReactNode;
+}
+
+const AnimatedPromptTextarea = forwardRef<
+  HTMLTextAreaElement,
+  AnimatedPromptTextareaProps
+>(({ children, className, onBlur, onFocus, ...props }, ref) => {
+  return (
+    <SpotlightField>
+      <Textarea
+        className={cn(
+          'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
+          className,
+        )}
+        onBlur={onBlur}
+        onFocus={onFocus}
+        ref={ref}
+        {...props}
+      />
+      {children}
+    </SpotlightField>
+  );
+});
+AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
+
+interface NonGrokPromptEditorProps {
+  charactersLimit: number;
+  dict: (typeof messages)['generate'];
+  isEnhancingText: boolean;
+  isFullscreen: boolean;
+  isGenerating: boolean;
+  isPaidUser: boolean;
+  onEnhanceText: () => void;
+  onTextChange: (text: string) => void;
+  onToggleFullscreen: () => void;
+  showEnhanceButton: boolean;
+  text: string;
+  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  textareaRightPadding: string;
+  textIsOverLimit: boolean;
+}
+
+function NonGrokPromptEditor({
+  charactersLimit,
+  dict,
+  isEnhancingText,
+  isFullscreen,
+  isGenerating,
+  isPaidUser,
+  onEnhanceText,
+  onTextChange,
+  onToggleFullscreen,
+  showEnhanceButton,
+  text,
+  textareaRef,
+  textareaRightPadding,
+  textIsOverLimit,
+}: NonGrokPromptEditorProps) {
+  return (
+    <>
+      <AnimatedPromptTextarea
+        className={cn(
+          'textarea-2 bg-transparent transition-[height] duration-200 ease-in-out',
+          textareaRightPadding,
+        )}
+        maxLength={charactersLimit + 10}
+        onChange={(e) => onTextChange(e.target.value)}
+        placeholder={dict.textAreaPlaceholder}
+        ref={textareaRef}
+        style={
+          {
+            '--ta2-height': isFullscreen ? '30vh' : '8rem',
+          } as CSSProperties
+        }
+        value={text}
+      >
+        {showEnhanceButton && (
+          <>
+            <TooltipProvider>
+              <Tooltip delayDuration={100} supportMobileTap>
+                <TooltipTrigger asChild>
+                  <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This model supports emotion tags</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <Button
+              className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
+              disabled={!text.trim() || isEnhancingText || isGenerating}
+              onClick={onEnhanceText}
+              size="icon"
+              title="Enhance text with AI emotion tags"
+              variant="ghost"
+            >
+              {isEnhancingText ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 text-yellow-300" />
+              )}
+            </Button>
+          </>
+        )}
+
+        <Button
+          className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          onClick={onToggleFullscreen}
+          size="icon"
+          title="Fullscreen"
+          variant="ghost"
+        >
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4" />
+          ) : (
+            <Maximize2 className="h-4 w-4" />
+          )}
+        </Button>
+      </AnimatedPromptTextarea>
+
+      <div
+        className={cn(
+          'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+          textIsOverLimit ? 'font-bold text-red-500' : '',
+        )}
+      >
+        {text.length} / {charactersLimit}
+        <TooltipProvider>
+          <Tooltip delayDuration={100} supportMobileTap>
+            <TooltipTrigger asChild>
+              <Crown
+                className={cn(
+                  'h-3.5 w-3.5 cursor-default',
+                  isPaidUser ? 'text-muted-foreground/50' : 'text-yellow-400',
+                )}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {isPaidUser
+                  ? 'Paid users enjoy 2× character limit'
+                  : 'Upgrade to a paid plan for 2× character limit'}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+    </>
+  );
+}
+
+interface CreditEstimatorProps {
+  buttonLabel: string;
+  estimatedCredits: number | null;
+  isEstimating: boolean;
+  isGenerating: boolean;
+  onEstimateCredits: () => void;
+  text: string;
+  textIsOverLimit: boolean;
+}
+
+function CreditEstimator({
+  buttonLabel,
+  estimatedCredits,
+  isEstimating,
+  isGenerating,
+  onEstimateCredits,
+  text,
+  textIsOverLimit,
+}: CreditEstimatorProps) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
+      <Button
+        className="h-8 bg-secondary text-xs"
+        disabled={
+          !text.trim() || isEstimating || isGenerating || textIsOverLimit
+        }
+        onClick={onEstimateCredits}
+        size="sm"
+        variant="outline"
+      >
+        {isEstimating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          buttonLabel
+        )}
+      </Button>
+      {estimatedCredits !== null && (
+        <div className="text-muted-foreground text-xs">
+          ~{estimatedCredits.toString()}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
@@ -315,127 +525,34 @@ export function AudioGenerator({
               value={text}
             />
           ) : (
-            <>
-              <div className="relative">
-                <Textarea
-                  className={cn(
-                    'textarea-2 transition-[height] duration-200 ease-in-out',
-                    textareaRightPadding,
-                  )}
-                  maxLength={charactersLimit + 10}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder={dict.textAreaPlaceholder}
-                  ref={textareaRef}
-                  style={
-                    {
-                      '--ta2-height': isFullscreen ? '30vh' : '8rem',
-                    } as React.CSSProperties
-                  }
-                  value={text}
-                />
-
-                {showEnhanceButton && (
-                  <>
-                    <TooltipProvider>
-                      <Tooltip delayDuration={100} supportMobileTap>
-                        <TooltipTrigger asChild>
-                          <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>This model supports emotion tags</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <Button
-                      className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-                      disabled={!text.trim() || isEnhancingText || isGenerating}
-                      onClick={handleEnhanceText}
-                      size="icon"
-                      title="Enhance text with AI emotion tags"
-                      variant="ghost"
-                    >
-                      {isEnhancingText ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Sparkles className="h-4 w-4 text-yellow-300" />
-                      )}
-                    </Button>
-                  </>
-                )}
-
-                <Button
-                  className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  size="icon"
-                  title="Fullscreen"
-                  variant="ghost"
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="h-4 w-4" />
-                  ) : (
-                    <Maximize2 className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-
-              <div
-                className={cn(
-                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                  textIsOverLimit ? 'font-bold text-red-500' : '',
-                )}
-              >
-                {text.length} / {charactersLimit}
-                <TooltipProvider>
-                  <Tooltip delayDuration={100} supportMobileTap>
-                    <TooltipTrigger asChild>
-                      <Crown
-                        className={cn(
-                          'h-3.5 w-3.5 cursor-default',
-                          isPaidUser
-                            ? 'text-muted-foreground/50'
-                            : 'text-yellow-400',
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {isPaidUser
-                          ? 'Paid users enjoy 2× character limit'
-                          : 'Upgrade to a paid plan for 2× character limit'}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            </>
+            <NonGrokPromptEditor
+              charactersLimit={charactersLimit}
+              dict={dict}
+              isEnhancingText={isEnhancingText}
+              isFullscreen={isFullscreen}
+              isGenerating={isGenerating}
+              isPaidUser={isPaidUser}
+              onEnhanceText={handleEnhanceText}
+              onTextChange={setText}
+              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+              showEnhanceButton={showEnhanceButton}
+              text={text}
+              textareaRef={textareaRef}
+              textareaRightPadding={textareaRightPadding}
+              textIsOverLimit={textIsOverLimit}
+            />
           )}
 
           {(isGeminiVoice || isGrokVoice) && (
-            <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
-              <Button
-                className="h-8 bg-secondary text-xs"
-                disabled={
-                  !text.trim() ||
-                  isEstimating ||
-                  isGenerating ||
-                  textIsOverLimit
-                }
-                onClick={handleEstimateCredits}
-                size="sm"
-                variant="outline"
-              >
-                {isEstimating ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  dict.estimateCreditsButton
-                )}
-              </Button>
-              {estimatedCredits !== null && (
-                <div className="text-muted-foreground text-xs">
-                  ~{estimatedCredits.toString()}
-                </div>
-              )}
-            </div>
+            <CreditEstimator
+              buttonLabel={dict.estimateCreditsButton}
+              estimatedCredits={estimatedCredits}
+              isEstimating={isEstimating}
+              isGenerating={isGenerating}
+              onEstimateCredits={handleEstimateCredits}
+              text={text}
+              textIsOverLimit={textIsOverLimit}
+            />
           )}
         </div>
 

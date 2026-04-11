@@ -49,6 +49,7 @@ import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './clone-sample-card';
 import CloneSampleCard from './clone-sample-card';
+import { SpotlightField } from '@/components/spotlight-field';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
@@ -758,15 +759,18 @@ function NewVoiceClientInner({
                 <Label htmlFor="text-to-convert">
                   {dict.textToConvertLabel}
                 </Label>
-                <Textarea
-                  disabled={status === 'generating'}
-                  id="text-to-convert"
-                  maxLength={MAX_LENGTH + 30}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder={dict.textAreaPlaceholder}
-                  rows={5}
-                  value={text}
-                />
+                <SpotlightField>
+                  <Textarea
+                    className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={status === 'generating'}
+                    id="text-to-convert"
+                    maxLength={MAX_LENGTH + 30}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder={dict.textAreaPlaceholder}
+                    rows={5}
+                    value={text}
+                  />
+                </SpotlightField>
               </div>
               <div
                 className={cn(
