@@ -16,6 +16,7 @@ import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -104,7 +105,16 @@ interface CloneProviderConstraints {
   minDurationSeconds: number;
 }
 
+interface ProcessedCloneInputAudio {
+  audioHash: string;
+  buffer: Buffer;
+  duration: number | null;
+  mimeType: string;
+  publicUrl?: string;
+}
+
 interface FormInput {
+  enhanceReferenceAudio: boolean;
   file: File;
   locale: string;
   text: string;
@@ -248,12 +258,16 @@ function validateContentType(contentType: string): void {
 async function parseFormData(request: Request): Promise<FormInput> {
   const formData = await request.formData();
 
+  const enhanceReferenceAudioValue = formData.get('enhanceReferenceAudio');
   const textValue = formData.get('text');
   const file = formData.get('file');
   const locale = formData.get('locale');
 
   const text = typeof textValue === 'string' ? textValue : '';
   const audioFile = file instanceof File ? file : null;
+  const shouldEnhanceReferenceAudio =
+    typeof enhanceReferenceAudioValue === 'string' &&
+    enhanceReferenceAudioValue === 'true';
   const localeStr = typeof locale === 'string' ? locale : '';
 
   if (!(text && audioFile)) {
@@ -267,7 +281,12 @@ async function parseFormData(request: Request): Promise<FormInput> {
     throw createRouteError('Missing required parameter: locale', 400);
   }
 
-  return { text, file: audioFile, locale: localeStr };
+  return {
+    text,
+    file: audioFile,
+    locale: localeStr,
+    enhanceReferenceAudio: shouldEnhanceReferenceAudio,
+  };
 }
 
 function validateTextLength(text: string, locale: string): void {
@@ -375,14 +394,10 @@ async function validateCredits(
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: large
 async function processAudioFile(
   file: File,
+  enhancementEnabled: boolean,
   locale: string,
   userId: string,
-): Promise<{
-  audioHash: string;
-  buffer: Buffer;
-  duration: number | null;
-  mimeType: string;
-}> {
+): Promise<ProcessedCloneInputAudio> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
@@ -409,12 +424,14 @@ async function processAudioFile(
   let processedMimeType = normalizedMimeType;
 
   const provider = resolveCloneProvider(locale);
+  const shouldNormalizeToWav =
+    provider === 'mistral' || enhancementEnabled;
 
   // Convert to WAV for providers that need normalized reference audio
-  if (provider === 'mistral' && needsConversion(normalizedMimeType)) {
+  if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
     if (!(isMicAudio || isConversionSupported(normalizedMimeType, file.name))) {
       throw createRouteError(
-        'Unsupported audio format for non-English voice cloning. Please use MP3, OGG/OPUS, WEBM, or WAV.',
+        'Unsupported audio format for voice cloning. Please use MP3, OGG/OPUS, WEBM, or WAV.',
         400,
       );
     }
@@ -429,9 +446,10 @@ async function processAudioFile(
       if (wavBuffer) {
         processedBuffer = wavBuffer as Buffer<ArrayBuffer>;
         processedMimeType = 'audio/wav';
-        logger.info('Converted audio to WAV for non-English voice cloning', {
+        logger.info('Converted audio to WAV for voice cloning', {
           user: { id: userId },
           extra: {
+            enhancementEnabled,
             originalMimeType: file.type,
             locale,
           },
@@ -632,6 +650,9 @@ async function runBackgroundTasks(
   provider: CloneProvider,
   audioFileData: {
     filename: string;
+    referenceAudioEnhancementModel?: string | null;
+    referenceAudioEnhancementRequestId?: string | null;
+    referenceAudioEnhanced: boolean;
     text: string;
     url: string;
     modelUsed: string;
@@ -658,6 +679,11 @@ async function runBackgroundTasks(
     credits_used: estimate,
     usage: {
       locale: audioFileData.locale,
+      referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
+      referenceAudioEnhancementModel:
+        audioFileData.referenceAudioEnhancementModel ?? '',
+      referenceAudioEnhancementRequestId:
+        audioFileData.referenceAudioEnhancementRequestId ?? '',
       userHasPaid,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
     },
@@ -696,6 +722,11 @@ async function runBackgroundTasks(
       textPreview: audioFileData.text.slice(0, 100),
       textLength: audioFileData.text.length,
       audioDuration: audioFileData.duration,
+      referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
+      referenceAudioEnhancementModel:
+        audioFileData.referenceAudioEnhancementModel,
+      referenceAudioEnhancementRequestId:
+        audioFileData.referenceAudioEnhancementRequestId,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
       requestId: audioFileData.requestId,
       userHasPaid,
@@ -711,6 +742,9 @@ async function runBackgroundTasks(
       textPreview: audioFileData.text.slice(0, 100),
       model: audioFileData.modelUsed,
       audioDuration: audioFileData.duration,
+      referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
+      referenceAudioEnhancementModel:
+        audioFileData.referenceAudioEnhancementModel,
       text: audioFileData.text,
       locale: audioFileData.locale,
       generatedAudioUrl: audioFileData.url,
@@ -726,6 +760,9 @@ async function runBackgroundTasks(
 // ============================================================================
 
 export async function POST(request: Request) {
+  let enhancementModelUsed: string | null = null;
+  let enhancementRequestId: string | null = null;
+  let referenceAudioEnhanced = false;
   let text = '';
   let locale = '';
   let duration: number | null = null;
@@ -755,6 +792,7 @@ export async function POST(request: Request) {
     text = formInput.text;
     locale = formInput.locale;
     referenceAudioFile = formInput.file;
+    referenceAudioEnhanced = formInput.enhanceReferenceAudio;
 
     // Validate inputs
     validateTextLength(text, locale);
@@ -774,15 +812,58 @@ export async function POST(request: Request) {
 
     const processedAudio = await processAudioFile(
       referenceAudioFile,
+      formInput.enhanceReferenceAudio,
       locale,
       user.id,
     );
-    validateAudioDuration(processedAudio.duration, provider);
-    duration = processedAudio.duration;
+    let cloneInputAudio = processedAudio;
+
+    if (formInput.enhanceReferenceAudio) {
+      try {
+        const enhancedAudio = await enhanceReferenceAudio({
+          abortSignal: request.signal,
+          buffer: processedAudio.buffer,
+          filename: referenceAudioFile.name,
+          mimeType: processedAudio.mimeType,
+        });
+
+        enhancementModelUsed = enhancedAudio.modelUsed;
+        enhancementRequestId = enhancedAudio.requestId;
+
+        cloneInputAudio = {
+          audioHash: await generateBufferHash(enhancedAudio.buffer),
+          buffer: enhancedAudio.buffer,
+          duration: await getAudioDuration(
+            enhancedAudio.buffer,
+            enhancedAudio.mimeType,
+          ),
+          mimeType: enhancedAudio.mimeType,
+          publicUrl: enhancedAudio.publicUrl,
+        };
+      } catch (enhancementError) {
+        captureException(enhancementError, {
+          user: { id: user.id },
+          extra: {
+            locale,
+            mimeType: processedAudio.mimeType,
+            filename: referenceAudioFile.name,
+          },
+        });
+
+        throw createRouteError(
+          'Failed to enhance reference audio.',
+          502,
+          'clone_reference_audio_enhancement_failed',
+        );
+      }
+    }
+
+    validateAudioDuration(cloneInputAudio.duration, provider);
+    duration = cloneInputAudio.duration;
 
     // Generate deterministic cache key by audio hash, text, and locale
     const hash = await generateHash(
-      `${locale}-${provider}-${text}-${processedAudio.audioHash}`,
+      `${locale}-${provider}-${text}-${cloneInputAudio.audioHash}-${formInput.enhanceReferenceAudio ? 'enhanced' : 'raw'}`,
     );
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
@@ -808,7 +889,7 @@ export async function POST(request: Request) {
     if (provider === 'mistral') {
       const result = await generateVoiceWithMistral(
         text,
-        processedAudio.buffer,
+        cloneInputAudio.buffer,
       );
 
       outputUrl = await uploadGeneratedAudio(
@@ -822,18 +903,21 @@ export async function POST(request: Request) {
     } else {
       const referenceAudioFilename = sanitizeFilename(referenceAudioFile.name);
       const processedFilename =
-        processedAudio.mimeType === 'audio/wav' &&
+        cloneInputAudio.mimeType === 'audio/wav' &&
         !referenceAudioFilename.endsWith('.wav')
           ? `${referenceAudioFilename.replace(/\.[^/.]+$/, '')}.wav`
           : referenceAudioFilename;
 
-      const blobUrl = `clone-voice-input/${user.id}-${processedAudio.audioHash}-${processedFilename}`;
+      const blobUrl = `clone-voice-input/${user.id}-${cloneInputAudio.audioHash}-${processedFilename}`;
 
-      const referenceAudioUrl = await uploadFileToR2(
-        blobUrl,
-        processedAudio.buffer,
-        processedAudio.mimeType,
-      );
+      const referenceAudioUrl =
+        formInput.enhanceReferenceAudio && cloneInputAudio.publicUrl
+          ? cloneInputAudio.publicUrl
+          : await uploadFileToR2(
+              blobUrl,
+              cloneInputAudio.buffer,
+              cloneInputAudio.mimeType,
+            );
 
       const result = await generateVoiceWithReplicate(
         text,
@@ -855,6 +939,9 @@ export async function POST(request: Request) {
     after(async () => {
       await runBackgroundTasks(user.id, estimate, provider, {
         filename,
+        referenceAudioEnhanced,
+        referenceAudioEnhancementModel: enhancementModelUsed,
+        referenceAudioEnhancementRequestId: enhancementRequestId,
         text,
         url: outputUrl,
         modelUsed,

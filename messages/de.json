@@ -553,7 +553,10 @@
       "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
       "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
     },
-    "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden."
+    "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden.",
+    "referenceAudioEnhancementLabel": "Referenz-Audio verbessern",
+    "referenceAudioEnhancementHelp": "Optional wird der Referenzclip vor dem Klonen entrauscht und bereinigt. Am besten für verrauschte oder unperfekte Aufnahmen.",
+    "errorEnhancingReferenceAudio": "Das Referenz-Audio konnte nicht verbessert werden. Bitte versuchen Sie es erneut oder deaktivieren Sie die Referenz-Audio-Verbesserung."
   },
   "profile": {
     "title": "Profileinstellungen",

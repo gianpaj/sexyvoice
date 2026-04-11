@@ -167,6 +167,10 @@ function NewVoiceClientInner({
   );
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
+  const [
+    referenceAudioEnhancementEnabled,
+    setReferenceAudioEnhancementEnabled,
+  ] = useState(false);
 
   const usesVoxtral = useMemo(
     () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
@@ -284,6 +288,13 @@ function NewVoiceClientInner({
         return `Audio must be between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
       }
 
+      if (code === 'clone_reference_audio_enhancement_failed') {
+        return (
+          dict.errorEnhancingReferenceAudio ||
+          'Failed to enhance reference audio. Please try again or turn off reference audio enhancement.'
+        );
+      }
+
       return fallbackMessage || dict.errorCloning || 'Failed to clone voice.';
     },
     [audioDurationGuidance.max, audioDurationGuidance.min, dict],
@@ -393,6 +404,10 @@ function NewVoiceClientInner({
       formData.append('file', audioToProcess);
       formData.append('text', text);
       formData.append('locale', selectedLocale.code);
+      formData.append(
+        'enhanceReferenceAudio',
+        String(referenceAudioEnhancementEnabled),
+      );
 
       voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -453,6 +468,7 @@ function NewVoiceClientInner({
     getCloneErrorMessage,
     legalConsentChecked,
     micBlob,
+    referenceAudioEnhancementEnabled,
     selectedLocale,
     text,
   ]);
@@ -791,6 +807,28 @@ function NewVoiceClientInner({
                 <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
               </Alert>
             )}
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                checked={referenceAudioEnhancementEnabled}
+                disabled={status === 'generating'}
+                id="reference-audio-enhancement"
+                onCheckedChange={(checked) =>
+                  setReferenceAudioEnhancementEnabled(checked === true)
+                }
+              />
+              <div className="grid gap-1">
+                <Label
+                  className="font-normal text-muted-foreground text-sm leading-tight"
+                  htmlFor="reference-audio-enhancement"
+                >
+                  {dict.referenceAudioEnhancementLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-tight">
+                  {dict.referenceAudioEnhancementHelp}
+                </p>
+              </div>
+            </div>
 
             <div className="flex items-start space-x-2">
               <Checkbox
