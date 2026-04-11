@@ -1,0 +1,1 @@
+- look into https://scalar.com  - if it's free 100% and self hosted

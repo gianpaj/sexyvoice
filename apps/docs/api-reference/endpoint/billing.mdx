@@ -1,0 +1,48 @@
+---
+title: 'Get Billing Balance'
+openapi: 'GET /api/v1/billing'
+---
+
+Retrieve your current credit balance and latest billing transaction.
+
+## What it returns
+
+- `creditsLeft`: Current available credits.
+- `lastUpdated`: Last credits table update timestamp, or `null` if never updated.
+- `userId`: User ID linked to your API key.
+- `lastBillingTransaction`: Most recent `purchase` or `topup` transaction, or
+  `null` if none exists yet.
+
+## Example Request
+
+```bash
+curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+## Example Response
+
+```json
+{
+  "creditsLeft": 12500,
+  "lastUpdated": "2026-03-03T19:02:00.000Z",
+  "userId": "d8a1d8f9-67f8-4a27-9c77-b31a4f9d9e6f",
+  "lastBillingTransaction": {
+    "id": "7b7f0d27-feb2-4f7b-b0f4-0e9a7064f4fd",
+    "type": "topup",
+    "amount": 5000,
+    "description": "Top-up package",
+    "created_at": "2026-03-02T10:22:31.000Z",
+    "reference_id": "pi_3Qxxxx",
+    "subscription_id": null,
+    "metadata": {
+      "package": "starter"
+    }
+  }
+}
+```
+
+## Debugging
+
+All responses include a `request-id` header. Store it in your logs and include
+it in support requests when troubleshooting.

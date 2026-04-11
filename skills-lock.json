@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "efddfd0efbd0e7b5075c5a66ff91a706ac506c88c7b5ddd7fd45a351cb3fe3af"
     },
+    "motion": {
+      "source": "hairyf/skills",
+      "sourceType": "github",
+      "computedHash": "f9570a39ae54cba08f40345f68007a66130904224ab45656582c1719dfcad0b9"
+    },
     "tiptap": {
       "source": "ueberdosis/tiptap",
       "sourceType": "github",
