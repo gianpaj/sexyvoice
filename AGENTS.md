@@ -1,554 +1,188 @@
 # Coding Assistant Guidelines
 
-- Search: Always run `ck --help` first and use `ck` for codebase search. Prefer `ck --regex` for exact text, `ck --sem`/`--hybrid` for conceptual matches, and `--jsonl` for tooling.
+This is the repo-specific operating guide for SexyVoice.ai. Keep it short:
+put durable agent rules here, and move product or architecture detail to linked
+docs.
 
-This file contains repository-specific guidelines and instructions when working on the SexyVoice.ai project.
+## Task Completion Requirements
 
-## Rules
+- All of `pnpm fixall` and `pnpm type-check` must pass before considering tasks completed.
 
-- Whenever writing a test, run the test suite for that file or the entire suite.
-- When I say step by step, I don't mean pausing. Only pause if you're stuck or going on loops
+## Mandatory Rules
 
-## Project Overview
+- Search: Always run `ck --help` first and use `ck` for codebase search.
+  Prefer `ck --regex` for exact text, `ck --sem` or `ck --hybrid` for
+  conceptual matches, and `--jsonl` for tooling.
+- Read relevant files before changing code. Follow existing patterns and keep
+  edits scoped.
+- When writing or changing a test, run the test file or the smallest relevant
+  suite. Run broader tests when the change affects shared behavior.
+- When asked to work "step by step," keep working. Only pause when blocked or
+  looping.
+- Never execute `supabase` CLI commands or SQL queries that can write data.
+  Read-only commands such as `supabase status` are allowed.
+- Do not revert user changes unless the user explicitly asks.
+- Run `pnpm fixall` before committing when feasible.
 
-SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system.
+## Maintainability
 
-### Key Technologies
+Long term maintainability is a core priority. If you add new functionality, first check if there is shared logic that can be extracted to a separate module.
+Duplicate logic across multiple files is a code smell and should be avoided. Don't be afraid to change existing code.
+Don't take shortcuts by just adding local logic to solve a problem.
 
-- **Frontend**: Next.js 16 with App Router, React 19, TypeScript 5
-- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning), xAI (Grok TTS)
-- **Database**: Supabase PostgreSQL
-- **Storage**: Cloudflare R2 for audio files (`R2_BUCKET_NAME` for dashboard, `R2_SPEECH_API_BUCKET_NAME` for external API)
-- **Caching**: Upstash Redis for audio URL caching (dashboard/clone flows only; external API always generates fresh audio)
-- **Real-time Communication**: LiveKit for AI voice calls with WebRTC
-- **Styling**: Tailwind CSS 3, shadcn/ui components, Radix UI primitives
-- **Content**: Contentlayer2 for MDX blog processing
-- **Payments**: Stripe integration with promotional bonus system
-- **Monitoring**: Sentry error tracking and PostHog analytics; Axiom for structured API request logging
-- **AI Services**: Google Generative AI for text-to-speech (Gemini 2.5 Pro/Flash TTS) and text enhancement; xAI Grok TTS for multi-language voice generation
-- **Configuration**: Vercel Edge Config for dynamic call instructions
-- **External API**: REST API (`/api/v1/*`) with HMAC-keyed API keys, rate limiting, OpenAPI 3.1 spec
-- **Code Quality**: Biome for linting and formatting
-- **Testing**: Vitest for unit/integration tests, MSW for API mocking
-- **Package Manager**: pnpm 10
-- **Internationalization**: `next-intl` for route-based i18n; website UI in English, Spanish, German, Danish, Italian, and French; voice generation and cloning in 20+ languages
+## Other Repos
 
-## Architecture Overview
+- Docs: External API and Product docs - <https://github.com/gianpaj/sexyvoice-docs> - it should clone in same parent folder as this project.
 
-### Application Structure
+## Project Snapshot
 
-This is a Next.js 16 App Router application with the following key architectural patterns:
+SexyVoice.ai is a Next.js 16, React 19, TypeScript, Supabase, and Tailwind 3
+app for AI voice generation, voice cloning, audio tools, and LiveKit-powered AI
+voice calls.
 
-- **Internationalization**: `next-intl` with route-based i18n; English (en), Spanish (es), German (de), Danish (da), Italian (it), and French (fr) using `[lang]` dynamic segments; config in `lib/i18n/i18n-config.ts`; messages in `messages/*.json`; server components use `getMessages()` from `next-intl/server`, client components use `useTranslations()` from `next-intl`; navigation helpers (`Link`, `redirect`, `useRouter`, `usePathname`) exported from `lib/i18n/navigation.ts`; type-safe messages via `types/next-intl.d.ts`
-- **Authentication**: Supabase Auth with SSR support, session management in middleware
-- **Database**: Supabase PostgreSQL with type-safe operations
-- **Content**: Contentlayer2 for MDX blog posts with locale support
-- **Styling**: Tailwind 3 CSS with shadcn/ui components and Radix UI primitives
-- **Caching**: Upstash Redis for performance optimization
+Core integrations: Supabase, Cloudflare R2, Upstash Redis, Replicate, fal.ai,
+Google Generative AI, xAI Grok TTS, LiveKit, Stripe, Sentry, PostHog, Axiom,
+Contentlayer2, and `next-intl`.
 
-### Key Directory Structure
+Package manager: `pnpm 10`.
 
-```
-app/[lang]/                    # Internationalized routes
-├── (auth)/                    # Auth-related pages (login, sign up, etc.)
-├── (dashboard)/               # Protected dashboard routes
-│   └── dashboard/             # Main dashboard with nested routes
-│       ├── call/              # Real-time AI voice call interface
-│       ├── usage/             # Usage statistics dashboard
-│       └── ...                # Other dashboard pages
-├── tools/                     # Public utility tools
-│   ├── audio-converter/       # Audio format conversion tool
-│   └── transcribe/            # Audio transcription & translation tool
-├── actions/                   # Server actions (promos, stripe)
-├── blog/[slug]/               # Dynamic blog post pages
-└── page.tsx                   # Landing page
+## High-Value Paths
 
-app/api/
-├── api-keys/                  # API key management (list, create)
-│   └── [id]/                  # Deactivate a specific key (DELETE)
-├── call-token/                # LiveKit token generation for calls (Zod validation, resolves character prompts from DB, includes character_id in metadata)
-├── characters/                # Custom character CRUD (POST create/update, DELETE)
-├── clone-voice/               # Voice cloning endpoint
-├── daily-stats/               # Daily statistics
-├── estimate-credits/          # Credit cost estimation
-├── generate-text/             # Text enhancement with AI
-├── generate-voice/            # Voice generation endpoint
-├── health/                    # Health check
-├── inngest/                   # Background jobs
-├── popular-audios/            # Popular audio listing (not being used)
-├── stripe/
-│   ├── transactions/          # Stripe transaction history
-│   └── webhook/               # Stripe payment webhooks
-├── usage-events/              # Usage tracking API
-├── v1/                        # External REST API (API-key auth, rate-limited)
-│   ├── billing/               # GET  – credit balance + last transaction
-│   ├── models/                # GET  – available model catalog
-│   ├── openapi/               # GET  – OpenAPI 3.1 spec (public, no auth)
-│   ├── speech/                # POST – text-to-speech generation
-│   └── voices/                # GET  – list public TTS voices
-└── wrapped/platform/          # Platform analytics (only updated once a year)
+- `app/[lang]/` - localized App Router pages and layouts.
+- `app/api/` - route handlers, including dashboard APIs and external API v1.
+- `components/` - reusable UI and feature components.
+- `hooks/` - client hooks, including LiveKit call state.
+- `lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
+  pricing, and OpenAPI generation.
+- `lib/i18n/` and `messages/*.json` - locale config, navigation, and copy.
+- `lib/supabase/` - Supabase clients, typed queries, and admin access.
+- `lib/storage/` - Cloudflare R2 upload/delete helpers.
+- `supabase/migrations/` - database migrations.
+- `tests/` - Vitest tests and utilities.
+- `docs/devops.md` - canonical environment, deployment, runtime, and
+  troubleshooting docs.
+- `tests/README.md` - testing details.
+- `docs/changelog-format.md` - changelog rules.
+- `.cursor/rules/` - database function and migration rules.
 
-lib/
-├── api/                       # External API shared layer
-│   ├── auth.ts                # API key generation, HMAC hashing, validateApiKey()
-│   ├── constants.ts           # EXTERNAL_API_MODELS catalog, RATE_LIMIT_DEFAULT
-│   ├── errors.ts              # createApiError(), zodErrorToApiError()
-│   ├── external-errors.ts     # Structured error definitions + externalApiErrorResponse()
-│   ├── logger.ts              # Axiom-backed per-request structured logger
-│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), isFormatSupported(), getModelCatalogResponse()
-│   ├── openapi.ts             # createExternalApiOpenApiDocument() via zod-openapi
-│   ├── pricing.ts             # calculateExternalApiDollarAmount()
-│   ├── rate-limit.ts          # consumeRateLimit() using Upstash Ratelimit
-│   ├── responses.ts           # jsonWithRateLimitHeaders()
-│   └── schemas.ts             # Zod schemas for all v1 request/response types
-├── edge-config/               # Vercel Edge Config for dynamic settings
-├── i18n/                      # Internationalization config and dictionaries
-├── inngest/                   # Background job definitions (not being used)
-├── redis/                     # Upstash Redis client and helpers
-├── storage/                   # Cloudflare R2 upload/delete operations
-│                              #   uploadFileToR2(filename, buffer, contentType, bucketName, publicBaseUrl)
-├── stripe/                    # Payment processing, pricing configuration
-├── supabase/                  # Database client, queries, types
-│   ├── admin.ts               # createAdminClient() – service role, bypasses RLS
-│   ├── queries.ts             # Shared DB queries; *Admin variants for external API routes
-│   └── server.ts              # createClient() – anon key, session-scoped
-├── ai.ts                      # Google Generative AI integration
-├── banlist.ts                 # Blocked email domains
-└── utils.ts                   # Shared utilities
-```
-
-data/
-├── playground-state.ts        # Call session state management
-├── presets.ts                 # Preset configurations for calls
-├── voices.ts                  # Voice definitions
-└── session-config.ts          # Session configuration
-
-components/
-├── ui/                        # shadcn/ui components
-├── call/                      # Real-time call components (17 files)
-├── promo-banner.tsx           # Generic promotion banner
-└── [feature-components]       # App-specific components
-
-hooks/
-├── use-connection.tsx         # LiveKit connection management
-├── use-agent.tsx              # AI agent interaction
-├── use-call-timer.ts          # Call duration tracking
-├── use-playground-state.tsx   # Call state management
-└── ...                        # Other hooks
-
-tests/
-├── utils/                     # Test utilities and helpers
-├── setup.ts                   # Vitest setup and mocks
-└── *.test.ts                  # Test files
-```
-
-### Database Schema
-
-Core tables:
-
-- `profiles` - User profiles linked to Supabase Auth
-- `voices` - Voice models (can be user-created or system voices); includes `feature` column (`feature_type` enum: `'tts'` or `'call'`), `description`, `type`, and `sort_order` for stable ordering
-- `audio_files` - Generated audio files with metadata
-- `credits` - User credit balances
-- `credit_transactions` - Credit usage/purchase history
-- `call_sessions` - Real-time voice call sessions with duration and billing
-- `usage_events` - Detailed usage tracking for analytics and billing
-- `characters` - AI character metadata (name, image, voice FK, session config, localized descriptions); supports both predefined (`is_public = true`) and user-created custom characters (max 10 per user)
-- `prompts` - Prompt content for characters (English text + localized JSONB translations); linked 1:1 from `characters.prompt_id`; predefined prompt text is never exposed to the client
-- `api_keys` - External API keys; stores `key_hash` (HMAC-SHA256, never the raw key), `key_prefix` (first 12 chars for display), `is_active`, `expires_at`, `permissions` (JSONB scopes), `last_used_at`
-
-Shared enum types:
-
-- `feature_type` — `'tts'` | `'call'` — used by both `voices.feature` and `prompts.type` to discriminate which product feature a voice or prompt belongs to
-
-### Voice Generation Flow (Dashboard)
-
-1. User selects voice and enters text in dashboard
-2. API route validates request and checks user credits in Supabase
-3. Request hash is looked up in Redis cache; if found, cached URL is returned
-4. Otherwise, API invokes Replicate (voice generation) or Google Gemini TTS to synthesize audio
-5. Generated audio is uploaded to Cloudflare R2 Storage (`R2_BUCKET_NAME`)
-6. R2 URL is cached in Redis and stored in Supabase with metadata
-7. Analytics sent to PostHog, errors logged in Sentry
-8. Final audio URL returned to client
-
-### External API Speech Generation Flow (`POST /api/v1/speech`)
-
-1. Request arrives with `Authorization: Bearer sk_live_…` header
-2. API key is HMAC-SHA256 hashed and looked up in `api_keys` table via admin client
-3. Rate limit checked via Upstash Ratelimit (60 req/min per key hash)
-4. Request body validated against `VoiceGenerationRequestSchema` (Zod)
-5. Voice looked up by name in `voices` table (admin client, bypasses RLS)
-6. Model compatibility, text length, and format validated
-7. User credit balance fetched via admin client; 402 returned if insufficient
-8. Audio generated fresh every time (no cache) — Gemini TTS for `gpro`, xAI TTS for `grok`, Replicate for `orpheus`
-9. Audio uploaded to `R2_SPEECH_API_BUCKET_NAME` with public URL from `R2_SPEECH_API_PUBLIC_URL`
-10. Credits deducted, audio file saved, usage event inserted — all via admin client
-11. Response includes `url`, `credits_used`, `credits_remaining`, and `usage` object
-12. Rate limit headers (`X-RateLimit-*`) and `request-id` included on every response
-
-### Real-time AI Voice Call Flow
-
-1. User selects a character (predefined or custom) and configures call settings in `/dashboard/call`
-2. User clicks connect, frontend requests token from `/api/call-token` with `selectedPresetId` (character UUID)
-3. API validates request using Zod schema, checks user session and minimum credit balance
-4. API resolves the character's prompt from the DB via `resolveCharacterPrompt()` using `createAdminClient()` (bypasses RLS so predefined prompt text never reaches the client)
-5. For custom characters, API verifies ownership and paid status before resolving the prompt
-6. LiveKit access token is generated with room configuration, AI agent dispatch, and metadata including `character_id` for tracking
-7. Client connects to LiveKit room using WebRTC
-8. AI agent joins the room and handles real-time voice conversation with access to character metadata
-9. Call duration and usage are tracked via `call_sessions` and `usage_events` tables
-10. Credits are deducted based on call duration
-11. On disconnect, credits are refetched and UI is updated
-
-## Development Guidelines
-
-### Code Quality Standards
-
-#### Essential Commands (Always run before committing)
+## Common Commands
 
 ```bash
-pnpm run fixall      # Run all fixes: lint, format, and check
-# OR run individually:
-pnpm run lint --write    # Fix linting issues automatically
-pnpm run format --write  # Format code with Biome
-pnpm run type-check      # Verify TypeScript types
+pnpm dev                 # Start the dev server
+pnpm build               # Production build
+pnpm preview             # Build and run production locally
+pnpm test                # Run all Vitest tests
+pnpm test -- <file>      # Run a focused test file
+pnpm type-check          # TypeScript checks
+pnpm lint                # Biome lint check
+pnpm format              # Biome format check
+pnpm fixall              # lint:write + format:write + check:fix
+pnpm check-translations  # Validate message key parity
+pnpm build:content       # Build MDX content
+pnpm clean               # Check unused dependencies with knip
 ```
 
-#### Code Style
-
-- Use **Biome** for linting and formatting (configured in `biome.json`)
-- 2-space indentation, single quotes, 80 character line width
-- Automatic import organization with Node, Package, Alias groups
-- TypeScript strict mode with `strictNullChecks` enabled
-- Use import/export types when appropriate
-- Prefer `const` over `let`, use proper type annotations
-- Follow React Server Components (RSC) patterns
-
-### File Structure Conventions
-
-#### Naming Conventions
-
-- Components: PascalCase (e.g., `VoiceGenerator.tsx`)
-- Files: kebab-case (e.g., `audio-player.tsx`)
-- API routes: lowercase with hyphens
-- Database tables: snake_case
-
-#### Component Organization
-
-```
-components/
-├── ui/              # shadcn/ui base components
-├── *.tsx           # Reusable components (kebab-case naming)
-```
-
-#### App Router Structure
-
-```
-app/
-├── [lang]/         # Internationalized routes (en/es/de/da/it/fr)
-│   ├── (auth)/     # Authentication pages
-│   ├── (dashboard)/ # Protected dashboard pages
-│   └── layout.tsx  # Language-specific layout
-├── api/            # API routes
-└── globals.css     # Global styles
-```
-
-### Database and API Guidelines
-
-#### Supabase Integration
-
-- Use Supabase SSR client for server components
-- Implement proper error handling for database operations
-- Follow Row Level Security (RLS) policies
-- Use typed database queries with proper TypeScript interfaces
-
-#### Database Development Guidelines
-
-When creating database functions, follow Cursor rules in `.cursor/rules/`:
-
-- Default to `SECURITY INVOKER` for functions
-- Always set `search_path = ''` and use fully qualified names
-- Migration files use format: `YYYYMMDDHHmmss_description.sql`
-- Enable RLS on all new tables with granular policies
-
-#### API Route Standards
-
-- Implement proper error handling and status codes
-- Use Supabase service role for admin operations
-- Validate input data and sanitize outputs
-- Implement rate limiting for resource-intensive operations
-
-#### External API Route Standards (`/api/v1/*`)
-
-- All routes (except `/api/v1/openapi`) require `Authorization: Bearer sk_live_…` header
-- Use `validateApiKey()` from `lib/api/auth.ts` — never trust raw key, always compare hashes
-- Use `consumeRateLimit()` and return rate limit headers via `jsonWithRateLimitHeaders()`
-- Use `externalApiErrorResponse()` for all error responses — consistent structured error shape
-- Use `*Admin` query variants from `lib/supabase/queries.ts` (e.g. `getCreditsAdmin`, `getVoiceIdByNameAdmin`) — external API routes resolve `userId` from the API key, not a session cookie, so `createClient()` (anon key + RLS) will not see the data
-- Always call `updateApiKeyLastUsed()` in a `finally` block
-- Log every request outcome to Axiom via `createLogger()` from `lib/api/logger.ts`
-- Schemas live in `lib/api/schemas.ts` and are shared with the OpenAPI document generator
-
-### Authentication & Routing
-
-- Middleware handles locale detection and Supabase session management
-- Protected routes use `(dashboard)` route group
-- Public routes include auth pages and static content
-
-## Development Commands
-
-### Core Commands
-
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Build production application (includes content build and translation checks)
-- `pnpm start` - Start production server
-- `pnpm preview` - Build and start (preview production locally)
-
-### Code Quality
-
-- `pnpm lint` - Run Biome linting on app/, components/, hooks/, lib/, proxy.ts
-- `pnpm lint:write` / `pnpm lint --write` - Auto-fix linting issues
-- `pnpm format` - Format code with Biome
-- `pnpm format:write` / `pnpm format --write` - Auto-format code
-- `pnpm check:fix` - Run Biome check with fixes
-- `pnpm fixall` - Run all code quality fixes (lint:write + format:write + check:fix)
-- `pnpm type-check` - Run TypeScript type checking
-
-### Testing
-
-- `pnpm test` - Run all tests with Vitest
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:ui` - Run tests with UI interface
-- `pnpm test:coverage` - Generate test coverage report
-
-### Content & Data
-
-- `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)
-- `pnpm dev:content` - Start Contentlayer2 in development mode
-- `pnpm check-translations` - Validate i18n translation files
-
-### Database (Supabase)
-
-- `supabase db push` - Apply migrations to database
-- `pnpm run generate-supabase-types` - Generate TypeScript types from database schema
-- Migration files located in `supabase/migrations/` with timestamp format
-- Telegram bot function available in `supabase/functions/telegram-bot/` using Deno and deployed on Deno Deploy
-
-### Additional Commands
-
-- `pnpm run analyze` - Analyze bundle size
-- `pnpm clean` - Remove unused dependencies with knip
-- `pnpm prepare` - Setup Husky git hooks
-
-## Security and Privacy
-
-### Security Requirements
-
-- **Content Security Policy**: Comprehensive CSP headers configured in `next.config.js`
-- **Security Headers**: X-Content-Type-Options set to `nosniff`
-- **Authentication**: Supabase Auth with SSR support and middleware (proxy) session management
-- **API Security**: Rate limiting and input validation on API routes
-- **Voice Ethics**: Follow voice cloning ethical guidelines (require permission)
-- **Email Security**: Block temporary email addresses for signups
-- **Error Monitoring**: Sentry integration with production tunneling (Generates a random route for each build)
-
-### Privacy Considerations
-
-- Implement data retention policies
-- Respect voice rights and permissions
-- Secure audio file storage and access
-
-## AI/ML Specific Guidelines
-
-### Voice Generation
-
-- Use Replicate API for AI voice generation
-- Use fal.ai API for voice cloning functionality
-- Use Google Generative AI for text-to-speech and text enhancement (emotion tags)
-- Implement credit tracking for API usage
-- Handle voice cloning with proper permissions
-- Support voice generation and cloning in 20+ languages (including Arabic, Bengali, Dutch, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Marathi, Polish, Portuguese, Romanian, Russian, Spanish, Tamil, Telugu, Thai, Turkish, Ukrainian, Vietnamese, and more)
-- Implement audio preview functionality
-
-### Content Moderation
-
-- Implement voice privacy controls (public/private)
-- Validate audio content before storage
-
-### Testing Requirements
-
-### Testing Guidelines
-
-- **Framework**: Vitest with MSW for API mocking
-- **Test Files**: Located in `tests/` directory with `*.test.ts` naming
-- **Coverage**: Voice generation API, Stripe webhooks, utility functions
-- **Mocking**: MSW handlers for external APIs (Replicate, Stripe, Supabase)
-- **Setup**: Global test setup in `tests/setup.ts` with environment variable mocking
-- **Utilities**: Reusable test helpers in `tests/utils/`
-- **CI/CD**: GitHub Actions workflow for automated testing
-- **E2E**: Plan to implement Playwright for end-to-end testing
-- Test critical flows: voice generation, credit management, payment webhooks
-- See `tests/README.md` for detailed testing documentation
-
-## Content Management
-
-### Internationalization
-
-- Translations live in `messages/` — one JSON file per locale: `en.json`, `es.json`, `de.json`, `da.json`, `it.json`, `fr.json`
-- i18n is powered by **`next-intl`** (replaces the old `getDictionary()` helper, which has been deleted)
-- Locale config in `lib/i18n/i18n-config.ts` (`defaultLocale: 'en'`)
-- Request config (locale resolution + message loading) in `src/i18n/request.ts`
-- Type declarations in `types/next-intl.d.ts` — `IntlMessages` is globally augmented so all `useTranslations` / `getMessages` calls are fully type-safe
-- **Server components**: `import { getMessages } from 'next-intl/server'` then `const messages = (await getMessages({ locale: lang })) as IntlMessages`
-- **Client components**: `import { useTranslations } from 'next-intl'` then `const t = useTranslations('generate')`
-- **Navigation**: use `Link`, `redirect`, `useRouter`, `usePathname` from `lib/i18n/navigation.ts` (wraps `next-intl/navigation`) instead of Next.js builtins so locale prefix is handled automatically
-- Uses route-based i18n with `[lang]` dynamic segments; middleware handles locale detection and routing
-- Run `pnpm run check-translations` before commits to validate all locale files have the same keys
-
-### Content Guidelines
-
-- Blog posts written in MDX in `posts/` directory
-- Locale-specific posts use `.es.mdx` extension (defaults to English)
-- Contentlayer2 processes content and generates type-safe data
-- Follow SEO best practices for content structure
-
-### Changelog Maintenance
-
-- Keep changelog formatting rules in `docs/changelog-format.md`
-- Treat `Changelog.md` updates as release-only documentation work:
-  no `Unreleased` section, use the documented header/category format,
-  and include only items supported by repo history
-
-## Environment and Deployment
-
-See [`docs/devops.md`](docs/devops.md) for the canonical DevOps documentation, including:
-
-- environment setup
-- environment variables
-- deployment/runtime guidance
-- infrastructure and region notes
-- operational troubleshooting
-- LiveKit call infrastructure and required call token environment variables (`LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`)
-
-Environment variable maintenance rule:
-
-Key environment variables include:
-
-- **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2 — dashboard audio); `R2_SPEECH_API_BUCKET_NAME`, `R2_SPEECH_API_PUBLIC_URL` (separate bucket + public domain for external API audio)
-- **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
-- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `XAI_API_KEY` (xAI Grok TTS)
-- **Real-time Calls**: `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_URL` (LiveKit for voice calls)
-- **Edge Config**: `EDGE_CONFIG` (Vercel Edge Config for dynamic call instructions)
-- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
-- **Banners & Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`, `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER`, `NEXT_PUBLIC_PROMO_TRANSLATIONS` (legacy promo fallback), `NEXT_PUBLIC_PROMO_THEME`, `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
-- **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
-- **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
-- **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`); Axiom (`AXIOM_TOKEN`) for structured API request logs
-- **External API**: `API_KEY_HMAC_SECRET` (HMAC-SHA256 secret for hashing API keys — never expose, rotate carefully)
-- **Production**: Environment-specific configurations for Sentry and CSP
-- Follow `.env.example` for complete list and setup instructions
-
-When adding, renaming, or removing any environment variable, update `AGENTS.md`, `README.md`, `.env.example`, and `docs/devops.md` in the same change so implementation and setup docs stay in sync.
-
-## Banner System
-
-### Shared Banner Framework
-
-The platform includes a shared banner system for promotions and announcements:
-
-- **Renderer**: `components/banner.tsx` renders the shared dismissible banner UI
-- **Registry**: `lib/banners/registry.ts` defines supported promo and announcement banners
-- **Resolver**: `lib/banners/resolve-banner.ts` chooses the single visible banner for landing, blog, or dashboard
-- **Server Actions**: `app/[lang]/actions/banners.ts` handles banner dismissal with per-banner cookies
-- **Localization**: Banner copy lives in `messages.promos.*` and `messages.announcements.*`
-- **Visibility Model**: Only one banner is visible at a time; dismiss state is independent per banner
-
-### Implementation Pattern
-
-1. Define the banner in `lib/banners/registry.ts`
-2. Add localized copy to all `messages/*.json` files under `promos` or `announcements`
-3. Activate a promo via `NEXT_PUBLIC_PROMO_ENABLED=true` plus `NEXT_PUBLIC_ACTIVE_PROMO_BANNER=<id>`
-4. Activate an announcement via `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER=<id>`
-5. The resolver selects the highest-priority banner valid for the current placement
-6. Users can dismiss a banner without affecting other banners
-7. Credit packages still use the existing promo bonus env vars when promos are enabled
-
-## Feature Development Priorities
-
-Based on TODO.md, current priorities include:
-
-1. **Data Management**: Account deletion with audio cleanup, branch merges (r2, terms-and-conditions)
-2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
-3. **Internationalization**: Expand voice models to French, German, Korean, Mandarin; translate remaining SEO content
-4. **User Experience**: Share pages for audio files, history page with regeneration
-5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
-6. **Analytics**: Add PostHog to auth pages, track paid user status
-7. **Testing**: Expand test coverage, Playwright E2E tests with test database
-8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors
-
-### Recently Completed Features
-
-- **next-intl migration**: Replaced the bespoke `getDictionary()` / `lib/i18n/dictionaries/` system with `next-intl`; messages moved to `messages/*.json`; server components use `getMessages()`, client components use `useTranslations()`; fully type-safe via `types/next-intl.d.ts`
-- **External REST API v1**: Public API (`/api/v1/*`) with API key auth (HMAC-SHA256), rate limiting, structured errors, OpenAPI 3.1 spec auto-generated from Zod schemas via `zod-openapi`
-- **API Key Management**: Dashboard UI and `/api/api-keys` routes for creating/listing/deactivating keys; requires paid account; max 10 active keys per user
-- **Real-time AI Voice Calls**: LiveKit-based voice calling with configurable AI agents
-- **Usage Statistics Dashboard**: `/dashboard/usage` with detailed usage tracking and analytics
-- **Audio Transcription & Translation**: `/tools/transcribe` page for offline audio transcription in 99+ languages with optional translation to English using Whisper AI
-
-## Claude-Specific Instructions
-
-### When Working on Issues
-
-1. **Always analyze the project context first** by reading relevant files
-2. **Follow the existing code patterns** and architectural decisions
-3. **Run `pnpm run fixall` before committing** to ensure code quality
-4. **Update documentation** when adding new features or changing APIs
-5. **Use the dedicated DevOps documentation** — update [`docs/devops.md`](docs/devops.md) when changes affect environment setup, deployment, infrastructure, secret management, or operational troubleshooting
-6. **Keep environment variable documentation synchronized** — if you add, remove, or rename an environment variable, update `AGENTS.md`, `README.md`, `.env.example`, and `docs/devops.md` in the same change
-7. **Consider internationalization** for user-facing text — add keys to `messages/en.json` (and all other locale files), use `getMessages()` in server components and `useTranslations()` in client components; never hardcode English strings in UI
-8. **Implement proper error handling** and loading states
-9. **Follow security best practices** for voice-related features
-10. **Use TodoWrite tool** for multi-step tasks to track progress
-
-### Pull Request Requirements
-
-- Include clear description of changes and their purpose
-- Reference related issues and feature requests
-- Ensure all tests pass and code quality checks pass
-- Update relevant documentation (README, ROADMAP, etc.)
-- Consider impact on credit system and voice generation features
-
-## Troubleshooting
-
-### Common Issues
-
-- **Build failures**: Check TypeScript errors and dependency conflicts
-- **Database issues**: Verify Supabase connection and migration status
-- **Audio generation**: Check Replicate API status and credit balance
-- **Authentication**: Validate Supabase SSR configuration
-- **External API 500s**: Check `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL` are set; verify `API_KEY_HMAC_SECRET` matches what was used to hash stored keys; check Axiom logs for the full error via `createLogger()`
-- **External API 403**: User account has no paid transaction — `hasUserPaidAdmin()` returned false; backfill or top up credits
-- **External API credits showing 0**: User has no row in `credits` table (account predates the `handle_new_user` trigger); run the backfill SQL in `supabase/migrations/` comments or insert manually via Supabase dashboard
-- **R2 CORS errors**: Configure CORS policy on the R2 bucket in the Cloudflare dashboard — allow `GET`/`HEAD` from your app origins
-
-### Debug Commands
-
-```bash
-
-pnpm run type-check              # Check TypeScript issues
-pnpm run lint                    # Check code quality issues
-pnpm run fixall                  # Fix all code quality issues
-pnpm clean                       # Check for unused dependencies
-supabase status                  # Check Supabase connection
-pnpm run analyze                 # Analyze bundle size
-```
-
-## Rules
-
-- NEVER execute any `supabase` CLI commands or SQL queries that can write data
-
----
-
-This document should be updated as the project evolves and new patterns emerge.
+## Code Style
+
+- Use Biome formatting and linting from `biome.json`.
+- Use 2-space indentation, single quotes, and the repo's import ordering.
+- Keep TypeScript strict. Use `import type` and `export type` where appropriate.
+- Follow React Server Component patterns in App Router code.
+- Use kebab-case for files, PascalCase for components, lowercase hyphenated API
+  route segments, and snake_case for database names.
+
+## Internationalization
+
+- UI copy must use `next-intl`; do not hardcode user-facing English strings.
+- Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`.
+- Server components use `getMessages()` from `next-intl/server`.
+- Client components use `useTranslations()` from `next-intl`.
+- Use locale-aware navigation exports from `lib/i18n/navigation.ts`, not raw
+  Next.js navigation helpers.
+- Add or update keys in every `messages/*.json` file and run
+  `pnpm check-translations` for user-facing copy changes.
+
+## Supabase and Database
+
+- Use the SSR client from `lib/supabase/server.ts` for session-scoped server
+  code.
+- Use `createAdminClient()` only for server-side operations that require service
+  role access, and never expose service role data to the client.
+- Keep RLS in mind for all table access.
+- Database functions should default to `SECURITY INVOKER`, set
+  `search_path = ''`, and use fully qualified names.
+- Migration files use `YYYYMMDDHHmmss_description.sql`.
+- Enable RLS on new tables and add granular policies.
+
+## External API v1
+
+Routes under `app/api/v1/*` are API-key authenticated except
+`/api/v1/openapi`.
+
+- Validate keys with `validateApiKey()` from `lib/api/auth.ts`; never trust raw
+  keys and always compare hashes.
+- Rate-limit with `consumeRateLimit()` and return headers via
+  `jsonWithRateLimitHeaders()`.
+- Use `externalApiErrorResponse()` for structured errors.
+- Use `*Admin` query variants from `lib/supabase/queries.ts`, because external
+  API users are resolved from API keys, not session cookies.
+- Call `updateApiKeyLastUsed()` in a `finally` block.
+- Log outcomes through `createLogger()` from `lib/api/logger.ts`.
+- Keep request and response schemas in `lib/api/schemas.ts`; they feed OpenAPI
+  generation.
+- When changing external API behavior, request/response schemas, auth, rate
+  limits, errors, models, pricing, or OpenAPI output, update the
+  `sexyvoice-docs` repo when available. If it is not available, document the
+  exact public API changes in the final response so another coding agent with
+  access can update it.
+- External speech generation always generates fresh audio and uploads to the
+  external API R2 bucket.
+
+## Voice and Call Flows
+
+- Dashboard TTS may use Redis URL caching; external API speech must not.
+- Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
+  `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
+- Voice generation can involve Replicate, Google Gemini TTS, or xAI Grok TTS.
+- Voice cloning uses fal.ai and must respect permission and privacy
+  requirements.
+- LiveKit call tokens resolve character prompts server-side. Predefined prompt
+  text must never be exposed to the client.
+
+## Banners
+
+- Banner definitions live in `lib/banners/registry.ts`.
+- Banner resolution lives in `lib/banners/resolve-banner.ts`.
+- Dismissal actions live in `app/[lang]/actions/banners.ts`.
+- Localized copy lives under `promos` or `announcements` in every
+  `messages/*.json` file.
+- Only one banner should be visible at a time.
+
+## Documentation Rules
+
+- Update docs when changing APIs, workflows, environment variables, or
+  operational behavior.
+- For environment variable changes, update `AGENTS.md`, `README.md`,
+  `.env.example`, and `docs/devops.md` in the same change.
+- Update `docs/devops.md` for deployment, infrastructure, runtime, secret, and
+  troubleshooting changes.
+- Follow `docs/changelog-format.md` for `Changelog.md`; treat changelog edits as
+  release-only documentation work with no `Unreleased` section.
+- Blog content lives in `posts/` and is processed by Contentlayer2.
+
+## Security Notes
+
+- Validate and sanitize API inputs.
+- Preserve structured error handling and status codes.
+- Protect service role secrets, API key hashes, payment data, and generated
+  audio access.
+- Respect voice rights and user privacy when working on cloning, public/private
+  voices, retention, or moderation.
+
+## Pull Requests
+
+- Explain what changed and why.
+- Mention tests and checks run.
+- Note documentation updates.
+- Call out impact on credits, billing, generation, storage, or API contracts
+  when relevant.
