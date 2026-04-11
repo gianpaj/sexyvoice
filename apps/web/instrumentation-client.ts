@@ -2,7 +2,11 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from '@sentry/nextjs';
-import posthog from 'posthog-js';
+import {
+  AnalyticsExtensions,
+  SessionReplayExtensions,
+} from 'posthog-js/dist/extension-bundles';
+import posthog from 'posthog-js/dist/module.slim';
 
 Sentry.init({
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
@@ -61,4 +65,8 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   api_host: '/seguimiento',
   ui_host: 'https://eu.posthog.com',
   defaults: '2026-01-30',
+  __extensionClasses: {
+    ...SessionReplayExtensions,
+    ...AnalyticsExtensions,
+  },
 });
