@@ -1,0 +1,110 @@
+{
+  "totalAnalyzed": 1,
+  "validAnalyses": 1,
+  "errors": 0,
+  "errorSummary": {},
+  "durationAnalysis": {
+    "shortCalls": 0,
+    "mediumCalls": 0,
+    "longCalls": 1,
+    "averageDuration": 635
+  },
+  "timeOfDayAnalysis": {
+    "hourlyDistribution": {
+      "8": 1
+    },
+    "peakHours": [
+      {
+        "hour": 8,
+        "count": 1
+      }
+    ],
+    "totalLongCalls": 1
+  },
+  "topUsers": {
+    "byCallCount": [
+      {
+        "userId": "c1b26eca-ea8b-4321-abf8-0e14ba127b72",
+        "totalCalls": 1,
+        "totalDurationSeconds": 635,
+        "averageDurationSeconds": 635,
+        "successfulAnalyses": 1,
+        "erroredCalls": 0
+      }
+    ],
+    "byTotalDuration": [
+      {
+        "userId": "c1b26eca-ea8b-4321-abf8-0e14ba127b72",
+        "totalCalls": 1,
+        "totalDurationSeconds": 635,
+        "averageDurationSeconds": 635,
+        "successfulAnalyses": 1,
+        "erroredCalls": 0
+      }
+    ]
+  },
+  "languageDistribution": {
+    "it": 1
+  },
+  "topicDistribution": {
+    "fetish_content": 1
+  },
+  "subtopicDistribution": {
+    "bdsm_humiliation": 1
+  },
+  "engagementLevels": {
+    "high": 1
+  },
+  "conversationDeathAnalysis": {
+    "totalConversationsDied": 1,
+    "reasons": [
+      {
+        "sessionId": "8e5cbcf5-f337-4fc4-b3f3-e89ce50a8826",
+        "reason": "User disconnected during ongoing roleplay interaction",
+        "durationSeconds": 635
+      }
+    ]
+  },
+  "aiComplianceIssues": {
+    "total": 0,
+    "issues": []
+  },
+  "popularTopics": [
+    {
+      "topic": "fetish_content",
+      "count": 1
+    }
+  ],
+  "leastPopularTopics": [
+    {
+      "topic": "fetish_content",
+      "count": 1
+    }
+  ],
+  "topUserRequests": [
+    {
+      "request": "switch to italian",
+      "count": 1
+    },
+    {
+      "request": "dominant, cruel, denigrating and vulgar voice",
+      "count": 1
+    },
+    {
+      "request": "describe sexy outfit to wear",
+      "count": 1
+    },
+    {
+      "request": "insert anal plug",
+      "count": 1
+    },
+    {
+      "request": "go to restaurant and order phallic-shaped food",
+      "count": 1
+    },
+    {
+      "request": "respond to waiter's proposition",
+      "count": 1
+    }
+  ]
+}

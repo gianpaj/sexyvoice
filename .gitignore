@@ -30,6 +30,7 @@ build
 .turbo
 
 .env
+.env.e2e
 .vercel
 .vscode
 .env*.local

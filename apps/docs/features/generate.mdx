@@ -1,0 +1,68 @@
+---
+title: "Generate"
+description: "Convert text to natural-sounding speech with AI voices"
+icon: "waveform-lines"
+---
+
+Generate lets you turn any text into lifelike audio using AI voices. Choose from a variety of voices, enter your text, and download the audio file.
+
+## How to Generate Speech
+
+<Steps>
+  <Step title="Select a voice">
+    Choose a voice from the dropdown. Voices are grouped by language. Click the play button to preview how each voice sounds.
+  </Step>
+  <Step title="Enter your text">
+    Type or paste the text you want to convert. Character limits depend on the voice type (see table below).
+  </Step>
+  <Step title="Generate">
+    Click **Generate** or press `Cmd+Enter` (Mac) / `Ctrl+Enter` (Windows). Wait for processing to complete.
+  </Step>
+  <Step title="Download">
+    Preview the audio in the player, then click **Download** to save the file.
+  </Step>
+</Steps>
+
+## Voice Types
+
+| Voice Type | Character Limit | Output Formats | Special Features |
+|------------|-----------------|----------------|------------------|
+| **Gemini voices** | 1,000 characters | WAV | Add style instructions for tone/emotion |
+| **Grok voices** | 1,000 characters | MP3, WAV | Multi-language support with expressive tags |
+| **Standard voices** | 500 characters | MP3 | Use emotion tags in your text |
+
+<Tip>
+Gemini voices show a text box where you can describe how you want the voice to sound (e.g., "warm and friendly" or "serious and professional").
+</Tip>
+
+<Tip>
+Grok voices support both MP3 and WAV output. They also support expressive tags like `[laugh]`, `[sigh]`, `[pause]`, and wrapper tags like `<whisper>...</whisper>`, `<soft>...</soft>` for fine-grained control over delivery.
+</Tip>
+
+## Emotion Tags
+
+Standard voices support emotion tags you can insert directly into your text. Available tags vary by language.
+
+<AccordionGroup>
+  <Accordion title="English">
+    `<laugh>`, `<chuckle>`, `<sigh>`, `<cough>`, `<sniffle>`, `<groan>`, `<yawn>`, `<gasp>`
+  </Accordion>
+  <Accordion title="Spanish">
+    `<groan>`, `<chuckle>`, `<gasp>`, `<resoplido>`, `<laugh>`, `<yawn>`, `<cough>`
+  </Accordion>
+  <Accordion title="Italian">
+    `<sigh>`, `<laugh>`, `<cough>`, `<sniffle>`, `<groan>`, `<yawn>`, `<gemito>`, `<gasp>`
+  </Accordion>
+</AccordionGroup>
+
+**Example:** `Hello! <laugh> That was a good one.`
+
+## Credits
+
+Credits are calculated based on text length and voice type:
+
+- **Gemini voices**: ~1 credit per token (based on text and audio length)
+- **Grok voices**: 4 credits per 100 characters
+- **Standard voices**: Based on estimated audio duration
+
+You need at least **10 credits** to generate audio. Your remaining credits are shown at the top of the page.

@@ -30,9 +30,12 @@ Long term maintainability is a core priority. If you add new functionality, firs
 Duplicate logic across multiple files is a code smell and should be avoided. Don't be afraid to change existing code.
 Don't take shortcuts by just adding local logic to solve a problem.
 
-## Other Repos
+## Monorepo Layout
 
-- Docs: External API and Product docs - <https://github.com/gianpaj/sexyvoice-docs> - it should clone in same parent folder as this project.
+- Web app package: `apps/web` (`@sexyvoice/web`).
+- Mintlify docs app: `apps/docs`.
+- Operational one-off scripts: `scripts` (`@sexyvoice/scripts`).
+- Root commands are orchestrated with Turborepo.
 
 ## Project Snapshot
 
@@ -48,20 +51,21 @@ Package manager: `pnpm 10`.
 
 ## High-Value Paths
 
-- `app/[lang]/` - localized App Router pages and layouts.
-- `app/api/` - route handlers, including dashboard APIs and external API v1.
-- `components/` - reusable UI and feature components.
-- `hooks/` - client hooks, including LiveKit call state.
-- `lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
+- `apps/web/app/[lang]/` - localized App Router pages and layouts.
+- `apps/web/app/api/` - route handlers, including dashboard APIs and external API v1.
+- `apps/web/components/` - reusable UI and feature components.
+- `apps/web/hooks/` - client hooks, including LiveKit call state.
+- `apps/web/lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
   pricing, and OpenAPI generation.
-- `lib/i18n/` and `messages/*.json` - locale config, navigation, and copy.
-- `lib/supabase/` - Supabase clients, typed queries, and admin access.
-- `lib/storage/` - Cloudflare R2 upload/delete helpers.
-- `supabase/migrations/` - database migrations.
-- `tests/` - Vitest tests and utilities.
+- `apps/web/lib/i18n/` and `apps/web/messages/*.json` - locale config, navigation, and copy.
+- `apps/web/lib/supabase/` - Supabase clients, typed queries, and admin access.
+- `apps/web/lib/storage/` - Cloudflare R2 upload/delete helpers.
+- `apps/web/supabase/migrations/` - database migrations.
+- `apps/web/tests/` - Vitest tests and utilities.
+- `apps/docs/` - Mintlify docs, including external API docs.
 - `docs/devops.md` - canonical environment, deployment, runtime, and
   troubleshooting docs.
-- `tests/README.md` - testing details.
+- `apps/web/tests/README.md` - testing details.
 - `docs/changelog-format.md` - changelog rules.
 - `.cursor/rules/` - database function and migration rules.
 
@@ -97,14 +101,14 @@ pnpm clean               # Check unused dependencies with knip
 - Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`.
 - Server components use `getMessages()` from `next-intl/server`.
 - Client components use `useTranslations()` from `next-intl`.
-- Use locale-aware navigation exports from `lib/i18n/navigation.ts`, not raw
+- Use locale-aware navigation exports from `apps/web/lib/i18n/navigation.ts`, not raw
   Next.js navigation helpers.
-- Add or update keys in every `messages/*.json` file and run
+- Add or update keys in every `apps/web/messages/*.json` file and run
   `pnpm check-translations` for user-facing copy changes.
 
 ## Supabase and Database
 
-- Use the SSR client from `lib/supabase/server.ts` for session-scoped server
+- Use the SSR client from `apps/web/lib/supabase/server.ts` for session-scoped server
   code.
 - Use `createAdminClient()` only for server-side operations that require service
   role access, and never expose service role data to the client.
@@ -116,25 +120,23 @@ pnpm clean               # Check unused dependencies with knip
 
 ## External API v1
 
-Routes under `app/api/v1/*` are API-key authenticated except
+Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 `/api/v1/openapi`.
 
-- Validate keys with `validateApiKey()` from `lib/api/auth.ts`; never trust raw
+- Validate keys with `validateApiKey()` from `apps/web/lib/api/auth.ts`; never trust raw
   keys and always compare hashes.
 - Rate-limit with `consumeRateLimit()` and return headers via
   `jsonWithRateLimitHeaders()`.
 - Use `externalApiErrorResponse()` for structured errors.
-- Use `*Admin` query variants from `lib/supabase/queries.ts`, because external
+- Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts`, because external
   API users are resolved from API keys, not session cookies.
 - Call `updateApiKeyLastUsed()` in a `finally` block.
-- Log outcomes through `createLogger()` from `lib/api/logger.ts`.
-- Keep request and response schemas in `lib/api/schemas.ts`; they feed OpenAPI
+- Log outcomes through `createLogger()` from `apps/web/lib/api/logger.ts`.
+- Keep request and response schemas in `apps/web/lib/api/schemas.ts`; they feed OpenAPI
   generation.
 - When changing external API behavior, request/response schemas, auth, rate
   limits, errors, models, pricing, or OpenAPI output, update the
-  `sexyvoice-docs` repo when available. If it is not available, document the
-  exact public API changes in the final response so another coding agent with
-  access can update it.
+  Mintlify docs in `apps/docs`.
 - External speech generation always generates fresh audio and uploads to the
   external API R2 bucket.
 
@@ -151,9 +153,9 @@ Routes under `app/api/v1/*` are API-key authenticated except
 
 ## Banners
 
-- Banner definitions live in `lib/banners/registry.ts`.
-- Banner resolution lives in `lib/banners/resolve-banner.ts`.
-- Dismissal actions live in `app/[lang]/actions/banners.ts`.
+- Banner definitions live in `apps/web/lib/banners/registry.ts`.
+- Banner resolution lives in `apps/web/lib/banners/resolve-banner.ts`.
+- Dismissal actions live in `apps/web/app/[lang]/actions/banners.ts`.
 - Localized copy lives under `promos` or `announcements` in every
   `messages/*.json` file.
 - Only one banner should be visible at a time.
@@ -163,12 +165,12 @@ Routes under `app/api/v1/*` are API-key authenticated except
 - Update docs when changing APIs, workflows, environment variables, or
   operational behavior.
 - For environment variable changes, update `AGENTS.md`, `README.md`,
-  `.env.example`, and `docs/devops.md` in the same change.
+  `apps/web/.env.example`, and `docs/devops.md` in the same change.
 - Update `docs/devops.md` for deployment, infrastructure, runtime, secret, and
   troubleshooting changes.
 - Follow `docs/changelog-format.md` for `Changelog.md`; treat changelog edits as
   release-only documentation work with no `Unreleased` section.
-- Blog content lives in `posts/` and is processed by Contentlayer2.
+- Blog content lives in `apps/web/posts/` and is processed by Contentlayer2.
 
 ## Security Notes
 

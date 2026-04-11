@@ -1,0 +1,84 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "SexyVoice.ai Docs",
+  "colors": {
+    "primary": "#16A34A",
+    "light": "#8a66ff",
+    "dark": "#15803D"
+  },
+  "favicon": "/favicon.svg",
+  "seo": {
+    "indexing": "all",
+    "metatags": {
+      "og:type": "website",
+      "og:site_name": "SexyVoice.ai Docs"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": ["index", "guides/api"]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/generate",
+              "features/voice-cloning",
+              "features/voice-call"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["api-reference/introduction", "api-reference/errors"]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api-reference/endpoint/speech",
+              "api-reference/endpoint/billing",
+              "api-reference/endpoint/voices",
+              "api-reference/endpoint/models",
+              "api-reference/endpoint/openapi"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Documentation",
+          "href": "https://docs.sexyvoice.ai",
+          "icon": "book-open-cover"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://sexyvoice.ai/en/dashboard"
+    }
+  },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "cursor"]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/sexyvoiceai",
+      "github": "https://github.com/gianpaj/sexyvoice.ai",
+      "instagram": "https://www.instagram.com/sexyvoice_ai"
+    }
+  }
+}

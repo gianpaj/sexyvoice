@@ -1,0 +1,46 @@
+---
+title: 'Error Codes'
+description: 'Centralized error response format and code semantics for API.'
+---
+
+All errors return this shape:
+
+```json
+{
+  "error": {
+    "message": "Human-readable message",
+    "type": "invalid_request_error",
+    "param": "input",
+    "code": "input_too_long"
+  }
+}
+```
+
+## Error Types
+
+- `invalid_request_error`: Request shape or parameter invalid.
+- `authentication_error`: Missing or invalid API key.
+- `permission_error`: Account is authenticated but operation is blocked (for example, insufficient credits).
+- `not_found_error`: Referenced resource does not exist.
+- `rate_limit_error`: Request exceeds configured rate limits.
+- `server_error`: Internal processing failure.
+
+## Common Codes
+
+| code | type | Meaning |
+| --- | --- | --- |
+| `invalid_request` | `invalid_request_error` | Request body failed validation.
+| `unsupported_parameter` | `invalid_request_error` | Parameter is not supported.
+| `unsupported_response_format` | `invalid_request_error` | Requested format is unsupported for selected model.
+| `input_too_long` | `invalid_request_error` | Input exceeds model limits.
+| `model_not_found` | `invalid_request_error` | Voice and model combination is invalid.
+| `voice_not_found` | `not_found_error` | Voice name does not exist.
+| `invalid_api_key` | `authentication_error` | Bearer key missing/invalid/inactive.
+| `insufficient_credits` | `permission_error` | Account balance is too low.
+| `rate_limit_exceeded` | `rate_limit_error` | Too many requests.
+| `content_policy_violation` | `invalid_request_error` | Content blocked by provider safety policy.
+| `server_error` | `server_error` | Internal service/provider failure.
+
+## Debugging with request-id
+
+Every response includes `request-id` header. Save it with your logs and include it in bug reports.

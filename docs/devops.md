@@ -7,6 +7,13 @@ for SexyVoice.ai.
 For local development onboarding, see [`README.md`](../README.md).
 For architecture and product context, see [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
+## Monorepo Layout
+
+- `apps/web` contains the Next.js app package, `@sexyvoice/web`.
+- `apps/docs` contains the Mintlify docs site for `docs.sexyvoice.ai`.
+- `scripts` contains operational one-off scripts as `@sexyvoice/scripts`.
+- Root package scripts run through Turborepo.
+
 ## Infrastructure Overview
 
 ### Primary Services
@@ -96,7 +103,7 @@ Notes:
 1. Copy the example environment file:
 
    ```bash
-   cp .env.example .env.local
+   cp apps/web/.env.example apps/web/.env.local
    ```
 
 2. Fill in all required values for the services you use.
@@ -120,13 +127,14 @@ Notes:
 - If you add, rename, or remove an environment variable, update:
   - `AGENTS.md`
   - `README.md`
-  - `.env.example`
+  - `apps/web/.env.example`
   - this file (`docs/devops.md`) when the change affects deployment,
     operations, security, or runtime setup
 
 ## Environment Variables
 
-Use [`.env.example`](../.env.example) as the canonical template.
+Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical
+template.
 
 ### Core application
 
@@ -177,7 +185,7 @@ Notes:
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
   for free-user Gemini flows where configured in code.
 - `MISTRAL_API_KEY` is required for voice cloning requests that use the
-  Voxtral/Mistral path in `app/api/clone-voice/route.ts`.
+  Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
 
 ### LiveKit real-time calls
 
@@ -189,7 +197,7 @@ Notes:
 - `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
   and used by the frontend to connect to LiveKit rooms.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
-  by `app/api/call-token/route.ts` to mint LiveKit access tokens.
+  by `apps/web/app/api/call-token/route.ts` to mint LiveKit access tokens.
 - These secrets must never be exposed to the client.
 
 ### Authentication / auth monitoring
@@ -249,8 +257,8 @@ Used for:
 ### Promotion / banner configuration
 
 - `NEXT_PUBLIC_PROMO_ENABLED` — enables promo campaign behavior: promo banners, bonus-credit pricing, and promo metadata; does not control announcement banners
-- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` — active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`; only used when `NEXT_PUBLIC_PROMO_ENABLED=true`
-- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` — active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`; works independently of `NEXT_PUBLIC_PROMO_ENABLED`
+- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` — active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`; only used when `NEXT_PUBLIC_PROMO_ENABLED=true`
+- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` — active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`; works independently of `NEXT_PUBLIC_PROMO_ENABLED`
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
 - `NEXT_PUBLIC_PROMO_TRANSLATIONS`
@@ -269,10 +277,32 @@ Used for:
 
 ### Vercel
 
-- Main app is deployed on Vercel.
+- Main app is deployed on Vercel from `apps/web`.
+- Keep the existing Vercel project, custom domains, environment variables,
+  Edge Config connection, cron job, and Sentry/PostHog/Axiom settings attached
+  to the web app project.
+- Set the Vercel project Root Directory to `apps/web`.
+- Keep the Framework Preset as Next.js.
+- If the project is configured to install and build from `apps/web`, use the
+  default Next.js build command or set `pnpm build`.
+- If the project is configured from the repository root instead, use
+  `pnpm turbo run build --filter=@sexyvoice/web` as the build command and keep
+  the web app output owned by the filtered package.
+- Enable Vercel's monorepo "skip deployments for unaffected projects" setting
+  when available so docs-only commits do not redeploy the web app.
 - Preview deployments should receive the minimum required secrets for the flows
   being tested.
 - Production secrets must be managed in project settings, never committed.
+
+### Mintlify
+
+- Docs are deployed from `apps/docs`.
+- In Mintlify Git Settings, point the project at this monorepo repository and
+  the production branch.
+- Enable Mintlify monorepo mode.
+- Set the documentation path to `/apps/docs` with no trailing slash.
+- Keep the existing `docs.sexyvoice.ai` custom domain and Mintlify GitHub App
+  installation connected to the repository/branch used for docs deployments.
 
 ### Supabase
 
@@ -490,7 +520,7 @@ Check:
 
 When environment or deployment behavior changes:
 
-1. Update [`.env.example`](../.env.example)
+1. Update [`apps/web/.env.example`](../apps/web/.env.example)
 2. Update [`README.md`](../README.md)
 3. Update [`AGENTS.md`](../AGENTS.md)
 4. Update this file if the change affects:
