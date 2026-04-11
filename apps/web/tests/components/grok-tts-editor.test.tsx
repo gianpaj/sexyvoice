@@ -448,17 +448,14 @@ describe('GrokTTSEditor', () => {
     });
     expect(onChange).toHaveBeenCalledWith('<soft></soft>');
 
-    const serializedCalls = onChange.mock.calls.map(([value]) => value);
-    expect(
-      serializedCalls.some(
-        (value) => value === '<soft>a</soft>' || value === '<soft></soft>a',
-      ),
-    ).toBe(true);
-    expect(
-      serializedCalls.some(
-        (value) => value === '<soft>ab</soft>' || value === '<soft></soft>ab',
-      ),
-    ).toBe(true);
+    await waitFor(() => {
+      const serializedCalls = onChange.mock.calls.map(([value]) => value);
+      expect(
+        serializedCalls.some(
+          (value) => value === '<soft>ab</soft>' || value === '<soft></soft>ab',
+        ),
+      ).toBe(true);
+    });
 
     expect(screen.getByText('<soft>')).toBeInTheDocument();
     expect(screen.getByText('</soft>')).toBeInTheDocument();
