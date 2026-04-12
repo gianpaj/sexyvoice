@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
@@ -58,6 +58,9 @@ const baseDict = {
   title: 'Generate audio',
   textAreaPlaceholder: 'Enter text',
   estimateCreditsButton: 'Estimate credits',
+  languageLabel: 'Language',
+  languageSelectPlaceholder: 'Select a language',
+  langAutomatic: 'Automatic',
   ctaButton: 'Generate',
   generating: 'Generating',
   cancel: 'Cancel',
@@ -89,21 +92,6 @@ const baseDict = {
       inhale: 'Inhale',
       exhale: 'Exhale',
       sigh: 'Sigh',
-    },
-    wrappingTags: {
-      soft: 'Soft',
-      whisper: 'Whisper',
-      loud: 'Loud',
-      buildIntensity: 'Build intensity',
-      decreaseIntensity: 'Decrease intensity',
-      higherPitch: 'Higher pitch',
-      lowerPitch: 'Lower pitch',
-      slow: 'Slow',
-      fast: 'Fast',
-      singSong: 'Sing-song',
-      singing: 'Singing',
-      laughSpeak: 'Laugh-speak',
-      emphasis: 'Emphasis',
     },
   },
 } as const;
@@ -149,6 +137,104 @@ describe('AudioGenerator', () => {
     mockToastFn.mockClear();
     mockToastFn.success.mockClear();
     mockToastFn.error.mockClear();
+  });
+
+  it('shows the Grok language selector with Automatic first and English second', async () => {
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: 'eve',
+        model: 'grok',
+      }),
+    });
+
+    const languageLabel = screen.getByText(baseDict.languageLabel);
+    expect(languageLabel).toBeInTheDocument();
+
+    const languageField = languageLabel.parentElement;
+    expect(languageField).not.toBeNull();
+
+    const trigger = within(languageField as HTMLElement).getByRole('combobox');
+    expect(trigger).toHaveTextContent(baseDict.langAutomatic);
+
+    trigger.click();
+
+    const options = await screen.findAllByRole('option');
+    expect(options[0]).toHaveTextContent(baseDict.langAutomatic);
+    expect(options[1]).toHaveTextContent('English');
+    expect(options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          textContent: expect.stringContaining('Arabic (Egypt)'),
+        }),
+        expect.objectContaining({
+          textContent: expect.stringContaining('Arabic (Saudi Arabia)'),
+        }),
+      ]),
+    );
+  });
+
+  it('submits the selected Grok language in the generation request', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: 'https://example.com/audio.mp3' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: 'eve',
+        model: 'grok',
+      }),
+    });
+
+    const languageLabel = screen.getByText(baseDict.languageLabel);
+    const languageField = languageLabel.parentElement;
+    expect(languageField).not.toBeNull();
+
+    const trigger = within(languageField as HTMLElement).getByRole('combobox');
+    trigger.click();
+
+    const arabicEgyptOption = await screen.findByRole('option', {
+      name: 'Arabic (Egypt)',
+    });
+    arabicEgyptOption.click();
+
+    await waitFor(() => {
+      expect(trigger).toHaveTextContent('Arabic (Egypt)');
+    });
+
+    const editor = document.querySelector('[contenteditable="true"]');
+    expect(editor).not.toBeNull();
+
+    editor?.dispatchEvent(
+      new InputEvent('input', {
+        bubbles: true,
+        inputType: 'insertText',
+        data: 'مرحبا',
+      }),
+    );
+
+    const generateButton = screen.getByTestId('generate-button');
+    generateButton.click();
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/generate-voice',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: 'مرحبا',
+            voice: 'eve',
+            styleVariant: '',
+            language: 'ar-EG',
+          }),
+          signal: expect.any(AbortSignal),
+        }),
+      );
+    });
   });
 
   it('hides Gemini estimate credits UI for Grok voices', () => {

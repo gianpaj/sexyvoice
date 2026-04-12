@@ -43,13 +43,13 @@ import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
 } from './audio-player-with-context';
+import { GenerateButton } from './generate-button';
 
 const GrokTTSEditor = dynamic(
   () => import('./grok-tts-editor').then((mod) => mod.GrokTTSEditor),
   { ssr: false },
 );
 
-import { GenerateButton } from './generate-button';
 import { Alert, AlertDescription } from './ui/alert';
 import {
   Tooltip,
@@ -285,6 +285,7 @@ export function AudioGenerator({
   const [playerControls, setPlayerControls] =
     useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
@@ -323,8 +324,16 @@ export function AudioGenerator({
       text,
       voice: selectedVoice?.name,
       styleVariant: isGeminiVoice ? selectedStyle : '',
+      language: isGrokVoice ? selectedGrokLanguage : undefined,
     }),
-    [isGeminiVoice, selectedStyle, selectedVoice?.name, text],
+    [
+      isGeminiVoice,
+      isGrokVoice,
+      selectedStyle,
+      selectedVoice?.name,
+      selectedGrokLanguage,
+      text,
+    ],
   );
 
   const handleCancel = useCallback(() => {
@@ -526,6 +535,8 @@ export function AudioGenerator({
               maxLength={charactersLimit}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}
+              selectedGrokLanguage={selectedGrokLanguage}
+              setSelectedGrokLanguage={setSelectedGrokLanguage}
               value={text}
             />
           ) : (

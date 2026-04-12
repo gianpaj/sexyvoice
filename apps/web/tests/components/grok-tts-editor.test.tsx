@@ -11,6 +11,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
+import messages from '@/messages/en.json';
 
 const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
   'rounded',
@@ -40,41 +41,35 @@ function getSuggestionDecoration(editor: HTMLElement) {
   return editor.querySelector('[data-decoration-content="Filter..."]');
 }
 
-const baseDict = {
-  effects: {
-    breath: '[breath]',
-    chuckle: '[chuckle]',
-    cry: '[cry]',
-    exhale: '[exhale]',
-    giggle: '[giggle]',
-    humTune: '[hum-tune]',
-    inhale: '[inhale]',
-    laugh: '[laugh]',
-    lipSmack: '[lip-smack]',
-    longPause: '[long-pause]',
-    pause: '[pause]',
-    sigh: '[sigh]',
-    tongueClick: '[tongue-click]',
-    tsk: '[tsk]',
-  },
-  inlineEffectPlaceholder: 'Insert inline effect',
-  wrappingEffectPlaceholder: 'Wrap with style tag',
-  wrappingTags: {
-    buildIntensity: '<build-intensity>...</build-intensity>',
-    decreaseIntensity: '<decrease-intensity>...</decrease-intensity>',
-    emphasis: '<emphasis>...</emphasis>',
-    fast: '<fast>...</fast>',
-    higherPitch: '<higher-pitch>...</higher-pitch>',
-    laughSpeak: '<laugh-speak>...</laugh-speak>',
-    loud: '<loud>...</loud>',
-    lowerPitch: '<lower-pitch>...</lower-pitch>',
-    singSong: '<sing-song>...</sing-song>',
-    singing: '<singing>...</singing>',
-    slow: '<slow>...</slow>',
-    soft: '<soft>...</soft>',
-    whisper: '<whisper>...</whisper>',
-  },
-} as const;
+const baseDict = messages.generate.grok;
+
+function renderEditor({
+  maxLength = 500,
+  onChange = vi.fn(),
+  placeholder = messages.generate.textAreaPlaceholder,
+  selectedGrokLanguage = 'auto',
+  setSelectedGrokLanguage = vi.fn(),
+  value = '',
+}: {
+  maxLength?: number;
+  onChange?: (text: string) => void;
+  placeholder?: string;
+  selectedGrokLanguage?: string;
+  setSelectedGrokLanguage?: (text: string) => void;
+  value?: string;
+} = {}) {
+  return render(
+    <GrokTTSEditor
+      dict={baseDict}
+      maxLength={maxLength}
+      onChange={onChange}
+      placeholder={placeholder}
+      selectedGrokLanguage={selectedGrokLanguage}
+      setSelectedGrokLanguage={setSelectedGrokLanguage}
+      value={value}
+    />,
+  );
+}
 
 function selectEditorText(editor: HTMLElement, text: string) {
   const paragraph = editor.querySelector('p');
@@ -159,19 +154,11 @@ describe('GrokTTSEditor', () => {
   it('renders the editable content area and effects trigger', async () => {
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     expect(await findEditor()).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     ).toBeInTheDocument();
     expect(screen.getByText('0 / 500')).toBeInTheDocument();
   });
@@ -179,15 +166,7 @@ describe('GrokTTSEditor', () => {
   it('renders multiline paragraphs in the ProseMirror editor', async () => {
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value={'Hello\nworld'}
-      />,
-    );
+    renderEditor({ onChange, value: 'Hello\nworld' });
 
     const editor = await findEditor();
 
@@ -198,15 +177,7 @@ describe('GrokTTSEditor', () => {
   it('renders initial multiline content', async () => {
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value={'Line one\nLine two'}
-      />,
-    );
+    renderEditor({ onChange, value: 'Line one\nLine two' });
 
     const editor = await findEditor();
 
@@ -219,22 +190,16 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
 
     expect(
-      await screen.findByRole('heading', { name: /insert inline effect/i }),
+      await screen.findByRole('heading', {
+        name: baseDict.inlineEffectPlaceholder,
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /\[laugh\]/i }),
@@ -246,18 +211,10 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -268,25 +225,21 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
     expect(
-      screen.getByRole('textbox', { name: 'Type your script' }),
+      screen.getByRole('textbox', {
+        name: messages.generate.textAreaPlaceholder,
+      }),
     ).toBeInTheDocument();
 
     await user.type(editor, 'Hello');
 
-    expect(screen.queryByText('Type your script')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(messages.generate.textAreaPlaceholder),
+    ).not.toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello');
   });
 
@@ -294,22 +247,14 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value="Hello"
-      />,
-    );
+    renderEditor({ onChange, value: 'Hello' });
 
     const editor = await findEditor();
 
     placeCaretAtEnd(editor);
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -322,22 +267,14 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value="Hello world"
-      />,
-    );
+    renderEditor({ onChange, value: 'Hello world' });
 
     const editor = await findEditor();
 
     selectEditorText(editor, 'world');
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -350,15 +287,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value="Hello"
-      />,
-    );
+    renderEditor({ onChange, value: 'Hello' });
 
     const editor = await screen.findByText(
       (_, element) => element?.classList.contains('ProseMirror') ?? false,
@@ -367,7 +296,7 @@ describe('GrokTTSEditor', () => {
     selectEditorText(editor, 'Hello');
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
 
@@ -378,7 +307,9 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('</soft>')).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: /wrap with style tag/i }),
+        screen.queryByRole('heading', {
+          name: baseDict.wrappingEffectPlaceholder,
+        }),
       ).not.toBeInTheDocument();
     });
   });
@@ -387,18 +318,10 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
 
@@ -409,7 +332,9 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('</soft>')).toBeInTheDocument();
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: /wrap with style tag/i }),
+        screen.queryByRole('heading', {
+          name: baseDict.wrappingEffectPlaceholder,
+        }),
       ).not.toBeInTheDocument();
     });
   });
@@ -418,20 +343,12 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
     await user.click(
-      screen.getByRole('button', { name: /insert inline effect/i }),
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
     );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
     const paragraph = editor.querySelector('p');
@@ -465,15 +382,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -488,15 +397,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -512,15 +413,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -535,15 +428,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value="Hello"
-      />,
-    );
+    renderEditor({ onChange, value: 'Hello' });
 
     const editor = await findEditor();
 
@@ -562,15 +447,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -595,15 +472,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
     const scrollToSpy = vi
@@ -629,15 +498,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -659,15 +520,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -688,15 +541,10 @@ describe('GrokTTSEditor', () => {
   it('visually highlights unsupported Grok tags in dark red', async () => {
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value={'Hello [unknown-tag] <mystery>world</mystery>'}
-      />,
-    );
+    renderEditor({
+      onChange,
+      value: 'Hello [unknown-tag] <mystery>world</mystery>',
+    });
 
     const editor = await findEditor();
 
@@ -721,15 +569,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -749,15 +589,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -780,15 +612,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -807,15 +631,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 
@@ -839,15 +655,7 @@ describe('GrokTTSEditor', () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value="emphasis>"
-      />,
-    );
+    renderEditor({ onChange, value: 'emphasis>' });
 
     const editor = await findEditor();
 
@@ -866,15 +674,7 @@ describe('GrokTTSEditor', () => {
     const pastedText =
       '<soft>Oh baby... </soft> [inhale] [sigh] <build-intensity>yes</build-intensity>';
 
-    render(
-      <GrokTTSEditor
-        dict={baseDict}
-        maxLength={500}
-        onChange={onChange}
-        placeholder="Type your script"
-        value=""
-      />,
-    );
+    renderEditor({ onChange });
 
     const editor = await findEditor();
 

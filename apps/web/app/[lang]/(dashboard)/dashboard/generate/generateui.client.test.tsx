@@ -80,21 +80,6 @@ const baseDict = {
       exhale: 'Exhale',
       sigh: 'Sigh',
     },
-    wrappingTags: {
-      soft: 'Soft',
-      whisper: 'Whisper',
-      loud: 'Loud',
-      buildIntensity: 'Build intensity',
-      decreaseIntensity: 'Decrease intensity',
-      higherPitch: 'Higher pitch',
-      lowerPitch: 'Lower pitch',
-      slow: 'Slow',
-      fast: 'Fast',
-      singSong: 'Sing-song',
-      singing: 'Singing',
-      laughSpeak: 'Laugh-speak',
-      emphasis: 'Emphasis',
-    },
   },
 } as const;
 

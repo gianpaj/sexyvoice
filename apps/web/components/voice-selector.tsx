@@ -189,12 +189,12 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger>
+          <SelectTrigger className="sm:w-1/3">
             <span className="flex! items-center gap-2">
               <SelectValue placeholder="Select a voice" />
               {selectedVoice && isFeaturedVoice(selectedVoice) && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 font-semibold text-[10px] text-primary uppercase tracking-wide">
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3 text-primary" />
                   {featuredBadgeLabel}
                 </span>
               )}
