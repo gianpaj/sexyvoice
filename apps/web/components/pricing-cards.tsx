@@ -66,13 +66,9 @@ export function PricingCards({
 
   return (
     <div
-      className={cn('flex flex-col gap-6 py-16 xl:px-28', className)}
+      className={cn('flex flex-col gap-6 xl:px-28', className)}
       data-promo-theme={promoTheme}
     >
-      <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
-        {creditsT('pricingPlan')}
-      </h2>
-
       {/* Billing toggle — the "+15%" badge here is the single source of truth */}
       <div className="mx-auto flex items-center gap-1 rounded-full bg-muted p-1">
         <button
@@ -109,9 +105,9 @@ export function PricingCards({
       </div>
 
       <div
-        className={clsx('grid gap-6 md:grid-cols-1', {
-          'lg:grid-cols-3': plans.length === 3,
-          'lg:grid-cols-4': plans.length === 4,
+        className={clsx('grid gap-6', {
+          'md:grid-cols-1 lg:grid-cols-3': plans.length === 3,
+          'md:grid-cols-2 lg:grid-cols-4': plans.length === 4,
         })}
       >
         {plans.map((plan) => (

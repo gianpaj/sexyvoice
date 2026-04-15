@@ -111,7 +111,7 @@ export default async function CreditsPage(props: {
       </div>
 
       <PricingTable
-        className="xl:px-0"
+        className="py-0 pb-16 xl:px-0"
         hideFreePlan
         lang={lang}
         shouldShowSubscriptionPlans={shouldShowSubscriptionPlans}

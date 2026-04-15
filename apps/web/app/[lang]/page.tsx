@@ -274,7 +274,12 @@ export default async function LandingPage(props: {
               </Card>
             </div>
 
-            <PricingTable lang={lang} />
+            <div className="flex flex-col">
+              <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
+                {messages.credits.pricingPlan}
+              </h2>
+              <PricingTable className="py-4 pb-16" lang={lang} />
+            </div>
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">
