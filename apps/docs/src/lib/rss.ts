@@ -27,7 +27,7 @@ export function getRSS() {
 
       author: [
         {
-          name: 'Gianfranco Palumboø',
+          name: 'Gianfranco Palumbo',
         },
       ],
     });

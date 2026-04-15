@@ -81,7 +81,11 @@ const systemPrompt = [
 
 export async function POST(req: Request, ctx: RouteContext<'/api/chat'>) {
   const reqJson = await req.json();
+  const requestSchema = z.object({
+    messages: z.array(z.any()).max(50), // limit conversation length
+  });
 
+  const { messages } = requestSchema.parse(reqJson);
   const result = streamText({
     model: openrouter.chat(
       process.env.OPENROUTER_MODEL ?? 'anthropic/claude-3.5-sonnet',
@@ -92,7 +96,7 @@ export async function POST(req: Request, ctx: RouteContext<'/api/chat'>) {
     },
     messages: [
       { role: 'system', content: systemPrompt },
-      ...(await convertToModelMessages<ChatUIMessage>(reqJson.messages ?? [], {
+      ...(await convertToModelMessages<ChatUIMessage>(messages ?? [], {
         convertDataPart(part) {
           if (part.type === 'data-client')
             return {
