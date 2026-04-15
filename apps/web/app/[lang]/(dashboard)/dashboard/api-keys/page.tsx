@@ -17,7 +17,7 @@ export default async function ApiKeysPage(props: {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <ApiKeys dict={dict.apiKeys} isPaidUser={!isPaidUser} />
+      <ApiKeys dict={dict.apiKeys} isPaidUser={isPaidUser} />
     </div>
   );
 }

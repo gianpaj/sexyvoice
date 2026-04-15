@@ -1,11 +1,11 @@
 # TODO
 
 - Sidebar: close on click on mobile
-- api New Key button: add tooptip and crown showing that's for paid users
+- api New Key button: add tooltip and crown showing that's for paid users
 
 - self-host Sentry on Hetzner machine
 - change all `dict...replace()` to use next-intl functions
-- Generate: if a sample contain tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
+- Generate: if a sample contains tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
 
 ## Agents
 

@@ -9,7 +9,9 @@ export async function GET(
   { params }: { params: Promise<{ slug?: string[] }> },
 ) {
   const { slug } = await params;
-  const page = source.getPage(slug?.slice(0, -1));
+  const pageSlug = slug?.at(0) === 'docs' ? slug.slice(1, -1) : slug?.slice(0, -1);
+  const page = source.getPage(pageSlug);
+
   if (!page) notFound();
 
   return new Response(await getLLMText(page), {
@@ -21,7 +23,6 @@ export async function GET(
 
 export function generateStaticParams() {
   return source.getPages().map((page) => ({
-    lang: page.locale,
     slug: getPageMarkdownUrl(page).segments,
   }));
 }

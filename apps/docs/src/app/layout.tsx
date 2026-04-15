@@ -14,7 +14,7 @@ export const metadata: Metadata = {
       'application/rss+xml': [
         {
           title: 'SexyVoice Docs',
-          url: 'https://docs.sexyVoice.ai/index.xml',
+          url: 'https://docs.sexyvoice.ai/index.xml',
         },
       ],
     },

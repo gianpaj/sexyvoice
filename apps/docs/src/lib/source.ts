@@ -32,11 +32,11 @@ export function getPageImage(page: InferPageType<typeof source>) {
 }
 
 export function getPageMarkdownUrl(page: InferPageType<typeof source>) {
-  const segments = [...page.slugs, 'content.md'];
+  const segments = ['docs', ...page.slugs, 'content.md'];
 
   return {
     segments,
-    url: `${docsContentRoute}/${segments.join('/')}`,
+    url: `${docsContentRoute}/${page.slugs.join('/')}/content.md`,
   };
 }
 

@@ -40,7 +40,6 @@ const NonGrokPromptEditor = dynamic(
 
 import { GrokTTSEditor } from "./grok-tts-editor";
 import { Alert, AlertDescription } from "./ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface AnimatedPromptTextareaProps extends ComponentPropsWithoutRef<
   typeof Textarea

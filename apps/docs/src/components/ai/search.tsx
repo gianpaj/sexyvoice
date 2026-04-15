@@ -117,9 +117,10 @@ export function AISearchInputActions() {
 const StorageKeyInput = '__ai_search_input';
 export function AISearchInput(props: ComponentProps<'form'>) {
   const { status, sendMessage, stop } = useChatContext();
-  const [input, setInput] = useState(
-    () => localStorage.getItem(StorageKeyInput) ?? '',
-  );
+  const [input, setInput] = useState('');
+  useEffect(() => {
+    setInput(localStorage.getItem(StorageKeyInput) ?? '');
+  }, []);
   const isLoading = status === 'streaming' || status === 'submitted';
   const onStart = (e?: SyntheticEvent) => {
     e?.preventDefault();
