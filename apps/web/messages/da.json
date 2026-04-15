@@ -420,7 +420,7 @@
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
-      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og omsluttende tags som <fast>...</fast>.",
+      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og\nomsluttende tags som <fast>...</fast>.",
       "featuredBadge": "Fremhævet"
     }
   },

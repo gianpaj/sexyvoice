@@ -424,7 +424,7 @@
       "selectStyleTextareaPlaceholder": "Descrivi lo stile del tuo dialogo, es. \"Leggi questo in un sussurro drammatico\"",
       "toolTipEmotionTags": "Tag emotivi supportati:",
       "geminiInfo": "Supporta 24 lingue:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇳🇱 Olandese (Paesi Bassi),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇮🇳 Marathi (India),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\n🇻🇳 Vietnamita (Vietnam)",
-      "grokInfo": "Supporta tag inline espressivi come [laugh] e tag di stile avvolgenti come <fast>...</fast>.",
+      "grokInfo": "Supporta tag inline espressivi come [laugh] e\ntag di stile avvolgenti come <fast>...</fast>.",
       "featuredBadge": "In evidenza"
     }
   },

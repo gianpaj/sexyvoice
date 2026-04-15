@@ -371,7 +371,7 @@
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "title": "Generate Audio",
     "grok": {
-      "inlineEffectPlaceholder": "Insert inline effect",
+      "inlineEffectPlaceholder": "Insert tags",
       "wrappingEffectPlaceholder": "Wrap with style tag",
       "formatPlaceholder": "Select format",
       "effects": {
@@ -422,7 +422,7 @@
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)",
-      "grokInfo": "Supports expressive inline tags like [laugh] and wrapping tags like <fast>...</fast>.",
+      "grokInfo": "Supports expressive tags like [laugh] and\nwrapping tags like <fast>...</fast>.",
       "featuredBadge": "Featured"
     }
   },
