@@ -537,14 +537,10 @@ export function GrokTTSEditor({
       <div className="space-y-2 sm:w-1/3">
         <div className="font-medium text-sm">{dict.languageLabel}</div>
         <Select
-          aria-label="grok-language-label"
           onValueChange={setSelectedGrokLanguage}
           value={selectedGrokLanguage}
         >
-          <SelectTrigger
-            aria-labelledby="grok-language-label"
-            className="w-full"
-          >
+          <SelectTrigger className="w-full">
             <SelectValue placeholder={dict.languageSelectPlaceholder} />
           </SelectTrigger>
           <SelectContent>
