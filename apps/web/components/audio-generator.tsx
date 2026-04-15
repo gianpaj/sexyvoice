@@ -40,6 +40,7 @@ const NonGrokPromptEditor = dynamic(
 
 import { GrokTTSEditor } from "./grok-tts-editor";
 import { Alert, AlertDescription } from "./ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface AnimatedPromptTextareaProps extends ComponentPropsWithoutRef<
   typeof Textarea
@@ -153,6 +154,7 @@ export function AudioGenerator({
   const isGeminiVoice = provider === "gemini";
   const isGrokVoice = provider === "grok";
   const showEnhanceButton = provider === "replicate";
+
 
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || "", isPaidUser),
