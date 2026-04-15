@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { Placeholder } from '@tiptap/extensions';
-import { TextSelection } from '@tiptap/pm/state';
-import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { ChevronDown, Crown, Sparkles } from 'lucide-react';
+import { Placeholder } from "@tiptap/extensions";
+import { TextSelection } from "@tiptap/pm/state";
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { ChevronDown, Crown, Sparkles } from "lucide-react";
 import {
   type MouseEvent,
   useCallback,
@@ -13,39 +13,39 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
-import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
+import { AutoConvertGrokTags } from "@/components/grok-tts/extensions/auto-convert-grok-tags";
 import {
   createWrapperBoundaryNode,
   WrapperBoundary,
-} from '@/components/grok-tts/extensions/grok-wrapper-boundary';
+} from "@/components/grok-tts/extensions/grok-wrapper-boundary";
 import {
   createInstantTagNode,
   InstantTag,
-} from '@/components/grok-tts/extensions/instant-tag';
-import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
-import { SpotlightField } from '@/components/spotlight-field';
-import { Button } from '@/components/ui/button';
+} from "@/components/grok-tts/extensions/instant-tag";
+import { UnsupportedGrokTagHighlight } from "@/components/grok-tts/extensions/unsupported-grok-tag-highlight";
+import { SpotlightField } from "@/components/spotlight-field";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
+} from "@/components/ui/tooltip";
+import { useUiEditorState } from "@/hooks/tiptap/use-ui-editor-state";
 import {
   GROK_EMPTY_WRAPPING_TEXT,
   GROK_INSTANT_TAG_DEFINITIONS,
@@ -54,17 +54,17 @@ import {
   type GrokInstantTag,
   grokTextToTipTapDoc,
   grokTipTapDocToText,
-} from '@/lib/tts-editor';
-import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
-import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
-import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
+} from "@/lib/tts-editor";
+import { cn } from "@/lib/utils";
+import type messages from "@/messages/en.json";
+import { UiState } from "./tiptap/tiptap-extension/ui-state-extension";
+import { SlashDropdownMenu } from "./tiptap/tiptap-ui/slash-dropdown-menu";
 import type {
   SuggestionItem,
   SuggestionMenuProps,
-} from './tiptap/tiptap-ui-utils/suggestion-menu';
+} from "./tiptap/tiptap-ui-utils/suggestion-menu";
 
-import './grok-tts-editor.css';
+import "./grok-tts-editor.css";
 
 const INSTANT_TAGS = GROK_INSTANT_TAG_DEFINITIONS;
 
@@ -88,29 +88,29 @@ function isKnownInstantTag(tag: string): tag is GrokInstantTag {
 }
 
 const XAI_LANGUAGE_OPTIONS = [
-  { value: 'ar-EG', label: 'langArabicEgypt' },
-  { value: 'ar-SA', label: 'langArabicSaudiArabia' },
-  { value: 'ar-AE', label: 'langArabicUnitedArabEmirates' },
-  { value: 'bn', label: 'langBengali' },
-  { value: 'zh', label: 'langChinese' },
-  { value: 'fr', label: 'langFrench' },
-  { value: 'de', label: 'langGerman' },
-  { value: 'hi', label: 'langHindi' },
-  { value: 'id', label: 'langIndonesian' },
-  { value: 'it', label: 'langItalian' },
-  { value: 'ja', label: 'langJapanese' },
-  { value: 'ko', label: 'langKorean' },
-  { value: 'pt-BR', label: 'langPortugueseBrazil' },
-  { value: 'pt-PT', label: 'langPortuguesePortugal' },
-  { value: 'ru', label: 'langRussian' },
-  { value: 'es-ES', label: 'langSpanishSpain' },
-  { value: 'es-MX', label: 'langSpanishMexico' },
-  { value: 'tr', label: 'langTurkish' },
-  { value: 'vi', label: 'langVietnamese' },
+  { value: "ar-EG", label: "langArabicEgypt" },
+  { value: "ar-SA", label: "langArabicSaudiArabia" },
+  { value: "ar-AE", label: "langArabicUnitedArabEmirates" },
+  { value: "bn", label: "langBengali" },
+  { value: "zh", label: "langChinese" },
+  { value: "fr", label: "langFrench" },
+  { value: "de", label: "langGerman" },
+  { value: "hi", label: "langHindi" },
+  { value: "id", label: "langIndonesian" },
+  { value: "it", label: "langItalian" },
+  { value: "ja", label: "langJapanese" },
+  { value: "ko", label: "langKorean" },
+  { value: "pt-BR", label: "langPortugueseBrazil" },
+  { value: "pt-PT", label: "langPortuguesePortugal" },
+  { value: "ru", label: "langRussian" },
+  { value: "es-ES", label: "langSpanishSpain" },
+  { value: "es-MX", label: "langSpanishMexico" },
+  { value: "tr", label: "langTurkish" },
+  { value: "vi", label: "langVietnamese" },
 ] as const;
 
 interface GrokTTSEditorProps {
-  dict: (typeof messages)['generate']['grok'];
+  dict: (typeof messages)["generate"]["grok"];
   isPaidUser?: boolean;
   maxLength: number;
   onChange: (text: string) => void;
@@ -165,10 +165,10 @@ function getDomSelectionSnapshot(
 }
 
 interface GrokSlashMenuConfig {
-  allow?: NonNullable<SuggestionMenuProps['allow']>;
+  allow?: NonNullable<SuggestionMenuProps["allow"]>;
   customItems: SuggestionItem[];
   pluginKey: string;
-  triggerChar: '[' | '<';
+  triggerChar: "[" | "<";
 }
 
 interface EditorContentAreaProps {
@@ -218,7 +218,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
       editor={editor}
       role="presentation"
       style={{
-        cursor: isDragging ? 'grabbing' : 'auto',
+        cursor: isDragging ? "grabbing" : "auto",
       }}
     >
       {slashMenus.map((menu) => (
@@ -276,7 +276,7 @@ export function GrokTTSEditor({
       }),
       Placeholder.configure({
         placeholder,
-        emptyNodeClass: 'is-empty with-slash',
+        emptyNodeClass: "is-empty with-slash",
       }),
       InstantTag,
       WrapperBoundary,
@@ -287,13 +287,13 @@ export function GrokTTSEditor({
     content: plainTextToDoc(value),
     editorProps: {
       attributes: {
-        'aria-label': placeholder ?? 'TTS editor',
-        role: 'textbox',
-        'aria-multiline': 'true',
+        "aria-label": placeholder ?? "TTS editor",
+        role: "textbox",
+        "aria-multiline": "true",
         class:
-          'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
-        autoCorrect: 'false',
-        spellCheck: 'false',
+          "min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words",
+        autoCorrect: "false",
+        spellCheck: "false",
       },
       handleDOMEvents: {
         keydown: () => false,
@@ -346,7 +346,7 @@ export function GrokTTSEditor({
       const serialized = grokTipTapDocToText(editor.getJSON());
       const selectedTextLength = selection.empty
         ? 0
-        : editor.state.doc.textBetween(selection.from, selection.to, '\n')
+        : editor.state.doc.textBetween(selection.from, selection.to, "\n")
             .length;
       const nextLength =
         serialized.length - selectedTextLength + tag.tag.length;
@@ -383,12 +383,12 @@ export function GrokTTSEditor({
       }
 
       const openBoundary = createWrapperBoundaryNode(
-        'open',
+        "open",
         tag.tag,
         tag.closeTag,
       );
       const closeBoundary = createWrapperBoundaryNode(
-        'close',
+        "close",
         tag.tag,
         tag.closeTag,
       );
@@ -461,7 +461,7 @@ export function GrokTTSEditor({
 
   const handleInsertTag = useCallback(
     (tag: TagDef) => {
-      if ('closeTag' in tag) {
+      if ("closeTag" in tag) {
         insertWrapperTag(tag);
         return;
       }
@@ -473,8 +473,8 @@ export function GrokTTSEditor({
 
   const translatedGrokLanguages = useMemo(
     () => [
-      { value: 'auto', label: dict.langAutomatic },
-      { value: 'en', label: dict.langEnglish },
+      { value: "auto", label: dict.langAutomatic },
+      { value: "en", label: dict.langEnglish },
       ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
         value,
         label: dict[label as keyof typeof dict] as string,
@@ -489,21 +489,21 @@ export function GrokTTSEditor({
         customItems: INSTANT_TAGS.map((tag) =>
           createInstantTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
-        pluginKey: 'grokInstantTagMenu',
-        triggerChar: '[',
+        pluginKey: "grokInstantTagMenu",
+        triggerChar: "[",
       },
       {
         allow: ({
           editor,
           range,
-        }: Parameters<NonNullable<SuggestionMenuProps['allow']>>[0]) => {
+        }: Parameters<NonNullable<SuggestionMenuProps["allow"]>>[0]) => {
           const resolvedPosition = editor.state.doc.resolve(range.to);
           const nodeAfter = resolvedPosition.nodeAfter;
-          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? '') : '';
+          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? "") : "";
           const previousNode = resolvedPosition.nodeBefore;
           const previousText = previousNode?.isText
-            ? (previousNode.text ?? '')
-            : '';
+            ? (previousNode.text ?? "")
+            : "";
           const combinedTagText = `${previousText}${nextText}`;
 
           return !WRAPPING_TAGS.some((tag) => {
@@ -517,8 +517,8 @@ export function GrokTTSEditor({
         customItems: WRAPPING_TAGS.map((tag) =>
           createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
-        pluginKey: 'grokWrapperTagMenu',
-        triggerChar: '<',
+        pluginKey: "grokWrapperTagMenu",
+        triggerChar: "<",
       },
     ],
     [handleInsertTag],
@@ -537,10 +537,14 @@ export function GrokTTSEditor({
       <div className="space-y-2 sm:w-1/3">
         <div className="font-medium text-sm">{dict.languageLabel}</div>
         <Select
+          aria-label="grok-language-label"
           onValueChange={setSelectedGrokLanguage}
           value={selectedGrokLanguage}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger
+            aria-labelledby="grok-language-label"
+            className="w-full"
+          >
             <SelectValue placeholder={dict.languageSelectPlaceholder} />
           </SelectTrigger>
           <SelectContent>
@@ -640,28 +644,28 @@ export function GrokTTSEditor({
 
             <div
               className={cn(
-                'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                currentLength > maxLength ? 'font-bold text-red-500' : '',
+                "flex items-center justify-end gap-1.5 text-muted-foreground text-sm",
+                currentLength > maxLength ? "font-bold text-red-500" : "",
               )}
             >
               {currentLength} / {maxLength}
               <TooltipProvider>
-                <Tooltip delayDuration={100} /*supportMobileTap*/>
+                <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
                     <Crown
                       className={cn(
-                        'h-3.5 w-3.5 cursor-default',
+                        "h-3.5 w-3.5 cursor-default",
                         isPaidUser
-                          ? 'text-muted-foreground/50'
-                          : 'text-yellow-400',
+                          ? "text-muted-foreground/50"
+                          : "text-yellow-400",
                       )}
                     />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
                       {isPaidUser
-                        ? 'Paid users enjoy 2× character limit'
-                        : 'Upgrade to a paid plan for 2× character limit'}
+                        ? "Paid users enjoy 2× character limit"
+                        : "Upgrade to a paid plan for 2× character limit"}
                     </p>
                   </TooltipContent>
                 </Tooltip>

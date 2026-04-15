@@ -1,24 +1,12 @@
 "use client";
 
 import { useCompletion } from "@ai-sdk/react";
-import {
-  CircleStop,
-  Crown,
-  Download,
-  Info,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  Sparkles,
-} from "lucide-react";
+import { CircleStop, Download, Loader2, RotateCcw } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
   type ComponentPropsWithoutRef,
-  type CSSProperties,
   forwardRef,
   type ReactNode,
-  type RefObject,
   useCallback,
   useEffect,
   useMemo,
@@ -45,18 +33,13 @@ import {
 } from "./audio-player-with-context";
 import { GenerateButton } from "./generate-button";
 
-const GrokTTSEditor = dynamic(
-  () => import("./grok-tts-editor").then((mod) => mod.GrokTTSEditor),
+const NonGrokPromptEditor = dynamic(
+  () => import("./non-grok-editor").then((mod) => mod.NonGrokPromptEditor),
   { ssr: false },
 );
 
+import { GrokTTSEditor } from "./grok-tts-editor";
 import { Alert, AlertDescription } from "./ui/alert";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
 
 interface AnimatedPromptTextareaProps extends ComponentPropsWithoutRef<
   typeof Textarea
@@ -64,7 +47,7 @@ interface AnimatedPromptTextareaProps extends ComponentPropsWithoutRef<
   children?: ReactNode;
 }
 
-const AnimatedPromptTextarea = forwardRef<
+export const AnimatedPromptTextarea = forwardRef<
   HTMLTextAreaElement,
   AnimatedPromptTextareaProps
 >(({ children, className, onBlur, onFocus, ...props }, ref) => {
@@ -85,132 +68,6 @@ const AnimatedPromptTextarea = forwardRef<
   );
 });
 AnimatedPromptTextarea.displayName = "AnimatedPromptTextarea";
-
-interface NonGrokPromptEditorProps {
-  charactersLimit: number;
-  dict: (typeof messages)["generate"];
-  isEnhancingText: boolean;
-  isFullscreen: boolean;
-  isGenerating: boolean;
-  isPaidUser: boolean;
-  onEnhanceText: () => void;
-  onTextChange: (text: string) => void;
-  onToggleFullscreen: () => void;
-  showEnhanceButton: boolean;
-  text: string;
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
-  textareaRightPadding: string;
-  textIsOverLimit: boolean;
-}
-
-function NonGrokPromptEditor({
-  charactersLimit,
-  dict,
-  isEnhancingText,
-  isFullscreen,
-  isGenerating,
-  isPaidUser,
-  onEnhanceText,
-  onTextChange,
-  onToggleFullscreen,
-  showEnhanceButton,
-  text,
-  textareaRef,
-  textareaRightPadding,
-  textIsOverLimit,
-}: NonGrokPromptEditorProps) {
-  return (
-    <>
-      <AnimatedPromptTextarea
-        className={cn(
-          "textarea-2 bg-transparent transition-[height] duration-200 ease-in-out",
-          textareaRightPadding,
-        )}
-        maxLength={charactersLimit + 10}
-        onChange={(e) => onTextChange(e.target.value)}
-        placeholder={dict.textAreaPlaceholder}
-        ref={textareaRef}
-        style={
-          {
-            "--ta2-height": isFullscreen ? "30vh" : "8rem",
-          } as CSSProperties
-        }
-        value={text}
-      >
-        {showEnhanceButton && (
-          <>
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>This model supports emotion tags</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button
-              className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-              disabled={!text.trim() || isEnhancingText || isGenerating}
-              onClick={onEnhanceText}
-              size="icon"
-              title="Enhance text with AI emotion tags"
-              variant="ghost"
-            >
-              {isEnhancingText ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4 text-yellow-300" />
-              )}
-            </Button>
-          </>
-        )}
-
-        <Button
-          className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-          onClick={onToggleFullscreen}
-          size="icon"
-          title="Fullscreen"
-          variant="ghost"
-        >
-          {isFullscreen ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )}
-        </Button>
-      </AnimatedPromptTextarea>
-
-      <div
-        className={cn(
-          "flex items-center justify-end gap-1.5 text-muted-foreground text-sm",
-          textIsOverLimit ? "font-bold text-red-500" : "",
-        )}
-      >
-        {text.length} / {charactersLimit}
-        <TooltipProvider>
-          <Tooltip delayDuration={100} supportMobileTap>
-            <TooltipTrigger asChild>
-              <Crown
-                className={cn(
-                  "h-3.5 w-3.5 cursor-default",
-                  isPaidUser ? "text-muted-foreground/50" : "text-yellow-400",
-                )}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {isPaidUser
-                  ? "Paid users enjoy 2× character limit"
-                  : "Upgrade to a paid plan for 2× character limit"}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-    </>
-  );
-}
 
 interface CreditEstimatorProps {
   buttonLabel: string;
@@ -304,11 +161,11 @@ export function AudioGenerator({
 
   const textareaRightPadding = useMemo(() => {
     if (isGeminiVoice) {
-      return "pr-16";
+      return "pr-10";
     }
 
     if (showEnhanceButton) {
-      return "pr-30";
+      return "pr-20";
     }
 
     return "pr-16";
