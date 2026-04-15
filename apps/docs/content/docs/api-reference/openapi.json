@@ -1,0 +1,632 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SexyVoice API",
+    "version": "1.0.0",
+    "description": "API for text-to-speech generation."
+  },
+  "paths": {
+    "/api/v1/speech": {
+      "post": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Generate speech audio",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceGenerationRequest"
+              },
+              "examples": {
+                "basic": {
+                  "summary": "Basic voice generation",
+                  "value": {
+                    "model": "gpro",
+                    "input": "Hello, world!",
+                    "voice": "poe"
+                  }
+                },
+                "with_style": {
+                  "summary": "Voice generation with emotion",
+                  "value": {
+                    "model": "gpro",
+                    "input": "This is amazing news!",
+                    "voice": "tara",
+                    "style": "happy"
+                  }
+                },
+                "grok_mp3": {
+                  "summary": "Grok voice with default MP3 output",
+                  "value": {
+                    "model": "grok",
+                    "input": "Hello from Grok TTS!",
+                    "voice": "eve"
+                  }
+                },
+                "grok_wav": {
+                  "summary": "Grok voice with WAV output",
+                  "value": {
+                    "model": "grok",
+                    "input": "Hola mundo desde Grok",
+                    "voice": "sal",
+                    "response_format": "wav"
+                  }
+                },
+                "minimal": {
+                  "summary": "Minimum required parameters",
+                  "value": {
+                    "model": "orpheus",
+                    "input": "Test",
+                    "voice": "pietro"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Speech generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceGenerationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient credits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Voice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Content policy violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/voices": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List available voices",
+        "responses": {
+          "200": {
+            "description": "Voices list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoicesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "List available models",
+        "responses": {
+          "200": {
+            "description": "Models list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "summary": "Get billing balance",
+        "responses": {
+          "200": {
+            "description": "Billing balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VoiceGenerationRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": [
+              "gpro",
+              "orpheus",
+              "grok"
+            ],
+            "description": "The voice model to use"
+          },
+          "input": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)"
+          },
+          "voice": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Voice name (see GET /api/v1/voices for available voices)"
+          },
+          "response_format": {
+            "description": "Audio format. Default depends on model",
+            "type": "string",
+            "enum": [
+              "wav",
+              "mp3"
+            ]
+          },
+          "style": {
+            "description": "Emotion/style variant (e.g., \"happy\", \"sad\", \"whisper\")",
+            "type": "string"
+          },
+          "seed": {
+            "description": "Optional deterministic seed for providers that support it (e.g. Gpro)",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "model",
+          "input",
+          "voice"
+        ],
+        "additionalProperties": false
+      },
+      "VoiceGenerationResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to generated audio"
+          },
+          "credits_used": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Credits consumed for this generation"
+          },
+          "credits_remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Remaining credits"
+          },
+          "cached": {
+            "type": "boolean",
+            "description": "Whether result was served from cache"
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "input_characters": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Input characters processed"
+              },
+              "model": {
+                "type": "string",
+                "description": "Model used for generation"
+              }
+            },
+            "required": [
+              "input_characters",
+              "model"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "url",
+          "credits_used",
+          "credits_remaining",
+          "cached",
+          "usage"
+        ],
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "Human-readable error description"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "invalid_request_error",
+                  "authentication_error",
+                  "permission_error",
+                  "not_found_error",
+                  "rate_limit_error",
+                  "server_error"
+                ],
+                "description": "Error category"
+              },
+              "param": {
+                "description": "The parameter that caused the error, if applicable",
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code"
+              }
+            },
+            "required": [
+              "message",
+              "type",
+              "code"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "VoicesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "language": {
+                  "type": "string"
+                },
+                "model": {
+                  "type": "string",
+                  "enum": [
+                    "gpro",
+                    "orpheus",
+                    "grok"
+                  ]
+                },
+                "formats": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wav",
+                      "mp3"
+                    ]
+                  }
+                },
+                "styles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "language",
+                "model",
+                "formats",
+                "styles"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "ModelsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "enum": [
+                    "gpro",
+                    "orpheus",
+                    "grok"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "max_input_length": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "supported_formats": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wav",
+                      "mp3"
+                    ]
+                  }
+                },
+                "supported_styles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "max_input_length",
+                "supported_formats",
+                "supported_styles"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "BillingResponse": {
+        "type": "object",
+        "properties": {
+          "creditsLeft": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "lastUpdated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "userId": {
+            "type": "string"
+          },
+          "lastBillingTransaction": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "purchase",
+                      "topup"
+                    ]
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "reference_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "subscription_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "anyOf": [
+                      {},
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "type",
+                  "amount",
+                  "description",
+                  "created_at",
+                  "reference_id",
+                  "subscription_id"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "creditsLeft",
+          "lastUpdated",
+          "userId",
+          "lastBillingTransaction"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key"
+      }
+    }
+  }
+}

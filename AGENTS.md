@@ -10,7 +10,7 @@ docs.
 
 ## Mandatory Rules
 
-- Search: Always run `ck --help` first and use `ck` for codebase search.
+- Search: Always run `ck --help` first and use `ck` for codebase search, if you don't know how to use it.
   Prefer `ck --regex` for exact text, `ck --sem` or `ck --hybrid` for
   conceptual matches, and `--jsonl` for tooling.
 - Read relevant files before changing code. Follow existing patterns and keep

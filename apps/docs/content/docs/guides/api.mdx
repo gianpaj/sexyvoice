@@ -1,0 +1,95 @@
+---
+title: "API Quickstart"
+description: "How to authenticate, generate speech, and check billing with SexyVoice API"
+icon: "code-xml"
+---
+
+Use the API when you want to generate speech from your own backend or app.
+
+## Prerequisites
+
+- A SexyVoice account
+- API key from **Dashboard -> API Keys**
+- Paid account
+
+## 1. Authenticate
+
+Send your API key as a Bearer token:
+
+```bash
+-H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+## 2. Generate Speech
+
+### Using Gpro
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "gpro",
+    "voice": "poe",
+    "input": "Hello from SexyVoice API",
+    "style": "calm",
+    "seed": 1234
+  }'
+```
+
+### Using Grok (xAI)
+
+Grok voices support both MP3 (default) and WAV output via `response_format`.
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "grok",
+    "voice": "eve",
+    "input": "Hello from Grok! [laugh] This is exciting.",
+    "response_format": "mp3"
+  }'
+```
+
+Successful response includes:
+
+- `url`: generated audio URL
+- `credits_used`
+- `credits_remaining`
+- `usage`
+
+## 3. Check Balance
+
+```bash
+curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+Response includes:
+
+- `creditsLeft`
+- `lastUpdated`
+- `userId`
+- `lastBillingTransaction`
+
+## 4. Handle Errors + Debugging
+
+- Every response includes a `request-id` header. Log it in your app.
+- On failures, inspect `error.code` and `error.type`.
+- See [Error Codes](/api-reference/error-codes) for the full list.
+
+## Useful Endpoints
+
+- `POST /api/v1/speech`
+- `GET /api/v1/billing`
+- `GET /api/v1/voices`
+- `GET /api/v1/models`
+- `GET /api/v1/openapi`
+
+## Next Steps
+
+- Read full [API Reference](/api-reference/api)
+- Add retries for `429` and transient `500` errors
+- Store `request-id` with your logs for support and tracing

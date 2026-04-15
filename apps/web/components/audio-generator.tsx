@@ -154,6 +154,7 @@ export function AudioGenerator({
   const isGrokVoice = provider === "grok";
   const showEnhanceButton = provider === "replicate";
 
+
   const charactersLimit = useMemo(
     () => getCharactersLimit(selectedVoice?.model || "", isPaidUser),
     [selectedVoice, isPaidUser],

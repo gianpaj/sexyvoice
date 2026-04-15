@@ -1,0 +1,49 @@
+import { docs } from 'collections/server';
+import { type InferPageType, loader } from 'fumadocs-core/source';
+import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
+import { openapiPlugin } from 'fumadocs-openapi/server';
+import { icons } from 'lucide-react';
+import { createElement } from 'react';
+
+import { docsContentRoute, docsImageRoute, docsRoute } from './shared';
+
+// See https://fumadocs.dev/docs/headless/source-api for more info
+export const source = loader({
+  baseUrl: docsRoute,
+  source: docs.toFumadocsSource(),
+  plugins: [lucideIconsPlugin(), openapiPlugin()],
+  icon(icon) {
+      if (!icon) {
+        // You may set a default icon
+        return;
+      }
+
+      if (icon in icons) return createElement(icons[icon as keyof typeof icons]);
+    },
+});
+
+export function getPageImage(page: InferPageType<typeof source>) {
+  const segments = [...page.slugs, 'image.webp'];
+
+  return {
+    segments,
+    url: `${docsImageRoute}/${segments.join('/')}`,
+  };
+}
+
+export function getPageMarkdownUrl(page: InferPageType<typeof source>) {
+  const segments = ['docs', ...page.slugs, 'content.md'];
+
+  return {
+    segments,
+    url: `${docsContentRoute}/${page.slugs.join('/')}/content.md`,
+  };
+}
+
+export async function getLLMText(page: InferPageType<typeof source>) {
+  const processed = await page.data.getText('processed');
+
+  return `# ${page.data.title} (${page.url})
+
+${processed}`;
+}
