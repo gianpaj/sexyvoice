@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ export const ConnectionProvider = ({
   children: React.ReactNode;
   dict: (typeof langDict)['call'];
 }) => {
+  const t = useTranslations('call');
   const [connectionDetails, setConnectionDetails] = useState<{
     wsUrl: string;
     token: string;
@@ -111,12 +113,7 @@ export const ConnectionProvider = ({
 
     if (!response.ok) {
       if (response.status === 402) {
-        toast.error(
-          dict.notEnoughCredits.replace(
-            '__COUNT__',
-            MINIMUM_CREDITS_FOR_CALL.toString(),
-          ),
-        );
+        toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
       } else if (response.status === 403) {
         toast.error(dict.freeUserCallLimitExceeded);
       }

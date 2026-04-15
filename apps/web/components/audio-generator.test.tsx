@@ -28,6 +28,23 @@ vi.mock('@/components/services/toast', () => ({
   toast: mockToastFn,
 }));
 
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => {
+    const messages: Record<string, string> = {
+      'generate.gproLimitExceeded':
+        'You have exceeded the limit of {count} multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.',
+    };
+
+    return (key: string, values?: Record<string, string | number>) => {
+      const template =
+        messages[[namespace, key].filter(Boolean).join('.')] ?? key;
+      return template.replace(/\{(\w+)\}/g, (_, name: string) =>
+        String(values?.[name] ?? ''),
+      );
+    };
+  },
+}));
+
 vi.mock('@/components/audio-player-with-context', () => ({
   AudioPlayerWithContext: () => null,
 }));
@@ -71,6 +88,8 @@ const baseDict = {
   success: 'Success',
   error: 'Something went wrong',
   errorEstimating: 'Failed to estimate credits',
+  gproLimitExceeded:
+    'You have exceeded the limit of {count} multilingual voice generations as a free user.',
   dailyLimitError: 'Daily limit reached (__COUNT__)',
   grok: {
     helperText: 'Use Grok tags to control delivery.',

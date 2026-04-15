@@ -1,6 +1,7 @@
 'use client';
 
 import { ScissorsLineDashed } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -61,6 +62,7 @@ function computeTotalDuration(tracks: TrackSegment[]): number {
 }
 
 export default function AudioJoinerClient({ dict }: Props) {
+  const errorsT = useTranslations('audioJoiner.errors');
   const [tracks, setTracks] = useState<TrackSegment[]>([]);
   const [outputFormat, setOutputFormat] = useState<JoinerOutputFormat>('mp3');
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -306,7 +308,7 @@ export default function AudioJoinerClient({ dict }: Props) {
             decodedBuffer,
           });
         } catch (_err) {
-          toast.error(dict.errors.decodeFailed.replace('{file}', file.name));
+          toast.error(errorsT('decodeFailed', { file: file.name }));
         }
       }
 
@@ -314,7 +316,7 @@ export default function AudioJoinerClient({ dict }: Props) {
         setTracks((current) => [...current, ...createdTracks]);
       }
     },
-    [dict.errors.decodeFailed],
+    [errorsT],
   );
 
   const updateTrack = useCallback(

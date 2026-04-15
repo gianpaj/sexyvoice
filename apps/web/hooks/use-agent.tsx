@@ -12,6 +12,7 @@ import {
   type TrackPublication,
   type TranscriptionSegment,
 } from 'livekit-client';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ interface AgentContextType {
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
 
 export function AgentProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('call');
   const room = useMaybeRoomContext();
   const { shouldConnect, dict, disconnect } = useConnection();
   const { agent } = useVoiceAssistant();
@@ -117,7 +119,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         if (errorData.error === 'active_call') {
           toast.error(dict.activeCallError);
         } else if (errorData.error === 'insufficient_credits') {
-          toast.error(dict.notEnoughCredits.replace('__COUNT__', '2000'));
+          toast.error(t('notEnoughCredits', { count: 2000 }));
         } else {
           toast.error(errorData.message || 'An error occurred');
         }
@@ -126,7 +128,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         return JSON.stringify({ handled: true });
       },
     );
-  }, [localParticipant, dict, disconnect]);
+  }, [localParticipant, dict, disconnect, t]);
 
   // Register byte stream handler for images
   useEffect(() => {

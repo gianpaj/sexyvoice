@@ -364,7 +364,7 @@
     "errorEstimating": "Impossible d'estimer les crédits",
     "estimateCreditsButton": "Estimer les crédits",
     "generating": "Génération",
-    "gproLimitExceeded": "Vous avez dépassé la limite de __COUNT__ générations de voix multilingues en tant qu'utilisateur gratuit. Veuillez essayer une voix différente ou mettre à niveau votre forfait pour un accès illimité.",
+    "gproLimitExceeded": "Vous avez dépassé la limite de {count} générations de voix multilingues en tant qu'utilisateur gratuit. Veuillez essayer une voix différente ou mettre à niveau votre forfait pour un accès illimité.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "resetPlayer": "Réinitialiser le lecteur",
@@ -431,7 +431,7 @@
   "call": {
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
-    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
     "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 5 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
     "languageLabel": "Langue",
@@ -464,14 +464,14 @@
     "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Ajouter une description...",
     "clickToAddDescription": "Cliquez pour ajouter une description...",
-    "characterInstructions": "Instructions de __NAME__",
+    "characterInstructions": "Instructions de {name}",
     "characterFallbackName": "Personnage",
     "instructionsPlaceholder": "Entrez les instructions système",
     "voiceLabel": "Voix",
     "voicePlaceholder": "Choisir une voix",
     "voiceSelectorLabel": "Voix",
     "voiceSelectorPlaceholder": "Choisir une voix",
-    "deleteCharacterAriaLabel": "Supprimer __NAME__",
+    "deleteCharacterAriaLabel": "Supprimer {name}",
     "savePreset": {
       "save": "Enregistrer",
       "saveAsNew": "Enregistrer comme nouveau",
@@ -506,7 +506,7 @@
       "voicePlaceholder": "Choisir une voix",
       "instructionsLabel": "Instructions",
       "instructionsPlaceholder": "Décrivez la personnalité de votre personnage, les modèles de parole, l'histoire...",
-      "characterCount": "__COUNT__/5000 caractères",
+      "characterCount": "{count}/5000 caractères",
       "cancelButton": "Annuler",
       "createButton": "Créer le personnage",
       "creatingButton": "Création...",
@@ -515,7 +515,7 @@
       "errorVoiceRequired": "Veuillez sélectionner une voix",
       "playVoiceSample": "Lire l'échantillon vocal",
       "stopVoiceSample": "Arrêter l'échantillon vocal",
-      "previewVoice": "Aperçu de la voix de __VOICE__"
+      "previewVoice": "Aperçu de la voix de {voice}"
     }
   },
   "clone": {
@@ -527,7 +527,7 @@
     "errorCloning": "Échec du clonage vocal",
     "errorTooLarge": "Fichier trop volumineux. Veuillez utiliser un fichier audio plus petit.",
     "errorTitle": "Erreur",
-    "fileFormatsText": "MP3, WAV, M4A, OGG ou OPUS (WhatsApp) (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG ou OPUS (WhatsApp) (max. {size})",
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",

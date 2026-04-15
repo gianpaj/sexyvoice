@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import {
   type ComponentPropsWithoutRef,
   type CSSProperties,
@@ -275,6 +276,7 @@ export function AudioGenerator({
   selectedStyle,
   selectedVoice,
 }: AudioGeneratorProps) {
+  const t = useTranslations('generate');
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -359,13 +361,12 @@ export function AudioGenerator({
 
       if (!response.ok) {
         if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
-          const errorMessage = dict[
-            data.errorCode as keyof typeof dict
-          ] as string;
-          throw new APIError(
-            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-            response,
-          );
+          const errorKey = data.errorCode as keyof typeof dict;
+          const errorMessage =
+            errorKey === 'gproLimitExceeded'
+              ? t('gproLimitExceeded', { count: MAX_FREE_GENERATIONS })
+              : (dict[errorKey] as string);
+          throw new APIError(errorMessage, response);
         }
 
         throw new APIError(data.error || data.serverMessage, response);
@@ -386,7 +387,7 @@ export function AudioGenerator({
     } finally {
       setIsGenerating(false);
     }
-  }, [dict, requestBody]);
+  }, [dict, requestBody, t]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

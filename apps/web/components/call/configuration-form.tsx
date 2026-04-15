@@ -7,6 +7,7 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
@@ -64,6 +65,7 @@ export function ConfigurationForm({
   isPaidUser = false,
   callVoices = [],
 }: ConfigurationFormProps) {
+  const t = useTranslations('call');
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();
   const connectionState = useConnectionState();
@@ -301,11 +303,11 @@ export function ConfigurationForm({
                 {/* Instructions Editor for custom per-character instructions */}
                 <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
                   <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                    {dict.characterInstructions.replace(
-                      '__NAME__',
-                      helpers.getSelectedPreset(pgState)?.name ||
+                    {t('characterInstructions', {
+                      name:
+                        helpers.getSelectedPreset(pgState)?.name ||
                         dict.characterFallbackName,
-                    )}
+                    })}
                   </div>
                   <InstructionsEditor instructions={pgState.instructions} />
                 </div>

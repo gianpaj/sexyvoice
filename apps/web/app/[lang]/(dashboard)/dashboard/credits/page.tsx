@@ -1,8 +1,7 @@
 import { captureException } from '@sentry/nextjs';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import Script from 'next/script';
-import { getMessages } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import type Stripe from 'stripe';
 
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,10 @@ export default async function CreditsPage(props: {
 }) {
   const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const sidebarT = await getTranslations({
+    locale: lang,
+    namespace: 'sidebar',
+  });
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -119,10 +122,9 @@ export default async function CreditsPage(props: {
         <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
           <Sparkles className="size-5 shrink-0 text-yellow-500" />
           <span>
-            {dict.sidebar.subscriptionDiscount.replace(
-              '{discount}',
-              String(Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)),
-            )}
+            {sidebarT('subscriptionDiscount', {
+              discount: Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100),
+            })}
           </span>
         </div>
       )}
@@ -146,10 +148,9 @@ const NextStripePricingTable = ({
 
   return (
     <>
-      <Script
+      <script
         async
         src="https://js.stripe.com/v3/pricing-table.js"
-        strategy="lazyOnload"
       />
       {/* @ts-ignore */}
       <stripe-pricing-table

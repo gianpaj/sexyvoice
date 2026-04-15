@@ -8,6 +8,7 @@ import {
   UploadIcon,
   XIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
@@ -40,7 +41,6 @@ import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
 import type { SampleAudio } from './clone-sample-card';
 import CloneSampleCard from './clone-sample-card';
@@ -111,21 +111,15 @@ const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
 
 export default function NewVoiceClient({
-  dict,
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
   return (
     <AudioProvider>
-      <NewVoiceClientInner
-        dict={dict}
-        hasEnoughCredits={hasEnoughCredits}
-        lang={lang}
-      />
+      <NewVoiceClientInner hasEnoughCredits={hasEnoughCredits} lang={lang} />
     </AudioProvider>
   );
 }
@@ -133,14 +127,13 @@ export default function NewVoiceClient({
 const MAX_LENGTH = 500;
 
 function NewVoiceClientInner({
-  dict,
   lang,
   hasEnoughCredits,
 }: {
-  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
 }) {
+  const t = useTranslations('clone');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -279,9 +272,9 @@ function NewVoiceClientInner({
         return `Audio must be between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
       }
 
-      return fallbackMessage || dict.errorCloning || 'Failed to clone voice.';
+      return fallbackMessage || t('errorCloning');
     },
-    [audioDurationGuidance.max, audioDurationGuidance.min, dict],
+    [audioDurationGuidance.max, audioDurationGuidance.min, t],
   );
 
   const [
@@ -317,13 +310,13 @@ function NewVoiceClientInner({
 
   const handleGenerate = useCallback(async () => {
     if (!(file || micBlob)) {
-      setErrorMessage(dict.errors.noAudioFile);
+      setErrorMessage(t('errors.noAudioFile'));
       setStatus('error');
       return;
     }
 
     if (!text.trim()) {
-      setErrorMessage(dict.errors.noText);
+      setErrorMessage(t('errors.noText'));
       setStatus('error');
       return;
     }
@@ -375,7 +368,7 @@ function NewVoiceClientInner({
       }
 
       if (!audioToProcess) {
-        setErrorMessage(dict.errors.noAudioFile);
+        setErrorMessage(t('errors.noAudioFile'));
         setStatus('error');
         return;
       }
@@ -393,13 +386,11 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = dict.errorCloning || 'Failed to clone voice.';
+        let errorMessage = t('errorCloning');
 
         // Handle 413 Payload Too Large - returns plain text
         if (voiceRes.status === 413) {
-          errorMessage =
-            dict.errorTooLarge ||
-            'File size too large. Please use a smaller audio file.';
+          errorMessage = t('errorTooLarge');
         } else {
           const voiceResult = await voiceRes.json();
           errorMessage = getCloneErrorMessage(
@@ -417,7 +408,7 @@ function NewVoiceClientInner({
 
       setGeneratedAudioUrl(voiceResult.url);
 
-      toast.success(dict.success);
+      toast.success(t('success'));
 
       setStatus('complete');
       setActiveTab('preview');
@@ -440,12 +431,12 @@ function NewVoiceClientInner({
   }, [
     clearErrors,
     convertWithFFmpeg,
-    dict,
     file,
     getCloneErrorMessage,
     legalConsentChecked,
     micBlob,
     selectedLocale,
+    t,
     text,
   ]);
 
@@ -493,7 +484,7 @@ function NewVoiceClientInner({
     try {
       await downloadUrl(generatedAudioUrl, anchorElement);
     } catch {
-      toast.error(dict.errorCloning);
+      toast.error(t('errorCloning'));
     }
   };
 
@@ -528,16 +519,16 @@ function NewVoiceClientInner({
       <CardContent className="pt-6">
         <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
+            <TabsTrigger value="upload">{t('tabUpload')}</TabsTrigger>
             <TabsTrigger disabled={status !== 'complete'} value="preview">
-              {dict.tabPreview}
+              {t('tabPreview')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
               <div className="grid w-full gap-2">
-                <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
+                <Label htmlFor="audio-file">{t('audioFileLabel')}</Label>
 
                 {/* Drop area */}
                 {!(file || micRecording) && (
@@ -568,16 +559,15 @@ function NewVoiceClientInner({
                         <UploadIcon className="size-4 opacity-60" />
                       </div>
                       <p className="mb-1.5 font-medium text-sm">
-                        {dict.uploadAudioFile}
+                        {t('uploadAudioFile')}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {dict.dragDropText}
+                        {t('dragDropText')}
                       </p>
                       <p className="mt-1 text-muted-foreground text-xs">
-                        {dict.fileFormatsText.replace(
-                          '__SIZE__',
-                          formatBytes(CLONING_FILE_MAX_SIZE),
-                        )}
+                        {t('fileFormatsText', {
+                          size: formatBytes(CLONING_FILE_MAX_SIZE),
+                        })}
                       </p>
                       <p className="mt-2 text-muted-foreground text-xs italic">
                         {localeSpecificReferenceAudioGuidance}
@@ -589,7 +579,7 @@ function NewVoiceClientInner({
                 {!file && (
                   <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
                     <p className="text-center text-xs">
-                      {dict.orUseMicrophone}
+                      {t('orUseMicrophone')}
                     </p>
                     {ffmpegLoading && usesVoxtral && (
                       <div className="flex items-center justify-center gap-2 py-2">
@@ -673,14 +663,13 @@ function NewVoiceClientInner({
                     // Sample audio demo buttons
                     <div className="grid w-full gap-2">
                       <p className="text-muted-foreground text-xs">
-                        {dict.tryDemo}
+                        {t('tryDemo')}
                       </p>
 
                       <Accordion className="w-full" collapsible type="single">
                         {sampleAudios.map((sample) => (
                           <CloneSampleCard
                             addFiles={addFiles}
-                            dict={dict}
                             key={sample.id}
                             onSelectSample={onSelectSample}
                             sample={sample}
@@ -696,7 +685,7 @@ function NewVoiceClientInner({
 
               <div className="grid w-full gap-6">
                 <div className="grid w-full gap-2">
-                  <Label htmlFor="language">{dict.languageLabel}</Label>
+                  <Label htmlFor="language">{t('languageLabel')}</Label>
                   <Select
                     disabled={status === 'generating'}
                     onValueChange={(code) =>
@@ -711,7 +700,7 @@ function NewVoiceClientInner({
                   >
                     <SelectTrigger className="w-32" id="language">
                       <SelectValue
-                        placeholder={dict.languageSelectPlaceholder}
+                        placeholder={t('languageSelectPlaceholder')}
                       />
                     </SelectTrigger>
                     <SelectContent>
@@ -729,15 +718,15 @@ function NewVoiceClientInner({
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <InfoIcon className="size-5 text-blue-600" />
-                      {dict.crossLanguageInfo.title}
+                      {t('crossLanguageInfo.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <p className="text-gray-200 text-sm">
-                      {dict.crossLanguageInfo.description}
+                      {t('crossLanguageInfo.description')}
                     </p>
                     <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
-                      {dict.crossLanguageInfo.example}
+                      {t('crossLanguageInfo.example')}
                     </div>
                   </CardContent>
                 </Card>
@@ -745,7 +734,7 @@ function NewVoiceClientInner({
 
                 <div className="grid w-full gap-2">
                   <Label htmlFor="text-to-convert">
-                    {dict.textToConvertLabel}
+                    {t('textToConvertLabel')}
                   </Label>
                   <SpotlightField>
                     <Textarea
@@ -754,7 +743,7 @@ function NewVoiceClientInner({
                       id="text-to-convert"
                       maxLength={MAX_LENGTH + 30}
                       onChange={(e) => setText(e.target.value)}
-                      placeholder={dict.textAreaPlaceholder}
+                      placeholder={t('textAreaPlaceholder')}
                       rows={5}
                       value={text}
                     />
@@ -774,14 +763,14 @@ function NewVoiceClientInner({
             {status === 'error' && errorMessage && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{dict.errorTitle}</AlertTitle>
+                <AlertTitle>{t('errorTitle')}</AlertTitle>
                 <AlertDescription>{errorMessage}</AlertDescription>
               </Alert>
             )}
 
             {!hasEnoughCredits && (
               <Alert className="mx-auto w-fit" variant="destructive">
-                <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+                <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
               </Alert>
             )}
 
@@ -797,13 +786,13 @@ function NewVoiceClientInner({
                 className="font-normal text-muted-foreground text-sm leading-tight"
                 htmlFor="legal-consent"
               >
-                {dict.legalConsentCheckbox}
+                {t('legalConsentCheckbox')}
               </Label>
             </div>
 
             <GenerateButton
               className="w-full"
-              ctaText={dict.ctaButton}
+              ctaText={t('ctaButton')}
               disabled={
                 !((file || micBlob) && text.trim()) ||
                 status === 'generating' ||
@@ -814,7 +803,7 @@ function NewVoiceClientInner({
               }
               generatingText={
                 status === 'generating'
-                  ? `${dict.generating}...`
+                  ? `${t('generating')}...`
                   : // TODO: translate
                     'Converting audio...'
               }
@@ -827,7 +816,7 @@ function NewVoiceClientInner({
                 onClick={handleCancel}
                 variant="outline"
               >
-                {dict.cancelButton}{' '}
+                {t('cancelButton')}{' '}
                 <CircleStop className="size-4" name="cancel" />
               </Button>
             )}
@@ -836,7 +825,7 @@ function NewVoiceClientInner({
           <TabsContent className="space-y-4 py-4" value="preview">
             <div className="space-y-4">
               <h3 className="text-center font-medium text-xl">
-                {dict.previewTitle}
+                {t('previewTitle')}
               </h3>
 
               <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
@@ -844,7 +833,7 @@ function NewVoiceClientInner({
                   <AudioPlayerWithContext
                     autoPlay
                     className="rounded-full"
-                    playAudioTitle={dict.playAudio}
+                    playAudioTitle={t('playAudio')}
                     progressColor="#8b5cf6"
                     showWaveform
                     url={generatedAudioUrl}
@@ -859,7 +848,7 @@ function NewVoiceClientInner({
                   onClick={downloadAudio}
                 >
                   <Download className="h-4 w-4" />
-                  {dict.downloadAudio}
+                  {t('downloadAudio')}
                 </Button>
               </div>
             </div>

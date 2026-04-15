@@ -364,7 +364,7 @@
     "errorEstimating": "Credits konnten nicht geschätzt werden",
     "estimateCreditsButton": "Credits schätzen",
     "generating": "Wird generiert",
-    "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
+    "gproLimitExceeded": "Sie haben das Limit von {count} mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
@@ -431,7 +431,7 @@
   "call": {
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
-    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
     "languageLabel": "Sprache",
@@ -464,14 +464,14 @@
     "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Beschreibung hinzufügen...",
     "clickToAddDescription": "Klicke, um eine Beschreibung hinzuzufügen...",
-    "characterInstructions": "__NAME__-Anweisungen",
+    "characterInstructions": "{name}-Anweisungen",
     "characterFallbackName": "Charakter",
     "instructionsPlaceholder": "Systemanweisungen eingeben",
     "voiceLabel": "Stimme",
     "voicePlaceholder": "Stimme wählen",
     "voiceSelectorLabel": "Stimme",
     "voiceSelectorPlaceholder": "Stimme wählen",
-    "deleteCharacterAriaLabel": "__NAME__ löschen",
+    "deleteCharacterAriaLabel": "{name} löschen",
     "savePreset": {
       "save": "Speichern",
       "saveAsNew": "Als neu speichern",
@@ -506,7 +506,7 @@
       "voicePlaceholder": "Stimme wählen",
       "instructionsLabel": "Anweisungen",
       "instructionsPlaceholder": "Beschreiben Sie die Persönlichkeit, Sprechmuster und Hintergrundgeschichte Ihres Charakters...",
-      "characterCount": "__COUNT__/5000 Zeichen",
+      "characterCount": "{count}/5000 Zeichen",
       "cancelButton": "Abbrechen",
       "createButton": "Charakter erstellen",
       "creatingButton": "Erstelle...",
@@ -515,7 +515,7 @@
       "errorVoiceRequired": "Bitte wählen Sie eine Stimme",
       "playVoiceSample": "Stimmprobe abspielen",
       "stopVoiceSample": "Stimmprobe stoppen",
-      "previewVoice": "Vorschau der Stimme von __VOICE__"
+      "previewVoice": "Vorschau der Stimme von {voice}"
     }
   },
   "clone": {
@@ -527,7 +527,7 @@
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
     "errorTooLarge": "Dateigröße zu groß. Bitte verwenden Sie eine kleinere Audiodatei.",
-    "fileFormatsText": "MP3, WAV, M4A, OGG oder OPUS (WhatsApp) (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG oder OPUS (WhatsApp) (max. {size})",
     "generating": "Wird generiert",
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",

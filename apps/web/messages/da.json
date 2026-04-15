@@ -364,7 +364,7 @@
     "errorEstimating": "Kunne ikke estimere credits",
     "estimateCreditsButton": "Estimér credits",
     "generating": "Genererer",
-    "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
+    "gproLimitExceeded": "Du har overskredet grænsen på {count} flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
@@ -431,7 +431,7 @@
   "call": {
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
-    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__",
+    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er {count}",
     "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
     "languageLabel": "Sprog",
@@ -464,14 +464,14 @@
     "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Tilføj en beskrivelse...",
     "clickToAddDescription": "Klik for at tilføje en beskrivelse...",
-    "characterInstructions": "__NAME__-instruktioner",
+    "characterInstructions": "{name}-instruktioner",
     "characterFallbackName": "Karakter",
     "instructionsPlaceholder": "Indtast systeminstruktioner",
     "voiceLabel": "Stemme",
     "voicePlaceholder": "Vælg en stemme",
     "voiceSelectorLabel": "Stemme",
     "voiceSelectorPlaceholder": "Vælg stemme",
-    "deleteCharacterAriaLabel": "Slet __NAME__",
+    "deleteCharacterAriaLabel": "Slet {name}",
     "savePreset": {
       "save": "Gem",
       "saveAsNew": "Gem som ny",
@@ -506,7 +506,7 @@
       "voicePlaceholder": "Vælg en stemme",
       "instructionsLabel": "Instruktioner",
       "instructionsPlaceholder": "Beskriv din karakters personlighed, talemønstre, baggrund...",
-      "characterCount": "__COUNT__/5000 tegn",
+      "characterCount": "{count}/5000 tegn",
       "cancelButton": "Annuller",
       "paidUserOnly": "Upgrade feature",
       "createButton": "Opret karakter",
@@ -515,7 +515,7 @@
       "errorVoiceRequired": "Vælg venligst en stemme",
       "playVoiceSample": "Afspil stemmeprøve",
       "stopVoiceSample": "Stop stemmeprøve",
-      "previewVoice": "Forhåndsvisning af __VOICE__s stemme"
+      "previewVoice": "Forhåndsvisning af {voice}s stemme"
     }
   },
   "clone": {
@@ -527,7 +527,7 @@
     "errorCloning": "Kunne ikke klone stemme",
     "errorTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
     "errorTitle": "Fejl",
-    "fileFormatsText": "MP3, WAV, M4A, OGG eller OPUS (WhatsApp) (maks. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG eller OPUS (WhatsApp) (maks. {size})",
     "generating": "Genererer",
     "languageLabel": "Sprog",
     "languageSelectPlaceholder": "Vælg et sprog",

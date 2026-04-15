@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -50,6 +51,7 @@ export function CreateCharacterDialog({
   onSave,
   dict,
 }: CreateCharacterDialogProps) {
+  const t = useTranslations('call.createCharacter');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [voiceName, setVoiceName] = useState(callVoices[0]?.name ?? '');
@@ -164,7 +166,7 @@ export function CreateCharacterDialog({
                 }}
                 sampleUrl={selectedVoice?.sample_url ?? null}
                 size="lg"
-                title={dict.previewVoice.replace('__VOICE__', voiceName)}
+                title={t('previewVoice', { voice: voiceName })}
                 variant="button"
                 voiceName={voiceName}
               />
@@ -190,10 +192,7 @@ export function CreateCharacterDialog({
               value={prompt}
             />
             <p className="text-muted-foreground text-xs">
-              {dict.characterCount.replace(
-                '__COUNT__',
-                prompt.length.toString(),
-              )}
+              {t('characterCount', { count: prompt.length })}
             </p>
           </div>
         </div>

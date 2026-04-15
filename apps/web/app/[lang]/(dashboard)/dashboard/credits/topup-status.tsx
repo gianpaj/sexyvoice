@@ -2,6 +2,7 @@
 
 import { CircleCheckIcon, XCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,6 +14,7 @@ interface TopupStatusProps {
 }
 
 export function TopupStatus({ dict }: TopupStatusProps) {
+  const successT = useTranslations('credits.status.success');
   const searchParams = useSearchParams();
   const [isVisible, setIsVisible] = useState(false);
   const [status, setStatus] = useState<'success' | 'error' | 'canceled' | null>(
@@ -84,10 +86,9 @@ export function TopupStatus({ dict }: TopupStatusProps) {
           <div className="grid grid-cols-[2fr_1fr_auto]">
             <AlertDescription className="text-muted-foreground">
               {creditsAmount
-                ? dict.status.success.descriptionWithAmount.replace(
-                    '{creditsAmount}',
-                    Number(creditsAmount).toLocaleString(),
-                  )
+                ? successT('descriptionWithAmount', {
+                    creditsAmount: Number(creditsAmount).toLocaleString(),
+                  })
                 : dict.status.success.description}
             </AlertDescription>
           </div>

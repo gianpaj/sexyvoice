@@ -364,7 +364,7 @@
     "errorEstimating": "Failed to estimate credits",
     "estimateCreditsButton": "Estimate credits",
     "generating": "Generating",
-    "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
+    "gproLimitExceeded": "You have exceeded the limit of {count} multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "playAudio": "Play Audio",
     "resetPlayer": "Reset Player",
@@ -431,7 +431,7 @@
   "call": {
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
-    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__",
+    "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
     "languageLabel": "Language",
@@ -464,14 +464,14 @@
     "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Add a description...",
     "clickToAddDescription": "Click to add a description...",
-    "characterInstructions": "__NAME__ Instructions",
+    "characterInstructions": "{name} Instructions",
     "characterFallbackName": "Character",
     "instructionsPlaceholder": "Enter system instructions",
     "voiceLabel": "Voice",
     "voicePlaceholder": "Choose a voice",
     "voiceSelectorLabel": "Voice",
     "voiceSelectorPlaceholder": "Choose voice",
-    "deleteCharacterAriaLabel": "Delete __NAME__",
+    "deleteCharacterAriaLabel": "Delete {name}",
     "savePreset": {
       "save": "Save",
       "saveAsNew": "Save as new",
@@ -506,7 +506,7 @@
       "voicePlaceholder": "Choose a voice",
       "instructionsLabel": "Instructions",
       "instructionsPlaceholder": "Describe your character's personality, speech patterns, backstory...",
-      "characterCount": "__COUNT__/5000 characters",
+      "characterCount": "{count}/5000 characters",
       "cancelButton": "Cancel",
       "createButton": "Create Character",
       "creatingButton": "Creating...",
@@ -515,7 +515,7 @@
       "errorVoiceRequired": "Please select a voice",
       "playVoiceSample": "Play voice sample",
       "stopVoiceSample": "Stop voice sample",
-      "previewVoice": "Preview __VOICE__'s voice"
+      "previewVoice": "Preview {voice}'s voice"
     }
   },
   "clone": {
@@ -527,7 +527,7 @@
     "errorCloning": "Failed to clone voice",
     "errorTooLarge": "File size too large. Please use a smaller audio file.",
     "errorTitle": "Error",
-    "fileFormatsText": "MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. {size})",
     "generating": "Generating",
     "languageLabel": "Language",
     "languageSelectPlaceholder": "Select a language",

@@ -4,6 +4,7 @@ import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -130,6 +131,7 @@ export function PresetSelector({
   isPaidUser = false,
   callVoices = [],
 }: PresetSelectorProps) {
+  const t = useTranslations('call');
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();
   const connectionState = useConnectionState();
@@ -447,6 +449,9 @@ export function PresetSelector({
               {allCharacters.map((preset) => {
                 const isSelected = pgState.selectedPresetId === preset.id;
                 const isCustom = isCustomCharacter(preset.id);
+                const deleteCharacterAriaLabel = t('deleteCharacterAriaLabel', {
+                  name: preset.name,
+                });
                 return (
                   <CarouselItem
                     className="basis-1/5 pl-2 sm:basis-1/6"
@@ -463,10 +468,7 @@ export function PresetSelector({
                       {/* Delete button for custom characters */}
                       {isCustom && !isConnected && (
                         <button
-                          aria-label={dict.deleteCharacterAriaLabel.replace(
-                            '__NAME__',
-                            preset.name,
-                          )}
+                          aria-label={deleteCharacterAriaLabel}
                           className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -476,10 +478,7 @@ export function PresetSelector({
                             });
                             setShowDeleteDialog(true);
                           }}
-                          title={dict.deleteCharacterAriaLabel.replace(
-                            '__NAME__',
-                            preset.name,
-                          )}
+                          title={deleteCharacterAriaLabel}
                           type="button"
                         >
                           <Trash2 className="h-3 w-3" />

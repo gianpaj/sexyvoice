@@ -364,7 +364,7 @@
     "errorEstimating": "Impossibile stimare i crediti",
     "estimateCreditsButton": "Stima crediti",
     "generating": "Generazione",
-    "gproLimitExceeded": "Hai superato il limite di __COUNT__ generazioni vocali multilingua come utente gratuito. Prova una voce diversa o aggiorna il tuo piano per l'accesso illimitato.",
+    "gproLimitExceeded": "Hai superato il limite di {count} generazioni vocali multilingua come utente gratuito. Prova una voce diversa o aggiorna il tuo piano per l'accesso illimitato.",
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
     "playAudio": "Riproduci audio",
     "resetPlayer": "Reimposta player",
@@ -431,7 +431,7 @@
   "call": {
     "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
     "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
-    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
+    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è {count}",
     "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
     "languageLabel": "Lingua",
@@ -464,14 +464,14 @@
     "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Aggiungi una descrizione...",
     "clickToAddDescription": "Clicca per aggiungere una descrizione...",
-    "characterInstructions": "Istruzioni di __NAME__",
+    "characterInstructions": "Istruzioni di {name}",
     "characterFallbackName": "Personaggio",
     "instructionsPlaceholder": "Inserisci istruzioni di sistema",
     "voiceLabel": "Voce",
     "voicePlaceholder": "Scegli una voce",
     "voiceSelectorLabel": "Voce",
     "voiceSelectorPlaceholder": "Scegli voce",
-    "deleteCharacterAriaLabel": "Elimina __NAME__",
+    "deleteCharacterAriaLabel": "Elimina {name}",
     "savePreset": {
       "save": "Salva",
       "saveAsNew": "Salva come nuovo",
@@ -506,7 +506,7 @@
       "voicePlaceholder": "Scegli una voce",
       "instructionsLabel": "Istruzioni",
       "instructionsPlaceholder": "Descrivi la personalità del tuo personaggio, modelli di discorso, storia...",
-      "characterCount": "__COUNT__/5000 caratteri",
+      "characterCount": "{count}/5000 caratteri",
       "cancelButton": "Annulla",
       "createButton": "Crea personaggio",
       "creatingButton": "Creazione...",
@@ -515,7 +515,7 @@
       "paidUserOnly": "Upgrade feature",
       "playVoiceSample": "Riproduci campione vocale",
       "stopVoiceSample": "Ferma campione vocale",
-      "previewVoice": "Anteprima della voce di __VOICE__"
+      "previewVoice": "Anteprima della voce di {voice}"
     }
   },
   "clone": {
@@ -527,7 +527,7 @@
     "errorCloning": "Impossibile clonare la voce",
     "errorTooLarge": "File troppo grande. Usa un file audio più piccolo.",
     "errorTitle": "Errore",
-    "fileFormatsText": "MP3, WAV, M4A, OGG o OPUS (WhatsApp) (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG o OPUS (WhatsApp) (max. {size})",
     "generating": "Generazione",
     "languageLabel": "Lingua",
     "languageSelectPlaceholder": "Seleziona una lingua",

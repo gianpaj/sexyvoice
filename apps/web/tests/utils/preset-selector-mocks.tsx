@@ -68,6 +68,25 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => mockSearchParams.value,
 }));
 
+/* ---- next-intl ---- */
+vi.mock('next-intl', () => ({
+  useTranslations: (namespace?: string) => {
+    const messages: Record<string, string> = {
+      'call.deleteCharacterAriaLabel': 'Delete {name}',
+      'call.createCharacter.characterCount': '{count}/5000 characters',
+      'call.createCharacter.previewVoice': "Preview {voice}'s voice",
+    };
+
+    return (key: string, values?: Record<string, string | number>) => {
+      const template =
+        messages[[namespace, key].filter(Boolean).join('.')] ?? key;
+      return template.replace(/\{(\w+)\}/g, (_, name: string) =>
+        String(values?.[name] ?? ''),
+      );
+    };
+  },
+}));
+
 /* ---- sonner ---- */
 vi.mock('sonner', () => ({
   toast: { info: mockToastInfo, error: vi.fn(), success: vi.fn() },
@@ -86,14 +105,14 @@ vi.mock('@/hooks/use-connection', () => ({
       upgradePremiumTooltip: 'Upgrade to create custom characters',
       addDescriptionPlaceholder: 'Add a description...',
       clickToAddDescription: 'Click to add a description...',
-      characterInstructions: '__NAME__ Instructions',
+      characterInstructions: '{name} Instructions',
       characterFallbackName: 'Character',
       instructionsPlaceholder: 'Enter system instructions',
       voiceLabel: 'Voice',
       voicePlaceholder: 'Choose a voice',
       voiceSelectorLabel: 'Voice',
       voiceSelectorPlaceholder: 'Choose voice',
-      deleteCharacterAriaLabel: 'Delete __NAME__',
+      deleteCharacterAriaLabel: 'Delete {name}',
       deletePreset: 'Delete',
       deletePresetConfirm: 'This cannot be undone.',
       cancel: 'Cancel',
@@ -134,7 +153,7 @@ vi.mock('@/hooks/use-connection', () => ({
         instructionsLabel: 'Instructions',
         instructionsPlaceholder:
           "Describe your character's personality, speech patterns, backstory...",
-        characterCount: '__COUNT__/5000 characters',
+        characterCount: '{count}/5000 characters',
         cancelButton: 'Cancel',
         createButton: 'Create Character',
         creatingButton: 'Creating...',
@@ -142,7 +161,7 @@ vi.mock('@/hooks/use-connection', () => ({
         errorVoiceRequired: 'Please select a voice',
         playVoiceSample: 'Play voice sample',
         stopVoiceSample: 'Stop voice sample',
-        previewVoice: "Preview __VOICE__'s voice",
+        previewVoice: "Preview {voice}'s voice",
       },
     },
   }),
