@@ -509,7 +509,18 @@ function SidebarMenuButton({
   tooltip?: string | React.ComponentProps<typeof TooltipContent>
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot.Root : "button"
-  const { isMobile, state } = useSidebar()
+  const { isMobile, state, setOpenMobile } = useSidebar();
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      props.onClick?.(event);
+
+      if (!event.defaultPrevented && isMobile) {
+        setOpenMobile(false);
+      }
+    },
+    [isMobile, props, setOpenMobile],
+  );
 
   const button = (
     <Comp
@@ -519,6 +530,7 @@ function SidebarMenuButton({
       data-active={isActive ? true : undefined}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
       {...props}
+      onClick={handleClick}
     />
   )
 
@@ -678,6 +690,18 @@ function SidebarMenuSubButton({
   isActive?: boolean
 }) {
   const Comp = asChild ? Slot.Root : "a"
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      props.onClick?.(event);
+
+      if (!event.defaultPrevented && isMobile) {
+        setOpenMobile(false);
+      }
+    },
+    [isMobile, props, setOpenMobile],
+  );
 
   return (
     <Comp
@@ -694,6 +718,7 @@ function SidebarMenuSubButton({
         className
       )}
       {...props}
+      onClick={handleClick}
     />
   )
 }
