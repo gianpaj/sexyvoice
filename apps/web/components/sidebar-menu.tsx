@@ -3,7 +3,6 @@
 import { ChevronUp, ExternalLink, User2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useContext } from 'react';
 
 import {
   DropdownMenu,
@@ -12,10 +11,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  SidebarContext,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenu as SidebarMenuUI,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -28,10 +27,8 @@ export function SidebarMenu({
   lang: Locale;
   dict: (typeof langDict)['sidebar'];
 }) {
-  // Safely access the sidebar context without throwing an error
-  const sidebarContext = useContext(SidebarContext);
-  const isMobile = sidebarContext?.isMobile;
-  const toggleSidebar = sidebarContext?.toggleSidebar;
+  // Read sidebar state from context; this component must be rendered within SidebarProvider.
+  const { isMobile, toggleSidebar } = useSidebar();
 
   const supabase = getSupabaseBrowserClient();
   const router = useRouter();

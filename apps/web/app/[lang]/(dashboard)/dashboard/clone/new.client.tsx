@@ -20,13 +20,7 @@ import { SpotlightField } from '@/components/spotlight-field';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
@@ -322,9 +316,6 @@ function NewVoiceClientInner({
   const abortController = useRef<AbortController | null>(null);
 
   const handleGenerate = useCallback(async () => {
-    if (!legalConsentChecked) {
-      return;
-    }
     if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
       setStatus('error');
@@ -534,13 +525,7 @@ function NewVoiceClientInner({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{dict.title}</CardTitle>
-        <CardDescription>
-          <p className="mb-4">{dict.subtitle}</p>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
@@ -709,34 +694,37 @@ function NewVoiceClientInner({
                 )}
               </div>
 
-              <div className="grid w-full gap-2">
-                <Label htmlFor="language">{dict.languageLabel}</Label>
-                <Select
-                  disabled={status === 'generating'}
-                  onValueChange={(code) =>
-                    setSelectedLocale({
-                      code,
-                      value:
-                        supportedLocales.find((c) => c.code === code)?.value ||
-                        '',
-                    })
-                  }
-                  value={selectedLocale.code}
-                >
-                  <SelectTrigger id="language">
-                    <SelectValue placeholder={dict.languageSelectPlaceholder} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {supportedLocales.map((locale) => (
-                      <SelectItem key={locale.code} value={locale.code}>
-                        {locale.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="grid w-full gap-6">
+                <div className="grid w-full gap-2">
+                  <Label htmlFor="language">{dict.languageLabel}</Label>
+                  <Select
+                    disabled={status === 'generating'}
+                    onValueChange={(code) =>
+                      setSelectedLocale({
+                        code,
+                        value:
+                          supportedLocales.find((c) => c.code === code)
+                            ?.value || '',
+                      })
+                    }
+                    value={selectedLocale.code}
+                  >
+                    <SelectTrigger className="w-32" id="language">
+                      <SelectValue
+                        placeholder={dict.languageSelectPlaceholder}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLocales.map((locale) => (
+                        <SelectItem key={locale.code} value={locale.code}>
+                          {locale.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/*{selectedLocale.code !== 'en' && (
+                {/*{selectedLocale.code !== 'en' && (
                 <Card className="border-blue-800">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -755,30 +743,31 @@ function NewVoiceClientInner({
                 </Card>
               )}*/}
 
-              <div className="grid w-full gap-2">
-                <Label htmlFor="text-to-convert">
-                  {dict.textToConvertLabel}
-                </Label>
-                <SpotlightField>
-                  <Textarea
-                    className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-                    disabled={status === 'generating'}
-                    id="text-to-convert"
-                    maxLength={MAX_LENGTH + 30}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder={dict.textAreaPlaceholder}
-                    rows={5}
-                    value={text}
-                  />
-                </SpotlightField>
-              </div>
-              <div
-                className={cn(
-                  '-mt-2 text-right text-muted-foreground text-sm',
-                  [textIsOverLimit ? 'font-bold text-red-500' : ''],
-                )}
-              >
-                {text.length} / {MAX_LENGTH}
+                <div className="grid w-full gap-2">
+                  <Label htmlFor="text-to-convert">
+                    {dict.textToConvertLabel}
+                  </Label>
+                  <SpotlightField>
+                    <Textarea
+                      className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                      disabled={status === 'generating'}
+                      id="text-to-convert"
+                      maxLength={MAX_LENGTH + 30}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder={dict.textAreaPlaceholder}
+                      rows={5}
+                      value={text}
+                    />
+                  </SpotlightField>
+                </div>
+                <div
+                  className={cn(
+                    '-mt-2 text-right text-muted-foreground text-sm',
+                    [textIsOverLimit ? 'font-bold text-red-500' : ''],
+                  )}
+                >
+                  {text.length} / {MAX_LENGTH}
+                </div>
               </div>
             </div>
 

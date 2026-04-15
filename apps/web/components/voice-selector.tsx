@@ -1,5 +1,5 @@
-'use client';
-import { Info, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+"use client";
+import { Info, Maximize2, Minimize2, Sparkles } from "lucide-react";
 import {
   type Dispatch,
   type SetStateAction,
@@ -7,16 +7,16 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
-import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { AudioProvider } from "@/app/[lang]/(dashboard)/dashboard/clone/audio-provider";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -25,32 +25,32 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { getEmotionTags } from '@/lib/ai';
-import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
-import { isFeaturedVoice } from '@/lib/voices';
-import type messages from '@/messages/en.json';
-import { AudioPlayerWithContext } from './audio-player-with-context';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
+} from "@/components/ui/select";
+import { getEmotionTags } from "@/lib/ai";
+import { resizeTextarea } from "@/lib/react-textarea-autosize";
+import { capitalizeFirstLetter, cn, getTtsProvider } from "@/lib/utils";
+import { isFeaturedVoice } from "@/lib/voices";
+import type messages from "@/messages/en.json";
+import { AudioPlayerWithContext } from "./audio-player-with-context";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from './ui/tooltip';
+} from "./ui/tooltip";
 
 interface VoiceGroup {
   label: string;
-  voices: Tables<'voices'>[];
+  voices: Tables<"voices">[];
 }
 
-function isMultilingualVoice(voice: Tables<'voices'>) {
-  return voice.model === 'grok' || voice.language === 'multiple';
+function isMultilingualVoice(voice: Tables<"voices">) {
+  return voice.model === "grok" || voice.language === "multiple";
 }
 
-function sortVoices(voices: Tables<'voices'>[]) {
+function sortVoices(voices: Tables<"voices">[]) {
   return [...voices].sort((voiceA, voiceB) => {
     const isFeaturedA = isFeaturedVoice(voiceA);
     const isFeaturedB = isFeaturedVoice(voiceB);
@@ -70,30 +70,30 @@ export function VoiceSelector({
   setSelectedStyle,
   dict,
 }: {
-  publicVoices: Tables<'voices'>[];
-  selectedVoice?: Tables<'voices'>;
+  publicVoices: Tables<"voices">[];
+  selectedVoice?: Tables<"voices">;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
-  dict: (typeof messages)['generate'];
+  dict: (typeof messages)["generate"];
 }) {
   const provider = useMemo(
     () => getTtsProvider(selectedVoice?.model),
     [selectedVoice?.model],
   );
-  const isGeminiVoice = provider === 'gemini';
-  const isGrokVoice = provider === 'grok';
+  const isGeminiVoice = provider === "gemini";
+  const isGrokVoice = provider === "grok";
   const voiceSelectorLabels =
     dict.voiceSelector as typeof dict.voiceSelector & {
       featuredBadge?: string;
       featuredGroupLabel?: string;
       multilingualGroupLabel?: string;
     };
-  const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? 'Featured';
+  const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? "Featured";
   const featuredGroupLabel =
-    voiceSelectorLabels.featuredGroupLabel ?? 'Featured  ✨';
+    voiceSelectorLabels.featuredGroupLabel ?? "Featured  ✨";
   const multilingualGroupLabel =
-    voiceSelectorLabels.multilingualGroupLabel ?? 'Multilingual 🌍';
+    voiceSelectorLabels.multilingualGroupLabel ?? "Multilingual 🌍";
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -101,7 +101,7 @@ export function VoiceSelector({
   useEffect(() => {
     // Auto-resize textarea when content changes
     if (textareaRef.current && !isFullscreen) {
-      resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
+      resizeTextarea(textareaRef.current, 4, 10, "--ta1-height");
     }
   }, [selectedStyle]);
 
@@ -128,7 +128,7 @@ export function VoiceSelector({
           acc[language].push(voice);
           return acc;
         },
-        {} as Record<string, Tables<'voices'>[]>,
+        {} as Record<string, Tables<"voices">[]>,
       ),
     )
       .map(
@@ -162,7 +162,7 @@ export function VoiceSelector({
         <CardTitle className="flex flex-row">
           {dict.voiceSelector.title}
           <TooltipProvider>
-            <Tooltip delayDuration={100} supportMobileTap>
+            <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
                 <Button
                   className="h-auto w-auto self-end pb-[2px]"
@@ -189,12 +189,12 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger>
+          <SelectTrigger className="sm:w-1/3">
             <span className="flex! items-center gap-2">
               <SelectValue placeholder="Select a voice" />
               {selectedVoice && isFeaturedVoice(selectedVoice) && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 font-semibold text-[10px] text-primary uppercase tracking-wide">
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3 text-primary" />
                   {featuredBadgeLabel}
                 </span>
               )}
@@ -211,8 +211,8 @@ export function VoiceSelector({
                     return (
                       <SelectItem
                         className={cn(
-                          'cursor-pointer py-3',
-                          isFeatured && 'font-medium',
+                          "cursor-pointer py-3",
+                          isFeatured && "font-medium",
                         )}
                         key={voice.id}
                         value={voice.name}
@@ -229,7 +229,7 @@ export function VoiceSelector({
         </Select>
         <AudioProvider>
           {selectedVoice?.sample_url && (
-            <div className="flex items-center justify-start gap-2 py-2">
+            <div className="flex flex-col items-center justify-start gap-2 py-2 sm:flex-row">
               <AudioPlayerWithContext
                 playAudioTitle={dict.playAudio}
                 showWaveform
@@ -243,7 +243,7 @@ export function VoiceSelector({
                 </p>
                 {getEmotionTags(selectedVoice.language) && (
                   <TooltipProvider>
-                    <Tooltip delayDuration={100} supportMobileTap>
+                    <Tooltip delayDuration={100}>
                       <TooltipTrigger asChild>
                         <Button
                           className="h-auto w-auto p-1"
@@ -272,20 +272,20 @@ export function VoiceSelector({
         {isGeminiVoice && (
           <div className="relative">
             <Textarea
-              className="textarea-1 pr-16 transition-[height] duration-200 ease-in-out"
+              className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
               ref={textareaRef}
               style={
                 {
-                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
+                  "--ta1-height": isFullscreen ? "30vh" : "4rem",
                 } as React.CSSProperties
               }
               value={selectedStyle}
             />
             <Button
               className={
-                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                "absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
               }
               onClick={() => setIsFullscreen(!isFullscreen)}
               size="icon"

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { Placeholder } from '@tiptap/extensions';
-import { TextSelection } from '@tiptap/pm/state';
-import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { ChevronDown, Crown, Sparkles } from 'lucide-react';
+import { Placeholder } from "@tiptap/extensions";
+import { TextSelection } from "@tiptap/pm/state";
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { ChevronDown, Crown, Sparkles } from "lucide-react";
 import {
   type MouseEvent,
   useCallback,
@@ -13,32 +13,39 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
-import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
+import { AutoConvertGrokTags } from "@/components/grok-tts/extensions/auto-convert-grok-tags";
 import {
   createWrapperBoundaryNode,
   WrapperBoundary,
-} from '@/components/grok-tts/extensions/grok-wrapper-boundary';
+} from "@/components/grok-tts/extensions/grok-wrapper-boundary";
 import {
   createInstantTagNode,
   InstantTag,
-} from '@/components/grok-tts/extensions/instant-tag';
-import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
-import { SpotlightField } from '@/components/spotlight-field';
-import { Button } from '@/components/ui/button';
+} from "@/components/grok-tts/extensions/instant-tag";
+import { UnsupportedGrokTagHighlight } from "@/components/grok-tts/extensions/unsupported-grok-tag-highlight";
+import { SpotlightField } from "@/components/spotlight-field";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
+} from "@/components/ui/tooltip";
+import { useUiEditorState } from "@/hooks/tiptap/use-ui-editor-state";
 import {
   GROK_EMPTY_WRAPPING_TEXT,
   GROK_INSTANT_TAG_DEFINITIONS,
@@ -47,16 +54,17 @@ import {
   type GrokInstantTag,
   grokTextToTipTapDoc,
   grokTipTapDocToText,
-} from '@/lib/tts-editor';
-import { cn } from '@/lib/utils';
-import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
-import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
+} from "@/lib/tts-editor";
+import { cn } from "@/lib/utils";
+import type messages from "@/messages/en.json";
+import { UiState } from "./tiptap/tiptap-extension/ui-state-extension";
+import { SlashDropdownMenu } from "./tiptap/tiptap-ui/slash-dropdown-menu";
 import type {
   SuggestionItem,
   SuggestionMenuProps,
-} from './tiptap/tiptap-ui-utils/suggestion-menu';
+} from "./tiptap/tiptap-ui-utils/suggestion-menu";
 
-import './grok-tts-editor.css';
+import "./grok-tts-editor.css";
 
 const INSTANT_TAGS = GROK_INSTANT_TAG_DEFINITIONS;
 
@@ -79,46 +87,36 @@ function isKnownInstantTag(tag: string): tag is GrokInstantTag {
   return KNOWN_INSTANT_TAGS.has(tag as GrokInstantTag);
 }
 
+const XAI_LANGUAGE_OPTIONS = [
+  { value: "ar-EG", label: "langArabicEgypt" },
+  { value: "ar-SA", label: "langArabicSaudiArabia" },
+  { value: "ar-AE", label: "langArabicUnitedArabEmirates" },
+  { value: "bn", label: "langBengali" },
+  { value: "zh", label: "langChinese" },
+  { value: "fr", label: "langFrench" },
+  { value: "de", label: "langGerman" },
+  { value: "hi", label: "langHindi" },
+  { value: "id", label: "langIndonesian" },
+  { value: "it", label: "langItalian" },
+  { value: "ja", label: "langJapanese" },
+  { value: "ko", label: "langKorean" },
+  { value: "pt-BR", label: "langPortugueseBrazil" },
+  { value: "pt-PT", label: "langPortuguesePortugal" },
+  { value: "ru", label: "langRussian" },
+  { value: "es-ES", label: "langSpanishSpain" },
+  { value: "es-MX", label: "langSpanishMexico" },
+  { value: "tr", label: "langTurkish" },
+  { value: "vi", label: "langVietnamese" },
+] as const;
+
 interface GrokTTSEditorProps {
-  dict: {
-    effects: {
-      breath: string;
-      chuckle: string;
-      cry: string;
-      exhale: string;
-      giggle: string;
-      humTune: string;
-      inhale: string;
-      laugh: string;
-      lipSmack: string;
-      longPause: string;
-      pause: string;
-      sigh: string;
-      tongueClick: string;
-      tsk: string;
-    };
-    inlineEffectPlaceholder: string;
-    wrappingEffectPlaceholder: string;
-    wrappingTags: {
-      buildIntensity: string;
-      decreaseIntensity: string;
-      emphasis: string;
-      fast: string;
-      higherPitch: string;
-      laughSpeak: string;
-      loud: string;
-      lowerPitch: string;
-      singSong: string;
-      singing: string;
-      slow: string;
-      soft: string;
-      whisper: string;
-    };
-  };
+  dict: (typeof messages)["generate"]["grok"];
   isPaidUser?: boolean;
   maxLength: number;
   onChange: (text: string) => void;
   placeholder?: string;
+  selectedGrokLanguage: string;
+  setSelectedGrokLanguage: (text: string) => void;
   value: string;
 }
 
@@ -167,10 +165,10 @@ function getDomSelectionSnapshot(
 }
 
 interface GrokSlashMenuConfig {
-  allow?: NonNullable<SuggestionMenuProps['allow']>;
+  allow?: NonNullable<SuggestionMenuProps["allow"]>;
   customItems: SuggestionItem[];
   pluginKey: string;
-  triggerChar: '[' | '<';
+  triggerChar: "[" | "<";
 }
 
 interface EditorContentAreaProps {
@@ -220,7 +218,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
       editor={editor}
       role="presentation"
       style={{
-        cursor: isDragging ? 'grabbing' : 'auto',
+        cursor: isDragging ? "grabbing" : "auto",
       }}
     >
       {slashMenus.map((menu) => (
@@ -246,6 +244,8 @@ export function GrokTTSEditor({
   maxLength,
   onChange,
   placeholder,
+  selectedGrokLanguage,
+  setSelectedGrokLanguage,
   value,
 }: GrokTTSEditorProps) {
   const [effectsOpen, setEffectsOpen] = useState(false);
@@ -276,7 +276,7 @@ export function GrokTTSEditor({
       }),
       Placeholder.configure({
         placeholder,
-        emptyNodeClass: 'is-empty with-slash',
+        emptyNodeClass: "is-empty with-slash",
       }),
       InstantTag,
       WrapperBoundary,
@@ -287,13 +287,13 @@ export function GrokTTSEditor({
     content: plainTextToDoc(value),
     editorProps: {
       attributes: {
-        'aria-label': placeholder ?? 'TTS editor',
-        role: 'textbox',
-        'aria-multiline': 'true',
+        "aria-label": placeholder ?? "TTS editor",
+        role: "textbox",
+        "aria-multiline": "true",
         class:
-          'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
-        autoCorrect: 'false',
-        spellCheck: 'false',
+          "min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words",
+        autoCorrect: "false",
+        spellCheck: "false",
       },
       handleDOMEvents: {
         keydown: () => false,
@@ -346,7 +346,7 @@ export function GrokTTSEditor({
       const serialized = grokTipTapDocToText(editor.getJSON());
       const selectedTextLength = selection.empty
         ? 0
-        : editor.state.doc.textBetween(selection.from, selection.to, '\n')
+        : editor.state.doc.textBetween(selection.from, selection.to, "\n")
             .length;
       const nextLength =
         serialized.length - selectedTextLength + tag.tag.length;
@@ -383,12 +383,12 @@ export function GrokTTSEditor({
       }
 
       const openBoundary = createWrapperBoundaryNode(
-        'open',
+        "open",
         tag.tag,
         tag.closeTag,
       );
       const closeBoundary = createWrapperBoundaryNode(
-        'close',
+        "close",
         tag.tag,
         tag.closeTag,
       );
@@ -461,7 +461,7 @@ export function GrokTTSEditor({
 
   const handleInsertTag = useCallback(
     (tag: TagDef) => {
-      if ('closeTag' in tag) {
+      if ("closeTag" in tag) {
         insertWrapperTag(tag);
         return;
       }
@@ -471,27 +471,39 @@ export function GrokTTSEditor({
     [insertInstantTag, insertWrapperTag],
   );
 
+  const translatedGrokLanguages = useMemo(
+    () => [
+      { value: "auto", label: dict.langAutomatic },
+      { value: "en", label: dict.langEnglish },
+      ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
+        value,
+        label: dict[label as keyof typeof dict] as string,
+      })),
+    ],
+    [dict],
+  );
+
   const slashMenus = useMemo<GrokSlashMenuConfig[]>(
     () => [
       {
         customItems: INSTANT_TAGS.map((tag) =>
           createInstantTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
-        pluginKey: 'grokInstantTagMenu',
-        triggerChar: '[',
+        pluginKey: "grokInstantTagMenu",
+        triggerChar: "[",
       },
       {
         allow: ({
           editor,
           range,
-        }: Parameters<NonNullable<SuggestionMenuProps['allow']>>[0]) => {
+        }: Parameters<NonNullable<SuggestionMenuProps["allow"]>>[0]) => {
           const resolvedPosition = editor.state.doc.resolve(range.to);
           const nodeAfter = resolvedPosition.nodeAfter;
-          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? '') : '';
+          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? "") : "";
           const previousNode = resolvedPosition.nodeBefore;
           const previousText = previousNode?.isText
-            ? (previousNode.text ?? '')
-            : '';
+            ? (previousNode.text ?? "")
+            : "";
           const combinedTagText = `${previousText}${nextText}`;
 
           return !WRAPPING_TAGS.some((tag) => {
@@ -505,8 +517,8 @@ export function GrokTTSEditor({
         customItems: WRAPPING_TAGS.map((tag) =>
           createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
-        pluginKey: 'grokWrapperTagMenu',
-        triggerChar: '<',
+        pluginKey: "grokWrapperTagMenu",
+        triggerChar: "<",
       },
     ],
     [handleInsertTag],
@@ -521,131 +533,147 @@ export function GrokTTSEditor({
   }
 
   return (
-    <div className="w-full">
-      <div className="space-y-2">
-        <SpotlightField>
-          <div className="editor-wrapper relative min-h-[8rem] rounded-md bg-transparent p-3 text-sm ring-offset-background">
-            <EditorContext.Provider value={{ editor }}>
-              <EditorContentArea slashMenus={slashMenus} />
-            </EditorContext.Provider>
-          </div>
-        </SpotlightField>
-
-        <div className="mt-2 flex items-center gap-2">
-          <Popover onOpenChange={setEffectsOpen} open={effectsOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                className="h-8"
-                onMouseDown={preserveEditorSelection}
-                size="sm"
-                variant="outline"
-              >
-                <Sparkles className="mr-1.5 size-3.5" />
-                {dict.inlineEffectPlaceholder}
-                <ChevronDown className="ml-1 size-3" />
-              </Button>
-            </PopoverTrigger>
-
-            <PopoverContent align="start" className="w-80 bg-background p-0">
-              <div className="max-h-[400px] overflow-y-auto">
-                <div className="border-border border-b p-3">
-                  <h4 className="mb-2 font-medium text-sm">
-                    {dict.inlineEffectPlaceholder}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-1">
-                    {INSTANT_TAGS.map((tag) => (
-                      <button
-                        className="rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
-                        key={tag.tag}
-                        onClick={() => handleInsertTag(tag)}
-                        onMouseDown={preserveSelection}
-                        type="button"
-                      >
-                        <div className="font-medium">
-                          {isKnownInstantTag(tag.tag)
-                            ? tag.tag
-                            : `[${tag.label}]`}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="p-3">
-                  <h4 className="mb-2 font-medium text-sm">
-                    {dict.wrappingEffectPlaceholder}
-                  </h4>
-                  <div className="grid grid-cols-2 gap-1">
-                    {WRAPPING_TAGS.map((tag) => (
-                      <button
-                        className="rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
-                        key={tag.tag}
-                        onClick={() => handleInsertTag(tag)}
-                        onMouseDown={preserveSelection}
-                        type="button"
-                      >
-                        <div className="font-medium">
-                          {
-                            {
-                              '<soft>': dict.wrappingTags.soft,
-                              '<whisper>': dict.wrappingTags.whisper,
-                              '<loud>': dict.wrappingTags.loud,
-                              '<emphasis>': dict.wrappingTags.emphasis,
-                              '<slow>': dict.wrappingTags.slow,
-                              '<fast>': dict.wrappingTags.fast,
-                              '<higher-pitch>': dict.wrappingTags.higherPitch,
-                              '<lower-pitch>': dict.wrappingTags.lowerPitch,
-                              '<build-intensity>':
-                                dict.wrappingTags.buildIntensity,
-                              '<decrease-intensity>':
-                                dict.wrappingTags.decreaseIntensity,
-                              '<laugh-speak>': dict.wrappingTags.laughSpeak,
-                              '<sing-song>': dict.wrappingTags.singSong,
-                              '<singing>': dict.wrappingTags.singing,
-                            }[tag.tag]
-                          }
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <div className="flex-1" />
-
-          <div
-            className={cn(
-              'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-              currentLength > maxLength ? 'font-bold text-red-500' : '',
-            )}
+    <>
+      <div className="space-y-2 sm:w-1/3">
+        <div className="font-medium text-sm">{dict.languageLabel}</div>
+        <Select
+          aria-label="grok-language-label"
+          onValueChange={setSelectedGrokLanguage}
+          value={selectedGrokLanguage}
+        >
+          <SelectTrigger
+            aria-labelledby="grok-language-label"
+            className="w-full"
           >
-            {currentLength} / {maxLength}
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Crown
-                    className={cn(
-                      'h-3.5 w-3.5 cursor-default',
-                      isPaidUser
-                        ? 'text-muted-foreground/50'
-                        : 'text-yellow-400',
-                    )}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isPaidUser
-                      ? 'Paid users enjoy 2× character limit'
-                      : 'Upgrade to a paid plan for 2× character limit'}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <SelectValue placeholder={dict.languageSelectPlaceholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {translatedGrokLanguages.map(({ value, label }) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="w-full">
+        <div className="space-y-2">
+          <SpotlightField>
+            <div className="editor-wrapper relative min-h-[8rem] rounded-md bg-transparent p-3 text-sm ring-offset-background">
+              <EditorContext.Provider value={{ editor }}>
+                <EditorContentArea slashMenus={slashMenus} />
+              </EditorContext.Provider>
+            </div>
+          </SpotlightField>
+
+          <div className="mt-2 flex items-center gap-2">
+            <Popover onOpenChange={setEffectsOpen} open={effectsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  // className="w-1.3"
+                  onMouseDown={preserveEditorSelection}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Sparkles className="mr-1.5 size-3.5" />
+                  {dict.inlineEffectPlaceholder}
+                  <ChevronDown className="ml-1 size-3" />
+                </Button>
+              </PopoverTrigger>
+
+              <PopoverContent
+                align="start"
+                className="bg-background p-0 sm:w-100"
+              >
+                <div className="max-h-[400px] overflow-y-auto">
+                  <div className="border-border border-b p-3">
+                    <h4 className="mb-2 font-medium text-sm">
+                      {dict.inlineEffectPlaceholder}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-1">
+                      {INSTANT_TAGS.map((tag) => (
+                        <button
+                          className="rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
+                          key={tag.tag}
+                          onClick={() => handleInsertTag(tag)}
+                          onMouseDown={preserveSelection}
+                          type="button"
+                        >
+                          <div className="font-medium">
+                            {isKnownInstantTag(tag.tag)
+                              ? tag.tag
+                              : `[${tag.label}]`}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-3">
+                    <h4 className="mb-2 font-medium text-sm">
+                      {dict.wrappingEffectPlaceholder}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-1">
+                      {WRAPPING_TAGS.map((tag) => (
+                        <button
+                          className="w-full min-w-0 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
+                          key={tag.tag}
+                          onClick={() => handleInsertTag(tag)}
+                          onMouseDown={preserveSelection}
+                          type="button"
+                        >
+                          <div className="min-w-0 font-medium">
+                            <span className="inline-block whitespace-nowrap">
+                              {tag.tag}
+                              ...
+                            </span>
+                            <wbr />
+                            <span className="inline-block whitespace-nowrap">
+                              {tag.closeTag}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <div className="flex-1" />
+
+            <div
+              className={cn(
+                "flex items-center justify-end gap-1.5 text-muted-foreground text-sm",
+                currentLength > maxLength ? "font-bold text-red-500" : "",
+              )}
+            >
+              {currentLength} / {maxLength}
+              <TooltipProvider>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <Crown
+                      className={cn(
+                        "h-3.5 w-3.5 cursor-default",
+                        isPaidUser
+                          ? "text-muted-foreground/50"
+                          : "text-yellow-400",
+                      )}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {isPaidUser
+                        ? "Paid users enjoy 2× character limit"
+                        : "Upgrade to a paid plan for 2× character limit"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

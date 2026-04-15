@@ -119,7 +119,7 @@
     },
     "generator": {
       "title": "Provalo ora",
-      "subtitle": "Genera il tuo primo campione vocale",
+      "subtitle": "Genera il tuo primo file audio",
       "selectVoice": "Seleziona una voce",
       "enterText": "Inserisci il testo da convertire",
       "speed": "Velocità",
@@ -161,7 +161,7 @@
           "questions": [
             {
               "question": "Come funziona la clonazione vocale?",
-              "answer": "La nostra AI analizza il tuo campione vocale (da 10 secondi a 5 minuti) per apprendere i suoi schemi e caratteristiche uniche. Con solo pochi secondi di audio pulito, puoi creare una versione digitale della tua voce che suona naturale e realistica."
+              "answer": "La nostra AI analizza il tuo file audio (da 10 secondi a 5 minuti) per apprendere i suoi schemi e caratteristiche uniche. Con solo pochi secondi di audio pulito, puoi creare una versione digitale della tua voce che suona naturale e realistica."
             },
             {
               "question": "Posso clonare la mia voce?",
@@ -365,8 +365,6 @@
     "estimateCreditsButton": "Stima crediti",
     "generating": "Generazione",
     "gproLimitExceeded": "Hai superato il limite di __COUNT__ generazioni vocali multilingua come utente gratuito. Prova una voce diversa o aggiorna il tuo piano per l'accesso illimitato.",
-    "languageLabel": "Lingua",
-    "languageSelectPlaceholder": "Seleziona una lingua",
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
     "playAudio": "Riproduci audio",
     "resetPlayer": "Reimposta player",
@@ -394,21 +392,29 @@
         "exhale": "[exhale]",
         "sigh": "[sigh]"
       },
-      "wrappingTags": {
-        "soft": "<soft>...</soft>",
-        "whisper": "<whisper>...</whisper>",
-        "loud": "<loud>...</loud>",
-        "buildIntensity": "<build-intensity>...</build-intensity>",
-        "decreaseIntensity": "<decrease-intensity>...</decrease-intensity>",
-        "higherPitch": "<higher-pitch>...</higher-pitch>",
-        "lowerPitch": "<lower-pitch>...</lower-pitch>",
-        "slow": "<slow>...</slow>",
-        "fast": "<fast>...</fast>",
-        "singSong": "<sing-song>...</sing-song>",
-        "singing": "<singing>...</singing>",
-        "laughSpeak": "<laugh-speak>...</laugh-speak>",
-        "emphasis": "<emphasis>...</emphasis>"
-      }
+      "languageLabel": "Lingua",
+      "languageSelectPlaceholder": "Seleziona una lingua",
+      "langAutomatic": "Automatico",
+      "langArabicEgypt": "Arabo (Egitto)",
+      "langArabicSaudiArabia": "Arabo (Arabia Saudita)",
+      "langArabicUnitedArabEmirates": "Arabo (Emirati Arabi Uniti)",
+      "langBengali": "Bengalese",
+      "langChinese": "Cinese",
+      "langEnglish": "Inglese",
+      "langFrench": "Francese",
+      "langGerman": "Tedesco",
+      "langHindi": "Hindi",
+      "langIndonesian": "Indonesiano",
+      "langItalian": "Italiano",
+      "langJapanese": "Giapponese",
+      "langKorean": "Coreano",
+      "langPortugueseBrazil": "Portoghese (Brasile)",
+      "langPortuguesePortugal": "Portoghese (Portogallo)",
+      "langRussian": "Russo",
+      "langSpanishSpain": "Spagnolo (Spagna)",
+      "langSpanishMexico": "Spagnolo (Messico)",
+      "langTurkish": "Turco",
+      "langVietnamese": "Vietnamita"
     },
     "voiceSelector": {
       "title": "Seleziona voce",
@@ -418,7 +424,7 @@
       "selectStyleTextareaPlaceholder": "Descrivi lo stile del tuo dialogo, es. \"Leggi questo in un sussurro drammatico\"",
       "toolTipEmotionTags": "Tag emotivi supportati:",
       "geminiInfo": "Supporta 24 lingue:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇳🇱 Olandese (Paesi Bassi),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇮🇳 Marathi (India),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\n🇻🇳 Vietnamita (Vietnam)",
-      "grokInfo": "Supporta tag inline espressivi come [laugh] e tag di stile avvolgenti come <fast>...</fast>.",
+      "grokInfo": "Supporta tag inline espressivi come [laugh] e\ntag di stile avvolgenti come <fast>...</fast>.",
       "featuredBadge": "In evidenza"
     }
   },
@@ -507,8 +513,8 @@
       "errorNameRequired": "Il nome è obbligatorio",
       "errorVoiceRequired": "Seleziona una voce",
       "paidUserOnly": "Upgrade feature",
-      "playVoiceSample": "Riproduci campione vocale",
-      "stopVoiceSample": "Ferma campione vocale",
+      "playVoiceSample": "Riproduci file audio",
+      "stopVoiceSample": "Ferma file audio",
       "previewVoice": "Anteprima della voce di __VOICE__"
     }
   },
@@ -528,7 +534,7 @@
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
     "playAudio": "Riproduci audio",
     "previewTitle": "Anteprima voce generata",
-    "subtitle": "Carica un file audio e inserisci il testo per creare un clone vocale e generare parlato in un solo passaggio",
+    "subtitle": "Carica un file audio, inserisci il testo e genera istantaneamente parlato con la voce clonata",
     "success": "Audio generato con successo!",
     "tabPreview": "Anteprima",
     "tabUpload": "Carica",
@@ -551,7 +557,7 @@
     "crossLanguageInfo": {
       "title": "Trasferimento vocale cross-lingua",
       "description": "Clona una voce in una lingua e falla parlare fluentemente in una qualsiasi delle altre 23 lingue supportate preservando le caratteristiche uniche del parlante.",
-      "example": "Esempio: Carica un campione vocale di un parlante inglese → Genera parlato francese con la sua voce"
+      "example": "Esempio: Carica un file audio di un parlante inglese → Genera parlato francese con la sua voce"
     },
     "legalConsentCheckbox": "Utilizzando la clonazione vocale, certifico di avere tutti i consensi/diritti legali per clonare questi campioni vocali e che non utilizzerò nulla di generato per scopi illegali o dannosi."
   },

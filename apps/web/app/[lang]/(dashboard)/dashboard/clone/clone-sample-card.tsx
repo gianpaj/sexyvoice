@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import type langDict from '@/messages/en.json';
 import type { Status } from './new.client';
 
@@ -96,62 +97,63 @@ export default function CloneSampleCard({
         {sample.name}
       </AccordionTrigger>
       <AccordionContent>
-        <div className="center my-2 flex items-baseline justify-center gap-32">
-          <div className="flex flex-col text-center">
-            <p>{dict.sampleCard.sourceAudio}:</p>
-            <AudioPlayerWithContext
-              buttonClassName="bg-blue-950 hover:bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
-              className="my-4 self-center"
-              playAudioTitle={dict.playAudio}
-              progressColor="#8b5cf6"
-              showWaveform
-              url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
-              waveColor="#888888"
-            />
+        <Card className="pb-4">
+          <div className="center my-2 flex items-baseline justify-center gap-32">
+            <div className="flex flex-col text-center">
+              <p>{dict.sampleCard.sourceAudio}:</p>
+              <AudioPlayerWithContext
+                buttonClassName="bg-blue-950 hover:bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
+                className="my-4 self-center"
+                playAudioTitle={dict.playAudio}
+                progressColor="#8b5cf6"
+                showWaveform
+                url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
+                waveColor="#888888"
+              />
+            </div>
+            <div className="my-4 flex flex-col justify-center text-center">
+              <p>{dict.sampleCard.exampleOutput}:</p>
+              <AudioPlayerWithContext
+                buttonClassName="bg-purple-950 hover:bg-purple-950 opacity-60 transition-opacity hover:opacity-100"
+                className="my-4 self-center"
+                playAudioTitle={dict.playAudio}
+                progressColor="#8b5cf6"
+                showWaveform
+                url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}
+                waveColor="#888888"
+              />
+            </div>
           </div>
-          <div className="my-4 flex flex-col justify-center text-center">
-            <p>{dict.sampleCard.exampleOutput}:</p>
-            <AudioPlayerWithContext
-              buttonClassName="bg-purple-950 hover:bg-purple-950 opacity-60 transition-opacity hover:opacity-100"
-              className="my-4 self-center"
-              playAudioTitle={dict.playAudio}
-              progressColor="#8b5cf6"
-              showWaveform
-              url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}
-              waveColor="#888888"
+          <Button
+            className="mx-auto flex h-fit gap-0 whitespace-normal p-0"
+            key={sample.id}
+            onClick={() => handleLoadSampleAudio(sample)}
+            type="button"
+            variant="outline"
+          >
+            <Image
+              alt={sample.name}
+              className="h-16 w-16 rounded-sm"
+              height={65}
+              src={sample.image}
+              unoptimized
+              width={65}
             />
-          </div>
-        </div>
-        <Button
-          className="mx-auto flex h-fit gap-0 whitespace-normal p-0"
-          key={sample.id}
-          onClick={() => handleLoadSampleAudio(sample)}
-          type="button"
-          variant="outline"
-        >
-          <Image
-            alt={sample.name}
-            className="h-16 w-16 rounded-sm"
-            height={65}
-            src={sample.image}
-            unoptimized
-            width={65}
-          />
 
-          <div className="flex flex-col px-3 text-left">
-            <span className="font-medium text-sm">
-              {sample.name}
-              {/*<span className="text-gray-500">
+            <div className="flex flex-col px-3 text-left">
+              <span className="font-medium text-sm">
+                {sample.name}
+                {/*<span className="text-gray-500">
                 {dict.sampleCard.loadSource}
               </span>*/}
-            </span>
-            <span className="line-clamp-2 text-muted-foreground text-xs">
-              &quot;{sample.prompt}&quot;
-            </span>
-          </div>
-        </Button>
+              </span>
+              <span className="line-clamp-2 text-muted-foreground text-xs">
+                &quot;{sample.prompt}&quot;
+              </span>
+            </div>
+          </Button>
+        </Card>
       </AccordionContent>
     </AccordionItem>
-    // </div>
   );
 }

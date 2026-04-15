@@ -49,6 +49,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let selectedLanguage = '';
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     text = body.text || '';
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
+    selectedLanguage = body.language || '';
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -427,7 +429,7 @@ export async function POST(request: Request) {
         const { audioBuffer, codec, contentType } = await generateXaiTts({
           text,
           voiceId: voiceObj.name,
-          language: voiceObj.language,
+          language: selectedLanguage || voiceObj.language,
           codec: outputCodec,
           signal: abortController.signal,
         });
@@ -439,7 +441,7 @@ export async function POST(request: Request) {
           voice,
           model: voiceObj.model,
           codec: outputCodec,
-          language: voiceObj.language,
+          language: selectedLanguage || voiceObj.language,
           errorData: error,
         };
         logger.error('Grok TTS generation failed', {
@@ -452,7 +454,7 @@ export async function POST(request: Request) {
             text,
             model: voiceObj.model,
             codec: outputCodec,
-            language: voiceObj.language,
+            language: selectedLanguage || voiceObj.language,
             errorMessage: Error.isError(error) ? error.message : String(error),
             errorCause: Error.isError(error) ? error.cause : undefined,
           },

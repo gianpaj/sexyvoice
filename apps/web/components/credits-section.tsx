@@ -3,19 +3,19 @@
 import type { User } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { Crisp } from 'crisp-sdk-web';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { usePostHog } from 'posthog-js/react';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { getCredits } from '@/lib/supabase/queries.client';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
-import { SidebarContext } from './ui/sidebar';
+import { useSidebar } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
@@ -34,8 +34,7 @@ function CreditsSection({
   const t = useTranslations('creditsSection');
   const posthog = usePostHog();
   const supabase = useSupabaseBrowser();
-  const sidebarContext = useContext(SidebarContext);
-  const isMobile = sidebarContext?.isMobile;
+  const { isMobile, toggleSidebar } = useSidebar();
   const totalCredits =
     creditTransactions?.reduce(
       (total, transaction) => total + transaction.amount,
@@ -128,10 +127,10 @@ function CreditsSection({
           variant="link"
         >
           <Link
-            href={`/${lang}/dashboard/credits`}
+            href="/dashboard/credits"
             onClick={() => {
               if (isMobile && !doNotToggleSidebar) {
-                sidebarContext?.toggleSidebar?.();
+                toggleSidebar?.();
               }
             }}
           >

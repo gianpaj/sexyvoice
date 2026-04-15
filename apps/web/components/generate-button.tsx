@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { TextShimmer } from './motion-primitives/text-shimmer';
-import { Button, type ButtonProps } from './ui/button';
+import { Button, type ButtonIconProps } from './ui/button';
 
 export function GenerateButton({
   className,
@@ -11,7 +11,7 @@ export function GenerateButton({
   ctaText,
   generatingText,
   ...rest
-}: ButtonProps & {
+}: ButtonIconProps & {
   isGenerating: boolean;
   generatingText: string;
   ctaText: string;
@@ -27,7 +27,7 @@ export function GenerateButton({
   return (
     <Button
       {...rest}
-      className={cn('disabled:bg-primary/60 disabled:opacity-100', className)}
+      className={cn('disabled:opacity-70', className)}
       disabled={disabled}
     >
       {isGenerating ? (

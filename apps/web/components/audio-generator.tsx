@@ -1,69 +1,53 @@
-'use client';
+"use client";
 
-import { useCompletion } from '@ai-sdk/react';
-import {
-  CircleStop,
-  Crown,
-  Download,
-  Info,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  RotateCcw,
-  Sparkles,
-} from 'lucide-react';
-import dynamic from 'next/dynamic';
+import { useCompletion } from "@ai-sdk/react";
+import { CircleStop, Download, Loader2, RotateCcw } from "lucide-react";
+import dynamic from "next/dynamic";
 import {
   type ComponentPropsWithoutRef,
-  type CSSProperties,
   forwardRef,
   type ReactNode,
-  type RefObject,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-} from 'react';
+} from "react";
 
-import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
-import { toast } from '@/components/services/toast';
-import { SpotlightField } from '@/components/spotlight-field';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { getCharactersLimit } from '@/lib/ai';
-import { downloadUrl } from '@/lib/download';
-import { APIError } from '@/lib/error-ts';
-import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
-import { cn, getTtsProvider } from '@/lib/utils';
-import type messages from '@/messages/en.json';
+import { useAudio } from "@/app/[lang]/(dashboard)/dashboard/clone/audio-provider";
+import { toast } from "@/components/services/toast";
+import { SpotlightField } from "@/components/spotlight-field";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { getCharactersLimit } from "@/lib/ai";
+import { downloadUrl } from "@/lib/download";
+import { APIError } from "@/lib/error-ts";
+import { resizeTextarea } from "@/lib/react-textarea-autosize";
+import { MAX_FREE_GENERATIONS } from "@/lib/supabase/constants";
+import { cn, getTtsProvider } from "@/lib/utils";
+import type messages from "@/messages/en.json";
 import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
-} from './audio-player-with-context';
+} from "./audio-player-with-context";
+import { GenerateButton } from "./generate-button";
 
-const GrokTTSEditor = dynamic(
-  () => import('./grok-tts-editor').then((mod) => mod.GrokTTSEditor),
+const NonGrokPromptEditor = dynamic(
+  () => import("./non-grok-editor").then((mod) => mod.NonGrokPromptEditor),
   { ssr: false },
 );
 
-import { GenerateButton } from './generate-button';
-import { Alert, AlertDescription } from './ui/alert';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from './ui/tooltip';
+import { GrokTTSEditor } from "./grok-tts-editor";
+import { Alert, AlertDescription } from "./ui/alert";
 
-interface AnimatedPromptTextareaProps
-  extends ComponentPropsWithoutRef<typeof Textarea> {
+interface AnimatedPromptTextareaProps extends ComponentPropsWithoutRef<
+  typeof Textarea
+> {
   children?: ReactNode;
 }
 
-const AnimatedPromptTextarea = forwardRef<
+export const AnimatedPromptTextarea = forwardRef<
   HTMLTextAreaElement,
   AnimatedPromptTextareaProps
 >(({ children, className, onBlur, onFocus, ...props }, ref) => {
@@ -71,7 +55,7 @@ const AnimatedPromptTextarea = forwardRef<
     <SpotlightField>
       <Textarea
         className={cn(
-          'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
+          "border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0",
           className,
         )}
         onBlur={onBlur}
@@ -83,133 +67,7 @@ const AnimatedPromptTextarea = forwardRef<
     </SpotlightField>
   );
 });
-AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
-
-interface NonGrokPromptEditorProps {
-  charactersLimit: number;
-  dict: (typeof messages)['generate'];
-  isEnhancingText: boolean;
-  isFullscreen: boolean;
-  isGenerating: boolean;
-  isPaidUser: boolean;
-  onEnhanceText: () => void;
-  onTextChange: (text: string) => void;
-  onToggleFullscreen: () => void;
-  showEnhanceButton: boolean;
-  text: string;
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
-  textareaRightPadding: string;
-  textIsOverLimit: boolean;
-}
-
-function NonGrokPromptEditor({
-  charactersLimit,
-  dict,
-  isEnhancingText,
-  isFullscreen,
-  isGenerating,
-  isPaidUser,
-  onEnhanceText,
-  onTextChange,
-  onToggleFullscreen,
-  showEnhanceButton,
-  text,
-  textareaRef,
-  textareaRightPadding,
-  textIsOverLimit,
-}: NonGrokPromptEditorProps) {
-  return (
-    <>
-      <AnimatedPromptTextarea
-        className={cn(
-          'textarea-2 bg-transparent transition-[height] duration-200 ease-in-out',
-          textareaRightPadding,
-        )}
-        maxLength={charactersLimit + 10}
-        onChange={(e) => onTextChange(e.target.value)}
-        placeholder={dict.textAreaPlaceholder}
-        ref={textareaRef}
-        style={
-          {
-            '--ta2-height': isFullscreen ? '30vh' : '8rem',
-          } as CSSProperties
-        }
-        value={text}
-      >
-        {showEnhanceButton && (
-          <>
-            <TooltipProvider>
-              <Tooltip delayDuration={100} supportMobileTap>
-                <TooltipTrigger asChild>
-                  <Info className="absolute top-4 right-24 ml-2 h-4 w-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>This model supports emotion tags</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button
-              className="absolute top-2 right-12 h-8 w-8 hover:bg-zinc-800"
-              disabled={!text.trim() || isEnhancingText || isGenerating}
-              onClick={onEnhanceText}
-              size="icon"
-              title="Enhance text with AI emotion tags"
-              variant="ghost"
-            >
-              {isEnhancingText ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="h-4 w-4 text-yellow-300" />
-              )}
-            </Button>
-          </>
-        )}
-
-        <Button
-          className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-          onClick={onToggleFullscreen}
-          size="icon"
-          title="Fullscreen"
-          variant="ghost"
-        >
-          {isFullscreen ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )}
-        </Button>
-      </AnimatedPromptTextarea>
-
-      <div
-        className={cn(
-          'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-          textIsOverLimit ? 'font-bold text-red-500' : '',
-        )}
-      >
-        {text.length} / {charactersLimit}
-        <TooltipProvider>
-          <Tooltip delayDuration={100} supportMobileTap>
-            <TooltipTrigger asChild>
-              <Crown
-                className={cn(
-                  'h-3.5 w-3.5 cursor-default',
-                  isPaidUser ? 'text-muted-foreground/50' : 'text-yellow-400',
-                )}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {isPaidUser
-                  ? 'Paid users enjoy 2× character limit'
-                  : 'Upgrade to a paid plan for 2× character limit'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-    </>
-  );
-}
+AnimatedPromptTextarea.displayName = "AnimatedPromptTextarea";
 
 interface CreditEstimatorProps {
   buttonLabel: string;
@@ -233,13 +91,13 @@ function CreditEstimator({
   return (
     <div className="flex items-center justify-between rounded-lg border border-input border-dashed p-3 sm:p-2">
       <Button
-        className="h-8 bg-secondary text-xs"
+        className="h-8 text-xs"
         disabled={
           !text.trim() || isEstimating || isGenerating || textIsOverLimit
         }
         onClick={onEstimateCredits}
         size="sm"
-        variant="outline"
+        variant="secondary"
       >
         {isEstimating ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -257,11 +115,11 @@ function CreditEstimator({
 }
 
 interface AudioGeneratorProps {
-  dict: (typeof messages)['generate'];
+  dict: (typeof messages)["generate"];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
   selectedStyle?: string;
-  selectedVoice?: Tables<'voices'>;
+  selectedVoice?: Tables<"voices">;
 }
 
 export function AudioGenerator({
@@ -271,16 +129,17 @@ export function AudioGenerator({
   selectedStyle,
   selectedVoice,
 }: AudioGeneratorProps) {
-  const [text, setText] = useState('');
-  const [previousText, setPreviousText] = useState('');
+  const [text, setText] = useState("");
+  const [previousText, setPreviousText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [audioURL, setAudioURL] = useState('');
+  const [audioURL, setAudioURL] = useState("");
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
   const [playerControls, setPlayerControls] =
     useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedGrokLanguage, setSelectedGrokLanguage] = useState("auto");
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
@@ -291,25 +150,25 @@ export function AudioGenerator({
     () => getTtsProvider(selectedVoice?.model),
     [selectedVoice?.model],
   );
-  const isGeminiVoice = provider === 'gemini';
-  const isGrokVoice = provider === 'grok';
-  const showEnhanceButton = provider === 'replicate';
+  const isGeminiVoice = provider === "gemini";
+  const isGrokVoice = provider === "grok";
+  const showEnhanceButton = provider === "replicate";
 
   const charactersLimit = useMemo(
-    () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
+    () => getCharactersLimit(selectedVoice?.model || "", isPaidUser),
     [selectedVoice, isPaidUser],
   );
 
   const textareaRightPadding = useMemo(() => {
     if (isGeminiVoice) {
-      return 'pr-16';
+      return "pr-10";
     }
 
     if (showEnhanceButton) {
-      return 'pr-30';
+      return "pr-20";
     }
 
-    return 'pr-16';
+    return "pr-16";
   }, [isGeminiVoice, showEnhanceButton]);
 
   const textIsOverLimit = text.length > charactersLimit;
@@ -318,9 +177,17 @@ export function AudioGenerator({
     () => ({
       text,
       voice: selectedVoice?.name,
-      styleVariant: isGeminiVoice ? selectedStyle : '',
+      styleVariant: isGeminiVoice ? selectedStyle : "",
+      language: isGrokVoice ? selectedGrokLanguage : undefined,
     }),
-    [isGeminiVoice, selectedStyle, selectedVoice?.name, text],
+    [
+      isGeminiVoice,
+      isGrokVoice,
+      selectedStyle,
+      selectedVoice?.name,
+      selectedGrokLanguage,
+      text,
+    ],
   );
 
   const handleCancel = useCallback(() => {
@@ -333,10 +200,10 @@ export function AudioGenerator({
     try {
       abortController.current = new AbortController();
 
-      const response = await fetch('/api/generate-voice', {
-        method: 'POST',
+      const response = await fetch("/api/generate-voice", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
         signal: abortController.current.signal,
@@ -350,7 +217,7 @@ export function AudioGenerator({
             data.errorCode as keyof typeof dict
           ] as string;
           throw new APIError(
-            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+            errorMessage.replace("__COUNT__", MAX_FREE_GENERATIONS.toString()),
             response,
           );
         }
@@ -361,7 +228,7 @@ export function AudioGenerator({
       setAudioURL(data.url);
       toast.success(dict.success);
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
+      if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
 
@@ -377,21 +244,21 @@ export function AudioGenerator({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
         event.preventDefault();
 
         if (!isGenerating && text.trim() && selectedVoice && hasEnoughCredits) {
           handleGenerate().catch((error) => {
-            console.error('Keyboard shortcut generation failed:', error);
+            console.error("Keyboard shortcut generation failed:", error);
           });
         }
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleGenerate, hasEnoughCredits, isGenerating, selectedVoice, text]);
 
@@ -409,9 +276,9 @@ export function AudioGenerator({
   const downloadAudio = async () => {
     if (!audioURL) return;
 
-    const anchorElement = document.createElement('a');
+    const anchorElement = document.createElement("a");
     document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
+    anchorElement.style.display = "none";
 
     try {
       await downloadUrl(audioURL, anchorElement);
@@ -421,8 +288,8 @@ export function AudioGenerator({
   };
 
   const { complete } = useCompletion({
-    api: '/api/generate-text',
-    streamProtocol: 'text',
+    api: "/api/generate-text",
+    streamProtocol: "text",
   });
 
   const handleEnhanceText = async () => {
@@ -438,16 +305,16 @@ export function AudioGenerator({
 
       if (enhancedText) {
         setText(enhancedText);
-        toast('Text enhanced with emotion tags!', {
+        toast("Text enhanced with emotion tags!", {
           action: {
-            label: 'Undo',
+            label: "Undo",
             onClick: () => setText(previousText),
           },
         });
       }
     } catch (error) {
-      console.error('Error enhancing text:', error);
-      toast.error('Failed to enhance text');
+      console.error("Error enhancing text:", error);
+      toast.error("Failed to enhance text");
     } finally {
       setIsEnhancingText(false);
     }
@@ -475,10 +342,10 @@ export function AudioGenerator({
 
     setIsEstimating(true);
     try {
-      const response = await fetch('/api/estimate-credits', {
-        method: 'POST',
+      const response = await fetch("/api/estimate-credits", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text,
@@ -522,6 +389,8 @@ export function AudioGenerator({
               maxLength={charactersLimit}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}
+              selectedGrokLanguage={selectedGrokLanguage}
+              setSelectedGrokLanguage={setSelectedGrokLanguage}
               value={text}
             />
           ) : (
@@ -558,8 +427,8 @@ export function AudioGenerator({
 
         <div
           className={cn(
-            'grid grid-cols-1 justify-start gap-3 sm:grid-cols-[1fr_2fr]',
-            hasEnoughCredits ? '' : 'flex flex-col items-start',
+            "grid grid-cols-1 justify-start gap-3 sm:grid-cols-[1fr_2fr]",
+            hasEnoughCredits ? "" : "flex flex-col items-start",
           )}
         >
           {!hasEnoughCredits && (

@@ -21,7 +21,7 @@ import { usePathname } from 'next/navigation';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
-import { SidebarMenu as SidebarMenuCustom } from '@/components/sidebar-menu';
+import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -165,11 +165,7 @@ export default function DashboardUI({
                 <SidebarMenu>
                   {navigation.map((item) => (
                     <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={item.current}
-                        tooltip={item.name}
-                      >
+                      <SidebarMenuButton asChild isActive={item.current}>
                         <Link href={item.href}>
                           <item.icon className="mr-3 size-5" />
                           <span>{item.name}</span>
@@ -186,7 +182,7 @@ export default function DashboardUI({
                 <SidebarMenu>
                   {freeTools.map((item) => (
                     <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton asChild tooltip={item.name}>
+                      <SidebarMenuButton asChild>
                         <Link href={item.href} target="_blank">
                           <item.icon className="mr-3 size-5" />
                           <span>{item.name}</span>
@@ -207,7 +203,7 @@ export default function DashboardUI({
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />
-            <SidebarMenuCustom dict={dict.sidebar} lang={lang} />
+            <SidebarFooterMenu dict={dict.sidebar} lang={lang} />
           </SidebarFooter>
         </Sidebar>
 

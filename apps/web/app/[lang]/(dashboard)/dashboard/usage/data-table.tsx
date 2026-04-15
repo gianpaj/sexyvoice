@@ -168,7 +168,7 @@ export function DataTable({ dict }: DataTableProps) {
       return table.getRowModel().rows.map((row) => (
         <TableRow data-state={row.getIsSelected() && 'selected'} key={row.id}>
           {row.getVisibleCells().map((cell) => (
-            <TableCell key={cell.id}>
+            <TableCell className="whitespace-break-spaces p-4" key={cell.id}>
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </TableCell>
           ))}
@@ -256,7 +256,10 @@ export function DataTable({ dict }: DataTableProps) {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                className="px-4 [&>th]:text-muted-foreground"
+                key={headerGroup.id}
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder

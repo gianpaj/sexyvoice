@@ -272,11 +272,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -365,8 +361,6 @@
     "estimateCreditsButton": "Estimér credits",
     "generating": "Genererer",
     "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
-    "languageLabel": "Sprog",
-    "languageSelectPlaceholder": "Vælg et sprog",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
@@ -394,21 +388,29 @@
         "exhale": "[exhale]",
         "sigh": "[sigh]"
       },
-      "wrappingTags": {
-        "soft": "<soft>...</soft>",
-        "whisper": "<whisper>...</whisper>",
-        "loud": "<loud>...</loud>",
-        "buildIntensity": "<build-intensity>...</build-intensity>",
-        "decreaseIntensity": "<decrease-intensity>...</decrease-intensity>",
-        "higherPitch": "<higher-pitch>...</higher-pitch>",
-        "lowerPitch": "<lower-pitch>...</lower-pitch>",
-        "slow": "<slow>...</slow>",
-        "fast": "<fast>...</fast>",
-        "singSong": "<sing-song>...</sing-song>",
-        "singing": "<singing>...</singing>",
-        "laughSpeak": "<laugh-speak>...</laugh-speak>",
-        "emphasis": "<emphasis>...</emphasis>"
-      }
+      "languageLabel": "Sprog",
+      "languageSelectPlaceholder": "Vælg et sprog",
+      "langAutomatic": "Automatisk",
+      "langArabicEgypt": "Arabisk (Egypten)",
+      "langArabicSaudiArabia": "Arabisk (Saudi-Arabien)",
+      "langArabicUnitedArabEmirates": "Arabisk (De Forenede Arabiske Emirater)",
+      "langBengali": "Bengali",
+      "langChinese": "Kinesisk",
+      "langEnglish": "Engelsk",
+      "langFrench": "Fransk",
+      "langGerman": "Tysk",
+      "langHindi": "Hindi",
+      "langIndonesian": "Indonesisk",
+      "langItalian": "Italiensk",
+      "langJapanese": "Japansk",
+      "langKorean": "Koreansk",
+      "langPortugueseBrazil": "Portugisisk (Brasilien)",
+      "langPortuguesePortugal": "Portugisisk (Portugal)",
+      "langRussian": "Russisk",
+      "langSpanishSpain": "Spansk (Spanien)",
+      "langSpanishMexico": "Spansk (Mexico)",
+      "langTurkish": "Tyrkisk",
+      "langVietnamese": "Vietnamesisk"
     },
     "voiceSelector": {
       "title": "Vælg stemme",
@@ -418,7 +420,7 @@
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
-      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og omsluttende tags som <fast>...</fast>.",
+      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og\nomsluttende tags som <fast>...</fast>.",
       "featuredBadge": "Fremhævet"
     }
   },
@@ -528,7 +530,7 @@
     "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
     "playAudio": "Afspil lyd",
     "previewTitle": "Forhåndsvisning af genereret stemme",
-    "subtitle": "Upload en lydfil og indtast tekst for at oprette en stemmeklon og generere tale i ét trin",
+    "subtitle": "Upload en lydprøve, indtast din tekst, og generer tale med den klonede stemme med det samme",
     "success": "Lyd genereret!",
     "tabPreview": "Forhåndsvisning",
     "tabUpload": "Upload",

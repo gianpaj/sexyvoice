@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import "@testing-library/jest-dom/vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AudioGenerator } from '@/components/audio-generator';
+import { AudioGenerator } from "@/components/audio-generator";
 
 const mockToastFn = vi.hoisted(() =>
   Object.assign(vi.fn(), {
@@ -12,33 +12,33 @@ const mockToastFn = vi.hoisted(() =>
   }),
 );
 
-vi.mock('@ai-sdk/react', () => ({
+vi.mock("@ai-sdk/react", () => ({
   useCompletion: () => ({
     complete: vi.fn(),
   }),
 }));
 
-vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
+vi.mock("@/app/[lang]/(dashboard)/dashboard/clone/audio-provider", () => ({
   useAudio: () => ({
     reset: vi.fn(),
   }),
 }));
 
-vi.mock('@/components/services/toast', () => ({
+vi.mock("@/components/services/toast", () => ({
   toast: mockToastFn,
 }));
 
-vi.mock('@/components/audio-player-with-context', () => ({
+vi.mock("@/components/audio-player-with-context", () => ({
   AudioPlayerWithContext: () => null,
 }));
 
-vi.mock('@/lib/ai', () => ({
+vi.mock("@/lib/ai", () => ({
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
-    if (model === 'gpro') {
+    if (model === "gpro") {
       return isPaidUser ? 2000 : 1000;
     }
 
-    if (model === 'grok') {
+    if (model === "grok") {
       return isPaidUser ? 2000 : 1000;
     }
 
@@ -46,104 +46,92 @@ vi.mock('@/lib/ai', () => ({
   }),
 }));
 
-vi.mock('@/lib/download', () => ({
+vi.mock("@/lib/download", () => ({
   downloadUrl: vi.fn(),
 }));
 
-vi.mock('@/lib/react-textarea-autosize', () => ({
+vi.mock("@/lib/react-textarea-autosize", () => ({
   resizeTextarea: vi.fn(),
 }));
 
 const baseDict = {
-  title: 'Generate audio',
-  textAreaPlaceholder: 'Enter text',
-  estimateCreditsButton: 'Estimate credits',
-  ctaButton: 'Generate',
-  generating: 'Generating',
-  cancel: 'Cancel',
-  playAudio: 'Play audio',
-  resetPlayer: 'Reset player',
-  downloadAudio: 'Download audio',
-  notEnoughCredits: 'Not enough credits',
-  success: 'Success',
-  error: 'Something went wrong',
-  errorEstimating: 'Failed to estimate credits',
-  dailyLimitError: 'Daily limit reached (__COUNT__)',
+  title: "Generate audio",
+  textAreaPlaceholder: "Enter text",
+  estimateCreditsButton: "Estimate credits",
+  languageLabel: "Language",
+  languageSelectPlaceholder: "Select a language",
+  langAutomatic: "Automatic",
+  ctaButton: "Generate",
+  generating: "Generating",
+  cancel: "Cancel",
+  playAudio: "Play audio",
+  resetPlayer: "Reset player",
+  downloadAudio: "Download audio",
+  notEnoughCredits: "Not enough credits",
+  success: "Success",
+  error: "Something went wrong",
+  errorEstimating: "Failed to estimate credits",
+  dailyLimitError: "Daily limit reached (__COUNT__)",
   grok: {
-    helperText: 'Use Grok tags to control delivery.',
-    inlineEffectPlaceholder: 'Insert inline effect',
-    wrappingEffectPlaceholder: 'Wrap selected text',
-    formatPlaceholder: 'Select format',
+    helperText: "Use Grok tags to control delivery.",
+    inlineEffectPlaceholder: "Insert tags",
+    wrappingEffectPlaceholder: "Wrap selected text",
+    formatPlaceholder: "Select format",
     effects: {
-      pause: 'Pause',
-      longPause: 'Long pause',
-      humTune: 'Hum tune',
-      laugh: 'Laugh',
-      chuckle: 'Chuckle',
-      giggle: 'Giggle',
-      cry: 'Cry',
-      tsk: 'Tsk',
-      tongueClick: 'Tongue click',
-      lipSmack: 'Lip smack',
-      breath: 'Breath',
-      inhale: 'Inhale',
-      exhale: 'Exhale',
-      sigh: 'Sigh',
-    },
-    wrappingTags: {
-      soft: 'Soft',
-      whisper: 'Whisper',
-      loud: 'Loud',
-      buildIntensity: 'Build intensity',
-      decreaseIntensity: 'Decrease intensity',
-      higherPitch: 'Higher pitch',
-      lowerPitch: 'Lower pitch',
-      slow: 'Slow',
-      fast: 'Fast',
-      singSong: 'Sing-song',
-      singing: 'Singing',
-      laughSpeak: 'Laugh-speak',
-      emphasis: 'Emphasis',
+      pause: "Pause",
+      longPause: "Long pause",
+      humTune: "Hum tune",
+      laugh: "Laugh",
+      chuckle: "Chuckle",
+      giggle: "Giggle",
+      cry: "Cry",
+      tsk: "Tsk",
+      tongueClick: "Tongue click",
+      lipSmack: "Lip smack",
+      breath: "Breath",
+      inhale: "Inhale",
+      exhale: "Exhale",
+      sigh: "Sigh",
     },
   },
 } as const;
 
 function createVoice(
-  overrides: Partial<Tables<'voices'>> = {},
-): Tables<'voices'> {
+  overrides: Partial<Tables<"voices">> = {},
+): Tables<"voices"> {
   return {
-    id: 'voice-id',
-    name: 'tara',
-    language: 'en',
+    id: "voice-id",
+    name: "tara",
+    language: "en",
     model:
-      'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      "lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f",
     description: null,
     type: null,
     sort_order: 0,
-    feature: 'tts',
+    feature: "tts",
     sample_url: null,
     sample_prompt: null,
     user_id: null,
     created_at: null,
     ...overrides,
-  } as Tables<'voices'>;
+  } as Tables<"voices">;
 }
 
 function renderAudioGenerator(
   overrides: Partial<React.ComponentProps<typeof AudioGenerator>> = {},
 ) {
   const defaultProps: React.ComponentProps<typeof AudioGenerator> = {
-    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
+    dict: baseDict as unknown as (typeof import("@/messages/en.json"))["generate"],
     hasEnoughCredits: true,
     isPaidUser: true,
-    selectedStyle: 'moan softly',
+    selectedStyle: "moan softly",
     selectedVoice: createVoice(),
   };
 
   return render(<AudioGenerator {...defaultProps} {...overrides} />);
 }
 
-describe('AudioGenerator', () => {
+describe("AudioGenerator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockToastFn.mockClear();
@@ -151,47 +139,145 @@ describe('AudioGenerator', () => {
     mockToastFn.error.mockClear();
   });
 
-  it('hides Gemini estimate credits UI for Grok voices', () => {
+  it("shows the Grok language selector with Automatic first and English second", async () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
-        model: 'grok',
+        name: "eve",
+        model: "grok",
+      }),
+    });
+
+    const languageLabel = screen.getByText(baseDict.languageLabel);
+    expect(languageLabel).toBeInTheDocument();
+
+    const languageField = languageLabel.parentElement;
+    expect(languageField).not.toBeNull();
+
+    const trigger = within(languageField as HTMLElement).getByRole("combobox");
+    expect(trigger).toHaveTextContent(baseDict.langAutomatic);
+
+    trigger.click();
+
+    const options = await screen.findAllByRole("option");
+    expect(options[0]).toHaveTextContent(baseDict.langAutomatic);
+    expect(options[1]).toHaveTextContent("English");
+    expect(options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          textContent: expect.stringContaining("Arabic (Egypt)"),
+        }),
+        expect.objectContaining({
+          textContent: expect.stringContaining("Arabic (Saudi Arabia)"),
+        }),
+      ]),
+    );
+  });
+
+  it("submits the selected Grok language in the generation request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: "https://example.com/audio.mp3" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: "eve",
+        model: "grok",
+      }),
+    });
+
+    const languageLabel = screen.getByText(baseDict.languageLabel);
+    const languageField = languageLabel.parentElement;
+    expect(languageField).not.toBeNull();
+
+    const trigger = within(languageField as HTMLElement).getByRole("combobox");
+    trigger.click();
+
+    const arabicEgyptOption = await screen.findByRole("option", {
+      name: "Arabic (Egypt)",
+    });
+    arabicEgyptOption.click();
+
+    await waitFor(() => {
+      expect(trigger).toHaveTextContent("Arabic (Egypt)");
+    });
+
+    const editor = document.querySelector('[contenteditable="true"]');
+    expect(editor).not.toBeNull();
+
+    editor?.dispatchEvent(
+      new InputEvent("input", {
+        bubbles: true,
+        inputType: "insertText",
+        data: "مرحبا",
+      }),
+    );
+
+    const generateButton = screen.getByTestId("generate-button");
+    generateButton.click();
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/generate-voice",
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: "مرحبا",
+            voice: "eve",
+            styleVariant: "",
+            language: "ar-EG",
+          }),
+          signal: expect.any(AbortSignal),
+        }),
+      );
+    });
+  });
+
+  it("hides Gemini estimate credits UI for Grok voices", () => {
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: "eve",
+        model: "grok",
       }),
     });
 
     expect(
-      screen.queryByRole('button', { name: baseDict.estimateCreditsButton }),
+      screen.queryByRole("button", { name: baseDict.estimateCreditsButton }),
     ).not.toBeInTheDocument();
   });
 
-  it('hides the AI enhance button for Grok voices', () => {
+  it("hides the AI enhance button for Grok voices", () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
-        model: 'grok',
+        name: "eve",
+        model: "grok",
       }),
     });
 
     expect(
-      screen.queryByTitle('Enhance text with AI emotion tags'),
+      screen.queryByTitle("Enhance text with AI emotion tags"),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText('This model supports emotion tags'),
+      screen.queryByText("This model supports emotion tags"),
     ).not.toBeInTheDocument();
   });
 
-  it('shows Grok TTS editor for Grok voices', async () => {
+  it("shows Grok TTS editor for Grok voices", async () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
-        model: 'grok',
+        name: "eve",
+        model: "grok",
       }),
     });
 
     // GrokTTSEditor is loaded dynamically, wait for it
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: /insert inline effect/i }),
+        screen.getByRole("button", { name: /insert tags/i }),
       ).toBeInTheDocument();
     });
     // Should render the Tiptap contenteditable editor
@@ -202,17 +288,17 @@ describe('AudioGenerator', () => {
     // Codec selector is handled outside the editor and may not expose a combobox here
   });
 
-  it('does not show Grok TTS editor for Replicate voices', () => {
+  it("does not show Grok TTS editor for Replicate voices", () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'tara',
+        name: "tara",
         model:
-          'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          "lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f",
       }),
     });
 
     expect(
-      screen.queryByRole('button', { name: /insert inline effect/i }),
+      screen.queryByRole("button", { name: /insert tags/i }),
     ).not.toBeInTheDocument();
   });
 });

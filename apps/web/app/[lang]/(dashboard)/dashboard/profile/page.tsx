@@ -30,7 +30,7 @@ export default async function ProfilePage(props: {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8">
       <Card>
         <CardHeader>
           <CardTitle>{profileDict.security.title}</CardTitle>

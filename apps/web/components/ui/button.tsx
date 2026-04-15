@@ -1,24 +1,24 @@
-import { Slot, Slottable } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import * as React from 'react';
+import { Slot } from 'radix-ui';
+import type * as React from 'react';
+import { forwardRef } from 'react';
 
 import { cn } from '@/lib/utils';
-import { forwardRef } from 'react';
 
 // https://enhanced-button.vercel.app/
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2  disabled:bg-initial! disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow shadow hover:bg-primary-active',
+          'bg-primary text-primary-foreground shadow hover:bg-primary-active disabled:bg-primary',
         destructive:
-          'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+          'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 disabled:bg-destructive',
         outline:
-          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground',
+          'border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground disabled:bg-background',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary-foreground/30',
+          'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary-foreground/30 disabled:bg-secondary',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
@@ -60,63 +60,56 @@ interface IconRefProps {
   iconPlacement?: undefined;
 }
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+export type ButtonIconProps = (IconProps | IconRefProps) & React.ComponentProps<'button'> &
+    VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+  }
+
+function Button({
+  className,
+  variant,
+  effect,
+  size,
+  icon: Icon,
+  iconPlacement,
+  asChild = false,
+  ...props
+}: ButtonIconProps) {
+  const Comp = asChild ? Slot.Root : 'button';
+  const buttonClassName = cn(
+    buttonVariants({ variant, effect, size, className }),
+  );
+
+  return (
+    <Comp
+      className={buttonClassName}
+      data-size={size}
+      data-slot="button"
+      data-variant={variant}
+      {...props}
+    >
+      {Icon &&
+        iconPlacement === 'left' &&
+        (effect === 'expandIcon' ? (
+          <div className="w-0 translate-x-[0%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-100 group-hover:pr-2 group-hover:opacity-100">
+            <Icon />
+          </div>
+        ) : (
+          <Icon />
+        ))}
+      <Slot.Slottable>{props.children}</Slot.Slottable>
+      {Icon &&
+        iconPlacement === 'right' &&
+        (effect === 'expandIcon' ? (
+          <div className="w-0 translate-x-full pl-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-0 group-hover:pl-2 group-hover:opacity-100">
+            <Icon />
+          </div>
+        ) : (
+          <Icon />
+        ))}
+    </Comp>
+  );
 }
-
-export type ButtonIconProps = IconProps | IconRefProps;
-
-const Button = React.forwardRef<
-  HTMLButtonElement,
-  ButtonProps & ButtonIconProps
->(
-  (
-    {
-      className,
-      variant,
-      effect,
-      size,
-      icon: Icon,
-      iconPlacement,
-      asChild = false,
-      ...props
-    },
-    ref,
-  ) => {
-    const Comp = asChild ? Slot : 'button';
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, effect, size, className }))}
-        ref={ref}
-        {...props}
-      >
-        {Icon &&
-          iconPlacement === 'left' &&
-          (effect === 'expandIcon' ? (
-            <div className="w-0 translate-x-[0%] pr-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-100 group-hover:pr-2 group-hover:opacity-100">
-              <Icon />
-            </div>
-          ) : (
-            <Icon />
-          ))}
-        <Slottable>{props.children}</Slottable>
-        {Icon &&
-          iconPlacement === 'right' &&
-          (effect === 'expandIcon' ? (
-            <div className="w-0 translate-x-full pl-0 opacity-0 transition-all duration-200 group-hover:w-5 group-hover:translate-x-0 group-hover:pl-2 group-hover:opacity-100">
-              <Icon />
-            </div>
-          ) : (
-            <Icon />
-          ))}
-      </Comp>
-    );
-  },
-);
-Button.displayName = 'Button';
-
 
 const ButtonGroup = forwardRef<
   HTMLDivElement,
@@ -144,4 +137,4 @@ const ButtonGroup = forwardRef<
 });
 ButtonGroup.displayName = 'ButtonGroup';
 
-export { Button, buttonVariants, ButtonGroup };
+export { Button, ButtonGroup, buttonVariants };
