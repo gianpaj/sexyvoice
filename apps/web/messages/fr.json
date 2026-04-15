@@ -534,7 +534,7 @@
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "previewTitle": "Aperçu de la voix générée",
-    "subtitle": "Téléchargez un fichier audio et entrez du texte pour créer un clone vocal et générer de la parole en une seule étape",
+    "subtitle": "Téléchargez un échantillon audio, saisissez votre texte et générez instantanément de la parole avec la voix clonée",
     "success": "Audio généré avec succès !",
     "tabPreview": "Aperçu",
     "tabUpload": "Télécharger",

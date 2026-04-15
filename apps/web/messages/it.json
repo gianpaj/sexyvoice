@@ -119,7 +119,7 @@
     },
     "generator": {
       "title": "Provalo ora",
-      "subtitle": "Genera il tuo primo campione vocale",
+      "subtitle": "Genera il tuo primo file audio",
       "selectVoice": "Seleziona una voce",
       "enterText": "Inserisci il testo da convertire",
       "speed": "Velocità",
@@ -161,7 +161,7 @@
           "questions": [
             {
               "question": "Come funziona la clonazione vocale?",
-              "answer": "La nostra AI analizza il tuo campione vocale (da 10 secondi a 5 minuti) per apprendere i suoi schemi e caratteristiche uniche. Con solo pochi secondi di audio pulito, puoi creare una versione digitale della tua voce che suona naturale e realistica."
+              "answer": "La nostra AI analizza il tuo file audio (da 10 secondi a 5 minuti) per apprendere i suoi schemi e caratteristiche uniche. Con solo pochi secondi di audio pulito, puoi creare una versione digitale della tua voce che suona naturale e realistica."
             },
             {
               "question": "Posso clonare la mia voce?",
@@ -513,8 +513,8 @@
       "errorNameRequired": "Il nome è obbligatorio",
       "errorVoiceRequired": "Seleziona una voce",
       "paidUserOnly": "Upgrade feature",
-      "playVoiceSample": "Riproduci campione vocale",
-      "stopVoiceSample": "Ferma campione vocale",
+      "playVoiceSample": "Riproduci file audio",
+      "stopVoiceSample": "Ferma file audio",
       "previewVoice": "Anteprima della voce di __VOICE__"
     }
   },
@@ -534,7 +534,7 @@
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
     "playAudio": "Riproduci audio",
     "previewTitle": "Anteprima voce generata",
-    "subtitle": "Carica un file audio e inserisci il testo per creare un clone vocale e generare parlato in un solo passaggio",
+    "subtitle": "Carica un file audio, inserisci il testo e genera istantaneamente parlato con la voce clonata",
     "success": "Audio generato con successo!",
     "tabPreview": "Anteprima",
     "tabUpload": "Carica",
@@ -557,7 +557,7 @@
     "crossLanguageInfo": {
       "title": "Trasferimento vocale cross-lingua",
       "description": "Clona una voce in una lingua e falla parlare fluentemente in una qualsiasi delle altre 23 lingue supportate preservando le caratteristiche uniche del parlante.",
-      "example": "Esempio: Carica un campione vocale di un parlante inglese → Genera parlato francese con la sua voce"
+      "example": "Esempio: Carica un file audio di un parlante inglese → Genera parlato francese con la sua voce"
     },
     "legalConsentCheckbox": "Utilizzando la clonazione vocale, certifico di avere tutti i consensi/diritti legali per clonare questi campioni vocali e che non utilizzerò nulla di generato per scopi illegali o dannosi."
   },

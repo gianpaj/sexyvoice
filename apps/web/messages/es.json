@@ -534,7 +534,7 @@
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
     "playAudio": "Escucha Audio",
     "previewTitle": "Vista previa de voz generada",
-    "subtitle": "Sube un archivo de audio e ingresa texto para crear un clon de voz y generar voz en un solo paso",
+    "subtitle": "Sube una muestra de audio, ingresa tu texto y genera voz con la voz clonada al instante",
     "success": "Audio generado con éxito!",
     "tabPreview": "Previsualizar",
     "tabUpload": "Subir archivo",

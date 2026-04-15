@@ -534,7 +534,7 @@
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
     "previewTitle": "Vorschau der generierten Stimme",
-    "subtitle": "Laden Sie eine Audiodatei hoch und geben Sie Text ein, um einen Stimmklon zu erstellen und Sprache in einem Schritt zu generieren",
+    "subtitle": "Laden Sie ein Audiobeispiel hoch, geben Sie Ihren Text ein und generieren Sie sofort Sprache mit der geklonten Stimme",
     "success": "Audio erfolgreich generiert!",
     "tabPreview": "Vorschau",
     "tabUpload": "Stimme erstellen",

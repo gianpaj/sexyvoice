@@ -272,11 +272,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -534,7 +530,7 @@
     "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
     "playAudio": "Afspil lyd",
     "previewTitle": "Forhåndsvisning af genereret stemme",
-    "subtitle": "Upload en lydfil og indtast tekst for at oprette en stemmeklon og generere tale i ét trin",
+    "subtitle": "Upload en lydprøve, indtast din tekst, og generer tale med den klonede stemme med det samme",
     "success": "Lyd genereret!",
     "tabPreview": "Forhåndsvisning",
     "tabUpload": "Upload",
