@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import { Check } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
@@ -12,6 +13,7 @@ import {
   PRO_TOPUP_DISCOUNT_VS_STANDARD,
   SUBSCRIPTION_BONUS_MULTIPLIER,
 } from '@/lib/stripe/pricing';
+import { cn } from '@/lib/utils';
 
 export type BillingMode = 'monthly' | 'one-time';
 
@@ -33,6 +35,8 @@ export interface PlanData {
 }
 
 interface PricingCardsProps {
+  className?: string;
+  disableSubscriptionToggle?: boolean;
   isPromoEnabled: boolean;
   promoBannerText?: string;
   promoTheme: string;
@@ -41,11 +45,13 @@ interface PricingCardsProps {
 }
 
 export function PricingCards({
-  topupPlans,
-  subscriptionPlans,
+  className,
+  disableSubscriptionToggle = false,
   isPromoEnabled,
   promoBannerText,
   promoTheme,
+  subscriptionPlans,
+  topupPlans,
 }: PricingCardsProps) {
   const t = useTranslations('credits.plans');
   const billingT = useTranslations('credits.billing');
@@ -53,11 +59,14 @@ export function PricingCards({
   const format = useFormatter();
   const [billingMode, setBillingMode] = useState<BillingMode>('monthly');
 
-  const plans = billingMode === 'monthly' ? subscriptionPlans : topupPlans;
+  const plans =
+    billingMode === 'monthly' && !disableSubscriptionToggle
+      ? subscriptionPlans
+      : topupPlans;
 
   return (
     <div
-      className="flex flex-col gap-6 py-16 xl:px-28"
+      className={cn('flex flex-col gap-6 py-16 xl:px-28', className)}
       data-promo-theme={promoTheme}
     >
       <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
@@ -67,12 +76,16 @@ export function PricingCards({
       {/* Billing toggle — the "+15%" badge here is the single source of truth */}
       <div className="mx-auto flex items-center gap-1 rounded-full bg-muted p-1">
         <button
-          aria-pressed={billingMode === 'monthly'}
+          aria-disabled={disableSubscriptionToggle}
+          aria-pressed={billingMode === 'monthly' && !disableSubscriptionToggle}
           className={`hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
-            billingMode === 'monthly'
+            billingMode === 'monthly' && !disableSubscriptionToggle
               ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+              : disableSubscriptionToggle
+                ? 'cursor-not-allowed text-muted-foreground opacity-50'
+                : 'text-muted-foreground hover:text-foreground'
           }`}
+          disabled={disableSubscriptionToggle}
           onClick={() => setBillingMode('monthly')}
           type="button"
         >
@@ -82,9 +95,9 @@ export function PricingCards({
           </span>
         </button>
         <button
-          aria-pressed={billingMode === 'one-time'}
+          aria-pressed={billingMode === 'one-time' || disableSubscriptionToggle}
           className={`hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
-            billingMode === 'one-time'
+            billingMode === 'one-time' || disableSubscriptionToggle
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
@@ -95,7 +108,12 @@ export function PricingCards({
         </button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+      <div
+        className={clsx('grid gap-6 md:grid-cols-1', {
+          'lg:grid-cols-3': plans.length === 3,
+          'lg:grid-cols-4': plans.length === 4,
+        })}
+      >
         {plans.map((plan) => (
           <Card
             className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2`}

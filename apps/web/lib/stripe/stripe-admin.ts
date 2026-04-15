@@ -1,6 +1,15 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
+const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
+  'trialing',
+  'active',
+  'past_due',
+  'unpaid',
+  'paused',
+  'canceled',
+]);
+
 import { type CustomerData, setCustomerData } from '../redis/queries';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
@@ -213,6 +222,38 @@ export async function createCustomerSession(userId: string, stripeId: string) {
       extra: { stripeId },
     });
     throw error;
+  }
+}
+
+export async function hasEverHadRealSubscription(
+  customerId: string,
+): Promise<boolean> {
+  let startingAfter: string | undefined;
+
+  while (true) {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      limit: 100,
+      status: 'all',
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+
+    if (
+      subscriptions.data.some((subscription) =>
+        REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+      )
+    ) {
+      return true;
+    }
+
+    if (!subscriptions.has_more) {
+      return false;
+    }
+
+    startingAfter = subscriptions.data.at(-1)?.id;
+    if (!startingAfter) {
+      return false;
+    }
   }
 }
 

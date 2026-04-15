@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -12,15 +13,9 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import type langDict from '@/messages/en.json';
 
-export function LoginForm({
-  dict,
-  lang,
-}: {
-  dict: (typeof langDict)['auth']['login'];
-  lang: Locale;
-}) {
+export function LoginForm({ lang }: { lang: Locale }) {
+  const t = useTranslations('auth.login');
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect_to');
   const [lastUsedAuth, setLastUsedAuth] = useLocalStorage('lastUsedAuth', '');
@@ -48,7 +43,7 @@ export function LoginForm({
     });
 
     if (error) {
-      setError(error.message || dict.error);
+      setError(error.message || t('error'));
       setIsLoading(false);
       return;
     }
@@ -71,7 +66,7 @@ export function LoginForm({
     });
 
     if (error) {
-      setError(error.message || dict.error);
+      setError(error.message || t('error'));
       setIsLoading(false);
       return;
     }
@@ -81,7 +76,7 @@ export function LoginForm({
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-2">
-        <Label htmlFor="email">{dict.email}</Label>
+        <Label htmlFor="email">{t('email')}</Label>
         <Input
           autoComplete="email"
           id="email"
@@ -93,12 +88,12 @@ export function LoginForm({
       </div>
       <div className="grid gap-2">
         <div className="flex items-center">
-          <Label htmlFor="password">{dict.password}</Label>
+          <Label htmlFor="password">{t('password')}</Label>
           <Link
             className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
             href={`/${lang}/reset-password`}
           >
-            {dict.forgotPassword}
+            {t('forgotPassword')}
           </Link>
         </div>
         <Input
@@ -116,7 +111,7 @@ export function LoginForm({
       <div className="relative">
         {lastUsedAuthFixed.current === 'email' && <LastUsedBanner />}
         <Button className="w-full" disabled={isLoading} type="submit">
-          {isLoading ? 'Loading...' : dict.submit}
+          {isLoading ? 'Loading...' : t('submit')}
         </Button>
       </div>
 
@@ -129,17 +124,17 @@ export function LoginForm({
           variant="secondary"
         >
           <LogosGoogleIcon className="size-5" />
-          {dict.signInWithGoogle}
+          {t('signInWithGoogle')}
         </Button>
       </div>
 
       <p className="text-center text-gray-500 text-sm">
-        {dict.noAccount}{' '}
+        {t('noAccount')}{' '}
         <Link
           className="text-blue-600 hover:text-blue-500"
           href={`/${lang}/signup`}
         >
-          {dict.signUp}
+          {t('signUp')}
         </Link>
       </p>
     </form>
@@ -152,6 +147,7 @@ function LastUsedBanner() {
       className="pointer-events-none absolute -top-2 -right-2 z-10 border-none bg-[#6c2243] px-[0.4rem]"
       variant="outline"
     >
+      {/* TODO: translate me */}
       <span className="font-normal text-[11px] text-pink-200">Last used</span>
     </Badge>
   );

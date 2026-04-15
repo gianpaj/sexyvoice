@@ -159,11 +159,14 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
    - Stripe
       - `STRIPE_SECRET_KEY`
       - `STRIPE_WEBHOOK_SECRET`
-      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-      - `STRIPE_TOPUP_5_PRICE_ID`
-      - `STRIPE_TOPUP_10_PRICE_ID`
-      - `STRIPE_TOPUP_99_PRICE_ID`
+      - `STRIPE_TOPUP_STARTER_PRICE_ID`
+      - `STRIPE_TOPUP_STANDARD_PRICE_ID`
+      - `STRIPE_TOPUP_PRO_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon applied automatically for eligible first-time subscribers
+      - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month discount percentage used to display discounted subscription pricing when the coupon is configured
    - Banner and promotion configuration
       - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
       - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`

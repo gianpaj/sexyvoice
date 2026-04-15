@@ -1,23 +1,20 @@
 import { captureException } from '@sentry/nextjs';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import Script from 'next/script';
-import { getMessages } from 'next-intl/server';
-import type Stripe from 'stripe';
+import { getMessages, getTranslations } from 'next-intl/server';
 
+import PricingTable from '@/components/pricing-table';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
-  createCustomerSession,
   createOrRetrieveCustomer,
   refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
-import { CreditTopup } from './credit-topup';
 import { TopupStatus } from './topup-status';
 
 export default async function CreditsPage(props: {
@@ -25,6 +22,10 @@ export default async function CreditsPage(props: {
 }) {
   const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const tSidebar = await getTranslations({
+    locale: lang,
+    namespace: 'sidebar',
+  });
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -53,22 +54,17 @@ export default async function CreditsPage(props: {
   userData.stripe_id = stripeId;
 
   let customerData = await getCustomerData(stripeId);
-  let shouldShowPricingTable =
+  let shouldShowSubscriptionPlans =
     !customerData || customerData.status !== 'active';
-  let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
 
-  if (shouldShowPricingTable) {
+  if (shouldShowSubscriptionPlans) {
     try {
       customerData = await refreshCustomerSubscriptionData(stripeId);
-      shouldShowPricingTable = customerData.status !== 'active';
+      shouldShowSubscriptionPlans = customerData.status !== 'active';
     } catch (error) {
       console.error('Failed to refresh Stripe subscription data', error);
-      shouldShowPricingTable = false;
+      shouldShowSubscriptionPlans = false;
     }
-  }
-
-  if (shouldShowPricingTable) {
-    clientSecret = await createCustomerSession(userData.id, stripeId);
   }
 
   const { data: existingTransactions } = await supabase
@@ -100,9 +96,25 @@ export default async function CreditsPage(props: {
         </Button>
       </div>
 
-      <CreditTopup
-        dict={{ credits: dict.credits, promos: dict.promos }}
+      <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
+        <Sparkles className="size-5 shrink-0 text-yellow-500" />
+        <span>
+          {tSidebar('subscriptionDiscount', {
+            discount:
+              process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT ??
+              '0',
+            extraCredits: String(
+              Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100),
+            ),
+          })}
+        </span>
+      </div>
+
+      <PricingTable
+        className="xl:px-0"
+        hideFreePlan
         lang={lang}
+        shouldShowSubscriptionPlans={shouldShowSubscriptionPlans}
       />
 
       <div className="my-8">
@@ -114,49 +126,6 @@ export default async function CreditsPage(props: {
           transactions={existingTransactions}
         />
       </div>
-
-      {shouldShowPricingTable && (
-        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
-          <Sparkles className="size-5 shrink-0 text-yellow-500" />
-          <span>
-            {dict.sidebar.subscriptionDiscount.replace(
-              '{discount}',
-              String(Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)),
-            )}
-          </span>
-        </div>
-      )}
-
-      {shouldShowPricingTable && clientSecret && (
-        <NextStripePricingTable clientSecret={clientSecret} />
-      )}
     </div>
   );
 }
-
-const NextStripePricingTable = ({
-  clientSecret,
-}: {
-  clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
-}) => {
-  const pricingTableId = process.env.STRIPE_PRICING_ID;
-  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
-
-  if (!(pricingTableId && publishableKey && clientSecret)) return null;
-
-  return (
-    <>
-      <Script
-        async
-        src="https://js.stripe.com/v3/pricing-table.js"
-        strategy="lazyOnload"
-      />
-      {/* @ts-ignore */}
-      <stripe-pricing-table
-        customer-session-client-secret={clientSecret.client_secret}
-        pricing-table-id={pricingTableId}
-        publishable-key={publishableKey}
-      />
-    </>
-  );
-};

@@ -255,16 +255,16 @@ async function handleCheckoutSessionCompleted(
       let dollarAmount = 0;
 
       switch (priceId) {
-        case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
+        case process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID:
           credits = SUBSCRIPTION_PACKAGES.starter.credits;
           dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
           break;
-        case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+        case process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID:
           credits = SUBSCRIPTION_PACKAGES.standard.credits;
           dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
           break;
         // TODO: use `pro_monthly` look up key
-        case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
+        case process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID:
           credits = SUBSCRIPTION_PACKAGES.pro.credits;
           dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
           break;
@@ -370,16 +370,16 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     let dollarAmount = 0;
 
     switch (priceId) {
-      case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
+      case process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID:
         credits = SUBSCRIPTION_PACKAGES.starter.credits;
         dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
         break;
-      case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+      case process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID:
         credits = SUBSCRIPTION_PACKAGES.standard.credits;
         dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
         break;
       // FIXME: change env var name to STRIPE_SUBSCRIPTION_PRO_PRICE_ID
-      case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
+      case process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID:
         credits = SUBSCRIPTION_PACKAGES.pro.credits;
         dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
         break;

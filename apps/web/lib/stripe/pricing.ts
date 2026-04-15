@@ -28,6 +28,24 @@ export const PRO_TOPUP_DISCOUNT_VS_STANDARD =
  */
 export const SUBSCRIPTION_BONUS_MULTIPLIER = 1.15;
 
+function getFirstMonthSubscriptionDiscountMultiplier() {
+  const hasFirstMonthCoupon =
+    !!process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+  const discountPercent = Number.parseFloat(
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT || '0',
+  );
+
+  if (
+    !hasFirstMonthCoupon ||
+    Number.isNaN(discountPercent) ||
+    discountPercent <= 0
+  ) {
+    return 1;
+  }
+
+  return Math.max(0, 1 - discountPercent / 100);
+}
+
 export const getTopupPackages = (lang: Locale) => {
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
 
@@ -58,7 +76,7 @@ export const getTopupPackages = (lang: Locale) => {
     },
     // not shown on landing page, only in /credits page
     starter: {
-      priceId: process.env.STRIPE_TOPUP_5_PRICE_ID,
+      priceId: process.env.STRIPE_TOPUP_STARTER_PRICE_ID,
       baseCredits: 10_000,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -74,7 +92,7 @@ export const getTopupPackages = (lang: Locale) => {
       dollarAmount: 5, // $5.00
     },
     standard: {
-      priceId: process.env.STRIPE_TOPUP_10_PRICE_ID,
+      priceId: process.env.STRIPE_TOPUP_STANDARD_PRICE_ID,
       baseCredits: STANDARD_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -93,7 +111,7 @@ export const getTopupPackages = (lang: Locale) => {
       dollarAmount: STANDARD_TOPUP_DOLLAR_AMOUNT, // $10.00
     },
     pro: {
-      priceId: process.env.STRIPE_TOPUP_99_PRICE_ID,
+      priceId: process.env.STRIPE_TOPUP_PRO_PRICE_ID,
       baseCredits: PRO_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -124,10 +142,12 @@ export const getTopupPackages = (lang: Locale) => {
  */
 export const getSubscriptionPackages = (lang: Locale) => {
   const topup = getTopupPackages(lang);
+  const firstMonthDiscountMultiplier =
+    getFirstMonthSubscriptionDiscountMultiplier();
 
   return {
     starter: {
-      priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
+      priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
       baseCredits: topup.starter.baseCredits,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -147,10 +167,13 @@ export const getSubscriptionPackages = (lang: Locale) => {
         return this.credits.toLocaleString(lang);
       },
       promoBonus: topup.starter.promoBonus,
-      dollarAmount: topup.starter.dollarAmount,
+      dollarAmount: roundCurrency(
+        topup.starter.dollarAmount * firstMonthDiscountMultiplier,
+      ),
+      recurringDollarAmount: topup.starter.dollarAmount,
     },
     standard: {
-      priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+      priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
       baseCredits: topup.standard.baseCredits,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -173,10 +196,13 @@ export const getSubscriptionPackages = (lang: Locale) => {
         return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
       },
       promoBonus: topup.standard.promoBonus,
-      dollarAmount: topup.standard.dollarAmount,
+      dollarAmount: roundCurrency(
+        topup.standard.dollarAmount * firstMonthDiscountMultiplier,
+      ),
+      recurringDollarAmount: topup.standard.dollarAmount,
     },
     pro: {
-      priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
+      priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
       baseCredits: topup.pro.baseCredits,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -197,7 +223,10 @@ export const getSubscriptionPackages = (lang: Locale) => {
         return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
       },
       promoBonus: topup.pro.promoBonus,
-      dollarAmount: topup.pro.dollarAmount,
+      dollarAmount: roundCurrency(
+        topup.pro.dollarAmount * firstMonthDiscountMultiplier,
+      ),
+      recurringDollarAmount: topup.pro.dollarAmount,
     },
   } as const;
 };
@@ -213,4 +242,8 @@ function trimTrailingZeros(num: number): string {
 /** 2-decimal variant for subscription pricing (e.g. $0.35 instead of $0.348) */
 function trimTrailingZeros2(num: number): string {
   return num.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function roundCurrency(num: number): number {
+  return Math.round(num * 100) / 100;
 }

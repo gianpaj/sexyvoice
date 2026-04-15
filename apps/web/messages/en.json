@@ -688,7 +688,7 @@
     "profile": "Profile",
     "signOut": "Sign Out",
     "freeTools": "Free Tools",
-    "subscriptionDiscount": "Get {discount}% extra credits with a subscription"
+    "subscriptionDiscount": "Get {extraCredits}% extra credits & {discount}% off the first month!"
   },
   "header": {
     "generate": "Generate",

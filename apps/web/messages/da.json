@@ -688,7 +688,7 @@
     "profile": "Profil",
     "signOut": "Log ud",
     "freeTools": "Gratis værktøjer",
-    "subscriptionDiscount": "Få {discount}% ekstra kreditter med et abonnement"
+    "subscriptionDiscount": "Få {extraCredits}% ekstra kreditter og {discount}% rabat den første måned!"
   },
   "header": {
     "generate": "Generer",
