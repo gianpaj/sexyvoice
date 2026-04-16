@@ -9,6 +9,9 @@ import {
   useState,
 } from "react";
 
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+
 import { AudioProvider } from "@/app/[lang]/(dashboard)/dashboard/clone/audio-provider";
 import {
   Card,
@@ -68,6 +71,8 @@ export function VoiceSelector({
   setSelectedVoice,
   selectedStyle,
   setSelectedStyle,
+  useNewModel,
+  setUseNewModel,
   dict,
 }: {
   publicVoices: Tables<"voices">[];
@@ -75,6 +80,8 @@ export function VoiceSelector({
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
+  useNewModel?: boolean;
+  setUseNewModel: Dispatch<SetStateAction<boolean>>;
   dict: (typeof messages)["generate"];
 }) {
   const provider = useMemo(
@@ -269,6 +276,18 @@ export function VoiceSelector({
             </div>
           )}
         </AudioProvider>
+        {isGeminiVoice && useNewModel !== undefined && (
+          <div className="flex items-center gap-2">
+            <Switch
+              id="use-new-model"
+              checked={useNewModel}
+              onCheckedChange={setUseNewModel}
+            />
+            <Label htmlFor="use-new-model" className="cursor-pointer text-sm">
+              {dict.voiceSelector.useNewModelLabel}
+            </Label>
+          </div>
+        )}
         {isGeminiVoice && (
           <div className="relative">
             <Textarea

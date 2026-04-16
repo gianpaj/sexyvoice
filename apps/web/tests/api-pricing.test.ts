@@ -13,6 +13,16 @@ describe('external API pricing', () => {
     expect(amount).toBe(0.02);
   });
 
+  it('calculates g31 tts pricing', () => {
+    const amount = calculateExternalApiDollarAmount({
+      sourceType: 'api_tts',
+      provider: 'google',
+      model: 'g31',
+      inputChars: 1000,
+    });
+    expect(amount).toBe(0.02);
+  });
+
   it('calculates orpheus tts pricing', () => {
     const amount = calculateExternalApiDollarAmount({
       sourceType: 'api_tts',

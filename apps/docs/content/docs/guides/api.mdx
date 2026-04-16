@@ -22,7 +22,7 @@ Send your API key as a Bearer token:
 
 ## 2. Generate Speech
 
-### Using Gpro
+### Using Gpro (Gemini 2.5)
 
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
@@ -33,6 +33,22 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
     "voice": "poe",
     "input": "Hello from SexyVoice API",
     "style": "calm",
+    "seed": 1234
+  }'
+```
+
+### Using G31 (Gemini 3.1 Flash TTS)
+
+Gemini 3.1 supports 70+ languages and inline audio expression tags like `[cheerfully]`, `[whispering]`, and `[pause]`.
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "g31",
+    "voice": "zephyr",
+    "input": "[cheerfully] Hello from Gemini 3.1! [pause] This supports 70+ languages.",
     "seed": 1234
   }'
 ```

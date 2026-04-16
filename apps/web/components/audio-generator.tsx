@@ -120,6 +120,7 @@ interface AudioGeneratorProps {
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<"voices">;
+  useNewModel?: boolean;
 }
 
 export function AudioGenerator({
@@ -128,6 +129,7 @@ export function AudioGenerator({
   isPaidUser,
   selectedStyle,
   selectedVoice,
+  useNewModel,
 }: AudioGeneratorProps) {
   const [text, setText] = useState("");
   const [previousText, setPreviousText] = useState("");
@@ -152,7 +154,7 @@ export function AudioGenerator({
   );
   const isGeminiVoice = provider === "gemini";
   const isGrokVoice = provider === "grok";
-  const showEnhanceButton = provider === "replicate";
+  const showEnhanceButton = provider === "replicate" || (provider === "gemini" && (useNewModel ?? false));
 
 
   const charactersLimit = useMemo(
@@ -161,16 +163,12 @@ export function AudioGenerator({
   );
 
   const textareaRightPadding = useMemo(() => {
-    if (isGeminiVoice) {
-      return "pr-10";
-    }
-
     if (showEnhanceButton) {
       return "pr-20";
     }
 
     return "pr-16";
-  }, [isGeminiVoice, showEnhanceButton]);
+  }, [showEnhanceButton]);
 
   const textIsOverLimit = text.length > charactersLimit;
 
@@ -180,6 +178,7 @@ export function AudioGenerator({
       voice: selectedVoice?.name,
       styleVariant: isGeminiVoice ? selectedStyle : "",
       language: isGrokVoice ? selectedGrokLanguage : undefined,
+      useNewModel: isGeminiVoice ? (useNewModel ?? false) : undefined,
     }),
     [
       isGeminiVoice,
@@ -188,6 +187,7 @@ export function AudioGenerator({
       selectedVoice?.name,
       selectedGrokLanguage,
       text,
+      useNewModel,
     ],
   );
 
@@ -301,7 +301,7 @@ export function AudioGenerator({
 
     try {
       const enhancedText = await complete(text, {
-        body: { selectedVoiceLanguage: selectedVoice.language },
+        body: { selectedVoiceLanguage: selectedVoice.language, ttsProvider: provider, useNewModel: useNewModel ?? false },
       });
 
       if (enhancedText) {

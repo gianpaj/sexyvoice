@@ -23,13 +23,13 @@ export const ErrorResponseSchema = z.object({
 });
 
 export const VoiceGenerationRequestSchema = z.strictObject({
-  model: z.enum(['gpro', 'orpheus', 'grok']).describe('The voice model to use'),
+  model: z.enum(['gpro', 'g31', 'orpheus', 'grok']).describe('The voice model to use'),
   input: z
     .string()
     .min(1)
     .max(1000)
     .describe(
-      'The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)',
+      'The text to synthesize (max 1000 chars for gpro/g31/grok, 500 for orpheus)',
     ),
   voice: z
     .string()
@@ -81,6 +81,33 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
         .describe(
           'Optional deterministic seed for providers that support it (e.g. Gemini)',
         ),
+    }),
+    z.strictObject({
+      model: z.literal('g31').describe('The voice model to use'),
+      input: z
+        .string()
+        .min(1)
+        .max(1000)
+        .describe(
+          'The text to synthesize (max 1000 chars for g31). Supports inline audio tags like [cheerfully], [whispering], [pause].',
+        ),
+      voice: z
+        .string()
+        .min(1)
+        .describe('Voice name (see GET /api/v1/voices for available voices)'),
+      response_format: z
+        .enum(['wav', 'mp3'])
+        .optional()
+        .describe('Audio format. Default: wav'),
+      style: z
+        .string()
+        .optional()
+        .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
+      seed: z
+        .number()
+        .int()
+        .optional()
+        .describe('Optional deterministic seed'),
     }),
     z.strictObject({
       model: z.literal('orpheus').describe('The voice model to use'),
@@ -161,7 +188,7 @@ export const VoiceInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'orpheus', 'grok']),
+  model: z.enum(['gpro', 'g31', 'orpheus', 'grok']),
   formats: z.array(z.enum(['wav', 'mp3'])),
   supports_style: z
     .boolean()
@@ -173,7 +200,7 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'orpheus', 'grok']),
+  id: z.enum(['gpro', 'g31', 'orpheus', 'grok']),
   name: z.string(),
   max_input_length: z.number().int().positive(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),
