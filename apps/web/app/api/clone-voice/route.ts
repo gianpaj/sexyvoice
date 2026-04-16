@@ -438,10 +438,10 @@ async function processAudioFile(
         });
       }
     } catch (conversionError) {
-      const errorMessage = conversionError instanceof Error
+      const errorMessage = Error.isError(conversionError)
         ? conversionError.message
         : 'Unknown error';
-      const errorStack = conversionError instanceof Error
+      const errorStack = Error.isError(conversionError)
         ? conversionError.stack
         : undefined;
 
@@ -887,7 +887,7 @@ export async function POST(request: Request) {
       extra: errorObj,
     });
 
-    if (error instanceof Error && 'body' in error) {
+    if (Error.isError(error) && 'body' in error) {
       console.error(
         'Validation error details:',
         JSON.stringify(error.body, null, 2),
@@ -897,7 +897,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error) },
+      { error: Error.isError(error) ? error.message : String(error) },
       { status: 500 },
     );
   }

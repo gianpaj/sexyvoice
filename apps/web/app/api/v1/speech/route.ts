@@ -570,7 +570,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (
-      error instanceof Error &&
+      Error.isError(error) &&
       error.cause &&
       Object.values(ERROR_CODES).includes(error.cause as never)
     ) {

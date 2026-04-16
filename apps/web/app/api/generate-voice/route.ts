@@ -458,8 +458,8 @@ export async function POST(request: Request) {
             model: voiceObj.model,
             codec: outputCodec,
             language: selectedLanguage || voiceObj.language,
-            errorMessage: error instanceof Error ? error.message : String(error),
-            errorCause: error instanceof Error ? error.cause : undefined,
+            errorMessage: Error.isError(error) ? error.message : String(error),
+            errorCause: Error.isError(error) ? error.cause : undefined,
           },
         });
         captureException(error, {
@@ -616,12 +616,12 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (Error.isError(error) && error.name === 'AbortError') {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
 
-    if (error instanceof Error && error.cause === 'PROHIBITED_CONTENT') {
+    if (Error.isError(error) && error.cause === 'PROHIBITED_CONTENT') {
       return NextResponse.json(
         {
           error: error.message || 'Voice generation failed, please retry',
@@ -643,7 +643,7 @@ export async function POST(request: Request) {
     console.error('Voice generation error:', error);
 
     // if Gemini error
-    if (error instanceof Error && error.message.includes('googleapis')) {
+    if (Error.isError(error) && error.message.includes('googleapis')) {
       const message = JSON.parse(error.message);
       // You exceeded your current quota
       if (message.error.code === 429) {
@@ -662,7 +662,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     if (
-      error instanceof Error &&
+      Error.isError(error) &&
       Object.keys(ERROR_CODES).includes(String(error.cause))
     ) {
       return NextResponse.json(
