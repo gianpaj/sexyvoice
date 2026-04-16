@@ -15,7 +15,7 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Supabase** – Authentication (OAuth with Google) and PostgreSQL database with SSR support
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
 - **fal.ai** – Alternative voice cloning service *(optional)*
-- **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS, text enhancement, and automatic emotion tagging
+- **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS and Gemini 3.1 Flash TTS, text enhancement, and automatic emotion tagging
 - **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output)
 - **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
 - **Cloudflare R2** – Scalable storage for generated audio files; two buckets: `R2_BUCKET_NAME` (dashboard) and `R2_SPEECH_API_BUCKET_NAME` (external API)
@@ -89,6 +89,7 @@ flowchart TD
     G -->|Insufficient| Z6[402 insufficient_credits]
     G -->|Sufficient| H{Model?}
     H -->|gpro| I[Gemini 2.5 Pro TTS → fallback Flash]
+    H -->|g31| I2[Gemini 3.1 Flash TTS → fallback Flash]
     H -->|grok| J2[xAI Grok TTS — mp3 or wav]
     H -->|orpheus| J[Replicate Orpheus model]
     I --> K[Upload to R2_SPEECH_API_BUCKET]
@@ -108,7 +109,7 @@ flowchart TD
 | `errors.ts` | `createApiError()`, `zodErrorToApiError()` |
 | `external-errors.ts` | Structured error key map + `externalApiErrorResponse()` |
 | `logger.ts` | Axiom-backed per-request structured logger via `createLogger()` |
-| `model.ts` | `resolveExternalModelId()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
+| `model.ts` | `resolveExternalModelId()`, `isModelCompatibleWithVoice()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
 | `openapi.ts` | `createExternalApiOpenApiDocument()` using `zod-openapi` |
 | `pricing.ts` | `calculateExternalApiDollarAmount()` |
 | `rate-limit.ts` | `consumeRateLimit()` via Upstash Ratelimit (token bucket) |

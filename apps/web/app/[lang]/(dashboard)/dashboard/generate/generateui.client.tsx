@@ -31,6 +31,7 @@ export function GenerateUI({
   );
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceName);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
+  const [useNewModel, setUseNewModel] = useState(false);
   const selectedVoiceSample = publicVoices.find(
     (file) => file.name === selectedVoice,
   );
@@ -44,6 +45,8 @@ export function GenerateUI({
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}
         setSelectedVoice={setSelectedVoice}
+        useNewModel={isGeminiVoice ? useNewModel : undefined}
+        setUseNewModel={setUseNewModel}
       />
       <AudioProvider>
         <AudioGenerator
@@ -52,6 +55,7 @@ export function GenerateUI({
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
+          useNewModel={isGeminiVoice ? useNewModel : undefined}
         />
       </AudioProvider>
     </div>

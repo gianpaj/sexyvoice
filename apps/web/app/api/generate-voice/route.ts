@@ -66,6 +66,7 @@ export async function POST(request: Request) {
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
+    const useNewModel = Boolean(body.useNewModel);
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -238,7 +239,9 @@ export async function POST(request: Request) {
       };
       if (userHasPaid) {
         try {
-          modelUsed = 'gemini-3.1-flash-tts-preview'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+          modelUsed = useNewModel
+            ? 'gemini-3.1-flash-tts-preview'
+            : 'gemini-2.5-pro-preview-tts';
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
@@ -298,7 +301,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-3.1-flash-tts-preview',
+                originalModel: useNewModel ? 'gemini-3.1-flash-tts-preview' : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
                 proErrorMessage,
               },
@@ -311,7 +314,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-3.1-flash-tts-preview',
+                originalModel: useNewModel ? 'gemini-3.1-flash-tts-preview' : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
                 proErrorMessage,
                 flashErrorMessage:

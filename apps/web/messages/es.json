@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "¿Qué idiomas soportan tus voces de IA?",
-              "answer": "El soporte de idiomas depende de la voz seleccionada.\n\nAlgunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\ny 🇻🇳 Vietnamita (Vietnam).\n\nOtras voces son específicas del idioma:\n🇬🇧 Dan (Inglés UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglés EE.UU.),\n🇪🇸 Javi (Español),\n🇺🇸 Josh (Inglés EE.UU.),\n🇺🇸 y Tara (Inglés EE.UU.).\n\nElige tu voz según tu idioma objetivo para obtener los resultados más naturales."
+              "answer": "El soporte de idiomas depende de la voz y el modelo seleccionados.\n\n**Voces Gemini 2.5 (por defecto)** soportan 24 idiomas incluyendo:\n🇩🇪 Alemán, 🇪🇬 Árabe, 🇧🇩 Bengalí, 🇰🇷 Coreano, 🇺🇸 Español, 🇫🇷 Francés, 🇮🇳 Hindi, 🇳🇱 Holandés, 🇮🇩 Indonesio, 🇺🇸 Inglés, 🇮🇹 Italiano, 🇯🇵 Japonés, 🇮🇳 Marathi, 🇵🇱 Polaco, 🇧🇷 Portugués, 🇷🇴 Rumano, 🇷🇺 Ruso, 🇹🇭 Tailandés, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇷 Turco, 🇺🇦 Ucraniano, y 🇻🇳 Vietnamita.\n\n**Voces Gemini 3.1 (al activar \"Usar nuevo modelo de IA\")** soportan 70+ idiomas en 80+ variantes regionales, incluyendo todo lo anterior más Afrikáans, Albanés, Amhárico, Armenio, Azerbaiyano, Búlgaro, Catalán, Chino, Checo, Danés, Estonio, Filipino, Finlandés, Gallego, Georgiano, Griego, Gujarati, Hebreo, Húngaro, Islandés, Irlandés, Javanés, Canarés, Kazajo, Letón, Lituano, Macedonio, Malayo, Maltés, Noruego, Persa, Punjabi, Serbio, Eslovaco, Esloveno, Suajili, Sueco, Urdu, Uzbeko, Galés, Zulú y más.\n\nOtras voces son específicas del idioma:\n🇬🇧 Dan (Inglés UK), 🇮🇹 Pietro (Italiano), 🇺🇸 Emma, Josh, Tara (Inglés US), 🇪🇸 Javi (Español).\n\nElige tu voz según tu idioma objetivo para los resultados más naturales."
             },
             {
               "question": "¿Puedo hacer que una voz hable con un acento o estilo específico, como británico o pirata 🏴‍☠️?",
@@ -423,8 +423,9 @@
       "multilingualGroupLabel": "Multilingüe 🌍",
       "selectStyleTextareaPlaceholder": "Describe el estilo de tu diálogo, ej. \"Lee esto en un susurro dramático\"",
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
-      "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).",
+      "geminiInfo": "Soporta 24 idiomas por defecto.\nActiva \"Usar nuevo modelo de IA\" para 70+ idiomas con Gemini 3.1.",
       "grokInfo": "Admite etiquetas expresivas en línea como [laugh] y\netiquetas envolventes como <fast>...</fast>.",
+      "useNewModelLabel": "Usar nuevo modelo de IA (Gemini 3.1)",
       "featuredBadge": "Destacada"
     }
   },

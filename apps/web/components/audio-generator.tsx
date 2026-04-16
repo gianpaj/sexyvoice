@@ -120,6 +120,7 @@ interface AudioGeneratorProps {
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<"voices">;
+  useNewModel?: boolean;
 }
 
 export function AudioGenerator({
@@ -128,6 +129,7 @@ export function AudioGenerator({
   isPaidUser,
   selectedStyle,
   selectedVoice,
+  useNewModel,
 }: AudioGeneratorProps) {
   const [text, setText] = useState("");
   const [previousText, setPreviousText] = useState("");
@@ -176,6 +178,7 @@ export function AudioGenerator({
       voice: selectedVoice?.name,
       styleVariant: isGeminiVoice ? selectedStyle : "",
       language: isGrokVoice ? selectedGrokLanguage : undefined,
+      useNewModel: isGeminiVoice ? (useNewModel ?? false) : undefined,
     }),
     [
       isGeminiVoice,
@@ -184,6 +187,7 @@ export function AudioGenerator({
       selectedVoice?.name,
       selectedGrokLanguage,
       text,
+      useNewModel,
     ],
   );
 

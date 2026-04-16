@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Hvilke sprog understøttes for talesyntese?",
-              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇮🇳 Hindi (Indien),\n🇳🇱 Hollandsk (Holland),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇩🇪 Tysk (Tyskland),\n🇺🇦 Ukrainsk (Ukraine),\nog 🇻🇳 Vietnamesisk (Vietnam).\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK),\n🇮🇹 Pietro (Italiensk),\n🇺🇸 Emma (Engelsk US),\n🇪🇸 Javi (Spansk),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+              "answer": "Sprogunderstøttelse afhænger af den valgte stemme og model.\n\n**Gemini 2.5 stemmer (standard)** understøtter 24 sprog, herunder:\n🇪🇬 Arabisk, 🇧🇩 Bengalsk, 🇺🇸 Engelsk, 🇫🇷 Fransk, 🇮🇳 Hindi, 🇳🇱 Hollandsk, 🇮🇩 Indonesisk, 🇮🇹 Italiensk, 🇯🇵 Japansk, 🇰🇷 Koreansk, 🇮🇳 Marathi, 🇵🇱 Polsk, 🇧🇷 Portugisisk, 🇷🇴 Rumænsk, 🇷🇺 Russisk, 🇺🇸 Spansk, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇭 Thai, 🇹🇷 Tyrkisk, 🇩🇪 Tysk, 🇺🇦 Ukrainsk, og 🇻🇳 Vietnamesisk.\n\n**Gemini 3.1 stemmer (ved aktivering af \"Brug ny AI-model\")** understøtter 70+ sprog på tværs af 80+ regionale varianter, herunder alt ovenstående plus: Afrikaans, Albansk, Amharisk, Armensk, Aserbajdsjansk, Baskisk, Bulgarsk, Catalansk, Kinesisk, Kroatisk, Tjekkisk, Dansk, Estisk, Filippinsk, Finsk, Galicisk, Georgisk, Græsk, Gujarati, Hebraisk, Ungarsk, Islandsk, Irsk, Javanesisk, Kannada, Kasakhisk, Lettisk, Litauisk, Makedonsk, Malayisk, Maltesisk, Norsk, Persisk, Punjabi, Serbisk, Slovakisk, Slovensk, Swahili, Svensk, Urdu, Usbekisk, Walisisk, Zulu og mere.\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK), 🇮🇹 Pietro (Italiensk), 🇺🇸 Emma, Josh, Tara (Engelsk US), 🇪🇸 Javi (Spansk).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -419,8 +419,9 @@
       "multilingualGroupLabel": "Flersprogede 🌍",
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
-      "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
+      "geminiInfo": "Understøtter 24 sprog som standard.\nAktivér \"Brug ny AI-model\" for 70+ sprog med Gemini 3.1.",
       "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og\nomsluttende tags som <fast>...</fast>.",
+      "useNewModelLabel": "Brug ny AI-model (Gemini 3.1)",
       "featuredBadge": "Fremhævet"
     }
   },

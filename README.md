@@ -23,7 +23,7 @@
 
 ## 🌟 About
 
-- Generate AI voices in 20+ languages with voice cloning support
+- Generate AI voices in 24+ languages (70+ with Gemini 3.1) with voice cloning support
 - Voice selection system with customizable options
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
@@ -39,7 +39,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, German, French, Italian, Danish, Japanese, Korean, and more
+- **Multi-language Support**: Generate voices in 24 languages with Gemini 2.5 (default) or 70+ languages with Gemini 3.1 Flash TTS. Clone voices in 23 languages.
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
@@ -382,13 +382,11 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Real-time AI voice calls with configurable AI agents
 - ✅ API access
 
-### Supported Languages by these Google Gemini TTS Models
+### Supported Languages by Google Gemini TTS
 
-- Puck
-- Zephyr
-- Gacrux
-- Kore
-- Sulafat
+#### Gemini 2.5 voices — 24 languages (default model: `gpro`)
+
+Voices: Puck, Zephyr, Gacrux, Kore, Sulafat, and all other Gemini voices.
 
 | Language               | BCP-47 Code              | Language             | BCP-47 Code |
 | ---------------------- | ------------------------ | -------------------- | ----------- |
@@ -404,6 +402,26 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 | Ukrainian (Ukraine)    | `uk-UA`                  | Bengali (Bangladesh) | `bn-BD`     |
 | English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
 | Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
+
+#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (model: `g31`)
+
+Supports all 24 languages above, plus (non-exhaustive):
+Afrikaans (`af-ZA`), Albanian (`sq-AL`), Amharic (`am-ET`), Armenian (`hy-AM`),
+Azerbaijani (`az-AZ`), Basque (`eu-ES`), Bulgarian (`bg-BG`), Catalan (`ca-ES`),
+Chinese Simplified (`zh-CN`), Chinese Traditional (`zh-TW`), Croatian (`hr-HR`),
+Czech (`cs-CZ`), Danish (`da-DK`), Estonian (`et-EE`), Filipino/Tagalog (`fil-PH`),
+Finnish (`fi-FI`), Galician (`gl-ES`), Georgian (`ka-GE`), Greek (`el-GR`),
+Gujarati (`gu-IN`), Hebrew (`he-IL`), Hungarian (`hu-HU`), Icelandic (`is-IS`),
+Irish (`ga-IE`), Javanese (`jv-ID`), Kannada (`kn-IN`), Kazakh (`kk-KZ`),
+Latvian (`lv-LV`), Lithuanian (`lt-LT`), Macedonian (`mk-MK`), Malay (`ms-MY`),
+Maltese (`mt-MT`), Norwegian Bokmål (`nb-NO`), Persian (`fa-IR`), Punjabi (`pa-IN`),
+Serbian (`sr-RS`), Slovak (`sk-SK`), Slovenian (`sl-SI`), Swahili (`sw-KE`),
+Swedish (`sv-SE`), Urdu (`ur-PK`), Uzbek (`uz-UZ`), Welsh (`cy-GB`), Zulu (`zu-ZA`).
+Plus English, Spanish, French, Portuguese, and Arabic regional variants.
+
+> Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
+
+Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
 
 ---
 
