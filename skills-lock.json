@@ -26,6 +26,11 @@
       "sourceType": "github",
       "computedHash": "992391aaf81dc4b76427d77e6f40f3ab45c6af37de972202d9206376970f1984"
     },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "computedHash": "1373525c4d3831156f3b3dcaec5709cc642381179749bfd737037074019a41cf"
+    },
     "writing-clearly-and-concisely": {
       "source": "obra/the-elements-of-style",
       "sourceType": "github",
