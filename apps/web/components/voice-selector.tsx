@@ -276,11 +276,11 @@ export function VoiceSelector({
             </div>
           )}
         </AudioProvider>
-        {isGeminiVoice && (
+        {isGeminiVoice && useNewModel !== undefined && (
           <div className="flex items-center gap-2">
             <Switch
               id="use-new-model"
-              checked={useNewModel ?? false}
+              checked={useNewModel}
               onCheckedChange={setUseNewModel}
             />
             <Label htmlFor="use-new-model" className="cursor-pointer text-sm">

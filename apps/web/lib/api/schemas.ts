@@ -29,7 +29,7 @@ export const VoiceGenerationRequestSchema = z.strictObject({
     .min(1)
     .max(1000)
     .describe(
-      'The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)',
+      'The text to synthesize (max 1000 chars for gpro/g31/grok, 500 for orpheus)',
     ),
   voice: z
     .string()

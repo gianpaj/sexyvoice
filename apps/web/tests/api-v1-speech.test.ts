@@ -360,6 +360,77 @@ describe('/api/v1/speech', () => {
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
   });
 
+  it('accepts a Gemini voice with model g31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 10, totalTokenCount: 15 },
+    });
+    setMockGoogleGenAIFactory(() => ({ models: { countTokens: vi.fn(), generateContent } }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: TEST_AUTH_HEADER },
+      body: JSON.stringify({ model: 'g31', input: 'Hello world', voice: 'kore' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalled();
+    expect(generateContent.mock.calls[0][0].model).toBe('gemini-3.1-flash-tts-preview');
+    expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+  });
+
+  it('falls back to gemini-2.5-flash-preview-tts when g31 primary call fails', async () => {
+    let callCount = 0;
+    const generateContent = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) throw new Error('3.1 model unavailable');
+      return Promise.resolve({
+        candidates: [
+          {
+            content: {
+              parts: [{ inlineData: { data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=', mimeType: 'audio/wav' } }],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 10, totalTokenCount: 15 },
+      });
+    });
+    setMockGoogleGenAIFactory(() => ({ models: { countTokens: vi.fn(), generateContent } }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: TEST_AUTH_HEADER },
+      body: JSON.stringify({ model: 'g31', input: 'Hello world', voice: 'kore' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(generateContent.mock.calls[0][0].model).toBe('gemini-3.1-flash-tts-preview');
+    expect(generateContent.mock.calls[1][0].model).toBe('gemini-2.5-flash-preview-tts');
+    expect(json.usage.model).toBe('gemini-2.5-flash-preview-tts');
+  });
+
   it('always generates fresh audio (no caching)', async () => {
     const request1 = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
