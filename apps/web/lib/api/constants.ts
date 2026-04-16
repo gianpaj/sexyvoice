@@ -1,7 +1,7 @@
 export const EXTERNAL_API_MODELS = {
   gpro: {
     id: 'gpro',
-    name: 'GPro (Gemini)',
+    name: 'GPro (Gemini 3.1)',
     maxInputLength: 1000,
     supportedFormats: ['wav'] as const,
   },

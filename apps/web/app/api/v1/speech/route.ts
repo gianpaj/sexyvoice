@@ -292,7 +292,7 @@ export async function POST(request: Request) {
       };
 
       try {
-        modelUsed = 'gemini-2.5-pro-preview-tts';
+        modelUsed = 'gemini-3.1-flash-tts-preview';
         geminiResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text: finalText }] }],

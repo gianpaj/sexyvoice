@@ -238,7 +238,7 @@ export async function POST(request: Request) {
       };
       if (userHasPaid) {
         try {
-          modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+          modelUsed = 'gemini-3.1-flash-tts-preview'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
@@ -298,7 +298,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-2.5-pro-preview-tts',
+                originalModel: 'gemini-3.1-flash-tts-preview',
                 fallbackModel: modelUsed,
                 proErrorMessage,
               },
@@ -311,7 +311,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-2.5-pro-preview-tts',
+                originalModel: 'gemini-3.1-flash-tts-preview',
                 fallbackModel: modelUsed,
                 proErrorMessage,
                 flashErrorMessage:
