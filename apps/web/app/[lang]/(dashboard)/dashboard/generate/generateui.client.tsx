@@ -45,7 +45,7 @@ export function GenerateUI({
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}
         setSelectedVoice={setSelectedVoice}
-        useNewModel={isGeminiVoice ? useNewModel : undefined}
+        useNewModel={isGeminiVoice && isPaidUser ? useNewModel : undefined}
         setUseNewModel={setUseNewModel}
       />
       <AudioProvider>
@@ -55,7 +55,7 @@ export function GenerateUI({
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
-          useNewModel={isGeminiVoice ? useNewModel : undefined}
+          useNewModel={isGeminiVoice && isPaidUser ? useNewModel : undefined}
         />
       </AudioProvider>
     </div>

@@ -14,12 +14,13 @@ export function resolveExternalModelId(
   return undefined;
 }
 
+const GEMINI_FAMILY = new Set<ExternalApiModelId>(['gpro', 'g31']);
+
 export function isModelCompatibleWithVoice(
   requestedModel: ExternalApiModelId,
   voiceDbModel: string,
 ): boolean {
-  const geminiFamily = new Set<ExternalApiModelId>(['gpro', 'g31']);
-  if (geminiFamily.has(requestedModel) && voiceDbModel === 'gpro') return true;
+  if (GEMINI_FAMILY.has(requestedModel) && voiceDbModel === 'gpro') return true;
   return resolveExternalModelId(voiceDbModel) === requestedModel;
 }
 

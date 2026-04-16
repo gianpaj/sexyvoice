@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
-    const useNewModel = Boolean(body.useNewModel);
+    const useNewModel = body.useNewModel === true;
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {

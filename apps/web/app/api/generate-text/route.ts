@@ -18,10 +18,12 @@ export async function POST(request: Request) {
     prompt,
     selectedVoiceLanguage,
     ttsProvider,
+    useNewModel,
   }: {
     prompt: string;
     selectedVoiceLanguage: string;
     ttsProvider?: string;
+    useNewModel?: boolean;
   } = await request.json();
   let user: User | null = null;
   try {
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const isGeminiVoice = ttsProvider === 'gemini';
+    const isGeminiVoice = ttsProvider === 'gemini' && useNewModel === true;
     const system = isGeminiVoice
       ? `You are an expert at enhancing text for AI voice generation using Gemini audio tags.
 Add inline audio tags to make the voice output more expressive and engaging.

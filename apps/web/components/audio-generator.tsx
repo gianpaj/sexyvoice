@@ -154,7 +154,7 @@ export function AudioGenerator({
   );
   const isGeminiVoice = provider === "gemini";
   const isGrokVoice = provider === "grok";
-  const showEnhanceButton = provider === "replicate" || provider === "gemini";
+  const showEnhanceButton = provider === "replicate" || (provider === "gemini" && (useNewModel ?? false));
 
 
   const charactersLimit = useMemo(
@@ -301,7 +301,7 @@ export function AudioGenerator({
 
     try {
       const enhancedText = await complete(text, {
-        body: { selectedVoiceLanguage: selectedVoice.language, ttsProvider: provider },
+        body: { selectedVoiceLanguage: selectedVoice.language, ttsProvider: provider, useNewModel: useNewModel ?? false },
       });
 
       if (enhancedText) {
