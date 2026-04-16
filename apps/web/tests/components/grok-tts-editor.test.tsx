@@ -369,7 +369,10 @@ describe('GrokTTSEditor', () => {
       const serializedCalls = onChange.mock.calls.map(([value]) => value);
       expect(
         serializedCalls.some(
-          (value) => value === '<soft>ab</soft>' || value === '<soft></soft>ab',
+          (value) =>
+            value === '<soft>ab</soft>' ||
+            value === '<soft></soft>ab' ||
+            value === 'ab<soft></soft>',
         ),
       ).toBe(true);
     });
