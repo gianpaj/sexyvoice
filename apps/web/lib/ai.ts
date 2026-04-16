@@ -1,3 +1,7 @@
+// Gemini 3.1 audio tags for inline expressive control
+export const GEMINI_AUDIO_TAGS =
+  '[cheerfully], [whispering], [laughing], [pause], [excited], [sadly], [nervously], [slowly], [fast], [breathily], [sighing], [giggling]';
+
 // Emotion tags for each voice based on language
 export const getEmotionTags = (language: string) => {
   if (language.startsWith('it-')) {

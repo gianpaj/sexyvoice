@@ -152,7 +152,7 @@ export function AudioGenerator({
   );
   const isGeminiVoice = provider === "gemini";
   const isGrokVoice = provider === "grok";
-  const showEnhanceButton = provider === "replicate";
+  const showEnhanceButton = provider === "replicate" || provider === "gemini";
 
 
   const charactersLimit = useMemo(
@@ -161,16 +161,12 @@ export function AudioGenerator({
   );
 
   const textareaRightPadding = useMemo(() => {
-    if (isGeminiVoice) {
-      return "pr-10";
-    }
-
     if (showEnhanceButton) {
       return "pr-20";
     }
 
     return "pr-16";
-  }, [isGeminiVoice, showEnhanceButton]);
+  }, [showEnhanceButton]);
 
   const textIsOverLimit = text.length > charactersLimit;
 
@@ -301,7 +297,7 @@ export function AudioGenerator({
 
     try {
       const enhancedText = await complete(text, {
-        body: { selectedVoiceLanguage: selectedVoice.language },
+        body: { selectedVoiceLanguage: selectedVoice.language, ttsProvider: provider },
       });
 
       if (enhancedText) {
