@@ -11,7 +11,7 @@
     "ios >0 and last 2.5 years"
   ],
   "dependencies": {
-    "@ai-sdk/google": "3.0.43",
+    "@ai-sdk/google": "3.0.63",
     "@ai-sdk/react": "catalog:",
     "@aws-sdk/client-s3": "3.1011.0",
     "@axiomhq/js": "^1.4.0",
