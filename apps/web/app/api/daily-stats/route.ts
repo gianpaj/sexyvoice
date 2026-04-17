@@ -368,6 +368,7 @@ export async function GET(request: NextRequest) {
           .gte('created_at', previousDay.toISOString())
           .lt('created_at', today.toISOString())
           .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + pageSize - 1);
 
         if (error) throw error;
@@ -397,6 +398,7 @@ export async function GET(request: NextRequest) {
           .select('duration_seconds')
           .lt('started_at', today.toISOString())
           .order('started_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + pageSize - 1);
 
         if (error) throw error;
