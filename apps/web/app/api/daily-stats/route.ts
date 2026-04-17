@@ -227,11 +227,9 @@ export async function GET(request: NextRequest) {
     // Fetch data in parallel - combine related queries and filter in memory
     [
       // Audio files - fetch for last specific ranges
-      audioYesterdayResult,
       audioWeekResult,
       audioTotalCountResult,
       clonesResult,
-      profilesRecentResult,
       profilesTotalCountResult,
       apiKeysYesterdayResult,
 
@@ -240,12 +238,7 @@ export async function GET(request: NextRequest) {
       // Call sessions - fetch for last 7 days (includes yesterday)
       callSessionsWeekResult,
       callSessionsTotalCountResult,
-      callSessionsAllTimeDurationResult,
     ] = await Promise.all([
-      // (audioYesterdayResult) Placeholder; fetched below with pagination because
-      // Supabase caps result sets at 1000 rows per request
-      Promise.resolve({ data: null, error: null }),
-
       // (audioWeekResult) Audio files last 7 days
       _timed(
         `audio_files:week_count ${sevenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
@@ -279,10 +272,6 @@ export async function GET(request: NextRequest) {
           .then((result) => result),
       ),
 
-      // (profilesRecentResult) Placeholder; fetched below with pagination because
-      // Supabase caps result sets at 1000 rows per request
-      Promise.resolve({ data: null, error: null }),
-
       // (profilesTotalCountResult) Total profiles count
       supabase
         .from('profiles')
@@ -313,9 +302,6 @@ export async function GET(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .lt('started_at', today.toISOString()),
 
-      // (callSessionsAllTimeDurationResult) Placeholder; fetched below with
-      // pagination because all-time sessions exceed 1000 rows
-      Promise.resolve({ data: null, error: null }),
     ]);
 
     // Fetch all usage events with pagination (Supabase limits to 1000 per request)
@@ -427,18 +413,6 @@ export async function GET(request: NextRequest) {
       return allDurations;
     };
 
-    [audioYesterdayResult, callSessionsAllTimeDurationResult] = await Promise.all([
-      _timed(
-        `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        fetchAllAudioFilesYesterday().then((data) => ({ data, error: null })),
-      ),
-      _timed(
-        `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
-        fetchAllCallSessionDurationsAllTime().then((data) => ({ data, error: null })),
-      ),
-    ]);
-
-    // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
     const fetchAllProfilesInRange = async (
       start: Date,
       end: Date,
@@ -481,10 +455,17 @@ export async function GET(request: NextRequest) {
       return allProfiles;
     };
 
-    profilesRecentResult = {
-      data: await fetchAllProfilesInRange(sevenDaysAgo, today),
-      error: null,
-    };
+    [audioYesterdayResult, callSessionsAllTimeDurationResult, profilesRecentResult] = await Promise.all([
+      _timed(
+        `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        fetchAllAudioFilesYesterday().then((data) => ({ data, error: null })),
+      ),
+      _timed(
+        `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
+        fetchAllCallSessionDurationsAllTime().then((data) => ({ data, error: null })),
+      ),
+      fetchAllProfilesInRange(sevenDaysAgo, today).then((data) => ({ data, error: null })),
+    ]);
 
     const fetchCreditTransactionsInRange = async (
       start: Date,
