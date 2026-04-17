@@ -242,16 +242,9 @@ export async function GET(request: NextRequest) {
       callSessionsTotalCountResult,
       callSessionsAllTimeDurationResult,
     ] = await Promise.all([
-      // (audioYesterdayResult) Audio files yesterday with voice information
-      _timed(
-        `audio_files:yesterday ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id, created_at, model, voice_id, voices(name)')
-          .gte('created_at', previousDay.toISOString())
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
-      ),
+      // (audioYesterdayResult) Placeholder; fetched below with pagination because
+      // Supabase caps result sets at 1000 rows per request
+      Promise.resolve({ data: null, error: null }),
 
       // (audioWeekResult) Audio files last 7 days
       _timed(
@@ -320,11 +313,9 @@ export async function GET(request: NextRequest) {
         .select('id', { count: 'exact', head: true })
         .lt('started_at', today.toISOString()),
 
-      // (callSessionsAllTimeDurationResult) All-time call sessions durations
-      supabase
-        .from('call_sessions')
-        .select('duration_seconds')
-        .lt('started_at', today.toISOString()),
+      // (callSessionsAllTimeDurationResult) Placeholder; fetched below with
+      // pagination because all-time sessions exceed 1000 rows
+      Promise.resolve({ data: null, error: null }),
     ]);
 
     // Fetch all usage events with pagination (Supabase limits to 1000 per request)
@@ -370,6 +361,82 @@ export async function GET(request: NextRequest) {
       data: await fetchAllUsageEvents(),
       error: null,
     };
+
+    // Fetch audio files yesterday with pagination (Supabase limits to 1000 per request)
+    const fetchAllAudioFilesYesterday = async () => {
+      const allAudio: {
+        id: string;
+        created_at: string;
+        model: string | null;
+        voice_id: string | null;
+        voices: { name: string } | null;
+      }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('audio_files')
+          .select('id, created_at, model, voice_id, voices(name)')
+          .gte('created_at', previousDay.toISOString())
+          .lt('created_at', today.toISOString())
+          .order('created_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allAudio.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allAudio;
+    };
+
+    // Fetch all-time call session durations with pagination (Supabase limits to 1000 per request)
+    const fetchAllCallSessionDurationsAllTime = async () => {
+      const allDurations: { duration_seconds: number }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('call_sessions')
+          .select('duration_seconds')
+          .lt('started_at', today.toISOString())
+          .order('started_at', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allDurations.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      return allDurations;
+    };
+
+    [audioYesterdayResult, callSessionsAllTimeDurationResult] = await Promise.all([
+      _timed(
+        `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        fetchAllAudioFilesYesterday().then((data) => ({ data, error: null })),
+      ),
+      _timed(
+        `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
+        fetchAllCallSessionDurationsAllTime().then((data) => ({ data, error: null })),
+      ),
+    ]);
 
     // Fetch all credit transactions with pagination (Supabase limits to 1000 per request)
     const fetchAllProfilesInRange = async (
