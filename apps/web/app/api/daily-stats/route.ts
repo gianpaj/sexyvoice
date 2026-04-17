@@ -343,19 +343,12 @@ export async function GET(request: NextRequest) {
       return allEvents;
     };
 
-    usageEventsWeekResult = {
-      data: await fetchAllUsageEvents(),
-      error: null,
-    };
-
     // Fetch audio files yesterday with pagination (Supabase limits to 1000 per request)
     const fetchAllAudioFilesYesterday = async () => {
       const allAudio: {
         id: string;
         created_at: string | null;
         model: string | null;
-        voice_id: string | null;
-        voices: { name: string } | null;
       }[] = [];
       const pageSize = 1000;
       let offset = 0;
@@ -364,7 +357,7 @@ export async function GET(request: NextRequest) {
       while (hasMore) {
         const { data, error } = await supabase
           .from('audio_files')
-          .select('id, created_at, model, voice_id, voices(name)')
+          .select('id, created_at, model')
           .gte('created_at', previousDay.toISOString())
           .lt('created_at', today.toISOString())
           .order('created_at', { ascending: true })
@@ -457,7 +450,8 @@ export async function GET(request: NextRequest) {
       return allProfiles;
     };
 
-    [audioYesterdayResult, callSessionsAllTimeDurationResult, profilesRecentResult] = await Promise.all([
+    [usageEventsWeekResult, audioYesterdayResult, callSessionsAllTimeDurationResult, profilesRecentResult] = await Promise.all([
+      fetchAllUsageEvents().then((data) => ({ data, error: null })),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         fetchAllAudioFilesYesterday().then((data) => ({ data, error: null })),
