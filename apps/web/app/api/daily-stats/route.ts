@@ -366,7 +366,7 @@ export async function GET(request: NextRequest) {
     const fetchAllAudioFilesYesterday = async () => {
       const allAudio: {
         id: string;
-        created_at: string;
+        created_at: string | null;
         model: string | null;
         voice_id: string | null;
         voices: { name: string } | null;
