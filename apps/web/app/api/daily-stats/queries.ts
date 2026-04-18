@@ -60,6 +60,7 @@ export function getUsageEventsInRange(
       .gte('occurred_at', start.toISOString())
       .lt('occurred_at', end.toISOString())
       .order('occurred_at', { ascending: true })
+      .order('id', { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1)
       .then(({ data, error }) => ({
         data: (data as DailyStatsUsageEvent[] | null) ?? null,
@@ -125,6 +126,7 @@ export function getProfilesInRange(
       .gte('created_at', start.toISOString())
       .lt('created_at', end.toISOString())
       .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1)
       .then(({ data, error }) => ({
         data: (data as DailyStatsProfile[] | null) ?? null,
@@ -149,6 +151,7 @@ export function getCreditTransactionsInRange(
       .gte('created_at', start.toISOString())
       .lt('created_at', end.toISOString())
       .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
       .range(offset, offset + PAGE_SIZE - 1)
       .then(({ data, error }) => ({
         data: (data as DailyStatsCreditTransaction[] | null) ?? null,
