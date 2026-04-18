@@ -13,14 +13,22 @@ import {
   findNextSubscriptionDueForPayment,
 } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getUserByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
+  _timed,
+  calculateUsageBreakdown,
+  countByDateRange,
+  fetchAllPages,
   filterByDateRange,
   formatChange,
   formatCompactNumber,
   formatCurrencyChange,
+  formatDuration,
+  formatDurationChange,
+  getFeatureHealthStatus,
   maskUsername,
+  normalizeModelName,
+  PAGE_SIZE,
   reduceAmountUsd,
   startOfDay,
   startOfMonth,
@@ -73,7 +81,6 @@ export async function GET(request: NextRequest) {
     dateParam = searchParams.get('date');
   }
 
-  const supabase = createAdminClient();
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
   const cacheReportDate = today.toISOString().slice(0, 10);
@@ -147,6 +154,7 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
   let allCreditTransactions: CreditTransaction[] = [];
+  let allTimePurchaseTransactions: CreditTransaction[] = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -184,6 +192,7 @@ export async function GET(request: NextRequest) {
       profilesTotalCountResult = cached.profilesTotalCountResult;
       apiKeysYesterdayResult = cached.apiKeysYesterdayResult;
       allCreditTransactions = cached.allCreditTransactions;
+      allTimePurchaseTransactions = cached.allTimePurchaseTransactions ?? [];
       activeSubscribersCount = cached.activeSubscribersCount;
       nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
       callSessionsWeekResult = cached.callSessionsWeekResult;
@@ -202,27 +211,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!loadedFromValidCache) {
-    // Helper to time individual queries
-    const _timed = async <T>(
-      label: string,
-      promise: PromiseLike<T>,
-    ): Promise<T> => {
-      const start = Date.now();
-      console.log(`⏱  [daily-stats] START  ${label}`);
-      try {
-        const result = await promise;
-        console.log(
-          `✅ [daily-stats] DONE   ${label} — ${Date.now() - start}ms`,
-        );
-        return result;
-      } catch (err) {
-        console.log(
-          `❌ [daily-stats] ERROR  ${label} — ${Date.now() - start}ms`,
-          err,
-        );
-        throw err;
-      }
-    };
+    const supabase = createAdminClient();
 
     // Fetch data in parallel - combine related queries and filter in memory
     [
@@ -301,25 +290,11 @@ export async function GET(request: NextRequest) {
         .from('call_sessions')
         .select('id', { count: 'exact', head: true })
         .lt('started_at', today.toISOString()),
-
     ]);
 
-    // Fetch all usage events with pagination (Supabase limits to 1000 per request)
-    const fetchAllUsageEvents = async () => {
-      const allEvents: {
-        id: string;
-        user_id: string;
-        source_type: string;
-        credits_used: number;
-        occurred_at: string;
-        profiles: { username: string } | null;
-      }[] = [];
-      const pageSize = 1000;
-      let offset = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
+    const fetchAllUsageEvents = async () =>
+      fetchAllPages<UsageEvent>((offset) =>
+        supabase
           .from('usage_events')
           .select(
             'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
@@ -327,86 +302,35 @@ export async function GET(request: NextRequest) {
           .gte('occurred_at', sevenDaysAgo.toISOString())
           .lt('occurred_at', today.toISOString())
           .order('occurred_at', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .range(offset, offset + PAGE_SIZE - 1),
+      );
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          allEvents.push(...data);
-          offset += pageSize;
-          hasMore = data.length === pageSize;
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return allEvents;
-    };
-
-    // Fetch audio files yesterday with pagination (Supabase limits to 1000 per request)
-    const fetchAllAudioFilesYesterday = async () => {
-      const allAudio: {
+    const fetchAllAudioFilesYesterday = async () =>
+      fetchAllPages<{
         id: string;
         created_at: string | null;
         model: string | null;
-      }[] = [];
-      const pageSize = 1000;
-      let offset = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
+      }>((offset) =>
+        supabase
           .from('audio_files')
           .select('id, created_at, model')
           .gte('created_at', previousDay.toISOString())
           .lt('created_at', today.toISOString())
           .order('created_at', { ascending: true })
           .order('id', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .range(offset, offset + PAGE_SIZE - 1),
+      );
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          allAudio.push(...data);
-          offset += pageSize;
-          hasMore = data.length === pageSize;
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return allAudio;
-    };
-
-    // Fetch all-time call session durations with pagination (Supabase limits to 1000 per request)
-    const fetchAllCallSessionDurationsAllTime = async () => {
-      const allDurations: { duration_seconds: number }[] = [];
-      const pageSize = 1000;
-      let offset = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
+    const fetchAllCallSessionDurationsAllTime = async () =>
+      fetchAllPages<{ duration_seconds: number }>((offset) =>
+        supabase
           .from('call_sessions')
           .select('duration_seconds')
           .lt('started_at', today.toISOString())
           .order('started_at', { ascending: true })
           .order('id', { ascending: true })
-          .range(offset, offset + pageSize - 1);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          allDurations.push(...data);
-          offset += pageSize;
-          hasMore = data.length === pageSize;
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return allDurations;
-    };
+          .range(offset, offset + PAGE_SIZE - 1),
+      );
 
     const fetchAllProfilesInRange = async (
       start: Date,
@@ -417,40 +341,27 @@ export async function GET(request: NextRequest) {
         created_at: string | null;
         username: string | null;
       }[]
-    > => {
-      const allProfiles: {
+    > =>
+      fetchAllPages<{
         id: string;
         created_at: string | null;
         username: string | null;
-      }[] = [];
-      const pageSize = 1000;
-      let offset = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
+      }>((offset) =>
+        supabase
           .from('profiles')
           .select('id, created_at, username')
           .gte('created_at', start.toISOString())
           .lt('created_at', end.toISOString())
           .order('created_at', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .range(offset, offset + PAGE_SIZE - 1),
+      );
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          allProfiles.push(...data);
-          offset += pageSize;
-          hasMore = data.length === pageSize;
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return allProfiles;
-    };
-
-    [usageEventsWeekResult, audioYesterdayResult, callSessionsAllTimeDurationResult, profilesRecentResult] = await Promise.all([
+    [
+      usageEventsWeekResult,
+      audioYesterdayResult,
+      callSessionsAllTimeDurationResult,
+      profilesRecentResult,
+    ] = await Promise.all([
       fetchAllUsageEvents().then((data) => ({ data, error: null })),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
@@ -458,22 +369,23 @@ export async function GET(request: NextRequest) {
       ),
       _timed(
         `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
-        fetchAllCallSessionDurationsAllTime().then((data) => ({ data, error: null })),
+        fetchAllCallSessionDurationsAllTime().then((data) => ({
+          data,
+          error: null,
+        })),
       ),
-      fetchAllProfilesInRange(sevenDaysAgo, today).then((data) => ({ data, error: null })),
+      fetchAllProfilesInRange(sevenDaysAgo, today).then((data) => ({
+        data,
+        error: null,
+      })),
     ]);
 
     const fetchCreditTransactionsInRange = async (
       start: Date,
       end: Date,
-    ): Promise<CreditTransaction[]> => {
-      const allTransactions: CreditTransaction[] = [];
-      const pageSize = 1000;
-      let offset = 0;
-      let hasMore = true;
-
-      while (hasMore) {
-        const { data, error } = await supabase
+    ): Promise<CreditTransaction[]> =>
+      fetchAllPages<CreditTransaction>((offset) =>
+        supabase
           .from('credit_transactions')
           .select(
             'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
@@ -483,21 +395,25 @@ export async function GET(request: NextRequest) {
           .gte('created_at', start.toISOString())
           .lt('created_at', end.toISOString())
           .order('created_at', { ascending: true })
-          .range(offset, offset + pageSize - 1);
+          .range(offset, offset + PAGE_SIZE - 1),
+      );
 
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          allTransactions.push(...data);
-          offset += pageSize;
-          hasMore = data.length === pageSize;
-        } else {
-          hasMore = false;
-        }
-      }
-
-      return allTransactions;
-    };
+    const fetchAllTimePurchaseTransactions = async (): Promise<
+      CreditTransaction[]
+    > =>
+      fetchAllPages<CreditTransaction>((offset) =>
+        supabase
+          .from('credit_transactions')
+          .select(
+            'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
+          )
+          .in('type', ['purchase', 'topup'])
+          .not('description', 'ilike', '%manual%')
+          .lt('created_at', today.toISOString())
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(offset, offset + PAGE_SIZE - 1),
+      );
 
     const [
       yesterdayCreditTransactions,
@@ -507,7 +423,8 @@ export async function GET(request: NextRequest) {
       previousMonthToDateCreditTransactions,
       twoMonthsAgoToDateCreditTransactions,
       threeMonthsAgoToDateCreditTransactions,
-      allTimeRefundTransactions,
+      allTimeCreditTransactions,
+      allTimePurchaseTransactionsResult,
     ] = await Promise.all([
       fetchCreditTransactionsInRange(previousDay, today),
       fetchCreditTransactionsInRange(sevenDaysAgo, today),
@@ -526,12 +443,13 @@ export async function GET(request: NextRequest) {
         new Date('1970-01-01T00:00:00.000Z'),
         today,
       ),
+      fetchAllTimePurchaseTransactions(),
     ]);
 
     allCreditTransactions = [
       ...new Map(
         [
-          ...allTimeRefundTransactions,
+          ...allTimeCreditTransactions,
           ...yesterdayCreditTransactions,
           ...sevenDayCreditTransactions,
           ...thirtyDayCreditTransactions,
@@ -542,6 +460,11 @@ export async function GET(request: NextRequest) {
         ].map((transaction) => [transaction.id, transaction]),
       ).values(),
     ].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+
+    allTimePurchaseTransactions = allTimePurchaseTransactionsResult.sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
@@ -567,7 +490,7 @@ export async function GET(request: NextRequest) {
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
-  if (!isProd) {
+  if (!(isProd || loadedFromValidCache)) {
     const cacheData = {
       reportDate: cacheReportDate,
       audioYesterdayResult,
@@ -578,6 +501,7 @@ export async function GET(request: NextRequest) {
       profilesTotalCountResult,
       apiKeysYesterdayResult,
       allCreditTransactions,
+      allTimePurchaseTransactions,
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
       callSessionsWeekResult,
@@ -681,22 +605,6 @@ export async function GET(request: NextRequest) {
         : 0,
     ) || 0;
 
-  // Format duration in minutes
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-  };
-
-  const formatDurationChange = (
-    currentSeconds: number,
-    baselineSeconds: number,
-  ): string => {
-    const diffSeconds = Math.round(currentSeconds - baselineSeconds);
-    const sign = diffSeconds >= 0 ? '+' : '-';
-    return `${sign}${formatDuration(Math.abs(diffSeconds))}`;
-  };
-
   // Separate refunds from purchases/top-ups
   const refundTransactions = creditTransactions.filter(
     (t) => t.type === 'refund',
@@ -706,20 +614,15 @@ export async function GET(request: NextRequest) {
   );
 
   // Filter clones by date ranges
-  const clonePrevCount = filterByDateRange(
-    clonesData,
-    previousDay,
-    today,
-  ).length;
+  const clonePrevCount = countByDateRange(clonesData, previousDay, today);
   const cloneWeekCount = clonesData.length;
 
   // Filter profiles by date ranges
-  const profilesYesterdayData = filterByDateRange(
+  const profilesTodayCount = countByDateRange(
     profilesRecentData,
     previousDay,
     today,
   );
-  const profilesTodayCount = profilesYesterdayData.length;
   const profilesWeekCount = profilesRecentData.length;
 
   // Early exit if no audio files yesterday
@@ -746,34 +649,9 @@ export async function GET(request: NextRequest) {
 
   const nextPayingSubscriber =
     nextSubscriptionDueForPayment &&
-    (await getUserByStripeCustomerId(
-      nextSubscriptionDueForPayment?.customerId,
-    ));
-
-  // Top models calculation
-  const normalizeModelName = (modelName: string | null | undefined) => {
-    const trimmedModelName = modelName?.trim();
-    if (!trimmedModelName) return 'Unknown';
-
-    const modelWithoutVersion =
-      trimmedModelName.split(':')[0] ?? trimmedModelName;
-    const modelWithoutOwner =
-      modelWithoutVersion.split('/').pop() ?? modelWithoutVersion;
-    const normalizedModelName = modelWithoutOwner
-      .replace('-preview-tts', '')
-      .replace('-multilingual', '');
-
-    const friendlyModelLabels: Record<string, string> = {
-      chatterbox: 'Chatterbox',
-      'gemini-2.5-flash': 'Gemini Flash',
-      'gemini-2.5-pro': 'Gemini Pro',
-      grok: 'Grok',
-      'orpheus-3b-0.1-ft': 'Orpheus',
-      'voxtral-mini-tts-2603': 'Voxtral Clone',
-    };
-
-    return friendlyModelLabels[normalizedModelName] ?? normalizedModelName;
-  };
+    allTimePurchaseTransactions.find(
+      (t) => t.user_id === nextSubscriptionDueForPayment?.customerId,
+    );
 
   const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
   const modelCounts = new Map<string, number>();
@@ -849,7 +727,7 @@ export async function GET(request: NextRequest) {
   }).length;
   const creditsWeekCount = purchaseWeekData.length;
   const creditsMonthCount = purchaseThirtyDayData.length;
-  const creditsTotalCount = purchaseTransactions.length;
+  const creditsTotalCount = allTimePurchaseTransactions.length;
 
   // Filter refund transactions by date ranges
   const refundsPrevDayData = refundTransactions.filter(
@@ -961,7 +839,7 @@ export async function GET(request: NextRequest) {
   const topCustomerProfilesCount = topCustomerIds.length || '';
 
   const totalUniquePaidUsers = new Set(
-    purchaseTransactions.map((t) => t.user_id),
+    allTimePurchaseTransactions.map((t) => t.user_id),
   ).size;
   // Revenue calculations (incl. refund)
   const totalAmountUsd = creditTransactions.reduce(reduceAmountUsd, 0);
@@ -1044,7 +922,7 @@ export async function GET(request: NextRequest) {
   );
 
   // DEBUG: Log paid user usage analysis
-  if (!isProd) {
+  if (!isProd && process.env.DEBUG) {
     // Get unique user IDs from yesterday's usage events
     const yesterdayUserIds = new Set(
       filterByDateRange(
@@ -1126,17 +1004,6 @@ export async function GET(request: NextRequest) {
 
   const getSourceTypeLabel = (sourceType: string): string =>
     sourceTypeLabels[sourceType as UsageSourceType] ?? sourceType;
-
-  const calculateUsageBreakdown = (
-    events: typeof paidUserUsageEvents,
-  ): Map<string, number> => {
-    const breakdown = new Map<string, number>();
-    for (const event of events) {
-      const current = breakdown.get(event.source_type) ?? 0;
-      breakdown.set(event.source_type, current + event.credits_used);
-    }
-    return breakdown;
-  };
 
   const formatUsageBreakdown = (breakdown: Map<string, number>): string => {
     const total = [...breakdown.values()].reduce((sum, v) => sum + v, 0);
@@ -1220,7 +1087,7 @@ export async function GET(request: NextRequest) {
   }
 
   // DEBUG: Credit calculation verification
-  if (!isProd) {
+  if (!isProd && process.env.DEBUG) {
     console.log('\n💰 DEBUG: Credit Calculation Verification');
     console.log(
       '  - Paid user usage events (yesterday):',
@@ -1280,7 +1147,7 @@ export async function GET(request: NextRequest) {
   }
 
   // DEBUG: Top users verification
-  if (!isProd) {
+  if (!isProd && process.env.DEBUG) {
     console.log('\n👤 DEBUG: Top Users Verification');
     console.log('  - Total unique users with credits:', userCreditUsage.size);
     console.log('  - Top 3 raw data:');
@@ -1382,15 +1249,6 @@ export async function GET(request: NextRequest) {
     totalActiveUsersYesterday > 0
       ? ((creditsTodayCount / totalActiveUsersYesterday) * 100).toFixed(1)
       : null;
-
-  const getFeatureHealthStatus = (
-    current: number,
-    baseline: number,
-  ): '🟢 active' | '🟡 below trend' | '🔴 no usage' => {
-    if (current === 0) return '🔴 no usage';
-    if (baseline > 0 && current < baseline) return '🟡 below trend';
-    return '🟢 active';
-  };
 
   const featureHealthItems = [
     {
