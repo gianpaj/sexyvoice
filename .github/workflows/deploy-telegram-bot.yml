@@ -26,6 +26,7 @@ jobs:
 
       - name: Deploy to Deno Deploy
         working-directory: apps/web/supabase/functions/telegram-bot
-        run: deployctl deploy --project=sv-telegram-bot --entrypoint=./index.ts --prod --token=$DENO_TOKEN
+        run: deployctl deploy --project=sv-telegram-bot --entrypoint=./index.ts --prod
+          --token=$DENO_TOKEN
         env:
           DENO_TOKEN: ${{ secrets.DENO_TOKEN }}

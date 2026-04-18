@@ -16,10 +16,17 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
+  getAudioFilesInRange,
+  getCallSessionDurationsBefore,
+  getCreditTransactionsInRange,
+  getProfilesInRange,
+  getUsageEventsInRange,
+  VOICE_CLONING_MODELS,
+} from './queries';
+import {
   _timed,
   calculateUsageBreakdown,
   countByDateRange,
-  fetchAllPages,
   filterByDateRange,
   formatChange,
   formatCompactNumber,
@@ -30,7 +37,6 @@ import {
   getProfileUsername,
   maskUsername,
   normalizeModelName,
-  PAGE_SIZE,
   reduceAmountUsd,
   startOfDay,
   startOfMonth,
@@ -43,12 +49,6 @@ import {
 // which drops the PostgREST connection and surfaces as a PostgreSQL 57014
 // (query_canceled) error rather than a Vercel timeout.
 export const maxDuration = 300;
-
-const VOICE_CLONING_MODELS = [
-  'resemble-ai/chatterbox-multilingual',
-  'resemble-ai/chatterbox',
-  'voxtral-mini-tts-2603',
-];
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
 export async function GET(request: NextRequest) {
@@ -120,26 +120,6 @@ export async function GET(request: NextRequest) {
     ),
   );
 
-  // Partial credit_transactions type matching the selected columns
-  interface CreditTransaction {
-    created_at: string;
-    description: string | null;
-    id: string;
-    metadata: Json;
-    profiles: { username: string } | null;
-    type: 'purchase' | 'freemium' | 'topup' | 'refund';
-    user_id: string;
-  }
-
-  interface UsageEvent {
-    credits_used: number;
-    id: string;
-    occurred_at: string;
-    profiles: { username: string } | null;
-    source_type: string;
-    user_id: string;
-  }
-
   // Load from cache if available (non-prod only)
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let audioYesterdayResult: any;
@@ -155,8 +135,12 @@ export async function GET(request: NextRequest) {
   let profilesTotalCountResult: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
-  let allCreditTransactions: CreditTransaction[] = [];
-  let allTimePurchaseTransactions: CreditTransaction[] = [];
+  let allCreditTransactions: Awaited<
+    ReturnType<typeof getCreditTransactionsInRange>
+  > = [];
+  let allTimePurchaseTransactions: Awaited<
+    ReturnType<typeof getCreditTransactionsInRange>
+  > = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
@@ -168,7 +152,10 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessionsAllTimeDurationResult: any;
   let usageEventsWeekResult:
-    | { data: UsageEvent[] | null; error: unknown }
+    | {
+        data: Awaited<ReturnType<typeof getUsageEventsInRange>> | null;
+        error: unknown;
+      }
     | undefined;
   let loadedFromValidCache = false;
 
@@ -294,131 +281,35 @@ export async function GET(request: NextRequest) {
         .lt('started_at', today.toISOString()),
     ]);
 
-    const fetchAllUsageEvents = async () =>
-      fetchAllPages<UsageEvent>((offset) =>
-        supabase
-          .from('usage_events')
-          .select(
-            'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
-          )
-          .gte('occurred_at', sevenDaysAgo.toISOString())
-          .lt('occurred_at', today.toISOString())
-          .order('occurred_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1),
-      );
-
-    const fetchAllAudioFilesYesterday = async () =>
-      fetchAllPages<{
-        id: string;
-        created_at: string | null;
-        model: string | null;
-      }>((offset) =>
-        supabase
-          .from('audio_files')
-          .select('id, created_at, model')
-          .gte('created_at', previousDay.toISOString())
-          .lt('created_at', today.toISOString())
-          .order('created_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1),
-      );
-
-    const fetchAllCallSessionDurationsAllTime = async () =>
-      fetchAllPages<{ duration_seconds: number }>((offset) =>
-        supabase
-          .from('call_sessions')
-          .select('duration_seconds')
-          .lt('started_at', today.toISOString())
-          .order('started_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1),
-      );
-
-    const fetchAllProfilesInRange = async (
-      start: Date,
-      end: Date,
-    ): Promise<
-      {
-        id: string;
-        created_at: string | null;
-        username: string | null;
-      }[]
-    > =>
-      fetchAllPages<{
-        id: string;
-        created_at: string | null;
-        username: string | null;
-      }>((offset) =>
-        supabase
-          .from('profiles')
-          .select('id, created_at, username')
-          .gte('created_at', start.toISOString())
-          .lt('created_at', end.toISOString())
-          .order('created_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1),
-      );
-
     [
       usageEventsWeekResult,
       audioYesterdayResult,
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
     ] = await Promise.all([
-      fetchAllUsageEvents().then((data) => ({ data, error: null })),
+      getUsageEventsInRange(supabase, sevenDaysAgo, today).then((data) => ({
+        data,
+        error: null,
+      })),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        fetchAllAudioFilesYesterday().then((data) => ({ data, error: null })),
-      ),
-      _timed(
-        `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
-        fetchAllCallSessionDurationsAllTime().then((data) => ({
+        getAudioFilesInRange(supabase, previousDay, today).then((data) => ({
           data,
           error: null,
         })),
       ),
-      fetchAllProfilesInRange(sevenDaysAgo, today).then((data) => ({
+      _timed(
+        `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
+        getCallSessionDurationsBefore(supabase, today).then((data) => ({
+          data,
+          error: null,
+        })),
+      ),
+      getProfilesInRange(supabase, sevenDaysAgo, today).then((data) => ({
         data,
         error: null,
       })),
     ]);
-
-    const fetchCreditTransactionsInRange = async (
-      start: Date,
-      end: Date,
-    ): Promise<CreditTransaction[]> =>
-      fetchAllPages<CreditTransaction>((offset) =>
-        supabase
-          .from('credit_transactions')
-          .select(
-            'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
-          )
-          .in('type', ['purchase', 'topup', 'refund'])
-          .not('description', 'ilike', '%manual%')
-          .gte('created_at', start.toISOString())
-          .lt('created_at', end.toISOString())
-          .order('created_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1),
-      );
-
-    const fetchAllTimePurchaseTransactions = async (): Promise<
-      CreditTransaction[]
-    > =>
-      fetchAllPages<CreditTransaction>((offset) =>
-        supabase
-          .from('credit_transactions')
-          .select(
-            'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
-          )
-          .in('type', ['purchase', 'topup'])
-          .not('description', 'ilike', '%manual%')
-          .lt('created_at', today.toISOString())
-          .order('created_at', { ascending: true })
-          .order('id', { ascending: true })
-          .range(offset, offset + PAGE_SIZE - 1),
-      );
 
     const [
       yesterdayCreditTransactions,
@@ -429,26 +320,31 @@ export async function GET(request: NextRequest) {
       twoMonthsAgoToDateCreditTransactions,
       threeMonthsAgoToDateCreditTransactions,
       allTimeCreditTransactions,
-      allTimePurchaseTransactionsResult,
     ] = await Promise.all([
-      fetchCreditTransactionsInRange(previousDay, today),
-      fetchCreditTransactionsInRange(sevenDaysAgo, today),
-      fetchCreditTransactionsInRange(thirtyDaysAgo, today),
-      fetchCreditTransactionsInRange(monthStart, today),
-      fetchCreditTransactionsInRange(
+      getCreditTransactionsInRange(supabase, previousDay, today),
+      getCreditTransactionsInRange(supabase, sevenDaysAgo, today),
+      getCreditTransactionsInRange(supabase, thirtyDaysAgo, today),
+      getCreditTransactionsInRange(supabase, monthStart, today),
+      getCreditTransactionsInRange(
+        supabase,
         previousMonthStart,
         previousMonthPeriodEnd,
       ),
-      fetchCreditTransactionsInRange(twoMonthsAgoStart, twoMonthsAgoPeriodEnd),
-      fetchCreditTransactionsInRange(
+      getCreditTransactionsInRange(
+        supabase,
+        twoMonthsAgoStart,
+        twoMonthsAgoPeriodEnd,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
         threeMonthsAgoStart,
         threeMonthsAgoPeriodEnd,
       ),
-      fetchCreditTransactionsInRange(
+      getCreditTransactionsInRange(
+        supabase,
         new Date('1970-01-01T00:00:00.000Z'),
         today,
       ),
-      fetchAllTimePurchaseTransactions(),
     ]);
 
     allCreditTransactions = [
@@ -469,10 +365,12 @@ export async function GET(request: NextRequest) {
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
 
-    allTimePurchaseTransactions = allTimePurchaseTransactionsResult.sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    );
+    allTimePurchaseTransactions = allTimeCreditTransactions
+      .filter((transaction) => transaction.type !== 'refund')
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      );
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -556,7 +454,7 @@ export async function GET(request: NextRequest) {
     (key) => key.last_used_at !== null,
   ).length;
 
-  const creditTransactions: CreditTransaction[] = allCreditTransactions;
+  const creditTransactions = allCreditTransactions;
 
   const callSessionsWeekData = (
     (callSessionsWeekResult.data ?? []) as (Tables<'call_sessions'> & {
@@ -568,7 +466,7 @@ export async function GET(request: NextRequest) {
     (callSessionsAllTimeDurationResult.data ?? []) as {
       duration_seconds: number;
     }[];
-  const usageEventsWeekData: UsageEvent[] = usageEventsWeekResult.data ?? [];
+  const usageEventsWeekData = usageEventsWeekResult.data ?? [];
 
   // Calculate API TTS credits used yesterday
   const apiTtsCreditsYesterday = filterByDateRange(
@@ -794,7 +692,7 @@ export async function GET(request: NextRequest) {
     existing.push({
       amount: dollarAmount,
       type: purchaseTypeLabel,
-      username: transaction.profiles?.username || 'Unknown',
+      username: getProfileUsername(transaction.profiles) || 'Unknown',
     });
     customerTransactions.set(transaction.user_id, existing);
   }
@@ -1154,8 +1052,9 @@ export async function GET(request: NextRequest) {
   // Get usernames for top usage users from usage events
   const userIdToUsername = new Map<string, string>();
   for (const event of usageEventsWeekData) {
-    if (event.profiles?.username && !userIdToUsername.has(event.user_id)) {
-      userIdToUsername.set(event.user_id, event.profiles.username);
+    const username = getProfileUsername(event.profiles);
+    if (username && !userIdToUsername.has(event.user_id)) {
+      userIdToUsername.set(event.user_id, username);
     }
   }
 

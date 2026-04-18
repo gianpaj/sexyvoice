@@ -272,11 +272,15 @@ export async function fetchAllPages<T>(
     const { data, error } = await queryBuilder(offset);
 
     if (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+
       const msg =
         typeof error === 'object' && error !== null && 'message' in error
           ? (error as { message: string }).message
           : String(error);
-      throw new Error(msg);
+      throw new Error(msg, { cause: error });
     }
 
     if (!data || data.length === 0) {
