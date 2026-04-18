@@ -302,6 +302,7 @@ export async function GET(request: NextRequest) {
           .gte('occurred_at', sevenDaysAgo.toISOString())
           .lt('occurred_at', today.toISOString())
           .order('occurred_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1),
       );
 
@@ -353,6 +354,7 @@ export async function GET(request: NextRequest) {
           .gte('created_at', start.toISOString())
           .lt('created_at', end.toISOString())
           .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1),
       );
 
@@ -395,6 +397,7 @@ export async function GET(request: NextRequest) {
           .gte('created_at', start.toISOString())
           .lt('created_at', end.toISOString())
           .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + PAGE_SIZE - 1),
       );
 
