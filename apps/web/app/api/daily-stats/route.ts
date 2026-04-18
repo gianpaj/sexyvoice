@@ -13,6 +13,7 @@ import {
   findNextSubscriptionDueForPayment,
 } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
   _timed,
@@ -26,6 +27,7 @@ import {
   formatDuration,
   formatDurationChange,
   getFeatureHealthStatus,
+  getProfileUsername,
   maskUsername,
   normalizeModelName,
   PAGE_SIZE,
@@ -213,7 +215,6 @@ export async function GET(request: NextRequest) {
   const supabase = createAdminClient();
 
   if (!loadedFromValidCache) {
-
     // Fetch data in parallel - combine related queries and filter in memory
     [
       // Audio files - fetch for last specific ranges
@@ -654,20 +655,16 @@ export async function GET(request: NextRequest) {
   }
 
   const nextPayingSubscriberUserId = nextSubscriptionDueForPayment
-    ? (
-        await supabase
-          .from('profiles')
-          .select('id')
-          .eq('stripe_id', nextSubscriptionDueForPayment.customerId)
-          .single()
-      ).data?.id
+    ? await getUserIdByStripeCustomerId(
+        nextSubscriptionDueForPayment.customerId,
+      )
     : null;
 
-  const nextPayingSubscriber =
-    nextPayingSubscriberUserId &&
-    allTimePurchaseTransactions.find(
-      (t) => t.user_id === nextPayingSubscriberUserId,
-    );
+  const nextPayingSubscriber = nextPayingSubscriberUserId
+    ? allTimePurchaseTransactions.find(
+        (t) => t.user_id === nextPayingSubscriberUserId,
+      )
+    : undefined;
 
   const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
   const modelCounts = new Map<string, number>();
@@ -1328,7 +1325,7 @@ export async function GET(request: NextRequest) {
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
     `  - 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
     `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.profiles?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(getProfileUsername(nextPayingSubscriber?.profiles ?? null))} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
   ];
 
   const message = [
