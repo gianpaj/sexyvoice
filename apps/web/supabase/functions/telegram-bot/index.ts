@@ -159,23 +159,14 @@ async function generateTodayStats(): Promise<string> {
   try {
     // Parallel Fetching
     const [
-      audioTodayResult,
       audioWeekResult,
       audioTotalCountResult,
       clonesResult,
-      profilesRecentResult,
       profilesTotalCountResult,
       callSessionsWeekResult,
       callSessionsTotalCountResult,
       apiKeysTodayResult,
     ] = await Promise.all([
-      // Audio files today
-      supabase
-        .from('audio_files')
-        .select('id, created_at, model, voice_id, voices(name)')
-        .gte('created_at', today.toISOString())
-        .lt('created_at', now.toISOString()),
-
       // Audio files last 7 days
       supabase
         .from('audio_files')
@@ -198,13 +189,6 @@ async function generateTodayStats(): Promise<string> {
           'resemble-ai/chatterbox',
           'voxtral-mini-tts-2603',
         ])
-        .gte('created_at', sevenDaysAgo.toISOString())
-        .lt('created_at', now.toISOString()),
-
-      // Profiles last 7 days
-      supabase
-        .from('profiles')
-        .select('id, created_at, username')
         .gte('created_at', sevenDaysAgo.toISOString())
         .lt('created_at', now.toISOString()),
 
@@ -235,8 +219,66 @@ async function generateTodayStats(): Promise<string> {
         .lt('created_at', now.toISOString()),
     ]);
 
-    // Fetch credit transactions with pagination (to avoid 1000-row cap)
-    const allCreditTransactions: {
+    // Paginated fetch helpers
+
+    const fetchAudioFilesToday = async (): Promise<
+      { id: string; created_at: string; model: string | null }[]
+    > => {
+      const allAudio: { id: string; created_at: string; model: string | null }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('audio_files')
+          .select('id, created_at, model')
+          .gte('created_at', today.toISOString())
+          .lt('created_at', now.toISOString())
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allAudio.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+      return allAudio;
+    };
+
+    const fetchProfilesInRange = async (
+      start: Date,
+      end: Date,
+    ): Promise<{ id: string; created_at: string; username: string | null }[]> => {
+      const allProfiles: { id: string; created_at: string; username: string | null }[] = [];
+      const pageSize = 1000;
+      let offset = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, created_at, username')
+          .gte('created_at', start.toISOString())
+          .lt('created_at', end.toISOString())
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          allProfiles.push(...data);
+          offset += pageSize;
+          hasMore = data.length === pageSize;
+        } else {
+          hasMore = false;
+        }
+      }
+      return allProfiles;
+    };
+
+    const fetchCreditTransactions = async (): Promise<{
       id: string;
       user_id: string;
       created_at: string;
@@ -245,8 +287,17 @@ async function generateTodayStats(): Promise<string> {
       // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
       metadata: any;
       profiles: { username: string } | null;
-    }[] = [];
-    {
+    }[]> => {
+      const allTransactions: {
+        id: string;
+        user_id: string;
+        created_at: string;
+        type: string;
+        description: string | null;
+        // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
+        metadata: any;
+        profiles: { username: string } | null;
+      }[] = [];
       const pageSize = 1000;
       let offset = 0;
       let hasMore = true;
@@ -260,23 +311,24 @@ async function generateTodayStats(): Promise<string> {
           .not('description', 'ilike', '%manual%')
           .lt('created_at', now.toISOString())
           .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + pageSize - 1);
-
         if (error) throw error;
         if (data && data.length > 0) {
-          allCreditTransactions.push(...data);
+          allTransactions.push(...data);
           offset += pageSize;
           hasMore = data.length === pageSize;
         } else {
           hasMore = false;
         }
       }
-    }
+      return allTransactions;
+    };
 
-    // Fetch usage events with pagination
     // biome-ignore lint/suspicious/noExplicitAny: it's ok
-    const allUsageEvents: any[] = [];
-    {
+    const fetchUsageEvents = async (): Promise<any[]> => {
+      // biome-ignore lint/suspicious/noExplicitAny: it's ok
+      const allEvents: any[] = [];
       const pageSize = 1000;
       let offset = 0;
       let hasMore = true;
@@ -289,23 +341,30 @@ async function generateTodayStats(): Promise<string> {
           .gte('occurred_at', sevenDaysAgo.toISOString())
           .lt('occurred_at', now.toISOString())
           .order('occurred_at', { ascending: true })
+          .order('id', { ascending: true })
           .range(offset, offset + pageSize - 1);
-
         if (error) throw error;
         if (data && data.length > 0) {
-          allUsageEvents.push(...data);
+          allEvents.push(...data);
           offset += pageSize;
           hasMore = data.length === pageSize;
         } else {
           hasMore = false;
         }
       }
-    }
+      return allEvents;
+    };
+
+    const [audioTodayData, profilesRecentData, allCreditTransactions, allUsageEvents] = await Promise.all([
+      fetchAudioFilesToday(),
+      fetchProfilesInRange(sevenDaysAgo, now),
+      fetchCreditTransactions(),
+      fetchUsageEvents(),
+    ]);
 
     // --- Processing ---
 
     // Audio
-    const audioTodayData = audioTodayResult.data ?? [];
     const audioTodayCount = audioTodayData.length;
     const audioWeekCount = audioWeekResult.count ?? 0;
     const audioTotalCount = audioTotalCountResult.count ?? 0;
@@ -316,7 +375,6 @@ async function generateTodayStats(): Promise<string> {
     const cloneWeekCount = clonesData.length;
 
     // Profiles
-    const profilesRecentData = profilesRecentResult.data ?? [];
     const profilesTodayData = filterByDateRange(profilesRecentData, today, now);
     const profilesTodayCount = profilesTodayData.length;
     const profilesWeekCount = profilesRecentData.length;

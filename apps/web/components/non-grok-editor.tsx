@@ -1,29 +1,22 @@
-"use client";
+'use client';
 
-import {
-  Crown,
-  Info,
-  Loader2,
-  Maximize2,
-  Minimize2,
-  Sparkles,
-} from "lucide-react";
-import type { CSSProperties, RefObject } from "react";
+import { Crown, Loader2, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import type { CSSProperties, RefObject } from 'react';
 
-import { cn } from "@/lib/utils";
-import type messages from "@/messages/en.json";
-import { AnimatedPromptTextarea } from "./audio-generator";
-import { Button } from "./ui/button";
+import { cn } from '@/lib/utils';
+import type messages from '@/messages/en.json';
+import { AnimatedPromptTextarea } from './audio-generator';
+import { Button } from './ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from './ui/tooltip';
 
 interface NonGrokPromptEditorProps {
   charactersLimit: number;
-  dict: (typeof messages)["generate"];
+  dict: (typeof messages)['generate'];
   isEnhancingText: boolean;
   isFullscreen: boolean;
   isGenerating: boolean;
@@ -58,7 +51,7 @@ export function NonGrokPromptEditor({
     <>
       <AnimatedPromptTextarea
         className={cn(
-          "textarea-2 bg-transparent transition-[height] duration-200 ease-in-out",
+          'textarea-2 bg-transparent transition-[height] duration-200 ease-in-out',
           textareaRightPadding,
         )}
         maxLength={charactersLimit + 10}
@@ -67,7 +60,7 @@ export function NonGrokPromptEditor({
         ref={textareaRef}
         style={
           {
-            "--ta2-height": isFullscreen ? "30vh" : "8rem",
+            '--ta2-height': isFullscreen ? '30vh' : '8rem',
           } as CSSProperties
         }
         value={text}
@@ -106,8 +99,8 @@ export function NonGrokPromptEditor({
 
       <div
         className={cn(
-          "flex items-center justify-end gap-1.5 text-muted-foreground text-sm",
-          textIsOverLimit ? "font-bold text-red-500" : "",
+          'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+          textIsOverLimit ? 'font-bold text-red-500' : '',
         )}
       >
         {text.length} / {charactersLimit}
@@ -116,16 +109,16 @@ export function NonGrokPromptEditor({
             <TooltipTrigger asChild>
               <Crown
                 className={cn(
-                  "h-3.5 w-3.5 cursor-default",
-                  isPaidUser ? "text-muted-foreground/50" : "text-yellow-400",
+                  'h-3.5 w-3.5 cursor-default',
+                  isPaidUser ? 'text-muted-foreground/50' : 'text-yellow-400',
                 )}
               />
             </TooltipTrigger>
             <TooltipContent>
               <p>
                 {isPaidUser
-                  ? "Paid users enjoy 2× character limit"
-                  : "Upgrade to a paid plan for 2× character limit"}
+                  ? 'Paid users enjoy 2× character limit'
+                  : 'Upgrade to a paid plan for 2× character limit'}
               </p>
             </TooltipContent>
           </Tooltip>

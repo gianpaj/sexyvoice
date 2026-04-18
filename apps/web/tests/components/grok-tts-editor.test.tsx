@@ -358,6 +358,7 @@ describe('GrokTTSEditor', () => {
     }
 
     await user.click(paragraph);
+    placeCaretAtEnd(editor);
     await user.keyboard('ab');
 
     await waitFor(() => {
