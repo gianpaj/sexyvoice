@@ -484,6 +484,8 @@ export async function GET(request: NextRequest) {
   if (callSessionsWeekResult?.error) throw callSessionsWeekResult.error;
   if (callSessionsTotalCountResult?.error)
     throw callSessionsTotalCountResult.error;
+  if (callSessionsAllTimeDurationResult?.error)
+    throw callSessionsAllTimeDurationResult.error;
   if (!usageEventsWeekResult) {
     throw new Error(
       'usageEventsWeekResult was not loaded after cache validation/fetch',
