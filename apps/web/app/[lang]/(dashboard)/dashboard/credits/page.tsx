@@ -1,24 +1,24 @@
-import { captureException } from "@sentry/nextjs";
-import { ExternalLink, Sparkles } from "lucide-react";
-import Link from "next/link";
-import Script from "next/script";
-import { getMessages } from "next-intl/server";
-import type Stripe from "stripe";
+import { captureException } from '@sentry/nextjs';
+import { ExternalLink, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import Script from 'next/script';
+import { getMessages } from 'next-intl/server';
+import type Stripe from 'stripe';
 
-import { Button } from "@/components/ui/button";
-import type { Locale } from "@/lib/i18n/i18n-config";
-import { getCustomerData } from "@/lib/redis/queries";
-import { SUBSCRIPTION_BONUS_MULTIPLIER } from "@/lib/stripe/pricing";
+import { Button } from '@/components/ui/button';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { getCustomerData } from '@/lib/redis/queries';
+import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
   createCustomerSession,
   createOrRetrieveCustomer,
   refreshCustomerSubscriptionData,
-} from "@/lib/stripe/stripe-admin";
-import { getUserById } from "@/lib/supabase/queries";
-import { createClient } from "@/lib/supabase/server";
-import { CreditHistory } from "./credit-history";
-import { CreditTopup } from "./credit-topup";
-import { TopupStatus } from "./topup-status";
+} from '@/lib/stripe/stripe-admin';
+import { getUserById } from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
+import { CreditHistory } from './credit-history';
+import { CreditTopup } from './credit-topup';
+import { TopupStatus } from './topup-status';
 
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -31,7 +31,7 @@ export default async function CreditsPage(props: {
 
   const userData = user && (await getUserById(user.id));
   if (!(user && userData)) {
-    throw new Error("User not found");
+    throw new Error('User not found');
   }
 
   const stripeId = await createOrRetrieveCustomer(
@@ -41,10 +41,10 @@ export default async function CreditsPage(props: {
   );
 
   if (!stripeId) {
-    const error = new Error("Failed to create or retrieve Stripe customer.");
+    const error = new Error('Failed to create or retrieve Stripe customer.');
     console.error(error.message);
     captureException(error, {
-      level: "error",
+      level: 'error',
       user: { id: user.id, email: user.email },
     });
     throw error;
@@ -54,15 +54,15 @@ export default async function CreditsPage(props: {
 
   let customerData = await getCustomerData(stripeId);
   let shouldShowPricingTable =
-    !customerData || customerData.status !== "active";
+    !customerData || customerData.status !== 'active';
   let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
 
   if (shouldShowPricingTable) {
     try {
       customerData = await refreshCustomerSubscriptionData(stripeId);
-      shouldShowPricingTable = customerData.status !== "active";
+      shouldShowPricingTable = customerData.status !== 'active';
     } catch (error) {
-      console.error("Failed to refresh Stripe subscription data", error);
+      console.error('Failed to refresh Stripe subscription data', error);
       shouldShowPricingTable = false;
     }
   }
@@ -72,10 +72,10 @@ export default async function CreditsPage(props: {
   }
 
   const { data: existingTransactions } = await supabase
-    .from("credit_transactions")
-    .select("id, created_at, description, type, amount")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+    .from('credit_transactions')
+    .select('id, created_at, description, type, amount')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
     .limit(100);
 
   return (
@@ -120,7 +120,7 @@ export default async function CreditsPage(props: {
           <Sparkles className="size-5 shrink-0 text-yellow-500" />
           <span>
             {dict.sidebar.subscriptionDiscount.replace(
-              "{discount}",
+              '{discount}',
               String(Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)),
             )}
           </span>
