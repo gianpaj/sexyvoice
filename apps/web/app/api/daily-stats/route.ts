@@ -650,10 +650,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  const nextPayingSubscriberUserId = nextSubscriptionDueForPayment
+    ? (
+        await createAdminClient()
+          .from('profiles')
+          .select('id')
+          .eq('stripe_id', nextSubscriptionDueForPayment.customerId)
+          .single()
+      ).data?.id
+    : null;
+
   const nextPayingSubscriber =
-    nextSubscriptionDueForPayment &&
+    nextPayingSubscriberUserId &&
     allTimePurchaseTransactions.find(
-      (t) => t.user_id === nextSubscriptionDueForPayment?.customerId,
+      (t) => t.user_id === nextPayingSubscriberUserId,
     );
 
   const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
@@ -1315,7 +1325,7 @@ export async function GET(request: NextRequest) {
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg7dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg7dRevenue).toFixed(2)} vs 7d avg)`,
     `  - 7d: $${total7dRevenue.toFixed(2)} (avg $${avg7dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
     `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribersWeekCount} in 7d | Next renewal: ${maskUsername(nextPayingSubscriber?.profiles?.username)} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
   ];
 
   const message = [
