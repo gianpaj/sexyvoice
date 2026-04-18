@@ -10,6 +10,7 @@ export const VOICE_CLONING_MODELS = [
 ] as const;
 
 export interface DailyStatsCreditTransaction {
+  amount: number;
   created_at: string;
   description: string | null;
   id: string;

@@ -198,7 +198,7 @@ export async function GET(request: NextRequest) {
       callSessionsWeekResult = cached.callSessionsWeekResult;
       callSessionsTotalCountResult = cached.callSessionsTotalCountResult;
       callSessionsAllTimeDurationResult =
-        cached.callSessionsAllTimeDurationResult;
+        cached.callSessionsAllTimeDurationResult ?? { data: [], error: null };
       usageEventsWeekResult = cached.usageEventsWeekResult;
       loadedFromValidCache = true;
     } else {
@@ -210,8 +210,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const supabase = createAdminClient();
+
   if (!loadedFromValidCache) {
-    const supabase = createAdminClient();
 
     // Fetch data in parallel - combine related queries and filter in memory
     [
@@ -654,7 +655,7 @@ export async function GET(request: NextRequest) {
 
   const nextPayingSubscriberUserId = nextSubscriptionDueForPayment
     ? (
-        await createAdminClient()
+        await supabase
           .from('profiles')
           .select('id')
           .eq('stripe_id', nextSubscriptionDueForPayment.customerId)
