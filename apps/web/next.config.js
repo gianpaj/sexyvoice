@@ -62,20 +62,62 @@ let nextConfig = {
   // images: { unoptimized: true },
 
   async rewrites() {
-    return [
+    // Public pages that support Markdown for Agents content negotiation.
+    // Requests with `Accept: text/markdown` are internally rewritten to
+    // dedicated route handlers under /md/* that respond with markdown.
+    const markdownAccept = [
       {
-        source: '/seguimiento/static/:path*',
-        destination: 'https://eu-assets.i.posthog.com/static/:path*',
-      },
-      {
-        source: '/seguimiento/:path*',
-        destination: 'https://eu.i.posthog.com/:path*',
-      },
-      {
-        source: '/seguimiento/decide',
-        destination: 'https://eu.i.posthog.com/decide',
+        type: 'header',
+        key: 'accept',
+        value: '.*text/markdown.*',
       },
     ];
+
+    const localeMatcher = '(en|es|de|da|it|fr)';
+
+    return {
+      beforeFiles: [
+        {
+          source: `/:lang${localeMatcher}`,
+          destination: '/md/:lang',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/blog`,
+          destination: '/md/:lang/blog',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/blog/:slug`,
+          destination: '/md/:lang/blog/:slug',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/privacy-policy`,
+          destination: '/md/:lang/privacy-policy',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/terms`,
+          destination: '/md/:lang/terms',
+          has: markdownAccept,
+        },
+      ],
+      afterFiles: [
+        {
+          source: '/seguimiento/static/:path*',
+          destination: 'https://eu-assets.i.posthog.com/static/:path*',
+        },
+        {
+          source: '/seguimiento/:path*',
+          destination: 'https://eu.i.posthog.com/:path*',
+        },
+        {
+          source: '/seguimiento/decide',
+          destination: 'https://eu.i.posthog.com/decide',
+        },
+      ],
+    };
   },
   // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
   skipTrailingSlashRedirect: true,

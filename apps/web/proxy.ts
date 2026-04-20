@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
+    '/((?!api/|md/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/blog/|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|mp3|xml)$).*)',
     // Note: api/ is excluded above so next-intl never locale-redirects fetch calls
   ],
   missing: [
