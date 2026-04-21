@@ -1,6 +1,7 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
 const createNextIntlPlugin = require('next-intl/plugin');
+const { i18n } = require('./lib/i18n/i18n-config.ts');
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
@@ -62,20 +63,62 @@ let nextConfig = {
   // images: { unoptimized: true },
 
   async rewrites() {
-    return [
+    // Public pages that support Markdown for Agents content negotiation.
+    // Requests with `Accept: text/markdown` are internally rewritten to
+    // dedicated `.md` suffixed route handlers that respond with markdown.
+    const markdownAccept = [
       {
-        source: '/seguimiento/static/:path*',
-        destination: 'https://eu-assets.i.posthog.com/static/:path*',
-      },
-      {
-        source: '/seguimiento/:path*',
-        destination: 'https://eu.i.posthog.com/:path*',
-      },
-      {
-        source: '/seguimiento/decide',
-        destination: 'https://eu.i.posthog.com/decide',
+        type: 'header',
+        key: 'accept',
+        value: '.*text/markdown.*',
       },
     ];
+
+    const localeMatcher = `(${i18n.locales.join('|')})`;
+
+    return {
+      beforeFiles: [
+        {
+          source: `/:lang${localeMatcher}`,
+          destination: '/:lang/index.md',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/blog`,
+          destination: '/:lang/blog.md',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/blog/:slug`,
+          destination: '/markdown-internal/blog/:lang/:slug',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/privacy-policy`,
+          destination: '/:lang/privacy-policy.md',
+          has: markdownAccept,
+        },
+        {
+          source: `/:lang${localeMatcher}/terms`,
+          destination: '/:lang/terms.md',
+          has: markdownAccept,
+        },
+      ],
+      afterFiles: [
+        {
+          source: '/seguimiento/static/:path*',
+          destination: 'https://eu-assets.i.posthog.com/static/:path*',
+        },
+        {
+          source: '/seguimiento/:path*',
+          destination: 'https://eu.i.posthog.com/:path*',
+        },
+        {
+          source: '/seguimiento/decide',
+          destination: 'https://eu.i.posthog.com/decide',
+        },
+      ],
+    };
   },
   // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
   skipTrailingSlashRedirect: true,
