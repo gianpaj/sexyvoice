@@ -4,7 +4,6 @@ import {
   Languages,
   type LucideIcon,
   PhoneCall,
-  PlusIcon,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
@@ -83,15 +82,13 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
               value={`item-${group.id}`}
             >
               <AccordionTrigger
-                className="flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:-rotate-45"
+                className="flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-90"
                 data-slot="accordion-trigger"
-                icon={null}
               >
                 <span className="flex items-center gap-4">
                   <Icon className="size-4 shrink-0" />
                   <span>{group.category}</span>
                 </span>
-                <PlusIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
               </AccordionTrigger>
               <AccordionContent className="pb-0">
                 {group.questions.map((faq, i) => (
