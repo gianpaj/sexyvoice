@@ -15,7 +15,7 @@ const publicRoutesWithLang = (locales: readonly string[]) =>
     `/${locale}/terms.md`,
     `/${locale}/blog`,
     `/${locale}/blog.md`,
-    `/${locale}/index.md`,
+    `/${locale}/landing.md`,
   ]);
 
 const isLocalizedBlogPostPath = (pathname: string) => {
@@ -68,7 +68,7 @@ const getMarkdownLocalePath = (pathname: string) => {
   }
 
   if (!section) {
-    return `/${lang}/index.md`;
+    return `/${lang}/landing.md`;
   }
 
   if (section === 'blog') {

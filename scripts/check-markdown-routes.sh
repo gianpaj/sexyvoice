@@ -180,7 +180,7 @@ yellow "Blog slug: ${BLOG_SLUG}"
 
 section "Direct .md routes"
 
-run_curl "${BASE_URL}/en/index.md" "" "landing_md"
+run_curl "${BASE_URL}/en/landing.md" "" "landing_md"
 check_markdown_response "landing_md" "landing .md"
 
 run_curl "${BASE_URL}/en/blog.md" "" "blog_index_md"
