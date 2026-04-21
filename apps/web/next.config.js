@@ -55,6 +55,7 @@ let nextConfig = {
   },
   // do not bundle these packages and instead load them as external Node.js modules at runtime, which avoids the Turbopack dynamic import resolution issue
   serverExternalPackages: [
+    'mdx-bundler',
     'ogg-opus-decoder',
     'mpg123-decoder',
     '@wasm-audio-decoders/ogg-vorbis',
