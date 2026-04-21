@@ -13,7 +13,10 @@ export const dynamicParams = false;
 export function generateStaticParams() {
   return allPosts
     .filter((post) => !post.draft)
-    .map((post) => ({ lang: post.locale, slug: post.slugAsParams }));
+    .map((post) => ({
+      lang: post.locale,
+      slug: post.slugAsParams,
+    }));
 }
 
 export async function GET(

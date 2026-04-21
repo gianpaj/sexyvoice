@@ -1,6 +1,7 @@
 const { withContentlayer } = require('next-contentlayer2');
 // const { withBotId } = require('botid/next/config');
 const createNextIntlPlugin = require('next-intl/plugin');
+const { i18n } = require('./lib/i18n/i18n-config.ts');
 
 const withNextIntl = createNextIntlPlugin({
   experimental: {
@@ -64,7 +65,7 @@ let nextConfig = {
   async rewrites() {
     // Public pages that support Markdown for Agents content negotiation.
     // Requests with `Accept: text/markdown` are internally rewritten to
-    // dedicated route handlers under /md/* that respond with markdown.
+    // dedicated `.md` suffixed route handlers that respond with markdown.
     const markdownAccept = [
       {
         type: 'header',
@@ -73,33 +74,33 @@ let nextConfig = {
       },
     ];
 
-    const localeMatcher = '(en|es|de|da|it|fr)';
+    const localeMatcher = `(${i18n.locales.join('|')})`;
 
     return {
       beforeFiles: [
         {
           source: `/:lang${localeMatcher}`,
-          destination: '/md/:lang',
+          destination: '/:lang/index.md',
           has: markdownAccept,
         },
         {
           source: `/:lang${localeMatcher}/blog`,
-          destination: '/md/:lang/blog',
+          destination: '/:lang/blog.md',
           has: markdownAccept,
         },
         {
           source: `/:lang${localeMatcher}/blog/:slug`,
-          destination: '/md/:lang/blog/:slug',
+          destination: '/markdown-internal/blog/:lang/:slug',
           has: markdownAccept,
         },
         {
           source: `/:lang${localeMatcher}/privacy-policy`,
-          destination: '/md/:lang/privacy-policy',
+          destination: '/:lang/privacy-policy.md',
           has: markdownAccept,
         },
         {
           source: `/:lang${localeMatcher}/terms`,
-          destination: '/md/:lang/terms',
+          destination: '/:lang/terms.md',
           has: markdownAccept,
         },
       ],

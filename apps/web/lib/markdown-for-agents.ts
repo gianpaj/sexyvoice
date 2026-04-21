@@ -6,8 +6,6 @@ const SITE_URL = 'https://sexyvoice.ai';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 
-export const MARKDOWN_ACCEPT_PATTERN = '.*text/markdown.*';
-
 // Heuristic: ~4 characters per token (matches OpenAI's public guidance).
 export function estimateMarkdownTokens(text: string): number {
   if (!text) return 0;
