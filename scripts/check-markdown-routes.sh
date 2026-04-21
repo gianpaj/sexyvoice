@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-BASE_URL="${1:-http://localhost:3001}"
+BASE_URL="${1:-http://localhost:3000}"
 BLOG_SLUG="${BLOG_SLUG:-hello-from-sexyvoice}"
 
 TMP_DIR="$(mktemp -d)"
@@ -131,6 +131,39 @@ check_markdown_response() {
   assert_contains "$body_preview" "#" "$label body looks like markdown"
 }
 
+check_html_response() {
+  local prefix="$1"
+  local label="$2"
+
+  local status
+  local content_type
+  local body_preview
+  local robots_tag
+
+  status="$(status_code "$prefix")"
+  content_type="$(header_value "$prefix" "Content-Type")"
+  body_preview="$(body_head "$prefix")"
+  robots_tag="$(header_value "$prefix" "X-Robots-Tag")"
+
+  assert_equals "$status" "200" "$label status"
+  assert_contains "$content_type" "text/html" "$label content-type"
+
+  case "$body_preview" in
+    *"<!DOCTYPE html>"*|*"<html"*)
+      record_pass "$label body looks like html"
+      ;;
+    *)
+      record_fail "$label body looks like html (expected HTML document, got '$body_preview')"
+      ;;
+  esac
+
+  if [ -n "$robots_tag" ]; then
+    record_fail "$label should not include markdown robots header (got '$robots_tag')"
+  else
+    record_pass "$label does not include markdown robots header"
+  fi
+}
+
 check_rewrite_header() {
   local prefix="$1"
   local expected="$2"
@@ -180,6 +213,23 @@ check_markdown_response "privacy_accept" "privacy policy accept markdown"
 
 run_curl "${BASE_URL}/en/terms" "text/markdown" "terms_accept"
 check_markdown_response "terms_accept" "terms accept markdown"
+
+section "Routes without markdown Accept header stay HTML"
+
+run_curl "${BASE_URL}/en" "" "landing_html"
+check_html_response "landing_html" "landing html"
+
+run_curl "${BASE_URL}/en/blog" "" "blog_index_html"
+check_html_response "blog_index_html" "blog index html"
+
+run_curl "${BASE_URL}/en/blog/${BLOG_SLUG}" "" "blog_post_html"
+check_html_response "blog_post_html" "blog post html"
+
+run_curl "${BASE_URL}/en/privacy-policy" "" "privacy_html"
+check_html_response "privacy_html" "privacy policy html"
+
+run_curl "${BASE_URL}/en/terms" "" "terms_html"
+check_html_response "terms_html" "terms html"
 
 section "Summary"
 printf 'Passed: %s\n' "$PASS_COUNT"

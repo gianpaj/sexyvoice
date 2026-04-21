@@ -70,7 +70,7 @@ let nextConfig = {
       {
         type: 'header',
         key: 'accept',
-        value: '.*text/markdown.*',
+        value: '(^|.*[,;]\\s*)text/markdown(\\s*(;.*)?|,.*|$)',
       },
     ];
 
