@@ -2,7 +2,7 @@ import type { PolicyPage, Post } from 'contentlayer/generated';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 
-const SITE_URL = 'https://sexyvoice.ai';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sexyvoice.ai';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 
@@ -20,6 +20,7 @@ export function buildMarkdownResponse(
   const headers = new Headers(init.headers);
   headers.set('Content-Type', MARKDOWN_CONTENT_TYPE);
   headers.set('x-markdown-tokens', String(tokens));
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
   const existingVary = headers.get('Vary');
   headers.set('Vary', existingVary ? `${existingVary}, Accept` : 'Accept');
   if (!headers.has('Cache-Control')) {
@@ -145,7 +146,7 @@ export function renderBlogListMarkdown(
     lines.push('', landing.noPostsAvailable ?? 'No posts available yet.');
   } else {
     for (const post of posts) {
-      const url = `${SITE_URL}/${lang}/blog/${post.slug}`;
+      const url = `${SITE_URL}/${lang}/blog/${post.slugAsParams}`;
       lines.push('', `## [${post.title}](${url})`);
       lines.push('', `_${post.date}_`);
       if (post.description) {
@@ -160,7 +161,7 @@ export function renderBlogListMarkdown(
 
 export function renderBlogPostMarkdown(post: Post): string {
   const lines: string[] = [];
-  const url = `${SITE_URL}/${post.locale}/blog/${post.slug}`;
+  const url = `${SITE_URL}/${post.locale}/blog/${post.slugAsParams}`;
 
   lines.push(`# ${post.title}`);
   if (post.description) {
