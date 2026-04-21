@@ -29,6 +29,11 @@ const isLocalizedBlogPostPath = (pathname: string) => {
   return routing.locales.includes(lang as Locale);
 };
 
+const isExplicitMarkdownAccept = (acceptHeader: string) =>
+  acceptHeader
+    .split(',')
+    .some((part) => part.trim().toLowerCase().startsWith('text/markdown'));
+
 const handleI18nRouting = createMiddleware(routing);
 
 const getMarkdownBlogSlug = (pathname: string) => {
@@ -47,14 +52,44 @@ const getMarkdownBlogSlug = (pathname: string) => {
   return { lang, slug };
 };
 
+const getMarkdownLocalePath = (pathname: string) => {
+  const localeMatch = pathname.match(
+    /^\/([a-z]{2})(?:\/(blog|privacy-policy|terms))?$/,
+  );
+
+  if (!localeMatch) {
+    return null;
+  }
+
+  const [, lang, section] = localeMatch;
+
+  if (!routing.locales.includes(lang as Locale)) {
+    return null;
+  }
+
+  if (!section) {
+    return `/${lang}/index.md`;
+  }
+
+  if (section === 'blog') {
+    return `/${lang}/blog.md`;
+  }
+
+  return `/${lang}/${section}.md`;
+};
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const acceptHeader = request.headers.get('accept') ?? '';
   const markdownBlogSlug = getMarkdownBlogSlug(pathname);
+  const explicitMarkdownAccept = isExplicitMarkdownAccept(acceptHeader);
+  const markdownLocalePath = explicitMarkdownAccept
+    ? getMarkdownLocalePath(pathname)
+    : null;
 
   if (
     pathname === '/auth/callback' ||
-    pathname.startsWith('/internal-markdown/')
+    pathname.startsWith('/markdown-internal/')
   ) {
     return NextResponse.next();
   }
@@ -65,7 +100,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  if (acceptHeader.includes('text/markdown')) {
+  if (markdownLocalePath) {
+    const url = request.nextUrl.clone();
+    url.pathname = markdownLocalePath;
+    return NextResponse.rewrite(url);
+  }
+
+  if (explicitMarkdownAccept) {
     const blogMatch = pathname.match(/^\/([a-z]{2})\/blog\/([^/]+)$/);
 
     if (blogMatch) {
