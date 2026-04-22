@@ -1,13 +1,16 @@
+import { getExternalApiIssuer } from '../../../lib/api/oauth-discovery';
+
 export const dynamic = 'force-static';
 
 export function GET() {
+  const issuer = getExternalApiIssuer();
   const catalog = {
     linkset: [
       {
-        anchor: 'https://sexyvoice.ai/api/v1',
+        anchor: `${issuer}/api/v1`,
         'service-desc': [
           {
-            href: 'https://sexyvoice.ai/api/v1/openapi',
+            href: `${issuer}/api/v1/openapi`,
             type: 'application/openapi+json',
           },
         ],
@@ -19,7 +22,7 @@ export function GET() {
         ],
         status: [
           {
-            href: 'https://sexyvoice.ai/api/health',
+            href: `${issuer}/api/health`,
           },
         ],
       },

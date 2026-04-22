@@ -57,3 +57,5 @@ scripts/venv
 agent-browser*.json
 
 *.csv
+
+supabase/.temp
