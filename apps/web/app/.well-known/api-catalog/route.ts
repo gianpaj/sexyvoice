@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 export function GET() {
   const catalog = {
     linkset: [
@@ -28,6 +30,9 @@ export function GET() {
     status: 200,
     headers: {
       'Content-Type': 'application/linkset+json',
+      'Cache-Control': 'public, max-age=0, s-maxage=86400',
+      'CDN-Cache-Control': 'public, s-maxage=86400',
+      'Vercel-CDN-Cache-Control': 'public, s-maxage=86400',
     },
   });
 }
