@@ -1,6 +1,6 @@
 {
   "name": "sexyvoice",
-  "version": "2026.4.7",
+  "version": "2026.4.24",
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",

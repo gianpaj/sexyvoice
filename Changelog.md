@@ -2,6 +2,33 @@
 
 Completed releases are documented here in reverse chronological order.
 
+## [2026.4.24] - 2026-04-24
+
+### Added
+
+#### Internal
+
+- Added Markdown content negotiation for public pages so agent clients
+  can request localized landing pages, blog content, and policy pages as
+  `text/markdown` while browsers still receive HTML by default.
+  [#353](https://github.com/gianpaj/sexyvoice/pull/353)
+- Added `/.well-known/api-catalog` discovery metadata and Content
+  Signals hints in `robots.txt` to make the public API easier for
+  automated clients to discover. [#355](https://github.com/gianpaj/sexyvoice/pull/355)
+
+### Fixed
+
+#### Internal
+
+- Corrected daily stats totals so all-time audio counts and average call
+  duration are calculated across the full dataset instead of the first
+  1,000 rows. [#352](https://github.com/gianpaj/sexyvoice/pull/352)
+- Fixed the FAQ accordion so each row shows a single expand icon instead
+  of duplicate indicators.
+  [#354](https://github.com/gianpaj/sexyvoice/pull/354)
+- Restored production blog rendering after an MDX bundling issue caused
+  500 errors on blog pages.
+
 ## [2026.4.7] - 2026-04-07
 
 ### Added
