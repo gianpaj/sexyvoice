@@ -18,8 +18,8 @@ import { Banner } from '@/components/banner';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
+import HeroWaveform from '@/components/hero-waveform';
 import { JsonLd } from '@/components/json-ld';
-import LandingHero from '@/components/landing-hero';
 import PricingTable from '@/components/pricing-table';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
@@ -148,7 +148,7 @@ export default async function LandingPage(props: {
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
-              <LandingHero />
+              <HeroWaveform />
               <h1 className="font-bold text-5xl md:text-6xl">
                 <span className="text-white/90 leading-14">{firstPart}</span>
                 <br />

@@ -1,6 +1,6 @@
-import './landing-hero.scss';
+import './hero-waveform.scss';
 
-function LandingHero() {
+function HeroWaveform() {
   return (
     <div className="flex justify-center pb-6 sm:pb-8">
       <svg
@@ -11,10 +11,18 @@ function LandingHero() {
       >
         <title>Audio Wave</title>
         <defs>
-          <linearGradient id="header-shape-gradient" x2="0.35" y2="1">
-            <stop offset="0%" stopColor="var(--color-stop)" />
-            <stop offset="30%" stopColor="var(--color-stop)" />
-            <stop offset="100%" stopColor="var(--color-bot)" />
+          <linearGradient
+            gradientUnits="userSpaceOnUse"
+            id="header-shape-gradient"
+            x1="0"
+            x2="98"
+            y1="0"
+            y2="0"
+          >
+            <stop offset="0%" stopColor="var(--color-brand-purple)" />
+            <stop offset="14%" stopColor="#6b53d6" />
+            <stop offset="70%" stopColor="var(--color-brand-red)" />
+            <stop offset="100%" stopColor="#5f46bf" />
           </linearGradient>
         </defs>
         <path
@@ -107,4 +115,4 @@ function LandingHero() {
   );
 }
 
-export default LandingHero;
+export default HeroWaveform;
