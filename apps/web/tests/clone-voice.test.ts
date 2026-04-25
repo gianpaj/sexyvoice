@@ -1410,6 +1410,38 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
+
+    it('should return 502 when reference audio enhancement returns an untrusted URL', async () => {
+      mockFalSubscribe.mockResolvedValueOnce({
+        data: {
+          audio_file: {
+            url: 'https://example.com/enhanced-audio.wav',
+            content_type: 'audio/wav',
+          },
+        },
+        requestId: 'test-fal-request-id',
+      });
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(502);
+      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+    });
   });
 
   describe('Analytics Integration', () => {

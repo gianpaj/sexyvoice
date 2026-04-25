@@ -4,6 +4,7 @@ const REFERENCE_AUDIO_ENHANCEMENT_MODEL =
   'fal-ai/deepfilternet3' as `${string}/${string}`;
 const REFERENCE_AUDIO_ENHANCEMENT_TIMEOUT_MS = 60_000;
 const MAX_ENHANCED_AUDIO_BYTES = 50 * 1024 * 1024;
+const ALLOWED_ENHANCED_AUDIO_HOSTS = ['fal-cdn.com', 'fal.media'];
 
 interface FalEnhancedAudioResponse {
   audio_file?: {
@@ -32,6 +33,26 @@ function createReferenceAudioEnhancementSignal(
   return abortSignal
     ? AbortSignal.any([abortSignal, timeoutSignal])
     : timeoutSignal;
+}
+
+function assertAllowedEnhancedAudioUrl(url: string): void {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new Error('Reference audio enhancement returned an invalid URL');
+  }
+
+  const hostname = parsedUrl.hostname.toLowerCase();
+  const isAllowedHost = ALLOWED_ENHANCED_AUDIO_HOSTS.some(
+    (allowedHost) =>
+      hostname === allowedHost || hostname.endsWith(`.${allowedHost}`),
+  );
+
+  if (parsedUrl.protocol !== 'https:' || !isAllowedHost) {
+    throw new Error('Reference audio enhancement returned an untrusted URL');
+  }
 }
 
 export async function enhanceReferenceAudio({
@@ -76,6 +97,8 @@ export async function enhanceReferenceAudio({
       'Reference audio enhancement did not return an audio file URL',
     );
   }
+
+  assertAllowedEnhancedAudioUrl(enhancedAudioUrl);
 
   const enhancedAudioResponse = await fetch(enhancedAudioUrl, {
     signal: requestSignal,
