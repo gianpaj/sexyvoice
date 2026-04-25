@@ -55,6 +55,44 @@ function assertAllowedEnhancedAudioUrl(url: string): void {
   }
 }
 
+async function readEnhancedAudioBuffer(response: Response): Promise<Buffer> {
+  if (!response.body) {
+    const audioBuffer = Buffer.from(await response.arrayBuffer());
+
+    if (audioBuffer.length > MAX_ENHANCED_AUDIO_BYTES) {
+      throw new Error('Reference audio enhancement audio exceeds size limit');
+    }
+
+    return audioBuffer;
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      totalBytes += value.byteLength;
+
+      if (totalBytes > MAX_ENHANCED_AUDIO_BYTES) {
+        throw new Error('Reference audio enhancement audio exceeds size limit');
+      }
+
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return Buffer.concat(chunks, totalBytes);
+}
+
 export async function enhanceReferenceAudio({
   abortSignal,
   buffer,
@@ -132,12 +170,8 @@ export async function enhanceReferenceAudio({
     throw new Error('Reference audio enhancement audio exceeds size limit');
   }
 
-  const enhancedAudioArrayBuffer = await enhancedAudioResponse.arrayBuffer();
-  const enhancedAudioBuffer = Buffer.from(enhancedAudioArrayBuffer);
-
-  if (enhancedAudioBuffer.length > MAX_ENHANCED_AUDIO_BYTES) {
-    throw new Error('Reference audio enhancement audio exceeds size limit');
-  }
+  const enhancedAudioBuffer =
+    await readEnhancedAudioBuffer(enhancedAudioResponse);
 
   if (enhancedAudioBuffer.length === 0) {
     throw new Error('Reference audio enhancement returned empty audio data');
