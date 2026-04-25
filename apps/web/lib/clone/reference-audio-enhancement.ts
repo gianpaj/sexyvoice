@@ -46,9 +46,18 @@ export async function enhanceReferenceAudio({
   mimeType: string;
 }): Promise<EnhancedReferenceAudioResult> {
   const requestSignal = createReferenceAudioEnhancementSignal(abortSignal);
-  const inputFile = new File([new Uint8Array(buffer)], filename, {
-    type: mimeType || 'audio/wav',
-  });
+  const inputBytes = new Uint8Array(
+    buffer.buffer as ArrayBuffer,
+    buffer.byteOffset,
+    buffer.byteLength,
+  );
+  const inputFile = new File(
+    [inputBytes],
+    filename,
+    {
+      type: mimeType || 'audio/wav',
+    },
+  );
 
   const falResult = await fal.subscribe(REFERENCE_AUDIO_ENHANCEMENT_MODEL, {
     input: {
