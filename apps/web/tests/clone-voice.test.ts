@@ -924,6 +924,7 @@ describe('Clone Voice API Route', () => {
             referenceAudioEnhanced: true,
             referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
+            referenceAudioProcessedMimeType: 'audio/wav',
           }),
         }),
       );
@@ -933,6 +934,7 @@ describe('Clone Voice API Route', () => {
             referenceAudioEnhanced: true,
             referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
+            referenceAudioProcessedMimeType: 'audio/wav',
           }),
         }),
       );
@@ -1068,6 +1070,7 @@ describe('Clone Voice API Route', () => {
           referenceAudioEnhancementRequestId: '',
           userHasPaid: false,
           referenceAudioFileMimeType: 'audio/wav',
+          referenceAudioProcessedMimeType: 'audio/wav',
         },
       });
 
@@ -1092,6 +1095,7 @@ describe('Clone Voice API Route', () => {
             referenceAudioEnhancementModel: null,
             referenceAudioEnhancementRequestId: null,
             referenceAudioFileMimeType: 'audio/wav',
+            referenceAudioProcessedMimeType: 'audio/wav',
             requestId: expect.any(String),
             userHasPaid: false,
           }),

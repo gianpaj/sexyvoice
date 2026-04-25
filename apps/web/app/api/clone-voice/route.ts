@@ -727,6 +727,7 @@ async function runBackgroundTasks(
     duration: number;
     locale: string;
     referenceAudioFileMimeType: string;
+    referenceAudioProcessedMimeType: string;
   },
 ): Promise<void> {
   await reduceCredits({ userId, amount: estimate });
@@ -753,6 +754,8 @@ async function runBackgroundTasks(
         audioFileData.referenceAudioEnhancementRequestId ?? '',
       userHasPaid,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
+      referenceAudioProcessedMimeType:
+        audioFileData.referenceAudioProcessedMimeType,
     },
   });
 
@@ -795,6 +798,8 @@ async function runBackgroundTasks(
       referenceAudioEnhancementRequestId:
         audioFileData.referenceAudioEnhancementRequestId,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
+      referenceAudioProcessedMimeType:
+        audioFileData.referenceAudioProcessedMimeType,
       requestId: audioFileData.requestId,
       userHasPaid,
     },
@@ -1038,6 +1043,7 @@ export async function POST(request: Request) {
         duration: duration as number,
         locale,
         referenceAudioFileMimeType: referenceAudioFile?.type || '',
+        referenceAudioProcessedMimeType: cloneInputAudio.mimeType,
       });
     });
 
