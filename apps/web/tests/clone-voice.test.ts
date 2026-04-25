@@ -838,6 +838,35 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
+
+    it('should reject long clips before invoking reference enhancement', async () => {
+      const musicMetadata = await import('music-metadata');
+      vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValueOnce({
+        format: { duration: 61 },
+      } as any);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.code).toBe(
+        'clone_reference_audio_enhancement_input_too_long',
+      );
+      expect(mockFalSubscribe).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+    });
   });
 
   describe('Voice Cloning Generation', () => {

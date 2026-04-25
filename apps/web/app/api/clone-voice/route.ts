@@ -53,6 +53,8 @@ const FALLBACK_MIN_DURATION = 10;
 const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
 const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
+const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
+const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 
 // Replicate multilinguage supports the following languages
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
@@ -355,6 +357,35 @@ function validateAudioDuration(
   }
 }
 
+function validateReferenceAudioEnhancementInput(
+  duration: number | null,
+  inputBytes: number,
+): void {
+  if (duration === null) {
+    throw createRouteError(
+      'Could not determine audio duration.',
+      400,
+      'clone_audio_duration_unknown',
+    );
+  }
+
+  if (duration > REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION) {
+    throw createRouteError(
+      `Reference audio enhancement supports clips up to ${REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION} seconds.`,
+      400,
+      'clone_reference_audio_enhancement_input_too_long',
+    );
+  }
+
+  if (inputBytes > REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES) {
+    throw createRouteError(
+      'Reference audio enhancement input exceeds size limit.',
+      400,
+      'clone_reference_audio_enhancement_input_too_large',
+    );
+  }
+}
+
 function validateLocale(locale: string): void {
   const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
   if (!localeConfig) {
@@ -423,6 +454,11 @@ async function processAudioFile(
   let processedBuffer = buffer;
   let processedMimeType = normalizedMimeType;
 
+  if (enhancementEnabled) {
+    const sourceDuration = await getAudioDuration(buffer, normalizedMimeType);
+    validateReferenceAudioEnhancementInput(sourceDuration, buffer.length);
+  }
+
   const provider = resolveCloneProvider(locale);
   const shouldNormalizeToWav =
     provider === 'mistral' || enhancementEnabled;
@@ -446,6 +482,14 @@ async function processAudioFile(
       if (wavBuffer) {
         processedBuffer = wavBuffer as Buffer<ArrayBuffer>;
         processedMimeType = 'audio/wav';
+
+        if (enhancementEnabled) {
+          validateReferenceAudioEnhancementInput(
+            await getAudioDuration(processedBuffer, processedMimeType),
+            processedBuffer.length,
+          );
+        }
+
         logger.info('Converted audio to WAV for voice cloning', {
           user: { id: userId },
           extra: {
