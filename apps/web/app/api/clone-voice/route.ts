@@ -640,6 +640,29 @@ async function uploadGeneratedAudio(
   return url;
 }
 
+async function createCloneOutputFilename({
+  audioHash,
+  basePath,
+  enhancementEnabled,
+  locale,
+  provider,
+  text,
+}: {
+  audioHash: string;
+  basePath: string;
+  enhancementEnabled: boolean;
+  locale: string;
+  provider: CloneProvider;
+  text: string;
+}): Promise<string> {
+  const cacheKeyInput = enhancementEnabled
+    ? `${locale}-${provider}-${text}-${audioHash}-enhanced`
+    : `${locale}-${provider}-${text}-${audioHash}`;
+  const hash = await generateHash(cacheKeyInput);
+
+  return `${basePath}/${locale}-${provider}-${hash}.wav`;
+}
+
 // ============================================================================
 // Background Tasks
 // ============================================================================
@@ -818,6 +841,29 @@ export async function POST(request: Request) {
     );
     let cloneInputAudio = processedAudio;
 
+    const userHasPaid = await hasUserPaid(user.id);
+    const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
+    const filename = await createCloneOutputFilename({
+      audioHash: processedAudio.audioHash,
+      basePath,
+      enhancementEnabled: formInput.enhanceReferenceAudio,
+      locale,
+      provider,
+      text,
+    });
+
+    const cachedOutputUrl = await redis.get<string>(filename);
+    if (cachedOutputUrl) {
+      return NextResponse.json(
+        {
+          url: cachedOutputUrl,
+          creditsUsed: 0,
+          creditsRemaining: currentAmount || 0,
+        },
+        { status: 200 },
+      );
+    }
+
     if (formInput.enhanceReferenceAudio) {
       try {
         const enhancedAudio = await enhanceReferenceAudio({
@@ -860,27 +906,6 @@ export async function POST(request: Request) {
 
     validateAudioDuration(cloneInputAudio.duration, provider);
     duration = cloneInputAudio.duration;
-
-    // Generate deterministic cache key by audio hash, text, and locale
-    const hash = await generateHash(
-      `${locale}-${provider}-${text}-${cloneInputAudio.audioHash}-${formInput.enhanceReferenceAudio ? 'enhanced' : 'raw'}`,
-    );
-    const userHasPaid = await hasUserPaid(user.id);
-    const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
-    const path = `${basePath}/${locale}-${provider}-${hash}`;
-    const filename = `${path}.wav`;
-
-    const cachedOutputUrl = await redis.get<string>(filename);
-    if (cachedOutputUrl) {
-      return NextResponse.json(
-        {
-          url: cachedOutputUrl,
-          creditsUsed: 0,
-          creditsRemaining: currentAmount || 0,
-        },
-        { status: 200 },
-      );
-    }
 
     // Generate voice
     let outputUrl: string;

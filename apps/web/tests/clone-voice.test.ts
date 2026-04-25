@@ -805,6 +805,39 @@ describe('Clone Voice API Route', () => {
       expect(queries.insertUsageEvent).not.toHaveBeenCalled();
       expect(mockRedisSet).not.toHaveBeenCalled();
     });
+
+    it('should return cached enhanced output before invoking reference enhancement', async () => {
+      const cachedOutputUrl =
+        'https://files.sexyvoice.ai/cached-enhanced-output.wav';
+
+      mockRedisGet.mockResolvedValueOnce(cachedOutputUrl);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json).toEqual({
+        url: cachedOutputUrl,
+        creditsUsed: 0,
+        creditsRemaining: 1000,
+      });
+      expect(mockFalSubscribe).not.toHaveBeenCalled();
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+    });
   });
 
   describe('Voice Cloning Generation', () => {
