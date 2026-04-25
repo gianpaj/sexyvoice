@@ -1,10 +1,19 @@
 # TODO
 
+- Sidebar: close on click on mobile
+- api New Key button: add tooltip and crown showing that's for paid users
+
 - self-host Sentry on Hetzner machine
+- change all `dict...replace()` to use next-intl functions
+- Generate: if a sample contains tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
 
 ## Agents
 
 - create CLI for API auth <https://github.com/helius-labs/helius-cli>
+
+## Feedback button
+
+- <https://motion-primitives.com/docs/morphing-popover#morphing-popover-with-textarea>
 
 ## Call
 

@@ -1,7 +1,0 @@
-User-Agent: *
-Allow: /
-
-Disallow: /*/dashboard/
-Disallow: /api/
-
-Sitemap: https://sexyvoice.ai/sitemap.xml

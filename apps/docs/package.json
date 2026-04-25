@@ -1,0 +1,58 @@
+{
+  "name": "@sexyvoice/docs",
+  "version": "0.0.0",
+  "dependencies": {
+    "@ai-sdk/react": "catalog:",
+    "@openrouter/ai-sdk-provider": "^2.5.1",
+    "@radix-ui/react-presence": "^1.1.5",
+    "@takumi-rs/image-response": "^1.0.4",
+    "ai": "catalog:",
+    "class-variance-authority": "^0.7.1",
+    "feed": "^5.2.0",
+    "flexsearch": "^0.8.212",
+    "fumadocs-core": "16.7.14",
+    "fumadocs-mdx": "14.2.13",
+    "fumadocs-openapi": "^10.6.8",
+    "fumadocs-ui": "16.7.14",
+    "hast-util-to-jsx-runtime": "^2.3.6",
+    "lucide-react": "^1.8.0",
+    "next": "catalog:",
+    "next-validate-link": "^1.6.4",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-rehype": "^11.1.2",
+    "shiki": "^4.0.2",
+    "tailwind-merge": "3.5.0",
+    "unist-util-visit": "^5.1.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    
+    "@tailwindcss/postcss": "catalog:",
+    "@types/hast": "^3.0.4",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "postcss": "catalog:",
+    "tailwindcss": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  },
+  "private": true,
+  "scripts": {
+    "build": "pnpm run test-links && pnpm run generate-openapi-docs && next build",
+    "dev": "next dev",
+    "format": "biome format --write",
+    "generate-openapi-docs": "tsx ./src/scripts/generate-docs.mts",
+    "lint": "biome check",
+    "postinstall": "fumadocs-mdx",
+    "start": "next start",
+    "test-links": "tsx ./src/scripts/lint.mts",
+    "type-check": "fumadocs-mdx && next typegen && tsc --noEmit"
+  },
+  "type": "module"
+}

@@ -8,16 +8,16 @@ Node.js/TypeScript script to reset credits to 0 for users who exploited a bug th
 
 ```bash
 # Show help
-pnpm tsx scripts/reset-freeloader-credits.ts --help
+pnpm reset-freeloader-credits --help
 
 # Test with dry-run flag (no changes made)
-pnpm tsx scripts/reset-freeloader-credits.ts --dryrun freeloaders.csv
+pnpm reset-freeloader-credits --dryrun freeloaders.csv
 
 # Test with limited records
-pnpm tsx scripts/reset-freeloader-credits.ts --dryrun --limit 10 freeloaders.csv
+pnpm reset-freeloader-credits --dryrun --limit 10 freeloaders.csv
 
 # Run for real (will prompt for confirmation)
-pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
+pnpm reset-freeloader-credits freeloaders.csv
 ```
 
 ### CLI Options
@@ -65,16 +65,16 @@ user had a paid transaction (`purchase` or `topup`) before the call started.
 
 ```bash
 # Show help
-pnpm tsx scripts/backfill-free-call.mts --help
+pnpm backfill-free-call --help
 
 # Dry-run to preview changes
-pnpm tsx scripts/backfill-free-call.mts --dryrun
+pnpm backfill-free-call --dryrun
 
 # Dry-run first 50 records
-pnpm tsx scripts/backfill-free-call.mts --dryrun --limit 50
+pnpm backfill-free-call --dryrun --limit 50
 
 # Apply changes (prompts for confirmation)
-pnpm tsx scripts/backfill-free-call.mts
+pnpm backfill-free-call
 ```
 
 ### CLI Options
@@ -116,10 +116,10 @@ Interactive Node.js/TypeScript script to process credit refunds for users.
 
 ```bash
 # Run with user ID as argument
-pnpm exec tsx scripts/refund-credits.ts <user-id>
+pnpm refund-credits -- <user-id>
 
 # Or run interactively (will prompt for user ID)
-pnpm exec tsx scripts/refund-credits.ts
+pnpm refund-credits
 ```
 
 ### What it does:
