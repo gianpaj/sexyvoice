@@ -989,12 +989,19 @@ describe('Clone Voice API Route', () => {
         expect.any(String),
         {
           input: expect.objectContaining({
-            reference_audio: 'https://fal-cdn.com/test-enhanced-audio.wav',
+            reference_audio: expect.stringContaining(
+              'https://files.sexyvoice.ai/clone-voice-input/',
+            ),
           }),
         },
         expect.any(Function),
       );
-      expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
+      expect(mockUploadFileToR2).toHaveBeenCalledTimes(2);
+      expect(mockUploadFileToR2).toHaveBeenCalledWith(
+        expect.stringContaining('clone-voice-input/'),
+        expect.any(Buffer),
+        'audio/wav',
+      );
       expect(mockUploadFileToR2).toHaveBeenCalledWith(
         expect.stringContaining('cloned-audio-free/'),
         expect.anything(),

@@ -935,14 +935,11 @@ export async function POST(request: Request) {
 
       const blobUrl = `clone-voice-input/${user.id}-${cloneInputAudio.audioHash}-${processedFilename}`;
 
-      const referenceAudioUrl =
-        formInput.enhanceReferenceAudio && cloneInputAudio.publicUrl
-          ? cloneInputAudio.publicUrl
-          : await uploadFileToR2(
-              blobUrl,
-              cloneInputAudio.buffer,
-              cloneInputAudio.mimeType,
-            );
+      const referenceAudioUrl = await uploadFileToR2(
+        blobUrl,
+        cloneInputAudio.buffer,
+        cloneInputAudio.mimeType,
+      );
 
       const result = await generateVoiceWithReplicate(
         text,
