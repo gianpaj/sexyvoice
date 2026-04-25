@@ -1361,7 +1361,7 @@ describe('Clone Voice API Route', () => {
       expect(json.error).toBeDefined();
     });
 
-    it('should return 502 when reference audio enhancement fails', async () => {
+    it('should fall back to original audio when reference audio enhancement fails', async () => {
       mockFalSubscribe.mockRejectedValueOnce(new Error('enhancer unavailable'));
 
       const formData = createFormDataWithAudio(
@@ -1378,15 +1378,23 @@ describe('Clone Voice API Route', () => {
 
       const response = await POST(request);
       const json = await response.json();
+      await flushPromises();
 
-      expect(response.status).toBe(502);
-      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
-      expect(json.serverMessage).toBe('Failed to enhance reference audio.');
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(queries.reduceCredits).toHaveBeenCalled();
+      expect(queries.saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usage: expect.objectContaining({
+            referenceAudioEnhanced: false,
+            referenceAudioEnhancementModel: '',
+            referenceAudioEnhancementRequestId: '',
+          }),
+        }),
+      );
     });
 
-    it('should return 502 when enhanced audio download exceeds the size limit', async () => {
+    it('should fall back to original audio when enhanced audio download exceeds the size limit', async () => {
       server.use(
         http.get('https://fal-cdn.com/test-enhanced-audio.wav', () =>
           HttpResponse.arrayBuffer(new ArrayBuffer(1024), {
@@ -1413,13 +1421,12 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(502);
-      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(queries.reduceCredits).toHaveBeenCalled();
     });
 
-    it('should return 502 when enhanced audio download is not an audio content type', async () => {
+    it('should fall back to original audio when enhanced audio download is not an audio content type', async () => {
       server.use(
         http.get('https://fal-cdn.com/test-enhanced-audio.wav', () =>
           HttpResponse.text('not audio', {
@@ -1445,13 +1452,12 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(502);
-      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(queries.reduceCredits).toHaveBeenCalled();
     });
 
-    it('should return 502 when reference audio enhancement returns an untrusted URL', async () => {
+    it('should fall back to original audio when reference audio enhancement returns an untrusted URL', async () => {
       mockFalSubscribe.mockResolvedValueOnce({
         data: {
           audio_file: {
@@ -1477,10 +1483,9 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(502);
-      expect(json.code).toBe('clone_reference_audio_enhancement_failed');
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(queries.reduceCredits).toHaveBeenCalled();
     });
   });
 

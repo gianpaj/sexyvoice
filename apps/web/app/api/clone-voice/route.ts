@@ -815,7 +815,6 @@ export async function POST(request: Request) {
     text = formInput.text;
     locale = formInput.locale;
     referenceAudioFile = formInput.file;
-    referenceAudioEnhanced = formInput.enhanceReferenceAudio;
 
     // Validate inputs
     validateTextLength(text, locale);
@@ -843,7 +842,7 @@ export async function POST(request: Request) {
 
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
-    const filename = await createCloneOutputFilename({
+    let filename = await createCloneOutputFilename({
       audioHash: processedAudio.audioHash,
       basePath,
       enhancementEnabled: formInput.enhanceReferenceAudio,
@@ -875,6 +874,7 @@ export async function POST(request: Request) {
 
         enhancementModelUsed = enhancedAudio.modelUsed;
         enhancementRequestId = enhancedAudio.requestId;
+        referenceAudioEnhanced = true;
 
         cloneInputAudio = {
           audioHash: await generateBufferHash(enhancedAudio.buffer),
@@ -895,12 +895,35 @@ export async function POST(request: Request) {
             filename: referenceAudioFile.name,
           },
         });
+        logger.info('Reference audio enhancement failed; using original audio', {
+          user: { id: user.id },
+          extra: {
+            locale,
+            mimeType: processedAudio.mimeType,
+            filename: referenceAudioFile.name,
+          },
+        });
 
-        throw createRouteError(
-          'Failed to enhance reference audio.',
-          502,
-          'clone_reference_audio_enhancement_failed',
-        );
+        filename = await createCloneOutputFilename({
+          audioHash: processedAudio.audioHash,
+          basePath,
+          enhancementEnabled: false,
+          locale,
+          provider,
+          text,
+        });
+
+        const fallbackCachedOutputUrl = await redis.get<string>(filename);
+        if (fallbackCachedOutputUrl) {
+          return NextResponse.json(
+            {
+              url: fallbackCachedOutputUrl,
+              creditsUsed: 0,
+              creditsRemaining: currentAmount || 0,
+            },
+            { status: 200 },
+          );
+        }
       }
     }
 
