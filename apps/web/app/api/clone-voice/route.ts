@@ -55,6 +55,8 @@ const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
+const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
+const REFERENCE_AUDIO_ENHANCEMENT_DOLLARS_PER_SECOND = 0.001;
 
 // Replicate multilinguage supports the following languages
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema

@@ -110,6 +110,16 @@ const DEFAULT_MAX_AUDIO_DURATION_SECONDS = 5 * 60;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
 
+const formatCloneMessage = (
+  message: string,
+  values: Record<string, string | number>,
+) =>
+  Object.entries(values).reduce(
+    (formatted, [key, value]) =>
+      formatted.replaceAll(`__${key}__`, String(value)),
+    message,
+  );
+
 export default function NewVoiceClient({
   dict,
   lang,
@@ -132,6 +142,7 @@ export default function NewVoiceClient({
 
 const MAX_LENGTH = 500;
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing clone form coordinates upload, recording, conversion, and preview state.
 function NewVoiceClientInner({
   dict,
   lang,
@@ -194,12 +205,12 @@ function NewVoiceClientInner({
         const errorMsg =
           error instanceof Error
             ? error.message
-            : 'Failed to load audio processor';
+            : dict.failedToLoadAudioProcessor;
         setFFmpegError(errorMsg);
         console.error('FFmpeg preload error:', error);
       });
     }
-  }, [usesVoxtral, ensureLoaded]);
+  }, [usesVoxtral, ensureLoaded, dict.failedToLoadAudioProcessor]);
 
   const handleStartRecording = async () => {
     try {
@@ -213,9 +224,13 @@ function NewVoiceClientInner({
       const errorMsg =
         error instanceof Error
           ? error.message
-          : 'Failed to load audio processor';
+          : dict.failedToLoadAudioProcessor;
       setFFmpegError(errorMsg);
-      setErrorMessage(`Failed to start recording: ${errorMsg}`);
+      setErrorMessage(
+        formatCloneMessage(dict.failedToStartRecording, {
+          ERROR: errorMsg,
+        }),
+      );
     }
   };
 
@@ -236,7 +251,7 @@ function NewVoiceClientInner({
     },
     onError: (err) => {
       console.error(err);
-      setFFmpegError(err instanceof Error ? err.message : 'Microphone error');
+      setFFmpegError(err instanceof Error ? err.message : dict.microphoneError);
     },
     onStart: () => {
       setMicRecording(true);
@@ -266,21 +281,33 @@ function NewVoiceClientInner({
   };
 
   const localeSpecificReferenceAudioGuidance = usesVoxtral
-    ? `Use a clean single-speaker reference clip between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds. Neutral delivery works best.`
-    : `Use a clear reference clip between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+    ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
+        MIN: audioDurationGuidance.min,
+        MAX: audioDurationGuidance.max,
+      })
+    : formatCloneMessage(dict.referenceAudioGuidanceLong, {
+        MIN: audioDurationGuidance.min,
+        MAX_MINUTES: Math.floor(audioDurationGuidance.max / 60),
+      });
 
   const getCloneErrorMessage = useCallback(
     (code?: string, fallbackMessage?: string) => {
       if (code === 'clone_audio_duration_unknown') {
-        return 'Could not determine audio duration.';
+        return dict.audioDurationUnknown;
       }
 
       if (code === 'clone_audio_duration_invalid_voxtral') {
-        return `Reference audio must be between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds for voice cloning.`;
+        return formatCloneMessage(dict.audioDurationInvalidVoxtral, {
+          MIN: audioDurationGuidance.min,
+          MAX: audioDurationGuidance.max,
+        });
       }
 
       if (code === 'clone_audio_duration_invalid_fallback') {
-        return `Audio must be between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+        return formatCloneMessage(dict.audioDurationInvalidFallback, {
+          MIN: audioDurationGuidance.min,
+          MAX_MINUTES: Math.floor(audioDurationGuidance.max / 60),
+        });
       }
 
       if (code === 'clone_reference_audio_enhancement_failed') {
@@ -326,6 +353,7 @@ function NewVoiceClientInner({
 
   const abortController = useRef<AbortController | null>(null);
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
   const handleGenerate = useCallback(async () => {
     if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
@@ -365,8 +393,10 @@ function NewVoiceClientInner({
             // TODO send logs to Sentry
             setErrorMessage(
               convertError instanceof Error
-                ? `Audio conversion failed: ${convertError.message}`
-                : 'Audio conversion failed. Please try recording again.',
+                ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
+                    ERROR: convertError.message,
+                  })
+                : dict.audioConversionFailed,
             );
             setStatus('error');
             setConvertingMicAudio(false);
@@ -449,7 +479,7 @@ function NewVoiceClientInner({
       } else if (err instanceof Error) {
         errorMsg = err.message;
       }
-      setErrorMessage(errorMsg || 'Unexpected error occurred');
+      setErrorMessage(errorMsg || dict.unexpectedError);
       setStatus('error');
     }
   }, [
@@ -458,7 +488,6 @@ function NewVoiceClientInner({
     dict,
     file,
     getCloneErrorMessage,
-    legalConsentChecked,
     micBlob,
     referenceAudioEnhancementEnabled,
     selectedLocale,
@@ -611,14 +640,14 @@ function NewVoiceClientInner({
                       <div className="flex items-center justify-center gap-2 py-2">
                         <PulsatingDots />
                         <span className="text-muted-foreground text-xs">
-                          Loading audio processor...
+                          {dict.loadingAudioProcessor}
                         </span>
                       </div>
                     )}
                     {ffmpegError && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Audio Processor Error</AlertTitle>
+                        <AlertTitle>{dict.audioProcessorError}</AlertTitle>
                         <AlertDescription>{ffmpegError}</AlertDescription>
                       </Alert>
                     )}
@@ -637,7 +666,9 @@ function NewVoiceClientInner({
                   <div className="text-center text-muted-foreground text-xs">
                     <span className="flex items-center justify-center gap-2">
                       <PulsatingDots />
-                      Preparing audio processor for {selectedLocale.value}...
+                      {formatCloneMessage(dict.preparingAudioProcessor, {
+                        LANGUAGE: selectedLocale.value,
+                      })}
                     </span>
                   </div>
                 )}
@@ -675,7 +706,7 @@ function NewVoiceClientInner({
                     </div>
 
                     <Button
-                      aria-label="Remove file"
+                      aria-label={dict.removeFile}
                       className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
                       onClick={() => removeFile(files[0]?.id)}
                       size="icon"
@@ -853,8 +884,7 @@ function NewVoiceClientInner({
               generatingText={
                 status === 'generating'
                   ? `${dict.generating}...`
-                  : // TODO: translate
-                    'Converting audio...'
+                  : `${dict.convertingAudio}...`
               }
               isGenerating={status === 'generating' || convertingMicAudio}
               onClick={handleGenerate}
