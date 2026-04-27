@@ -124,17 +124,46 @@ interface FormInput {
   text: string;
 }
 
+type RouteErrorDetails = Record<string, boolean | number | string | null>;
+
+type CloneRouteErrorCode =
+  | 'errors.audioConversionFailed'
+  | 'errors.audioConversionRequiredWebm'
+  | 'errors.audioDurationInvalidFallback'
+  | 'errors.audioDurationInvalidVoxtral'
+  | 'errors.audioDurationUnknown'
+  | 'errors.fileTooLarge'
+  | 'errors.insufficientCredits'
+  | 'errors.internalError'
+  | 'errors.invalidContentType'
+  | 'errors.invalidFileType'
+  | 'errors.missingLocale'
+  | 'errors.missingRequiredParameters'
+  | 'errors.referenceAudioEnhancementInputTooLarge'
+  | 'errors.referenceAudioEnhancementInputTooLong'
+  | 'errors.textTooLong'
+  | 'errors.unsupportedAudioFormat'
+  | 'errors.unsupportedLocale'
+  | 'errors.userNotFound';
+
 class RouteError extends Error {
-  code?: string;
+  code?: CloneRouteErrorCode;
+  details?: RouteErrorDetails;
   status: number;
   serverMessage: string;
 
-  constructor(serverMessage: string, status: number, code?: string) {
+  constructor(
+    serverMessage: string,
+    status: number,
+    code?: CloneRouteErrorCode,
+    details?: RouteErrorDetails,
+  ) {
     super(`${serverMessage} (${status})`);
     this.name = 'RouteError';
     this.status = status;
     this.serverMessage = serverMessage;
     this.code = code;
+    this.details = details;
   }
 }
 
@@ -157,15 +186,17 @@ function getMistralClient(): Mistral {
 function createRouteError(
   serverMessage: string,
   status: number,
-  code?: string,
+  code?: CloneRouteErrorCode,
+  details?: RouteErrorDetails,
 ): RouteError {
-  return new RouteError(serverMessage, status, code);
+  return new RouteError(serverMessage, status, code, details);
 }
 
 function routeErrorResponse(
   serverMessage: string,
   status: number,
-  code?: string,
+  code?: CloneRouteErrorCode,
+  details?: RouteErrorDetails,
 ) {
   return NextResponse.json(
     {
@@ -173,6 +204,7 @@ function routeErrorResponse(
       serverMessage,
       status,
       code,
+      details,
     },
     { status },
   );
@@ -255,7 +287,12 @@ function getCloneProviderConstraints(
 
 function validateContentType(contentType: string): void {
   if (!contentType.startsWith('multipart/form-data')) {
-    throw createRouteError('Content-Type must be multipart/form-data', 400);
+    throw createRouteError(
+      'Content-Type must be multipart/form-data',
+      400,
+      'errors.invalidContentType',
+      { contentType },
+    );
   }
 }
 
@@ -278,11 +315,16 @@ async function parseFormData(request: Request): Promise<FormInput> {
     throw createRouteError(
       'Missing required parameters: text and audio file',
       400,
+      'errors.missingRequiredParameters',
     );
   }
 
   if (!localeStr) {
-    throw createRouteError('Missing required parameter: locale', 400);
+    throw createRouteError(
+      'Missing required parameter: locale',
+      400,
+      'errors.missingLocale',
+    );
   }
 
   return {
@@ -301,7 +343,9 @@ function validateTextLength(text: string, locale: string): void {
       locale === 'en'
         ? 'Text exceeds the maximum length of 500 characters'
         : `Text exceeds the maximum length of ${MAX_LENGTH_MULTILANGUAGE} characters for multilingual voice cloning`;
-    throw createRouteError(errorMessage, 400);
+    throw createRouteError(errorMessage, 400, 'errors.textTooLong', {
+      MAX: maxLength,
+    });
   }
 }
 
@@ -312,6 +356,8 @@ function validateFileType(file: File): string {
     throw createRouteError(
       'Invalid file type. Only MP3, OGG, Opus, M4A, WAV, or WebM allowed.',
       400,
+      'errors.invalidFileType',
+      { fileType: normalizedFileType },
     );
   }
 
@@ -322,7 +368,10 @@ function validateFileSize(file: File): void {
   if (file.size > CLONING_FILE_MAX_SIZE) {
     const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
     const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
-    throw createRouteError(errorMessage, 413);
+    throw createRouteError(errorMessage, 413, 'errors.fileTooLarge', {
+      MAX_BYTES: CLONING_FILE_MAX_SIZE,
+      MAX_MB: maxMb,
+    });
   }
 }
 
@@ -334,7 +383,7 @@ function validateAudioDuration(
     throw createRouteError(
       'Could not determine audio duration.',
       400,
-      'clone_audio_duration_unknown',
+      'errors.audioDurationUnknown',
     );
   }
 
@@ -353,10 +402,78 @@ function validateAudioDuration(
       errorMessage,
       400,
       provider === 'mistral'
-        ? 'clone_audio_duration_invalid_voxtral'
-        : 'clone_audio_duration_invalid_fallback',
+        ? 'errors.audioDurationInvalidVoxtral'
+        : 'errors.audioDurationInvalidFallback',
+      {
+        MAX: constraints.maxDurationSeconds,
+        MAX_MINUTES: constraints.maxDurationSeconds / 60,
+        MIN: constraints.minDurationSeconds,
+      },
     );
   }
+}
+
+function calculateReferenceAudioEnhancementCredits(
+  durationSeconds: number | null,
+): number {
+  if (durationSeconds === null) {
+    throw createRouteError(
+      'Could not determine audio duration.',
+      400,
+      'errors.audioDurationUnknown',
+    );
+  }
+
+  return Math.ceil(
+    Math.max(0, durationSeconds) *
+      REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND,
+  );
+}
+
+function getReferenceAudioEnhancementDollarCost(
+  durationSeconds: number | null,
+): number {
+  if (durationSeconds === null) {
+    return 0;
+  }
+
+  return (
+    Math.max(0, durationSeconds) *
+    REFERENCE_AUDIO_ENHANCEMENT_DOLLARS_PER_SECOND
+  );
+}
+
+function validateCreditAmount({
+  currentAmount,
+  requiredCredits,
+  text,
+  userEmail,
+  userId,
+}: {
+  currentAmount: number;
+  requiredCredits: number;
+  text: string;
+  userEmail?: string;
+  userId: string;
+}): void {
+  if (currentAmount >= requiredCredits) {
+    return;
+  }
+
+  logger.info('Insufficient credits', {
+    user: { id: userId, email: userEmail },
+    extra: {
+      text,
+      estimate: requiredCredits,
+      currentCreditsAmount: currentAmount,
+    },
+  });
+  throw createRouteError(
+    `Insufficient credits. You need ${requiredCredits} credits to clone this audio`,
+    402,
+    'errors.insufficientCredits',
+    { CREDITS: requiredCredits, currentCredits: currentAmount },
+  );
 }
 
 function validateReferenceAudioEnhancementInput(
@@ -367,7 +484,7 @@ function validateReferenceAudioEnhancementInput(
     throw createRouteError(
       'Could not determine audio duration.',
       400,
-      'clone_audio_duration_unknown',
+      'errors.audioDurationUnknown',
     );
   }
 
@@ -375,7 +492,10 @@ function validateReferenceAudioEnhancementInput(
     throw createRouteError(
       `Reference audio enhancement supports clips up to ${REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION} seconds.`,
       400,
-      'clone_reference_audio_enhancement_input_too_long',
+      'errors.referenceAudioEnhancementInputTooLong',
+      {
+        MAX: REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION,
+      },
     );
   }
 
@@ -383,7 +503,10 @@ function validateReferenceAudioEnhancementInput(
     throw createRouteError(
       'Reference audio enhancement input exceeds size limit.',
       400,
-      'clone_reference_audio_enhancement_input_too_large',
+      'errors.referenceAudioEnhancementInputTooLarge',
+      {
+        MAX_BYTES: REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES,
+      },
     );
   }
 }
@@ -394,6 +517,8 @@ function validateLocale(locale: string): void {
     throw createRouteError(
       `Unsupported language for voice cloning: ${locale}. Supported languages are: ${SUPPORTED_LOCALE_CODES.map((l) => l.code).join(', ')}`,
       400,
+      'errors.unsupportedLocale',
+      { locale },
     );
   }
 }
@@ -406,16 +531,13 @@ async function validateCredits(
   const currentAmount = await getCredits(userId);
   const estimate = estimateCredits(text, 'clone');
 
-  if (currentAmount < estimate) {
-    logger.info('Insufficient credits', {
-      user: { id: userId, email: userEmail },
-      extra: { text, estimate, currentCreditsAmount: currentAmount },
-    });
-    throw createRouteError(
-      `Insufficient credits. You need ${estimate} credits to generate this audio`,
-      402,
-    );
-  }
+  validateCreditAmount({
+    currentAmount,
+    requiredCredits: estimate,
+    text,
+    userEmail,
+    userId,
+  });
 
   return { currentAmount, estimate };
 }
@@ -462,8 +584,7 @@ async function processAudioFile(
   }
 
   const provider = resolveCloneProvider(locale);
-  const shouldNormalizeToWav =
-    provider === 'mistral' || enhancementEnabled;
+  const shouldNormalizeToWav = provider === 'mistral' || enhancementEnabled;
 
   // Convert to WAV for providers that need normalized reference audio
   if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
@@ -471,6 +592,8 @@ async function processAudioFile(
       throw createRouteError(
         'Unsupported audio format for voice cloning. Please use MP3, OGG/OPUS, WEBM, or WAV.',
         400,
+        'errors.unsupportedAudioFormat',
+        { mimeType: normalizedMimeType },
       );
     }
 
@@ -529,8 +652,15 @@ async function processAudioFile(
         normalizedMimeType === 'video/webm'
           ? 'WebM audio must be converted to WAV on the client before uploading. Please try recording again.'
           : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, Opus, or WAV';
+      const errorCode =
+        normalizedMimeType === 'audio/webm' ||
+        normalizedMimeType === 'video/webm'
+          ? 'errors.audioConversionRequiredWebm'
+          : 'errors.audioConversionFailed';
 
-      throw createRouteError(errorMsg, 500);
+      throw createRouteError(errorMsg, 500, errorCode, {
+        mimeType: normalizedMimeType,
+      });
     }
   }
 
@@ -715,10 +845,14 @@ async function createCloneOutputFilename({
 
 async function runBackgroundTasks(
   userId: string,
-  estimate: number,
+  creditsUsed: number,
   provider: CloneProvider,
   audioFileData: {
+    baseCloneCredits: number;
     filename: string;
+    referenceAudioEnhancementCredits: number;
+    referenceAudioEnhancementDollarAmount: number;
+    referenceAudioEnhancementDurationSeconds?: number | null;
     referenceAudioEnhancementModel?: string | null;
     referenceAudioEnhancementRequestId?: string | null;
     referenceAudioEnhanced: boolean;
@@ -732,7 +866,7 @@ async function runBackgroundTasks(
     referenceAudioProcessedMimeType: string;
   },
 ): Promise<void> {
-  await reduceCredits({ userId, amount: estimate });
+  await reduceCredits({ userId, amount: creditsUsed });
 
   const userHasPaid = await hasUserPaid(userId);
 
@@ -746,18 +880,9 @@ async function runBackgroundTasks(
     isPublic: false,
     voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
     duration: audioFileData.duration.toFixed(3),
-    credits_used: estimate,
+    credits_used: creditsUsed,
     usage: {
-      locale: audioFileData.locale,
-      referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
-      referenceAudioEnhancementModel:
-        audioFileData.referenceAudioEnhancementModel ?? '',
-      referenceAudioEnhancementRequestId:
-        audioFileData.referenceAudioEnhancementRequestId ?? '',
-      userHasPaid,
-      referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
-      referenceAudioProcessedMimeType:
-        audioFileData.referenceAudioProcessedMimeType,
+      creditsUsed,
     },
   });
 
@@ -785,8 +910,12 @@ async function runBackgroundTasks(
     sourceId: audioFileDBResult.data?.id,
     unit: 'operation',
     quantity: 1,
-    creditsUsed: estimate,
-    dollarAmount: getDollarCost(provider, estimate, audioFileData.text),
+    creditsUsed: audioFileData.baseCloneCredits,
+    dollarAmount: getDollarCost(
+      provider,
+      audioFileData.baseCloneCredits,
+      audioFileData.text,
+    ),
     metadata: {
       provider,
       model: audioFileData.modelUsed,
@@ -806,6 +935,40 @@ async function runBackgroundTasks(
       userHasPaid,
     },
   });
+
+  if (
+    audioFileData.referenceAudioEnhanced &&
+    audioFileData.referenceAudioEnhancementCredits > 0
+  ) {
+    const enhancementDurationSeconds =
+      audioFileData.referenceAudioEnhancementDurationSeconds ?? 0;
+
+    await insertUsageEvent({
+      userId,
+      sourceType: 'audio_processing',
+      sourceId: audioFileDBResult.data?.id,
+      requestId: audioFileData.referenceAudioEnhancementRequestId ?? undefined,
+      model: audioFileData.referenceAudioEnhancementModel ?? undefined,
+      unit: 'secs',
+      quantity: enhancementDurationSeconds,
+      durationSeconds: enhancementDurationSeconds,
+      creditsUsed: audioFileData.referenceAudioEnhancementCredits,
+      dollarAmount: audioFileData.referenceAudioEnhancementDollarAmount,
+      metadata: {
+        operation: 'reference_audio_enhancement',
+        provider: 'fal',
+        model: audioFileData.referenceAudioEnhancementModel,
+        voiceCloningRequestId: audioFileData.requestId,
+        voiceCloningModel: audioFileData.modelUsed,
+        locale: audioFileData.locale,
+        referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
+        referenceAudioProcessedMimeType:
+          audioFileData.referenceAudioProcessedMimeType,
+        userHasPaid,
+      },
+    });
+  }
+
   const posthog = PostHogClient();
   posthog.capture({
     distinctId: userId,
@@ -817,12 +980,14 @@ async function runBackgroundTasks(
       model: audioFileData.modelUsed,
       audioDuration: audioFileData.duration,
       referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
+      referenceAudioEnhancementDurationSeconds:
+        audioFileData.referenceAudioEnhancementDurationSeconds ?? null,
       referenceAudioEnhancementModel:
         audioFileData.referenceAudioEnhancementModel,
       text: audioFileData.text,
       locale: audioFileData.locale,
       generatedAudioUrl: audioFileData.url,
-      credits_used: estimate,
+      credits_used: audioFileData.baseCloneCredits,
       userHasPaid,
     },
   });
@@ -833,6 +998,7 @@ async function runBackgroundTasks(
 // Main Route Handler
 // ============================================================================
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing route coordinates validation, enhancement fallback, generation, caching, and billing.
 export async function POST(request: Request) {
   let enhancementModelUsed: string | null = null;
   let enhancementRequestId: string | null = null;
@@ -850,7 +1016,7 @@ export async function POST(request: Request) {
     const user = data?.user;
 
     if (!user) {
-      return routeErrorResponse('User not found', 401);
+      return routeErrorResponse('User not found', 401, 'errors.userNotFound');
     }
 
     setUser({
@@ -890,6 +1056,10 @@ export async function POST(request: Request) {
       user.id,
     );
     let cloneInputAudio = processedAudio;
+    let creditsUsed = estimate;
+    let referenceAudioEnhancementCredits = 0;
+    let referenceAudioEnhancementDollarAmount = 0;
+    let referenceAudioEnhancementDurationSeconds: number | null = null;
 
     const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
@@ -915,6 +1085,24 @@ export async function POST(request: Request) {
     }
 
     if (formInput.enhanceReferenceAudio) {
+      referenceAudioEnhancementDurationSeconds = processedAudio.duration;
+      referenceAudioEnhancementCredits =
+        calculateReferenceAudioEnhancementCredits(
+          referenceAudioEnhancementDurationSeconds,
+        );
+      referenceAudioEnhancementDollarAmount =
+        getReferenceAudioEnhancementDollarCost(
+          referenceAudioEnhancementDurationSeconds,
+        );
+
+      validateCreditAmount({
+        currentAmount,
+        requiredCredits: estimate + referenceAudioEnhancementCredits,
+        text,
+        userEmail: user.email,
+        userId: user.id,
+      });
+
       try {
         const enhancedAudio = await enhanceReferenceAudio({
           abortSignal: request.signal,
@@ -926,6 +1114,7 @@ export async function POST(request: Request) {
         enhancementModelUsed = enhancedAudio.modelUsed;
         enhancementRequestId = enhancedAudio.requestId;
         referenceAudioEnhanced = true;
+        creditsUsed = estimate + referenceAudioEnhancementCredits;
 
         cloneInputAudio = {
           audioHash: await generateBufferHash(enhancedAudio.buffer),
@@ -946,14 +1135,17 @@ export async function POST(request: Request) {
             filename: referenceAudioFile.name,
           },
         });
-        logger.info('Reference audio enhancement failed; using original audio', {
-          user: { id: user.id },
-          extra: {
-            locale,
-            mimeType: processedAudio.mimeType,
-            filename: referenceAudioFile.name,
+        logger.info(
+          'Reference audio enhancement failed; using original audio',
+          {
+            user: { id: user.id },
+            extra: {
+              locale,
+              mimeType: processedAudio.mimeType,
+              filename: referenceAudioFile.name,
+            },
           },
-        });
+        );
 
         filename = await createCloneOutputFilename({
           audioHash: processedAudio.audioHash,
@@ -963,6 +1155,10 @@ export async function POST(request: Request) {
           provider,
           text,
         });
+        creditsUsed = estimate;
+        referenceAudioEnhancementCredits = 0;
+        referenceAudioEnhancementDollarAmount = 0;
+        referenceAudioEnhancementDurationSeconds = null;
 
         const fallbackCachedOutputUrl = await redis.get<string>(filename);
         if (fallbackCachedOutputUrl) {
@@ -1033,8 +1229,12 @@ export async function POST(request: Request) {
 
     // Background tasks
     after(async () => {
-      await runBackgroundTasks(user.id, estimate, provider, {
+      await runBackgroundTasks(user.id, creditsUsed, provider, {
+        baseCloneCredits: estimate,
         filename,
+        referenceAudioEnhancementCredits,
+        referenceAudioEnhancementDollarAmount,
+        referenceAudioEnhancementDurationSeconds,
         referenceAudioEnhanced,
         referenceAudioEnhancementModel: enhancementModelUsed,
         referenceAudioEnhancementRequestId: enhancementRequestId,
@@ -1052,14 +1252,19 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         url: outputUrl,
-        creditsUsed: estimate,
-        creditsRemaining: (currentAmount || 0) - estimate,
+        creditsUsed,
+        creditsRemaining: (currentAmount || 0) - creditsUsed,
       },
       { status: 200 },
     );
   } catch (error) {
     if (error instanceof RouteError) {
-      return routeErrorResponse(error.serverMessage, error.status, error.code);
+      return routeErrorResponse(
+        error.serverMessage,
+        error.status,
+        error.code,
+        error.details,
+      );
     }
 
     const errorObj = {
@@ -1080,8 +1285,15 @@ export async function POST(request: Request) {
       console.error(errorObj);
     }
 
+    const serverMessage = Error.isError(error) ? error.message : String(error);
+
     return NextResponse.json(
-      { error: Error.isError(error) ? error.message : String(error) },
+      {
+        error: serverMessage,
+        serverMessage,
+        status: 500,
+        code: 'errors.internalError',
+      },
       { status: 500 },
     );
   }

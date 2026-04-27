@@ -112,6 +112,17 @@ const dict = {
   errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errorTooLarge: 'File size too large. Please use a smaller audio file.',
   errorTitle: 'Error',
+  audioConversionFailed: 'Audio conversion failed. Please try recording again.',
+  audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
+  audioDurationInvalidFallback:
+    'Audio must be between __MIN__ seconds and __MAX_MINUTES__ minutes.',
+  audioDurationInvalidVoxtral:
+    'Reference audio must be between __MIN__ and __MAX__ seconds for voice cloning.',
+  audioDurationUnknown: 'Could not determine audio duration.',
+  audioProcessorError: 'Audio Processor Error',
+  convertingAudio: 'Converting audio',
+  failedToLoadAudioProcessor: 'Failed to load audio processor',
+  failedToStartRecording: 'Failed to start recording: __ERROR__',
   fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
   generating: 'Generating',
   languageLabel: 'Language',
@@ -121,10 +132,18 @@ const dict = {
   notEnoughCredits: "You don't have enough credits to generate audio.",
   orUseMicrophone: 'or use your microphone',
   playAudio: 'Play Audio',
+  loadingAudioProcessor: 'Loading audio processor...',
+  microphoneError: 'Microphone error',
+  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
   previewTitle: 'Generated Voice Preview',
+  referenceAudioGuidanceLong:
+    'Use a clear reference clip between __MIN__ seconds and __MAX_MINUTES__ minutes.',
+  referenceAudioGuidanceShort:
+    'Use a clean single-speaker reference clip between __MIN__ and __MAX__ seconds. Neutral delivery works best.',
   referenceAudioEnhancementHelp:
     'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
   referenceAudioEnhancementLabel: 'Reference audio enhancement',
+  removeFile: 'Remove file',
   sampleCard: {
     exampleOutput: 'Example',
     loadSource: 'Load source',
@@ -139,12 +158,39 @@ const dict = {
   textToConvertLabel: 'Enter text to generate speech',
   title: 'Clone a Voice',
   tryDemo: 'Or try with a demo:',
+  unexpectedError: 'Unexpected error occurred',
   uploadAudioFile: 'Upload audio file',
   errors: {
+    audioConversionFailed:
+      'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
+    audioConversionRequiredWebm:
+      'WebM audio must be converted before uploading. Please try recording again.',
+    audioDurationInvalidFallback:
+      'Audio must be between __MIN__ seconds and __MAX_MINUTES__ minutes.',
+    audioDurationInvalidVoxtral:
+      'Reference audio must be between __MIN__ and __MAX__ seconds for voice cloning.',
+    audioDurationUnknown: 'Could not determine audio duration.',
     ffmpegLoading:
       'The audio converter is still loading. Please try again in a moment',
+    fileTooLarge: 'File size too large. Please use a smaller audio file.',
+    insufficientCredits: 'You need __CREDITS__ credits to clone this audio.',
+    internalError: 'Failed to clone voice. Please try again.',
+    invalidContentType: 'The upload request is invalid. Please try again.',
+    invalidFileType:
+      'Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.',
+    missingLocale: 'Please select a language.',
+    missingRequiredParameters: 'Please enter text and select an audio file.',
     noAudioFile: 'Please select an audio file.',
     noText: 'Please enter some text to convert to speech.',
+    referenceAudioEnhancementInputTooLarge:
+      'The reference audio is too large to enhance.',
+    referenceAudioEnhancementInputTooLong:
+      'Reference audio cleanup supports clips up to __MAX__ seconds.',
+    textTooLong: 'Text exceeds the maximum length of __MAX__ characters.',
+    unsupportedAudioFormat:
+      'Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.',
+    unsupportedLocale: 'This language is not supported for voice cloning.',
+    userNotFound: 'Please sign in to clone a voice.',
   },
   crossLanguageInfo: {
     description: '',
@@ -228,5 +274,52 @@ describe('NewVoiceClient', () => {
 
     expect(formData.get('enhanceReferenceAudio')).toBe('true');
     expect(mockToastSuccess).toHaveBeenCalledWith(dict.success);
+  });
+
+  it('renders translated clone errors from API error codes', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          code: 'errors.insufficientCredits',
+          details: { CREDITS: 252 },
+          error:
+            'Insufficient credits. You need 252 credits to clone this audio',
+        }),
+        {
+          status: 402,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    );
+
+    render(
+      <NewVoiceClient
+        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
+        hasEnoughCredits
+        lang={'en' as any}
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText(dict.textToConvertLabel),
+      'Hello world',
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: dict.legalConsentCheckbox,
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: /generate audio/i,
+      }),
+    );
+
+    expect(
+      await screen.findByText('You need 252 credits to clone this audio.'),
+    ).toBeInTheDocument();
   });
 });

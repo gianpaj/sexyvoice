@@ -110,18 +110,15 @@ export async function enhanceReferenceAudio({
     buffer.byteOffset,
     buffer.byteLength,
   );
-  const inputFile = new File(
-    [inputBytes],
-    filename,
-    {
-      type: mimeType || 'audio/wav',
-    },
-  );
+  const inputFile = new File([inputBytes], filename, {
+    type: mimeType || 'audio/wav',
+  });
 
   const falResult = await fal.subscribe(REFERENCE_AUDIO_ENHANCEMENT_MODEL, {
     input: {
       audio_format: 'wav',
       audio_url: inputFile,
+      bitrate: '16k',
     },
     logs: false,
     abortSignal: requestSignal,
@@ -170,8 +167,9 @@ export async function enhanceReferenceAudio({
     throw new Error('Reference audio enhancement audio exceeds size limit');
   }
 
-  const enhancedAudioBuffer =
-    await readEnhancedAudioBuffer(enhancedAudioResponse);
+  const enhancedAudioBuffer = await readEnhancedAudioBuffer(
+    enhancedAudioResponse,
+  );
 
   if (enhancedAudioBuffer.length === 0) {
     throw new Error('Reference audio enhancement returned empty audio data');

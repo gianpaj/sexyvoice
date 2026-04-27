@@ -112,13 +112,42 @@ const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
 
 const formatCloneMessage = (
   message: string,
-  values: Record<string, string | number>,
+  values: Record<string, boolean | number | string | null | undefined>,
 ) =>
   Object.entries(values).reduce(
     (formatted, [key, value]) =>
-      formatted.replaceAll(`__${key}__`, String(value)),
+      value === null || value === undefined
+        ? formatted
+        : formatted.replaceAll(`__${key}__`, String(value)),
     message,
   );
+
+type CloneErrorDetails = Record<string, boolean | number | string | null>;
+
+interface CloneErrorResponse {
+  code?: string;
+  details?: CloneErrorDetails;
+  error?: string;
+  message?: string;
+  serverMessage?: string;
+}
+
+const getCloneDictMessage = (
+  dict: (typeof messages)['clone'],
+  path: string,
+): string | undefined => {
+  let value: unknown = dict;
+
+  for (const segment of path.split('.')) {
+    if (!(value && typeof value === 'object' && segment in value)) {
+      return undefined;
+    }
+
+    value = (value as Record<string, unknown>)[segment];
+  }
+
+  return typeof value === 'string' ? value : undefined;
+};
 
 export default function NewVoiceClient({
   dict,
@@ -291,35 +320,23 @@ function NewVoiceClientInner({
       });
 
   const getCloneErrorMessage = useCallback(
-    (code?: string, fallbackMessage?: string) => {
-      if (code === 'clone_audio_duration_unknown') {
-        return dict.audioDurationUnknown;
+    (
+      code?: string,
+      fallbackMessage?: string,
+      details?: CloneErrorDetails,
+    ): string => {
+      if (!code) {
+        return fallbackMessage || dict.errorCloning;
       }
 
-      if (code === 'clone_audio_duration_invalid_voxtral') {
-        return formatCloneMessage(dict.audioDurationInvalidVoxtral, {
-          MIN: audioDurationGuidance.min,
-          MAX: audioDurationGuidance.max,
-        });
+      const message = getCloneDictMessage(dict, code);
+      if (!message) {
+        return dict.errorCloning;
       }
 
-      if (code === 'clone_audio_duration_invalid_fallback') {
-        return formatCloneMessage(dict.audioDurationInvalidFallback, {
-          MIN: audioDurationGuidance.min,
-          MAX_MINUTES: Math.floor(audioDurationGuidance.max / 60),
-        });
-      }
-
-      if (code === 'clone_reference_audio_enhancement_failed') {
-        return (
-          dict.errorEnhancingReferenceAudio ||
-          'Failed to enhance reference audio. Please try again or turn off reference audio enhancement.'
-        );
-      }
-
-      return fallbackMessage || dict.errorCloning || 'Failed to clone voice.';
+      return formatCloneMessage(message, details ?? {});
     },
-    [audioDurationGuidance.max, audioDurationGuidance.min, dict],
+    [dict],
   );
 
   const [
@@ -438,18 +455,26 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = dict.errorCloning || 'Failed to clone voice.';
+        let errorMessage = dict.errorCloning;
+        let voiceResult: CloneErrorResponse | null = null;
 
-        // Handle 413 Payload Too Large - returns plain text
-        if (voiceRes.status === 413) {
-          errorMessage =
-            dict.errorTooLarge ||
-            'File size too large. Please use a smaller audio file.';
+        try {
+          voiceResult = (await voiceRes.json()) as CloneErrorResponse;
+        } catch {
+          voiceResult = null;
+        }
+
+        // Older/proxy 413 responses may still arrive without the JSON error contract.
+        if (voiceRes.status === 413 && !voiceResult?.code) {
+          errorMessage = dict.errorTooLarge;
         } else {
-          const voiceResult = await voiceRes.json();
           errorMessage = getCloneErrorMessage(
-            voiceResult.code,
-            voiceResult.message || voiceResult.error || errorMessage,
+            voiceResult?.code,
+            voiceResult?.message ||
+              voiceResult?.serverMessage ||
+              voiceResult?.error ||
+              errorMessage,
+            voiceResult?.details,
           );
         }
 

@@ -127,6 +127,7 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toBe(
         'Content-Type must be multipart/form-data',
       );
+      expect(json.code).toBe('errors.invalidContentType');
     });
 
     it('should return 400 when text is missing', async () => {
@@ -146,6 +147,7 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toBe(
         'Missing required parameters: text and audio file',
       );
+      expect(json.code).toBe('errors.missingRequiredParameters');
     });
 
     it('should return 400 when audio file is missing', async () => {
@@ -187,6 +189,8 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toContain(
         'Text exceeds the maximum length of 500 characters',
       );
+      expect(json.code).toBe('errors.textTooLong');
+      expect(json.details).toEqual({ MAX: 500 });
     });
 
     it('should return 400 when text exceeds multilingual maximum length (300 chars)', async () => {
@@ -322,6 +326,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toContain('Invalid file type.');
+      expect(json.code).toBe('errors.invalidFileType');
     });
 
     it('should return 400 when file size exceeds limit', async () => {
@@ -344,6 +349,11 @@ describe('Clone Voice API Route', () => {
       const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
       const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
       expect(json.serverMessage).toBe(errorMessage);
+      expect(json.code).toBe('errors.fileTooLarge');
+      expect(json.details).toMatchObject({
+        MAX_BYTES: CLONING_FILE_MAX_SIZE,
+        MAX_MB: maxMb,
+      });
     });
 
     it('should return 400 when Voxtral reference audio duration is too short', async () => {
@@ -370,7 +380,11 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toBe(
         'Reference audio must be between 3 and 25 seconds for voice cloning.',
       );
-      expect(json.code).toBe('clone_audio_duration_invalid_voxtral');
+      expect(json.code).toBe('errors.audioDurationInvalidVoxtral');
+      expect(json.details).toMatchObject({
+        MIN: 3,
+        MAX: 25,
+      });
     });
 
     it('should return 400 when Voxtral reference audio duration is too long', async () => {
@@ -397,7 +411,7 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toBe(
         'Reference audio must be between 3 and 25 seconds for voice cloning.',
       );
-      expect(json.code).toBe('clone_audio_duration_invalid_voxtral');
+      expect(json.code).toBe('errors.audioDurationInvalidVoxtral');
     });
 
     it('should return 400 when audio duration cannot be determined', async () => {
@@ -422,7 +436,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe('Could not determine audio duration.');
-      expect(json.code).toBe('clone_audio_duration_unknown');
+      expect(json.code).toBe('errors.audioDurationUnknown');
     });
 
     it('should accept valid OGG audio when duration is available via format options', async () => {
@@ -505,6 +519,7 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe('Missing required parameter: locale');
+      expect(json.code).toBe('errors.missingLocale');
     });
 
     it('should return 400 when locale is unsupported for Replicate (non-English)', async () => {
@@ -527,6 +542,8 @@ describe('Clone Voice API Route', () => {
         'Unsupported language for voice cloning: xyz',
       );
       expect(json.serverMessage).toContain('Supported languages are:');
+      expect(json.code).toBe('errors.unsupportedLocale');
+      expect(json.details).toEqual({ locale: 'xyz' });
     });
 
     it('should not reject valid supported locales (Spanish)', async () => {
@@ -641,6 +658,41 @@ describe('Clone Voice API Route', () => {
 
       expect(json.error).toContain('Insufficient credits');
       expect(response.status).toBe(402);
+      expect(json.code).toBe('errors.insufficientCredits');
+      expect(json.details).toMatchObject({
+        currentCredits: 10,
+      });
+    });
+
+    it('should include reference audio enhancement credits in the credit check', async () => {
+      vi.mocked(queries.getCredits).mockResolvedValueOnce(200);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.error).toContain(
+        'Insufficient credits. You need 252 credits',
+      );
+      expect(json.code).toBe('errors.insufficientCredits');
+      expect(json.details).toEqual({
+        CREDITS: 252,
+        currentCredits: 200,
+      });
+      expect(mockFalSubscribe).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
     });
 
     it('should allow voice cloning when user has sufficient credits', async () => {
@@ -861,9 +913,8 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.code).toBe(
-        'clone_reference_audio_enhancement_input_too_long',
-      );
+      expect(json.code).toBe('errors.referenceAudioEnhancementInputTooLong');
+      expect(json.details).toEqual({ MAX: 60 });
       expect(mockFalSubscribe).not.toHaveBeenCalled();
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     });
@@ -905,9 +956,12 @@ describe('Clone Voice API Route', () => {
       });
 
       const response = await POST(request);
+      const json = await response.json();
       await flushPromises();
 
       expect(response.status).toBe(200);
+      expect(json.creditsUsed).toBe(252);
+      expect(json.creditsRemaining).toBe(748);
       expect(mockFalSubscribe).toHaveBeenCalledWith(
         'fal-ai/deepfilternet3',
         expect.objectContaining({
@@ -918,9 +972,24 @@ describe('Clone Voice API Route', () => {
         }),
       );
       expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 252,
+      });
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
-          usage: expect.objectContaining({
+          credits_used: 252,
+          usage: { creditsUsed: 252 },
+        }),
+      );
+      expect(queries.insertUsageEvent).toHaveBeenCalledTimes(2);
+      expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          sourceType: 'voice_cloning',
+          creditsUsed: 132,
+          dollarAmount: 0.000_176,
+          metadata: expect.objectContaining({
             referenceAudioEnhanced: true,
             referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
@@ -928,12 +997,25 @@ describe('Clone Voice API Route', () => {
           }),
         }),
       );
-      expect(queries.insertUsageEvent).toHaveBeenCalledWith(
+      expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
+        2,
         expect.objectContaining({
+          sourceType: 'audio_processing',
+          sourceId: 'test-audio-file-id',
+          requestId: 'test-fal-request-id',
+          model: 'fal-ai/deepfilternet3',
+          unit: 'secs',
+          quantity: 12,
+          durationSeconds: 12,
+          creditsUsed: 120,
+          dollarAmount: 0.012,
           metadata: expect.objectContaining({
-            referenceAudioEnhanced: true,
-            referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
-            referenceAudioEnhancementRequestId: 'test-fal-request-id',
+            operation: 'reference_audio_enhancement',
+            provider: 'fal',
+            model: 'fal-ai/deepfilternet3',
+            voiceCloningModel: 'voxtral-mini-tts-2603',
+            locale: 'en',
+            referenceAudioFileMimeType: 'audio/wav',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
         }),
@@ -1063,15 +1145,7 @@ describe('Clone Voice API Route', () => {
         voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
         duration: '12.000',
         credits_used: expect.any(Number),
-        usage: {
-          locale: 'en',
-          referenceAudioEnhanced: false,
-          referenceAudioEnhancementModel: '',
-          referenceAudioEnhancementRequestId: '',
-          userHasPaid: false,
-          referenceAudioFileMimeType: 'audio/wav',
-          referenceAudioProcessedMimeType: 'audio/wav',
-        },
+        usage: { creditsUsed: 132 },
       });
 
       // Verify usage event was logged for voice cloning
@@ -1415,14 +1489,14 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
-      expect(queries.reduceCredits).toHaveBeenCalled();
+      expect(json.creditsUsed).toBe(132);
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
-          usage: expect.objectContaining({
-            referenceAudioEnhanced: false,
-            referenceAudioEnhancementModel: '',
-            referenceAudioEnhancementRequestId: '',
-          }),
+          usage: { creditsUsed: 132 },
         }),
       );
     });
