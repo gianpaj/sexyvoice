@@ -229,7 +229,7 @@ export function VoiceSelector({
         </Select>
         <AudioProvider>
           {selectedVoice?.sample_url && (
-            <div className="flex flex-col items-center justify-start gap-2 py-2 sm:flex-row">
+            <div className="flex flex-col items-center justify-start gap-4 py-2 sm:flex-row">
               <AudioPlayerWithContext
                 playAudioTitle={dict.playAudio}
                 showWaveform

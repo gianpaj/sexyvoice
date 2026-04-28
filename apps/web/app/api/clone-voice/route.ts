@@ -11,12 +11,17 @@ import {
   convertToWav,
   isConversionSupported,
   needsConversion,
+  trimWavBuffer,
 } from '@/lib/audio-converter';
 import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
+import {
+  getCloneTextMaxLength,
+  isCloneTextOverLimit,
+} from '@/lib/clone/text-limits';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -47,10 +52,8 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
-const MAX_LENGTH_EN = 500;
-const MAX_LENGTH_MULTILANGUAGE = 300;
 const FALLBACK_MIN_DURATION = 10;
-const FALLBACK_MAX_DURATION = 5 * 60; // 5 minutes
+const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
 const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
@@ -105,7 +108,6 @@ interface ReplicateError {
 type ReplicateResponse = ReplicateOutput | ReplicateError;
 
 interface CloneProviderConstraints {
-  maxDurationSeconds: number;
   minDurationSeconds: number;
 }
 
@@ -114,7 +116,9 @@ interface ProcessedCloneInputAudio {
   buffer: Buffer;
   duration: number | null;
   mimeType: string;
+  originalDuration: number | null;
   publicUrl?: string;
+  wasTrimmed: boolean;
 }
 
 interface FormInput {
@@ -275,13 +279,11 @@ function getCloneProviderConstraints(
   if (provider === 'mistral') {
     return {
       minDurationSeconds: VOXTRAL_MIN_DURATION,
-      maxDurationSeconds: VOXTRAL_MAX_DURATION,
     };
   }
 
   return {
     minDurationSeconds: FALLBACK_MIN_DURATION,
-    maxDurationSeconds: FALLBACK_MAX_DURATION,
   };
 }
 
@@ -335,18 +337,25 @@ async function parseFormData(request: Request): Promise<FormInput> {
   };
 }
 
-function validateTextLength(text: string, locale: string): void {
-  const maxLength = locale === 'en' ? MAX_LENGTH_EN : MAX_LENGTH_MULTILANGUAGE;
+function validateTextLength(
+  text: string,
+  locale: string,
+  userHasPaid: boolean,
+): void {
+  const maxLength = getCloneTextMaxLength(locale, userHasPaid);
 
-  if (text.length > maxLength) {
-    const errorMessage =
-      locale === 'en'
-        ? 'Text exceeds the maximum length of 500 characters'
-        : `Text exceeds the maximum length of ${MAX_LENGTH_MULTILANGUAGE} characters for multilingual voice cloning`;
-    throw createRouteError(errorMessage, 400, 'errors.textTooLong', {
-      MAX: maxLength,
-    });
+  if (!isCloneTextOverLimit({ text, locale, userHasPaid })) {
+    return;
   }
+
+  throw createRouteError(
+    `Text exceeds the maximum length of ${maxLength} characters`,
+    400,
+    'errors.textTooLong',
+    {
+      MAX: maxLength,
+    },
+  );
 }
 
 function validateFileType(file: File): string {
@@ -389,24 +398,23 @@ function validateAudioDuration(
 
   const constraints = getCloneProviderConstraints(provider);
 
-  if (
-    duration < constraints.minDurationSeconds ||
-    duration > constraints.maxDurationSeconds
-  ) {
-    const errorMessage =
-      provider === 'mistral'
-        ? `Reference audio must be between ${constraints.minDurationSeconds} and ${constraints.maxDurationSeconds} seconds for voice cloning.`
-        : `Audio must be between ${constraints.minDurationSeconds} seconds and ${constraints.maxDurationSeconds / 60} minutes.`;
+  if (duration < constraints.minDurationSeconds) {
+    if (provider === 'mistral') {
+      throw createRouteError(
+        `Reference audio must be at least ${constraints.minDurationSeconds} seconds for voice cloning.`,
+        400,
+        'errors.audioDurationInvalidVoxtral',
+        {
+          MIN: constraints.minDurationSeconds,
+        },
+      );
+    }
 
     throw createRouteError(
-      errorMessage,
+      `Audio must be at least ${constraints.minDurationSeconds} seconds.`,
       400,
-      provider === 'mistral'
-        ? 'errors.audioDurationInvalidVoxtral'
-        : 'errors.audioDurationInvalidFallback',
+      'errors.audioDurationInvalidFallback',
       {
-        MAX: constraints.maxDurationSeconds,
-        MAX_MINUTES: constraints.maxDurationSeconds / 60,
         MIN: constraints.minDurationSeconds,
       },
     );
@@ -575,16 +583,18 @@ async function processAudioFile(
     }
   }
 
-  let processedBuffer = buffer;
+  let processedBuffer: Buffer = buffer;
   let processedMimeType = normalizedMimeType;
-
-  if (enhancementEnabled) {
-    const sourceDuration = await getAudioDuration(buffer, normalizedMimeType);
-    validateReferenceAudioEnhancementInput(sourceDuration, buffer.length);
-  }
-
+  let sourceDuration = await getAudioDuration(buffer, normalizedMimeType);
+  let wasTrimmed = false;
   const provider = resolveCloneProvider(locale);
-  const shouldNormalizeToWav = provider === 'mistral' || enhancementEnabled;
+
+  const canNormalizeToWav = isConversionSupported(
+    normalizedMimeType,
+    file.name,
+  );
+  const shouldNormalizeToWav =
+    provider === 'mistral' || enhancementEnabled || canNormalizeToWav;
 
   // Convert to WAV for providers that need normalized reference audio
   if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
@@ -607,13 +617,6 @@ async function processAudioFile(
       if (wavBuffer) {
         processedBuffer = wavBuffer as Buffer<ArrayBuffer>;
         processedMimeType = 'audio/wav';
-
-        if (enhancementEnabled) {
-          validateReferenceAudioEnhancementInput(
-            await getAudioDuration(processedBuffer, processedMimeType),
-            processedBuffer.length,
-          );
-        }
 
         logger.info('Converted audio to WAV for voice cloning', {
           user: { id: userId },
@@ -664,7 +667,51 @@ async function processAudioFile(
     }
   }
 
-  const duration = await getAudioDuration(processedBuffer, processedMimeType);
+  let duration = await getAudioDuration(processedBuffer, processedMimeType);
+  sourceDuration ??= duration;
+
+  const referenceAudioMaxDuration =
+    provider === 'mistral'
+      ? VOXTRAL_MAX_DURATION
+      : REPLICATE_REFERENCE_AUDIO_MAX_DURATION;
+
+  if (duration !== null && duration > referenceAudioMaxDuration) {
+    const trimmedBuffer = trimWavBuffer(
+      processedBuffer,
+      referenceAudioMaxDuration,
+    );
+
+    if (trimmedBuffer && trimmedBuffer !== processedBuffer) {
+      processedBuffer = trimmedBuffer;
+      processedMimeType = 'audio/wav';
+      duration =
+        (await getAudioDuration(processedBuffer, processedMimeType)) ??
+        referenceAudioMaxDuration;
+      wasTrimmed = true;
+
+      logger.info('Trimmed reference audio for voice cloning', {
+        user: { id: userId },
+        extra: {
+          provider,
+          originalDuration: sourceDuration,
+          trimmedDuration: duration,
+          maxDuration: referenceAudioMaxDuration,
+          locale,
+        },
+      });
+    } else if (provider === 'mistral') {
+      throw createRouteError(
+        'Failed to trim reference audio for voice cloning.',
+        400,
+        'errors.audioConversionFailed',
+      );
+    }
+  }
+
+  if (enhancementEnabled) {
+    validateReferenceAudioEnhancementInput(duration, processedBuffer.length);
+  }
+
   const audioHash = await generateBufferHash(processedBuffer);
 
   return {
@@ -672,6 +719,8 @@ async function processAudioFile(
     buffer: processedBuffer,
     mimeType: processedMimeType,
     duration,
+    originalDuration: sourceDuration,
+    wasTrimmed,
   };
 }
 
@@ -723,7 +772,7 @@ async function generateVoiceWithMistral(
   };
 }
 
-async function generateVoiceWithReplicate(
+async function cloneVoiceWithReplicate(
   text: string,
   locale: string,
   audioReferenceUrl: string,
@@ -856,6 +905,8 @@ async function runBackgroundTasks(
     referenceAudioEnhancementModel?: string | null;
     referenceAudioEnhancementRequestId?: string | null;
     referenceAudioEnhanced: boolean;
+    referenceAudioOriginalDurationSeconds?: number | null;
+    referenceAudioTrimmed: boolean;
     text: string;
     url: string;
     modelUsed: string;
@@ -929,8 +980,11 @@ async function runBackgroundTasks(
       referenceAudioEnhancementRequestId:
         audioFileData.referenceAudioEnhancementRequestId,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
+      referenceAudioOriginalDurationSeconds:
+        audioFileData.referenceAudioOriginalDurationSeconds,
       referenceAudioProcessedMimeType:
         audioFileData.referenceAudioProcessedMimeType,
+      referenceAudioTrimmed: audioFileData.referenceAudioTrimmed,
       requestId: audioFileData.requestId,
       userHasPaid,
     },
@@ -962,8 +1016,11 @@ async function runBackgroundTasks(
         voiceCloningModel: audioFileData.modelUsed,
         locale: audioFileData.locale,
         referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
+        referenceAudioOriginalDurationSeconds:
+          audioFileData.referenceAudioOriginalDurationSeconds,
         referenceAudioProcessedMimeType:
           audioFileData.referenceAudioProcessedMimeType,
+        referenceAudioTrimmed: audioFileData.referenceAudioTrimmed,
         userHasPaid,
       },
     });
@@ -984,6 +1041,9 @@ async function runBackgroundTasks(
         audioFileData.referenceAudioEnhancementDurationSeconds ?? null,
       referenceAudioEnhancementModel:
         audioFileData.referenceAudioEnhancementModel,
+      referenceAudioOriginalDurationSeconds:
+        audioFileData.referenceAudioOriginalDurationSeconds ?? null,
+      referenceAudioTrimmed: audioFileData.referenceAudioTrimmed,
       text: audioFileData.text,
       locale: audioFileData.locale,
       generatedAudioUrl: audioFileData.url,
@@ -1034,10 +1094,12 @@ export async function POST(request: Request) {
     referenceAudioFile = formInput.file;
 
     // Validate inputs
-    validateTextLength(text, locale);
     validateFileType(referenceAudioFile);
     validateFileSize(referenceAudioFile);
     validateLocale(locale);
+
+    const userHasPaid = await hasUserPaid(user.id);
+    validateTextLength(text, locale, userHasPaid);
 
     // Check credits
     const { currentAmount, estimate } = await validateCredits(
@@ -1061,7 +1123,6 @@ export async function POST(request: Request) {
     let referenceAudioEnhancementDollarAmount = 0;
     let referenceAudioEnhancementDurationSeconds: number | null = null;
 
-    const userHasPaid = await hasUserPaid(user.id);
     const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
     let filename = await createCloneOutputFilename({
       audioHash: processedAudio.audioHash,
@@ -1124,7 +1185,9 @@ export async function POST(request: Request) {
             enhancedAudio.mimeType,
           ),
           mimeType: enhancedAudio.mimeType,
+          originalDuration: processedAudio.originalDuration,
           publicUrl: enhancedAudio.publicUrl,
+          wasTrimmed: processedAudio.wasTrimmed,
         };
       } catch (enhancementError) {
         captureException(enhancementError, {
@@ -1211,7 +1274,7 @@ export async function POST(request: Request) {
         cloneInputAudio.mimeType,
       );
 
-      const result = await generateVoiceWithReplicate(
+      const result = await cloneVoiceWithReplicate(
         text,
         locale,
         referenceAudioUrl,
@@ -1238,6 +1301,8 @@ export async function POST(request: Request) {
         referenceAudioEnhanced,
         referenceAudioEnhancementModel: enhancementModelUsed,
         referenceAudioEnhancementRequestId: enhancementRequestId,
+        referenceAudioOriginalDurationSeconds: processedAudio.originalDuration,
+        referenceAudioTrimmed: processedAudio.wasTrimmed,
         text,
         url: outputUrl,
         modelUsed,

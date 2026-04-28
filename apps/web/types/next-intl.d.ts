@@ -1,4 +1,5 @@
 import 'next-intl';
+
 import type { i18n } from '@/lib/i18n/i18n-config';
 import type messages from '@/messages/en.json';
 

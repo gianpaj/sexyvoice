@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   CircleStop,
+  Crown,
   Download,
   PaperclipIcon,
   UploadIcon,
@@ -32,9 +33,19 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
-import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import {
+  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
+import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -106,9 +117,8 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
 };
 
 const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
-const DEFAULT_MAX_AUDIO_DURATION_SECONDS = 5 * 60;
+const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
-const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
 
 const formatCloneMessage = (
   message: string,
@@ -153,10 +163,12 @@ export default function NewVoiceClient({
   dict,
   lang,
   hasEnoughCredits,
+  userHasPaid,
 }: {
   dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
+  userHasPaid: boolean;
 }) {
   return (
     <AudioProvider>
@@ -164,22 +176,23 @@ export default function NewVoiceClient({
         dict={dict}
         hasEnoughCredits={hasEnoughCredits}
         lang={lang}
+        userHasPaid={userHasPaid}
       />
     </AudioProvider>
   );
 }
-
-const MAX_LENGTH = 500;
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing clone form coordinates upload, recording, conversion, and preview state.
 function NewVoiceClientInner({
   dict,
   lang,
   hasEnoughCredits,
+  userHasPaid,
 }: {
   dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
+  userHasPaid: boolean;
 }) {
   const {
     convert: convertWithFFmpeg,
@@ -217,11 +230,11 @@ function NewVoiceClientInner({
       usesVoxtral
         ? {
             min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
-            max: VOXTRAL_MAX_AUDIO_DURATION_SECONDS,
+            max: null,
           }
         : {
             min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
-            max: DEFAULT_MAX_AUDIO_DURATION_SECONDS,
+            max: null,
           },
     [usesVoxtral],
   );
@@ -312,12 +325,18 @@ function NewVoiceClientInner({
   const localeSpecificReferenceAudioGuidance = usesVoxtral
     ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
         MIN: audioDurationGuidance.min,
-        MAX: audioDurationGuidance.max,
       })
     : formatCloneMessage(dict.referenceAudioGuidanceLong, {
         MIN: audioDurationGuidance.min,
-        MAX_MINUTES: Math.floor(audioDurationGuidance.max / 60),
+        TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
       });
+
+  const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
+  const paidVoxtralTextMaxLength = CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID;
+  const textLimitTooltip = formatCloneMessage(
+    userHasPaid ? dict.paidTextLimitTooltip : dict.upgradeTextLimitTooltip,
+    { MAX: paidVoxtralTextMaxLength },
+  );
 
   const getCloneErrorMessage = useCallback(
     (
@@ -591,7 +610,7 @@ function NewVoiceClientInner({
     setFFmpegError(null);
   };
 
-  const textIsOverLimit = text.length > MAX_LENGTH;
+  const textIsOverLimit = text.length > textMaxLength;
 
   return (
     <Card>
@@ -824,7 +843,7 @@ function NewVoiceClientInner({
                       className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                       disabled={status === 'generating'}
                       id="text-to-convert"
-                      maxLength={MAX_LENGTH + 30}
+                      maxLength={textMaxLength + 30}
                       onChange={(e) => setText(e.target.value)}
                       placeholder={dict.textAreaPlaceholder}
                       rows={5}
@@ -834,11 +853,38 @@ function NewVoiceClientInner({
                 </div>
                 <div
                   className={cn(
-                    '-mt-2 text-right text-muted-foreground text-sm',
+                    '-mt-2 flex items-center justify-end gap-1.5 text-right text-muted-foreground text-sm',
                     [textIsOverLimit ? 'font-bold text-red-500' : ''],
                   )}
                 >
-                  {text.length} / {MAX_LENGTH}
+                  <span>
+                    {text.length} / {textMaxLength}
+                  </span>
+                  {usesVoxtral && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <button
+                            aria-label={textLimitTooltip}
+                            className="inline-flex"
+                            type="button"
+                          >
+                            <Crown
+                              className={cn(
+                                'h-3.5 w-3.5 cursor-default',
+                                userHasPaid
+                                  ? 'text-muted-foreground/50'
+                                  : 'text-yellow-400',
+                              )}
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{textLimitTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               </div>
             </div>

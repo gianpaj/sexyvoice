@@ -114,10 +114,9 @@ const dict = {
   errorTitle: 'Error',
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
   audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
-  audioDurationInvalidFallback:
-    'Audio must be between __MIN__ seconds and __MAX_MINUTES__ minutes.',
+  audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
   audioDurationInvalidVoxtral:
-    'Reference audio must be between __MIN__ and __MAX__ seconds for voice cloning.',
+    'Reference audio must be at least __MIN__ seconds for voice cloning.',
   audioDurationUnknown: 'Could not determine audio duration.',
   audioProcessorError: 'Audio Processor Error',
   convertingAudio: 'Converting audio',
@@ -137,9 +136,13 @@ const dict = {
   preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
   previewTitle: 'Generated Voice Preview',
   referenceAudioGuidanceLong:
-    'Use a clear reference clip between __MIN__ seconds and __MAX_MINUTES__ minutes.',
+    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
   referenceAudioGuidanceShort:
-    'Use a clean single-speaker reference clip between __MIN__ and __MAX__ seconds. Neutral delivery works best.',
+    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Longer clips are trimmed automatically.',
+  paidTextLimitTooltip:
+    'Paid users can clone longer speech with up to __MAX__ characters.',
+  upgradeTextLimitTooltip:
+    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
   referenceAudioEnhancementHelp:
     'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
   referenceAudioEnhancementLabel: 'Reference audio enhancement',
@@ -165,10 +168,9 @@ const dict = {
       'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
     audioConversionRequiredWebm:
       'WebM audio must be converted before uploading. Please try recording again.',
-    audioDurationInvalidFallback:
-      'Audio must be between __MIN__ seconds and __MAX_MINUTES__ minutes.',
+    audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
     audioDurationInvalidVoxtral:
-      'Reference audio must be between __MIN__ and __MAX__ seconds for voice cloning.',
+      'Reference audio must be at least __MIN__ seconds for voice cloning.',
     audioDurationUnknown: 'Could not determine audio duration.',
     ffmpegLoading:
       'The audio converter is still loading. Please try again in a moment',
@@ -226,6 +228,7 @@ describe('NewVoiceClient', () => {
         dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
         hasEnoughCredits
         lang={'en' as any}
+        userHasPaid={false}
       />,
     );
 
@@ -236,6 +239,42 @@ describe('NewVoiceClient', () => {
     ).not.toBeChecked();
   });
 
+  it('shows the free Voxtral text limit by default', () => {
+    render(
+      <NewVoiceClient
+        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
+        hasEnoughCredits
+        lang={'en' as any}
+        userHasPaid={false}
+      />,
+    );
+
+    expect(screen.getByText('0 / 1000')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        'Upgrade to a paid plan to clone longer speech with up to 4000 characters.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the paid Voxtral text limit for paid users', () => {
+    render(
+      <NewVoiceClient
+        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
+        hasEnoughCredits
+        lang={'en' as any}
+        userHasPaid
+      />,
+    );
+
+    expect(screen.getByText('0 / 4000')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        'Paid users can clone longer speech with up to 4000 characters.',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('submits enhanceReferenceAudio=true when the toggle is enabled', async () => {
     const user = userEvent.setup();
 
@@ -244,6 +283,7 @@ describe('NewVoiceClient', () => {
         dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
         hasEnoughCredits
         lang={'en' as any}
+        userHasPaid={false}
       />,
     );
 
@@ -300,6 +340,7 @@ describe('NewVoiceClient', () => {
         dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
         hasEnoughCredits
         lang={'en' as any}
+        userHasPaid={false}
       />,
     );
 

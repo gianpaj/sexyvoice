@@ -15,48 +15,30 @@ import {
 } from './setup';
 
 // Helper function to create a minimal valid WAV header
-const createWavHeader = (): Uint8Array => {
-  return new Uint8Array([
-    // "RIFF" chunk descriptor
-    0x52,
-    0x49,
-    0x46,
-    0x46, // "RIFF"
-    0x24,
-    0x00,
-    0x00,
-    0x00, // File size - 8 (36 bytes for minimal WAV)
-    // "WAVE" format
-    0x57,
-    0x41,
-    0x56,
-    0x45, // "WAVE"
-    // "fmt " subchunk
-    0x66,
-    0x6d,
-    0x74,
-    0x20, // "fmt "
-    0x10,
-    0x00,
-    0x00,
-    0x00, // Subchunk1Size (16 for PCM)
-    0x01,
-    0x00, // AudioFormat (1 for PCM)
-    0x01,
-    0x00, // NumChannels (1)
-    0x44,
-    0xac,
-    0x00,
-    0x00, // SampleRate (44100)
-    0x88,
-    0x58,
-    0x01,
-    0x00, // ByteRate
-    0x02,
-    0x00, // BlockAlign
-    0x10,
-    0x00, // BitsPerSample (16)
-  ]);
+const createWavHeader = (dataSize: number): Uint8Array => {
+  const buffer = new ArrayBuffer(44);
+  const view = new DataView(buffer);
+  const writeString = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i++) {
+      view.setUint8(offset + i, value.charCodeAt(i));
+    }
+  };
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 44_100, true);
+  view.setUint32(28, 88_200, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  return new Uint8Array(buffer);
 };
 
 // Helper function to create a mock audio file
@@ -67,11 +49,11 @@ const createMockAudioFile = (
 ) => {
   // Create a minimal valid WAV buffer
   // WAV files must start with "RIFF" and have "WAVE" at byte 8
-  const headerSize = 40;
+  const headerSize = 44;
   const dataSize = Math.max(0, size - headerSize);
 
   // Create header
-  const wavHeader = createWavHeader();
+  const wavHeader = createWavHeader(dataSize);
 
   // Create padding data
   const padding = new Uint8Array(dataSize);
@@ -169,8 +151,8 @@ describe('Clone Voice API Route', () => {
       );
     });
 
-    it('should return 400 when text exceeds maximum length for English', async () => {
-      const longText = 'a'.repeat(501); // Exceeds 500 char limit for English
+    it('should return 400 when free Voxtral text exceeds 1000 characters', async () => {
+      const longText = 'a'.repeat(1001);
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
@@ -187,18 +169,44 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toContain(
-        'Text exceeds the maximum length of 500 characters',
+        'Text exceeds the maximum length of 1000 characters',
       );
       expect(json.code).toBe('errors.textTooLong');
-      expect(json.details).toEqual({ MAX: 500 });
+      expect(json.details).toEqual({ MAX: 1000 });
     });
 
-    it('should return 400 when text exceeds multilingual maximum length (300 chars)', async () => {
-      const longText = 'a'.repeat(301); // Exceeds 300 char limit for multilingual
+    it('should return 400 when paid Voxtral text exceeds 4000 characters', async () => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const longText = 'a'.repeat(4001);
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
-        'es',
+        'en',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain(
+        'Text exceeds the maximum length of 4000 characters',
+      );
+      expect(json.code).toBe('errors.textTooLong');
+      expect(json.details).toEqual({ MAX: 4000 });
+    });
+
+    it('should return 400 when non-Voxtral text exceeds 300 characters', async () => {
+      const longText = 'a'.repeat(301);
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'ja',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -213,15 +221,42 @@ describe('Clone Voice API Route', () => {
       expect(json.serverMessage).toContain(
         'Text exceeds the maximum length of 300 characters',
       );
-      expect(json.serverMessage).toContain('multilingual');
+      expect(json.code).toBe('errors.textTooLong');
+      expect(json.details).toEqual({ MAX: 300 });
     });
 
-    it('should accept text up to 300 chars for multilingual locales', async () => {
+    it('should keep non-Voxtral text capped at 300 characters for paid users', async () => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const longText = 'a'.repeat(301);
+      const formData = createFormDataWithAudio(
+        longText,
+        createMockAudioFile(),
+        'ja',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain(
+        'Text exceeds the maximum length of 300 characters',
+      );
+      expect(json.code).toBe('errors.textTooLong');
+      expect(json.details).toEqual({ MAX: 300 });
+    });
+
+    it('should accept text up to 300 chars for non-Voxtral locales', async () => {
       const validText = 'a'.repeat(300); // Exactly 300 chars - at the limit
       const formData = createFormDataWithAudio(
         validText,
         createMockAudioFile(),
-        'de',
+        'ja',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -241,8 +276,8 @@ describe('Clone Voice API Route', () => {
       }
     });
 
-    it('should accept text up to 500 chars for English locale', async () => {
-      const validText = 'a'.repeat(500); // Exactly 500 chars - at the limit
+    it('should accept text up to 1000 chars for free Voxtral locales', async () => {
+      const validText = 'a'.repeat(1000);
       const formData = createFormDataWithAudio(
         validText,
         createMockAudioFile(),
@@ -261,17 +296,19 @@ describe('Clone Voice API Route', () => {
       if (response.status === 400) {
         const json = await response.json();
         expect(json.serverMessage).not.toContain(
-          'Text exceeds the maximum length of 500 characters',
+          'Text exceeds the maximum length of 1000 characters',
         );
       }
     });
 
-    it('should enforce 300 char limit for French multilingual', async () => {
-      const longText = 'Bonjour '.repeat(50); // Exceeds 300 chars
+    it('should accept text up to 4000 chars for paid Voxtral locales', async () => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const validText = 'a'.repeat(4000);
       const formData = createFormDataWithAudio(
-        longText,
+        validText,
         createMockAudioFile(),
-        'fr',
+        'en',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -280,30 +317,13 @@ describe('Clone Voice API Route', () => {
       });
 
       const response = await POST(request);
-      const json = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(json.serverMessage).toContain('300 characters');
-    });
-
-    it('should enforce 300 char limit for Japanese multilingual', async () => {
-      const longText = 'こんにちは'.repeat(100); // Exceeds 300 chars
-      const formData = createFormDataWithAudio(
-        longText,
-        createMockAudioFile(),
-        'ja',
-      );
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(json.serverMessage).toContain('300 characters');
+      if (response.status === 400) {
+        const json = await response.json();
+        expect(json.serverMessage).not.toContain(
+          'Text exceeds the maximum length of 4000 characters',
+        );
+      }
     });
 
     it('should return 400 when file type is invalid', async () => {
@@ -378,24 +398,35 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe(
-        'Reference audio must be between 3 and 25 seconds for voice cloning.',
+        'Reference audio must be at least 3 seconds for voice cloning.',
       );
       expect(json.code).toBe('errors.audioDurationInvalidVoxtral');
       expect(json.details).toMatchObject({
         MIN: 3,
-        MAX: 25,
       });
     });
 
-    it('should return 400 when Voxtral reference audio duration is too long', async () => {
+    it('should trim Voxtral reference audio when duration is too long', async () => {
       const musicMetadata = await import('music-metadata');
-      vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
-        format: { duration: 26 }, // More than 25 seconds
-      } as any);
+      vi.mocked(musicMetadata.parseBuffer)
+        .mockResolvedValueOnce({
+          format: { duration: 26 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 26 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 25 },
+        } as any);
 
+      const longAudioFile = createMockAudioFile(
+        'long-reference.wav',
+        'audio/wav',
+        44 + 26 * 44_100 * 2,
+      );
       const formData = createFormDataWithAudio(
         'Hello world',
-        createMockAudioFile(),
+        longAudioFile,
         'en',
       );
 
@@ -406,12 +437,12 @@ describe('Clone Voice API Route', () => {
 
       const response = await POST(request);
       const json = await response.json();
+      const trimmedBuffer = vi.mocked(musicMetadata.parseBuffer).mock
+        .calls[2]?.[0] as Buffer;
 
-      expect(response.status).toBe(400);
-      expect(json.serverMessage).toBe(
-        'Reference audio must be between 3 and 25 seconds for voice cloning.',
-      );
-      expect(json.code).toBe('errors.audioDurationInvalidVoxtral');
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(trimmedBuffer.length).toBe(44 + 25 * 44_100 * 2);
     });
 
     it('should return 400 when audio duration cannot be determined', async () => {
@@ -891,15 +922,120 @@ describe('Clone Voice API Route', () => {
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
-    it('should reject long clips before invoking reference enhancement', async () => {
+    it('should trim long fallback clips before invoking reference enhancement', async () => {
       const musicMetadata = await import('music-metadata');
-      vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValueOnce({
-        format: { duration: 61 },
-      } as any);
+      vi.mocked(musicMetadata.parseBuffer)
+        .mockResolvedValueOnce({
+          format: { duration: 61 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 61 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 10 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 10 },
+        } as any);
 
       const formData = createFormDataWithAudio(
         'Hello world',
-        createMockAudioFile(),
+        createMockAudioFile('long-reference.wav'),
+        'ja',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+      await flushPromises();
+
+      expect(response.status).toBe(200);
+      expect(json.creditsUsed).toBe(232);
+      expect(mockFalSubscribe).toHaveBeenCalled();
+      expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          sourceType: 'audio_processing',
+          quantity: 10,
+          durationSeconds: 10,
+          creditsUsed: 100,
+          dollarAmount: 0.01,
+          metadata: expect.objectContaining({
+            referenceAudioOriginalDurationSeconds: 61,
+            referenceAudioTrimmed: true,
+          }),
+        }),
+      );
+    });
+
+    it('should upload only the first 10 seconds for long fallback clips', async () => {
+      const musicMetadata = await import('music-metadata');
+      vi.mocked(musicMetadata.parseBuffer)
+        .mockResolvedValueOnce({
+          format: { duration: 30 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 30 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 10 },
+        } as any);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(
+          'long-reference.wav',
+          'audio/wav',
+          44 + 30 * 44_100 * 2,
+        ),
+        'ja',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+      const referenceUploadCall = vi.mocked(mockUploadFileToR2).mock.calls[0];
+      const uploadedReferenceBuffer = referenceUploadCall?.[1] as Buffer;
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(referenceUploadCall?.[0]).toContain('clone-voice-input/');
+      expect(uploadedReferenceBuffer.length).toBe(44 + 10 * 44_100 * 2);
+      expect(referenceUploadCall?.[2]).toBe('audio/wav');
+    });
+
+    it('should trim long Voxtral clips before invoking reference enhancement', async () => {
+      const musicMetadata = await import('music-metadata');
+      vi.mocked(musicMetadata.parseBuffer)
+        .mockResolvedValueOnce({
+          format: { duration: 30 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 30 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 25 },
+        } as any)
+        .mockResolvedValueOnce({
+          format: { duration: 25 },
+        } as any);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(
+          'long-reference.wav',
+          'audio/wav',
+          44 + 30 * 44_100 * 2,
+        ),
         'en',
         true,
       );
@@ -911,12 +1047,25 @@ describe('Clone Voice API Route', () => {
 
       const response = await POST(request);
       const json = await response.json();
+      await flushPromises();
 
-      expect(response.status).toBe(400);
-      expect(json.code).toBe('errors.referenceAudioEnhancementInputTooLong');
-      expect(json.details).toEqual({ MAX: 60 });
-      expect(mockFalSubscribe).not.toHaveBeenCalled();
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(json.creditsUsed).toBe(382);
+      expect(mockFalSubscribe).toHaveBeenCalled();
+      expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          sourceType: 'audio_processing',
+          quantity: 25,
+          durationSeconds: 25,
+          creditsUsed: 250,
+          dollarAmount: 0.025,
+          metadata: expect.objectContaining({
+            referenceAudioOriginalDurationSeconds: 30,
+            referenceAudioTrimmed: true,
+          }),
+        }),
+      );
     });
   });
 
