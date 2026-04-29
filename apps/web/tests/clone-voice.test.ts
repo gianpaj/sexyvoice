@@ -472,6 +472,10 @@ describe('Clone Voice API Route', () => {
 
     it('should accept valid OGG audio when duration is available via format options', async () => {
       const musicMetadata = await import('music-metadata');
+      const convertToWavModule = await import('@/lib/audio-converter');
+      vi.spyOn(convertToWavModule, 'convertToWav').mockResolvedValueOnce(
+        Buffer.from(await createMockAudioFile().arrayBuffer()),
+      );
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
         format: {
           container: 'Ogg',
@@ -504,6 +508,10 @@ describe('Clone Voice API Route', () => {
 
     it('should accept valid OGG audio when duration is available via format options', async () => {
       const musicMetadata = await import('music-metadata');
+      const convertToWavModule = await import('@/lib/audio-converter');
+      vi.spyOn(convertToWavModule, 'convertToWav').mockResolvedValueOnce(
+        Buffer.from(await createMockAudioFile().arrayBuffer()),
+      );
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
         format: {
           container: 'Ogg',
@@ -1526,7 +1534,7 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Error Handling', () => {
-    it('should return 500 when audio conversion fails for non-English', async () => {
+    it('should return 400 when audio conversion fails for non-English', async () => {
       // Mock convertToWav to throw an error for multilingual
       const convertToWavModule = await import('@/lib/audio-converter');
       vi.spyOn(convertToWavModule, 'convertToWav').mockRejectedValueOnce(
@@ -1547,7 +1555,7 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       expect(json.error).toBeDefined();
       expect(json.error).toContain('Failed to convert audio format to WAV');
     });

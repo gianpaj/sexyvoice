@@ -661,7 +661,7 @@ async function processAudioFile(
           ? 'errors.audioConversionRequiredWebm'
           : 'errors.audioConversionFailed';
 
-      throw createRouteError(errorMsg, 500, errorCode, {
+      throw createRouteError(errorMsg, 400, errorCode, {
         mimeType: normalizedMimeType,
       });
     }
