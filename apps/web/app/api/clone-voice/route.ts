@@ -1047,7 +1047,9 @@ async function runBackgroundTasks(
       text: audioFileData.text,
       locale: audioFileData.locale,
       generatedAudioUrl: audioFileData.url,
-      credits_used: audioFileData.baseCloneCredits,
+      credits_used:
+        audioFileData.baseCloneCredits +
+        (audioFileData.referenceAudioEnhancementCredits ?? 0),
       userHasPaid,
     },
   });
