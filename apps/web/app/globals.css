@@ -453,8 +453,9 @@
       linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
   }
 
-  /* cursor: pointer behavior for Buttons */
+  /* cursor: pointer behavior for interactive controls */
   button:not(:disabled),
+  label[for],
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
