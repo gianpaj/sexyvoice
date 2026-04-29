@@ -580,7 +580,7 @@
     },
     "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles.",
     "referenceAudioEnhancementLabel": "Nettoyer l'audio de référence",
-    "referenceAudioEnhancementHelp": "Supprime le bruit de fond et améliore l'audio vocal. Recommandé pour les enregistrements bruyants ou réalisés sur téléphone.",
+    "referenceAudioEnhancementHelp": "Supprime le bruit de fond et améliore l'audio vocal. Recommandé pour les enregistrements bruyants ou réalisés sur téléphone. Cela coûte 10 crédits par seconde d'audio de référence découpé.",
     "errorEnhancingReferenceAudio": "Impossible d'améliorer l'audio de référence. Réessayez ou désactivez l'amélioration de l'audio de référence.",
     "failedToLoadAudioProcessor": "Impossible de charger le processeur audio",
     "failedToStartRecording": "Impossible de démarrer l'enregistrement : __ERROR__",

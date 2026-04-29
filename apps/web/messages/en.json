@@ -578,7 +578,7 @@
     },
     "legalConsentCheckbox": "By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.",
     "referenceAudioEnhancementLabel": "Clean up the reference audio",
-    "referenceAudioEnhancementHelp": "Removes background noise and enhances speech audio. Recommended for noisy or mobile phone recordings.",
+    "referenceAudioEnhancementHelp": "Removes background noise and enhances speech audio. Recommended for noisy or mobile phone recordings. This costs 10 credits per second of trimmed reference audio.",
     "errorEnhancingReferenceAudio": "Failed to enhance reference audio. Please try again or turn off reference audio enhancement.",
     "failedToLoadAudioProcessor": "Failed to load audio processor",
     "failedToStartRecording": "Failed to start recording: __ERROR__",

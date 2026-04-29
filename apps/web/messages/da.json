@@ -576,7 +576,7 @@
     },
     "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål.",
     "referenceAudioEnhancementLabel": "Rens referenceaudioen",
-    "referenceAudioEnhancementHelp": "Fjerner baggrundsstøj og forbedrer taleaudio. Anbefales til støjende optagelser eller optagelser fra mobiltelefon.",
+    "referenceAudioEnhancementHelp": "Fjerner baggrundsstøj og forbedrer taleaudio. Anbefales til støjende optagelser eller optagelser fra mobiltelefon. Dette koster 10 kreditter pr. sekund af det trimmede referenceaudio.",
     "errorEnhancingReferenceAudio": "Referenceaudio kunne ikke forbedres. Prøv igen, eller slå forbedring af referenceaudio fra.",
     "failedToLoadAudioProcessor": "Kunne ikke indlæse lydprocessoren",
     "failedToStartRecording": "Kunne ikke starte optagelse: __ERROR__",
