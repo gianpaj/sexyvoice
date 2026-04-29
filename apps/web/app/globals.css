@@ -455,6 +455,7 @@
 
   /* cursor: pointer behavior for Buttons */
   button:not(:disabled),
+  label:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
