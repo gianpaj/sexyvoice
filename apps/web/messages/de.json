@@ -580,7 +580,7 @@
     },
     "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden.",
     "referenceAudioEnhancementLabel": "Referenz-Audio bereinigen",
-    "referenceAudioEnhancementHelp": "Entfernt Hintergrundgeräusche und verbessert Sprachaufnahmen. Empfohlen für verrauschte oder mit dem Handy aufgenommene Audios.",
+    "referenceAudioEnhancementHelp": "Entfernt Hintergrundgeräusche und verbessert Sprachaufnahmen. Empfohlen für verrauschte oder mit dem Handy aufgenommene Audios. Dies kostet 10 Credits pro Sekunde des zugeschnittenen Referenz-Audios.",
     "errorEnhancingReferenceAudio": "Das Referenz-Audio konnte nicht verbessert werden. Bitte versuchen Sie es erneut oder deaktivieren Sie die Referenz-Audio-Verbesserung.",
     "failedToLoadAudioProcessor": "Audioprozessor konnte nicht geladen werden",
     "failedToStartRecording": "Aufnahme konnte nicht gestartet werden: __ERROR__",
