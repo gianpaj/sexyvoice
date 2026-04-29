@@ -552,6 +552,7 @@
       "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
       "audioDurationUnknown": "Could not determine audio duration.",
       "fileTooLarge": "File size too large. Please use a smaller audio file.",
+      "guardrailViolation": "This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.",
       "insufficientCredits": "You need __CREDITS__ credits to clone this audio.",
       "internalError": "Failed to clone voice. Please try again.",
       "invalidContentType": "The upload request is invalid. Please try again.",

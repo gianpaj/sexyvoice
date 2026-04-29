@@ -128,6 +128,12 @@ interface FormInput {
   text: string;
 }
 
+interface MistralSdkErrorLike {
+  body?: unknown;
+  message?: unknown;
+  statusCode?: unknown;
+}
+
 type RouteErrorDetails = Record<string, boolean | number | string | null>;
 
 type CloneRouteErrorCode =
@@ -137,6 +143,7 @@ type CloneRouteErrorCode =
   | 'errors.audioDurationInvalidVoxtral'
   | 'errors.audioDurationUnknown'
   | 'errors.fileTooLarge'
+  | 'errors.guardrailViolation'
   | 'errors.insufficientCredits'
   | 'errors.internalError'
   | 'errors.invalidContentType'
@@ -724,6 +731,59 @@ async function processAudioFile(
   };
 }
 
+function getMistralErrorPayload(error: unknown): {
+  body?: string;
+  code?: string;
+  message?: string;
+  rawStatusCode?: number;
+  statusCode?: number;
+  type?: string;
+} {
+  if (!(error && typeof error === 'object')) {
+    return {};
+  }
+
+  const sdkError = error as MistralSdkErrorLike;
+  const statusCode =
+    typeof sdkError.statusCode === 'number' ? sdkError.statusCode : undefined;
+  const body = typeof sdkError.body === 'string' ? sdkError.body : undefined;
+  const message =
+    typeof sdkError.message === 'string' ? sdkError.message : undefined;
+
+  if (!body) {
+    return { message, statusCode };
+  }
+
+  try {
+    const parsed = JSON.parse(body) as Record<string, unknown>;
+    return {
+      body,
+      code: typeof parsed.code === 'string' ? parsed.code : undefined,
+      message: typeof parsed.message === 'string' ? parsed.message : message,
+      rawStatusCode:
+        typeof parsed.raw_status_code === 'number'
+          ? parsed.raw_status_code
+          : undefined,
+      statusCode,
+      type: typeof parsed.type === 'string' ? parsed.type : undefined,
+    };
+  } catch {
+    return { body, message, statusCode };
+  }
+}
+
+function isMistralGuardrailError(error: unknown): boolean {
+  const payload = getMistralErrorPayload(error);
+  const statusCode = payload.statusCode ?? payload.rawStatusCode;
+
+  return (
+    statusCode === 403 &&
+    (payload.type === 'guardrail_violation' ||
+      payload.code === '1920' ||
+      payload.message?.toLowerCase().includes('guardrail') === true)
+  );
+}
+
 // ============================================================================
 // Voice Generation Functions
 // ============================================================================
@@ -735,12 +795,37 @@ async function generateVoiceWithMistral(
   const model = 'voxtral-mini-tts-2603';
   const client = getMistralClient();
 
-  const response = await client.audio.speech.complete({
-    model,
-    input: text,
-    refAudio: referenceAudioBuffer.toString('base64'),
-    responseFormat: 'wav',
-  });
+  let response: Awaited<ReturnType<typeof client.audio.speech.complete>>;
+  try {
+    response = await client.audio.speech.complete({
+      model,
+      input: text,
+      refAudio: referenceAudioBuffer.toString('base64'),
+      responseFormat: 'wav',
+    });
+  } catch (error) {
+    if (isMistralGuardrailError(error)) {
+      const payload = getMistralErrorPayload(error);
+      logger.info('Mistral guardrail blocked voice cloning request', {
+        extra: {
+          code: payload.code ?? null,
+          model,
+          rawStatusCode: payload.rawStatusCode ?? null,
+          statusCode: payload.statusCode ?? null,
+          type: payload.type ?? null,
+        },
+      });
+
+      throw createRouteError(
+        'This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.',
+        403,
+        'errors.guardrailViolation',
+        { provider: 'mistral' },
+      );
+    }
+
+    throw error;
+  }
 
   const audioData = response.audioData;
   if (!audioData) {

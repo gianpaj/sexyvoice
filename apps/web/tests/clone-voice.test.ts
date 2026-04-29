@@ -7,6 +7,7 @@ import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,
   mockFalSubscribe,
+  mockMistralSpeechComplete,
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
@@ -1097,6 +1098,51 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
+    });
+
+    it('should return a translated client error for Mistral guardrail violations', async () => {
+      const guardrailBody = {
+        object: 'error',
+        message: 'Request blocked by guardrail policy',
+        type: 'guardrail_violation',
+        param: null,
+        code: '1920',
+        raw_status_code: 403,
+      };
+      const guardrailError = Object.assign(
+        new Error(
+          `API error occurred: Status 403. Body: ${JSON.stringify(guardrailBody)}`,
+        ),
+        {
+          body: JSON.stringify(guardrailBody),
+          name: 'SDKError',
+          statusCode: 403,
+        },
+      );
+      mockMistralSpeechComplete.mockRejectedValueOnce(guardrailError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1'),
+        'en',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(json.code).toBe('errors.guardrailViolation');
+      expect(json.serverMessage).toBe(
+        'This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.',
+      );
+      expect(json.details).toEqual({ provider: 'mistral' });
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
     it('should optionally enhance reference audio before cloning with Mistral', async () => {

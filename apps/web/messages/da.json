@@ -550,6 +550,7 @@
       "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
       "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
       "fileTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
+      "guardrailViolation": "Denne anmodning blev blokeret af en tredjeparts sikkerhedspolitik for stemmekloning. Prøv med en anden tekst eller en anden referencelyd.",
       "insufficientCredits": "Du skal bruge __CREDITS__ kreditter for at klone denne lyd.",
       "internalError": "Kunne ikke klone stemmen. Prøv igen.",
       "invalidContentType": "Uploadanmodningen er ugyldig. Prøv igen.",

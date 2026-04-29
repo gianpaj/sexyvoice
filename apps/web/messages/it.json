@@ -554,6 +554,7 @@
       "audioDurationInvalidVoxtral": "L'audio di riferimento deve durare almeno __MIN__ secondi per la clonazione vocale.",
       "audioDurationUnknown": "Impossibile determinare la durata dell'audio.",
       "fileTooLarge": "File troppo grande. Usa un file audio più piccolo.",
+      "guardrailViolation": "Questa richiesta è stata bloccata da una policy di sicurezza di terze parti per la clonazione vocale. Prova con un testo diverso o con un altro audio di riferimento.",
       "insufficientCredits": "Servono __CREDITS__ crediti per clonare questo audio.",
       "internalError": "Impossibile clonare la voce. Riprova.",
       "invalidContentType": "La richiesta di caricamento non è valida. Riprova.",
