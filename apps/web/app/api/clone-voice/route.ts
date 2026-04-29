@@ -1352,7 +1352,8 @@ export async function POST(request: Request) {
       console.error(errorObj);
     }
 
-    const serverMessage = Error.isError(error) ? error.message : String(error);
+    const serverMessage =
+      'An unexpected error occurred while cloning voice. Please try again.';
 
     return NextResponse.json(
       {

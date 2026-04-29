@@ -1355,7 +1355,10 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toContain('API quota exceeded');
+      expect(json.error).toBe(
+        'An unexpected error occurred while cloning voice. Please try again.',
+      );
+      expect(json.code).toBe('errors.internalError');
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -1578,7 +1581,13 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBeDefined();
-      expect(json.error).toContain('Database connection failed');
+      expect(json.error).toBe(
+        'An unexpected error occurred while cloning voice. Please try again.',
+      );
+      expect(json.serverMessage).toBe(
+        'An unexpected error occurred while cloning voice. Please try again.',
+      );
+      expect(json.code).toBe('errors.internalError');
     });
 
     it('should log errors to Sentry', async () => {
