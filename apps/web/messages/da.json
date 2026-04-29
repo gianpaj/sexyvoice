@@ -581,7 +581,7 @@
     "failedToLoadAudioProcessor": "Kunne ikke indlæse lydprocessoren",
     "failedToStartRecording": "Kunne ikke starte optagelse: __ERROR__",
     "microphoneError": "Mikrofonfejl",
-    "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst __MIN__ sekunder. Længere klip trimmes automatisk.",
+    "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
     "referenceAudioGuidanceLong": "Brug et klart referenceklip på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
     "paidTextLimitTooltip": "Betalende brugere kan klone længere tale med op til __MAX__ tegn.",
     "upgradeTextLimitTooltip": "Opgrader til en betalt plan for at klone længere tale med op til __MAX__ tegn.",

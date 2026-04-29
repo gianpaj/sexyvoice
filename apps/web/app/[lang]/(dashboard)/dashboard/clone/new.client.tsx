@@ -119,6 +119,7 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
 const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
+const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
 
 const formatCloneMessage = (
   message: string,
@@ -325,6 +326,7 @@ function NewVoiceClientInner({
   const localeSpecificReferenceAudioGuidance = usesVoxtral
     ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
         MIN: audioDurationGuidance.min,
+        TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
       })
     : formatCloneMessage(dict.referenceAudioGuidanceLong, {
         MIN: audioDurationGuidance.min,

@@ -138,7 +138,7 @@ const dict = {
   referenceAudioGuidanceLong:
     'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
   referenceAudioGuidanceShort:
-    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Longer clips are trimmed automatically.',
+    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
   paidTextLimitTooltip:
     'Paid users can clone longer speech with up to __MAX__ characters.',
   upgradeTextLimitTooltip:

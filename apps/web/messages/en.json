@@ -583,7 +583,7 @@
     "failedToLoadAudioProcessor": "Failed to load audio processor",
     "failedToStartRecording": "Failed to start recording: __ERROR__",
     "microphoneError": "Microphone error",
-    "referenceAudioGuidanceShort": "For best results: a clean, single-speaker clip at least __MIN__ seconds long. Longer clips are trimmed automatically.",
+    "referenceAudioGuidanceShort": "For best results: use a clean, single-speaker clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
     "referenceAudioGuidanceLong": "Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
     "paidTextLimitTooltip": "Paid users can clone longer speech with up to __MAX__ characters.",
     "upgradeTextLimitTooltip": "Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.",

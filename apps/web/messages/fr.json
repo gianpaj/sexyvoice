@@ -585,7 +585,7 @@
     "failedToLoadAudioProcessor": "Impossible de charger le processeur audio",
     "failedToStartRecording": "Impossible de démarrer l'enregistrement : __ERROR__",
     "microphoneError": "Erreur de microphone",
-    "referenceAudioGuidanceShort": "Pour de meilleurs résultats : utilisez un clip de référence propre avec un seul locuteur, d'au moins __MIN__ secondes. Les clips plus longs sont coupés automatiquement.",
+    "referenceAudioGuidanceShort": "Pour de meilleurs résultats : utilisez un clip de référence propre avec un seul locuteur, d'au moins __MIN__ secondes. Seules les __TRIM_SECONDS__ premières secondes sont utilisées.",
     "referenceAudioGuidanceLong": "Utilisez un clip de référence clair d'au moins __MIN__ secondes. Seules les __TRIM_SECONDS__ premières secondes sont utilisées.",
     "paidTextLimitTooltip": "Les utilisateurs payants peuvent cloner une parole plus longue avec jusqu'à __MAX__ caractères.",
     "upgradeTextLimitTooltip": "Passez à une offre payante pour cloner une parole plus longue avec jusqu'à __MAX__ caractères.",
