@@ -160,9 +160,11 @@ export default function DashboardUI({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
-              <div className="group-data-[collapsible=icon]:hidden">
-                <Inbox />
-              </div>
+              {process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER && (
+                <div className="group-data-[collapsible=icon]:hidden">
+                  <Inbox />
+                </div>
+              )}
             </SidebarHeader>
 
             <SidebarContent>
