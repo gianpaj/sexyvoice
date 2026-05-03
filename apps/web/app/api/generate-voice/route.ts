@@ -199,6 +199,7 @@ export async function POST(request: Request) {
     let modelUsed = '';
     let uploadUrl = '';
     let selectedGrokCodec = outputCodec;
+    let grokCostInUsdTicks: number | undefined;
 
     if (isGeminiVoice) {
       let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -426,7 +427,12 @@ export async function POST(request: Request) {
       modelUsed = voiceObj.model;
 
       try {
-        const { audioBuffer, codec, contentType } = await generateXaiTts({
+        const {
+          audioBuffer,
+          codec,
+          contentType,
+          costInUsdTicks,
+        } = await generateXaiTts({
           text,
           voiceId: voiceObj.name,
           language: selectedLanguage || voiceObj.language,
@@ -434,6 +440,7 @@ export async function POST(request: Request) {
           signal: abortController.signal,
         });
         selectedGrokCodec = codec;
+        grokCostInUsdTicks = costInUsdTicks;
         uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
       } catch (error) {
         const errorObj = {
@@ -541,6 +548,12 @@ export async function POST(request: Request) {
 
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
+      // 1 USD tick = $0.000_000_001 (1 nanotick)
+      const grokDollarAmount =
+        grokCostInUsdTicks !== undefined
+          ? grokCostInUsdTicks / 1_000_000_000
+          : undefined;
+
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
@@ -555,6 +568,9 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           userHasPaid,
+          ...(isGrokVoice && grokCostInUsdTicks !== undefined
+            ? { costInUsdTicks: grokCostInUsdTicks, dollarAmount: grokDollarAmount }
+            : {}),
         },
       });
 
@@ -580,6 +596,7 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
+        ...(isGrokVoice ? { dollarAmount: grokDollarAmount ?? null } : {}),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
@@ -590,7 +607,14 @@ export async function POST(request: Request) {
           isGeminiVoice,
           userHasPaid,
           predictionId: replicateResponse?.id ?? null,
-          ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
+          ...(isGrokVoice
+            ? {
+                codec: selectedGrokCodec,
+                ...(grokCostInUsdTicks !== undefined
+                  ? { costInUsdTicks: grokCostInUsdTicks }
+                  : {}),
+              }
+            : {}),
         },
       });
 

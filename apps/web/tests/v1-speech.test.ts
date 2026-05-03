@@ -201,6 +201,15 @@ describe('V1 Speech API Route', () => {
   // -------------------------------------------------------------------------
   describe('Grok TTS Generation', () => {
     it('should successfully generate voice using Grok with default mp3 format', async () => {
+      const { insertUsageEvent, saveAudioFileAdmin } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      const xaiAudioBase64 = Buffer.from(
+        new Uint8Array([1, 2, 3, 4]),
+      ).toString('base64');
+      const xaiCostInUsdTicks = 1650;
+
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {
           const body = (await request.json()) as {
@@ -215,9 +224,12 @@ describe('V1 Speech API Route', () => {
           expect(body.language).toBe('en');
           expect(body.output_format.codec).toBe('mp3');
 
-          return HttpResponse.arrayBuffer(
-            new Uint8Array([1, 2, 3, 4]).buffer,
-            { headers: { 'Content-Type': 'audio/mpeg' } },
+          return HttpResponse.json(
+            {
+              audio: xaiAudioBase64,
+              usage: { cost_in_usd_ticks: xaiCostInUsdTicks, characters: 11 },
+            },
+            { headers: { 'Content-Type': 'application/json' } },
           );
         }),
       );
@@ -234,6 +246,29 @@ describe('V1 Speech API Route', () => {
       expect(json.credits_remaining).toBeDefined();
       expect(json.usage.input_characters).toBe(11);
       expect(json.usage.model).toBe('grok');
+
+      const expectedDollarAmount = Number.parseFloat(
+        (xaiCostInUsdTicks / 1_000_000_000).toFixed(6),
+      );
+
+      expect(saveAudioFileAdmin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usage: expect.objectContaining({
+            costInUsdTicks: xaiCostInUsdTicks,
+            dollarAmount: expectedDollarAmount,
+          }),
+        }),
+      );
+
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dollarAmount: expectedDollarAmount,
+          metadata: expect.objectContaining({
+            costInUsdTicks: xaiCostInUsdTicks,
+            isGrokVoice: true,
+          }),
+        }),
+      );
     });
 
     it('should generate voice using Grok with wav format', async () => {

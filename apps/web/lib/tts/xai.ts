@@ -12,6 +12,16 @@ export interface GenerateXaiTtsResult {
   audioBuffer: Buffer;
   codec: XaiTtsCodec;
   contentType: string;
+  /** Raw cost value from xAI response usage object (1 tick = $0.000_000_001 USD) */
+  costInUsdTicks?: number;
+}
+
+interface XaiTtsJsonResponse {
+  audio?: string;
+  usage?: {
+    cost_in_usd_ticks?: number;
+    characters?: number;
+  };
 }
 
 const XAI_TTS_URL = 'https://api.x.ai/v1/tts';
@@ -137,6 +147,25 @@ export async function generateXaiTts({
         cause: 'XAI_TTS_ERROR',
       },
     );
+  }
+
+  const contentType = response.headers.get('content-type') ?? '';
+
+  if (contentType.includes('application/json')) {
+    const json = (await response.json()) as XaiTtsJsonResponse;
+    const audioBase64 = json.audio;
+    if (!audioBase64) {
+      throw new Error('xAI TTS JSON response missing audio field', {
+        cause: 'XAI_TTS_ERROR',
+      });
+    }
+    const audioBuffer = Buffer.from(audioBase64, 'base64');
+    return {
+      audioBuffer,
+      codec: normalizedCodec,
+      contentType: getXaiContentType(normalizedCodec),
+      costInUsdTicks: json.usage?.cost_in_usd_ticks,
+    };
   }
 
   const audioBuffer = Buffer.from(await response.arrayBuffer());

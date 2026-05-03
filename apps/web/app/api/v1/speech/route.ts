@@ -268,6 +268,7 @@ export async function POST(request: Request) {
     let uploadUrl: string;
     let replicateResponse: Prediction | undefined;
     let geminiResponse: GenerateContentResponse | null = null;
+    let grokCostInUsdTicks: number | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -367,12 +368,17 @@ export async function POST(request: Request) {
       const codec = normalizeXaiTtsCodec(chosenFormat);
 
       try {
-        const { audioBuffer, contentType } = await generateXaiTts({
+        const {
+          audioBuffer,
+          contentType,
+          costInUsdTicks,
+        } = await generateXaiTts({
           text: finalText,
           voiceId: voice,
           language: voiceObj.language ?? 'en',
           codec,
         });
+        grokCostInUsdTicks = costInUsdTicks;
         uploadUrl = await uploadFileToR2(
           filename,
           audioBuffer,
@@ -478,12 +484,19 @@ export async function POST(request: Request) {
     }
 
     await reduceCreditsAdmin({ userId, amount: creditsUsed });
-    const dollarAmount = calculateExternalApiDollarAmount({
-      sourceType: 'api_tts',
-      provider,
-      model,
-      inputChars: finalText.length,
-    });
+
+    // For Grok voices use the exact cost reported by xAI (1 tick = $0.000_000_001).
+    // Fall back to our estimated pricing table for other providers.
+    const dollarAmount =
+      isGrokVoice && grokCostInUsdTicks !== undefined
+        ? Number.parseFloat((grokCostInUsdTicks / 1_000_000_000).toFixed(6))
+        : calculateExternalApiDollarAmount({
+            sourceType: 'api_tts',
+            provider,
+            model,
+            inputChars: finalText.length,
+          });
+
     const [audioFileResult, updatedCredits] = await Promise.all([
       saveAudioFileAdmin({
         userId,
@@ -503,6 +516,9 @@ export async function POST(request: Request) {
           sourceType: 'api_tts',
           dollarAmount,
           ...(seed === undefined ? {} : { seed }),
+          ...(isGrokVoice && grokCostInUsdTicks !== undefined
+            ? { costInUsdTicks: grokCostInUsdTicks }
+            : {}),
         },
       }),
       getCreditsAdmin(userId),
@@ -532,6 +548,9 @@ export async function POST(request: Request) {
         isGrokVoice,
         userHasPaid,
         predictionId: replicateResponse?.id ?? null,
+        ...(isGrokVoice && grokCostInUsdTicks !== undefined
+          ? { costInUsdTicks: grokCostInUsdTicks }
+          : {}),
       },
     });
 
