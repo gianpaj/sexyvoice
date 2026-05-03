@@ -22,10 +22,20 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      - name: Get PR head SHA
+        id: get-pr-sha
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_SHA=$(gh api "${{ github.event.issue.pull_request.url }}" --jq '.head.sha')
+          echo "sha=$PR_SHA" >> $GITHUB_OUTPUT
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
+          ref: ${{ steps.get-pr-sha.outputs.sha || github.event.pull_request.head.sha }}
 
       - name: PR Review with Progress Tracking
         uses: anthropics/claude-code-action@567fe954a4527e81f132d87d1bdbcc94f7737434 # v1
