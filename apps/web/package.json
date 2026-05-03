@@ -31,6 +31,8 @@
     "@livekit/krisp-noise-filter": "^0.3.4",
     "@livekit/protocol": "1.45.1",
     "@mistralai/mistralai": "^2.1.2",
+    "@novu/js": "^3.16.0",
+    "@novu/react": "^3.16.0",
     "@sentry/nextjs": "10.45.0",
     "@supabase-cache-helpers/postgrest-react-query": "^1.13.7",
     "@supabase/ssr": "^0.8.0",
