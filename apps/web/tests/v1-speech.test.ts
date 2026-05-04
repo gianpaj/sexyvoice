@@ -247,9 +247,7 @@ describe('V1 Speech API Route', () => {
       expect(json.usage.input_characters).toBe(11);
       expect(json.usage.model).toBe('grok');
 
-      const expectedDollarAmount = Number.parseFloat(
-        (xaiCostInUsdTicks / 1_000_000_000).toFixed(6),
-      );
+      const expectedDollarAmount = xaiCostInUsdTicks / 1_000_000_000;
 
       expect(saveAudioFileAdmin).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -264,6 +262,7 @@ describe('V1 Speech API Route', () => {
         expect.objectContaining({
           dollarAmount: expectedDollarAmount,
           metadata: expect.objectContaining({
+            codec: 'mp3',
             costInUsdTicks: xaiCostInUsdTicks,
             isGrokVoice: true,
           }),

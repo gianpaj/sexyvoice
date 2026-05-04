@@ -269,6 +269,7 @@ export async function POST(request: Request) {
     let replicateResponse: Prediction | undefined;
     let geminiResponse: GenerateContentResponse | null = null;
     let grokCostInUsdTicks: number | undefined;
+    let grokCodec: string | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -366,6 +367,7 @@ export async function POST(request: Request) {
     } else if (isGrokVoice) {
       modelUsed = voiceObj.model;
       const codec = normalizeXaiTtsCodec(chosenFormat);
+      grokCodec = codec;
 
       try {
         const {
@@ -489,7 +491,7 @@ export async function POST(request: Request) {
     // Fall back to our estimated pricing table for other providers.
     const dollarAmount =
       isGrokVoice && grokCostInUsdTicks !== undefined
-        ? Number.parseFloat((grokCostInUsdTicks / 1_000_000_000).toFixed(6))
+        ? grokCostInUsdTicks / 1_000_000_000
         : calculateExternalApiDollarAmount({
             sourceType: 'api_tts',
             provider,
@@ -548,8 +550,13 @@ export async function POST(request: Request) {
         isGrokVoice,
         userHasPaid,
         predictionId: replicateResponse?.id ?? null,
-        ...(isGrokVoice && grokCostInUsdTicks !== undefined
-          ? { costInUsdTicks: grokCostInUsdTicks }
+        ...(isGrokVoice
+          ? {
+              ...(grokCodec !== undefined ? { codec: grokCodec } : {}),
+              ...(grokCostInUsdTicks !== undefined
+                ? { costInUsdTicks: grokCostInUsdTicks }
+                : {}),
+            }
           : {}),
       },
     });
