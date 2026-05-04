@@ -75,9 +75,13 @@ export function getXaiFileExtension(codec: XaiTtsCodec): string {
   return codec;
 }
 
-/** Convert xAI cost_in_usd_ticks to a dollar amount. 1 tick = $0.000_000_001 (1 nanotick). */
+/**
+ * Convert xAI cost_in_usd_ticks to a dollar amount rounded to 6 decimal
+ * places, matching the numeric(12,6) precision used in the database.
+ * 1 tick = $0.000_000_001 (1 nanotick).
+ */
 export function usdTicksToDollarAmount(ticks: number): number {
-  return ticks / 1_000_000_000;
+  return Number.parseFloat((ticks / 1_000_000_000).toFixed(6));
 }
 
 export function normalizeXaiTtsLanguage(language?: string): string {
@@ -106,6 +110,13 @@ export function normalizeXaiTtsLanguage(language?: string): string {
   }
 
   return XAI_LANGUAGE_MAP[primarySubtag] ?? 'auto';
+}
+
+function validateTicks(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+  return undefined;
 }
 
 export async function generateXaiTts({
@@ -174,7 +185,7 @@ export async function generateXaiTts({
       audioBuffer,
       codec: normalizedCodec,
       contentType: getXaiContentType(normalizedCodec),
-      costInUsdTicks: json.usage?.cost_in_usd_ticks,
+      costInUsdTicks: validateTicks(json.usage?.cost_in_usd_ticks),
     };
   }
 
