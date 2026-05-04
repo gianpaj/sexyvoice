@@ -36,7 +36,7 @@ import {
   reduceCreditsAdmin,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
+import { generateXaiTts, normalizeXaiTtsCodec, usdTicksToDollarAmount } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -491,7 +491,7 @@ export async function POST(request: Request) {
     // Fall back to our estimated pricing table for other providers.
     const dollarAmount =
       isGrokVoice && grokCostInUsdTicks !== undefined
-        ? grokCostInUsdTicks / 1_000_000_000
+        ? usdTicksToDollarAmount(grokCostInUsdTicks)
         : calculateExternalApiDollarAmount({
             sourceType: 'api_tts',
             provider,

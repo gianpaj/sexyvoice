@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
+import { usdTicksToDollarAmount } from '@/lib/tts/xai';
 import {
   mockUploadFileToR2,
   server,
@@ -247,7 +248,7 @@ describe('V1 Speech API Route', () => {
       expect(json.usage.input_characters).toBe(11);
       expect(json.usage.model).toBe('grok');
 
-      const expectedDollarAmount = xaiCostInUsdTicks / 1_000_000_000;
+      const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
 
       expect(saveAudioFileAdmin).toHaveBeenCalledWith(
         expect.objectContaining({

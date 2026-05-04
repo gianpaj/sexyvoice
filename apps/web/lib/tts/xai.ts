@@ -75,6 +75,11 @@ export function getXaiFileExtension(codec: XaiTtsCodec): string {
   return codec;
 }
 
+/** Convert xAI cost_in_usd_ticks to a dollar amount. 1 tick = $0.000_000_001 (1 nanotick). */
+export function usdTicksToDollarAmount(ticks: number): number {
+  return ticks / 1_000_000_000;
+}
+
 export function normalizeXaiTtsLanguage(language?: string): string {
   if (!language) {
     return 'auto';
@@ -149,9 +154,9 @@ export async function generateXaiTts({
     );
   }
 
-  const contentType = response.headers.get('content-type') ?? '';
+  const contentType = (response.headers.get('content-type') ?? '').toLowerCase();
 
-  if (contentType.includes('application/json')) {
+  if (contentType.includes('json')) {
     const json = (await response.json()) as XaiTtsJsonResponse;
     const audioBase64 = json.audio;
     if (!audioBase64) {
@@ -160,6 +165,11 @@ export async function generateXaiTts({
       });
     }
     const audioBuffer = Buffer.from(audioBase64, 'base64');
+    if (audioBuffer.length === 0) {
+      throw new Error('xAI TTS JSON response contains empty audio data', {
+        cause: 'XAI_TTS_ERROR',
+      });
+    }
     return {
       audioBuffer,
       codec: normalizedCodec,

@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
+import { usdTicksToDollarAmount } from '@/lib/tts/xai';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
@@ -543,7 +544,7 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.url).toContain('.mp3');
 
-      const expectedDollarAmount = xaiCostInUsdTicks / 1_000_000_000;
+      const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
 
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 100,
