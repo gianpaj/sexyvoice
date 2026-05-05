@@ -546,7 +546,7 @@ describe('Generate Voice API Route', () => {
           /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
         ),
         isPublic: false,
-        model: 'grok',
+        model: 'xai',
         usage: {
           userHasPaid: false,
         },
@@ -569,7 +569,7 @@ describe('Generate Voice API Route', () => {
         metadata: {
           voiceId: 'voice-eve-id',
           voiceName: 'eve',
-          model: 'grok',
+          model: 'xai',
           provider: 'grok',
           textPreview: 'Hello [laugh]',
           textLength: 13,

@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "SexyVoice API",
+    "title": "SexyVoice External API",
     "version": "1.0.0",
-    "description": "API for text-to-speech generation."
+    "description": "External API for text-to-speech generation."
   },
   "paths": {
     "/api/v1/speech": {
@@ -27,7 +27,7 @@
                   "value": {
                     "model": "gpro",
                     "input": "Hello, world!",
-                    "voice": "poe"
+                    "voice": "achernar"
                   }
                 },
                 "with_style": {
@@ -35,33 +35,16 @@
                   "value": {
                     "model": "gpro",
                     "input": "This is amazing news!",
-                    "voice": "tara",
+                    "voice": "zephyr",
                     "style": "happy"
                   }
                 },
-                "grok_mp3": {
-                  "summary": "Grok voice with default MP3 output",
-                  "value": {
-                    "model": "grok",
-                    "input": "Hello from Grok TTS!",
-                    "voice": "eve"
-                  }
-                },
-                "grok_wav": {
-                  "summary": "Grok voice with WAV output",
-                  "value": {
-                    "model": "grok",
-                    "input": "Hola mundo desde Grok",
-                    "voice": "sal",
-                    "response_format": "wav"
-                  }
-                },
-                "minimal": {
-                  "summary": "Minimum required parameters",
+                "orpheus_voice": {
+                  "summary": "Orpheus model with English voice",
                   "value": {
                     "model": "orpheus",
-                    "input": "Test",
-                    "voice": "pietro"
+                    "input": "Hello, my name is Tara!",
+                    "voice": "tara"
                   }
                 }
               }
@@ -167,6 +150,125 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VoicesResponse"
+                },
+                "examples": {
+                  "available_voices": {
+                    "summary": "Currently available gpro voices",
+                    "value": {
+                      "data": [
+                        {
+                          "id": "390f5864-111b-4795-81ea-7026a1e64cfc",
+                          "name": "achernar",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "03925a20-4e15-4745-b86c-2c2e9d7de870",
+                          "name": "zephyr",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "5797178d-c047-44ea-aef4-94e97fb48663",
+                          "name": "aoede",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "cd71a399-9c9a-4384-b76e-14e96a45fc8a",
+                          "name": "autonoe",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "c38d0c52-e8c1-404b-9cb1-56d4cf252b9f",
+                          "name": "callirrhoe",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "3da76670-6fca-435b-b097-eed8cc6f37a5",
+                          "name": "gacrux",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "f586bd2c-909f-4bf3-a859-4e45e45a22d6",
+                          "name": "despina",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "530c8354-bb32-4231-a9c9-3c05fcdd220b",
+                          "name": "erinome",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "0111e4dd-a38a-48e0-a8bb-a0a057f4cceb",
+                          "name": "puck",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "a68482ea-c14e-43cf-bf8c-16074bff9f8d",
+                          "name": "sulafat",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        },
+                        {
+                          "id": "5a2bffef-5e60-4fe6-b989-9ed3e68b6c48",
+                          "name": "kore",
+                          "language": "multiple",
+                          "model": "gpro",
+                          "formats": [
+                            "wav"
+                          ],
+                          "supports_style": true
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -259,7 +361,7 @@
             "enum": [
               "gpro",
               "orpheus",
-              "grok"
+              "xai"
             ],
             "description": "The voice model to use"
           },
@@ -287,7 +389,7 @@
             "type": "string"
           },
           "seed": {
-            "description": "Optional deterministic seed for providers that support it (e.g. Gpro)",
+            "description": "Optional deterministic seed for providers that support it (e.g. Gemini)",
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
@@ -320,10 +422,6 @@
             "maximum": 9007199254740991,
             "description": "Remaining credits"
           },
-          "cached": {
-            "type": "boolean",
-            "description": "Whether result was served from cache"
-          },
           "usage": {
             "type": "object",
             "properties": {
@@ -349,7 +447,6 @@
           "url",
           "credits_used",
           "credits_remaining",
-          "cached",
           "usage"
         ],
         "additionalProperties": false
@@ -440,11 +537,9 @@
                     ]
                   }
                 },
-                "styles": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
+                "supports_style": {
+                  "type": "boolean",
+                  "description": "Whether this voice accepts the freeform `style` parameter"
                 }
               },
               "required": [
@@ -453,7 +548,7 @@
                 "language",
                 "model",
                 "formats",
-                "styles"
+                "supports_style"
               ],
               "additionalProperties": false
             }

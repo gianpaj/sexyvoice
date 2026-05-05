@@ -424,7 +424,7 @@
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un chuchotement dramatique\"",
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
       "geminiInfo": "Il prend en charge 24 langues :\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Néerlandais (Pays-Bas),\n🇺🇸 Anglais (États-Unis),\n🇮🇳 Anglais/Hindi (Inde),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇺🇸 Espagnol (États-Unis),\n🇮🇳 Tamil (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)",
-      "grokInfo": "Prend en charge des balises inline expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast>.",
+      "grokInfo": "Prend en charge des balises expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast> et prend en charge 24 langues :\n🇪🇬 Arabe (Égypte, Arabie saoudite et EAU),\n🇧🇩 Bengali,\n🇳🇱 Néerlandais (Pays-Bas),\n🇨🇳 Chinois (simplifié),\n🇺🇸 Anglais,\n🇫🇷 Français,\n🇩🇪 Allemand,\n🇮🇳 Hindi,\n🇮🇩 Indonésien,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇰🇷 Coréen,\n🇧🇷 Portugais (Brésil, Portugal),\n🇷🇺 Russe,\n🇪🇸 Espagnol (Mexique, Espagne),\n🇹🇷 Turc,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien",
       "featuredBadge": "En vedette"
     }
   },

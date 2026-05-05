@@ -44,10 +44,10 @@ export const handlers = [
   }),
   http.get('https://fal-cdn.com/test-enhanced-audio.wav', () => {
     const audioBuffer = new Uint8Array([
-      0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56,
-      0x45, 0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00,
-      0x01, 0x00, 0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02,
-      0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61,
+      0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45,
+      0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+      0x44, 0xac, 0x00, 0x00, 0x88, 0x58, 0x01, 0x00, 0x02, 0x00, 0x10, 0x00,
+      0x64, 0x61, 0x74, 0x61,
     ]);
     return HttpResponse.arrayBuffer(audioBuffer.buffer, {
       headers: {
@@ -317,7 +317,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-eve-id',
           name: 'eve',
           language: 'en',
-          model: 'grok',
+          model: 'xai',
         });
       }
       if (voiceName === 'sal') {
@@ -325,7 +325,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-sal-id',
           name: 'sal',
           language: 'es-ES',
-          model: 'grok',
+          model: 'xai',
         });
       }
       return Promise.resolve(null);
@@ -353,7 +353,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-eve-id',
           name: 'eve',
           language: 'en',
-          model: 'grok',
+          model: 'xai',
         });
       }
       if (voiceName === 'sal') {
@@ -361,7 +361,7 @@ vi.mock('@/lib/supabase/queries', async () => {
           id: 'voice-sal-id',
           name: 'sal',
           language: 'es-ES',
-          model: 'grok',
+          model: 'xai',
         });
       }
       return Promise.resolve(null);
