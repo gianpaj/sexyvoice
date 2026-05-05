@@ -105,6 +105,7 @@ let nextConfig = {
       },
     ];
   },
+  allowedDevOrigins: ['sv.localhost', '*.sv.localhost'],
 };
 
 if (process.env.ANALYZE === 'true') {
