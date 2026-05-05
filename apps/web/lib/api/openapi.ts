@@ -13,9 +13,9 @@ export function createExternalApiOpenApiDocument() {
   return createDocument({
     openapi: '3.1.0',
     info: {
-      title: 'SexyVoice External API',
-      version: '1.0.0',
-      description: 'External API for text-to-speech generation.',
+      title: 'SexyVoice API',
+      version: '1.0.1',
+      description: 'API for text-to-speech generation.',
     },
     components: {
       securitySchemes: {

@@ -46,8 +46,14 @@ interface VoiceGroup {
   voices: Tables<'voices'>[];
 }
 
+const featuredGroupLabel = 'Grok ✨';
+const geminiGroupLabel = 'Gemini 🌍';
+
 function isMultilingualVoice(voice: Tables<'voices'>) {
-  return voice.model === 'grok' || voice.language === 'multiple';
+  return voice.model === 'gpro';
+}
+function isGrokVoice(voice: Tables<'voices'>) {
+  return voice.model === 'xai';
 }
 
 function sortVoices(voices: Tables<'voices'>[]) {
@@ -60,6 +66,12 @@ function sortVoices(voices: Tables<'voices'>[]) {
 
     return voiceA.name.localeCompare(voiceB.name);
   });
+}
+
+function getGroupLabel(voice: Tables<'voices'>): string {
+  if (isMultilingualVoice(voice)) return geminiGroupLabel;
+  if (isGrokVoice(voice)) return featuredGroupLabel;
+  return voice.language;
 }
 
 export function VoiceSelector({
@@ -86,14 +98,9 @@ export function VoiceSelector({
   const voiceSelectorLabels =
     dict.voiceSelector as typeof dict.voiceSelector & {
       featuredBadge?: string;
-      featuredGroupLabel?: string;
-      multilingualGroupLabel?: string;
     };
-  const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? 'Featured';
-  const featuredGroupLabel =
-    voiceSelectorLabels.featuredGroupLabel ?? 'Featured  ✨';
-  const multilingualGroupLabel =
-    voiceSelectorLabels.multilingualGroupLabel ?? 'Multilingual 🌍';
+  const featuredBadgeLabel =
+    voiceSelectorLabels.featuredBadge ?? featuredGroupLabel;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -117,15 +124,13 @@ export function VoiceSelector({
     const groupedVoices = Object.entries(
       nonFeaturedVoices.reduce(
         (acc, voice) => {
-          const language = isMultilingualVoice(voice)
-            ? multilingualGroupLabel
-            : voice.language;
+          const group = getGroupLabel(voice);
 
-          if (!acc[language]) {
-            acc[language] = [];
+          if (!acc[group]) {
+            acc[group] = [];
           }
 
-          acc[language].push(voice);
+          acc[group].push(voice);
           return acc;
         },
         {} as Record<string, Tables<'voices'>[]>,
@@ -139,8 +144,8 @@ export function VoiceSelector({
           }) satisfies VoiceGroup,
       )
       .sort((groupA, groupB) => {
-        if (groupA.label === multilingualGroupLabel) return -1;
-        if (groupB.label === multilingualGroupLabel) return 1;
+        if (groupA.label === geminiGroupLabel) return -1;
+        if (groupB.label === geminiGroupLabel) return 1;
         return groupA.label.localeCompare(groupB.label);
       });
 
@@ -154,7 +159,7 @@ export function VoiceSelector({
     }
 
     return [...groups, ...groupedVoices];
-  }, [featuredGroupLabel, multilingualGroupLabel, publicVoices]);
+  }, [publicVoices]);
 
   return (
     <Card>
@@ -189,7 +194,7 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger className="sm:w-1/3">
+          <SelectTrigger className="w-full sm:w-1/3">
             <span className="flex! items-center gap-2">
               <SelectValue placeholder="Select a voice" />
               {selectedVoice && isFeaturedVoice(selectedVoice) && (

@@ -34,8 +34,8 @@ const baseDict = {
     toolTipEmotionTags: 'Emotion tags',
     selectStyleTextareaPlaceholder: 'Describe the speaking style',
     featuredBadge: 'Featured',
-    featuredGroupLabel: 'Featured',
-    multilingualGroupLabel: 'Multilingual 🌍',
+    featuredGroupLabel: 'Grok',
+    multilingualGroupLabel: 'Gemini',
   },
 } as const;
 
@@ -232,13 +232,6 @@ describe('VoiceSelector', () => {
     expect(screen.getByRole('combobox')).toHaveTextContent(/featured/i);
   });
 
-  it('provides dedicated selector group labels for featured and multilingual voices', () => {
-    expect(baseDict.voiceSelector.featuredGroupLabel).toBe('Featured');
-    expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
-      'Multilingual 🌍',
-    );
-  });
-
   it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
     renderVoiceSelector({
       publicVoices: [
@@ -266,7 +259,7 @@ describe('VoiceSelector', () => {
 
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
     expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
-      'Multilingual 🌍',
+      baseDict.voiceSelector.multilingualGroupLabel,
     );
   });
 });

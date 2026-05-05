@@ -295,7 +295,9 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": ["Everything in Standard, just cheaper"]
+        "features": [
+          "Everything in Standard, just cheaper"
+        ]
       }
     },
     "topup": {
@@ -422,7 +424,7 @@
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)",
-      "grokInfo": "Supports expressive tags like [laugh] and\nwrapping tags like <fast>...</fast>.",
+      "grokInfo": "Supports expressive tags like [laugh] and\nwrapping tags like <fast>...</fast> and supports 24 languages:\n🇪🇬 Arabic (Egypt, Saudi Arabia and UAE),\n🇧🇩 Bengali,\n🇳🇱 Dutch (Netherlands),\n🇨🇳 Chinese (Simplified),\n🇺🇸 English,\n🇫🇷 French,\n🇩🇪 German,\n🇮🇳 Hindi,\n🇮🇩 Indonesian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇧🇷 Portuguese (Brazil, Portugal),\n🇷🇺 Russian,\n🇪🇸 Spanish (Mexico, Spain),\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\n🇻🇳 Vietnamese",
       "featuredBadge": "Featured"
     }
   },

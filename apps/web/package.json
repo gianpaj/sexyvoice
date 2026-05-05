@@ -140,7 +140,7 @@
     "check-translations": "node scripts/check-translations.mjs",
     "check:fix": "biome check ./app components hooks lib proxy.ts --write",
     "clean": "knip",
-    "dev": "next dev",
+    "dev": "portless sv next dev",
     "dev:content": "contentlayer2 dev",
     "fixall": "pnpm run lint:write; pnpm run format:write; pnpm run check:fix",
     "format": "biome format ./app components hooks lib proxy.ts",

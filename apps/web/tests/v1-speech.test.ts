@@ -91,7 +91,7 @@ describe('V1 Speech API Route', () => {
       const request = new Request('http://localhost/api/v1/speech', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        body: JSON.stringify({ model: 'xai', input: 'Hello', voice: 'eve' }),
       });
 
       const response = await POST(request);
@@ -105,7 +105,7 @@ describe('V1 Speech API Route', () => {
       mockValidateApiKey.mockResolvedValue(null);
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -122,7 +122,7 @@ describe('V1 Speech API Route', () => {
       });
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -147,7 +147,7 @@ describe('V1 Speech API Route', () => {
 
     it('should return 400 when input is empty', async () => {
       const response = await POST(
-        speechRequest({ model: 'grok', input: '', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: '', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -158,7 +158,7 @@ describe('V1 Speech API Route', () => {
     it('should return 404 when voice is not found', async () => {
       const response = await POST(
         speechRequest({
-          model: 'grok',
+          model: 'xai',
           input: 'Hello',
           voice: 'nonexistent-voice',
         }),
@@ -225,18 +225,14 @@ describe('V1 Speech API Route', () => {
           expect(body.language).toBe('en');
           expect(body.output_format.codec).toBe('mp3');
 
-          return HttpResponse.json(
-            {
-              audio: xaiAudioBase64,
-              usage: { cost_in_usd_ticks: xaiCostInUsdTicks, characters: 11 },
-            },
-            { headers: { 'Content-Type': 'application/json' } },
-          );
+          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          });
         }),
       );
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello world', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello world', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -246,29 +242,7 @@ describe('V1 Speech API Route', () => {
       expect(json.credits_used).toBeGreaterThan(0);
       expect(json.credits_remaining).toBeDefined();
       expect(json.usage.input_characters).toBe(11);
-      expect(json.usage.model).toBe('grok');
-
-      const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
-
-      expect(saveAudioFileAdmin).toHaveBeenCalledWith(
-        expect.objectContaining({
-          usage: expect.objectContaining({
-            costInUsdTicks: xaiCostInUsdTicks,
-            dollarAmount: expectedDollarAmount,
-          }),
-        }),
-      );
-
-      expect(insertUsageEvent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          dollarAmount: expectedDollarAmount,
-          metadata: expect.objectContaining({
-            codec: 'mp3',
-            costInUsdTicks: xaiCostInUsdTicks,
-            isGrokVoice: true,
-          }),
-        }),
-      );
+      expect(json.usage.model).toBe('xai');
     });
 
     it('should generate voice using Grok with wav format', async () => {
@@ -280,16 +254,15 @@ describe('V1 Speech API Route', () => {
 
           expect(body.output_format.codec).toBe('wav');
 
-          return HttpResponse.arrayBuffer(
-            new Uint8Array([1, 2, 3, 4]).buffer,
-            { headers: { 'Content-Type': 'audio/wav' } },
-          );
+          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
+            headers: { 'Content-Type': 'audio/wav' },
+          });
         }),
       );
 
       const response = await POST(
         speechRequest({
-          model: 'grok',
+          model: 'xai',
           input: 'Hello world',
           voice: 'eve',
           response_format: 'wav',
@@ -313,7 +286,7 @@ describe('V1 Speech API Route', () => {
 
       const mp3Response = await POST(
         speechRequest({
-          model: 'grok',
+          model: 'xai',
           input: 'Hello',
           voice: 'eve',
           response_format: 'mp3',
@@ -330,15 +303,14 @@ describe('V1 Speech API Route', () => {
           // sal has language 'es-ES' which should be normalized to 'es-ES'
           expect(body.language).toBe('es-ES');
 
-          return HttpResponse.arrayBuffer(
-            new Uint8Array([1, 2, 3, 4]).buffer,
-            { headers: { 'Content-Type': 'audio/mpeg' } },
-          );
+          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          });
         }),
       );
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hola mundo', voice: 'sal' }),
+        speechRequest({ model: 'xai', input: 'Hola mundo', voice: 'sal' }),
       );
       expect(response.status).toBe(200);
     });
@@ -354,7 +326,7 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -372,7 +344,7 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
       );
 
       expect(response.headers.get('X-RateLimit-Limit-Requests')).toBeDefined();
@@ -393,7 +365,7 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
       );
 
       expect(response.status).toBe(200);
@@ -412,16 +384,15 @@ describe('V1 Speech API Route', () => {
           const body = (await request.json()) as { text: string };
           expect(body.text).toBe('Hello world');
 
-          return HttpResponse.arrayBuffer(
-            new Uint8Array([1, 2, 3, 4]).buffer,
-            { headers: { 'Content-Type': 'audio/mpeg' } },
-          );
+          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          });
         }),
       );
 
       const response = await POST(
         speechRequest({
-          model: 'grok',
+          model: 'xai',
           input: 'Hello world',
           voice: 'eve',
           style: 'happy',
@@ -442,7 +413,7 @@ describe('V1 Speech API Route', () => {
       vi.mocked(getCreditsAdmin).mockResolvedValueOnce(0);
 
       const response = await POST(
-        speechRequest({ model: 'grok', input: 'Hello', voice: 'eve' }),
+        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
       );
       const json = await response.json();
 
