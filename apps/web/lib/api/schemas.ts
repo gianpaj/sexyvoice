@@ -29,7 +29,7 @@ export const VoiceGenerationRequestSchema = z.strictObject({
     .min(1)
     .max(1000)
     .describe(
-      'The text to synthesize (max 1000 chars for gpro/g31/grok, 500 for orpheus)',
+      'The text to synthesize (max 1000 chars for gpro/g31/xai, 500 for orpheus)',
     ),
   voice: z
     .string()
@@ -137,12 +137,12 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
         ),
     }),
     z.strictObject({
-      model: z.literal('grok').describe('The voice model to use'),
+      model: z.literal('xai').describe('The voice model to use'),
       input: z
         .string()
         .min(1)
         .max(1000)
-        .describe('The text to synthesize (max 1000 chars for grok)'),
+        .describe('The text to synthesize (max 1000 chars for xai)'),
       voice: z
         .string()
         .min(1)
@@ -188,7 +188,7 @@ export const VoiceInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'g31', 'orpheus', 'grok']),
+  model: z.enum(['gpro', 'g31', 'orpheus', 'xai']),
   formats: z.array(z.enum(['wav', 'mp3'])),
   supports_style: z
     .boolean()
@@ -200,11 +200,10 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'g31', 'orpheus', 'grok']),
+  id: z.enum(['gpro', 'g31', 'orpheus', 'xai']),
   name: z.string(),
   max_input_length: z.number().int().positive(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),
-  supported_styles: z.array(z.string()),
 });
 
 export const ModelsResponseSchema = z.object({

@@ -45,7 +45,7 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perMinute: 0,
     perRequest: 0,
   },
-  'api_tts:xai:grok': {
+  'api_tts:xai:xai': {
     perInputChar: 0.000_015,
     perOutputChar: 0,
     perMinute: 0,

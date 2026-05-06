@@ -33,6 +33,16 @@ describe('external API pricing', () => {
     expect(amount).toBe(0.015);
   });
 
+  it('calculates xai tts pricing', () => {
+    const amount = calculateExternalApiDollarAmount({
+      sourceType: 'api_tts',
+      provider: 'xai',
+      model: 'xai',
+      inputChars: 1000,
+    });
+    expect(amount).toBe(0.015);
+  });
+
   it('returns zero when no model pricing is configured', () => {
     const amount = calculateExternalApiDollarAmount({
       sourceType: 'api_tts',
