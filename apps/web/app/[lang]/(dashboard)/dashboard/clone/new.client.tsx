@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   CircleStop,
+  Crown,
   Download,
   PaperclipIcon,
   UploadIcon,
@@ -32,9 +33,19 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
-import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import {
+  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
+import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -106,18 +117,59 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
 };
 
 const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
-const DEFAULT_MAX_AUDIO_DURATION_SECONDS = 5 * 60;
+const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
-const VOXTRAL_MAX_AUDIO_DURATION_SECONDS = 25;
+const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
+
+const formatCloneMessage = (
+  message: string,
+  values: Record<string, boolean | number | string | null | undefined>,
+) =>
+  Object.entries(values).reduce(
+    (formatted, [key, value]) =>
+      value === null || value === undefined
+        ? formatted
+        : formatted.replaceAll(`__${key}__`, String(value)),
+    message,
+  );
+
+type CloneErrorDetails = Record<string, boolean | number | string | null>;
+
+interface CloneErrorResponse {
+  code?: string;
+  details?: CloneErrorDetails;
+  error?: string;
+  message?: string;
+  serverMessage?: string;
+}
+
+const getCloneDictMessage = (
+  dict: (typeof messages)['clone'],
+  path: string,
+): string | undefined => {
+  let value: unknown = dict;
+
+  for (const segment of path.split('.')) {
+    if (!(value && typeof value === 'object' && segment in value)) {
+      return undefined;
+    }
+
+    value = (value as Record<string, unknown>)[segment];
+  }
+
+  return typeof value === 'string' ? value : undefined;
+};
 
 export default function NewVoiceClient({
   dict,
   lang,
   hasEnoughCredits,
+  userHasPaid,
 }: {
   dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
+  userHasPaid: boolean;
 }) {
   return (
     <AudioProvider>
@@ -125,21 +177,23 @@ export default function NewVoiceClient({
         dict={dict}
         hasEnoughCredits={hasEnoughCredits}
         lang={lang}
+        userHasPaid={userHasPaid}
       />
     </AudioProvider>
   );
 }
 
-const MAX_LENGTH = 500;
-
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing clone form coordinates upload, recording, conversion, and preview state.
 function NewVoiceClientInner({
   dict,
   lang,
   hasEnoughCredits,
+  userHasPaid,
 }: {
   dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
+  userHasPaid: boolean;
 }) {
   const {
     convert: convertWithFFmpeg,
@@ -162,6 +216,10 @@ function NewVoiceClientInner({
   );
   const [convertingMicAudio, setConvertingMicAudio] = useState(false);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
+  const [
+    referenceAudioEnhancementEnabled,
+    setReferenceAudioEnhancementEnabled,
+  ] = useState(false);
 
   const usesVoxtral = useMemo(
     () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
@@ -173,11 +231,11 @@ function NewVoiceClientInner({
       usesVoxtral
         ? {
             min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
-            max: VOXTRAL_MAX_AUDIO_DURATION_SECONDS,
+            max: null,
           }
         : {
             min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
-            max: DEFAULT_MAX_AUDIO_DURATION_SECONDS,
+            max: null,
           },
     [usesVoxtral],
   );
@@ -190,12 +248,12 @@ function NewVoiceClientInner({
         const errorMsg =
           error instanceof Error
             ? error.message
-            : 'Failed to load audio processor';
+            : dict.failedToLoadAudioProcessor;
         setFFmpegError(errorMsg);
         console.error('FFmpeg preload error:', error);
       });
     }
-  }, [usesVoxtral, ensureLoaded]);
+  }, [usesVoxtral, ensureLoaded, dict.failedToLoadAudioProcessor]);
 
   const handleStartRecording = async () => {
     try {
@@ -209,9 +267,13 @@ function NewVoiceClientInner({
       const errorMsg =
         error instanceof Error
           ? error.message
-          : 'Failed to load audio processor';
+          : dict.failedToLoadAudioProcessor;
       setFFmpegError(errorMsg);
-      setErrorMessage(`Failed to start recording: ${errorMsg}`);
+      setErrorMessage(
+        formatCloneMessage(dict.failedToStartRecording, {
+          ERROR: errorMsg,
+        }),
+      );
     }
   };
 
@@ -232,7 +294,7 @@ function NewVoiceClientInner({
     },
     onError: (err) => {
       console.error(err);
-      setFFmpegError(err instanceof Error ? err.message : 'Microphone error');
+      setFFmpegError(err instanceof Error ? err.message : dict.microphoneError);
     },
     onStart: () => {
       setMicRecording(true);
@@ -262,26 +324,40 @@ function NewVoiceClientInner({
   };
 
   const localeSpecificReferenceAudioGuidance = usesVoxtral
-    ? `Use a clean single-speaker reference clip between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds. Neutral delivery works best.`
-    : `Use a clear reference clip between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
+    ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
+        MIN: audioDurationGuidance.min,
+        TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
+      })
+    : formatCloneMessage(dict.referenceAudioGuidanceLong, {
+        MIN: audioDurationGuidance.min,
+        TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
+      });
+
+  const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
+  const paidVoxtralTextMaxLength = CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID;
+  const textLimitTooltip = formatCloneMessage(
+    userHasPaid ? dict.paidTextLimitTooltip : dict.upgradeTextLimitTooltip,
+    { MAX: paidVoxtralTextMaxLength },
+  );
 
   const getCloneErrorMessage = useCallback(
-    (code?: string, fallbackMessage?: string) => {
-      if (code === 'clone_audio_duration_unknown') {
-        return 'Could not determine audio duration.';
+    (
+      code?: string,
+      fallbackMessage?: string,
+      details?: CloneErrorDetails,
+    ): string => {
+      if (!code) {
+        return fallbackMessage || dict.errorCloning;
       }
 
-      if (code === 'clone_audio_duration_invalid_voxtral') {
-        return `Reference audio must be between ${audioDurationGuidance.min} and ${audioDurationGuidance.max} seconds for voice cloning.`;
+      const message = getCloneDictMessage(dict, code);
+      if (!message) {
+        return dict.errorCloning;
       }
 
-      if (code === 'clone_audio_duration_invalid_fallback') {
-        return `Audio must be between ${audioDurationGuidance.min} seconds and ${Math.floor(audioDurationGuidance.max / 60)} minutes.`;
-      }
-
-      return fallbackMessage || dict.errorCloning || 'Failed to clone voice.';
+      return formatCloneMessage(message, details ?? {});
     },
-    [audioDurationGuidance.max, audioDurationGuidance.min, dict],
+    [dict],
   );
 
   const [
@@ -315,6 +391,7 @@ function NewVoiceClientInner({
 
   const abortController = useRef<AbortController | null>(null);
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
   const handleGenerate = useCallback(async () => {
     if (!(file || micBlob)) {
       setErrorMessage(dict.errors.noAudioFile);
@@ -354,8 +431,10 @@ function NewVoiceClientInner({
             // TODO send logs to Sentry
             setErrorMessage(
               convertError instanceof Error
-                ? `Audio conversion failed: ${convertError.message}`
-                : 'Audio conversion failed. Please try recording again.',
+                ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
+                    ERROR: convertError.message,
+                  })
+                : dict.audioConversionFailed,
             );
             setStatus('error');
             setConvertingMicAudio(false);
@@ -385,6 +464,10 @@ function NewVoiceClientInner({
       formData.append('file', audioToProcess);
       formData.append('text', text);
       formData.append('locale', selectedLocale.code);
+      formData.append(
+        'enhanceReferenceAudio',
+        String(referenceAudioEnhancementEnabled),
+      );
 
       voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -393,18 +476,26 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = dict.errorCloning || 'Failed to clone voice.';
+        let errorMessage = dict.errorCloning;
+        let voiceResult: CloneErrorResponse | null = null;
 
-        // Handle 413 Payload Too Large - returns plain text
-        if (voiceRes.status === 413) {
-          errorMessage =
-            dict.errorTooLarge ||
-            'File size too large. Please use a smaller audio file.';
+        try {
+          voiceResult = (await voiceRes.json()) as CloneErrorResponse;
+        } catch {
+          voiceResult = null;
+        }
+
+        // Older/proxy 413 responses may still arrive without the JSON error contract.
+        if (voiceRes.status === 413 && !voiceResult?.code) {
+          errorMessage = dict.errorTooLarge;
         } else {
-          const voiceResult = await voiceRes.json();
           errorMessage = getCloneErrorMessage(
-            voiceResult.code,
-            voiceResult.message || voiceResult.error || errorMessage,
+            voiceResult?.code,
+            voiceResult?.message ||
+              voiceResult?.serverMessage ||
+              voiceResult?.error ||
+              errorMessage,
+            voiceResult?.details,
           );
         }
 
@@ -434,7 +525,7 @@ function NewVoiceClientInner({
       } else if (err instanceof Error) {
         errorMsg = err.message;
       }
-      setErrorMessage(errorMsg || 'Unexpected error occurred');
+      setErrorMessage(errorMsg || dict.unexpectedError);
       setStatus('error');
     }
   }, [
@@ -443,8 +534,8 @@ function NewVoiceClientInner({
     dict,
     file,
     getCloneErrorMessage,
-    legalConsentChecked,
     micBlob,
+    referenceAudioEnhancementEnabled,
     selectedLocale,
     text,
   ]);
@@ -521,7 +612,7 @@ function NewVoiceClientInner({
     setFFmpegError(null);
   };
 
-  const textIsOverLimit = text.length > MAX_LENGTH;
+  const textIsOverLimit = text.length > textMaxLength;
 
   return (
     <Card>
@@ -595,14 +686,14 @@ function NewVoiceClientInner({
                       <div className="flex items-center justify-center gap-2 py-2">
                         <PulsatingDots />
                         <span className="text-muted-foreground text-xs">
-                          Loading audio processor...
+                          {dict.loadingAudioProcessor}
                         </span>
                       </div>
                     )}
                     {ffmpegError && (
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Audio Processor Error</AlertTitle>
+                        <AlertTitle>{dict.audioProcessorError}</AlertTitle>
                         <AlertDescription>{ffmpegError}</AlertDescription>
                       </Alert>
                     )}
@@ -621,7 +712,9 @@ function NewVoiceClientInner({
                   <div className="text-center text-muted-foreground text-xs">
                     <span className="flex items-center justify-center gap-2">
                       <PulsatingDots />
-                      Preparing audio processor for {selectedLocale.value}...
+                      {formatCloneMessage(dict.preparingAudioProcessor, {
+                        LANGUAGE: selectedLocale.value,
+                      })}
                     </span>
                   </div>
                 )}
@@ -659,7 +752,7 @@ function NewVoiceClientInner({
                     </div>
 
                     <Button
-                      aria-label="Remove file"
+                      aria-label={dict.removeFile}
                       className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
                       onClick={() => removeFile(files[0]?.id)}
                       size="icon"
@@ -752,7 +845,7 @@ function NewVoiceClientInner({
                       className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                       disabled={status === 'generating'}
                       id="text-to-convert"
-                      maxLength={MAX_LENGTH + 30}
+                      maxLength={textMaxLength + 30}
                       onChange={(e) => setText(e.target.value)}
                       placeholder={dict.textAreaPlaceholder}
                       rows={5}
@@ -762,11 +855,38 @@ function NewVoiceClientInner({
                 </div>
                 <div
                   className={cn(
-                    '-mt-2 text-right text-muted-foreground text-sm',
+                    '-mt-2 flex items-center justify-end gap-1.5 text-right text-muted-foreground text-sm',
                     [textIsOverLimit ? 'font-bold text-red-500' : ''],
                   )}
                 >
-                  {text.length} / {MAX_LENGTH}
+                  <span>
+                    {text.length} / {textMaxLength}
+                  </span>
+                  {usesVoxtral && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <button
+                            aria-label={textLimitTooltip}
+                            className="inline-flex"
+                            type="button"
+                          >
+                            <Crown
+                              className={cn(
+                                'h-3.5 w-3.5 cursor-default',
+                                userHasPaid
+                                  ? 'text-muted-foreground/50'
+                                  : 'text-yellow-400',
+                              )}
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{textLimitTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               </div>
             </div>
@@ -784,6 +904,28 @@ function NewVoiceClientInner({
                 <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
               </Alert>
             )}
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                checked={referenceAudioEnhancementEnabled}
+                disabled={status === 'generating'}
+                id="reference-audio-enhancement"
+                onCheckedChange={(checked) =>
+                  setReferenceAudioEnhancementEnabled(checked === true)
+                }
+              />
+              <div className="grid gap-1">
+                <Label
+                  className="font-normal text-muted-foreground text-sm leading-tight"
+                  htmlFor="reference-audio-enhancement"
+                >
+                  {dict.referenceAudioEnhancementLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-tight">
+                  {dict.referenceAudioEnhancementHelp}
+                </p>
+              </div>
+            </div>
 
             <div className="flex items-start space-x-2">
               <Checkbox
@@ -815,8 +957,7 @@ function NewVoiceClientInner({
               generatingText={
                 status === 'generating'
                   ? `${dict.generating}...`
-                  : // TODO: translate
-                    'Converting audio...'
+                  : `${dict.convertingAudio}...`
               }
               isGenerating={status === 'generating' || convertingMicAudio}
               onClick={handleGenerate}

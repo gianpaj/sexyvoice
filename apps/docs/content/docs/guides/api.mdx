@@ -62,7 +62,7 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
   -H 'Content-Type: application/json' \
   -d '{
-    "model": "grok",
+    "model": "xai",
     "voice": "eve",
     "input": "Hello from Grok! [laugh] This is exciting.",
     "response_format": "mp3"
@@ -107,5 +107,6 @@ Response includes:
 ## Next Steps
 
 - Read full [API Reference](/api-reference/api)
+- Browse [Grok Voices & Speech Tags](/guides/grok-speech-tags) for the full tag reference
 - Add retries for `429` and transient `500` errors
 - Store `request-id` with your logs for support and tracing

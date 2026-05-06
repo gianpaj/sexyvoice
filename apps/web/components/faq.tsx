@@ -4,7 +4,6 @@ import {
   Languages,
   type LucideIcon,
   PhoneCall,
-  PlusIcon,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
@@ -83,27 +82,26 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
               value={`item-${group.id}`}
             >
               <AccordionTrigger
-                className="flex w-full items-start justify-between gap-4 rounded-md px-5 py-4 text-left font-medium text-sm text-white outline-none hover:underline disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:-rotate-45"
+                className="px-5 [&[data-state=open]>svg]:rotate-90"
                 data-slot="accordion-trigger"
               >
                 <span className="flex items-center gap-4">
                   <Icon className="size-4 shrink-0" />
                   <span>{group.category}</span>
                 </span>
-                <PlusIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
               </AccordionTrigger>
               <AccordionContent className="pb-0">
                 {group.questions.map((faq, i) => (
                   <Collapsible
-                    className="border-gray-500 border-t bg-accent px-5"
+                    className="border-gray-500 border-t bg-accent px-5 text-muted-foreground"
                     defaultOpen={i === 0}
                     key={i}
                   >
-                    <CollapsibleTrigger className="flex w-full items-center gap-4 rounded-sm py-4 text-left font-medium text-white outline-none focus-visible:z-10 focus-visible:ring-[3px] focus-visible:ring-ring/50 [&[data-state=open]>svg]:rotate-90">
-                      <ChevronRightIcon className="pointer-events-none size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+                    <CollapsibleTrigger className="flex items-center gap-4 py-4 text-left text-white focus-visible:z-10 [&[data-state=open]>svg]:rotate-90">
+                      <ChevronRightIcon className="size-4 shrink-0 transition-transform duration-200" />
                       {faq.question}
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="whitespace-pre-wrap pb-4 text-muted-foreground text-sm">
+                    <CollapsibleContent className="whitespace-pre-wrap pb-4 text-sm">
                       {renderAnswer(
                         faq.answer,
                         (faq as { link?: FaqLink }).link,

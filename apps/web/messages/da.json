@@ -419,8 +419,8 @@
       "multilingualGroupLabel": "Flersprogede 🌍",
       "selectStyleTextareaPlaceholder": "Beskriv stilen på din dialog, f.eks. \"Læs dette i en dramatisk hvisken\"",
       "toolTipEmotionTags": "Understøttede følelsestags:",
-      "geminiInfo": "Understøtter 24 sprog som standard.\nAktivér \"Brug ny AI-model\" for 70+ sprog med Gemini 3.1.",
-      "grokInfo": "Understøtter udtryksfulde inline-tags som [laugh] og\nomsluttende tags som <fast>...</fast>.",
+      "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
+      "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
       "useNewModelLabel": "Brug ny AI-model (Gemini 3.1)",
       "featuredBadge": "Fremhævet"
     }
@@ -544,7 +544,26 @@
     "errors": {
       "noAudioFile": "Vælg venligst en lydfil.",
       "noText": "Indtast venligst noget tekst at konvertere til tale.",
-      "ffmpegLoading": "Lydkonverteren indlæses stadig. Prøv igen om et øjeblik"
+      "ffmpegLoading": "Lydkonverteren indlæses stadig. Prøv igen om et øjeblik",
+      "audioConversionFailed": "Lydformatet kunne ikke konverteres. Upload MP3, OGG, Opus eller WAV.",
+      "audioConversionRequiredWebm": "WebM-lyd skal konverteres før upload. Prøv at optage igen.",
+      "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
+      "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
+      "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
+      "fileTooLarge": "Filstørrelsen er for stor. Brug venligst en mindre lydfil.",
+      "guardrailViolation": "Denne anmodning blev blokeret af en tredjeparts sikkerhedspolitik for stemmekloning. Prøv med en anden tekst eller en anden referencelyd.",
+      "insufficientCredits": "Du skal bruge __CREDITS__ kreditter for at klone denne lyd.",
+      "internalError": "Kunne ikke klone stemmen. Prøv igen.",
+      "invalidContentType": "Uploadanmodningen er ugyldig. Prøv igen.",
+      "invalidFileType": "Ugyldig filtype. Upload MP3, OGG, Opus, M4A, WAV eller WebM.",
+      "missingLocale": "Vælg et sprog.",
+      "missingRequiredParameters": "Indtast tekst, og vælg en lydfil.",
+      "referenceAudioEnhancementInputTooLarge": "Referenceaudioen er for stor til at blive forbedret. Brug en mindre fil, eller slå lydrensning fra.",
+      "referenceAudioEnhancementInputTooLong": "Rensning af referenceaudio understøtter klip på op til __MAX__ sekunder.",
+      "textTooLong": "Teksten overskrider den maksimale længde på __MAX__ tegn.",
+      "unsupportedAudioFormat": "Ikke-understøttet lydformat til stemmekloning. Brug MP3, OGG/Opus, WebM eller WAV.",
+      "unsupportedLocale": "Dette sprog understøttes ikke til stemmekloning.",
+      "userNotFound": "Log ind for at klone en stemme."
     },
     "sampleCard": {
       "sourceAudio": "Kildelyd",
@@ -556,7 +575,28 @@
       "description": "Klon en stemme på ét sprog og få den til at tale flydende på et af de andre 23 understøttede sprog, mens talerens unikke karakteristika bevares.",
       "example": "Eksempel: Upload en engelsktalende persons stemmeprøve → Generer fransk tale med deres stemme"
     },
-    "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål."
+    "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål.",
+    "referenceAudioEnhancementLabel": "Rens referenceaudioen",
+    "referenceAudioEnhancementHelp": "Fjerner baggrundsstøj og forbedrer taleaudio. Anbefales til støjende optagelser eller optagelser fra mobiltelefon. Dette koster 10 kreditter pr. sekund af det trimmede referenceaudio.",
+    "errorEnhancingReferenceAudio": "Referenceaudio kunne ikke forbedres. Prøv igen, eller slå forbedring af referenceaudio fra.",
+    "failedToLoadAudioProcessor": "Kunne ikke indlæse lydprocessoren",
+    "failedToStartRecording": "Kunne ikke starte optagelse: __ERROR__",
+    "microphoneError": "Mikrofonfejl",
+    "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
+    "referenceAudioGuidanceLong": "Brug et klart referenceklip på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
+    "paidTextLimitTooltip": "Betalende brugere kan klone længere tale med op til __MAX__ tegn.",
+    "upgradeTextLimitTooltip": "Opgrader til en betalt plan for at klone længere tale med op til __MAX__ tegn.",
+    "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
+    "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
+    "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
+    "audioConversionFailed": "Lydkonvertering mislykkedes. Prøv at optage igen.",
+    "audioConversionFailedWithMessage": "Lydkonvertering mislykkedes: __ERROR__",
+    "unexpectedError": "Der opstod en uventet fejl",
+    "loadingAudioProcessor": "Indlæser lydprocessor...",
+    "audioProcessorError": "Lydprocessorfejl",
+    "preparingAudioProcessor": "Forbereder lydprocessor til __LANGUAGE__...",
+    "removeFile": "Fjern fil",
+    "convertingAudio": "Konverterer lyd"
   },
   "profile": {
     "title": "Profilindstillinger",

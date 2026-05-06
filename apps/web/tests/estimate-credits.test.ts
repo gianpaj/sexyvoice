@@ -124,7 +124,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
     expect(mockCountTokens).toHaveBeenCalledOnce();
   });
 
-  it('returns estimated credits for grok voices', async () => {
+  it('returns estimated credits for grok (xai) voices', async () => {
     mockCountTokens.mockClear();
 
     const request = new Request('http://localhost/api/estimate-credits', {

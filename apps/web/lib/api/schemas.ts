@@ -23,7 +23,7 @@ export const ErrorResponseSchema = z.object({
 });
 
 export const VoiceGenerationRequestSchema = z.strictObject({
-  model: z.enum(['gpro', 'g31', 'orpheus', 'grok']).describe('The voice model to use'),
+  model: z.enum(['gpro', 'g31', 'orpheus', 'xai']).describe('The voice model to use'),
   input: z
     .string()
     .min(1)

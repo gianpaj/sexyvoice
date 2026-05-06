@@ -1,5 +1,5 @@
-"use client";
-import { Info, Maximize2, Minimize2, Sparkles } from "lucide-react";
+'use client';
+import { Info, Maximize2, Minimize2, Sparkles } from 'lucide-react';
 import {
   type Dispatch,
   type SetStateAction,
@@ -7,19 +7,17 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
+} from 'react';
 
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-
-import { AudioProvider } from "@/app/[lang]/(dashboard)/dashboard/clone/audio-provider";
+import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -28,32 +26,39 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { getEmotionTags } from "@/lib/ai";
-import { resizeTextarea } from "@/lib/react-textarea-autosize";
-import { capitalizeFirstLetter, cn, getTtsProvider } from "@/lib/utils";
-import { isFeaturedVoice } from "@/lib/voices";
-import type messages from "@/messages/en.json";
-import { AudioPlayerWithContext } from "./audio-player-with-context";
-import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { getEmotionTags } from '@/lib/ai';
+import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
+import { isFeaturedVoice } from '@/lib/voices';
+import type messages from '@/messages/en.json';
+import { AudioPlayerWithContext } from './audio-player-with-context';
+import { Button } from './ui/button';
+import { Textarea } from './ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from './ui/tooltip';
 
 interface VoiceGroup {
   label: string;
-  voices: Tables<"voices">[];
+  voices: Tables<'voices'>[];
 }
 
-function isMultilingualVoice(voice: Tables<"voices">) {
-  return voice.model === "grok" || voice.language === "multiple";
+const featuredGroupLabel = 'Grok ✨';
+const geminiGroupLabel = 'Gemini 🌍';
+
+function isMultilingualVoice(voice: Tables<'voices'>) {
+  return voice.model === 'gpro';
+}
+function isGrokVoice(voice: Tables<'voices'>) {
+  return voice.model === 'xai';
 }
 
-function sortVoices(voices: Tables<"voices">[]) {
+function sortVoices(voices: Tables<'voices'>[]) {
   return [...voices].sort((voiceA, voiceB) => {
     const isFeaturedA = isFeaturedVoice(voiceA);
     const isFeaturedB = isFeaturedVoice(voiceB);
@@ -63,6 +68,12 @@ function sortVoices(voices: Tables<"voices">[]) {
 
     return voiceA.name.localeCompare(voiceB.name);
   });
+}
+
+function getGroupLabel(voice: Tables<'voices'>): string {
+  if (isMultilingualVoice(voice)) return geminiGroupLabel;
+  if (isGrokVoice(voice)) return featuredGroupLabel;
+  return voice.language;
 }
 
 export function VoiceSelector({
@@ -75,32 +86,27 @@ export function VoiceSelector({
   setUseNewModel,
   dict,
 }: {
-  publicVoices: Tables<"voices">[];
-  selectedVoice?: Tables<"voices">;
+  publicVoices: Tables<'voices'>[];
+  selectedVoice?: Tables<'voices'>;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
   useNewModel?: boolean;
   setUseNewModel: Dispatch<SetStateAction<boolean>>;
-  dict: (typeof messages)["generate"];
+  dict: (typeof messages)['generate'];
 }) {
   const provider = useMemo(
     () => getTtsProvider(selectedVoice?.model),
     [selectedVoice?.model],
   );
-  const isGeminiVoice = provider === "gemini";
-  const isGrokVoice = provider === "grok";
+  const isGeminiVoice = provider === 'gemini';
+  const isGrokVoice = provider === 'grok';
   const voiceSelectorLabels =
     dict.voiceSelector as typeof dict.voiceSelector & {
       featuredBadge?: string;
-      featuredGroupLabel?: string;
-      multilingualGroupLabel?: string;
     };
-  const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? "Featured";
-  const featuredGroupLabel =
-    voiceSelectorLabels.featuredGroupLabel ?? "Featured  ✨";
-  const multilingualGroupLabel =
-    voiceSelectorLabels.multilingualGroupLabel ?? "Multilingual 🌍";
+  const featuredBadgeLabel =
+    voiceSelectorLabels.featuredBadge ?? featuredGroupLabel;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -108,7 +114,7 @@ export function VoiceSelector({
   useEffect(() => {
     // Auto-resize textarea when content changes
     if (textareaRef.current && !isFullscreen) {
-      resizeTextarea(textareaRef.current, 4, 10, "--ta1-height");
+      resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
     }
   }, [selectedStyle]);
 
@@ -124,18 +130,16 @@ export function VoiceSelector({
     const groupedVoices = Object.entries(
       nonFeaturedVoices.reduce(
         (acc, voice) => {
-          const language = isMultilingualVoice(voice)
-            ? multilingualGroupLabel
-            : voice.language;
+          const group = getGroupLabel(voice);
 
-          if (!acc[language]) {
-            acc[language] = [];
+          if (!acc[group]) {
+            acc[group] = [];
           }
 
-          acc[language].push(voice);
+          acc[group].push(voice);
           return acc;
         },
-        {} as Record<string, Tables<"voices">[]>,
+        {} as Record<string, Tables<'voices'>[]>,
       ),
     )
       .map(
@@ -146,8 +150,8 @@ export function VoiceSelector({
           }) satisfies VoiceGroup,
       )
       .sort((groupA, groupB) => {
-        if (groupA.label === multilingualGroupLabel) return -1;
-        if (groupB.label === multilingualGroupLabel) return 1;
+        if (groupA.label === geminiGroupLabel) return -1;
+        if (groupB.label === geminiGroupLabel) return 1;
         return groupA.label.localeCompare(groupB.label);
       });
 
@@ -161,7 +165,7 @@ export function VoiceSelector({
     }
 
     return [...groups, ...groupedVoices];
-  }, [featuredGroupLabel, multilingualGroupLabel, publicVoices]);
+  }, [publicVoices]);
 
   return (
     <Card>
@@ -196,7 +200,7 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger className="sm:w-1/3">
+          <SelectTrigger className="w-full sm:w-1/3">
             <span className="flex! items-center gap-2">
               <SelectValue placeholder="Select a voice" />
               {selectedVoice && isFeaturedVoice(selectedVoice) && (
@@ -218,8 +222,8 @@ export function VoiceSelector({
                     return (
                       <SelectItem
                         className={cn(
-                          "cursor-pointer py-3",
-                          isFeatured && "font-medium",
+                          'cursor-pointer py-3',
+                          isFeatured && 'font-medium',
                         )}
                         key={voice.id}
                         value={voice.name}
@@ -236,7 +240,7 @@ export function VoiceSelector({
         </Select>
         <AudioProvider>
           {selectedVoice?.sample_url && (
-            <div className="flex flex-col items-center justify-start gap-2 py-2 sm:flex-row">
+            <div className="flex flex-col items-center justify-start gap-4 py-2 sm:flex-row">
               <AudioPlayerWithContext
                 playAudioTitle={dict.playAudio}
                 showWaveform
@@ -279,11 +283,11 @@ export function VoiceSelector({
         {isGeminiVoice && useNewModel !== undefined && (
           <div className="flex items-center gap-2">
             <Switch
-              id="use-new-model"
               checked={useNewModel}
+              id="use-new-model"
               onCheckedChange={setUseNewModel}
             />
-            <Label htmlFor="use-new-model" className="cursor-pointer text-sm">
+            <Label className="cursor-pointer text-sm" htmlFor="use-new-model">
               {dict.voiceSelector.useNewModelLabel}
             </Label>
           </div>
@@ -297,14 +301,14 @@ export function VoiceSelector({
               ref={textareaRef}
               style={
                 {
-                  "--ta1-height": isFullscreen ? "30vh" : "4rem",
+                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
                 } as React.CSSProperties
               }
               value={selectedStyle}
             />
             <Button
               className={
-                "absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
               }
               onClick={() => setIsFullscreen(!isFullscreen)}
               size="icon"

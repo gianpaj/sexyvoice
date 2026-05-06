@@ -44,7 +44,7 @@ export function getTtsProvider(model?: string): TtsProvider {
     return 'gemini';
   }
 
-  if (model === 'grok') {
+  if (model === 'xai') {
     return 'grok';
   }
 

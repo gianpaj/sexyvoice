@@ -4,7 +4,7 @@ export interface FeaturedVoiceMatcher {
 }
 
 export const FEATURED_TTS_VOICE: FeaturedVoiceMatcher = {
-  model: 'grok',
+  model: 'xai',
   name: 'eve',
 };
 

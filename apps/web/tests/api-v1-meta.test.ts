@@ -54,7 +54,7 @@ describe('/api/v1 metadata endpoints', () => {
               id: 'voice-eve-id',
               name: 'eve',
               language: 'en',
-              model: 'grok',
+              model: 'xai',
               feature: 'tts',
               is_public: true,
             },
@@ -78,10 +78,10 @@ describe('/api/v1 metadata endpoints', () => {
     expect(json.data[1].model).toBe('g31');
     expect(json.data[2].model).toBe('orpheus');
     expect(json.data[0].supports_style).toBe(true);
-    expect(json.data[1].supports_style).toBe(true);
+    expect(json.data[1].supports_style).toBe(false);
     expect(json.data[2].supports_style).toBe(false);
     expect(json.data[3]).toMatchObject({
-      model: 'grok',
+      model: 'xai',
       formats: ['mp3', 'wav'],
       supports_style: false,
     });

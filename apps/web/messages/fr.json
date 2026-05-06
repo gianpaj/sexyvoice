@@ -423,8 +423,8 @@
       "multilingualGroupLabel": "Multilingue 🌍",
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un chuchotement dramatique\"",
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
-      "geminiInfo": "Prend en charge 24 langues par défaut.\nActivez \"Utiliser le nouveau modèle IA\" pour 70+ langues avec Gemini 3.1.",
-      "grokInfo": "Prend en charge des balises inline expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast>.",
+      "geminiInfo": "Il prend en charge 24 langues :\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Néerlandais (Pays-Bas),\n🇺🇸 Anglais (États-Unis),\n🇮🇳 Anglais/Hindi (Inde),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇺🇸 Espagnol (États-Unis),\n🇮🇳 Tamil (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)",
+      "grokInfo": "Prend en charge des balises expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast> et prend en charge 24 langues :\n🇪🇬 Arabe (Égypte, Arabie saoudite et EAU),\n🇧🇩 Bengali,\n🇳🇱 Néerlandais (Pays-Bas),\n🇨🇳 Chinois (simplifié),\n🇺🇸 Anglais,\n🇫🇷 Français,\n🇩🇪 Allemand,\n🇮🇳 Hindi,\n🇮🇩 Indonésien,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇰🇷 Coréen,\n🇧🇷 Portugais (Brésil, Portugal),\n🇷🇺 Russe,\n🇪🇸 Espagnol (Mexique, Espagne),\n🇹🇷 Turc,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien",
       "useNewModelLabel": "Utiliser le nouveau modèle IA (Gemini 3.1)",
       "featuredBadge": "En vedette"
     }
@@ -548,7 +548,26 @@
     "errors": {
       "noAudioFile": "Veuillez sélectionner un fichier audio.",
       "noText": "Veuillez entrer du texte à convertir en parole.",
-      "ffmpegLoading": "Le convertisseur audio est encore en cours de chargement. Veuillez réessayer dans un moment"
+      "ffmpegLoading": "Le convertisseur audio est encore en cours de chargement. Veuillez réessayer dans un moment",
+      "audioConversionFailed": "Impossible de convertir le format audio. Veuillez téléverser un fichier MP3, OGG, Opus ou WAV.",
+      "audioConversionRequiredWebm": "L'audio WebM doit être converti avant l'envoi. Veuillez réessayer l'enregistrement.",
+      "audioDurationInvalidFallback": "L'audio doit durer au moins __MIN__ secondes.",
+      "audioDurationInvalidVoxtral": "L'audio de référence doit durer au moins __MIN__ secondes pour le clonage vocal.",
+      "audioDurationUnknown": "Impossible de déterminer la durée de l'audio.",
+      "fileTooLarge": "Fichier trop volumineux. Veuillez utiliser un fichier audio plus petit.",
+      "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
+      "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
+      "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
+      "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
+      "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
+      "missingLocale": "Veuillez sélectionner une langue.",
+      "missingRequiredParameters": "Veuillez entrer du texte et sélectionner un fichier audio.",
+      "referenceAudioEnhancementInputTooLarge": "L'audio de référence est trop volumineux pour être amélioré. Utilisez un fichier plus petit ou désactivez le nettoyage audio.",
+      "referenceAudioEnhancementInputTooLong": "Le nettoyage de l'audio de référence prend en charge les clips jusqu'à __MAX__ secondes.",
+      "textTooLong": "Le texte dépasse la longueur maximale de __MAX__ caractères.",
+      "unsupportedAudioFormat": "Format audio non pris en charge pour le clonage vocal. Utilisez MP3, OGG/Opus, WebM ou WAV.",
+      "unsupportedLocale": "Cette langue n'est pas prise en charge pour le clonage vocal.",
+      "userNotFound": "Veuillez vous connecter pour cloner une voix."
     },
     "sampleCard": {
       "sourceAudio": "Audio source",
@@ -560,7 +579,28 @@
       "description": "Clonez une voix dans une langue et faites-la parler couramment dans l'une des 23 autres langues supportées tout en préservant les caractéristiques uniques du locuteur.",
       "example": "Exemple : Téléchargez un échantillon vocal d'un locuteur anglais → Générez de la parole française avec sa voix"
     },
-    "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles."
+    "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles.",
+    "referenceAudioEnhancementLabel": "Nettoyer l'audio de référence",
+    "referenceAudioEnhancementHelp": "Supprime le bruit de fond et améliore l'audio vocal. Recommandé pour les enregistrements bruyants ou réalisés sur téléphone. Cela coûte 10 crédits par seconde d'audio de référence découpé.",
+    "errorEnhancingReferenceAudio": "Impossible d'améliorer l'audio de référence. Réessayez ou désactivez l'amélioration de l'audio de référence.",
+    "failedToLoadAudioProcessor": "Impossible de charger le processeur audio",
+    "failedToStartRecording": "Impossible de démarrer l'enregistrement : __ERROR__",
+    "microphoneError": "Erreur de microphone",
+    "referenceAudioGuidanceShort": "Pour de meilleurs résultats : utilisez un clip de référence propre avec un seul locuteur, d'au moins __MIN__ secondes. Seules les __TRIM_SECONDS__ premières secondes sont utilisées.",
+    "referenceAudioGuidanceLong": "Utilisez un clip de référence clair d'au moins __MIN__ secondes. Seules les __TRIM_SECONDS__ premières secondes sont utilisées.",
+    "paidTextLimitTooltip": "Les utilisateurs payants peuvent cloner une parole plus longue avec jusqu'à __MAX__ caractères.",
+    "upgradeTextLimitTooltip": "Passez à une offre payante pour cloner une parole plus longue avec jusqu'à __MAX__ caractères.",
+    "audioDurationUnknown": "Impossible de déterminer la durée de l'audio.",
+    "audioDurationInvalidVoxtral": "L'audio de référence doit durer au moins __MIN__ secondes pour le clonage vocal.",
+    "audioDurationInvalidFallback": "L'audio doit durer au moins __MIN__ secondes.",
+    "audioConversionFailed": "La conversion audio a échoué. Veuillez réessayer l'enregistrement.",
+    "audioConversionFailedWithMessage": "La conversion audio a échoué : __ERROR__",
+    "unexpectedError": "Une erreur inattendue s'est produite",
+    "loadingAudioProcessor": "Chargement du processeur audio...",
+    "audioProcessorError": "Erreur du processeur audio",
+    "preparingAudioProcessor": "Préparation du processeur audio pour __LANGUAGE__...",
+    "removeFile": "Supprimer le fichier",
+    "convertingAudio": "Conversion de l'audio"
   },
   "profile": {
     "title": "Paramètres du profil",

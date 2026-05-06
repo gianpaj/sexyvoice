@@ -423,8 +423,8 @@
       "multilingualGroupLabel": "Mehrsprachig 🌍",
       "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
-      "geminiInfo": "Unterstützt standardmäßig 24 Sprachen.\nAktiviere \"Neues KI-Modell verwenden\" für 70+ Sprachen mit Gemini 3.1.",
-      "grokInfo": "Unterstützt ausdrucksstarke Inline-Tags wie [laugh] und\numschließende Tags wie <fast>...</fast>.",
+      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)",
+      "grokInfo": "Unterstützt ausdrucksstarke Tags wie [laugh] und\numschließende Tags wie <fast>...</fast> und unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägypten, Saudi-Arabien und VAE),\n🇧🇩 Bengali,\n🇳🇱 Niederländisch (Niederlande),\n🇨🇳 Chinesisch (vereinfacht),\n🇺🇸 Englisch,\n🇫🇷 Französisch,\n🇩🇪 Deutsch,\n🇮🇳 Hindi,\n🇮🇩 Indonesisch,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇧🇷 Portugiesisch (Brasilien, Portugal),\n🇷🇺 Russisch,\n🇪🇸 Spanisch (Mexiko, Spanien),\n🇹🇷 Türkisch,\n🇺🇦 Ukrainisch,\n🇻🇳 Vietnamesisch",
       "useNewModelLabel": "Neues KI-Modell verwenden (Gemini 3.1)",
       "featuredBadge": "Empfohlen"
     }
@@ -548,7 +548,26 @@
     "errors": {
       "noAudioFile": "Bitte wählen Sie eine Audiodatei aus.",
       "noText": "Bitte geben Sie Text ein, der in Sprache umgewandelt werden soll.",
-      "ffmpegLoading": "Der Audio-Konverter wird noch geladen. Bitte versuchen Sie es in einem Moment erneut"
+      "ffmpegLoading": "Der Audio-Konverter wird noch geladen. Bitte versuchen Sie es in einem Moment erneut",
+      "audioConversionFailed": "Das Audioformat konnte nicht konvertiert werden. Bitte laden Sie MP3, OGG, Opus oder WAV hoch.",
+      "audioConversionRequiredWebm": "WebM-Audio muss vor dem Hochladen konvertiert werden. Bitte nehmen Sie erneut auf.",
+      "audioDurationInvalidFallback": "Das Audio muss mindestens __MIN__ Sekunden lang sein.",
+      "audioDurationInvalidVoxtral": "Das Referenz-Audio muss für das Klonen der Stimme mindestens __MIN__ Sekunden lang sein.",
+      "audioDurationUnknown": "Die Audiodauer konnte nicht ermittelt werden.",
+      "fileTooLarge": "Dateigröße zu groß. Bitte verwenden Sie eine kleinere Audiodatei.",
+      "guardrailViolation": "Diese Anfrage wurde durch die Sicherheitsrichtlinie eines Drittanbieters für das Klonen von Stimmen blockiert. Bitte versuchen Sie es mit anderem Text oder anderem Referenz-Audio.",
+      "insufficientCredits": "Sie benötigen __CREDITS__ Credits, um dieses Audio zu klonen.",
+      "internalError": "Die Stimme konnte nicht geklont werden. Bitte versuchen Sie es erneut.",
+      "invalidContentType": "Die Upload-Anfrage ist ungültig. Bitte versuchen Sie es erneut.",
+      "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
+      "missingLocale": "Bitte wählen Sie eine Sprache.",
+      "missingRequiredParameters": "Bitte geben Sie Text ein und wählen Sie eine Audiodatei aus.",
+      "referenceAudioEnhancementInputTooLarge": "Das Referenz-Audio ist zu groß für die Verbesserung. Verwenden Sie eine kleinere Datei oder deaktivieren Sie die Audiobereinigung.",
+      "referenceAudioEnhancementInputTooLong": "Die Bereinigung des Referenz-Audios unterstützt Clips bis zu __MAX__ Sekunden.",
+      "textTooLong": "Der Text überschreitet die maximale Länge von __MAX__ Zeichen.",
+      "unsupportedAudioFormat": "Nicht unterstütztes Audioformat für das Klonen von Stimmen. Bitte verwenden Sie MP3, OGG/Opus, WebM oder WAV.",
+      "unsupportedLocale": "Diese Sprache wird für das Klonen von Stimmen nicht unterstützt.",
+      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -560,7 +579,28 @@
       "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
       "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
     },
-    "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden."
+    "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden.",
+    "referenceAudioEnhancementLabel": "Referenz-Audio bereinigen",
+    "referenceAudioEnhancementHelp": "Entfernt Hintergrundgeräusche und verbessert Sprachaufnahmen. Empfohlen für verrauschte oder mit dem Handy aufgenommene Audios. Dies kostet 10 Credits pro Sekunde des zugeschnittenen Referenz-Audios.",
+    "errorEnhancingReferenceAudio": "Das Referenz-Audio konnte nicht verbessert werden. Bitte versuchen Sie es erneut oder deaktivieren Sie die Referenz-Audio-Verbesserung.",
+    "failedToLoadAudioProcessor": "Audioprozessor konnte nicht geladen werden",
+    "failedToStartRecording": "Aufnahme konnte nicht gestartet werden: __ERROR__",
+    "microphoneError": "Mikrofonfehler",
+    "referenceAudioGuidanceShort": "Verwenden Sie einen sauberen Referenzclip mit nur einer sprechenden Person von mindestens __MIN__ Sekunden. Es werden nur die ersten __TRIM_SECONDS__ Sekunden verwendet.",
+    "referenceAudioGuidanceLong": "Verwenden Sie einen klaren Referenzclip von mindestens __MIN__ Sekunden. Es werden nur die ersten __TRIM_SECONDS__ Sekunden verwendet.",
+    "paidTextLimitTooltip": "Zahlende Nutzer können längere Sprache mit bis zu __MAX__ Zeichen klonen.",
+    "upgradeTextLimitTooltip": "Wechseln Sie zu einem kostenpflichtigen Tarif, um längere Sprache mit bis zu __MAX__ Zeichen zu klonen.",
+    "audioDurationUnknown": "Die Audiodauer konnte nicht ermittelt werden.",
+    "audioDurationInvalidVoxtral": "Das Referenz-Audio muss für das Klonen der Stimme mindestens __MIN__ Sekunden lang sein.",
+    "audioDurationInvalidFallback": "Das Audio muss mindestens __MIN__ Sekunden lang sein.",
+    "audioConversionFailed": "Audiokonvertierung fehlgeschlagen. Bitte nehmen Sie erneut auf.",
+    "audioConversionFailedWithMessage": "Audiokonvertierung fehlgeschlagen: __ERROR__",
+    "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten",
+    "loadingAudioProcessor": "Audioprozessor wird geladen...",
+    "audioProcessorError": "Audioprozessor-Fehler",
+    "preparingAudioProcessor": "Audioprozessor für __LANGUAGE__ wird vorbereitet...",
+    "removeFile": "Datei entfernen",
+    "convertingAudio": "Audio wird konvertiert"
   },
   "profile": {
     "title": "Profileinstellungen",

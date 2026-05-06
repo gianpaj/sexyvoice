@@ -62,20 +62,22 @@ let nextConfig = {
   // images: { unoptimized: true },
 
   async rewrites() {
-    return [
-      {
-        source: '/seguimiento/static/:path*',
-        destination: 'https://eu-assets.i.posthog.com/static/:path*',
-      },
-      {
-        source: '/seguimiento/:path*',
-        destination: 'https://eu.i.posthog.com/:path*',
-      },
-      {
-        source: '/seguimiento/decide',
-        destination: 'https://eu.i.posthog.com/decide',
-      },
-    ];
+    return {
+      afterFiles: [
+        {
+          source: '/seguimiento/static/:path*',
+          destination: 'https://eu-assets.i.posthog.com/static/:path*',
+        },
+        {
+          source: '/seguimiento/:path*',
+          destination: 'https://eu.i.posthog.com/:path*',
+        },
+        {
+          source: '/seguimiento/decide',
+          destination: 'https://eu.i.posthog.com/decide',
+        },
+      ],
+    };
   },
   // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
   skipTrailingSlashRedirect: true,
@@ -103,6 +105,7 @@ let nextConfig = {
       },
     ];
   },
+  allowedDevOrigins: ['sv.localhost', '*.sv.localhost'],
 };
 
 if (process.env.ANALYZE === 'true') {

@@ -2,12 +2,13 @@
 
 #wave {
 	width: 198px;
+	overflow: visible;
 	fill: url(#header-shape-gradient) #fff;
+	filter:
+    drop-shadow(0 0 8px rgb(29 168 242 / 0.16))
+    drop-shadow(0 0 12px rgb(214 58 136 / 0.12));
 }
-#header-shape-gradient {
-  --color-stop: rgb(from hsl(var(--brand-purple)) calc(r * 1.2) calc(g * 1.2) calc(b * 1.2));
-  --color-bot: rgb(from hsl(var(--brand-red)) calc(r * 1.1) calc(g * 1.1) calc(b * 1.1));
-}
+
 @for $i from 1 through 17 {
 	#Line_#{$i} {
 		animation: pulse 0.75s infinite;

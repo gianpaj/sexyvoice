@@ -245,6 +245,92 @@ function createWavBuffer(
   return buffer;
 }
 
+interface WavChunk {
+  chunkStart: number;
+  dataStart: number;
+  size: number;
+}
+
+function findWavChunk(buffer: Buffer, chunkId: string): WavChunk | null {
+  let offset = 12;
+
+  while (offset + 8 <= buffer.length) {
+    const id = buffer.subarray(offset, offset + 4).toString('ascii');
+    const size = buffer.readUInt32LE(offset + 4);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + size;
+
+    if (dataEnd > buffer.length) {
+      return null;
+    }
+
+    if (id === chunkId) {
+      return {
+        chunkStart: offset,
+        dataStart,
+        size,
+      };
+    }
+
+    offset = dataEnd + (size % 2);
+  }
+
+  return null;
+}
+
+export function trimWavBuffer(
+  wavBuffer: Buffer,
+  maxDurationSeconds: number,
+): Buffer | null {
+  if (
+    wavBuffer.length < 44 ||
+    wavBuffer.subarray(0, 4).toString('ascii') !== 'RIFF' ||
+    wavBuffer.subarray(8, 12).toString('ascii') !== 'WAVE'
+  ) {
+    return null;
+  }
+
+  const fmtChunk = findWavChunk(wavBuffer, 'fmt ');
+  const dataChunk = findWavChunk(wavBuffer, 'data');
+  if (!(fmtChunk && dataChunk) || fmtChunk.size < 16) {
+    return null;
+  }
+
+  const sampleRate = wavBuffer.readUInt32LE(fmtChunk.dataStart + 4);
+  const blockAlign = wavBuffer.readUInt16LE(fmtChunk.dataStart + 12);
+
+  if (
+    !Number.isFinite(maxDurationSeconds) ||
+    maxDurationSeconds <= 0 ||
+    sampleRate <= 0 ||
+    blockAlign <= 0
+  ) {
+    return null;
+  }
+
+  const maxFrames = Math.floor(maxDurationSeconds * sampleRate);
+  const maxDataBytes = maxFrames * blockAlign;
+  const trimmedDataBytes = Math.min(dataChunk.size, maxDataBytes);
+
+  if (trimmedDataBytes >= dataChunk.size) {
+    return wavBuffer;
+  }
+
+  const prefix = Buffer.from(wavBuffer.subarray(0, dataChunk.dataStart));
+  prefix.writeUInt32LE(trimmedDataBytes, dataChunk.chunkStart + 4);
+
+  const trimmed = Buffer.concat([
+    prefix,
+    wavBuffer.subarray(
+      dataChunk.dataStart,
+      dataChunk.dataStart + trimmedDataBytes,
+    ),
+  ]);
+  trimmed.writeUInt32LE(trimmed.length - 8, 4);
+
+  return trimmed;
+}
+
 /**
  * Convert audio buffer to WAV format
  *
