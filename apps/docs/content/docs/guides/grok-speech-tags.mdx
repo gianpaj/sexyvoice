@@ -1,0 +1,124 @@
+---
+title: "Grok Voices & Speech Tags"
+description: "Available Grok voices and expressive speech tags for natural, emotional AI speech"
+icon: "sparkles"
+---
+
+Grok voices are powered by xAI and support expressive speech synthesis through a tag system that lets you embed emotion, pacing, and vocal effects directly in the `input` text.
+
+## Available Voices
+
+Use `GET /api/v1/voices` to retrieve the current list of Grok voices and filter by `model: "grok"`:
+
+```bash
+curl 'https://sexyvoice.ai/api/v1/voices' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+```
+
+The response includes each voice's `name`, `language`, and `model`. Pass the `name` as the `voice` parameter in speech requests.
+
+## Speech Tags
+
+Grok supports two kinds of speech tags that you embed directly in the `input` text:
+
+- **Instant tags** — single sound effects inserted at a specific point, written as `[tag-name]`
+- **Wrapping tags** — style effects applied to a span of text, written as `<tag-name>...</tag-name>`
+
+### Instant Tags
+
+| Tag | Description |
+| --- | --- |
+| `[pause]` | Short pause |
+| `[long-pause]` | Longer pause |
+| `[laugh]` | Laughter |
+| `[chuckle]` | Brief chuckle |
+| `[giggle]` | Giggle |
+| `[cry]` | Crying sound |
+| `[sigh]` | Sigh |
+| `[breath]` | Audible breath |
+| `[inhale]` | Inhale sound |
+| `[exhale]` | Exhale sound |
+| `[tsk]` | Tsk sound |
+| `[tongue-click]` | Tongue click |
+| `[lip-smack]` | Lip smack |
+| `[hum-tune]` | Humming |
+
+### Wrapping Tags
+
+| Tag | Description |
+| --- | --- |
+| `<soft>...</soft>` | Soft, gentle delivery |
+| `<whisper>...</whisper>` | Whispered speech |
+| `<loud>...</loud>` | Louder, projected voice |
+| `<emphasis>...</emphasis>` | Emphatic stress |
+| `<slow>...</slow>` | Slower speech rate |
+| `<fast>...</fast>` | Faster speech rate |
+| `<higher-pitch>...</higher-pitch>` | Raised pitch |
+| `<lower-pitch>...</lower-pitch>` | Lowered pitch |
+| `<build-intensity>...</build-intensity>` | Gradually increasing intensity |
+| `<decrease-intensity>...</decrease-intensity>` | Gradually decreasing intensity |
+| `<laugh-speak>...</laugh-speak>` | Laughing while speaking |
+| `<sing-song>...</sing-song>` | Sing-song delivery |
+| `<singing>...</singing>` | Sung vocal style |
+
+## Examples
+
+### Instant tags
+
+```json
+{
+  "model": "grok",
+  "voice": "eve",
+  "input": "Welcome everyone! [laugh] I'm so happy to be here. [pause] Let's get started."
+}
+```
+
+### Wrapping tags
+
+```json
+{
+  "model": "grok",
+  "voice": "eve",
+  "input": "<emphasis>Do not miss this deadline.</emphasis> <soft>I'm counting on you.</soft>"
+}
+```
+
+### Combining instant and wrapping tags
+
+```json
+{
+  "model": "grok",
+  "voice": "eve",
+  "input": "<build-intensity>The crowd grew louder and louder</build-intensity> [laugh] until the stadium erupted."
+}
+```
+
+### Whispered secret
+
+```json
+{
+  "model": "grok",
+  "voice": "eve",
+  "input": "I have something to tell you. <whisper>Don't tell anyone.</whisper> [pause] Promise?"
+}
+```
+
+## Output Format
+
+Grok voices support both `mp3` (default) and `wav`:
+
+```json
+{
+  "model": "grok",
+  "voice": "eve",
+  "input": "Hello there!",
+  "response_format": "mp3"
+}
+```
+
+## Notes
+
+- Tags count toward the character limit and are billed as input characters
+- Unsupported or misspelled tags pass through as plain text in the audio
+- Grok voices do not support the `style` parameter — use speech tags for expression instead
+- The `seed` parameter is not supported for Grok voices
