@@ -272,7 +272,11 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
+        "features": [
+          "Alt i Gratis",
+          "2× længere tekstgenerering",
+          "API-adgang"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -421,7 +425,7 @@
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
       "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
-      "useNewModelLabel": "Brug ny AI-model (Gemini 3.1)",
+      "useNewModelLabel": "Brug ny AI-model",
       "featuredBadge": "Fremhævet"
     }
   },

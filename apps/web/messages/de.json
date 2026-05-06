@@ -425,7 +425,7 @@
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)",
       "grokInfo": "Unterstützt ausdrucksstarke Tags wie [laugh] und\numschließende Tags wie <fast>...</fast> und unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägypten, Saudi-Arabien und VAE),\n🇧🇩 Bengali,\n🇳🇱 Niederländisch (Niederlande),\n🇨🇳 Chinesisch (vereinfacht),\n🇺🇸 Englisch,\n🇫🇷 Französisch,\n🇩🇪 Deutsch,\n🇮🇳 Hindi,\n🇮🇩 Indonesisch,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇧🇷 Portugiesisch (Brasilien, Portugal),\n🇷🇺 Russisch,\n🇪🇸 Spanisch (Mexiko, Spanien),\n🇹🇷 Türkisch,\n🇺🇦 Ukrainisch,\n🇻🇳 Vietnamesisch",
-      "useNewModelLabel": "Neues KI-Modell verwenden (Gemini 3.1)",
+      "useNewModelLabel": "Neues KI-Modell verwenden",
       "featuredBadge": "Empfohlen"
     }
   },

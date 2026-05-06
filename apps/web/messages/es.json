@@ -425,7 +425,7 @@
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
       "geminiInfo": "Soporta 24 idiomas:\n🇩🇪 Alemán (Alemania),\n🇪🇬 Árabe (Egipcio),\n🇧🇩 Bengalí (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇺🇸 Español (EE.UU.),\n🇫🇷 Francés (Francia),\n🇮🇳 Hindi (India),\n🇳🇱 Holandés (Países Bajos),\n🇮🇩 Indonesio (Indonesia),\n🇺🇸 Inglés (EE.UU.),\n🇮🇳 Inglés/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇯🇵 Japonés (Japón),\n🇮🇳 Marathi (India),\n🇵🇱 Polaco (Polonia),\n🇧🇷 Portugués (Brasil),\n🇷🇴 Rumano (Rumania),\n🇷🇺 Ruso (Rusia),\n🇹🇭 Tailandés (Tailandia),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India)\n🇹🇷 Turco (Turquía),\n🇺🇦 Ucraniano (Ucrania),\n🇻🇳 Vietnamita (Vietnam).",
       "grokInfo": "Admite etiquetas expresivas como [laugh] y\netiquetas envolventes como <fast>...</fast> y admite 24 idiomas:\n🇪🇬 Árabe (Egipto, Arabia Saudí y EAU),\n🇧🇩 Bengalí,\n🇳🇱 Neerlandés (Países Bajos),\n🇨🇳 Chino (simplificado),\n🇺🇸 Inglés,\n🇫🇷 Francés,\n🇩🇪 Alemán,\n🇮🇳 Hindi,\n🇮🇩 Indonesio,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇰🇷 Coreano,\n🇧🇷 Portugués (Brasil, Portugal),\n🇷🇺 Ruso,\n🇪🇸 Español (México, España),\n🇹🇷 Turco,\n🇺🇦 Ucraniano,\n🇻🇳 Vietnamita",
-      "useNewModelLabel": "Usar nuevo modelo de IA (Gemini 3.1)",
+      "useNewModelLabel": "Usar nuevo modelo de IA",
       "featuredBadge": "Destacada"
     }
   },
