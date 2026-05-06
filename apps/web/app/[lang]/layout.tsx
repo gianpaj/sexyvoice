@@ -11,7 +11,10 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { routing } from '@/src/i18n/routing';
 import '../globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
 
 interface Props {
   children: React.ReactNode;
@@ -46,12 +49,12 @@ export async function generateMetadata(
   const pageTitle =
     pagePath in pages ? pages[pagePath as keyof typeof pages] : undefined;
   const title = pageTitle || pages.defaultTitle;
-  const description =
-    pagePath === '/login'
-      ? pages.descriptionLogin || pages.description
-      : pagePath === '/signup'
-        ? pages.descriptionSignup || pages.description
-        : pages.description;
+  let description = pages.description;
+  if (pagePath === '/login') {
+    description = pages.descriptionLogin || pages.description;
+  } else if (pagePath === '/signup') {
+    description = pages.descriptionSignup || pages.description;
+  }
   const keywords =
     pagePath === '/' && pages.keywordsLanding
       ? pages.keywordsLanding.split(',').map((keyword) => keyword.trim())
@@ -116,7 +119,10 @@ export default async function LangLayout({
 
   return (
     <html lang={lang}>
-      <body className={`${inter.className} dark`} suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${inter.className} dark`}
+        suppressHydrationWarning
+      >
         <a className="sr-only focus:not-sr-only" href="#main-content">
           {messages.pages.skipToMainContent}
         </a>

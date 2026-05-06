@@ -153,13 +153,7 @@ export default async function LandingPage(props: {
                 <span className="text-white/90 leading-14">{firstPart}</span>
                 <br />
                 {titleRestParts && (
-                  <span
-                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent leading-16"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
-                    }}
-                  >
+                  <span className="gradient-text phosphor whitespace-break-spaces leading-16">
                     {titleRestParts}
                   </span>
                 )}
@@ -319,7 +313,7 @@ export default async function LandingPage(props: {
 
             {/* CTA Section */}
             <div className="space-y-8 py-16 text-center">
-              <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
+              <div className="mb-4 inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-primary">
                 <Sparkles className="mr-2 size-4" />
                 <span>{dictLanding.cta.freeCredits}</span>
               </div>
@@ -331,7 +325,7 @@ export default async function LandingPage(props: {
               </p>
               <Button
                 asChild
-                className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
+                className="hit-area-4 mt-4"
                 effect="ringHover"
                 size="lg"
               >
@@ -348,7 +342,7 @@ export default async function LandingPage(props: {
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
   <div className="relative mx-auto size-36">
-    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
+    <div className="ic absolute inset-0 m-auto flex size-12 items-center justify-center rounded-sm border-t border-l">
       {children}
     </div>
   </div>

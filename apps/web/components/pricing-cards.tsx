@@ -77,7 +77,7 @@ export function PricingCards({
           type="button"
         >
           {t('toggleMonthly')}
-          <span className="ml-1.5 rounded-full bg-promo-accent/20 px-1.5 py-0.5 font-semibold text-promo-accent text-xs">
+          <span className="ml-1.5 rounded-full bg-promo-accent px-1.5 py-0.5 font-semibold text-white text-xs">
             +{Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}%
           </span>
         </button>
