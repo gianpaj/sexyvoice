@@ -92,6 +92,7 @@ function renderVoiceSelector(
     selectedVoice: publicVoices[0],
     setSelectedStyle: vi.fn(),
     setSelectedVoice: vi.fn(),
+    setUseNewModel: vi.fn(),
   };
 
   return render(<VoiceSelector {...defaultProps} {...overrides} />);

@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
@@ -80,6 +82,8 @@ export function VoiceSelector({
   setSelectedVoice,
   selectedStyle,
   setSelectedStyle,
+  useNewModel,
+  setUseNewModel,
   dict,
 }: {
   publicVoices: Tables<'voices'>[];
@@ -87,6 +91,8 @@ export function VoiceSelector({
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
+  useNewModel?: boolean;
+  setUseNewModel: Dispatch<SetStateAction<boolean>>;
   dict: (typeof messages)['generate'];
 }) {
   const provider = useMemo(
@@ -274,6 +280,18 @@ export function VoiceSelector({
             </div>
           )}
         </AudioProvider>
+        {isGeminiVoice && useNewModel !== undefined && (
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={useNewModel}
+              id="use-new-model"
+              onCheckedChange={setUseNewModel}
+            />
+            <Label className="cursor-pointer text-sm" htmlFor="use-new-model">
+              {dict.voiceSelector.useNewModelLabel}
+            </Label>
+          </div>
+        )}
         {isGeminiVoice && (
           <div className="relative">
             <Textarea

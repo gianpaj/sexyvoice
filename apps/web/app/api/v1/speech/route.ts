@@ -20,7 +20,7 @@ import { createLogger } from '@/lib/api/logger';
 import {
   getDefaultFormat,
   isFormatSupported,
-  resolveExternalModelId,
+  isModelCompatibleWithVoice,
 } from '@/lib/api/model';
 import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
@@ -163,8 +163,7 @@ export async function POST(request: Request) {
     const isGrokVoice = ttsProvider === 'grok';
     const finalText = isGeminiVoice && style ? `${style}: ${input}` : input;
 
-    const resolvedModel = resolveExternalModelId(voiceObj.model);
-    if (model !== resolvedModel) {
+    if (!isModelCompatibleWithVoice(model, voiceObj.model)) {
       await log({
         status: 400,
         errorCode: 'model_not_found',
@@ -211,9 +210,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const defaultFormat = getDefaultFormat(resolvedModel);
+    const defaultFormat = getDefaultFormat(model);
     const chosenFormat = response_format ?? defaultFormat;
-    if (!isFormatSupported(resolvedModel, chosenFormat)) {
+    if (!isFormatSupported(model, chosenFormat)) {
       await log({
         status: 400,
         errorCode: 'unsupported_response_format',
@@ -292,7 +291,10 @@ export async function POST(request: Request) {
       };
 
       try {
-        modelUsed = 'gemini-2.5-pro-preview-tts';
+        modelUsed =
+          model === 'g31'
+            ? 'gemini-3.1-flash-tts-preview'
+            : 'gemini-2.5-pro-preview-tts';
         geminiResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ parts: [{ text: finalText }] }],

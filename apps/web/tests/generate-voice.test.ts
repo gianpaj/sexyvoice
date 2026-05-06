@@ -723,6 +723,73 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
+    it.each([
+      [false, 'gemini-2.5-pro-preview-tts'],
+      [true, 'gemini-3.1-flash-tts-preview'],
+    ] as const)('should use %s useNewModel flag to select %s for paid Gemini users', async (useNewModel, expectedModel) => {
+      const { hasUserPaid, saveAudioFile } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      } as GenerateContentResponse);
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent,
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'kore',
+          useNewModel,
+        }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expectedModel,
+          contents: [{ parts: [{ text: 'Hello world' }] }],
+        }),
+      );
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: expectedModel,
+          text: 'Hello world',
+        }),
+      );
+    });
+
     it('should use flash model directly for free Gemini users', async () => {
       const { saveAudioFile } = await import('@/lib/supabase/queries');
 

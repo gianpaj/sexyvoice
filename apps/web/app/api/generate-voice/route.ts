@@ -21,7 +21,6 @@ import {
   getVoiceIdByName,
   hasUserPaid,
   insertUsageEvent,
-  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -66,6 +65,7 @@ export async function POST(request: Request) {
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
+    const useNewModel = body.useNewModel === true;
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -145,8 +145,18 @@ export async function POST(request: Request) {
       isGeminiVoice && styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
+    // Resolve the effective model before hashing so paid/free and 2.5/3.1
+    // requests never share a cache entry.
+    const effectiveModel = isGeminiVoice
+      ? userHasPaid
+        ? useNewModel
+          ? 'gemini-3.1-flash-tts-preview'
+          : 'gemini-2.5-pro-preview-tts'
+        : 'gemini-2.5-flash-preview-tts'
+      : voiceObj.model;
+
     // Generate hash for the combination of text, voice and model
-    const hash = await generateHash(`${text}-${voice}-${voiceObj.model}`);
+    const hash = await generateHash(`${text}-${voice}-${effectiveModel}`);
 
     const abortController = new AbortController();
 
@@ -187,7 +197,7 @@ export async function POST(request: Request) {
         text,
         voiceId: voiceObj.id,
         creditUsed: 0,
-        model: voiceObj.model,
+        model: effectiveModel,
       });
 
       // Return existing audio file URL
@@ -201,23 +211,9 @@ export async function POST(request: Request) {
     let selectedGrokCodec = outputCodec;
 
     if (isGeminiVoice) {
-      let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-      if (!userHasPaid) {
-        const isOverLimit = await isFreemiumUserOverLimit(user.id);
-        if (isOverLimit) {
-          return NextResponse.json(
-            {
-              errorCode: 'gproLimitExceeded',
-            },
-            { status: 403 },
-          );
-        }
-        apiKey =
-          process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
-          process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      });
 
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,
@@ -238,7 +234,9 @@ export async function POST(request: Request) {
       };
       if (userHasPaid) {
         try {
-          modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+          modelUsed = useNewModel
+            ? 'gemini-3.1-flash-tts-preview'
+            : 'gemini-2.5-pro-preview-tts';
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
@@ -298,7 +296,9 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-2.5-pro-preview-tts',
+                originalModel: useNewModel
+                  ? 'gemini-3.1-flash-tts-preview'
+                  : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
                 proErrorMessage,
               },
@@ -311,7 +311,9 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-2.5-pro-preview-tts',
+                originalModel: useNewModel
+                  ? 'gemini-3.1-flash-tts-preview'
+                  : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
                 proErrorMessage,
                 flashErrorMessage:
