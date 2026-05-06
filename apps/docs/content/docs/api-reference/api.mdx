@@ -70,7 +70,7 @@ const response = await fetch('https://sexyvoice.ai/api/v1/speech', {
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    model: 'grok',
+    model: 'xai',
     voice: 'eve',
     input: 'Hello from Grok! [laugh] This sounds great.',
     response_format: 'wav',
@@ -88,7 +88,7 @@ curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 ```
 
-### Python (Gpro)
+### Python (gpro)
 
 ```python
 import requests
@@ -125,7 +125,7 @@ response = requests.post(
         'Content-Type': 'application/json',
     },
     json={
-        'model': 'grok',
+        'model': 'xai',
         'voice': 'eve',
         'input': 'Hello from Grok! <whisper>This is a secret.</whisper>',
         'response_format': 'mp3',

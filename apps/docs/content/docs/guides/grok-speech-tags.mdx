@@ -8,10 +8,10 @@ Grok voices are powered by xAI and support expressive speech synthesis through a
 
 ## Available Voices
 
-Use `GET /api/v1/voices` to retrieve the current list of Grok voices and filter by `model: "grok"`:
+Use `GET /api/v1/voices` to retrieve the current list of voices and filter the results by `model: "grok"`:
 
 ```bash
-curl 'https://sexyvoice.ai/api/v1/voices' \
+curl -X GET 'https://sexyvoice.ai/api/v1/voices' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 ```
 
@@ -67,7 +67,7 @@ Grok supports two kinds of speech tags that you embed directly in the `input` te
 
 ```json
 {
-  "model": "grok",
+  "model": "xai",
   "voice": "eve",
   "input": "Welcome everyone! [laugh] I'm so happy to be here. [pause] Let's get started."
 }
@@ -77,7 +77,7 @@ Grok supports two kinds of speech tags that you embed directly in the `input` te
 
 ```json
 {
-  "model": "grok",
+  "model": "xai",
   "voice": "eve",
   "input": "<emphasis>Do not miss this deadline.</emphasis> <soft>I'm counting on you.</soft>"
 }
@@ -87,7 +87,7 @@ Grok supports two kinds of speech tags that you embed directly in the `input` te
 
 ```json
 {
-  "model": "grok",
+  "model": "xai",
   "voice": "eve",
   "input": "<build-intensity>The crowd grew louder and louder</build-intensity> [laugh] until the stadium erupted."
 }
@@ -97,7 +97,7 @@ Grok supports two kinds of speech tags that you embed directly in the `input` te
 
 ```json
 {
-  "model": "grok",
+  "model": "xai",
   "voice": "eve",
   "input": "I have something to tell you. <whisper>Don't tell anyone.</whisper> [pause] Promise?"
 }
@@ -109,7 +109,7 @@ Grok voices support both `mp3` (default) and `wav`:
 
 ```json
 {
-  "model": "grok",
+  "model": "xai",
   "voice": "eve",
   "input": "Hello there!",
   "response_format": "mp3"
