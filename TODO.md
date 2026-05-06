@@ -1,10 +1,19 @@
 # TODO
 
+- Sidebar: close on click on mobile
+- api New Key button: add tooltip and crown showing that's for paid users
+
 - self-host Sentry on Hetzner machine
+- change all `dict...replace()` to use next-intl functions
+- Generate: if a sample contains tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
 
 ## Agents
 
 - create CLI for API auth <https://github.com/helius-labs/helius-cli>
+
+## Feedback button
+
+- <https://motion-primitives.com/docs/morphing-popover#morphing-popover-with-textarea>
 
 ## Call
 
@@ -111,6 +120,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Research
 
 - Automated Dialogue Replacement (ADR) is a post-production process in filmmaking where actors re-record their dialogue in a studio to improve audio quality or make changes to the script. This technique helps to ensure that the final audio matches the visuals and enhances the overall sound of the film.
+- Sound effects (SFX): <https://fal.ai/models/fal-ai/stable-audio>
 
 ## Emails
 

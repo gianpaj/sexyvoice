@@ -1,0 +1,10 @@
+{
+  "apps": {
+    "apps/web": {
+      "name": "sexyvoice"
+    },
+    "apps/docs": {
+      "name": "sexyvoice-docs"
+    }
+  }
+}

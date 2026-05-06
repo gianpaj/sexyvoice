@@ -30,6 +30,7 @@ build
 .turbo
 
 .env
+.env.e2e
 .vercel
 .vscode
 .env*.local
@@ -52,3 +53,7 @@ scripts/venv
 
 .daily-stats-cache.json
 .ck/
+
+agent-browser*.json
+
+*.csv
