@@ -153,7 +153,7 @@ export default async function LandingPage(props: {
                 <span className="text-white/90 leading-14">{firstPart}</span>
                 <br />
                 {titleRestParts && (
-                  <span className="gradient-text phosphor whitespace-break-spaces leading-16">
+                  <span className="phosphor whitespace-break-spaces leading-16">
                     {titleRestParts}
                   </span>
                 )}
@@ -218,7 +218,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Shield aria-hidden className="size-6 text-gray-200" />
+                    <Shield aria-hidden className="size-7 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
@@ -234,7 +234,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Mic2 aria-hidden className="size-6 text-gray-200" />
+                    <Mic2 aria-hidden className="size-7 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
@@ -252,7 +252,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Globe2 aria-hidden className="size-6 text-gray-200" />
+                    <Globe2 aria-hidden className="size-7 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-center font-medium text-pink-200">
@@ -342,7 +342,7 @@ export default async function LandingPage(props: {
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
   <div className="relative mx-auto size-36">
-    <div className="ic absolute inset-0 m-auto flex size-12 items-center justify-center rounded-sm border-t border-l">
+    <div className="ic absolute inset-0 m-auto flex size-15 items-center justify-center rounded-sm border-t border-l bg-linear-150 from-brand-purple to-80% to-brand-red">
       {children}
     </div>
   </div>

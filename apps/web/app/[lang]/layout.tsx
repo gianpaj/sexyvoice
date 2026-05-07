@@ -13,7 +13,6 @@ import '../globals.css';
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter',
 });
 
 interface Props {
@@ -119,10 +118,7 @@ export default async function LangLayout({
 
   return (
     <html lang={lang}>
-      <body
-        className={`${inter.variable} ${inter.className} dark`}
-        suppressHydrationWarning
-      >
+      <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
           {messages.pages.skipToMainContent}
         </a>

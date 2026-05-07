@@ -22,11 +22,6 @@
   --radius-lg: var(--radius-surface);
   --radius-xl: var(--radius-surface);
 
-  /* Typography */
-  --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    sans-serif;
-
   /* Colours */
   --color-white: #ffffff;
   --color-background: var(--background);
@@ -566,7 +561,7 @@
 
   ::selection {
     color: #ffffff;
-    background: rgba(176, 102, 255, 0.35);
+    background: color-mix(in srgb, var(--brand-purple) 35%, transparent);
   }
 
   :focus-visible {
@@ -638,45 +633,6 @@
     line-height: var(--label-sm-lh);
     text-transform: uppercase;
     letter-spacing: var(--label-sm-tracking);
-  }
-
-  .gradient-text,
-  .phosphor {
-    color: transparent;
-    background: var(--gradient-brand);
-    -webkit-background-clip: text;
-    background-clip: text;
-  }
-
-  .phosphor {
-    filter: drop-shadow(0 0 12px rgba(176, 102, 255, 0.35)) drop-shadow(0 0 28px rgba(255, 51, 102, 0.22));
-    animation: phosphor-flicker 6s ease-in-out infinite;
-  }
-
-  .sample-play {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    color: #fff;
-    cursor: pointer;
-    background: var(--gradient-brand);
-    border: 0;
-    border-radius: var(--radius-pill);
-    box-shadow: 0 0 16px rgba(176, 102, 255, 0.35);
-  }
-
-  .ic {
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    margin: 0 auto var(--space-3);
-    background: var(--gradient-brand);
-    border-radius: var(--radius-control);
-    box-shadow: 0 0 32px rgba(176, 102, 255, 0.25);
   }
 
   .anim-fade-in {
@@ -774,6 +730,27 @@
   .animate-incoming-call {
     animation: incoming-call 2s ease-in-out infinite;
   }
+
+  .gradient-text,
+  .phosphor {
+    color: transparent;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  .phosphor {
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--brand-purple))) drop-shadow(0 0 28px color-mix(in srgb, var(--brand-red)));
+    animation: phosphor-flicker 6s ease-in-out infinite;
+  }
+
+  .sample-play {
+    background: var(--gradient-brand);
+  }
+
+  .ic {
+    box-shadow: 0 0 32px rgba(176, 102, 255, 0.25);
+  }
 }
 
 /* Added incoming call animation */
@@ -832,7 +809,7 @@
 
   0%,
   100% {
-    filter: drop-shadow(0 0 12px rgba(176, 102, 255, 0.35)) drop-shadow(0 0 28px rgba(255, 51, 102, 0.22));
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--brand-purple))) drop-shadow(0 0 28px color-mix(in srgb, var(--brand-red)));
   }
 
   47%,
