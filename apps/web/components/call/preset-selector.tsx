@@ -645,7 +645,7 @@ export function PresetSelector({
       <CreateCharacterDialog
         callVoices={callVoices}
         dict={dict.createCharacter}
-        isPaidUser={!isPaidUser}
+        isPaidUser={isPaidUser}
         onOpenChange={setShowCreateDialog}
         onSave={handleCreateCharacter}
         open={showCreateDialog}

@@ -110,9 +110,9 @@ const XAI_LANGUAGE_OPTIONS = [
 ] as const;
 
 interface GrokTTSEditorProps {
+  charactersLimit: number;
   dict: (typeof messages)['generate']['grok'];
   isPaidUser?: boolean;
-  maxLength: number;
   onChange: (text: string) => void;
   placeholder?: string;
   selectedGrokLanguage: string;
@@ -241,7 +241,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 export function GrokTTSEditor({
   dict,
   isPaidUser,
-  maxLength,
+  charactersLimit,
   onChange,
   placeholder,
   selectedGrokLanguage,
@@ -310,7 +310,7 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const text = fullText.slice(0, maxLength);
+      const text = fullText.slice(0, charactersLimit + 10);
 
       if (text !== fullText) {
         nextEditor.commands.setContent(plainTextToDoc(text));
@@ -351,7 +351,7 @@ export function GrokTTSEditor({
       const nextLength =
         serialized.length - selectedTextLength + tag.tag.length;
 
-      if (nextLength > maxLength) {
+      if (nextLength > charactersLimit) {
         return;
       }
 
@@ -363,7 +363,7 @@ export function GrokTTSEditor({
         .run();
       setEffectsOpen(false);
     },
-    [editor, maxLength],
+    [editor, charactersLimit],
   );
 
   const insertWrapperTag = useCallback(
@@ -378,7 +378,7 @@ export function GrokTTSEditor({
       const serialized = grokTipTapDocToText(editor.getJSON());
       const nextLength = serialized.length + wrapperLength;
 
-      if (nextLength > maxLength) {
+      if (nextLength > charactersLimit) {
         return;
       }
 
@@ -434,7 +434,7 @@ export function GrokTTSEditor({
 
       setEffectsOpen(false);
     },
-    [editor, maxLength],
+    [editor, charactersLimit],
   );
 
   const preserveSelection = useCallback(
@@ -641,10 +641,12 @@ export function GrokTTSEditor({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                currentLength > maxLength ? 'font-bold text-red-500' : '',
+                currentLength >= charactersLimit
+                  ? 'font-bold text-red-500'
+                  : '',
               )}
             >
-              {currentLength} / {maxLength}
+              {currentLength} / {charactersLimit}
               <TooltipProvider>
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
