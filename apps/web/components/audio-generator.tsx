@@ -35,7 +35,6 @@ import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
   generateRetrySeed,
-  SPLIT_TEXT_MIN_LENGTH,
   splitLongTextIntoSegments,
 } from './audio-generator/split-segments-utils';
 import {
@@ -51,6 +50,12 @@ const NonGrokPromptEditor = dynamic(
 
 import { GrokTTSEditor } from './grok-tts-editor';
 import { Alert, AlertDescription } from './ui/alert';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 interface AnimatedPromptTextareaProps
   extends ComponentPropsWithoutRef<typeof Textarea> {
@@ -165,24 +170,20 @@ export function AudioGenerator({
     isLoading: isJoinerLoading,
   } = useFFmpegJoiner();
 
-  const provider = useMemo(
-    () => getTtsProvider(selectedVoice?.model),
-    [selectedVoice?.model],
-  );
+  const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const showEnhanceButton = provider === 'replicate';
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit();
-  const splitFeatureVisible =
-    !isGrokVoice && text.trim().length > SPLIT_TEXT_MIN_LENGTH;
+  const splitFeatureEnabled = !isGrokVoice;
   const shouldUseSplitMode =
-    isPaidUser && splitFeatureVisible && splitTextAudios;
+    isPaidUser && splitFeatureEnabled && splitTextAudios;
   const textIsOverLimit = !shouldUseSplitMode && text.length > charactersLimit;
   const splitSegmentTexts = useMemo(
-    () => (splitFeatureVisible ? splitLongTextIntoSegments(text) : []),
-    [text, splitFeatureVisible],
+    () => (splitFeatureEnabled ? splitLongTextIntoSegments(text) : []),
+    [text, splitFeatureEnabled],
   );
   const {
     splitSegments,
@@ -214,10 +215,10 @@ export function AudioGenerator({
   }, [isGeminiVoice, showEnhanceButton]);
 
   useEffect(() => {
-    if (!splitFeatureVisible) {
+    if (!splitFeatureEnabled) {
       setSplitTextAudios(false);
     }
-  }, [splitFeatureVisible]);
+  }, [splitFeatureEnabled]);
 
   const requestGenerateVoice = useCallback(
     async (segmentText: string, signal: AbortSignal, seed?: number) => {
@@ -824,23 +825,36 @@ export function AudioGenerator({
             />
           )}
 
-          {splitFeatureVisible && (
-            <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
-              <Label
-                className="cursor-pointer text-sm"
-                htmlFor="split-text-audios"
-              >
-                {dict.split.splitToggleLabel}
-              </Label>
-              <Checkbox
-                checked={splitTextAudios}
-                disabled={!isPaidUser}
-                id="split-text-audios"
-                onCheckedChange={(checked) =>
-                  setSplitTextAudios(Boolean(checked))
-                }
-              />
-            </div>
+          {splitFeatureEnabled && (
+            <TooltipProvider>
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
+                    <Label
+                      className={cn('text-sm', {
+                        'cursor-not-allowed': !isPaidUser,
+                      })}
+                      htmlFor="split-text-audios"
+                    >
+                      {dict.split.splitToggleLabel}
+                    </Label>
+                    <Checkbox
+                      checked={splitTextAudios}
+                      disabled={!isPaidUser}
+                      id="split-text-audios"
+                      onCheckedChange={(checked) =>
+                        setSplitTextAudios(Boolean(checked))
+                      }
+                    />
+                  </div>
+                </TooltipTrigger>
+                {!isPaidUser && (
+                  <TooltipContent>
+                    <p>{dict.split.splitToggleDisabled}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           )}
 
           {canEstimateCredits && (
@@ -870,7 +884,7 @@ export function AudioGenerator({
           <div className="flex grow-0 gap-2">
             <GenerateButton
               className="h-10 w-full sm:w-fit"
-              ctaText={dict.ctaButton}
+              ctaText={splitTextAudios ? dict.ctaButtonPlural : dict.ctaButton}
               data-testid="generate-button"
               disabled={
                 isGenerating ||

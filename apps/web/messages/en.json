@@ -359,6 +359,7 @@
     "abortedCloning": "Voice generation aborted.",
     "cancel": "Cancel generation",
     "ctaButton": "Generate Audio",
+    "ctaButtonPlural": "Generate Audios",
     "downloadAudio": "Download Audio",
     "error": "Failed to generate audio",
     "errorEstimating": "Failed to estimate credits",
@@ -446,6 +447,7 @@
       "statusFailed": "Failed",
       "statusPending": "Pending",
       "splitToggleLabel": "Split text audios",
+      "splitToggleDisabled": "Split text audios are not available for free users.",
       "downloadAllFailed": "Failed to download all segments as one WAV file."
     }
   },

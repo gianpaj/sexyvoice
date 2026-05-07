@@ -355,6 +355,7 @@
     "abortedCloning": "Stemmegenerering afbrudt.",
     "cancel": "Annuller generering",
     "ctaButton": "Generer lyd",
+    "ctaButtonPlural": "Generer lydfiler",
     "downloadAudio": "Download lyd",
     "error": "Kunne ikke generere lyd",
     "errorEstimating": "Kunne ikke estimere credits",
@@ -442,6 +443,7 @@
       "statusFailed": "Fejlet",
       "statusPending": "Afventer",
       "splitToggleLabel": "Opdel tekstlyd",
+      "splitToggleDisabled": "Opdeling af tekst i lydfiler er ikke tilgængelig for gratis brugere.",
       "downloadAllFailed": "Kunne ikke downloade alle segmenter som én WAV-fil."
     }
   },

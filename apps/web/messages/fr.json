@@ -359,6 +359,7 @@
     "abortedCloning": "Génération de voix annulée.",
     "cancel": "Annuler la génération",
     "ctaButton": "Générer l'audio",
+    "ctaButtonPlural": "Générer des audios",
     "downloadAudio": "Télécharger l'audio",
     "error": "Échec de la génération de l'audio",
     "errorEstimating": "Impossible d'estimer les crédits",
@@ -446,6 +447,7 @@
       "statusFailed": "Échoué",
       "statusPending": "En attente",
       "splitToggleLabel": "Diviser le texte en audios",
+      "splitToggleDisabled": "La division du texte en audios n'est pas disponible pour les utilisateurs gratuits.",
       "downloadAllFailed": "Impossible de télécharger tous les segments en un seul fichier WAV."
     }
   },
