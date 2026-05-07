@@ -107,7 +107,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('Choose Character')).toBeInTheDocument();
     });
 
-    it('renders all four default character names when there are no custom characters', () => {
+    it('renders all three default character names when there are no custom characters', () => {
       render(<PresetSelector />);
       for (const preset of defaultPresetsFixture) {
         expect(screen.getByText(preset.name)).toBeInTheDocument();
