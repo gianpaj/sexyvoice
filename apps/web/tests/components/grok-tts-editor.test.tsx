@@ -44,14 +44,14 @@ function getSuggestionDecoration(editor: HTMLElement) {
 const baseDict = messages.generate.grok;
 
 function renderEditor({
-  maxLength = 500,
+  charactersLimit = 500,
   onChange = vi.fn(),
   placeholder = messages.generate.textAreaPlaceholder,
   selectedGrokLanguage = 'auto',
   setSelectedGrokLanguage = vi.fn(),
   value = '',
 }: {
-  maxLength?: number;
+  charactersLimit?: number;
   onChange?: (text: string) => void;
   placeholder?: string;
   selectedGrokLanguage?: string;
@@ -60,8 +60,8 @@ function renderEditor({
 } = {}) {
   return render(
     <GrokTTSEditor
+      charactersLimit={charactersLimit}
       dict={baseDict}
-      maxLength={maxLength}
       onChange={onChange}
       placeholder={placeholder}
       selectedGrokLanguage={selectedGrokLanguage}
