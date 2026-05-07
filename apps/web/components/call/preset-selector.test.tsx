@@ -450,11 +450,11 @@ describe('PresetSelector', () => {
       // Initially Ramona is selected
       expect(screen.getByText(/Ramona:/)).toBeInTheDocument();
 
-      // Click Milo
-      await user.click(screen.getByRole('button', { name: /milo/i }));
+      // Click Rafal
+      await user.click(screen.getByRole('button', { name: /rafal/i }));
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'SET_SELECTED_PRESET_ID',
-        payload: 'milo',
+        payload: 'rafal',
       });
     });
   });
