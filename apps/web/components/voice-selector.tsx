@@ -181,10 +181,10 @@ export function VoiceSelector({
                 {isGeminiVoice && <p>{dict.voiceSelector.geminiInfo}</p>}
                 {isGrokVoice && <p>{dict.voiceSelector.grokInfo}</p>}
                 {!(isGeminiVoice || isGrokVoice) && (
-                  <p>
+                  <span>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial
                     use ✔️
-                  </p>
+                  </span>
                 )}
               </TooltipContent>
             </Tooltip>
