@@ -177,13 +177,14 @@ export function AudioGenerator({
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit();
-  const splitFeatureEnabled = !isGrokVoice;
-  const shouldUseSplitMode =
-    isPaidUser && splitFeatureEnabled && splitTextAudios;
+  const shouldUseSplitMode = isPaidUser && splitTextAudios;
   const textIsOverLimit = !shouldUseSplitMode && text.length > charactersLimit;
   const splitSegmentTexts = useMemo(
-    () => (splitFeatureEnabled ? splitLongTextIntoSegments(text) : []),
-    [text, splitFeatureEnabled],
+    () =>
+      splitLongTextIntoSegments(text, {
+        preserveGrokWrappingTags: isGrokVoice,
+      }),
+    [text, isGrokVoice],
   );
   const {
     splitSegments,
@@ -213,12 +214,6 @@ export function AudioGenerator({
 
     return 'pr-16';
   }, [isGeminiVoice, showEnhanceButton]);
-
-  useEffect(() => {
-    if (!splitFeatureEnabled) {
-      setSplitTextAudios(false);
-    }
-  }, [splitFeatureEnabled]);
 
   const requestGenerateVoice = useCallback(
     async (segmentText: string, signal: AbortSignal, seed?: number) => {
@@ -825,37 +820,35 @@ export function AudioGenerator({
             />
           )}
 
-          {splitFeatureEnabled && (
-            <TooltipProvider>
-              <Tooltip delayDuration={100}>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
-                    <Label
-                      className={cn('text-sm', {
-                        'cursor-not-allowed': !isPaidUser,
-                      })}
-                      htmlFor="split-text-audios"
-                    >
-                      {dict.split.splitToggleLabel}
-                    </Label>
-                    <Checkbox
-                      checked={splitTextAudios}
-                      disabled={!isPaidUser}
-                      id="split-text-audios"
-                      onCheckedChange={(checked) =>
-                        setSplitTextAudios(Boolean(checked))
-                      }
-                    />
-                  </div>
-                </TooltipTrigger>
-                {!isPaidUser && (
-                  <TooltipContent>
-                    <p>{dict.split.splitToggleDisabled}</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
+                  <Label
+                    className={cn('text-sm', {
+                      'cursor-not-allowed': !isPaidUser,
+                    })}
+                    htmlFor="split-text-audios"
+                  >
+                    {dict.split.splitToggleLabel}
+                  </Label>
+                  <Checkbox
+                    checked={splitTextAudios}
+                    disabled={!isPaidUser}
+                    id="split-text-audios"
+                    onCheckedChange={(checked) =>
+                      setSplitTextAudios(Boolean(checked))
+                    }
+                  />
+                </div>
+              </TooltipTrigger>
+              {!isPaidUser && (
+                <TooltipContent>
+                  <p>{dict.split.splitToggleDisabled}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           {canEstimateCredits && (
             <CreditEstimator

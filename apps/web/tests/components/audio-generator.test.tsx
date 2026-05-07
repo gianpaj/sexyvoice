@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -109,6 +115,7 @@ const baseDict = {
   languageSelectPlaceholder: 'Select a language',
   langAutomatic: 'Automatic',
   ctaButton: 'Generate',
+  ctaButtonPlural: 'Generate audios',
   generating: 'Generating',
   cancel: 'Cancel',
   playAudio: 'Play audio',
@@ -125,6 +132,7 @@ const baseDict = {
     segmentRetryFailed: 'Retry failed for segment __INDEX__',
     segmentGenerated: 'Segment __INDEX__ generated',
     splitToggleLabel: 'Split long text',
+    splitToggleDisabled: 'Split text audios are not available for free users.',
     downloadAllFailed: 'Failed to download all segments',
     segmentPreviews: 'Segment previews',
     downloadAll: 'Download all',
@@ -230,9 +238,15 @@ describe('AudioGenerator', () => {
     mockToastFn.error.mockClear();
     mockToastFn.loading.mockClear();
     mockToastFn.dismiss.mockClear();
+    window.localStorage.clear();
+
+    let uuidCounter = 0;
+    Object.assign(globalThis.crypto, {
+      randomUUID: vi.fn(() => `segment-${++uuidCounter}`),
+    });
   });
 
-  it('shows the Grok language selector with Automatic first and English second', async () => {
+  it('shows the Grok language selector with Automatic first and English second', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
         name: 'eve',
@@ -351,7 +365,7 @@ describe('AudioGenerator', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows Grok TTS editor for Grok voices', async () => {
+  it('shows Grok TTS editor for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
         name: 'eve',
@@ -380,5 +394,260 @@ describe('AudioGenerator', () => {
     expect(
       screen.queryByRole('button', { name: /insert tags/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('enables split mode for paid Replicate users and shows segment previews', async () => {
+    const user = userEvent.setup();
+    const longText = `${'A'.repeat(300)}. ${'B'.repeat(300)}.`;
+
+    renderAudioGenerator();
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      {
+        target: { value: longText },
+      },
+    );
+
+    expect(screen.getByTestId('generate-button')).toHaveTextContent(
+      baseDict.ctaButton,
+    );
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    expect(screen.getByTestId('generate-button')).toHaveTextContent(
+      baseDict.ctaButtonPlural,
+    );
+    expect(screen.getByText('603 chars -> 2 segments')).toBeInTheDocument();
+    expect(screen.getByText('Segment 1')).toBeInTheDocument();
+    expect(screen.getByText('Segment 2')).toBeInTheDocument();
+  });
+
+  it('disables split mode for free users', () => {
+    renderAudioGenerator({
+      isPaidUser: false,
+    });
+
+    expect(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    ).toBeDisabled();
+  });
+
+  it('enables split mode for paid Grok users', () => {
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: 'eve',
+        model: 'xai',
+      }),
+    });
+
+    expect(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    ).toBeEnabled();
+  });
+
+  it('generates each Replicate split segment separately', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/segment-1.mp3' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/segment-2.mp3' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator();
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      {
+        target: { value: longText },
+      },
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      text: firstSegment,
+      voice: 'tara',
+      styleVariant: '',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      text: secondSegment,
+      voice: 'tara',
+      styleVariant: '',
+    });
+    expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  it('generates each Gemini split segment separately with the selected style', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedStyle: 'Read this in a dramatic whisper',
+      selectedVoice: createVoice({
+        name: 'achernar',
+        model: 'gpro',
+      }),
+    });
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      {
+        target: { value: longText },
+      },
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      text: firstSegment,
+      voice: 'achernar',
+      styleVariant: 'Read this in a dramatic whisper',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      text: secondSegment,
+      voice: 'achernar',
+      styleVariant: 'Read this in a dramatic whisper',
+    });
+    expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  it('generates Grok split segments without breaking wrapping tags', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(260)}.`;
+    const wrappedSegment = `<fast>${'B'.repeat(220)}. ${'C'.repeat(
+      220,
+    )}.</fast>`;
+    const lastSegment = `${'D'.repeat(260)}.`;
+    const longText = `${firstSegment} ${wrappedSegment} ${lastSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-3.mp3' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: 'eve',
+        model: 'xai',
+      }),
+    });
+
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: baseDict.textAreaPlaceholder,
+      }),
+      {
+        target: { value: longText },
+      },
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+    expect(screen.getByText('Segment 1')).toBeInTheDocument();
+    expect(screen.getByText('Segment 2')).toBeInTheDocument();
+    expect(screen.getByText('Segment 3')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      text: firstSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'auto',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      text: wrappedSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'auto',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
+      text: lastSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'auto',
+    });
+    expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
   });
 });
