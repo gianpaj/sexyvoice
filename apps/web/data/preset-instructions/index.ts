@@ -1,6 +1,5 @@
 import type { CallLanguage } from '../playground-state';
 import { lilyInstructions } from './lily';
-import { miloInstructions } from './milo';
 import { rafalInstructions } from './rafal';
 import { ramonaInstructions } from './ramona';
 
@@ -21,7 +20,6 @@ export const presetInstructionsMap: Record<
   Partial<Record<CallLanguage, string>>
 > = {
   lily: lilyInstructions,
-  milo: miloInstructions,
   rafal: rafalInstructions,
   ramona: ramonaInstructions,
 };

@@ -191,13 +191,6 @@ export const defaultPresetsFixture: Preset[] = [
     sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
   }),
   makePreset({
-    id: 'milo',
-    name: 'Milo',
-    localizedDescriptions: { en: 'Bisexual twink.' },
-    image: 'milo.webp',
-    sessionConfig: { ...defaultSessionConfig, voice: 'Sal' },
-  }),
-  makePreset({
     id: 'rafal',
     name: 'Rafal',
     localizedDescriptions: { en: 'Ex-military commander.' },
