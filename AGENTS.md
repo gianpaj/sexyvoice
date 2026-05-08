@@ -67,7 +67,7 @@ Package manager: `pnpm 10`.
   troubleshooting docs.
 - `apps/web/tests/README.md` - testing details.
 - `docs/changelog-format.md` - changelog rules.
-- `.cursor/rules/` - database function and migration rules.
+- `.agents/rules/` - database function and migration rules.
 
 ## Common Commands
 

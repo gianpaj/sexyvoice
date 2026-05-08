@@ -1,5 +1,6 @@
 'use client';
 
+import { Inbox } from '@novu/react';
 import {
   BarChart3,
   CreditCard,
@@ -21,6 +22,7 @@ import { usePathname } from 'next/navigation';
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
+import { NovuNotificationsProvider } from '@/components/providers/novu-provider';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
 import {
   Sidebar,
@@ -135,110 +137,120 @@ export default function DashboardUI({
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <SidebarProvider defaultOpen>
-        <Sidebar collapsible="icon">
-          <SidebarHeader>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
-                  size="lg"
+    <NovuNotificationsProvider subscriberId={userId}>
+      <div className="min-h-screen bg-background">
+        <SidebarProvider defaultOpen>
+          <Sidebar collapsible="icon">
+            <SidebarHeader>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                    size="lg"
+                  >
+                    <div className="aspect-square group-data-[collapsible=icon]:size-9">
+                      <Image
+                        alt="Logo"
+                        height={292 / 8}
+                        src={logoSmall}
+                        width={221 / 8}
+                      />
+                    </div>
+                    <span className="font-semibold text-xl">exyVoice.ai</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+              {process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER && (
+                <div className="group-data-[collapsible=icon]:hidden">
+                  <Inbox />
+                </div>
+              )}
+            </SidebarHeader>
+
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {navigation.map((item) => (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild isActive={item.current}>
+                          <Link href={item.href}>
+                            <item.icon className="mr-3 size-5" />
+                            <span>{item.name}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+              <SidebarGroup>
+                <SidebarGroupLabel>{dict.sidebar.freeTools}</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {freeTools.map((item) => (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton asChild>
+                          <Link href={item.href} target="_blank">
+                            <item.icon className="mr-3 size-5" />
+                            <span>{item.name}</span>
+                            <ExternalLink className="max-h-3 max-w-3" />
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+
+            <SidebarFooter>
+              <CreditsSection
+                creditTransactions={creditTransactions}
+                lang={lang}
+                showMinutes={pathname === `/${lang}/dashboard/call`}
+                userId={userId}
+              />
+              <SidebarFooterMenu dict={dict.sidebar} lang={lang} />
+            </SidebarFooter>
+          </Sidebar>
+
+          {activeBanner && <Banner banner={activeBanner} inDashboard />}
+          <div className="flex w-full flex-1 flex-col">
+            <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
+              <SidebarTrigger className="lg:hidden" />
+            </div>
+
+            <main
+              className="flex-1 px-4 py-8 sm:px-6 lg:px-8"
+              id="main-content"
+            >
+              {children}
+            </main>
+            <footer className="border-t p-4 text-center">
+              <p className="text-gray-500 text-xs">
+                <a
+                  className="hover:underline"
+                  href="https://sexyvoice.checkly-dashboards.com/"
+                  rel="noopener noreferrer"
+                  target="_blank"
                 >
-                  <div className="aspect-square group-data-[collapsible=icon]:size-9">
-                    <Image
-                      alt="Logo"
-                      height={292 / 8}
-                      src={logoSmall}
-                      width={221 / 8}
-                    />
-                  </div>
-                  <span className="font-semibold text-xl">exyVoice.ai</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarHeader>
-
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navigation.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton asChild isActive={item.current}>
-                        <Link href={item.href}>
-                          <item.icon className="mr-3 size-5" />
-                          <span>{item.name}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{dict.sidebar.freeTools}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {freeTools.map((item) => (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton asChild>
-                        <Link href={item.href} target="_blank">
-                          <item.icon className="mr-3 size-5" />
-                          <span>{item.name}</span>
-                          <ExternalLink className="max-h-3 max-w-3" />
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-
-          <SidebarFooter>
-            <CreditsSection
-              creditTransactions={creditTransactions}
-              lang={lang}
-              showMinutes={pathname === `/${lang}/dashboard/call`}
-              userId={userId}
-            />
-            <SidebarFooterMenu dict={dict.sidebar} lang={lang} />
-          </SidebarFooter>
-        </Sidebar>
-
-        {activeBanner && <Banner banner={activeBanner} inDashboard />}
-        <div className="flex w-full flex-1 flex-col">
-          <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
-            <SidebarTrigger className="lg:hidden" />
+                  Status Page
+                </a>
+                <span> - </span>
+                <a
+                  className="hover:underline"
+                  href="https://sexyvoice.featurebase.app/"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Roadmap
+                </a>
+              </p>
+            </footer>
           </div>
-
-          <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8" id="main-content">
-            {children}
-          </main>
-          <footer className="border-t p-4 text-center">
-            <p className="text-gray-500 text-xs">
-              <a
-                className="hover:underline"
-                href="https://sexyvoice.checkly-dashboards.com/"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Status Page
-              </a>
-              <span> - </span>
-              <a
-                className="hover:underline"
-                href="https://sexyvoice.featurebase.app/"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Roadmap
-              </a>
-            </p>
-          </footer>
-        </div>
-      </SidebarProvider>
-    </div>
+        </SidebarProvider>
+      </div>
+    </NovuNotificationsProvider>
   );
 }
