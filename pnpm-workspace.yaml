@@ -1,0 +1,22 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "scripts"
+
+catalog:
+  "@ai-sdk/react": "3.0.118"
+  "@biomejs/biome": "2.4.11"
+  "@supabase/supabase-js": "2.99.2"
+  "@tailwindcss/postcss": "4.2.2"
+  "@types/node": "24.10.4"
+  "@types/react": "19.2.14"
+  "@types/react-dom": "19.2.3"
+  "ai": "6.0.116"
+  "next": "16.2.6"
+  "postcss": "8.5.10"
+  "react": "19.2.6"
+  "react-dom": "19.2.6"
+  "tailwindcss": "4.2.2"
+  "tsx": "4.19.3"
+  "typescript": "5.9.3"
+  "zod": "^4.3.5"

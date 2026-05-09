@@ -1,0 +1,32 @@
+name: Deploy Telegram Bot
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/web/supabase/functions/telegram-bot/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+
+      - name: Install deployctl
+        run: deno install -gArf jsr:@deno/deployctl
+
+      - name: Deploy to Deno Deploy
+        working-directory: apps/web/supabase/functions/telegram-bot
+        run: deployctl deploy --project=sv-telegram-bot --entrypoint=./index.ts --prod
+          --token=$DENO_TOKEN
+        env:
+          DENO_TOKEN: ${{ secrets.DENO_TOKEN }}

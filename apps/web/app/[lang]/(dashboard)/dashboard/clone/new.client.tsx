@@ -1,0 +1,1022 @@
+'use client';
+
+import {
+  AlertCircle,
+  CircleStop,
+  Crown,
+  Download,
+  PaperclipIcon,
+  UploadIcon,
+  XIcon,
+} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
+import { MicrophoneMain } from '@/components/audio/microphone-main';
+import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
+import { GenerateButton } from '@/components/generate-button';
+import PulsatingDots from '@/components/PulsatingDots';
+import { toast } from '@/components/services/toast';
+import { SpotlightField } from '@/components/spotlight-field';
+import { Accordion } from '@/components/ui/accordion';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import useMediaRecorder from '@/hooks/use-media-recorder';
+import {
+  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
+import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
+import { downloadUrl } from '@/lib/download';
+import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+import { cn } from '@/lib/utils';
+import type messages from '@/messages/en.json';
+import { AudioProvider } from './audio-provider';
+import type { SampleAudio } from './clone-sample-card';
+import CloneSampleCard from './clone-sample-card';
+
+export type Status = 'idle' | 'generating' | 'complete' | 'error';
+
+const ALLOWED_TYPES =
+  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
+
+const sampleAudios: readonly SampleAudio[] = [
+  {
+    id: 1,
+    name: 'Marilyn Monroe 🇺🇸',
+    language: 'english',
+    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
+    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
+    audioExampleOutputSrc:
+      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
+  },
+  // {
+  //   id: 2,
+  //   name: 'Morgan Freeman 🇺🇸',
+  //   prompt: 'The most important thing is the mission, not the money',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
+  // },
+  // {
+  //   id: 3,
+  //   name: 'Audrey Hepburn 🇬🇧',
+  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
+  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
+  // },
+  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
+];
+
+const SUPPORTED_LOCALE_CODES: Record<string, string> = {
+  ar: 'arabic',
+  da: 'danish',
+  de: 'german',
+  el: 'greek',
+  en: 'english',
+  'en-multi': 'english',
+  es: 'spanish',
+  fi: 'finnish',
+  fr: 'french',
+  he: 'hebrew',
+  hi: 'hindi',
+  it: 'italian',
+  ja: 'japanese',
+  ko: 'korean',
+  ms: 'malay',
+  nl: 'dutch',
+  no: 'norwegian',
+  pl: 'polish',
+  pt: 'portuguese',
+  ru: 'russian',
+  sv: 'swedish',
+  sw: 'swahili',
+  tr: 'turkish',
+  zh: 'chinese',
+};
+
+const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
+const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
+const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
+const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
+
+const formatCloneMessage = (
+  message: string,
+  values: Record<string, boolean | number | string | null | undefined>,
+) =>
+  Object.entries(values).reduce(
+    (formatted, [key, value]) =>
+      value === null || value === undefined
+        ? formatted
+        : formatted.replaceAll(`__${key}__`, String(value)),
+    message,
+  );
+
+type CloneErrorDetails = Record<string, boolean | number | string | null>;
+
+interface CloneErrorResponse {
+  code?: string;
+  details?: CloneErrorDetails;
+  error?: string;
+  message?: string;
+  serverMessage?: string;
+}
+
+const getCloneDictMessage = (
+  dict: (typeof messages)['clone'],
+  path: string,
+): string | undefined => {
+  let value: unknown = dict;
+
+  for (const segment of path.split('.')) {
+    if (!(value && typeof value === 'object' && segment in value)) {
+      return undefined;
+    }
+
+    value = (value as Record<string, unknown>)[segment];
+  }
+
+  return typeof value === 'string' ? value : undefined;
+};
+
+export default function NewVoiceClient({
+  dict,
+  lang,
+  hasEnoughCredits,
+  userHasPaid,
+}: {
+  dict: (typeof messages)['clone'];
+  lang: Locale;
+  hasEnoughCredits: boolean;
+  userHasPaid: boolean;
+}) {
+  return (
+    <AudioProvider>
+      <NewVoiceClientInner
+        dict={dict}
+        hasEnoughCredits={hasEnoughCredits}
+        lang={lang}
+        userHasPaid={userHasPaid}
+      />
+    </AudioProvider>
+  );
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing clone form coordinates upload, recording, conversion, and preview state.
+function NewVoiceClientInner({
+  dict,
+  lang,
+  hasEnoughCredits,
+  userHasPaid,
+}: {
+  dict: (typeof messages)['clone'];
+  lang: Locale;
+  hasEnoughCredits: boolean;
+  userHasPaid: boolean;
+}) {
+  const {
+    convert: convertWithFFmpeg,
+    ensureLoaded,
+    isLoading: ffmpegLoading,
+  } = useFFmpeg({ lazyLoad: true });
+  const [status, setStatus] = useState<Status>('idle');
+  const [activeTab, setActiveTab] = useState('upload');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [text, setText] = useState('');
+  const [selectedLocale, setSelectedLocale] = useState({
+    code: 'en',
+    value: 'english',
+  });
+  const [ffmpegError, setFFmpegError] = useState<string | null>(null);
+  const [micBlob, setMicBlob] = useState<Blob | null>(null);
+  const [micRecording, setMicRecording] = useState(false);
+  const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
+    null,
+  );
+  const [convertingMicAudio, setConvertingMicAudio] = useState(false);
+  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
+  const [
+    referenceAudioEnhancementEnabled,
+    setReferenceAudioEnhancementEnabled,
+  ] = useState(false);
+
+  const usesVoxtral = useMemo(
+    () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
+    [selectedLocale.code],
+  );
+
+  const audioDurationGuidance = useMemo(
+    () =>
+      usesVoxtral
+        ? {
+            min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
+            max: null,
+          }
+        : {
+            min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
+            max: null,
+          },
+    [usesVoxtral],
+  );
+
+  // Preload FFmpeg when Voxtral locale is selected
+  useEffect(() => {
+    if (usesVoxtral) {
+      setFFmpegError(null);
+      ensureLoaded().catch((error) => {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : dict.failedToLoadAudioProcessor;
+        setFFmpegError(errorMsg);
+        console.error('FFmpeg preload error:', error);
+      });
+    }
+  }, [usesVoxtral, ensureLoaded, dict.failedToLoadAudioProcessor]);
+
+  const handleStartRecording = async () => {
+    try {
+      setFFmpegError(null);
+      // Preload FFmpeg before recording if needed for this locale
+      if (usesVoxtral) {
+        await ensureLoaded();
+      }
+      startRecording();
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : dict.failedToLoadAudioProcessor;
+      setFFmpegError(errorMsg);
+      setErrorMessage(
+        formatCloneMessage(dict.failedToStartRecording, {
+          ERROR: errorMsg,
+        }),
+      );
+    }
+  };
+
+  const {
+    status: micStatus,
+    startRecording,
+    stopRecording,
+    clearMediaStream,
+    clearMediaBlob,
+    mediaStream,
+    mediaBlob: recorderMediaBlob,
+    getMediaStream,
+  } = useMediaRecorder({
+    mediaStreamConstraints: { audio: true },
+    onStop: (blob) => {
+      // Store the raw blob - conversion will happen at generation time based on the locale
+      setMicBlob(blob);
+    },
+    onError: (err) => {
+      console.error(err);
+      setFFmpegError(err instanceof Error ? err.message : dict.microphoneError);
+    },
+    onStart: () => {
+      setMicRecording(true);
+      setMicBlob(null);
+      setFFmpegError(null);
+    },
+  });
+
+  // FFmpeg for audio conversion
+
+  const supportedLocales = useMemo(() => {
+    const codes = Object.keys(SUPPORTED_LOCALE_CODES);
+    const translated = getTranslatedLanguages(lang, codes);
+    const merged = translated.map(({ value: code, label }) => ({
+      code,
+      value: SUPPORTED_LOCALE_CODES[code] || code,
+      name: label,
+    }));
+    const current = merged.find((l) => l.code === lang);
+    const rest = merged.filter((l) => l.code !== lang);
+    return current ? [current, ...rest] : merged;
+  }, [lang]);
+
+  const onFilesAdded = () => {
+    setStatus('idle');
+    setErrorMessage('');
+  };
+
+  const localeSpecificReferenceAudioGuidance = usesVoxtral
+    ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
+        MIN: audioDurationGuidance.min,
+        TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
+      })
+    : formatCloneMessage(dict.referenceAudioGuidanceLong, {
+        MIN: audioDurationGuidance.min,
+        TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
+      });
+
+  const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
+  const paidVoxtralTextMaxLength = CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID;
+  const textLimitTooltip = formatCloneMessage(
+    userHasPaid ? dict.paidTextLimitTooltip : dict.upgradeTextLimitTooltip,
+    { MAX: paidVoxtralTextMaxLength },
+  );
+
+  const getCloneErrorMessage = useCallback(
+    (
+      code?: string,
+      fallbackMessage?: string,
+      details?: CloneErrorDetails,
+    ): string => {
+      if (!code) {
+        return fallbackMessage || dict.errorCloning;
+      }
+
+      const message = getCloneDictMessage(dict, code);
+      if (!message) {
+        return dict.errorCloning;
+      }
+
+      return formatCloneMessage(message, details ?? {});
+    },
+    [dict],
+  );
+
+  const [
+    { files, isDragging, errors },
+    {
+      handleDragEnter,
+      handleDragLeave,
+      handleDragOver,
+      handleDrop,
+      openFileDialog,
+      removeFile,
+      getInputProps,
+      clearErrors,
+      addFiles,
+    },
+  ] = useFileUpload({
+    onFilesAdded,
+    maxSize: CLONING_FILE_MAX_SIZE,
+    accept: ALLOWED_TYPES,
+    multiple: false,
+  });
+
+  const file = files[0]?.file instanceof File ? files[0].file : null;
+
+  // Clear custom error message when file upload errors change
+  useEffect(() => {
+    if (errors.length > 0) {
+      setErrorMessage('');
+    }
+  }, [errors]);
+
+  const abortController = useRef<AbortController | null>(null);
+
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
+  const handleGenerate = useCallback(async () => {
+    if (!(file || micBlob)) {
+      setErrorMessage(dict.errors.noAudioFile);
+      setStatus('error');
+      return;
+    }
+
+    if (!text.trim()) {
+      setErrorMessage(dict.errors.noText);
+      setStatus('error');
+      return;
+    }
+
+    // Clear both custom errors and file upload errors
+    setErrorMessage('');
+    clearErrors();
+    setStatus('generating');
+
+    let voiceRes: Response | undefined;
+    try {
+      abortController.current = new AbortController();
+
+      // Use micBlob if available, otherwise use file
+      let audioToProcess = file;
+      if (micBlob && !file) {
+        // Convert WebM to WAV for non-English locales
+        // Check locale at GENERATION time, not recording time
+        if (micBlob.type.includes('webm') && selectedLocale.code !== 'en') {
+          setConvertingMicAudio(true);
+          try {
+            const wavBlob = await convertWithFFmpeg(micBlob, 'wav');
+            audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
+              type: wavBlob.type,
+            });
+          } catch (convertError) {
+            console.error('WebM to WAV conversion error:', convertError);
+            // TODO send logs to Sentry
+            setErrorMessage(
+              convertError instanceof Error
+                ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
+                    ERROR: convertError.message,
+                  })
+                : dict.audioConversionFailed,
+            );
+            setStatus('error');
+            setConvertingMicAudio(false);
+            return;
+          } finally {
+            setConvertingMicAudio(false);
+          }
+        } else {
+          // For English or non-WebM formats, use blob directly
+          const mimeType = micBlob.type || 'audio/wav';
+          const isWebM = mimeType.includes('webm');
+          const filename = isWebM
+            ? 'microphone-recording.webm'
+            : 'microphone-recording.wav';
+          audioToProcess = new File([micBlob], filename, { type: mimeType });
+        }
+      }
+
+      if (!audioToProcess) {
+        setErrorMessage(dict.errors.noAudioFile);
+        setStatus('error');
+        return;
+      }
+
+      // First upload and process the voice
+      const formData = new FormData();
+      formData.append('file', audioToProcess);
+      formData.append('text', text);
+      formData.append('locale', selectedLocale.code);
+      formData.append(
+        'enhanceReferenceAudio',
+        String(referenceAudioEnhancementEnabled),
+      );
+
+      voiceRes = await fetch('/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+        signal: abortController.current.signal,
+      });
+
+      if (!voiceRes.ok) {
+        let errorMessage = dict.errorCloning;
+        let voiceResult: CloneErrorResponse | null = null;
+
+        try {
+          voiceResult = (await voiceRes.json()) as CloneErrorResponse;
+        } catch {
+          voiceResult = null;
+        }
+
+        // Older/proxy 413 responses may still arrive without the JSON error contract.
+        if (voiceRes.status === 413 && !voiceResult?.code) {
+          errorMessage = dict.errorTooLarge;
+        } else {
+          errorMessage = getCloneErrorMessage(
+            voiceResult?.code,
+            voiceResult?.message ||
+              voiceResult?.serverMessage ||
+              voiceResult?.error ||
+              errorMessage,
+            voiceResult?.details,
+          );
+        }
+
+        setErrorMessage(errorMessage);
+        setStatus('error');
+        return;
+      }
+
+      const voiceResult = await voiceRes.json();
+
+      setGeneratedAudioUrl(voiceResult.url);
+
+      toast.success(dict.success);
+
+      setStatus('complete');
+      setActiveTab('preview');
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message === 'signal is aborted without reason'
+      ) {
+        return;
+      }
+      let errorMsg = '';
+      if (voiceRes && !voiceRes.ok) {
+        errorMsg = voiceRes.statusText;
+      } else if (err instanceof Error) {
+        errorMsg = err.message;
+      }
+      setErrorMessage(errorMsg || dict.unexpectedError);
+      setStatus('error');
+    }
+  }, [
+    clearErrors,
+    convertWithFFmpeg,
+    dict,
+    file,
+    getCloneErrorMessage,
+    micBlob,
+    referenceAudioEnhancementEnabled,
+    selectedLocale,
+    text,
+  ]);
+
+  const handleCancel = () => {
+    abortController.current?.abort();
+    setStatus('idle');
+  };
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+
+        // Only trigger if form can be submitted
+        if (
+          status !== 'generating' &&
+          text.trim() &&
+          hasEnoughCredits &&
+          legalConsentChecked
+        ) {
+          handleGenerate();
+        }
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
+
+  const downloadAudio = async () => {
+    // Prepare the anchor element once in a closure scope
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
+
+    if (!generatedAudioUrl) return;
+
+    try {
+      await downloadUrl(generatedAudioUrl, anchorElement);
+    } catch {
+      toast.error(dict.errorCloning);
+    }
+  };
+
+  const onSelectSample = (sample: SampleAudio) => {
+    setSelectedLocale({ code: 'en', value: 'english' });
+    setText(sample.prompt);
+  };
+
+  const onToggleMicrophone = async () => {
+    if (micStatus === 'idle' || micStatus === 'stopped') {
+      clearMediaStream();
+      // Request microphone access on first toggle
+      await getMediaStream();
+      await handleStartRecording();
+    } else if (micStatus === 'recording') {
+      stopRecording();
+    }
+  };
+
+  const onClearMediaStream = () => {
+    clearMediaStream();
+    clearMediaBlob();
+    setMicBlob(null);
+    setMicRecording(false);
+    setFFmpegError(null);
+  };
+
+  const textIsOverLimit = text.length > textMaxLength;
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
+            <TabsTrigger disabled={status !== 'complete'} value="preview">
+              {dict.tabPreview}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent className="space-y-6 py-4" value="upload">
+            <div className="grid w-full gap-6">
+              <div className="grid w-full gap-2">
+                <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
+
+                {/* Drop area */}
+                {!(file || micRecording) && (
+                  <button
+                    className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+                    data-dragging={isDragging || undefined}
+                    data-testid="clone-upload-dropzone"
+                    disabled={Boolean(micRecording)}
+                    onClick={openFileDialog}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onKeyUp={openFileDialog}
+                    type="button"
+                  >
+                    <input
+                      {...getInputProps()}
+                      aria-label="Upload audio file"
+                      className="sr-only"
+                      disabled={Boolean(file) || Boolean(micBlob)}
+                    />
+
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div
+                        aria-hidden="true"
+                        className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
+                      >
+                        <UploadIcon className="size-4 opacity-60" />
+                      </div>
+                      <p className="mb-1.5 font-medium text-sm">
+                        {dict.uploadAudioFile}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {dict.dragDropText}
+                      </p>
+                      <p className="mt-1 text-muted-foreground text-xs">
+                        {dict.fileFormatsText.replace(
+                          '__SIZE__',
+                          formatBytes(CLONING_FILE_MAX_SIZE),
+                        )}
+                      </p>
+                      <p className="mt-2 text-muted-foreground text-xs italic">
+                        {localeSpecificReferenceAudioGuidance}
+                      </p>
+                    </div>
+                  </button>
+                )}
+
+                {!file && (
+                  <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
+                    <p className="text-center text-xs">
+                      {dict.orUseMicrophone}
+                    </p>
+                    {ffmpegLoading && usesVoxtral && (
+                      <div className="flex items-center justify-center gap-2 py-2">
+                        <PulsatingDots />
+                        <span className="text-muted-foreground text-xs">
+                          {dict.loadingAudioProcessor}
+                        </span>
+                      </div>
+                    )}
+                    {ffmpegError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>{dict.audioProcessorError}</AlertTitle>
+                        <AlertDescription>{ffmpegError}</AlertDescription>
+                      </Alert>
+                    )}
+                    <MicrophoneMain
+                      mediaBlob={recorderMediaBlob}
+                      mediaStream={mediaStream}
+                      onClearMediaStream={onClearMediaStream}
+                      onToggleMicrophone={onToggleMicrophone}
+                      status={micStatus}
+                    />
+                  </div>
+                )}
+
+                {/* FFmpeg loading message for non-English locales */}
+                {ffmpegLoading && selectedLocale.code !== 'en' && (
+                  <div className="text-center text-muted-foreground text-xs">
+                    <span className="flex items-center justify-center gap-2">
+                      <PulsatingDots />
+                      {formatCloneMessage(dict.preparingAudioProcessor, {
+                        LANGUAGE: selectedLocale.value,
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {/* File upload errors */}
+                {errors.length > 0 && (
+                  <div
+                    className="flex items-center gap-1 text-destructive text-xs"
+                    role="alert"
+                  >
+                    <AlertCircle className="size-3 shrink-0" />
+                    <span>{errors[0]}</span>
+                  </div>
+                )}
+
+                {/* Selected file display */}
+                {file ? (
+                  <div
+                    className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
+                    key={files[0]?.id}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <PaperclipIcon
+                        aria-hidden="true"
+                        className="size-4 shrink-0 opacity-60"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate whitespace-normal break-all font-medium text-[13px]">
+                          {file.name}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {formatBytes(file.size)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      aria-label={dict.removeFile}
+                      className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
+                      onClick={() => removeFile(files[0]?.id)}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <XIcon aria-hidden="true" className="size-6!" />
+                    </Button>
+                  </div>
+                ) : (
+                  !micBlob && (
+                    // Sample audio demo buttons
+                    <div className="grid w-full gap-2">
+                      <p className="text-muted-foreground text-xs">
+                        {dict.tryDemo}
+                      </p>
+
+                      <Accordion className="w-full" collapsible type="single">
+                        {sampleAudios.map((sample) => (
+                          <CloneSampleCard
+                            addFiles={addFiles}
+                            dict={dict}
+                            key={sample.id}
+                            onSelectSample={onSelectSample}
+                            sample={sample}
+                            setErrorMessage={setErrorMessage}
+                            setStatus={setStatus}
+                          />
+                        ))}
+                      </Accordion>
+                    </div>
+                  )
+                )}
+              </div>
+
+              <div className="grid w-full gap-6">
+                <div className="grid w-full gap-2">
+                  <Label htmlFor="language">{dict.languageLabel}</Label>
+                  <Select
+                    disabled={status === 'generating'}
+                    onValueChange={(code) =>
+                      setSelectedLocale({
+                        code,
+                        value:
+                          supportedLocales.find((c) => c.code === code)
+                            ?.value || '',
+                      })
+                    }
+                    value={selectedLocale.code}
+                  >
+                    <SelectTrigger
+                      className="w-32"
+                      data-testid="clone-language-select"
+                      id="language"
+                    >
+                      <SelectValue
+                        placeholder={dict.languageSelectPlaceholder}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supportedLocales.map((locale) => (
+                        <SelectItem key={locale.code} value={locale.code}>
+                          {locale.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/*{selectedLocale.code !== 'en' && (
+                <Card className="border-blue-800">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <InfoIcon className="size-5 text-blue-600" />
+                      {dict.crossLanguageInfo.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-gray-200 text-sm">
+                      {dict.crossLanguageInfo.description}
+                    </p>
+                    <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
+                      {dict.crossLanguageInfo.example}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}*/}
+
+                <div className="grid w-full gap-2">
+                  <Label htmlFor="text-to-convert">
+                    {dict.textToConvertLabel}
+                  </Label>
+                  <SpotlightField>
+                    <Textarea
+                      className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                      data-testid="clone-text-input"
+                      disabled={status === 'generating'}
+                      id="text-to-convert"
+                      maxLength={textMaxLength + 30}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder={dict.textAreaPlaceholder}
+                      rows={5}
+                      value={text}
+                    />
+                  </SpotlightField>
+                </div>
+                <div
+                  className={cn(
+                    '-mt-2 flex items-center justify-end gap-1.5 text-right text-muted-foreground text-sm',
+                    [textIsOverLimit ? 'font-bold text-red-500' : ''],
+                  )}
+                  data-testid="clone-character-count"
+                >
+                  <span>
+                    {text.length} / {textMaxLength}
+                  </span>
+                  {usesVoxtral && (
+                    <TooltipProvider>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                          <button
+                            aria-label={textLimitTooltip}
+                            className="inline-flex"
+                            type="button"
+                          >
+                            <Crown
+                              className={cn(
+                                'h-3.5 w-3.5 cursor-default',
+                                userHasPaid
+                                  ? 'text-muted-foreground/50'
+                                  : 'text-yellow-400',
+                              )}
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{textLimitTooltip}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {status === 'error' && errorMessage && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{dict.errorTitle}</AlertTitle>
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+
+            {!hasEnoughCredits && (
+              <Alert className="mx-auto w-fit" variant="destructive">
+                <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                checked={referenceAudioEnhancementEnabled}
+                disabled={status === 'generating'}
+                id="reference-audio-enhancement"
+                onCheckedChange={(checked) =>
+                  setReferenceAudioEnhancementEnabled(checked === true)
+                }
+              />
+              <div className="grid gap-1">
+                <Label
+                  className="font-normal text-muted-foreground text-sm leading-tight"
+                  htmlFor="reference-audio-enhancement"
+                >
+                  {dict.referenceAudioEnhancementLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-tight">
+                  {dict.referenceAudioEnhancementHelp}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                checked={legalConsentChecked}
+                data-testid="clone-legal-consent"
+                id="legal-consent"
+                onCheckedChange={(checked) =>
+                  setLegalConsentChecked(checked === true)
+                }
+              />
+              <Label
+                className="font-normal text-muted-foreground text-sm leading-tight"
+                data-testid="clone-legal-consent-label"
+                htmlFor="legal-consent"
+              >
+                {dict.legalConsentCheckbox}
+              </Label>
+            </div>
+
+            <GenerateButton
+              className="w-full"
+              ctaText={dict.ctaButton}
+              data-testid="clone-generate-button"
+              disabled={
+                !((file || micBlob) && text.trim()) ||
+                status === 'generating' ||
+                !hasEnoughCredits ||
+                convertingMicAudio ||
+                textIsOverLimit ||
+                !legalConsentChecked
+              }
+              generatingText={
+                status === 'generating'
+                  ? `${dict.generating}...`
+                  : `${dict.convertingAudio}...`
+              }
+              isGenerating={status === 'generating' || convertingMicAudio}
+              onClick={handleGenerate}
+            />
+            {status === 'generating' && (
+              <Button
+                className="mx-auto"
+                onClick={handleCancel}
+                variant="outline"
+              >
+                {dict.cancelButton}{' '}
+                <CircleStop className="size-4" name="cancel" />
+              </Button>
+            )}
+          </TabsContent>
+
+          <TabsContent className="space-y-4 py-4" value="preview">
+            <div className="space-y-4">
+              <h3 className="text-center font-medium text-xl">
+                {dict.previewTitle}
+              </h3>
+
+              <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
+                {generatedAudioUrl && (
+                  <AudioPlayerWithContext
+                    autoPlay
+                    className="rounded-full"
+                    playAudioTitle={dict.playAudio}
+                    progressColor="#8b5cf6"
+                    showWaveform
+                    url={generatedAudioUrl}
+                    waveColor="#888888"
+                  />
+                )}
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={downloadAudio}
+                >
+                  <Download className="h-4 w-4" />
+                  {dict.downloadAudio}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}

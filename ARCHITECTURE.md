@@ -208,12 +208,13 @@ flowchart TD
 7. **Cache Lookup**: Generate hash from (locale + text + audio blob URL) and check Redis
 8. **Cache Hit**: Return cached cloned audio URL immediately (0 credits used)
 9. **Cache Miss**:
-   - Select model based on locale:
-     - English (`en`): `resemble-ai/chatterbox`
-     - Other languages: `resemble-ai/chatterbox-multilingual`
-   - Call Replicate API with reference audio and text/prompt
-   - Generate cloned voice audio
-10. **Fetch & Storage**: Fetch generated audio from Replicate and upload to Cloudflare R2 as `clone-voice/{hash}.wav`
+   - Resolve provider based on locale:
+     - Mistral Voxtral (`voxtral-mini-tts-2603`) for `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, and `pt`
+     - Replicate Chatterbox Multilingual (`resemble-ai/chatterbox-multilingual`) for all other supported clone locales: `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, and `zh`
+   - Generate cloned voice audio using the selected provider:
+     - Mistral returns WAV audio directly from `audio.speech.complete()`
+     - Replicate runs the multilingual Chatterbox model with the locale mapped to the provider language code (`en-multi` is sent as `en`)
+10. **Fetch & Storage**: Upload generated audio to Cloudflare R2 as `clone-voice/{hash}.wav`
 11. **Cache Update**: Store blob URL in Redis for future identical requests
 12. **Background Tasks** (using Next.js `after()`):
     - Deduct credits from user balance
@@ -224,10 +225,10 @@ flowchart TD
 
 ### Voice Cloning Models
 
-| Locale | Model | Provider |
-|--------|-------|----------|
-| English (`en`) | `resemble-ai/chatterbox` | Replicate |
-| Other languages | `resemble-ai/chatterbox-multilingual` | Replicate |
+| Locale group | Locales | Model | Provider |
+|--------------|---------|-------|----------|
+| Voxtral-supported locales | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt` | `voxtral-mini-tts-2603` | Mistral |
+| Chatterbox multilingual locales | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 ### File Constraints
 

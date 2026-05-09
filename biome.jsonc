@@ -12,10 +12,10 @@
       "!**/venv",
       "!**/.venv",
       "!**/node_modules",
-      "!components/ui",
-      "!.next",
-      "!dist",
-      "!build"
+      "!**/.next",
+      "!**/dist",
+      "!**/build",
+      "!apps/web/components/ui"
     ]
   },
   "formatter": {

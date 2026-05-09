@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://sexyvoice.ai">
-    <img alt="SexyVoice.ai - AI Voice Generation Platform" src="./public/sexyvoice.ai-og-image.jpg" width="640">
+    <img alt="SexyVoice.ai - AI Voice Generation Platform" src="./apps/web/public/sexyvoice.ai-og-image.jpg" width="640">
   </a>
 </p>
 
@@ -64,7 +64,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Frontend
 
 - **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
-- **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
+- **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `apps/web/messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
 - **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
@@ -92,6 +92,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Husky](https://typicode.github.io/husky)** - Git hooks for automated tasks
 - **[lint-staged](https://github.com/okonet/lint-staged)** - Runs commands on staged files
 
+## Repository Layout
+
+- `apps/web` - Next.js web app deployed to Vercel.
+- `apps/docs` - Mintlify docs app for `docs.sexyvoice.ai`.
+- `scripts` - operational scripts kept outside the web app as
+  `@sexyvoice/scripts`.
+- `docs` - internal engineering and operational docs.
+
+Root commands are orchestrated with Turborepo. Use package filters when you
+only want one app, for example `pnpm --filter @sexyvoice/web dev`.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -118,10 +129,11 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 3. **Set up environment variables**
 
    ```bash
-   cp .env.example .env.local
+   cp apps/web/.env.example apps/web/.env.local
    ```
 
-   Fill in the required environment variables as defined in [`.env.example`](.env.example):
+   Fill in the required environment variables as defined in
+   [`apps/web/.env.example`](apps/web/.env.example):
    - Supabase
       - `NEXT_PUBLIC_SUPABASE_URL`
       - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -154,8 +166,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
       - `STRIPE_TOPUP_99_PRICE_ID`
    - Banner and promotion configuration
       - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
-      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`
-      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`
+      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
       - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
       - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
       - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
@@ -181,7 +193,9 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    - Run database migrations:
 
    ```bash
+   cd apps/web
    supabase db push
+   cd ../..
    ```
 
 5. **Start the development server**
@@ -197,12 +211,12 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 The app uses a shared banner system for both promotions and announcements:
 
-- `components/banner.tsx` renders the banner UI
-- `lib/banners/registry.ts` defines supported banners
-- `lib/banners/resolve-banner.ts` resolves the single visible banner per placement
-- `app/[lang]/actions/banners.ts` handles dismissal cookies
+- `apps/web/components/banner.tsx` renders the banner UI
+- `apps/web/lib/banners/registry.ts` defines supported banners
+- `apps/web/lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `apps/web/app/[lang]/actions/banners.ts` handles dismissal cookies
 
-Banner copy is localized in `messages.promos.*` and `messages.announcements.*`.
+Banner copy is localized in `apps/web/messages/*.json`.
 Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 ## 🧪 Development
@@ -211,18 +225,17 @@ Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 | Command                   | Description                             |
 | ------------------------- | --------------------------------------- |
-| `pnpm dev`                | Start development server with Turbopack |
-| `pnpm build`              | Build production application            |
-| `pnpm start`              | Start production server                 |
-| `pnpm test`               | Run test suite                          |
-| `pnpm test:watch`         | Run tests in watch mode                 |
+| `pnpm dev`                | Start all workspace dev tasks           |
+| `pnpm --filter @sexyvoice/web dev` | Start only the web app dev server |
+| `pnpm build`              | Build workspace apps with Turbo         |
+| `pnpm test`               | Run test suites                         |
+| `pnpm test:ui`            | Run Vitest UI for the web app           |
 | `pnpm lint`               | Lint codebase with Biome                |
-| `pnpm lint:fix`           | Fix linting issues automatically        |
 | `pnpm type-check`         | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
 | `pnpm check-translations` | Validate all locale files have matching keys |
-| `pnpm build:content`      | Build content layer                     |
-| `pnpm clean`              | Clean unused dependencies with Knip     |
+| `pnpm build:content`      | Build web app content layer             |
+| `pnpm clean`              | Check unused dependencies with Knip     |
 | `pnpm fixall`             | Run all fixes: lint, format, and check  |
 
 ### Testing
@@ -233,10 +246,10 @@ Run the test suite:
 pnpm test
 ```
 
-For continuous testing during development:
+For the Vitest UI during development:
 
 ```bash
-pnpm test:watch
+pnpm test:ui
 ```
 
 ### Database Operations
@@ -250,13 +263,17 @@ pnpm run generate-supabase-types
 Push schema changes to Supabase:
 
 ```bash
+cd apps/web
 supabase db push
+cd ../..
 ```
 
 Fetch database migrations:
 
 ```bash
+cd apps/web
 supabase migration fetch
+cd ../..
 ```
 
 Backup database and schema:
@@ -265,6 +282,17 @@ Backup database and schema:
 export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
 sh ./scripts/db_backups.sh
 ```
+
+### Mintlify
+
+The docs site remains the Mintlify project for `docs.sexyvoice.ai`.
+
+- In Mintlify Git Settings, point the project to this monorepo repository and
+  the production branch.
+- Enable Mintlify monorepo mode.
+- Set the docs path to `/apps/docs` with no trailing slash.
+- Keep the existing custom domain and GitHub App installation attached to the
+  repository/branch used for docs deployments.
 
 ### Video Generation
 

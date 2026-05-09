@@ -609,7 +609,7 @@ Only needed for **mutations** (create/update/delete custom characters + their pr
 //    }
 //
 // 3. VALIDATE VOICE:
-//      getVoiceIdByName(voiceName, false)
+//      getVoiceIdByName(voiceName)
 //      → not found? 400 "Voice no longer available"
 //      → found? Use voice.id for the character's voice_id FK
 //
