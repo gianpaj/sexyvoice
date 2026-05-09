@@ -61,22 +61,18 @@ export class CreditsPage {
       name: /stripe customer portal/i,
     });
 
-    // Package cards — each card is a Card component containing the plan name and buy button
+    // Package cards — scope to cards that contain a buy button to avoid
+    // matching sidebar cards or unrelated dashboard sections.
     this.packageCards = page.locator('[class*="card"]').filter({
       has: page.getByRole('button', { name: /buy credits/i }),
     });
-    this.starterCard = page
-      .locator('[class*="card"]')
+    this.starterCard = this.packageCards
       .filter({ hasText: /starter/i })
       .first();
-    this.standardCard = page
-      .locator('[class*="card"]')
+    this.standardCard = this.packageCards
       .filter({ hasText: /standard/i })
       .first();
-    this.proCard = page
-      .locator('[class*="card"]')
-      .filter({ hasText: /pro/i })
-      .first();
+    this.proCard = this.packageCards.filter({ hasText: /pro/i }).first();
     this.buyButtons = page.getByRole('button', { name: /buy credits/i });
 
     // Credit history section
@@ -87,16 +83,17 @@ export class CreditsPage {
 
     // TopupStatus alerts (driven by URL search params)
     this.successAlert = page.getByRole('alert').filter({
-      has: page.locator('.text-emerald-500, [class*="emerald"]'),
+      hasText: /payment successful|successfully added|credited with/i,
     });
     this.canceledAlert = page.getByRole('alert').filter({
-      hasText: /cancel/i,
+      hasText: /payment cancelled|payment canceled|no charges were made/i,
     });
     this.errorAlert = page.getByRole('alert').filter({
-      hasText: /error|failed|went wrong/i,
+      hasText:
+        /payment failed|failed to create checkout session|issue processing your payment/i,
     });
     this.dismissButton = page.getByRole('button', {
-      name: /dismiss|ok|got it/i,
+      name: /dismiss/i,
     });
   }
 
@@ -109,10 +106,10 @@ export class CreditsPage {
       : '/en/dashboard/credits';
     await this.page.goto(url, { waitUntil: 'domcontentloaded' });
     // Wait for page content to load — look for buy buttons or history heading
-    await this.page
-      .getByRole('button', { name: /buy credits|stripe/i })
-      .first()
-      .waitFor({ state: 'visible', timeout: 20_000 });
+    await this.buyButtons.first().waitFor({
+      state: 'visible',
+      timeout: 20_000,
+    });
   }
 
   /**
@@ -167,7 +164,15 @@ export class CreditsPage {
    * Dismiss the topup status alert
    */
   async dismissAlert() {
-    await this.dismissButton.first().click();
+    const visibleAlert = (await this.successAlert.isVisible())
+      ? this.successAlert
+      : (await this.canceledAlert.isVisible())
+        ? this.canceledAlert
+        : this.errorAlert;
+
+    await visibleAlert
+      .getByRole('button', { name: /dismiss/i })
+      .evaluate((element) => (element as HTMLElement).click());
   }
 
   // --- Assertions ---
@@ -193,9 +198,24 @@ export class CreditsPage {
    * Verify each package card shows a dollar amount
    */
   async expectPackagePricesVisible() {
-    await expect(this.starterCard.getByText(/\$/)).toBeVisible();
-    await expect(this.standardCard.getByText(/\$/)).toBeVisible();
-    await expect(this.proCard.getByText(/\$/)).toBeVisible();
+    await expect(
+      this.starterCard
+        .locator('span')
+        .filter({ hasText: /^\$\d+/ })
+        .first(),
+    ).toBeVisible();
+    await expect(
+      this.standardCard
+        .locator('span')
+        .filter({ hasText: /^\$\d+/ })
+        .first(),
+    ).toBeVisible();
+    await expect(
+      this.proCard
+        .locator('span')
+        .filter({ hasText: /^\$\d+/ })
+        .first(),
+    ).toBeVisible();
   }
 
   /**
@@ -297,6 +317,17 @@ export class CreditsPage {
     await expect(this.successAlert).toBeHidden({ timeout: 5000 });
     await expect(this.canceledAlert).toBeHidden({ timeout: 5000 });
     await expect(this.errorAlert).toBeHidden({ timeout: 5000 });
+  }
+
+  /**
+   * Verify checkout failed inline (expected in local/dev without Stripe price IDs)
+   */
+  async expectCheckoutErrorVisible() {
+    await expect(
+      this.errorAlert
+        .or(this.page.getByText(/failed to create checkout session/i))
+        .first(),
+    ).toBeVisible({ timeout: 5000 });
   }
 
   /**

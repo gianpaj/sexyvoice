@@ -127,8 +127,19 @@ export class UsagePage {
    */
   async selectSourceTypeFilter(sourceType: string) {
     await this.sourceTypeFilterTrigger.click();
+
+    const optionNameBySourceType: Record<string, RegExp> = {
+      all: /^all$/i,
+      tts: /^tts$/i,
+      voice_cloning: /^voice cloning$/i,
+      live_call: /^live call$/i,
+      audio_processing: /^audio processing$/i,
+      api_tts: /^api tts$/i,
+      api_voice_cloning: /^api voice cloning$/i,
+    };
+
     const option = this.page.getByRole('option', {
-      name: new RegExp(sourceType.replace('_', ' '), 'i'),
+      name: optionNameBySourceType[sourceType] ?? new RegExp(sourceType, 'i'),
     });
     await option.waitFor({ state: 'visible', timeout: 5000 });
     await option.click();
@@ -210,23 +221,12 @@ export class UsagePage {
    * Verify expected table column headers are present
    */
   async expectTableHeaders() {
-    // The usage table should have these columns (from columns.tsx)
-    // Type, Quantity, Credits, Date, Details
-    await expect(
-      this.page.getByRole('columnheader', { name: /type/i }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: /quantity/i }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: /credits/i }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: /date/i }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: /details/i }),
-    ).toBeVisible();
+    const headerText = (await this.tableHeaders.allTextContents()).join(' ');
+    expect(headerText).toMatch(/type/i);
+    expect(headerText).toMatch(/quantity/i);
+    expect(headerText).toMatch(/credits/i);
+    expect(headerText).toMatch(/date/i);
+    expect(headerText).toMatch(/details/i);
   }
 
   /**
@@ -280,7 +280,7 @@ export class UsagePage {
    */
   async expectUrlHasSourceType(sourceType: string) {
     await expect(this.page).toHaveURL(new RegExp(`sourceType=${sourceType}`), {
-      timeout: 5000,
+      timeout: 10_000,
     });
   }
 

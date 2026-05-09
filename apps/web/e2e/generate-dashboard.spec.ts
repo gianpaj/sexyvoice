@@ -88,7 +88,7 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     await expect(generatePage.styleInput).toHaveCount(0);
     await expect(
       generatePage.audioGeneratorCard.getByRole('button', {
-        name: /insert inline effect/i,
+        name: /insert tags/i,
       }),
     ).toBeVisible();
 

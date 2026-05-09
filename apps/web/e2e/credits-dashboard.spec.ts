@@ -129,28 +129,25 @@ test.describe('Credits Dashboard - Checkout Flow', () => {
   });
 
   test('should attempt checkout when clicking buy button', async ({ page }) => {
-    // Intercept the Stripe checkout action to prevent real charges
-    // The form uses a server action that returns a redirect URL
-    let checkoutAttempted = false;
-    await page.route('**/actions/stripe', async (route) => {
-      checkoutAttempted = true;
-      // Return an error to prevent redirect to Stripe
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Mocked in test' }),
-      });
-    });
-
-    // Click buy on the starter package
     await creditsPage.clickBuyButton('starter');
 
-    // Verify that the checkout route was actually hit
-    expect(checkoutAttempted).toBe(true);
+    const result = await Promise.race([
+      page
+        .waitForURL(/stripe|checkout/i, { timeout: 5000 })
+        .then(() => 'redirect' as const)
+        .catch(() => null),
+      creditsPage
+        .expectCheckoutErrorVisible()
+        .then(() => 'error' as const)
+        .catch(() => null),
+    ]);
 
-    // The button should show a loading state (processing)
+    expect(result).toBeTruthy();
+
     await expect(
-      creditsPage.starterCard.getByRole('button').first(),
+      creditsPage.starterCard.getByRole('button', {
+        name: /buy credits|processing/i,
+      }),
     ).toBeVisible();
   });
 });

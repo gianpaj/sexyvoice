@@ -255,24 +255,14 @@ export class HistoryPage {
    * Verify expected table headers are present
    */
   async expectTableHeaders() {
-    await expect(
-      this.page.getByRole('columnheader', { name: 'File Name' }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: 'Voice' }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: 'Text' }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: 'Created At' }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: 'Preview' }),
-    ).toBeVisible();
-    await expect(
-      this.page.getByRole('columnheader', { name: 'Download' }),
-    ).toBeVisible();
+    const headerText = (await this.tableHeaders.allTextContents()).join(' ');
+    expect(headerText).toMatch(/file name/i);
+    expect(headerText).toMatch(/voice/i);
+    expect(headerText).toMatch(/text/i);
+    expect(headerText).toMatch(/created at/i);
+    expect(headerText).toMatch(/preview/i);
+    expect(headerText).toMatch(/download/i);
+    expect(headerText).toMatch(/actions/i);
   }
 
   /**

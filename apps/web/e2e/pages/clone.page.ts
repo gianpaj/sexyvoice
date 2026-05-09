@@ -66,10 +66,12 @@ export class ClonePage {
   constructor(page: Page) {
     this.page = page;
 
-    // Card heading and description
-    this.cardTitle = page.getByTestId('clone-page-title');
+    // Page heading and description
+    this.cardTitle = page.getByRole('heading', {
+      name: /clone a voice/i,
+    });
     this.cardDescription = page.getByText(
-      /upload.*audio|record.*voice|clone.*voice/i,
+      /upload an audio sample|generate speech in the cloned voice/i,
     );
 
     // Tabs
@@ -126,8 +128,9 @@ export class ClonePage {
     await this.page.goto('/en/dashboard/clone', {
       waitUntil: 'domcontentloaded',
     });
-    // Wait for the card title to appear
-    await this.cardTitle.waitFor({ state: 'visible', timeout: 15_000 });
+    // Wait for the main clone UI to appear
+    await this.textInput.waitFor({ state: 'visible', timeout: 15_000 });
+    await expect(this.cardTitle).toBeVisible();
   }
 
   // --- Actions ---
