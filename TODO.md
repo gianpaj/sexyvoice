@@ -1,5 +1,8 @@
 # TODO
 
+- update API to support Grok voices
+- check usage_logs have the correct dollar cost for Grok TTS generate-voice/route.ts
+- add e2e tests for Grok voices
 - self-host Sentry on Hetzner machine
 
 ## Agents
@@ -22,7 +25,7 @@
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - share link & page after an audio has been generated
-- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
+- analyze and remove unused voices and group by male and female (see < CommandGroup>)
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
@@ -46,7 +49,7 @@
   import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
-      useKrispNoiseFilter();
+    useKrispNoiseFilter();
 
   useEffect(() => {
     setNoiseFilterEnabled(true);
@@ -91,7 +94,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Features
 
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>
-<https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
+  <https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
 
 ## Tests
 
@@ -111,6 +114,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Research
 
 - Automated Dialogue Replacement (ADR) is a post-production process in filmmaking where actors re-record their dialogue in a studio to improve audio quality or make changes to the script. This technique helps to ensure that the final audio matches the visuals and enhances the overall sound of the film.
+- Sound effects (SFX): <https://fal.ai/models/fal-ai/stable-audio>
 
 ## Emails
 

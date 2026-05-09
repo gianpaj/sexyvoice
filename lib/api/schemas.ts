@@ -23,13 +23,13 @@ export const ErrorResponseSchema = z.object({
 });
 
 export const VoiceGenerationRequestSchema = z.strictObject({
-  model: z.enum(['gpro', 'orpheus']).describe('The voice model to use'),
+  model: z.enum(['gpro', 'orpheus', 'grok']).describe('The voice model to use'),
   input: z
     .string()
     .min(1)
     .max(1000)
     .describe(
-      'The text to synthesize (max 1000 chars for gpro, 500 for orpheus)',
+      'The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)',
     ),
   voice: z
     .string()
@@ -74,7 +74,7 @@ export const VoiceInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'orpheus']),
+  model: z.enum(['gpro', 'orpheus', 'grok']),
   formats: z.array(z.enum(['wav', 'mp3'])),
   styles: z.array(z.string()),
 });
@@ -84,7 +84,7 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'orpheus']),
+  id: z.enum(['gpro', 'orpheus', 'grok']),
   name: z.string(),
   max_input_length: z.number().int().positive(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),

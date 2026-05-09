@@ -56,6 +56,12 @@
   },
   "landing": {
     "latestPosts": "Neueste Beiträge",
+    "blogDescription": "Anleitungen, Tutorials und Neuigkeiten zu KI-Stimmklonen, Text-zu-Sprache-Synthese und Voice-KI-Technologie.",
+    "homeLabel": "Startseite",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "Noch keine Beiträge verfügbar.",
+    "minutesRead": "Min. Lesezeit",
+    "readMore": "Weiterlesen",
     "more": "Weitere Beiträge",
     "hero": {
       "title": "Starke Stimmen, frei",
@@ -79,7 +85,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits (5 Min. Sprachanruf) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits ( ͡° ͜ʖ ͡°)",
       "title": "Bereit, Ihre Stimme zu finden?",
       "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
       "action": "Erstellen sie ihre erste stimme"
@@ -341,12 +347,52 @@
     "success": "Audio erfolgreich generiert!",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
     "title": "Audio generieren",
+    "grok": {
+      "inlineEffectPlaceholder": "Inline-Effekt einfügen",
+      "wrappingEffectPlaceholder": "Mit Stil-Tag umschließen",
+      "formatPlaceholder": "Format wählen",
+      "effects": {
+        "pause": "[pause]",
+        "longPause": "[long-pause]",
+        "humTune": "[hum-tune]",
+        "laugh": "[laugh]",
+        "chuckle": "[chuckle]",
+        "giggle": "[giggle]",
+        "cry": "[cry]",
+        "tsk": "[tsk]",
+        "tongueClick": "[tongue-click]",
+        "lipSmack": "[lip-smack]",
+        "breath": "[breath]",
+        "inhale": "[inhale]",
+        "exhale": "[exhale]",
+        "sigh": "[sigh]"
+      },
+      "wrappingTags": {
+        "soft": "<soft>...</soft>",
+        "whisper": "<whisper>...</whisper>",
+        "loud": "<loud>...</loud>",
+        "buildIntensity": "<build-intensity>...</build-intensity>",
+        "decreaseIntensity": "<decrease-intensity>...</decrease-intensity>",
+        "higherPitch": "<higher-pitch>...</higher-pitch>",
+        "lowerPitch": "<lower-pitch>...</lower-pitch>",
+        "slow": "<slow>...</slow>",
+        "fast": "<fast>...</fast>",
+        "singSong": "<sing-song>...</sing-song>",
+        "singing": "<singing>...</singing>",
+        "laughSpeak": "<laugh-speak>...</laugh-speak>",
+        "emphasis": "<emphasis>...</emphasis>"
+      }
+    },
     "voiceSelector": {
       "title": "Stimme auswählen",
       "description": "Wählen Sie aus verfügbaren Stimmen",
+      "featuredGroupLabel": "Empfohlen",
+      "multilingualGroupLabel": "Mehrsprachig 🌍",
       "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
-      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)"
+      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)",
+      "grokInfo": "Unterstützt ausdrucksstarke Inline-Tags wie [laugh] und umschließende Tags wie <fast>...</fast>.",
+      "featuredBadge": "Empfohlen"
     }
   },
   "call": {
@@ -382,7 +428,7 @@
     "grokImagineIncluded": "Grok Imagine-Anweisungen enthalten",
     "addCustomCharacter": "Eigenen Charakter hinzufügen",
     "addCharacterLabel": "Hinzufügen",
-    "upgradePremiumTooltip": "Upgrade, um eigene Charaktere zu erstellen",
+    "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Beschreibung hinzufügen...",
     "clickToAddDescription": "Klicke, um eine Beschreibung hinzuzufügen...",
     "characterInstructions": "__NAME__-Anweisungen",
@@ -431,6 +477,7 @@
       "cancelButton": "Abbrechen",
       "createButton": "Charakter erstellen",
       "creatingButton": "Erstelle...",
+      "paidUserOnly": "Upgrade feature",
       "errorNameRequired": "Name ist erforderlich",
       "errorVoiceRequired": "Bitte wählen Sie eine Stimme",
       "playVoiceSample": "Stimmprobe abspielen",
@@ -447,7 +494,7 @@
     "errorCloning": "Stimme konnte nicht geklont werden",
     "errorTitle": "Fehler",
     "errorTooLarge": "Dateigröße zu groß. Bitte verwenden Sie eine kleinere Audiodatei.",
-    "fileFormatsText": "MP3, WAV, M4A oder OGG (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG oder OPUS (WhatsApp) (max. __SIZE__)",
     "generating": "Wird generiert",
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",
@@ -517,7 +564,7 @@
       "deleteAccount": {
         "button": "Konto löschen",
         "confirmTitle": "Sind Sie sich absolut sicher?",
-        "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht, einschließlich:\n• Alle generierten Audiodateien\n• Geklonte Stimmen\n• Ihre Daten von unseren Servern",
+        "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht, einschließlich:\n• Alle generierten Audiodateien\n• Geklonte Stimmen\n• API-Nutzung\n• Benutzerdefinierte Anrufcharaktere\n• Alle zugehörigen Daten von unseren Servern",
         "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
         "cancel": "Abbrechen",
         "continue": "Weiter"
@@ -566,6 +613,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Kostenlose KI Text-zu-Sprache & Stimmengenerator für Erwachsene",
     "description": "Generieren Sie ausdrucksstarke KI-Stimmen mit Emotionen für Erwachseneninhalte in 24+ Sprachen. Kostenlose Text-zu-Sprache mit Stimmenklonung und NSFW-Support. Mit kostenlosen Credits starten – keine Kreditkarte nötig.",
+    "skipToMainContent": "Zum Hauptinhalt springen",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "/": "",
@@ -703,6 +751,14 @@
       "pricing": {
         "bannerText": "❄️ Winterschlussverkauf"
       }
+    }
+  },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "Die neuen Stimmen fuer die Sprachgenerierung sind jetzt live und bieten mehr Kontrolle ueber Tempo, Atemgeraeusche, Tonhoehe, Geschwindigkeit und Intensitaet.",
+      "ctaLoggedIn": "Stimmen testen",
+      "ctaLoggedOut": "Anmelden",
+      "ariaLabelDismiss": "Hinweis zu expressiven Stimmen schliessen"
     }
   },
   "audioConverter": {

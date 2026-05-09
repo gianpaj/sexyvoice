@@ -60,8 +60,6 @@ test.describe('Generate Dashboard - Authenticated User', () => {
   test('should successfully generate audio with mocked API', async ({
     page,
   }, testInfo) => {
-    // Zephyr is already selected by default, no need to select
-
     // Fill in text input
     await generatePage.enterText(
       'Hello, this is a test message for voice generation.',
@@ -83,6 +81,25 @@ test.describe('Generate Dashboard - Authenticated User', () => {
       page,
       `generate-dashboard-result-${testInfo.project.name}`,
     );
+  });
+
+  test('should support the Grok TTS flow', async () => {
+    await generatePage.selectVoice('Eve|Rex|Sal');
+    await expect(generatePage.styleInput).toHaveCount(0);
+    await expect(
+      generatePage.audioGeneratorCard.getByRole('button', {
+        name: /insert inline effect/i,
+      }),
+    ).toBeVisible();
+
+    await generatePage.enterText('Hello [breath] from the featured Grok voice');
+    await generatePage.clickEstimateCredits();
+    await generatePage.expectEstimatedCredits(15);
+
+    await generatePage.clickGenerate();
+    await generatePage.waitForGenerationComplete();
+    await generatePage.expectAudioPlayerVisible();
+    await generatePage.expectSuccessToast();
   });
 
   test('should disable generate button when text is empty', async () => {
@@ -124,8 +141,8 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     await expect(generatePage.generateButton).toContainText(/generate/i);
   });
 
-  test('should estimate credits for Gemini voice', async () => {
-    // Zephyr (Gemini voice) is already selected by default
+  test('should estimate credits for a Gemini voice', async () => {
+    await generatePage.selectVoice('Poe|Zephyr');
 
     // Fill in text
     await generatePage.enterText('Hello world test message');
@@ -171,6 +188,7 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     });
   });
 
+  // biome-ignore lint/suspicious/noSkippedTests: intentionally skipped — test is too slow (types 1000+ chars)
   test.skip('should show warning when text exceeds character limit', async () => {
     // SKIPPED: This test is slow due to typing 1000+ characters
     // TODO: Find a faster way to test character limit validation
@@ -188,7 +206,7 @@ test.describe('Generate Dashboard - Authenticated User', () => {
   });
 
   test('should allow style input for Gemini voices', async () => {
-    // Zephyr (Gemini voice) is already selected by default
+    await generatePage.selectVoice('Poe|Zephyr');
 
     // Style input should be visible for Gemini voices
     await expect(generatePage.styleInput).toBeVisible();
@@ -236,7 +254,7 @@ test.describe('Generate Dashboard - Unauthenticated', () => {
 test.describe('Generate Dashboard - Error Scenarios', () => {
   let generatePage: GeneratePage;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(({ page }) => {
     generatePage = new GeneratePage(page);
   });
 

@@ -152,12 +152,14 @@ export class CreditsPage {
    * Click the buy button on a specific package card
    */
   async clickBuyButton(packageName: 'starter' | 'standard' | 'pro') {
-    const card =
-      packageName === 'starter'
-        ? this.starterCard
-        : packageName === 'standard'
-          ? this.standardCard
-          : this.proCard;
+    let card: Locator;
+    if (packageName === 'starter') {
+      card = this.starterCard;
+    } else if (packageName === 'standard') {
+      card = this.standardCard;
+    } else {
+      card = this.proCard;
+    }
     await card.getByRole('button', { name: /buy credits/i }).click();
   }
 

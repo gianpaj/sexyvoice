@@ -234,6 +234,11 @@ export class UsagePage {
    */
   async expectTableRowsOrEmptyState() {
     const rowCount = await this.tableRows.count();
+    if (rowCount === 0) {
+      // No rows at all — the empty state element should be visible
+      await expect(this.emptyState).toBeVisible();
+      return;
+    }
     if (rowCount === 1) {
       const firstRowText = await this.tableRows.first().textContent();
       if (
@@ -244,9 +249,8 @@ export class UsagePage {
         return;
       }
     }
-    if (rowCount > 0) {
-      await expect(this.tableRows.first()).toBeVisible();
-    }
+    // At least one data row exists — verify the first row is visible
+    await expect(this.tableRows.first()).toBeVisible();
   }
 
   /**
@@ -311,6 +315,6 @@ export class UsagePage {
    * Get the number of visible table rows
    */
   async getRowCount(): Promise<number> {
-    return this.tableRows.count();
+    return await this.tableRows.count();
   }
 }

@@ -145,6 +145,9 @@ test.describe('Credits Dashboard - Checkout Flow', () => {
     // Click buy on the starter package
     await creditsPage.clickBuyButton('starter');
 
+    // Verify that the checkout route was actually hit
+    expect(checkoutAttempted).toBe(true);
+
     // The button should show a loading state (processing)
     await expect(
       creditsPage.starterCard.getByRole('button').first(),

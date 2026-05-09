@@ -6,7 +6,7 @@
 
 ## Current State Summary
 
-SexyVoice.ai is an adult-oriented AI voice SaaS with three products: TTS generation, voice cloning, and real-time AI voice calls (the flagship). It runs on a credit-based freemium model ($5-$75 top-ups) with ~6 external AI providers. The dashboard redirects straight to the call feature, signaling where the bet is.
+SexyVoice.ai is an adult-oriented AI voice SaaS with three products: TTS generation, voice cloning, and real-time AI voice calls (the flagship). It runs on a credit-based freemium model ($5-$79 top-ups + subscription) with ~6 external AI providers. The dashboard redirects straight to the generation feature as it's main and most profitable feature (March 2026).
 
 ---
 

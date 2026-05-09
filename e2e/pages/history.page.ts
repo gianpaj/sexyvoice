@@ -358,6 +358,6 @@ export class HistoryPage {
    * Get the number of visible table rows
    */
   async getRowCount(): Promise<number> {
-    return this.tableRows.count();
+    return await this.tableRows.count();
   }
 }

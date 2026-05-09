@@ -56,6 +56,12 @@
   },
   "landing": {
     "latestPosts": "Latest Posts",
+    "blogDescription": "Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, and voice AI technology.",
+    "homeLabel": "Home",
+    "blogLabel": "Blog",
+    "noPostsAvailable": "No posts available yet.",
+    "minutesRead": "min read",
+    "readMore": "Read more",
     "more": "More posts",
     "hero": {
       "title": "Expressive Voices, Uncensored",
@@ -79,7 +85,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start with 10,000 free credits (5 min voice call) ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start with 10,000 free credits ( ͡° ͜ʖ ͡°)",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
@@ -341,12 +347,52 @@
     "success": "Audio generated successfully!",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "title": "Generate Audio",
+    "grok": {
+      "inlineEffectPlaceholder": "Insert inline effect",
+      "wrappingEffectPlaceholder": "Wrap with style tag",
+      "formatPlaceholder": "Select format",
+      "effects": {
+        "pause": "[pause]",
+        "longPause": "[long-pause]",
+        "humTune": "[hum-tune]",
+        "laugh": "[laugh]",
+        "chuckle": "[chuckle]",
+        "giggle": "[giggle]",
+        "cry": "[cry]",
+        "tsk": "[tsk]",
+        "tongueClick": "[tongue-click]",
+        "lipSmack": "[lip-smack]",
+        "breath": "[breath]",
+        "inhale": "[inhale]",
+        "exhale": "[exhale]",
+        "sigh": "[sigh]"
+      },
+      "wrappingTags": {
+        "soft": "<soft>...</soft>",
+        "whisper": "<whisper>...</whisper>",
+        "loud": "<loud>...</loud>",
+        "buildIntensity": "<build-intensity>...</build-intensity>",
+        "decreaseIntensity": "<decrease-intensity>...</decrease-intensity>",
+        "higherPitch": "<higher-pitch>...</higher-pitch>",
+        "lowerPitch": "<lower-pitch>...</lower-pitch>",
+        "slow": "<slow>...</slow>",
+        "fast": "<fast>...</fast>",
+        "singSong": "<sing-song>...</sing-song>",
+        "singing": "<singing>...</singing>",
+        "laughSpeak": "<laugh-speak>...</laugh-speak>",
+        "emphasis": "<emphasis>...</emphasis>"
+      }
+    },
     "voiceSelector": {
       "title": "Select Voice",
       "description": "Choose from available voices",
+      "featuredGroupLabel": "Featured",
+      "multilingualGroupLabel": "Multilingual 🌍",
       "selectStyleTextareaPlaceholder": "Describe the style of your dialog, e.g. \"Read this in a dramatic whisper\"",
       "toolTipEmotionTags": "Supported emotion tags:",
-      "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)"
+      "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)",
+      "grokInfo": "Supports expressive inline tags like [laugh] and wrapping tags like <fast>...</fast>.",
+      "featuredBadge": "Featured"
     }
   },
   "call": {
@@ -382,7 +428,7 @@
     "grokImagineIncluded": "Grok Imagine Instructions Included",
     "addCustomCharacter": "Add custom character",
     "addCharacterLabel": "Add",
-    "upgradePremiumTooltip": "Upgrade to create custom characters",
+    "upgradePremiumTooltip": "Upgrade feature",
     "addDescriptionPlaceholder": "Add a description...",
     "clickToAddDescription": "Click to add a description...",
     "characterInstructions": "__NAME__ Instructions",
@@ -431,6 +477,7 @@
       "cancelButton": "Cancel",
       "createButton": "Create Character",
       "creatingButton": "Creating...",
+      "paidUserOnly": "Paid users only",
       "errorNameRequired": "Name is required",
       "errorVoiceRequired": "Please select a voice",
       "playVoiceSample": "Play voice sample",
@@ -447,7 +494,7 @@
     "errorCloning": "Failed to clone voice",
     "errorTooLarge": "File size too large. Please use a smaller audio file.",
     "errorTitle": "Error",
-    "fileFormatsText": "MP3, WAV, M4A or OGG (max. __SIZE__)",
+    "fileFormatsText": "MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)",
     "generating": "Generating",
     "languageLabel": "Language",
     "languageSelectPlaceholder": "Select a language",
@@ -517,7 +564,7 @@
       "deleteAccount": {
         "button": "Delete account",
         "confirmTitle": "Are you absolutely sure?",
-        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• All associated data from our servers",
+        "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
         "continue": "Continue"
@@ -566,6 +613,7 @@
   "pages": {
     "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan",
     "description": "Generate expressive AI speech with emotions for adult content in 24+ languages. Free to try text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
+    "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
@@ -703,6 +751,14 @@
       "pricing": {
         "bannerText": "❄️ Winter Sale"
       }
+    }
+  },
+  "announcements": {
+    "expressiveVoicesLaunch": {
+      "text": "New voice generation voices are live — with more control over pacing, breaths, pitch, speed, and intensity.",
+      "ctaLoggedIn": "Try voices",
+      "ctaLoggedOut": "Log in",
+      "ariaLabelDismiss": "Dismiss expressive voices announcement"
     }
   },
   "audioConverter": {

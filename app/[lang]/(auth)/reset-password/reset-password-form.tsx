@@ -1,5 +1,6 @@
 'use client';
 
+import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 
@@ -7,8 +8,8 @@ import { forgotPasswordAction } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type langDict from '@/messages/en.json';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import type langDict from '@/messages/en.json';
 
 export type Message =
   | { success: string }
@@ -44,12 +45,12 @@ export function ResetPasswordForm({
 
       {'error' in message && (
         <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
-          {/* @ts-ignore */}
           {dict.errors[message.error as keyof typeof dict.errors]}
         </div>
       )}
       {'success' in message && (
-        <div className="border-foreground border-l-2 px-4 text-foreground text-sm">
+        <div className="flex items-center border-green-400 text-foreground text-sm">
+          <CheckCircle className="mr-2 inline-block h-4 w-4 text-green-400" />
           {dict.success}
         </div>
       )}

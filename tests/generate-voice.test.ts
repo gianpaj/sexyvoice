@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
 import { createClient } from '@/lib/supabase/server';
-import { getErrorMessage } from '@/lib/utils';
+import { estimateCredits, getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
   mockRedisGet,
@@ -108,6 +108,27 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(400);
       expect(json.error).toContain('Text exceeds the maximum length');
     });
+
+    it('should return 400 when text exceeds maximum length for Grok voices', async () => {
+      const longText = 'a'.repeat(1001); // Exceeds 1000 char paid Grok limit
+
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voice: 'eve' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Text exceeds the maximum length');
+    });
   });
 
   describe('Authentication', () => {
@@ -177,6 +198,31 @@ describe('Generate Voice API Route', () => {
         body: JSON.stringify({
           text: 'Hello world this is a test',
           voice: 'tara',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.error).toBe('Insufficient credits');
+    });
+
+    it('should return 402 when user has insufficient credits for Grok voice', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      const text = 'a'.repeat(101);
+      const estimate = estimateCredits(text, 'eve', 'grok');
+
+      vi.mocked(queries.getCredits).mockResolvedValueOnce(estimate - 1);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          voice: 'eve',
         }),
       });
 
@@ -290,6 +336,36 @@ describe('Generate Voice API Route', () => {
         expect.stringContaining('files.sexyvoice.ai'),
       );
     });
+
+    it('should return cached result for Grok voice without consuming credits', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      const cachedUrl = 'https://example.com/cached-grok-audio.mp3';
+
+      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'eve',
+          outputCodec: 'mp3',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toBe(cachedUrl);
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringContaining('generated-audio-free/eve-'),
+      );
+    });
   });
 
   describe('Voice Generation - Replicate', () => {
@@ -347,14 +423,18 @@ describe('Generate Voice API Route', () => {
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 48,
         duration: '-1',
-        filename: 'generated-audio-free/tara-e5b92e4b.wav',
+        filename: expect.stringMatching(
+          /^generated-audio-free\/tara-[a-f0-9]+\.wav$/,
+        ),
         isPublic: false,
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
         usage: { userHasPaid: false },
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://files.sexyvoice.ai/generated-audio-free/tara-e5b92e4b.wav',
+        url: expect.stringMatching(
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/tara-[a-f0-9]+\.wav$/,
+        ),
         userId: 'test-user-id',
         voiceId: 'voice-tara-id',
       });
@@ -372,6 +452,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'tara',
           model:
             'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          provider: 'replicate',
           textPreview: 'Hello world',
           textLength: 11,
           isGeminiVoice: false,
@@ -402,6 +483,157 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(500);
       expect(json.error).toBe('Voice generation failed, please retry');
       expect(mockReplicateRun).toHaveBeenCalled();
+    });
+  });
+
+  describe('Voice Generation - Grok', () => {
+    it('should successfully generate voice using xAI Grok and preserve JSON response contract', async () => {
+      const { saveAudioFile, insertUsageEvent } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      const xaiResponseBuffer = new Uint8Array([10, 20, 30, 40]).buffer;
+
+      server.use(
+        http.post('https://api.x.ai/v1/tts', async ({ request }) => {
+          const body = (await request.json()) as {
+            language: string;
+            output_format: { codec: string };
+            text: string;
+            voice_id: string;
+          };
+
+          expect(body.text).toBe('Hello [laugh]');
+          expect(body.voice_id).toBe('eve');
+          expect(body.language).toBe('en');
+          expect(body.output_format.codec).toBe('mp3');
+
+          return HttpResponse.arrayBuffer(xaiResponseBuffer, {
+            headers: {
+              'Content-Type': 'audio/mpeg',
+            },
+          });
+        }),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello [laugh]',
+          voice: 'eve',
+          outputCodec: 'mp3',
+          styleVariant: 'ignored style prompt',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json).toHaveProperty('url');
+      expect(json).toHaveProperty('creditsUsed');
+      expect(json).toHaveProperty('creditsRemaining');
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.url).toContain('.mp3');
+
+      expect(saveAudioFile).toHaveBeenCalledWith({
+        credits_used: 100,
+        duration: '-1',
+        filename: expect.stringMatching(
+          /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
+        ),
+        isPublic: false,
+        model: 'grok',
+        usage: {
+          userHasPaid: false,
+        },
+        predictionId: undefined,
+        text: 'Hello [laugh]',
+        url: expect.stringMatching(
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
+        ),
+        userId: 'test-user-id',
+        voiceId: 'voice-eve-id',
+      });
+
+      expect(insertUsageEvent).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        sourceType: 'tts',
+        sourceId: 'test-audio-file-id',
+        unit: 'chars',
+        quantity: 13,
+        creditsUsed: 100,
+        dollarAmount: 0.000055,
+        metadata: {
+          voiceId: 'voice-eve-id',
+          voiceName: 'eve',
+          model: 'grok',
+          provider: 'grok',
+          textPreview: 'Hello [laugh]',
+          textLength: 13,
+          isGeminiVoice: false,
+          userHasPaid: false,
+          predictionId: null,
+          codec: 'mp3',
+        },
+      });
+    });
+
+    it('should return 500 when XAI_API_KEY is missing', async () => {
+      const previousApiKey = process.env.XAI_API_KEY;
+      delete process.env.XAI_API_KEY;
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'eve',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      process.env.XAI_API_KEY = previousApiKey;
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Voice generation failed, please retry');
+    });
+
+    it('should return 500 when xAI TTS request fails', async () => {
+      server.use(
+        http.post('https://api.x.ai/v1/tts', () =>
+          HttpResponse.json(
+            { error: 'provider failure' },
+            {
+              status: 500,
+            },
+          ),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'eve',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Voice generation failed, please retry');
     });
   });
 
@@ -446,9 +678,11 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 23,
+        credits_used: 26,
         duration: '-1',
-        filename: 'generated-audio/poe-ddb72d4b.wav',
+        filename: expect.stringMatching(
+          /^generated-audio\/poe-[a-f0-9]+\.wav$/,
+        ),
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
@@ -459,7 +693,9 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         },
         predictionId: undefined,
         text,
-        url: 'https://files.sexyvoice.ai/generated-audio/poe-ddb72d4b.wav',
+        url: expect.stringMatching(
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/poe-[a-f0-9]+\.wav$/,
+        ),
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -471,11 +707,12 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         sourceId: 'test-audio-file-id',
         unit: 'chars',
         quantity: text.length,
-        creditsUsed: 23,
+        creditsUsed: 26,
         metadata: {
           voiceId: 'voice-poe-id',
           voiceName: 'poe',
           model: 'gemini-2.5-pro-preview-tts',
+          provider: 'gemini',
           textPreview: text.slice(0, 100),
           textLength: text.length,
           isGeminiVoice: true,
@@ -538,9 +775,11 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(response.status).toBe(200);
       expect(callCount).toBe(1);
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 23,
+        credits_used: 26,
         duration: '-1',
-        filename: 'generated-audio-free/poe-9de7f9fe.wav',
+        filename: expect.stringMatching(
+          /^generated-audio-free\/poe-[a-f0-9]+\.wav$/,
+        ),
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
         usage: {
@@ -551,7 +790,9 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         },
         predictionId: undefined,
         text: 'Hello world',
-        url: 'https://files.sexyvoice.ai/generated-audio-free/poe-9de7f9fe.wav',
+        url: expect.stringMatching(
+          /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/poe-[a-f0-9]+\.wav$/,
+        ),
         userId: 'test-user-id',
         voiceId: 'voice-poe-id',
       });
@@ -628,7 +869,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(response.status).toBe(200);
       expect(callCount).toBe(2);
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 23,
+        credits_used: 26,
         duration: '-1',
         filename: expect.stringMatching(
           /^generated-audio\/poe-[a-f0-9]+\.wav$/,
@@ -669,7 +910,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
             provider: 'gemini',
             textLength: 11,
             textPreview: 'Hello world',
-            requestedOutputCodec: null,
+            requestedOutputCodec: 'mp3',
             errorMessage: 'Pro model failed',
           }),
         }),
@@ -1014,36 +1255,88 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
   });
 
   describe('Request Abortion', () => {
-    it('should handle aborted requests gracefully', async () => {
-      // Mock Replicate API to return error
-      server.use(
-        http.post('https://api.replicate.com/v1/predictions', () =>
-          HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
-        ),
+    it('should return 499 when request signal is already aborted and a handler error occurs', async () => {
+      // Cause an error deep in the handler so the outer catch is reached.
+      // Because request.signal is already aborted, the outer catch should
+      // return 499 instead of propagating the error.
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.getVoiceIdByName).mockRejectedValueOnce(
+        new Error('Simulated DB error'),
       );
 
       const controller = new AbortController();
+      controller.abort(); // abort before the request is even created
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
         signal: controller.signal,
       });
 
-      // Abort the request immediately
-      controller.abort();
+      const response = await POST(request);
+      expect(response.status).toBe(499);
+    });
 
-      // The function should still handle this gracefully
-      // The actual behavior depends on when the abort signal is checked
-      try {
-        await POST(request);
-      } catch (error) {
-        // AbortError is expected
-        expect(error).toBeDefined();
-      }
+    it('should return 499 for a Google AI SDK-wrapped AbortError (SEXYVOICE-AI-4Z)', async () => {
+      // The Google AI SDK wraps native AbortError into a generic Error whose
+      // name stays "Error" but whose message contains the word "aborted".
+      // Previously this bypassed the `error.name === 'AbortError'` guard and
+      // landed in Sentry. The isAbortError() helper must catch this pattern.
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi
+            .fn()
+            .mockRejectedValue(
+              new Error(
+                'exception AbortError: This operation was aborted sending request',
+              ),
+            ),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(499);
+    });
+
+    it('should return 503 when both Gemini pro and flash models fail with a transient error (SEXYVOICE-AI-4F)', async () => {
+      // Both models throw a generic (non-googleapis) internal error — simulates
+      // a transient Google outage. The route should return 503 with a friendly
+      // message rather than crashing into the outer catch.
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockRejectedValue(
+            new Error(
+              JSON.stringify({
+                error: {
+                  code: 500,
+                  message:
+                    'An internal error has occurred. Please retry or report in https://developers.generativeai.google/guide/troubleshooting',
+                  status: 'INTERNAL',
+                },
+              }),
+            ),
+          ),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toContain('temporarily unavailable');
     });
   });
 

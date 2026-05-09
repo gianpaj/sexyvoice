@@ -83,6 +83,7 @@ Recommended verification flow:
    ```
 
 Notes:
+
 - `vercel project inspect sexyvoice` currently returns general project metadata such as project ID, owner, root directory, framework preset, and Node.js version.
 - `vercel env ls` confirms you are operating on `gianpaj-projects/sexyvoice`.
 - The tested CLI output did not expose the runtime region list directly.
@@ -142,6 +143,7 @@ Use [`.env.example`](../.env.example) as the canonical template.
 - `KV_REST_API_READ_ONLY_TOKEN`
 
 Used for:
+
 - caching
 - rate limiting
 - fast lookups
@@ -156,21 +158,26 @@ Used for:
 - `R2_ENDPOINT`
 
 Used for:
+
 - dashboard audio storage
 - external API speech output storage
 
 ### AI provider credentials
 
-- `REPLICATE_API_TOKEN`
 - `FAL_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `MISTRAL_API_KEY`
+- `REPLICATE_API_TOKEN`
 - `XAI_API_KEY` if xAI TTS is enabled in the environment
 
 Notes:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
   for free-user Gemini flows where configured in code.
+- `MISTRAL_API_KEY` is required for voice cloning requests that use the
+  Voxtral/Mistral path in `app/api/clone-voice/route.ts`.
 
 ### LiveKit real-time calls
 
@@ -241,7 +248,9 @@ Used for:
 
 ### Promotion / banner configuration
 
-- `NEXT_PUBLIC_PROMO_ENABLED`
+- `NEXT_PUBLIC_PROMO_ENABLED` — enables promo campaign behavior: promo banners, bonus-credit pricing, and promo metadata; does not control announcement banners
+- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` — active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`; only used when `NEXT_PUBLIC_PROMO_ENABLED=true`
+- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` — active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`; works independently of `NEXT_PUBLIC_PROMO_ENABLED`
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
 - `NEXT_PUBLIC_PROMO_TRANSLATIONS`
@@ -461,6 +470,7 @@ Check:
 ### Gemini / voice generation issues
 
 Check:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - provider quotas

@@ -26,16 +26,31 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
+  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
   getErrorMessage,
   getErrorStatusCode,
+  getTtsProvider,
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
+
+/**
+ * The Google AI SDK wraps native AbortError into a generic Error whose name
+ * stays "Error" but whose message contains "AbortError" or "aborted".
+ * This helper covers both the native case and the SDK-wrapped case.
+ */
+function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'AbortError') return true;
+  const msg = error.message.toLowerCase();
+  return msg.includes('aborted') || msg.includes('abort error');
+}
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
@@ -47,6 +62,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
   try {
@@ -99,9 +115,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
 
-    const isGeminiVoice = voiceObj.model === 'gpro';
-    const provider = isGeminiVoice ? 'gemini' : 'replicate';
-    const outputCodec = '';
+    const provider = getTtsProvider(voiceObj.model);
+    const isGeminiVoice = provider === 'gemini';
+    const isGrokVoice = provider === 'grok';
 
     userHasPaid = await hasUserPaid(user.id);
 
@@ -136,11 +152,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+    const finalText =
+      isGeminiVoice && styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Generate hash for the combination of text, voice
-    const hash = await generateHash(`${text}-${voice}`);
+    // Generate hash for the combination of text, voice and model
+    const hash = await generateHash(`${text}-${voice}-${voiceObj.model}`);
 
     const abortController = new AbortController();
 
@@ -165,7 +182,9 @@ export async function POST(request: Request) {
       abortController.abort();
     });
 
-    const filename = `${path}.wav`;
+    // const requestedGrokCodec = normalizeXaiTtsCodec(outputCodec);
+    const fileExtension = isGeminiVoice ? 'wav' : isGrokVoice ? 'mp3' : 'wav';
+    const filename = `${path}.${fileExtension}`;
     const result = await redis.get<string>(filename);
 
     if (result) {
@@ -190,6 +209,7 @@ export async function POST(request: Request) {
     let genAIResponse: GenerateContentResponse | null = null;
     let modelUsed = '';
     let uploadUrl = '';
+    let selectedGrokCodec = outputCodec;
 
     if (isGeminiVoice) {
       let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -384,6 +404,22 @@ export async function POST(request: Request) {
             );
           }
         }
+        // Only capture non-PROHIBITED_CONTENT errors to Sentry.
+        // PROHIBITED_CONTENT is an expected user input block, not an error to report.
+        if (!isProhibitedContent) {
+          captureException(new Error('Gemini 200 — no audio data'), {
+            extra: {
+              finishReason,
+              blockReason,
+              hasData: !!data,
+              mimeType,
+              model: modelUsed,
+              textPreview: text.slice(0, 200),
+              voice,
+            },
+            user: { id: user.id },
+          });
+        }
         throw new Error(
           isProhibitedContent
             ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
@@ -413,6 +449,52 @@ export async function POST(request: Request) {
 
       const audioBuffer = convertToWav(data, mimeType || 'wav');
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
+    } else if (isGrokVoice) {
+      modelUsed = voiceObj.model;
+
+      try {
+        const { audioBuffer, codec, contentType } = await generateXaiTts({
+          text,
+          voiceId: voiceObj.name,
+          language: voiceObj.language,
+          codec: outputCodec,
+          signal: abortController.signal,
+        });
+        selectedGrokCodec = codec;
+        uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
+      } catch (error) {
+        const errorObj = {
+          text,
+          voice,
+          model: voiceObj.model,
+          codec: outputCodec,
+          language: voiceObj.language,
+          errorData: error,
+        };
+        logger.error('Grok TTS generation failed', {
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+          extra: {
+            voice,
+            text,
+            model: voiceObj.model,
+            codec: outputCodec,
+            language: voiceObj.language,
+            errorMessage: Error.isError(error) ? error.message : String(error),
+            errorCause: Error.isError(error) ? error.cause : undefined,
+          },
+        });
+        captureException(error, {
+          extra: errorObj,
+          user: { id: user.id, email: user.email },
+        });
+        console.error('Grok TTS generation failed', errorObj);
+        throw new Error(getErrorMessage('XAI_TTS_ERROR', 'voice-generation'), {
+          cause: 'XAI_TTS_ERROR',
+        });
+      }
     } else {
       // uses REPLICATE_API_TOKEN
       modelUsed = voiceObj.model;
@@ -484,6 +566,10 @@ export async function POST(request: Request) {
         );
       }
 
+      const grokDollarAmount = isGrokVoice
+        ? calculateGrokTtsDollarAmount(text)
+        : undefined;
+
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const audioFileDBResult = await saveAudioFile({
@@ -525,15 +611,20 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
+        ...(grokDollarAmount === undefined
+          ? {}
+          : { dollarAmount: grokDollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
           model: modelUsed,
+          provider,
           textPreview: text.slice(0, 100),
           textLength: text.length,
           isGeminiVoice,
           userHasPaid,
           predictionId: replicateResponse?.id ?? null,
+          ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
       });
 
@@ -556,7 +647,11 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (Error.isError(error) && error.name === 'AbortError') {
+    // Client disconnected — do not attempt to write to a dead socket (prevents write EPIPE)
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
+    if (isAbortError(error)) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
@@ -581,6 +676,24 @@ export async function POST(request: Request) {
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
+
+    // Check for transient errors (INTERNAL status) from Google API
+    if (Error.isError(error)) {
+      try {
+        const message = JSON.parse(error.message);
+        if (message.error?.status === 'INTERNAL') {
+          return NextResponse.json(
+            {
+              error:
+                'Voice generation service temporarily unavailable. Please retry.',
+            },
+            { status: 503 },
+          );
+        }
+      } catch {
+        // Not JSON or doesn't have the expected structure, continue to next check
+      }
+    }
 
     // if Gemini error
     if (Error.isError(error) && error.message.includes('googleapis')) {

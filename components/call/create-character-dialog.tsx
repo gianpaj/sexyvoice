@@ -36,6 +36,7 @@ export interface NewCharacterPayload {
 interface CreateCharacterDialogProps {
   callVoices: DBVoice[];
   dict: (typeof langDict)['call']['createCharacter'];
+  isPaidUser: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (character: NewCharacterPayload) => Promise<void>;
   open: boolean;
@@ -44,6 +45,7 @@ interface CreateCharacterDialogProps {
 export function CreateCharacterDialog({
   open,
   onOpenChange,
+  isPaidUser,
   callVoices,
   onSave,
   dict,
@@ -110,6 +112,7 @@ export function CreateCharacterDialog({
             </Label>
             <Input
               autoFocus
+              disabled={!isPaidUser}
               id="char-name"
               maxLength={50}
               onChange={(e) => setName(e.target.value)}
@@ -122,6 +125,7 @@ export function CreateCharacterDialog({
           <div className="grid gap-2">
             <Label htmlFor="char-description">{dict.descriptionLabel}</Label>
             <Input
+              disabled={!isPaidUser}
               id="char-description"
               maxLength={200}
               onChange={(e) => setDescription(e.target.value)}
@@ -135,7 +139,7 @@ export function CreateCharacterDialog({
             <Label>{dict.voiceLabel}</Label>
             <div className="flex items-center gap-2">
               <Select onValueChange={setVoiceName} value={voiceName}>
-                <SelectTrigger className="flex-1">
+                <SelectTrigger className="flex-1" disabled={!isPaidUser}>
                   <SelectValue placeholder={dict.voicePlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,6 +181,7 @@ export function CreateCharacterDialog({
             <Label htmlFor="char-prompt">{dict.instructionsLabel}</Label>
             <Textarea
               className="min-h-32 resize-y"
+              disabled={!isPaidUser}
               id="char-prompt"
               maxLength={5000}
               onChange={(e) => setPrompt(e.target.value)}
@@ -197,7 +202,15 @@ export function CreateCharacterDialog({
           <Button onClick={() => onOpenChange(false)} variant="outline">
             {dict.cancelButton}
           </Button>
-          <Button disabled={isSaving || !name.trim()} onClick={handleSave}>
+          <Button
+            className={
+              isPaidUser
+                ? undefined
+                : 'cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted'
+            }
+            onClick={handleSave}
+            title={isPaidUser ? undefined : dict.paidUserOnly}
+          >
             {isSaving ? dict.creatingButton : dict.createButton}
           </Button>
         </DialogFooter>

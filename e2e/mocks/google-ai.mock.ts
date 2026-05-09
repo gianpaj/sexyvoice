@@ -56,7 +56,7 @@ export async function handleGenerateVoice(route: Route) {
 
   // Log for debugging
   console.log('[MOCK] generate-voice called with:', {
-    text: postData?.text?.substring(0, 50) + '...',
+    text: `${postData?.text?.substring(0, 50)}...`,
     voice: postData?.voice,
   });
 
@@ -81,7 +81,7 @@ export async function handleEstimateCredits(route: Route) {
   const postData = request.postDataJSON();
 
   console.log('[MOCK] estimate-credits called with:', {
-    text: postData?.text?.substring(0, 50) + '...',
+    text: `${postData?.text?.substring(0, 50)}...`,
     voice: postData?.voice,
   });
 
@@ -103,7 +103,7 @@ export async function handleGenerateText(route: Route) {
   const postData = request.postDataJSON();
 
   console.log('[MOCK] generate-text called with:', {
-    prompt: postData?.prompt?.substring(0, 50) + '...',
+    prompt: `${postData?.prompt?.substring(0, 50)}...`,
   });
 
   await route.fulfill({

@@ -138,6 +138,7 @@ export default function CloneSampleCard({
             className="h-16 w-16 rounded-sm"
             height={65}
             src={sample.image}
+            unoptimized
             width={65}
           />
 

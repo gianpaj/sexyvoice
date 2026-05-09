@@ -34,7 +34,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   const callbackUrl = formData.get('callbackUrl')?.toString();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?redirect_to=/${lang}/protected/update-password`,
+    redirectTo: `${origin}/auth/callback?redirect_to=/${lang}/protected/update-password&email=${encodeURIComponent(email)}`,
   });
 
   if (error) {
@@ -100,13 +100,36 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     throw new Error('User not found');
   }
 
+  const deletedAt = new Date();
+  const deletedAtIso = deletedAt.toISOString();
+
   const { error } = await supabase.auth.updateUser({
-    data: { deleted: new Date() },
+    data: { deleted: deletedAt },
   });
-  const { data: audio_files } = await supabase
-    .from('audio_files')
-    .select()
-    .eq('user_id', user.id);
+
+  const [
+    { data: audio_files, error: audioFilesError },
+    { data: customCharacters, error: customCharactersError },
+    { data: apiKeys, error: apiKeysError },
+    { count: usageEventsCount, error: usageEventsError },
+  ] = await Promise.all([
+    supabase.from('audio_files').select().eq('user_id', user.id),
+    supabase.from('characters').select('id, prompt_id').eq('user_id', user.id),
+    supabase.from('api_keys').select().eq('user_id', user.id),
+    supabase
+      .from('usage_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+  ]);
+
+  if (
+    audioFilesError ||
+    customCharactersError ||
+    apiKeysError ||
+    usageEventsError
+  ) {
+    throw new Error('User deletion failed');
+  }
 
   if (audio_files) {
     const deletionResults = await Promise.allSettled(
@@ -137,22 +160,68 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     .from('audio_files')
     .update({
       status: 'deleted',
-      deleted_at: new Date().toISOString(),
+      deleted_at: deletedAtIso,
     })
     .eq('user_id', user.id)
     .select();
 
-  if (error || deleteError) {
+  if (customCharacters && customCharacters.length > 0) {
+    const characterIds = customCharacters.map((character) => character.id);
+    const promptIds = customCharacters
+      .map((character) => character.prompt_id)
+      .filter((promptId): promptId is string => Boolean(promptId));
+
+    const { error: deleteCharactersError } = await supabase
+      .from('characters')
+      .delete()
+      .in('id', characterIds)
+      .eq('user_id', user.id);
+
+    if (deleteCharactersError) {
+      throw new Error('User deletion failed');
+    }
+
+    if (promptIds.length > 0) {
+      const { error: deletePromptsError } = await supabase
+        .from('prompts')
+        .delete()
+        .in('id', promptIds)
+        .eq('user_id', user.id);
+
+      if (deletePromptsError) {
+        Sentry.captureException(deletePromptsError, {
+          user: { id: user.id, email: user.email },
+          extra: {
+            promptIds,
+            context: 'custom character prompt cleanup during account deletion',
+          },
+        });
+      }
+    }
+  }
+
+  const { error: deleteUsageEventsError } = await supabase
+    .from('usage_events')
+    .delete()
+    .eq('user_id', user.id);
+
+  if (error || deleteError || deleteUsageEventsError) {
     throw new Error('User deletion failed');
   }
   Sentry.logger.info('User deleted', {
     userId: user.id,
     deleted: deleteData?.length,
+    deletedCustomCharacters: customCharacters?.length ?? 0,
+    apiKeysDeleted: apiKeys ? apiKeys.length : 0,
+    usageEventsDeleted: usageEventsCount ?? 0,
   });
 
   console.log('User deleted', {
     userId: user.id,
     deleted: deleteData?.length,
+    deletedCustomCharacters: customCharacters?.length ?? 0,
+    apiKeysDeleted: apiKeys?.length ?? 0,
+    usageEventsDeleted: usageEventsCount ?? 0,
   });
   await supabase.auth.signOut();
 
