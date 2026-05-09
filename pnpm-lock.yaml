@@ -111,7 +111,7 @@ importers:
         version: 16.7.14(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(flexsearch@0.8.212)(lucide-react@1.8.0(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.3.6)
       fumadocs-mdx:
         specifier: 14.2.13
-        version: 14.2.13(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(fumadocs-core@16.7.14(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(flexsearch@0.8.212)(lucide-react@1.8.0(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.3.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react@19.2.6)(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2))
+        version: 14.2.13(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(fumadocs-core@16.7.14(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(flexsearch@0.8.212)(lucide-react@1.8.0(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.3.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react@19.2.6)(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2))
       fumadocs-openapi:
         specifier: ^10.6.8
         version: 10.6.8(b5aa58daa282a898eb963bef9deb093d)
@@ -208,7 +208,7 @@ importers:
         version: 1.4.0
       '@fal-ai/client':
         specifier: ^1.5.0
-        version: 1.5.0
+        version: 1.10.1
       '@ffmpeg/ffmpeg':
         specifier: ^0.12.15
         version: 0.12.15
@@ -536,7 +536,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: 4.1.4
-        version: 4.1.4(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.4)(jsdom@28.1.0)(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2))
+        version: 4.1.4(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.4)(jsdom@28.1.0)(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2))
 
   scripts:
     dependencies:
@@ -1498,8 +1498,8 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@fal-ai/client@1.5.0':
-    resolution: {integrity: sha512-e0WtcbSjbwKFCOwAex3lRDba1iMY42QAwLZuae7oc5xNav2+HdprE9QWYdsDS3nyr0GOttEpUgsBa/c/AKAguA==}
+  '@fal-ai/client@1.10.1':
+    resolution: {integrity: sha512-c3AVeH31OioiI2J1BfW8Cryi1DhUYldnY3X35nv6xLMq3fU2NQOo+eYaR5mL2O8MoHHh+HzXdQuIyanIyeq+ug==}
     engines: {node: '>=18.0.0'}
 
   '@fal-works/esbuild-plugin-global-externals@2.1.2':
@@ -1951,8 +1951,8 @@ packages:
   '@mistralai/mistralai@2.1.2':
     resolution: {integrity: sha512-0NlXBNdTMmi4z0oSUWa8KseBHlli+/FkaUTaAyLYTJzkKh3mYM/D3DnJzRil8VD6QC7W3IteARjd3LnxAZGPUw==}
 
-  '@msgpack/msgpack@3.1.2':
-    resolution: {integrity: sha512-JEW4DEtBzfe8HvUYecLU9e6+XJnKDlUAIve8FvPzF3Kzs6Xo/KuZkZJsDH0wJXl/qEZbeeE7edxDNY3kMs39hQ==}
+  '@msgpack/msgpack@3.1.3':
+    resolution: {integrity: sha512-47XIizs9XZXvuJgoaJUIE2lFoID8ugvc0jzSHP+Ptfk8nTbnR8g788wv48N03Kx0UkAv559HWRQ3yzOgzlRNUA==}
     engines: {node: '>= 18'}
 
   '@mswjs/interceptors@0.41.3':
@@ -5274,6 +5274,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/estree@1.0.9':
+    resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
   '@types/hast@3.0.4':
     resolution: {integrity: sha512-WPs+bbQw5aCj+x6laNGWLH3wviHtoCv/P3+otBhbOhJgG8qtpdAMlTCxLtsTWA7LH1Oh/bFCHsBn0TPS5m30EQ==}
 
@@ -5310,8 +5313,8 @@ packages:
   '@types/node@24.10.4':
     resolution: {integrity: sha512-vnDVpYPMzs4wunl27jHrfmwojOGKya0xyM3sH+UE5iv5uPS6vX7UIoh6m+vQc5LGBq52HBKPIn/zcSZVzeDEZg==}
 
-  '@types/node@25.6.0':
-    resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
+  '@types/node@25.6.1':
+    resolution: {integrity: sha512-coJCN8O1q4AGyyqCAUSP06P+SrMTu18BkEj3NVAK07q6QUneD2wzj3CLv9+yP+BMeZQlMvneXqqvDe3w+xcq7g==}
 
   '@types/oracledb@6.5.2':
     resolution: {integrity: sha512-kK1eBS/Adeyis+3OlBDMeQQuasIDLUYXsi2T15ccNJ0iyUpQ4xDF7svFu3+bGVrI0CMBUclPciz+lsQR3JX3TQ==}
@@ -8670,8 +8673,8 @@ packages:
       uglify-js:
         optional: true
 
-  terser@5.46.2:
-    resolution: {integrity: sha512-uxfo9fPcSgLDYob/w1FuL0c99MWiJDnv+5qXSQc5+Ki5NjVNsYi66INnMFBjf6uFz6OnX12piJQPF4IpjJTNTw==}
+  terser@5.47.1:
+    resolution: {integrity: sha512-tPbLXTI6ohPASb/1YViL428oEHu6/qv1OxqYnfaonVCFHqx4+wCd95pHrQWsL5X4pl90CTyW9piSAsS2L0VoMw==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -10285,9 +10288,9 @@ snapshots:
 
   '@exodus/bytes@1.13.0': {}
 
-  '@fal-ai/client@1.5.0':
+  '@fal-ai/client@1.10.1':
     dependencies:
-      '@msgpack/msgpack': 3.1.2
+      '@msgpack/msgpack': 3.1.3
       eventsource-parser: 1.1.2
       robot3: 0.4.1
 
@@ -10769,7 +10772,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@msgpack/msgpack@3.1.2': {}
+  '@msgpack/msgpack@3.1.3': {}
 
   '@mswjs/interceptors@0.41.3':
     dependencies:
@@ -14302,11 +14305,11 @@ snapshots:
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.1
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   '@types/eslint@9.6.1':
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
 
   '@types/estree-jsx@1.0.5':
@@ -14314,6 +14317,8 @@ snapshots:
       '@types/estree': 1.0.8
 
   '@types/estree@1.0.8': {}
+
+  '@types/estree@1.0.9': {}
 
   '@types/hast@3.0.4':
     dependencies:
@@ -14353,7 +14358,7 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/node@25.6.0':
+  '@types/node@25.6.1':
     dependencies:
       undici-types: 7.19.2
 
@@ -14486,7 +14491,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.4)(jsdom@28.1.0)(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2))
+      vitest: 4.1.4(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.4)(jsdom@28.1.0)(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2))
 
   '@vitest/expect@4.1.4':
     dependencies:
@@ -14497,14 +14502,14 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.4(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2))':
+  '@vitest/mocker@4.1.4(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2))':
     dependencies:
       '@vitest/spy': 4.1.4
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       msw: 2.12.13(@types/node@24.10.4)(typescript@5.9.3)
-      vite: 7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2)
+      vite: 7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2)
 
   '@vitest/pretty-format@4.1.4':
     dependencies:
@@ -15594,7 +15599,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  fumadocs-mdx@14.2.13(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(fumadocs-core@16.7.14(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(flexsearch@0.8.212)(lucide-react@1.8.0(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.3.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react@19.2.6)(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2)):
+  fumadocs-mdx@14.2.13(@types/mdast@4.0.4)(@types/mdx@2.0.13)(@types/react@19.2.14)(fumadocs-core@16.7.14(@mdx-js/mdx@3.1.1)(@types/estree-jsx@1.0.5)(@types/hast@3.0.4)(@types/mdast@4.0.4)(@types/react@19.2.14)(flexsearch@0.8.212)(lucide-react@1.8.0(react@19.2.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.3.6))(next@16.2.6(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3))(react@19.2.6)(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2)):
     dependencies:
       '@mdx-js/mdx': 3.1.1
       '@standard-schema/spec': 1.1.0
@@ -15620,7 +15625,7 @@ snapshots:
       '@types/react': 19.2.14
       next: 16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.86.3)
       react: 19.2.6
-      vite: 7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2)
+      vite: 7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -16220,7 +16225,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.6.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -18465,12 +18470,12 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
-      terser: 5.46.2
+      terser: 5.47.1
       webpack: 5.99.9(esbuild@0.28.0)
     optionalDependencies:
       esbuild: 0.28.0
 
-  terser@5.46.2:
+  terser@5.47.1:
     dependencies:
       '@jridgewell/source-map': 0.3.11
       acorn: 8.16.0
@@ -18736,7 +18741,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2):
+  vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.4)
@@ -18750,14 +18755,14 @@ snapshots:
       jiti: 2.6.1
       lightningcss: 1.32.0
       sass: 1.86.3
-      terser: 5.46.2
+      terser: 5.47.1
       tsx: 4.19.3
       yaml: 2.8.2
 
-  vitest@4.1.4(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.4)(jsdom@28.1.0)(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2)):
+  vitest@4.1.4(@opentelemetry/api@1.9.0)(@types/node@24.10.4)(@vitest/coverage-v8@4.1.4)(jsdom@28.1.0)(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2)):
     dependencies:
       '@vitest/expect': 4.1.4
-      '@vitest/mocker': 4.1.4(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2))
+      '@vitest/mocker': 4.1.4(msw@2.12.13(@types/node@24.10.4)(typescript@5.9.3))(vite@7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2))
       '@vitest/pretty-format': 4.1.4
       '@vitest/runner': 4.1.4
       '@vitest/snapshot': 4.1.4
@@ -18774,7 +18779,7 @@ snapshots:
       tinyexec: 1.1.1
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.46.2)(tsx@4.19.3)(yaml@2.8.2)
+      vite: 7.1.9(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.86.3)(terser@5.47.1)(tsx@4.19.3)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
@@ -18814,7 +18819,7 @@ snapshots:
   webpack@5.99.9(esbuild@0.28.0):
     dependencies:
       '@types/eslint-scope': 3.7.7
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
