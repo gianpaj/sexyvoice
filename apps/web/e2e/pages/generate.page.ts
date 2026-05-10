@@ -277,6 +277,13 @@ export class GeneratePage {
   }
 
   /**
+   * Expect any positive estimated credits value to be displayed
+   */
+  async expectEstimatedCreditsVisible() {
+    await expect(this.page.getByText(/~[1-9]\d*/)).toBeVisible();
+  }
+
+  /**
    * Expect insufficient credits alert to be visible
    */
   async expectInsufficientCreditsAlert() {

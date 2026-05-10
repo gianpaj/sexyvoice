@@ -1,5 +1,7 @@
 import type { Page, Route } from '@playwright/test';
 
+import { estimateGrokCredits } from '@/lib/utils';
+
 /**
  * Google AI Mock Handlers
  *
@@ -29,13 +31,19 @@ export const mockGenerateVoiceResponse = {
 };
 
 /**
- * Mock response for estimate-credits API
- * Matches the structure: { tokens, estimatedCredits }
+ * Mock response for Gemini estimate-credits API.
+ * Grok estimates are calculated dynamically to mirror the real bucketed logic.
  */
-export const mockEstimateCreditsResponse = {
+export const mockGeminiEstimateCreditsResponse = {
   tokens: 150,
   estimatedCredits: 15,
 };
+
+const MOCK_GROK_VOICES = new Set(['eve', 'rex', 'sal']);
+
+function isMockGrokVoice(voice: unknown): voice is string {
+  return typeof voice === 'string' && MOCK_GROK_VOICES.has(voice.toLowerCase());
+}
 
 /**
  * Mock enhanced text response (with emotion tags)
@@ -85,10 +93,17 @@ export async function handleEstimateCredits(route: Route) {
     voice: postData?.voice,
   });
 
+  const text = typeof postData?.text === 'string' ? postData.text : '';
+  const responseBody = isMockGrokVoice(postData?.voice)
+    ? {
+        estimatedCredits: estimateGrokCredits(text),
+      }
+    : mockGeminiEstimateCreditsResponse;
+
   await route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify(mockEstimateCreditsResponse),
+    body: JSON.stringify(responseBody),
   });
 }
 

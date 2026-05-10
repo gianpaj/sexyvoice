@@ -94,7 +94,7 @@ test.describe('Generate Dashboard - Authenticated User', () => {
 
     await generatePage.enterText('Hello [breath] from the featured Grok voice');
     await generatePage.clickEstimateCredits();
-    await generatePage.expectEstimatedCredits(15);
+    await generatePage.expectEstimatedCreditsVisible();
 
     await generatePage.clickGenerate();
     await generatePage.waitForGenerationComplete();

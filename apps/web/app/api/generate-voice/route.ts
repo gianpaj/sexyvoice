@@ -49,7 +49,7 @@ function isAbortError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   if (error.name === 'AbortError') return true;
   const msg = error.message.toLowerCase();
-  return msg.includes('aborted') || msg.includes('abort error');
+  return /\babort(?:ed| ?error)\b/.test(msg);
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration

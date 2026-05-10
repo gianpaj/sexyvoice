@@ -31,10 +31,12 @@ export default async function GeneratePage(props: {
     .eq('user_id', userId)
     .single()) || { amount: 0 };
   const credits = creditsData || { amount: 0 };
+  const isPlaywrightCreditsBypassEnabled =
+    process.env.E2E_TEST_MODE === 'true' &&
+    !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
+    user?.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
   const hasEnoughCredits =
-    credits.amount >= 10 ||
-    (!!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
-      user?.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL);
+    credits.amount >= 10 || isPlaywrightCreditsBypassEnabled;
 
   const [{ data: creditTransactions }, isPaidUser, { data: publicVoices }] =
     await Promise.all([

@@ -10,6 +10,10 @@ import dotenv from 'dotenv';
 // biome-ignore lint/correctness/noGlobalDirnameFilename: bug
 dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 
+if (process.env.PLAYWRIGHT_TEST_USER_EMAIL) {
+  process.env.E2E_TEST_MODE ??= 'true';
+}
+
 const PLAYWRIGHT_PORT = Number(process.env.PLAYWRIGHT_PORT || '3100');
 const PLAYWRIGHT_BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${PLAYWRIGHT_PORT}`;
@@ -142,9 +146,12 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    // Use a built production server for E2E stability. This avoids the local
-    // dev wrapper and Next dev-server locking issues that can break auth setup.
-    command: `pnpm run build && pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
+    // In CI, the workflow builds the app before tests, so only start the
+    // server here. Locally, keep building first so `pnpm run test:e2e` works
+    // without requiring a manual build step.
+    command: process.env.CI
+      ? `pnpm exec next start --port ${PLAYWRIGHT_PORT}`
+      : `pnpm run build && pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
     url: PLAYWRIGHT_BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 300 * 1000,

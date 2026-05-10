@@ -155,7 +155,7 @@ export async function handleUsageEvents(route: Route) {
   const response: Record<string, unknown> = {
     data: paginatedEvents,
     totalCount: filteredEvents.length,
-    totalPages: Math.max(1, Math.ceil(filteredEvents.length / pageSize)),
+    totalPages: Math.ceil(filteredEvents.length / pageSize),
     page,
     pageSize,
   };
