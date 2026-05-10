@@ -778,7 +778,7 @@ export function AudioGenerator({
   };
 
   return (
-    <Card>
+    <Card data-testid="audio-generator-card">
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>

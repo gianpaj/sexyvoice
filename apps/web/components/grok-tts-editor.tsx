@@ -287,6 +287,7 @@ export function GrokTTSEditor({
     content: plainTextToDoc(value),
     editorProps: {
       attributes: {
+        'data-testid': 'generate-textarea',
         'aria-label': placeholder ?? 'TTS editor',
         role: 'textbox',
         'aria-multiline': 'true',
@@ -641,10 +642,9 @@ export function GrokTTSEditor({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                currentLength >= charactersLimit
-                  ? 'font-bold text-red-500'
-                  : '',
+                currentLength > charactersLimit ? 'font-bold text-red-500' : '',
               )}
+              data-testid="generate-character-count"
             >
               {currentLength} / {charactersLimit}
               <TooltipProvider>

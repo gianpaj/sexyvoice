@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     // Validate voice exists in DB
     let voiceObj: { id: string; name: string; language: string; model: string };
     try {
-      voiceObj = await getVoiceIdByName(body.voiceName, false);
+      voiceObj = await getVoiceIdByName(body.voiceName);
     } catch {
       return NextResponse.json(
         { error: 'Voice no longer available' },

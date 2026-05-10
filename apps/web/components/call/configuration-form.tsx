@@ -256,7 +256,10 @@ export function ConfigurationForm({
   const displayLanguage = true;
 
   return (
-    <header className="flex w-full flex-col items-stretch justify-stretch">
+    <header
+      className="flex w-full flex-col items-stretch justify-stretch"
+      data-testid="call-configuration-form"
+    >
       <Form {...form}>
         <div className="w-full border-separator1 border-b px-4 pt-0 pb-4 md:px-1 md:py-4">
           <div className="font-bold text-fg0 text-xs uppercase tracking-widest">

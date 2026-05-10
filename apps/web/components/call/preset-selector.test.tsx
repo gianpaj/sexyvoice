@@ -107,7 +107,7 @@ describe('PresetSelector', () => {
       expect(screen.getByText('Choose Character')).toBeInTheDocument();
     });
 
-    it('renders all four default character names when there are no custom characters', () => {
+    it('renders all three default character names when there are no custom characters', () => {
       render(<PresetSelector />);
       for (const preset of defaultPresetsFixture) {
         expect(screen.getByText(preset.name)).toBeInTheDocument();
@@ -450,11 +450,11 @@ describe('PresetSelector', () => {
       // Initially Ramona is selected
       expect(screen.getByText(/Ramona:/)).toBeInTheDocument();
 
-      // Click Milo
-      await user.click(screen.getByRole('button', { name: /milo/i }));
+      // Click Rafal
+      await user.click(screen.getByRole('button', { name: /rafal/i }));
       expect(mockDispatch).toHaveBeenCalledWith({
         type: 'SET_SELECTED_PRESET_ID',
-        payload: 'milo',
+        payload: 'rafal',
       });
     });
   });

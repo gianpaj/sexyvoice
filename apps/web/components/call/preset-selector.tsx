@@ -467,7 +467,7 @@ export function PresetSelector({
                             '__NAME__',
                             preset.name,
                           )}
-                          className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
+                          className="absolute top-0 -right-1 z-10 rounded-full bg-red-800 p-1 text-destructive-foreground transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
                             setCharacterToDelete({
@@ -482,7 +482,7 @@ export function PresetSelector({
                           )}
                           type="button"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-2.5 w-2.5 text-white" />
                         </button>
                       )}
                     </div>

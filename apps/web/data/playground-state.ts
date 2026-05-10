@@ -78,8 +78,6 @@ export interface PlaygroundState {
   customCharacters: Preset[];
   selectedPresetId: string | null;
   instructions: string;
-  /** Per-character instruction overrides keyed by character ID, then by language */
-  characterOverrides: Record<string, Partial<Record<string, string>>>;
   language: CallLanguage;
   initialInstruction: string;
   defaultPresets: Preset[];
@@ -93,7 +91,6 @@ export const defaultPlaygroundState: PlaygroundState = {
   customCharacters: [],
   selectedPresetId: null,
   instructions,
-  characterOverrides: {},
   language: defaultLanguage,
   initialInstruction,
   defaultPresets: [], // Now populated from DB via SSR props

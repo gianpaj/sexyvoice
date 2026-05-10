@@ -58,6 +58,7 @@ export function NonGrokPromptEditor({
           'textarea-2 bg-transparent transition-[height] duration-200 ease-in-out',
           textareaRightPadding,
         )}
+        data-testid="generate-textarea"
         maxLength={
           textareaMaxLength === null
             ? undefined
@@ -110,6 +111,7 @@ export function NonGrokPromptEditor({
           'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
           textIsOverLimit ? 'font-bold text-red-500' : '',
         )}
+        data-testid="generate-character-count"
       >
         {characterCountText ?? (
           <>
