@@ -145,15 +145,14 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    // In CI, the workflow builds the app before tests, so only start the
-    // server here. Locally, keep building first so `pnpm run test:e2e` works
-    // without requiring a manual build step.
-    command: process.env.CI
-      ? `pnpm exec next start --port ${PLAYWRIGHT_PORT}`
-      : `pnpm run build && pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
-    url: PLAYWRIGHT_BASE_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 300 * 1000,
-  },
+  webServer: process.env.CI
+    ? {
+        // In CI, the workflow builds the app before tests, so only start the
+        // server here. Locally, keep building first so `pnpm run test:e2e` works
+        // without requiring a manual build step.
+        command: `pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
+        url: PLAYWRIGHT_BASE_URL,
+        timeout: 300 * 1000,
+      }
+    : undefined,
 });
