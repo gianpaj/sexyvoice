@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   e2e:
+    environment: Production
     # Skip if PR is a draft
     if: github.event.pull_request.draft == false || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -56,12 +57,16 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Build application
+        working-directory: apps/web
         run: pnpm run build
         env:
           # Supabase
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Upstash
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
           # Stripe
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
@@ -82,9 +87,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Upstash
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
           # Stripe
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          # Disable analytics in tests
+          # Analytics (stubbed)
           NEXT_PUBLIC_POSTHOG_KEY: "phc_test"
           NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com"
 
