@@ -52,6 +52,7 @@ jobs:
           REDISMS_DISABLE_POSTINSTALL: 1
 
       - name: Install Playwright browsers
+        working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Build application
@@ -71,6 +72,7 @@ jobs:
           SKIP_ENV_VALIDATION: true
 
       - name: Run Playwright tests
+        working-directory: apps/web
         run: pnpm run test:e2e
         env:
           CI: true
@@ -91,7 +93,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: playwright-report/
+          path: apps/web/playwright-report/
           retention-days: 14
 
       - name: Upload test results
@@ -99,5 +101,5 @@ jobs:
         if: failure()
         with:
           name: test-results
-          path: test-results/
+          path: apps/web/test-results/
           retention-days: 7
