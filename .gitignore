@@ -49,6 +49,13 @@ backups
 # Python virtual environment used by scripts/
 scripts/venv
 
+# Playwright
+.auth/
+playwright-report/
+test-results/
+playwright/.cache/
+.env.e2e
+
 .edgeconfig.json
 
 .daily-stats-cache.json

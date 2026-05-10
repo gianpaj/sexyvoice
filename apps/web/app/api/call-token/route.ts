@@ -60,9 +60,6 @@ const playgroundStateSchema = z.object({
   selectedPresetId: z.uuid().nullable(),
   sessionConfig: sessionConfigSchema,
   customCharacters: z.array(z.any()).optional(),
-  characterOverrides: z
-    .record(z.string(), z.record(z.string(), z.string()))
-    .optional(),
   initialInstruction: z.string().optional(),
   defaultPresets: z.array(z.any()).optional(),
 });

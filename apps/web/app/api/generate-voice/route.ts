@@ -29,6 +29,7 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
+  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
@@ -38,6 +39,18 @@ import {
 } from '@/lib/utils';
 
 const { logger, captureException } = Sentry;
+
+/**
+ * The Google AI SDK wraps native AbortError into a generic Error whose name
+ * stays "Error" but whose message contains "AbortError" or "aborted".
+ * This helper covers both the native case and the SDK-wrapped case.
+ */
+function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'AbortError') return true;
+  const msg = error.message.toLowerCase();
+  return /\babort(?:ed| ?error)\b/.test(msg);
+}
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
@@ -393,6 +406,22 @@ export async function POST(request: Request) {
             );
           }
         }
+        // Only capture non-PROHIBITED_CONTENT errors to Sentry.
+        // PROHIBITED_CONTENT is an expected user input block, not an error to report.
+        if (!isProhibitedContent) {
+          captureException(new Error('Gemini 200 — no audio data'), {
+            extra: {
+              finishReason,
+              blockReason,
+              hasData: !!data,
+              mimeType,
+              model: modelUsed,
+              textPreview: text.slice(0, 200),
+              voice,
+            },
+            user: { id: user.id },
+          });
+        }
         throw new Error(
           isProhibitedContent
             ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
@@ -539,6 +568,10 @@ export async function POST(request: Request) {
         );
       }
 
+      const grokDollarAmount = isGrokVoice
+        ? calculateGrokTtsDollarAmount(text)
+        : undefined;
+
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const audioFileDBResult = await saveAudioFile({
@@ -580,6 +613,9 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
+        ...(grokDollarAmount === undefined
+          ? {}
+          : { dollarAmount: grokDollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
@@ -613,7 +649,11 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (Error.isError(error) && error.name === 'AbortError') {
+    // Client disconnected — do not attempt to write to a dead socket (prevents write EPIPE)
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
+    if (isAbortError(error)) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
@@ -638,6 +678,24 @@ export async function POST(request: Request) {
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
+
+    // Check for transient errors (INTERNAL status) from Google API
+    if (Error.isError(error)) {
+      try {
+        const message = JSON.parse(error.message);
+        if (message.error?.status === 'INTERNAL') {
+          return NextResponse.json(
+            {
+              error:
+                'Voice generation service temporarily unavailable. Please retry.',
+            },
+            { status: 503 },
+          );
+        }
+      } catch {
+        // Not JSON or doesn't have the expected structure, continue to next check
+      }
+    }
 
     // if Gemini error
     if (Error.isError(error) && error.message.includes('googleapis')) {

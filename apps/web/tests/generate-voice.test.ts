@@ -566,6 +566,7 @@ describe('Generate Voice API Route', () => {
         unit: 'chars',
         quantity: 13,
         creditsUsed: 100,
+        dollarAmount: 0.000_055,
         metadata: {
           voiceId: 'voice-eve-id',
           voiceName: 'eve',
@@ -1254,36 +1255,88 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
   });
 
   describe('Request Abortion', () => {
-    it('should handle aborted requests gracefully', async () => {
-      // Mock Replicate API to return error
-      server.use(
-        http.post('https://api.replicate.com/v1/predictions', () =>
-          HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
-        ),
+    it('should return 499 when request signal is already aborted and a handler error occurs', async () => {
+      // Cause an error deep in the handler so the outer catch is reached.
+      // Because request.signal is already aborted, the outer catch should
+      // return 499 instead of propagating the error.
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.getVoiceIdByName).mockRejectedValueOnce(
+        new Error('Simulated DB error'),
       );
 
       const controller = new AbortController();
+      controller.abort(); // abort before the request is even created
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
         signal: controller.signal,
       });
 
-      // Abort the request immediately
-      controller.abort();
+      const response = await POST(request);
+      expect(response.status).toBe(499);
+    });
 
-      // The function should still handle this gracefully
-      // The actual behavior depends on when the abort signal is checked
-      try {
-        await POST(request);
-      } catch (error) {
-        // AbortError is expected
-        expect(error).toBeDefined();
-      }
+    it('should return 499 for a Google AI SDK-wrapped AbortError (SEXYVOICE-AI-4Z)', async () => {
+      // The Google AI SDK wraps native AbortError into a generic Error whose
+      // name stays "Error" but whose message contains the word "aborted".
+      // Previously this bypassed the `error.name === 'AbortError'` guard and
+      // landed in Sentry. The isAbortError() helper must catch this pattern.
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi
+            .fn()
+            .mockRejectedValue(
+              new Error(
+                'exception AbortError: This operation was aborted sending request',
+              ),
+            ),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(499);
+    });
+
+    it('should return 503 when both Gemini pro and flash models fail with a transient error (SEXYVOICE-AI-4F)', async () => {
+      // Both models throw a generic (non-googleapis) internal error — simulates
+      // a transient Google outage. The route should return 503 with a friendly
+      // message rather than crashing into the outer catch.
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockRejectedValue(
+            new Error(
+              JSON.stringify({
+                error: {
+                  code: 500,
+                  message:
+                    'An internal error has occurred. Please retry or report in https://developers.generativeai.google/guide/troubleshooting',
+                  status: 'INTERNAL',
+                },
+              }),
+            ),
+          ),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toContain('temporarily unavailable');
     });
   });
 
