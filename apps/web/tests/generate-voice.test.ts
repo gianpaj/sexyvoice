@@ -1298,7 +1298,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
@@ -1329,7 +1329,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: 'Hello world', voice: 'poe' }),
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
       });
 
       const response = await POST(request);
