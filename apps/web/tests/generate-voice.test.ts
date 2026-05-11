@@ -1163,6 +1163,12 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
           user: { id: 'test-user-id' },
         }),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        }),
+        expect.anything(),
+      );
     });
 
     it('should throw error when Gemini response has no mimeType', async () => {
@@ -1218,6 +1224,12 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
           }),
           user: { id: 'test-user-id' },
         }),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        }),
+        expect.anything(),
       );
     });
 
