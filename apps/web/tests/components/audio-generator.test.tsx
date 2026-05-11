@@ -88,14 +88,14 @@ vi.mock('@/components/grok-tts-editor', () => ({
 vi.mock('@/lib/ai', () => ({
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
     if (model === 'gpro') {
-      return isPaidUser ? 2000 : 1000;
+      return isPaidUser ? 1000 : 500;
     }
 
     if (model === 'xai') {
-      return isPaidUser ? 2000 : 1000;
+      return isPaidUser ? 1000 : 500;
     }
 
-    return isPaidUser ? 1000 : 500;
+    return 500;
   }),
 }));
 
@@ -230,6 +230,24 @@ function renderAudioGenerator(
   return render(<AudioGenerator {...defaultProps} {...overrides} />);
 }
 
+function ensureLocalStorage() {
+  if (typeof window.localStorage.clear === 'function') {
+    return;
+  }
+
+  const storage = new Map<string, string>();
+
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      clear: () => storage.clear(),
+      getItem: (key: string) => storage.get(key) ?? null,
+      removeItem: (key: string) => storage.delete(key),
+      setItem: (key: string, value: string) => storage.set(key, value),
+    },
+  });
+}
+
 describe('AudioGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -238,6 +256,7 @@ describe('AudioGenerator', () => {
     mockToastFn.error.mockClear();
     mockToastFn.loading.mockClear();
     mockToastFn.dismiss.mockClear();
+    ensureLocalStorage();
     window.localStorage.clear();
 
     let uuidCounter = 0;
@@ -434,6 +453,7 @@ describe('AudioGenerator', () => {
   it('disables split mode for free users', () => {
     renderAudioGenerator({
       isPaidUser: false,
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
     });
 
     expect(
@@ -441,6 +461,28 @@ describe('AudioGenerator', () => {
         name: baseDict.split.splitToggleLabel,
       }),
     ).toBeDisabled();
+    expect(
+      screen.getByPlaceholderText(baseDict.textAreaPlaceholder),
+    ).toHaveAttribute('maxlength', '510');
+  });
+
+  it('uses the paid Gemini character limit before split mode removes the native cap', async () => {
+    const user = userEvent.setup();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+    });
+
+    const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
+    expect(input).toHaveAttribute('maxlength', '1010');
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    expect(input).not.toHaveAttribute('maxlength');
   });
 
   it('enables split mode for paid Grok users', () => {
@@ -570,6 +612,264 @@ describe('AudioGenerator', () => {
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  it('generates Gemini split segments and stops on first failure', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Server error' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedStyle: 'calm',
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+    });
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith('Server error (500)');
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockToastFn.success).not.toHaveBeenCalled();
+  });
+
+  it('skips already-generated Gemini segments on re-run', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedStyle: 'dramatic',
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+    });
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith('Server error (500)');
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    mockToastFn.error.mockClear();
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
+      text: secondSegment,
+      voice: 'achernar',
+      styleVariant: 'dramatic',
+    });
+  });
+
+  it('generates Grok split segments with a specific language for all segments', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-fr-1.mp3' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-fr-2.mp3' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+    });
+
+    const languageLabel = screen.getByText(baseDict.grok.languageLabel);
+    const languageField = languageLabel.parentElement as HTMLElement;
+    const trigger = within(languageField).getByRole('combobox');
+    await user.selectOptions(trigger, 'en');
+
+    fireEvent.change(
+      screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      text: firstSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'en',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      text: secondSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'en',
+    });
+    expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  it('generates Grok split segments and stops on first failure', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Rate limit exceeded' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+    });
+
+    fireEvent.change(
+      screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        'Rate limit exceeded (500)',
+      );
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockToastFn.success).not.toHaveBeenCalled();
+  });
+
+  it('skips already-generated Grok segments on re-run', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+    });
+
+    fireEvent.change(
+      screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith('Server error (500)');
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    mockToastFn.error.mockClear();
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
+      text: secondSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'auto',
+    });
   });
 
   it('generates Grok split segments without breaking wrapping tags', async () => {

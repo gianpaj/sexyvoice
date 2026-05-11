@@ -109,6 +109,28 @@ describe('Generate Voice API Route', () => {
       expect(json.error).toContain('Text exceeds the maximum length');
     });
 
+    it('should return 400 when paid Gemini text exceeds maximum length', async () => {
+      const longText = 'a'.repeat(1001); // Exceeds 1000 char paid Gemini limit
+
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Text exceeds the maximum length');
+      expect(json.error).toContain('1000 characters');
+    });
+
     it('should return 400 when text exceeds maximum length for Grok voices', async () => {
       const longText = 'a'.repeat(1001); // Exceeds 1000 char paid Grok limit
 
@@ -696,7 +718,7 @@ describe('Generate Voice API Route', () => {
       } = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(getCredits).mockResolvedValueOnce(3000);
-      // Keep paid user flow coverage; text limit is now 500 for all voices.
+      // Keep paid user flow coverage; Gemini paid users have a 1000 char limit.
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
       const text = 'Hello world';

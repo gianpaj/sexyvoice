@@ -185,7 +185,7 @@ export async function POST(request: Request) {
     }
 
     const userHasPaid = await hasUserPaidAdmin(userId);
-    const maxLength = getCharactersLimit();
+    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (finalText.length > maxLength) {
       const lengthErrorMessage =
         isGeminiVoice && style

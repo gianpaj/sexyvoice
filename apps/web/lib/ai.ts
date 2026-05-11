@@ -11,11 +11,15 @@ export const getEmotionTags = (language: string) => {
   }
 };
 
+const PAID_LIMIT = 1000;
 const DEFAULT_LIMIT = 500;
 
-// The limit is uniform across all models and user tiers for now.
-// If per-model or per-tier limits are needed in the future, restore the
-// `model` and `isPaidUser` parameters here and at all call sites.
-export const getCharactersLimit = () => {
+export const getCharactersLimit = (model: string, isPaidUser = false) => {
+  if (!isPaidUser) {
+    return DEFAULT_LIMIT;
+  }
+  if (model === 'gpro' || model === 'xai') {
+    return PAID_LIMIT;
+  }
   return DEFAULT_LIMIT;
 };

@@ -176,7 +176,10 @@ export function AudioGenerator({
   const showEnhanceButton = provider === 'replicate';
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
-  const charactersLimit = getCharactersLimit();
+  const charactersLimit = getCharactersLimit(
+    selectedVoice?.model ?? '',
+    isPaidUser,
+  );
   const shouldUseSplitMode = isPaidUser && splitTextAudios;
   const textIsOverLimit = !shouldUseSplitMode && text.length > charactersLimit;
   const splitSegmentTexts = useMemo(

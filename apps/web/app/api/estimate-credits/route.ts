@@ -108,8 +108,12 @@ async function validateVoice(
   return { ok: true, data: voiceObj };
 }
 
-function validateTextLength(text: string): ValidationResult<null> {
-  const maxLength = getCharactersLimit();
+function validateTextLength(
+  text: string,
+  model: string,
+  isPaidUser: boolean,
+): ValidationResult<null> {
+  const maxLength = getCharactersLimit(model, isPaidUser);
 
   if (text.length > maxLength) {
     return {
@@ -163,7 +167,11 @@ export async function POST(request: Request) {
       return voiceResult.response;
     }
 
-    const textError = validateTextLength(text);
+    const textError = validateTextLength(
+      text,
+      voiceResult.data.model,
+      isPaidUser,
+    );
     if (!textError.ok) {
       return textError.response;
     }

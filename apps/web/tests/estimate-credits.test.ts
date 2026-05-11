@@ -160,6 +160,26 @@ describe('Estimate Credits API Route', () => {
     expect(json.error).toContain('500 characters');
   });
 
+  it('returns 400 when paid gpro text exceeds character limit', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    const excessiveText = 'a'.repeat(1001);
+
+    const request = new Request('http://localhost/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ text: excessiveText, voice: 'kore' }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error).toContain('Text exceeds the maximum length');
+    expect(json.error).toContain('1000 characters');
+  });
+
   it('returns 400 when grok text exceeds character limit', async () => {
     const excessiveText = 'a'.repeat(501);
 

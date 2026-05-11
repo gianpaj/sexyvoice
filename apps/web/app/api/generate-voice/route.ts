@@ -128,7 +128,7 @@ export async function POST(request: Request) {
 
     userHasPaid = await hasUserPaid(user.id);
 
-    const maxLength = getCharactersLimit();
+    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (text.length > maxLength) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
@@ -166,7 +166,9 @@ export async function POST(request: Request) {
     // Generate hash for the combination of text, voice, model (and seed when provided,
     // so requests with different seeds don't collide in the Redis cache)
     const hashInput =
-      seed !== undefined ? `${text}-${voice}-${voiceObj.model}-${seed}` : `${text}-${voice}-${voiceObj.model}`;
+      seed === undefined
+        ? `${text}-${voice}-${voiceObj.model}`
+        : `${text}-${voice}-${voiceObj.model}-${seed}`;
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -243,7 +245,7 @@ export async function POST(request: Request) {
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,
         responseModalities: ['AUDIO'],
-        ...(seed !== undefined ? { seed } : {}),
+        ...(seed === undefined ? {} : { seed }),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
