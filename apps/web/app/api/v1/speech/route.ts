@@ -36,7 +36,7 @@ import {
   reduceCreditsAdmin,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { generateXaiTts, normalizeXaiTtsCodec, usdTicksToDollarAmount } from '@/lib/tts/xai';
+import { generateXaiTts, normalizeXaiTtsCodec, usdTicksToDollarAmount, type XaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -269,7 +269,7 @@ export async function POST(request: Request) {
     let replicateResponse: Prediction | undefined;
     let geminiResponse: GenerateContentResponse | null = null;
     let grokCostInUsdTicks: number | undefined;
-    let grokCodec: string | undefined;
+    let grokCodec: XaiTtsCodec | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
