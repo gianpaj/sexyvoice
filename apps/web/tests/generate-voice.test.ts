@@ -4,8 +4,8 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import { usdTicksToDollarAmount } from '@/lib/tts/xai';
 import { createClient } from '@/lib/supabase/server';
+import { usdTicksToDollarAmount } from '@/lib/tts/xai';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
@@ -547,7 +547,7 @@ describe('Generate Voice API Route', () => {
       const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
 
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 100,
+        credits_used: 50,
         duration: '-1',
         filename: expect.stringMatching(
           /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
@@ -574,7 +574,7 @@ describe('Generate Voice API Route', () => {
         sourceId: 'test-audio-file-id',
         unit: 'chars',
         quantity: 13,
-        creditsUsed: 100,
+        creditsUsed: 50,
         dollarAmount: expectedDollarAmount,
         metadata: {
           voiceId: 'voice-eve-id',

@@ -36,9 +36,11 @@ export type TtsProvider = 'gemini' | 'grok' | 'replicate';
 
 const DEFAULT_CREDIT_MULTIPLIER = 4;
 const GEMINI_CREDIT_MULTIPLIER = 1.1;
-const GROK_CHAR_BUCKET = 100;
-const GROK_CREDITS_PER_BUCKET = 100;
-const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
+const GROK_CHAR_BUCKET = 50;
+const GROK_CREDITS_PER_BUCKET = 50;
+
+// our cost
+const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 15;
 
 export function getTtsProvider(model?: string): TtsProvider {
   if (model === 'gpro') {
@@ -123,8 +125,10 @@ function calculateCredits(
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
 
-// $4.20 / 1M characters
-// ~1 credit per character (~1,000 credits per minute of audio)
+// $15.00 / 1M characters
+// ~4 credits per character (~4,000 credits per minute of audio)
+// Gross margin:
+// 99.5%
 export function estimateGrokCredits(text: string): number {
   if (!text.trim()) {
     return 0;
