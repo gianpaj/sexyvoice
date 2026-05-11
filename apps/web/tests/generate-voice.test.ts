@@ -1147,6 +1147,28 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.error).toBe(
         getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
       );
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Gemini 200 — no audio data',
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: undefined,
+            hasData: false,
+            mimeType: 'audio/wav',
+            model: 'gemini-2.5-flash-preview-tts',
+            voice: 'kore',
+          }),
+          user: { id: 'test-user-id' },
+        }),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        }),
+        expect.anything(),
+      );
     });
 
     it('should throw error when Gemini response has no mimeType', async () => {
@@ -1186,6 +1208,28 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(response.status).toBe(500);
       expect(json.error).toBe(
         getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Gemini 200 — no audio data',
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: undefined,
+            hasData: true,
+            mimeType: undefined,
+            model: 'gemini-2.5-flash-preview-tts',
+            voice: 'kore',
+          }),
+          user: { id: 'test-user-id' },
+        }),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        }),
+        expect.anything(),
       );
     });
 

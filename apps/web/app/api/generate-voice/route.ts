@@ -185,7 +185,7 @@ export async function POST(request: Request) {
     });
 
     // const requestedGrokCodec = normalizeXaiTtsCodec(outputCodec);
-    const fileExtension = isGeminiVoice ? 'wav' : isGrokVoice ? 'mp3' : 'wav';
+    const fileExtension = isGrokVoice ? 'mp3' : 'wav';
     const filename = `${path}.${fileExtension}`;
     const result = await redis.get<string>(filename);
 
@@ -659,6 +659,15 @@ export async function POST(request: Request) {
     }
 
     if (Error.isError(error) && error.cause === 'PROHIBITED_CONTENT') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation failed, please retry',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
+    if (Error.isError(error) && error.cause === 'OTHER_GEMINI_BLOCK') {
       return NextResponse.json(
         {
           error: error.message || 'Voice generation failed, please retry',
