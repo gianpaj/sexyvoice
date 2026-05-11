@@ -2,7 +2,11 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
-import { mockUploadFileToR2, server } from './setup';
+import { usdTicksToDollarAmount } from '@/lib/tts/xai';
+import {
+  mockUploadFileToR2,
+  server,
+} from './setup';
 
 // ---------------------------------------------------------------------------
 // Mocks specific to the v1 speech route (auth + rate-limit)
@@ -198,6 +202,15 @@ describe('V1 Speech API Route', () => {
   // -------------------------------------------------------------------------
   describe('Grok TTS Generation', () => {
     it('should successfully generate voice using Grok with default mp3 format', async () => {
+      const { insertUsageEvent, saveAudioFileAdmin } = await import(
+        '@/lib/supabase/queries'
+      );
+
+      const xaiAudioBase64 = Buffer.from(
+        new Uint8Array([1, 2, 3, 4]),
+      ).toString('base64');
+      const xaiCostInUsdTicks = 15_000_000;
+
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {
           const body = (await request.json()) as {
@@ -212,9 +225,13 @@ describe('V1 Speech API Route', () => {
           expect(body.language).toBe('en');
           expect(body.output_format.codec).toBe('mp3');
 
-          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
-            headers: { 'Content-Type': 'audio/mpeg' },
-          });
+          return HttpResponse.json(
+            {
+              audio: xaiAudioBase64,
+              usage: { cost_in_usd_ticks: xaiCostInUsdTicks, characters: 11 },
+            },
+            { headers: { 'Content-Type': 'application/json' } },
+          );
         }),
       );
 
@@ -230,6 +247,38 @@ describe('V1 Speech API Route', () => {
       expect(json.credits_remaining).toBeDefined();
       expect(json.usage.input_characters).toBe(11);
       expect(json.usage.model).toBe('xai');
+
+      const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
+
+      expect(saveAudioFileAdmin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'test-user-id',
+          model: 'xai',
+          usage: expect.objectContaining({
+            userHasPaid: false,
+            apiKeyId: 'test-api-key-id',
+            sourceType: 'api_tts',
+            dollarAmount: expectedDollarAmount,
+            costInUsdTicks: xaiCostInUsdTicks,
+          }),
+        }),
+      );
+
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'test-user-id',
+          sourceType: 'api_tts',
+          sourceId: 'test-audio-file-id',
+          model: 'xai',
+          dollarAmount: expectedDollarAmount,
+          creditsUsed: 50,
+          metadata: expect.objectContaining({
+            isGrokVoice: true,
+            codec: 'mp3',
+            costInUsdTicks: xaiCostInUsdTicks,
+          }),
+        }),
+      );
     });
 
     it('should generate voice using Grok with wav format', async () => {

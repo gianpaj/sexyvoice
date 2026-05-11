@@ -12,7 +12,7 @@ export const EXTERNAL_API_MODELS = {
     supportedFormats: ['mp3'] as const,
   },
   xai: {
-    id: 'grok',
+    id: 'xai',
     name: 'Grok (xAI)',
     maxInputLength: 1000,
     supportedFormats: ['mp3', 'wav'] as const,

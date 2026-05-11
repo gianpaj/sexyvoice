@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
 import { createClient } from '@/lib/supabase/server';
+import { usdTicksToDollarAmount } from '@/lib/tts/xai';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
 import type { GoogleApiError } from '@/utils/googleErrors';
 import {
@@ -492,7 +493,9 @@ describe('Generate Voice API Route', () => {
         '@/lib/supabase/queries'
       );
 
-      const xaiResponseBuffer = new Uint8Array([10, 20, 30, 40]).buffer;
+      const xaiAudioBytes = new Uint8Array([10, 20, 30, 40]);
+      const xaiAudioBase64 = Buffer.from(xaiAudioBytes).toString('base64');
+      const xaiCostInUsdTicks = 15_000_000;
 
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {
@@ -508,11 +511,13 @@ describe('Generate Voice API Route', () => {
           expect(body.language).toBe('en');
           expect(body.output_format.codec).toBe('mp3');
 
-          return HttpResponse.arrayBuffer(xaiResponseBuffer, {
-            headers: {
-              'Content-Type': 'audio/mpeg',
+          return HttpResponse.json(
+            {
+              audio: xaiAudioBase64,
+              usage: { cost_in_usd_ticks: xaiCostInUsdTicks, characters: 13 },
             },
-          });
+            { headers: { 'Content-Type': 'application/json' } },
+          );
         }),
       );
 
@@ -539,8 +544,10 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.url).toContain('.mp3');
 
+      const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
+
       expect(saveAudioFile).toHaveBeenCalledWith({
-        credits_used: 100,
+        credits_used: 50,
         duration: '-1',
         filename: expect.stringMatching(
           /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
@@ -549,6 +556,8 @@ describe('Generate Voice API Route', () => {
         model: 'xai',
         usage: {
           userHasPaid: false,
+          costInUsdTicks: xaiCostInUsdTicks,
+          dollarAmount: expectedDollarAmount,
         },
         predictionId: undefined,
         text: 'Hello [laugh]',
@@ -565,8 +574,8 @@ describe('Generate Voice API Route', () => {
         sourceId: 'test-audio-file-id',
         unit: 'chars',
         quantity: 13,
-        creditsUsed: 100,
-        dollarAmount: 0.000_055,
+        creditsUsed: 50,
+        dollarAmount: expectedDollarAmount,
         metadata: {
           voiceId: 'voice-eve-id',
           voiceName: 'eve',
@@ -578,6 +587,7 @@ describe('Generate Voice API Route', () => {
           userHasPaid: false,
           predictionId: null,
           codec: 'mp3',
+          costInUsdTicks: xaiCostInUsdTicks,
         },
       });
     });

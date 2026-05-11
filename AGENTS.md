@@ -52,11 +52,12 @@ Package manager: `pnpm 10`.
 ## High-Value Paths
 
 - `apps/web/app/[lang]/` - localized App Router pages and layouts.
-- `apps/web/app/api/` - route handlers, including dashboard APIs and external API v1.
+- `apps/web/app/api/` - route handlers, including dashboard APIs, API key management, and external API v1.
+- `apps/web/app/api/v1/` - external API v1 routes for speech, voices, models, billing, and OpenAPI.
 - `apps/web/components/` - reusable UI and feature components.
 - `apps/web/hooks/` - client hooks, including LiveKit call state.
-- `apps/web/lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
-  pricing, and OpenAPI generation.
+- `apps/web/lib/api/` - external API v1 auth, schemas, model catalog, rate limits,
+  errors, response helpers, logging, pricing, and OpenAPI generation.
 - `apps/web/lib/i18n/` and `apps/web/messages/*.json` - locale config, navigation, and copy.
 - `apps/web/lib/supabase/` - Supabase clients, typed queries, and admin access.
 - `apps/web/lib/storage/` - Cloudflare R2 upload/delete helpers.
@@ -121,24 +122,54 @@ pnpm clean               # Check unused dependencies with knip
 ## External API v1
 
 Routes under `apps/web/app/api/v1/*` are API-key authenticated except
-`/api/v1/openapi`.
+`GET /api/v1/openapi`.
 
+- Current endpoint surface:
+  - `POST /api/v1/speech`
+  - `GET /api/v1/voices`
+  - `GET /api/v1/models`
+  - `GET /api/v1/billing`
+  - `GET /api/v1/openapi`
+- The public speech request model IDs are `gpro`, `orpheus`, and `xai`. Keep
+  `EXTERNAL_API_MODELS`, `resolveExternalModelId()`, route validation,
+  request/response schemas, tests, OpenAPI output, and Mintlify docs aligned
+  when model names or catalog entries change.
+- `style` only affects `gpro`; `xai` supports both `mp3` and `wav`; `orpheus`
+  is `mp3`-only.
+- `GET /api/v1/voices` returns only public TTS voices and must include
+  `formats` and `supports_style`.
+- `GET /api/v1/models` returns the public model catalog with max input lengths
+  and supported formats.
+- `GET /api/v1/billing` returns `creditsLeft`, `lastUpdated`, `userId`, and the
+  latest `purchase`/`topup` transaction.
+- All authenticated `/api/v1/*` responses, including errors, should include
+  rate-limit headers and a `request-id`; use `getExternalApiRequestId()` and
+  `jsonWithRateLimitHeaders()`.
 - Validate keys with `validateApiKey()` from `apps/web/lib/api/auth.ts`; never trust raw
   keys and always compare hashes.
 - Rate-limit with `consumeRateLimit()` and return headers via
   `jsonWithRateLimitHeaders()`.
 - Use `externalApiErrorResponse()` for structured errors.
-- Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts`, because external
-  API users are resolved from API keys, not session cookies.
+- Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts` or
+  `createAdminClient()` for user-scoped/private external API data, because
+  external API users are resolved from API keys, not session cookies. Public
+  catalog reads like `/api/v1/voices` may use the server client only when the
+  query is explicitly constrained to public rows.
 - Call `updateApiKeyLastUsed()` in a `finally` block.
-- Log outcomes through `createLogger()` from `apps/web/lib/api/logger.ts`.
+- Use `createLogger()` from `apps/web/lib/api/logger.ts` for externally visible
+  generation routes, and preserve `requestId`, `apiKeyId`, provider/model, and
+  billing fields in logs.
 - Keep request and response schemas in `apps/web/lib/api/schemas.ts`; they feed OpenAPI
   generation.
-- When changing external API behavior, request/response schemas, auth, rate
-  limits, errors, models, pricing, or OpenAPI output, update the
-  Mintlify docs in `apps/docs`.
-- External speech generation always generates fresh audio and uploads to the
-  external API R2 bucket.
+- External API speech always generates fresh audio, uploads to
+  `R2_SPEECH_API_BUCKET_NAME` via `R2_SPEECH_API_PUBLIC_URL`, and persists both
+  `audio_files` and `usage_events`.
+- For Grok/xAI speech, prefer the exact provider cost (`costInUsdTicks` →
+  `usdTicksToDollarAmount()`) over estimated pricing when it is available.
+- When changing external API behavior, endpoints, request/response schemas,
+  auth, rate limits, errors, models, pricing, or OpenAPI output, update the
+  Mintlify docs in `apps/docs` and the external API section in
+  `ARCHITECTURE.md`.
 
 ## Voice and Call Flows
 

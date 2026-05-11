@@ -18,9 +18,12 @@ describe('/api/v1 metadata endpoints', () => {
     const response = await getModels(request);
     const json = await response.json();
 
+    const ids = json.data.map((m: { id: string }) => m.id);
     expect(response.status).toBe(200);
     expect(json.data).toHaveLength(3);
-    expect(json.data[0].id).toBe('gpro');
+    expect(ids).toContain('gpro');
+    expect(ids).toContain('orpheus');
+    expect(ids).toContain('xai');
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
@@ -97,10 +100,18 @@ describe('/api/v1 metadata endpoints', () => {
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
     ).toBe('gpro');
-    const speechSchema = JSON.stringify(
+    const requestSchema =
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
-        .schema,
+        .schema;
+    expect(requestSchema.$ref).toBe(
+      '#/components/schemas/VoiceGenerationRequest',
     );
+
+    const speechSchema = JSON.stringify(
+      json.components.schemas.VoiceGenerationRequest,
+    );
+    expect(speechSchema).toContain('"xai"');
+    expect(speechSchema).not.toContain('"grok"');
     expect(speechSchema).not.toContain('"speed"');
   });
 });
