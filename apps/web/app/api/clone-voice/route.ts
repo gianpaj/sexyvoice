@@ -8,6 +8,7 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { generateHash } from '@/lib/audio';
 import {
+  AudioDecodeError,
   convertToWav,
   isConversionSupported,
   needsConversion,
@@ -642,20 +643,34 @@ async function processAudioFile(
         ? conversionError.stack
         : undefined;
 
-      console.error('Audio conversion failed:', {
-        error: errorMessage,
-        stack: errorStack,
-        normalizedMimeType,
-        isMicAudio,
-        locale,
-        filename: file.name,
-        bufferSize: buffer.length,
+      logger.info('Audio conversion rejected uploaded reference audio', {
+        user: { id: userId },
+        extra: {
+          error: errorMessage,
+          normalizedMimeType,
+          isMicAudio,
+          locale,
+          filename: file.name,
+          bufferSize: buffer.length,
+        },
       });
 
-      captureException(conversionError, {
-        user: { id: userId },
-        extra: { locale, mimeType: file.type, filename: file.name },
-      });
+      if (!(conversionError instanceof AudioDecodeError)) {
+        console.error('Audio conversion failed:', {
+          error: errorMessage,
+          stack: errorStack,
+          normalizedMimeType,
+          isMicAudio,
+          locale,
+          filename: file.name,
+          bufferSize: buffer.length,
+        });
+
+        captureException(conversionError, {
+          user: { id: userId },
+          extra: { locale, mimeType: file.type, filename: file.name },
+        });
+      }
 
       const errorMsg =
         normalizedMimeType === 'audio/webm' ||

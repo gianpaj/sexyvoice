@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import {
+  AudioDecodeError,
   convertToWav,
   detectAudioFormat,
   isConversionSupported,
@@ -21,7 +22,9 @@ vi.mock('mpg123-decoder', () => ({
       };
     }
 
-    free() {}
+    free() {
+      return undefined;
+    }
   },
 }));
 
@@ -47,7 +50,9 @@ vi.mock('ogg-opus-decoder', () => ({
       };
     }
 
-    free() {}
+    free() {
+      return undefined;
+    }
   },
 }));
 
@@ -55,7 +60,7 @@ vi.mock('@wasm-audio-decoders/ogg-vorbis', () => ({
   OggVorbisDecoder: class MockOggVorbisDecoder {
     ready = Promise.resolve();
 
-    async decode() {
+    decode() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
         sampleRate: 44_100,
@@ -65,7 +70,7 @@ vi.mock('@wasm-audio-decoders/ogg-vorbis', () => ({
       };
     }
 
-    async decodeFile() {
+    decodeFile() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
         sampleRate: 44_100,
@@ -75,7 +80,9 @@ vi.mock('@wasm-audio-decoders/ogg-vorbis', () => ({
       };
     }
 
-    free() {}
+    free() {
+      return undefined;
+    }
   },
 }));
 
@@ -334,6 +341,18 @@ describe('audio-converter', () => {
       }
     });
 
+    test('should keep decoder internals out of the public decode error message', () => {
+      const error = new AudioDecodeError(
+        'mp3',
+        new Error('mpg123-decoder: -1 MPG123_ERR'),
+      );
+
+      expect(error.message).toBe(
+        'Failed to decode mp3 audio. Please upload a valid audio file.',
+      );
+      expect(error.decoderMessage).toBe('mpg123-decoder: -1 MPG123_ERR');
+    });
+
     test('should reject decoded audio without channel data', async () => {
       const mockMPEGDecoder = await import('mpg123-decoder').then(
         (m) => m.MPEGDecoder,
@@ -433,7 +452,7 @@ describe('audio-converter', () => {
       expect(wavBuffer?.toString('ascii', 0, 4)).toBe('RIFF');
     });
 
-    test('should skip conversion for WAV files', async () => {
+    test('should skip conversion for WAV files', () => {
       const format = detectAudioFormat('audio/wav');
       expect(format).toBe(null); // WAV is not in supported formats
 
