@@ -10,9 +10,12 @@ import { createClient } from '@/lib/supabase/server';
 
 const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
 const CHECKOUT_INVALID_PACKAGE_ID = 'CHECKOUT_INVALID_PACKAGE_ID';
-const CHECKOUT_PACKAGE_IDS = ['starter', 'standard', 'pro'] as const;
 
-type CheckoutPackageId = (typeof CHECKOUT_PACKAGE_IDS)[number];
+type CheckoutPackageId = Exclude<PackageType, 'free'>;
+
+const CHECKOUT_PACKAGE_IDS = Object.keys(getTopupPackages('en')).filter(
+  (packageId): packageId is CheckoutPackageId => packageId !== 'free',
+);
 
 const isCheckoutPackageId = (value: unknown): value is CheckoutPackageId =>
   typeof value === 'string' &&
@@ -21,7 +24,9 @@ const isCheckoutPackageId = (value: unknown): value is CheckoutPackageId =>
 const shouldReportCheckoutConfigurationError = () =>
   process.env.VERCEL_ENV === 'production';
 
-const isCheckoutSetupError = (error: unknown) =>
+const isCheckoutSetupError = (
+  error: unknown,
+): error is Error & { cause: unknown } =>
   Error.isError(error) &&
   [CHECKOUT_CONFIGURATION_ERROR, CHECKOUT_INVALID_PACKAGE_ID].includes(
     String(error.cause),
@@ -38,7 +43,7 @@ export interface CheckoutMetadata {
 
 export async function createCheckoutSession(
   data: FormData,
-  packageId: PackageType,
+  packageId: CheckoutPackageId,
 ): Promise<{ client_secret: string | null; url: string | null }> {
   try {
     const ui_mode = data.get(
@@ -121,7 +126,6 @@ export async function createCheckoutSession(
     console.error('Error creating checkout session:', error);
     if (isCheckoutSetupError(error)) {
       if (
-        Error.isError(error) &&
         error.cause === CHECKOUT_CONFIGURATION_ERROR &&
         shouldReportCheckoutConfigurationError()
       ) {

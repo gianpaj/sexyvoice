@@ -40,9 +40,9 @@ describe('createCheckoutSession()', () => {
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
 
-    await expect(createCheckoutSession(formData, 'free')).rejects.toThrow(
-      'Invalid checkout package',
-    );
+    await expect(
+      createCheckoutSession(formData, 'free' as never),
+    ).rejects.toThrow('Invalid checkout package');
 
     expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
     expect(captureException).not.toHaveBeenCalled();
