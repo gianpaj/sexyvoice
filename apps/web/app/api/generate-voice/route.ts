@@ -29,6 +29,7 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts, usdTicksToDollarAmount } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
+  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
@@ -572,10 +573,11 @@ export async function POST(request: Request) {
 
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
-      const grokDollarAmount =
-        grokCostInUsdTicks === undefined
-          ? undefined
-          : usdTicksToDollarAmount(grokCostInUsdTicks);
+      const grokDollarAmount = isGrokVoice
+        ? grokCostInUsdTicks !== undefined
+          ? usdTicksToDollarAmount(grokCostInUsdTicks)
+          : calculateGrokTtsDollarAmount(text)
+        : undefined;
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
@@ -591,10 +593,12 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           userHasPaid,
-          ...(isGrokVoice && grokCostInUsdTicks !== undefined
+          ...(isGrokVoice
             ? {
-                costInUsdTicks: grokCostInUsdTicks,
                 dollarAmount: grokDollarAmount,
+                ...(grokCostInUsdTicks !== undefined
+                  ? { costInUsdTicks: grokCostInUsdTicks }
+                  : {}),
               }
             : {}),
         },

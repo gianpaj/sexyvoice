@@ -497,6 +497,7 @@ export async function POST(request: Request) {
         : calculateExternalApiDollarAmount({
             sourceType: 'api_tts',
             provider,
+            model,
             inputChars: finalText.length,
           });
 

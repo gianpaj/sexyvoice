@@ -125,10 +125,7 @@ function calculateCredits(
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
 
-// $15.00 / 1M characters
-// ~4 credits per character (~4,000 credits per minute of audio)
-// Gross margin:
-// 99.5%
+// Billed in 50-character buckets (minimum 50 credits per request, ~1 credit/char)
 export function estimateGrokCredits(text: string): number {
   if (!text.trim()) {
     return 0;

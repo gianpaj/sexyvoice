@@ -18,10 +18,12 @@ describe('/api/v1 metadata endpoints', () => {
     const response = await getModels(request);
     const json = await response.json();
 
+    const ids = json.data.map((m: { id: string }) => m.id);
     expect(response.status).toBe(200);
     expect(json.data).toHaveLength(3);
-    expect(json.data[0].id).toBe('gpro');
-    expect(json.data[2].id).toBe('xai');
+    expect(ids).toContain('gpro');
+    expect(ids).toContain('orpheus');
+    expect(ids).toContain('xai');
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
