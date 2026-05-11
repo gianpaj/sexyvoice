@@ -42,6 +42,58 @@ const getOauthCodeFingerprint = (code: string | null) => {
   };
 };
 
+const getErrorStringProperty = (
+  error: unknown,
+  property: 'message' | 'name',
+) => {
+  if (error instanceof Error) {
+    return error[property];
+  }
+
+  if (typeof error !== 'object' || error === null || !(property in error)) {
+    return '';
+  }
+
+  const value = (error as Record<typeof property, unknown>)[property];
+  return typeof value === 'string' ? value : String(value ?? '');
+};
+
+const isPkceCodeVerifierMissingError = (error: unknown) => {
+  const errorName = getErrorStringProperty(error, 'name');
+  const errorMessage = getErrorStringProperty(error, 'message');
+  return (
+    errorName === 'AuthPKCECodeVerifierMissingError' ||
+    errorMessage.includes('PKCE code verifier not found')
+  );
+};
+
+const getOauthCallbackCookieContext = (request: Request) => {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const cookieNames = cookieHeader
+    .split(';')
+    .map((cookie) => cookie.split('=')[0]?.trim())
+    .filter((name): name is string => Boolean(name));
+  const supabaseCookieNames = cookieNames.filter((name) => {
+    const lowerName = name.toLowerCase();
+    return lowerName.startsWith('sb-') || lowerName.includes('supabase');
+  });
+
+  return {
+    hasCookieHeader: Boolean(cookieHeader),
+    cookieCount: cookieNames.length,
+    supabaseCookieCount: supabaseCookieNames.length,
+    hasSupabaseAuthCookie: supabaseCookieNames.some((name) =>
+      name.includes('auth-token'),
+    ),
+    hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
+      name.includes('code-verifier'),
+    ),
+    hasOauthCallbackMarkerCookie: cookieNames.includes(
+      OAUTH_CALLBACK_COOKIE_NAME,
+    ),
+  };
+};
+
 const createOauthRedirectResponse = (url: string) => {
   const response = NextResponse.redirect(url);
   const markerValue = createOauthCallbackMarkerValue();
@@ -72,6 +124,7 @@ export async function GET(request: Request) {
   const locale = getLocaleFromRedirectPath(redirectTo);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
+  const oauthCookieContext = getOauthCallbackCookieContext(request);
 
   try {
     if (!code) {
@@ -84,6 +137,26 @@ export async function GET(request: Request) {
     } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
+      if (isPkceCodeVerifierMissingError(exchangeError)) {
+        captureMessage('OAuth callback missing PKCE code verifier.', {
+          level: 'warning',
+          tags: {
+            area: 'auth',
+            flow: 'oauth-callback',
+            error_type: 'pkce_code_verifier_missing',
+          },
+          extra: {
+            redirectTo,
+            locale,
+            ...oauthCodeContext,
+            ...oauthCookieContext,
+            errorMessage: exchangeError.message,
+          },
+        });
+
+        return NextResponse.redirect(`${origin}${loginPath}`);
+      }
+
       captureException(exchangeError, {
         tags: {
           area: 'auth',
@@ -93,6 +166,7 @@ export async function GET(request: Request) {
           redirectTo,
           locale,
           ...oauthCodeContext,
+          ...oauthCookieContext,
         },
       });
 
@@ -153,6 +227,26 @@ export async function GET(request: Request) {
       `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {
+    if (isPkceCodeVerifierMissingError(error)) {
+      captureMessage('OAuth callback missing PKCE code verifier.', {
+        level: 'warning',
+        tags: {
+          area: 'auth',
+          flow: 'oauth-callback',
+          error_type: 'pkce_code_verifier_missing',
+        },
+        extra: {
+          redirectTo,
+          locale,
+          ...oauthCodeContext,
+          ...oauthCookieContext,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        },
+      });
+
+      return NextResponse.redirect(`${origin}${loginPath}`);
+    }
+
     captureException(error, {
       tags: {
         area: 'auth',
@@ -162,6 +256,7 @@ export async function GET(request: Request) {
         redirectTo,
         locale,
         ...oauthCodeContext,
+        ...oauthCookieContext,
       },
     });
 
