@@ -47,8 +47,11 @@ function CreditsSection({
     queryFn: () => getCredits(supabase, userId),
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: dashboard bootstrapping
   useEffect(() => {
+    if (!creditsData) {
+      return;
+    }
+
     const getData = async () => {
       const { data } = await supabase.auth.getUser();
       const user = data?.user;
@@ -65,10 +68,12 @@ function CreditsSection({
       credits: Pick<Tables<'credits'>, 'amount'> | null | undefined,
       userHasPaid: boolean,
     ) => {
+      const creditsLeft = credits?.amount ?? -1;
+
       posthog.identify(user.id, {
         email: user.email,
         name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft: credits?.amount || 0,
+        creditsLeft,
         userHasPaid,
       });
 
@@ -92,7 +97,7 @@ function CreditsSection({
 
       Crisp.session.setData({
         user_id: user.id,
-        creditsLeft: credits?.amount || 0,
+        creditsLeft,
         userHasPaid,
       });
     };
@@ -104,7 +109,7 @@ function CreditsSection({
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, []);
+  }, [creditsData, lang, posthog, supabase]);
 
   if (!creditsData) {
     return <Skeleton className="h-[150px] w-full rounded-lg" />;

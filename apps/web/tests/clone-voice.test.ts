@@ -1583,11 +1583,15 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Error Handling', () => {
-    it('should return 400 when audio conversion fails for non-English', async () => {
+    it('should return 400 without logging to Sentry when audio decoding fails for non-English', async () => {
+      const { captureException } = await import('@sentry/nextjs');
       // Mock convertToWav to throw an error for multilingual
       const convertToWavModule = await import('@/lib/audio-converter');
       vi.spyOn(convertToWavModule, 'convertToWav').mockRejectedValueOnce(
-        new Error('Decoder initialization failed'),
+        new convertToWavModule.AudioDecodeError(
+          'mp3',
+          new Error('mpg123-decoder: -1 MPG123_ERR'),
+        ),
       );
 
       const formData = createFormDataWithAudio(
@@ -1607,6 +1611,8 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(400);
       expect(json.error).toBeDefined();
       expect(json.error).toContain('Failed to convert audio format to WAV');
+      expect(json.code).toBe('errors.audioConversionFailed');
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should handle general errors and return 500', async () => {

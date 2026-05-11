@@ -38,6 +38,7 @@ const DEFAULT_CREDIT_MULTIPLIER = 4;
 const GEMINI_CREDIT_MULTIPLIER = 1.1;
 const GROK_CHAR_BUCKET = 100;
 const GROK_CREDITS_PER_BUCKET = 100;
+const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 
 export function getTtsProvider(model?: string): TtsProvider {
   if (model === 'gpro') {
@@ -130,6 +131,14 @@ export function estimateGrokCredits(text: string): number {
   }
 
   return Math.ceil(text.length / GROK_CHAR_BUCKET) * GROK_CREDITS_PER_BUCKET;
+}
+
+export function calculateGrokTtsDollarAmount(text: string): number {
+  const normalizedLength = Math.max(0, text.length);
+  const rawAmount =
+    (normalizedLength / 1_000_000) * GROK_TTS_DOLLARS_PER_MILLION_CHARS;
+
+  return Number.parseFloat(rawAmount.toFixed(6));
 }
 
 export function estimateCredits(

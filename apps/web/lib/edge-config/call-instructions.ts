@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import { get } from '@vercel/edge-config';
 
 import { instructions as fallbackInstructions } from '@/data/default-config';
@@ -16,7 +16,29 @@ const FALLBACK_CONFIG: CallInstructionConfig = {
   initialInstruction: fallbackInitialInstruction,
 };
 
+const shouldReportEdgeConfigError = () =>
+  process.env.VERCEL_ENV === 'production';
+
+let hasReportedMissingEdgeConfig = false;
+let hasReportedEdgeConfigLoadFailure = false;
+
 export async function getCallInstructionConfig(): Promise<CallInstructionConfig> {
+  if (!process.env.EDGE_CONFIG) {
+    if (shouldReportEdgeConfigError() && !hasReportedMissingEdgeConfig) {
+      hasReportedMissingEdgeConfig = true;
+      captureMessage('Edge Config connection string missing.', {
+        level: 'warning',
+        fingerprint: ['edge-config-missing'],
+        tags: {
+          area: 'edge-config',
+          config: 'call-instructions',
+        },
+      });
+    }
+
+    return FALLBACK_CONFIG;
+  }
+
   try {
     const config =
       await get<Partial<CallInstructionConfig>>('call-instructions');
@@ -28,11 +50,15 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
       presetInstructions: config?.presetInstructions,
     };
   } catch (error) {
-    captureException(error, {
-      extra: {
-        message: 'Failed to load "call-instructions" from Edge Config',
-      },
-    });
+    if (shouldReportEdgeConfigError() && !hasReportedEdgeConfigLoadFailure) {
+      hasReportedEdgeConfigLoadFailure = true;
+      captureException(error, {
+        fingerprint: ['edge-config-load-failure'],
+        extra: {
+          message: 'Failed to load "call-instructions" from Edge Config',
+        },
+      });
+    }
 
     return FALLBACK_CONFIG;
   }

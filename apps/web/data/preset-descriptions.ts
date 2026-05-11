@@ -54,29 +54,6 @@ export const lilyDescriptions: Record<CallLanguage, string> = {
   zh: '22岁害羞、顺从的女大学生。喜欢取悦他人，犹豫不决，乖巧听话。',
 };
 
-export const miloDescriptions: Record<CallLanguage, string> = {
-  ar: 'شاب ثنائي الميول يبلغ 25 عامًا، خجول ورشيق. يتوق للتوجيه، يحب تجربة أشياء جديدة، بلا حدود.',
-  cs: '25letý bisexuální červenající se mladík. Touží po vedení, rád zkouší nové věci, žádné hranice.',
-  da: '25-årig biseksuel rødmende twink. Længes efter vejledning, elsker at prøve nyt, ingen grænser.',
-  de: '25-jähriger bisexueller, errötender Twink. Sehnt sich nach Führung, probiert gerne Neues aus, keine Grenzen.',
-  en: '25yo bisexual blushing twink. Craves guidance, likes to try new things, zero boundaries.',
-  es: 'Twink bisexual sonrojado de 25 años. Ansía orientación, le gusta probar cosas nuevas, sin límites.',
-  fi: '25-vuotias biseksuaalinen punastuva twink. Kaipaa ohjausta, kokeilee mielellään uutta, ei rajoja.',
-  fr: 'Twink bisexuel rougissant de 25 ans. Avide de direction, aime essayer de nouvelles choses, aucune limite.',
-  hi: '25 वर्षीय उभयलिंगी शर्मीला ट्विंक। मार्गदर्शन चाहता है, नई चीज़ें आज़माना पसंद करता है, कोई सीमा नहीं।',
-  it: 'Twink bisessuale arrossente di 25 anni. Desidera guida, ama provare cose nuove, nessun limite.',
-  ja: '25歳のバイセクシュアルで赤面しがちなトウィンク。導きを求め、新しいことに挑戦するのが好き、限界なし。',
-  ko: '25세의 양성애자이며 수줍어하는 트윙크. 이끌어주길 갈망하며, 새로운 것을 시도하고, 한계가 없다.',
-  nl: '25-jarige biseksuele, blozende twink. Verlangt naar leiding, probeert graag nieuwe dingen, geen grenzen.',
-  no: '25 år gammel biseksuell rødmende twink. Lengter etter veiledning, liker å prøve nye ting, ingen grenser.',
-  pl: '25-letni biseksualny rumieniący się twink. Pragnie przewodnictwa, lubi próbować nowych rzeczy, zero granic.',
-  pt: 'Twink bissexual corado de 25 anos. Anseia por orientação, gosta de experimentar coisas novas, sem limites.',
-  ru: '25-летний бисексуальный краснеющий твинк. Жаждет руководства, любит пробовать новое, без границ.',
-  sv: '25-årig bisexuell rodnande twink. Längtar efter vägledning, gillar att prova nytt, inga gränser.',
-  tr: '25 yaşında kızaran biseksüel twink. Yönlendirme ister, yeni şeyler denemeyi sever, sınır tanımaz.',
-  zh: '25岁双性恋、容易脸红的清秀男孩。渴望引导，喜欢尝试新事物，毫无底线。',
-};
-
 export const rafalDescriptions: Record<CallLanguage, string> = {
   ar: 'قائد عسكري سابق مهيمن يبلغ 35 عامًا. ضخم، عضلي، مشعر، يحب الانضباط.',
   cs: '35letý dominantní exvojenský velitel. Velký, svalnatý, chlupatý, miluje disciplínu.',
@@ -113,6 +90,5 @@ export const presetDescriptions: Record<
 > = {
   ramona: ramonaDescriptions,
   lily: lilyDescriptions,
-  milo: miloDescriptions,
   rafal: rafalDescriptions,
 };

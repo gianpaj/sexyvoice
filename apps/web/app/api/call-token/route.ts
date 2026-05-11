@@ -60,9 +60,6 @@ const playgroundStateSchema = z.object({
   selectedPresetId: z.uuid().nullable(),
   sessionConfig: sessionConfigSchema,
   customCharacters: z.array(z.any()).optional(),
-  characterOverrides: z
-    .record(z.string(), z.record(z.string(), z.string()))
-    .optional(),
   initialInstruction: z.string().optional(),
   defaultPresets: z.array(z.any()).optional(),
 });
@@ -164,7 +161,7 @@ export async function POST(request: Request) {
       : defaultLanguage;
 
     // Validate voice exists in DB
-    const voiceObj = await getVoiceIdByName(voice, false);
+    const voiceObj = await getVoiceIdByName(voice);
 
     if (!voiceObj) {
       captureException('Voice not found', { extra: { voice } });

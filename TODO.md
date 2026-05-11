@@ -1,11 +1,15 @@
 # TODO
 
+- update API to support Grok voices
+- check usage_logs have the correct dollar cost for Grok TTS generate-voice/route.ts
+- add e2e tests for Grok voices
 - Sidebar: close on click on mobile
 - api New Key button: add tooltip and crown showing that's for paid users
-
 - self-host Sentry on Hetzner machine
 - change all `dict...replace()` to use next-intl functions
 - Generate: if a sample contains tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
+
+- Landing: add character images for each popular voice. Think about a way to generate avatar images
 
 ## Agents
 
@@ -31,7 +35,7 @@
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - share link & page after an audio has been generated
-- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
+- analyze and remove unused voices and group by male and female (see < CommandGroup>)
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
@@ -55,7 +59,7 @@
   import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
-      useKrispNoiseFilter();
+    useKrispNoiseFilter();
 
   useEffect(() => {
     setNoiseFilterEnabled(true);
@@ -100,7 +104,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Features
 
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>
-<https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
+  <https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
 
 ## Tests
 

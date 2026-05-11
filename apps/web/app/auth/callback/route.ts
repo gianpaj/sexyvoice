@@ -42,6 +42,66 @@ const getOauthCodeFingerprint = (code: string | null) => {
   };
 };
 
+const getErrorStringProperty = (
+  error: unknown,
+  property: 'message' | 'name',
+) => {
+  if (error instanceof Error) {
+    return error[property];
+  }
+
+  if (typeof error !== 'object' || error === null || !(property in error)) {
+    return '';
+  }
+
+  return String((error as Record<string, unknown>)[property] ?? '');
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+};
+
+const isPkceCodeVerifierMissingError = (error: unknown) => {
+  const errorName = getErrorStringProperty(error, 'name');
+  const errorMessage = getErrorStringProperty(error, 'message');
+  return (
+    errorName === 'AuthPKCECodeVerifierMissingError' ||
+    // Defensive fallback for serialized Supabase errors that preserve only message text.
+    errorMessage.includes('PKCE code verifier not found')
+  );
+};
+
+const getOauthCallbackCookieContext = (request: Request) => {
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const cookieNames = cookieHeader
+    .split(';')
+    .map((cookie) => cookie.split('=')[0]?.trim())
+    .filter((name): name is string => Boolean(name));
+  const supabaseCookieNames = cookieNames.filter((name) => {
+    const lowerName = name.toLowerCase();
+    return lowerName.startsWith('sb-') || lowerName.includes('supabase');
+  });
+
+  return {
+    hasCookieHeader: Boolean(cookieHeader),
+    cookieCount: cookieNames.length,
+    supabaseCookieCount: supabaseCookieNames.length,
+    hasSupabaseAuthCookie: supabaseCookieNames.some((name) =>
+      name.includes('auth-token'),
+    ),
+    hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
+      name.includes('code-verifier'),
+    ),
+    hasOauthCallbackMarkerCookie: cookieNames.includes(
+      OAUTH_CALLBACK_COOKIE_NAME,
+    ),
+  };
+};
+
 const createOauthRedirectResponse = (url: string) => {
   const response = NextResponse.redirect(url);
   const markerValue = createOauthCallbackMarkerValue();
@@ -72,6 +132,26 @@ export async function GET(request: Request) {
   const locale = getLocaleFromRedirectPath(redirectTo);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
+  const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const reportPkceCodeVerifierMissing = (error: unknown) => {
+    captureMessage('OAuth callback missing PKCE code verifier.', {
+      level: 'warning',
+      tags: {
+        area: 'auth',
+        flow: 'oauth-callback',
+        error_type: 'pkce-code-verifier-missing',
+      },
+      extra: {
+        redirectTo,
+        locale,
+        ...oauthCodeContext,
+        ...oauthCookieContext,
+        errorMessage: getErrorMessage(error),
+      },
+    });
+
+    return NextResponse.redirect(`${origin}${loginPath}`);
+  };
 
   try {
     if (!code) {
@@ -84,6 +164,10 @@ export async function GET(request: Request) {
     } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
+      if (isPkceCodeVerifierMissingError(exchangeError)) {
+        return reportPkceCodeVerifierMissing(exchangeError);
+      }
+
       captureException(exchangeError, {
         tags: {
           area: 'auth',
@@ -93,6 +177,7 @@ export async function GET(request: Request) {
           redirectTo,
           locale,
           ...oauthCodeContext,
+          ...oauthCookieContext,
         },
       });
 
@@ -153,6 +238,10 @@ export async function GET(request: Request) {
       `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {
+    if (isPkceCodeVerifierMissingError(error)) {
+      return reportPkceCodeVerifierMissing(error);
+    }
+
     captureException(error, {
       tags: {
         area: 'auth',
@@ -162,6 +251,7 @@ export async function GET(request: Request) {
         redirectTo,
         locale,
         ...oauthCodeContext,
+        ...oauthCookieContext,
       },
     });
 

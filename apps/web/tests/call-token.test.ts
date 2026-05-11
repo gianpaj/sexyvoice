@@ -57,9 +57,6 @@ describe('call-token API validation', () => {
     selectedPresetId: z.string().uuid().nullable(),
     sessionConfig: sessionConfigSchema,
     customCharacters: z.array(z.any()).optional(),
-    characterOverrides: z
-      .record(z.string(), z.record(z.string(), z.string()))
-      .optional(),
     initialInstruction: z.string().optional(),
     defaultPresets: z.array(z.any()).optional(),
   });
@@ -113,7 +110,6 @@ describe('call-token API validation', () => {
           grokImageEnabled: false,
         },
         customCharacters: [],
-        characterOverrides: {},
         initialInstruction: 'Say hello',
         defaultPresets: [],
       };

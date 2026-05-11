@@ -375,7 +375,7 @@ export function AudioGenerator({
   };
 
   return (
-    <Card>
+    <Card data-testid="audio-generator-card">
       <CardHeader>
         <CardTitle>{dict.title}</CardTitle>
       </CardHeader>
@@ -383,9 +383,9 @@ export function AudioGenerator({
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
+              charactersLimit={charactersLimit}
               dict={dict.grok}
               isPaidUser={isPaidUser}
-              maxLength={charactersLimit}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}
               selectedGrokLanguage={selectedGrokLanguage}
