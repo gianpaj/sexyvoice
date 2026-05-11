@@ -271,7 +271,7 @@ describe('V1 Speech API Route', () => {
           sourceId: 'test-audio-file-id',
           model: 'xai',
           dollarAmount: expectedDollarAmount,
-          creditsUsed: 100,
+          creditsUsed: 50,
           metadata: expect.objectContaining({
             isGrokVoice: true,
             codec: 'mp3',
