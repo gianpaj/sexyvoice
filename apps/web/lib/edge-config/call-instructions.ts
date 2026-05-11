@@ -19,11 +19,16 @@ const FALLBACK_CONFIG: CallInstructionConfig = {
 const shouldReportEdgeConfigError = () =>
   process.env.VERCEL_ENV === 'production';
 
+let hasReportedMissingEdgeConfig = false;
+let hasReportedEdgeConfigLoadFailure = false;
+
 export async function getCallInstructionConfig(): Promise<CallInstructionConfig> {
   if (!process.env.EDGE_CONFIG) {
-    if (shouldReportEdgeConfigError()) {
+    if (shouldReportEdgeConfigError() && !hasReportedMissingEdgeConfig) {
+      hasReportedMissingEdgeConfig = true;
       captureMessage('Edge Config connection string missing.', {
         level: 'warning',
+        fingerprint: ['edge-config-missing'],
         tags: {
           area: 'edge-config',
           config: 'call-instructions',
@@ -45,8 +50,10 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
       presetInstructions: config?.presetInstructions,
     };
   } catch (error) {
-    if (shouldReportEdgeConfigError()) {
+    if (shouldReportEdgeConfigError() && !hasReportedEdgeConfigLoadFailure) {
+      hasReportedEdgeConfigLoadFailure = true;
       captureException(error, {
+        fingerprint: ['edge-config-load-failure'],
         extra: {
           message: 'Failed to load "call-instructions" from Edge Config',
         },

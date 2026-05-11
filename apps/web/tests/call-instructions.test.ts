@@ -48,12 +48,15 @@ describe('getCallInstructionConfig()', () => {
     process.env.VERCEL_ENV = 'production';
 
     await getCallInstructionConfig();
+    await getCallInstructionConfig();
 
     expect(get).not.toHaveBeenCalled();
+    expect(captureMessage).toHaveBeenCalledTimes(1);
     expect(captureMessage).toHaveBeenCalledWith(
       'Edge Config connection string missing.',
       expect.objectContaining({
         level: 'warning',
+        fingerprint: ['edge-config-missing'],
         tags: {
           area: 'edge-config',
           config: 'call-instructions',
@@ -73,5 +76,27 @@ describe('getCallInstructionConfig()', () => {
     expect(config.initialInstruction).toBeTruthy();
     expect(get).toHaveBeenCalledWith('call-instructions');
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('reports Edge Config fetch failures once in Vercel production', async () => {
+    process.env.EDGE_CONFIG = 'edge-config-connection';
+    process.env.VERCEL_ENV = 'production';
+    const error = new Error('Edge Config unavailable');
+    vi.mocked(get).mockRejectedValue(error);
+
+    await getCallInstructionConfig();
+    await getCallInstructionConfig();
+
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(captureException).toHaveBeenCalledTimes(1);
+    expect(captureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        fingerprint: ['edge-config-load-failure'],
+        extra: {
+          message: 'Failed to load "call-instructions" from Edge Config',
+        },
+      }),
+    );
   });
 });
