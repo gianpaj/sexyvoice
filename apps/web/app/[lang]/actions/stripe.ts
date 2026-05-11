@@ -1,6 +1,6 @@
 'use server';
 
-import { captureException } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
 import { getTopupPackages, type PackageType } from '@/lib/stripe/pricing';
@@ -22,6 +22,9 @@ const isCheckoutPackageId = (value: unknown): value is CheckoutPackageId =>
   CHECKOUT_PACKAGE_IDS.includes(value as CheckoutPackageId);
 
 const shouldReportCheckoutConfigurationError = () =>
+  process.env.VERCEL_ENV === 'production';
+
+const shouldReportInvalidCheckoutPackageId = () =>
   process.env.VERCEL_ENV === 'production';
 
 const isCheckoutSetupError = (
@@ -125,6 +128,24 @@ export async function createCheckoutSession(
   } catch (error) {
     console.error('Error creating checkout session:', error);
     if (isCheckoutSetupError(error)) {
+      if (
+        error.cause === CHECKOUT_INVALID_PACKAGE_ID &&
+        shouldReportInvalidCheckoutPackageId()
+      ) {
+        captureMessage('Invalid checkout package id submitted.', {
+          level: 'info',
+          tags: {
+            section: 'stripe_actions',
+            event_type: 'invalid_package_id',
+          },
+          extra: {
+            packageId,
+            available_packages: CHECKOUT_PACKAGE_IDS,
+            vercelEnv: process.env.VERCEL_ENV ?? null,
+          },
+        });
+      }
+
       if (
         error.cause === CHECKOUT_CONFIGURATION_ERROR &&
         shouldReportCheckoutConfigurationError()

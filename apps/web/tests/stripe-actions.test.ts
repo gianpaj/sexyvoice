@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
@@ -37,6 +37,7 @@ describe('createCheckoutSession()', () => {
   });
 
   it('rejects invalid package IDs without Sentry error noise', async () => {
+    process.env.VERCEL_ENV = 'preview';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
 
@@ -46,6 +47,35 @@ describe('createCheckoutSession()', () => {
 
     expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
     expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+  });
+
+  it('reports invalid package IDs as info telemetry in Vercel production', async () => {
+    process.env.VERCEL_ENV = 'production';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(
+      createCheckoutSession(formData, 'free' as never),
+    ).rejects.toThrow('Invalid checkout package');
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).toHaveBeenCalledWith(
+      'Invalid checkout package id submitted.',
+      expect.objectContaining({
+        level: 'info',
+        tags: {
+          section: 'stripe_actions',
+          event_type: 'invalid_package_id',
+        },
+        extra: expect.objectContaining({
+          packageId: 'free',
+          available_packages: ['starter', 'standard', 'pro'],
+          vercelEnv: 'production',
+        }),
+      }),
+    );
   });
 
   it('does not report missing top-up price IDs outside Vercel production', async () => {
