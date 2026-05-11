@@ -495,7 +495,7 @@ describe('Generate Voice API Route', () => {
 
       const xaiAudioBytes = new Uint8Array([10, 20, 30, 40]);
       const xaiAudioBase64 = Buffer.from(xaiAudioBytes).toString('base64');
-      const xaiCostInUsdTicks = 1950;
+      const xaiCostInUsdTicks = 15_000_000;
 
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {

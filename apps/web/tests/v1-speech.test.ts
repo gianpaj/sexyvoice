@@ -209,7 +209,7 @@ describe('V1 Speech API Route', () => {
       const xaiAudioBase64 = Buffer.from(
         new Uint8Array([1, 2, 3, 4]),
       ).toString('base64');
-      const xaiCostInUsdTicks = 1650;
+      const xaiCostInUsdTicks = 15_000_000;
 
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {
@@ -225,9 +225,13 @@ describe('V1 Speech API Route', () => {
           expect(body.language).toBe('en');
           expect(body.output_format.codec).toBe('mp3');
 
-          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
-            headers: { 'Content-Type': 'audio/mpeg' },
-          });
+          return HttpResponse.json(
+            {
+              audio: xaiAudioBase64,
+              usage: { cost_in_usd_ticks: xaiCostInUsdTicks, characters: 11 },
+            },
+            { headers: { 'Content-Type': 'application/json' } },
+          );
         }),
       );
 
@@ -243,6 +247,38 @@ describe('V1 Speech API Route', () => {
       expect(json.credits_remaining).toBeDefined();
       expect(json.usage.input_characters).toBe(11);
       expect(json.usage.model).toBe('xai');
+
+      const expectedDollarAmount = usdTicksToDollarAmount(xaiCostInUsdTicks);
+
+      expect(saveAudioFileAdmin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'test-user-id',
+          model: 'xai',
+          usage: expect.objectContaining({
+            userHasPaid: false,
+            apiKeyId: 'test-api-key-id',
+            sourceType: 'api_tts',
+            dollarAmount: expectedDollarAmount,
+            costInUsdTicks: xaiCostInUsdTicks,
+          }),
+        }),
+      );
+
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'test-user-id',
+          sourceType: 'api_tts',
+          sourceId: 'test-audio-file-id',
+          model: 'xai',
+          dollarAmount: expectedDollarAmount,
+          creditsUsed: 100,
+          metadata: expect.objectContaining({
+            isGrokVoice: true,
+            codec: 'mp3',
+            costInUsdTicks: xaiCostInUsdTicks,
+          }),
+        }),
+      );
     });
 
     it('should generate voice using Grok with wav format', async () => {
