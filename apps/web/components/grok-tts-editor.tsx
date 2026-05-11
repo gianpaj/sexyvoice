@@ -25,6 +25,7 @@ import {
   InstantTag,
 } from '@/components/grok-tts/extensions/instant-tag';
 import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
+import { isGrokWrapperSuggestionAllowed } from '@/components/grok-tts/suggestion-rules';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import {
@@ -494,27 +495,8 @@ export function GrokTTSEditor({
         triggerChar: '[',
       },
       {
-        allow: ({
-          editor,
-          range,
-        }: Parameters<NonNullable<SuggestionMenuProps['allow']>>[0]) => {
-          const resolvedPosition = editor.state.doc.resolve(range.to);
-          const nodeAfter = resolvedPosition.nodeAfter;
-          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? '') : '';
-          const previousNode = resolvedPosition.nodeBefore;
-          const previousText = previousNode?.isText
-            ? (previousNode.text ?? '')
-            : '';
-          const combinedTagText = `${previousText}${nextText}`;
-
-          return !WRAPPING_TAGS.some((tag) => {
-            const partialOpenTag = tag.tag.slice(1);
-            return (
-              combinedTagText.startsWith(partialOpenTag) ||
-              combinedTagText.startsWith(tag.tag)
-            );
-          });
-        },
+        allow: ({ editor, range, state }) =>
+          isGrokWrapperSuggestionAllowed({ editor, range, state }),
         customItems: WRAPPING_TAGS.map((tag) =>
           createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
