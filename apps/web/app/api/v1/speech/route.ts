@@ -36,7 +36,12 @@ import {
   reduceCreditsAdmin,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { generateXaiTts, normalizeXaiTtsCodec, usdTicksToDollarAmount, type XaiTtsCodec } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  normalizeXaiTtsCodec,
+  usdTicksToDollarAmount,
+  type XaiTtsCodec,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -370,16 +375,13 @@ export async function POST(request: Request) {
       grokCodec = codec;
 
       try {
-        const {
-          audioBuffer,
-          contentType,
-          costInUsdTicks,
-        } = await generateXaiTts({
-          text: finalText,
-          voiceId: voice,
-          language: voiceObj.language ?? 'en',
-          codec,
-        });
+        const { audioBuffer, contentType, costInUsdTicks } =
+          await generateXaiTts({
+            text: finalText,
+            voiceId: voice,
+            language: voiceObj.language ?? 'en',
+            codec,
+          });
         grokCostInUsdTicks = costInUsdTicks;
         uploadUrl = await uploadFileToR2(
           filename,
@@ -495,7 +497,6 @@ export async function POST(request: Request) {
         : calculateExternalApiDollarAmount({
             sourceType: 'api_tts',
             provider,
-            model,
             inputChars: finalText.length,
           });
 
@@ -552,10 +553,10 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id ?? null,
         ...(isGrokVoice
           ? {
-              ...(grokCodec !== undefined ? { codec: grokCodec } : {}),
-              ...(grokCostInUsdTicks !== undefined
-                ? { costInUsdTicks: grokCostInUsdTicks }
-                : {}),
+              ...(grokCodec === undefined ? {} : { codec: grokCodec }),
+              ...(grokCostInUsdTicks === undefined
+                ? {}
+                : { costInUsdTicks: grokCostInUsdTicks }),
             }
           : {}),
       },

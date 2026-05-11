@@ -165,7 +165,9 @@ export async function generateXaiTts({
     );
   }
 
-  const contentType = (response.headers.get('content-type') ?? '').toLowerCase();
+  const contentType = (
+    response.headers.get('content-type') ?? ''
+  ).toLowerCase();
 
   if (contentType.includes('json')) {
     const json = (await response.json()) as XaiTtsJsonResponse;
