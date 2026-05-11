@@ -72,7 +72,7 @@ describe('OAuth callback route', () => {
         tags: {
           area: 'auth',
           flow: 'oauth-callback',
-          error_type: 'pkce_code_verifier_missing',
+          error_type: 'pkce-code-verifier-missing',
         },
         extra: expect.objectContaining({
           redirectTo: '/en/dashboard',

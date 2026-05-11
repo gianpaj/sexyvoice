@@ -54,8 +54,15 @@ const getErrorStringProperty = (
     return '';
   }
 
-  const value = (error as Record<typeof property, unknown>)[property];
-  return typeof value === 'string' ? value : String(value ?? '');
+  return String((error as Record<string, unknown>)[property] ?? '');
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 };
 
 const isPkceCodeVerifierMissingError = (error: unknown) => {
@@ -63,6 +70,7 @@ const isPkceCodeVerifierMissingError = (error: unknown) => {
   const errorMessage = getErrorStringProperty(error, 'message');
   return (
     errorName === 'AuthPKCECodeVerifierMissingError' ||
+    // Defensive fallback for serialized Supabase errors that preserve only message text.
     errorMessage.includes('PKCE code verifier not found')
   );
 };
@@ -125,6 +133,25 @@ export async function GET(request: Request) {
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
   const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const reportPkceCodeVerifierMissing = (error: unknown) => {
+    captureMessage('OAuth callback missing PKCE code verifier.', {
+      level: 'warning',
+      tags: {
+        area: 'auth',
+        flow: 'oauth-callback',
+        error_type: 'pkce-code-verifier-missing',
+      },
+      extra: {
+        redirectTo,
+        locale,
+        ...oauthCodeContext,
+        ...oauthCookieContext,
+        errorMessage: getErrorMessage(error),
+      },
+    });
+
+    return NextResponse.redirect(`${origin}${loginPath}`);
+  };
 
   try {
     if (!code) {
@@ -138,23 +165,7 @@ export async function GET(request: Request) {
 
     if (exchangeError) {
       if (isPkceCodeVerifierMissingError(exchangeError)) {
-        captureMessage('OAuth callback missing PKCE code verifier.', {
-          level: 'warning',
-          tags: {
-            area: 'auth',
-            flow: 'oauth-callback',
-            error_type: 'pkce_code_verifier_missing',
-          },
-          extra: {
-            redirectTo,
-            locale,
-            ...oauthCodeContext,
-            ...oauthCookieContext,
-            errorMessage: exchangeError.message,
-          },
-        });
-
-        return NextResponse.redirect(`${origin}${loginPath}`);
+        return reportPkceCodeVerifierMissing(exchangeError);
       }
 
       captureException(exchangeError, {
@@ -228,23 +239,7 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     if (isPkceCodeVerifierMissingError(error)) {
-      captureMessage('OAuth callback missing PKCE code verifier.', {
-        level: 'warning',
-        tags: {
-          area: 'auth',
-          flow: 'oauth-callback',
-          error_type: 'pkce_code_verifier_missing',
-        },
-        extra: {
-          redirectTo,
-          locale,
-          ...oauthCodeContext,
-          ...oauthCookieContext,
-          errorMessage: error instanceof Error ? error.message : String(error),
-        },
-      });
-
-      return NextResponse.redirect(`${origin}${loginPath}`);
+      return reportPkceCodeVerifierMissing(error);
     }
 
     captureException(error, {
