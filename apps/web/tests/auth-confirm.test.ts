@@ -113,6 +113,28 @@ describe('Email auth confirm route', () => {
     });
   });
 
+  it('normalizes same-origin redirect paths with duplicate leading slashes', async () => {
+    const verifyOtp = vi.fn().mockResolvedValue({
+      data: { user: { id: 'user-id', email: 'user@example.com' } },
+      error: null,
+    });
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { verifyOtp },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/confirm?token_hash=pkce_hash&type=email&redirect_to=https%3A%2F%2Fsexyvoice.ai%2F%2Fevil.com%3Fsource%3Demail%23billing',
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/evil.com?source=email#billing',
+    );
+  });
+
   it('reports malformed confirmation links without calling Supabase', async () => {
     const response = await GET(
       new Request('https://sexyvoice.ai/auth/confirm?type=email'),
