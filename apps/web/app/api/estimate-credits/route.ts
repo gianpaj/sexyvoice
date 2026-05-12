@@ -148,27 +148,24 @@ function validateApiKey(): ValidationResult<string> {
 
 export async function POST(request: Request) {
   try {
-    const [bodyResult, userResult] = await Promise.all([
-      validateRequestBody(request),
-      validateUser(),
-    ]);
+    const bodyResult = await validateRequestBody(request);
     if (!bodyResult.ok) {
       return bodyResult.response;
     }
 
     const { text, voice, styleVariant } = bodyResult.data;
 
+    const userResult = await validateUser();
     if (!userResult.ok) {
       return userResult.response;
     }
 
-    const [isPaidUser, voiceResult] = await Promise.all([
-      hasUserPaid(userResult.data.id),
-      validateVoice(voice),
-    ]);
+    const voiceResult = await validateVoice(voice);
     if (!voiceResult.ok) {
       return voiceResult.response;
     }
+
+    const isPaidUser = await hasUserPaid(userResult.data.id);
 
     const textError = validateTextLength(
       text,
