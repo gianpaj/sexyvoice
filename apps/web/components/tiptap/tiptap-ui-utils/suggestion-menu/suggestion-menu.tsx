@@ -53,7 +53,7 @@ type SuggestionMenuAction =
         decorationNode: HTMLElement | null;
         items: SuggestionItem[];
         query: string;
-        show: boolean;
+        show?: boolean;
       };
     }
   | { type: 'set-open'; payload: boolean }
@@ -281,7 +281,6 @@ export const SuggestionMenu = ({
                 command: props.command,
                 items: props.items,
                 query: props.query,
-                show: true,
               },
             });
           },
