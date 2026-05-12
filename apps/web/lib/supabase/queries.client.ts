@@ -66,9 +66,10 @@ export async function hasUserPaid(
 ): Promise<boolean> {
   const { data, error } = await client
     .from('credit_transactions')
-    .select('type')
+    .select('id')
     .eq('user_id', userId)
-    .in('type', ['purchase', 'topup']);
+    .in('type', ['purchase', 'topup'])
+    .limit(1);
 
   if (error) {
     throw error;
