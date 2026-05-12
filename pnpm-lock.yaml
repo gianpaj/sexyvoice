@@ -217,8 +217,8 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
       '@fal-ai/client':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: ^1.10.1
+        version: 1.10.1
       '@ffmpeg/ffmpeg':
         specifier: ^0.12.15
         version: 0.12.15
@@ -1530,8 +1530,8 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@fal-ai/client@1.5.0':
-    resolution: {integrity: sha512-e0WtcbSjbwKFCOwAex3lRDba1iMY42QAwLZuae7oc5xNav2+HdprE9QWYdsDS3nyr0GOttEpUgsBa/c/AKAguA==}
+  '@fal-ai/client@1.10.1':
+    resolution: {integrity: sha512-c3AVeH31OioiI2J1BfW8Cryi1DhUYldnY3X35nv6xLMq3fU2NQOo+eYaR5mL2O8MoHHh+HzXdQuIyanIyeq+ug==}
     engines: {node: '>=18.0.0'}
 
   '@fal-works/esbuild-plugin-global-externals@2.1.2':
@@ -10349,7 +10349,7 @@ snapshots:
 
   '@exodus/bytes@1.13.0': {}
 
-  '@fal-ai/client@1.5.0':
+  '@fal-ai/client@1.10.1':
     dependencies:
       '@msgpack/msgpack': 3.1.2
       eventsource-parser: 1.1.2
