@@ -2,7 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { type ComponentType, type ReactNode, useEffect, useState } from 'react';
+import {
+  type ComponentType,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -137,15 +143,17 @@ export function BillingUsageChart() {
   const bucketWidth = searchParams.get('bucket_width') ?? '1d';
   const sourceType = searchParams.get('source_type') ?? 'all';
 
-  const queryParams = new URLSearchParams();
-  queryParams.set('starting_on', startingOn);
-  queryParams.set('ending_before', addDaysToIsoDate(endingBefore, 1));
-  queryParams.set('group_by', groupBy);
-  queryParams.set('bucket_width', bucketWidth);
-  if (sourceType !== 'all') {
-    queryParams.set('source_type', sourceType);
-  }
-  const queryString = queryParams.toString();
+  const queryString = useMemo(() => {
+    const queryParams = new URLSearchParams();
+    queryParams.set('starting_on', startingOn);
+    queryParams.set('ending_before', addDaysToIsoDate(endingBefore, 1));
+    queryParams.set('group_by', groupBy);
+    queryParams.set('bucket_width', bucketWidth);
+    if (sourceType !== 'all') {
+      queryParams.set('source_type', sourceType);
+    }
+    return queryParams.toString();
+  }, [bucketWidth, endingBefore, groupBy, sourceType, startingOn]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['billing-usage', queryString],
@@ -163,35 +171,37 @@ export function BillingUsageChart() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  // Build a lookup from date → aggregated totals from the API response.
-  const byDate = new Map<
-    string,
-    { requests: number; cost: number; credits: number }
-  >();
-  for (const bucket of data?.data ?? []) {
-    const date = bucket.start_time_iso.slice(0, 10);
-    const totals = bucket.results.reduce(
-      (accumulator, result) => {
-        accumulator.requests += result.requests;
-        accumulator.cost += result.total_dollar_amount;
-        accumulator.credits += result.total_credits_used;
-        return accumulator;
-      },
-      { requests: 0, cost: 0, credits: 0 },
-    );
-    byDate.set(date, totals);
-  }
+  const bucketTotals = useMemo(() => {
+    // Build a lookup from date → aggregated totals from the API response.
+    const byDate = new Map<
+      string,
+      { requests: number; cost: number; credits: number }
+    >();
+    for (const bucket of data?.data ?? []) {
+      const date = bucket.start_time_iso.slice(0, 10);
+      const totals = bucket.results.reduce(
+        (accumulator, result) => {
+          accumulator.requests += result.requests;
+          accumulator.cost += result.total_dollar_amount;
+          accumulator.credits += result.total_credits_used;
+          return accumulator;
+        },
+        { requests: 0, cost: 0, credits: 0 },
+      );
+      byDate.set(date, totals);
+    }
 
-  // Generate the full spine so empty days still appear in the chart.
-  const spine = buildDateSpine(
-    startingOn,
-    addDaysToIsoDate(endingBefore, 1),
-    bucketWidth,
-  );
-  const bucketTotals = spine.map((date) => ({
-    date,
-    ...(byDate.get(date) ?? { requests: 0, cost: 0, credits: 0 }),
-  }));
+    // Generate the full spine so empty days still appear in the chart.
+    const spine = buildDateSpine(
+      startingOn,
+      addDaysToIsoDate(endingBefore, 1),
+      bucketWidth,
+    );
+    return spine.map((date) => ({
+      date,
+      ...(byDate.get(date) ?? { requests: 0, cost: 0, credits: 0 }),
+    }));
+  }, [data, startingOn, endingBefore, bucketWidth]);
 
   return (
     <div className="space-y-4 rounded-lg border p-4">
