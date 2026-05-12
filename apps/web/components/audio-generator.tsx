@@ -9,7 +9,6 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -121,6 +120,42 @@ interface AudioGeneratorProps {
   selectedVoice?: Tables<'voices'>;
 }
 
+function throwGenerateVoiceError(
+  dict: (typeof messages)['generate'],
+  data: {
+    error?: string;
+    errorCode?: string;
+    serverMessage?: string;
+  },
+  response: Response,
+): never {
+  if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
+    const errorMessage = dict[data.errorCode as keyof typeof dict] as string;
+    throw new APIError(
+      errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+      response,
+    );
+  }
+
+  throw new APIError(data.error || data.serverMessage || dict.error, response);
+}
+
+function handleGenerateVoiceError(
+  dict: (typeof messages)['generate'],
+  error: unknown,
+) {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return;
+  }
+
+  if (error instanceof APIError) {
+    toast.error(error.message || dict.error);
+    return;
+  }
+
+  toast.error(dict.error);
+}
+
 export function AudioGenerator({
   dict,
   hasEnoughCredits,
@@ -145,49 +180,25 @@ export function AudioGenerator({
 
   const audio = useAudio();
 
-  const provider = useMemo(
-    () => getTtsProvider(selectedVoice?.model),
-    [selectedVoice?.model],
-  );
+  const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const showEnhanceButton = provider === 'replicate';
 
-  const charactersLimit = useMemo(
-    () => getCharactersLimit(selectedVoice?.model || '', isPaidUser),
-    [selectedVoice, isPaidUser],
+  const charactersLimit = getCharactersLimit(
+    selectedVoice?.model || '',
+    isPaidUser,
   );
 
-  const textareaRightPadding = useMemo(() => {
-    if (isGeminiVoice) {
-      return 'pr-10';
-    }
+  let textareaRightPadding = 'pr-16';
 
-    if (showEnhanceButton) {
-      return 'pr-20';
-    }
-
-    return 'pr-16';
-  }, [isGeminiVoice, showEnhanceButton]);
+  if (isGeminiVoice) {
+    textareaRightPadding = 'pr-10';
+  } else if (showEnhanceButton) {
+    textareaRightPadding = 'pr-20';
+  }
 
   const textIsOverLimit = text.length > charactersLimit;
-
-  const requestBody = useMemo(
-    () => ({
-      text,
-      voice: selectedVoice?.name,
-      styleVariant: isGeminiVoice ? selectedStyle : '',
-      language: isGrokVoice ? selectedGrokLanguage : undefined,
-    }),
-    [
-      isGeminiVoice,
-      isGrokVoice,
-      selectedStyle,
-      selectedVoice?.name,
-      selectedGrokLanguage,
-      text,
-    ],
-  );
 
   const handleCancel = useCallback(() => {
     setIsGenerating(false);
@@ -204,42 +215,37 @@ export function AudioGenerator({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          text,
+          voice: selectedVoice?.name,
+          styleVariant: isGeminiVoice ? selectedStyle : '',
+          language: isGrokVoice ? selectedGrokLanguage : undefined,
+        }),
         signal: abortController.current.signal,
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
-          const errorMessage = dict[
-            data.errorCode as keyof typeof dict
-          ] as string;
-          throw new APIError(
-            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-            response,
-          );
-        }
-
-        throw new APIError(data.error || data.serverMessage, response);
+        throwGenerateVoiceError(dict, data, response);
       }
 
       setAudioURL(data.url);
       toast.success(dict.success);
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return;
-      }
-
-      if (error instanceof APIError) {
-        toast.error(error.message || dict.error);
-      } else {
-        toast.error(dict.error);
-      }
+      handleGenerateVoiceError(dict, error);
     } finally {
       setIsGenerating(false);
     }
-  }, [dict, requestBody]);
+  }, [
+    dict,
+    isGeminiVoice,
+    isGrokVoice,
+    selectedGrokLanguage,
+    selectedStyle,
+    selectedVoice?.name,
+    text,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

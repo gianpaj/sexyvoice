@@ -11,8 +11,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
-import { hasUserPaid } from '@/lib/supabase/queries';
-import { getCredits } from '@/lib/supabase/queries.client';
+import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
@@ -59,7 +58,7 @@ function CreditsSection({
         throw new Error('User not found');
       }
 
-      const userHasPaid = await hasUserPaid(user.id);
+      const userHasPaid = await hasUserPaid(supabase, user.id);
       return { user, userHasPaid };
     };
 

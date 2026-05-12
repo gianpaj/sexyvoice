@@ -84,19 +84,20 @@ export async function POST(request: Request) {
     }
     selectedKey = data;
   } else {
-    const isPaidUser = await hasUserPaid(user.id);
+    const [isPaidUser, { count, error: countError }] = await Promise.all([
+      hasUserPaid(user.id),
+      admin
+        .from('api_keys')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_active', true),
+    ]);
     if (!isPaidUser) {
       return NextResponse.json(
         { error: 'A subscription or top-up is required to create API keys' },
         { status: 403 },
       );
     }
-
-    const { count, error: countError } = await admin
-      .from('api_keys')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_active', true);
 
     if (countError) {
       return NextResponse.json(

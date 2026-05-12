@@ -49,6 +49,45 @@ const getBadgeClasses = (name: string) => {
   return `${COLOR_PAIRS[index].bg} ${COLOR_PAIRS[index].text}`;
 };
 
+function ActionsCell({ file }: { file: AudioFileAndVoicesRes }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleCloseDropdown = () => {
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+            size="icon"
+            variant="ghost"
+          >
+            <MoreVerticalIcon />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DeleteButton
+            handleCloseDropdown={handleCloseDropdown}
+            id={file.id}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function DateTimeCell({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {formatDate(value, { withTime: true })}
+    </time>
+  );
+}
+
 interface AudioUsageData {
   apiKeyId?: string;
   dollarAmount?: number;
@@ -118,11 +157,10 @@ export function createColumns({
           variant="ghost"
         >
           Created At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 size-4" />
         </Button>
       ),
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at!), { withTime: true }),
+      cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
     },
     {
       id: 'Preview',
@@ -151,38 +189,7 @@ export function createColumns({
     {
       id: 'actions',
       header: 'Actions',
-      cell: ({ row }) => {
-        const file = row.original;
-
-        const [isOpen, setIsOpen] = useState(false);
-
-        const handleCloseDropdown = () => {
-          setIsOpen(false);
-        };
-
-        return (
-          <div className="flex items-center gap-2">
-            <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                  variant="ghost"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DeleteButton
-                  handleCloseDropdown={handleCloseDropdown}
-                  id={file.id}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
+      cell: ({ row }) => <ActionsCell file={row.original} />,
     },
   ];
 

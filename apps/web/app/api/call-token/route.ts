@@ -79,8 +79,10 @@ export async function POST(request: Request) {
       return APIErrorResponse('User not found', 401);
     }
 
-    // Check if user has credits
-    const currentAmount = await getCredits(user.id);
+    const [currentAmount, isOverCallLimit] = await Promise.all([
+      getCredits(user.id),
+      isFreeUserOverCallLimit(user.id),
+    ]);
 
     if (currentAmount < MINIMUM_CREDITS_FOR_CALL) {
       logger.info('Insufficient credits', {
@@ -91,7 +93,6 @@ export async function POST(request: Request) {
     }
 
     // Check if free user has exceeded the 5-minute call limit
-    const isOverCallLimit = await isFreeUserOverCallLimit(user.id);
     if (isOverCallLimit) {
       logger.info('Free user exceeded call limit', {
         user: { id: user.id, email: user.email },

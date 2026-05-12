@@ -1,6 +1,5 @@
 import { flip, offset, shift, size } from '@floating-ui/react';
 import { PluginKey } from '@tiptap/pm/state';
-import type { Range } from '@tiptap/react';
 import {
   exitSuggestion,
   Suggestion,
@@ -8,7 +7,7 @@ import {
   SuggestionPluginKey,
   type SuggestionProps,
 } from '@tiptap/suggestion';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import type {
   SuggestionItem,
@@ -38,6 +37,58 @@ function shouldCloseSuggestionForQuery(
   return false;
 }
 
+interface SuggestionMenuState {
+  command: ((item: SuggestionItem) => void) | null;
+  decorationNode: HTMLElement | null;
+  items: SuggestionItem[];
+  query: string;
+  show: boolean;
+}
+
+type SuggestionMenuAction =
+  | {
+      type: 'update';
+      payload: {
+        command: (item: SuggestionItem) => void;
+        decorationNode: HTMLElement | null;
+        items: SuggestionItem[];
+        query: string;
+        show: boolean;
+      };
+    }
+  | { type: 'set-open'; payload: boolean }
+  | { type: 'reset' };
+
+const initialSuggestionMenuState: SuggestionMenuState = {
+  command: null,
+  decorationNode: null,
+  items: [],
+  query: '',
+  show: false,
+};
+
+function suggestionMenuReducer(
+  state: SuggestionMenuState,
+  action: SuggestionMenuAction,
+): SuggestionMenuState {
+  switch (action.type) {
+    case 'update':
+      return {
+        ...state,
+        ...action.payload,
+      };
+    case 'set-open':
+      return {
+        ...state,
+        show: action.payload,
+      };
+    case 'reset':
+      return initialSuggestionMenuState;
+    default:
+      return state;
+  }
+}
+
 /**
  * A component that renders a suggestion menu for Tiptap editors.
  * Displays a floating menu when a trigger character is typed.
@@ -52,22 +103,23 @@ export const SuggestionMenu = ({
   ...internalSuggestionProps
 }: SuggestionMenuProps) => {
   const { editor } = useTiptapEditor(providedEditor);
-
-  const [show, setShow] = useState<boolean>(false);
+  const [state, dispatch] = useReducer(
+    suggestionMenuReducer,
+    initialSuggestionMenuState,
+  );
+  const {
+    show,
+    decorationNode: internalDecorationNode,
+    command: internalCommand,
+    items: internalItems,
+    query: internalQuery,
+  } = state;
 
   // If later we want the floating stick to the position while browser is scrolling,
   // we can uncomment this part and pass the getBoundingClientRect prop to FloatingElement instead of referenceElement.
   // const [internalClientRect, setInternalClientRect] = useState<DOMRect | null>(
   //   null
   // )
-  const [internalDecorationNode, setInternalDecorationNode] =
-    useState<HTMLElement | null>(null);
-  const [internalCommand, setInternalCommand] = useState<
-    ((item: SuggestionItem) => void) | null
-  >(null);
-  const [internalItems, setInternalItems] = useState<SuggestionItem[]>([]);
-  const [internalQuery, setInternalQuery] = useState<string>('');
-  const [, setInternalRange] = useState<Range | null>(null);
 
   const { ref, style, getFloatingProps, isMounted } = useFloatingElement(
     show,
@@ -99,7 +151,7 @@ export const SuggestionMenu = ({
       ],
       onOpenChange(open) {
         if (!open) {
-          setShow(false);
+          dispatch({ type: 'set-open', payload: false });
         }
       },
       ...floatingOptions,
@@ -118,12 +170,7 @@ export const SuggestionMenu = ({
   });
 
   const resetMenuState = useCallback(() => {
-    setInternalDecorationNode(null);
-    setInternalCommand(null);
-    setInternalItems([]);
-    setInternalQuery('');
-    setInternalRange(null);
-    setShow(false);
+    dispatch({ type: 'reset' });
   }, []);
 
   const closePopup = useCallback(() => {
@@ -204,14 +251,16 @@ export const SuggestionMenu = ({
       render: () => {
         return {
           onStart: (props: SuggestionProps<SuggestionItem>) => {
-            setInternalDecorationNode(
-              (props.decorationNode as HTMLElement) ?? null,
-            );
-            setInternalCommand(() => props.command);
-            setInternalItems(props.items);
-            setInternalQuery(props.query);
-            setInternalRange(props.range);
-            setShow(true);
+            dispatch({
+              type: 'update',
+              payload: {
+                decorationNode: (props.decorationNode as HTMLElement) ?? null,
+                command: props.command,
+                items: props.items,
+                query: props.query,
+                show: true,
+              },
+            });
           },
 
           onUpdate: (props: SuggestionProps<SuggestionItem>) => {
@@ -225,13 +274,16 @@ export const SuggestionMenu = ({
               return;
             }
 
-            setInternalDecorationNode(
-              (props.decorationNode as HTMLElement) ?? null,
-            );
-            setInternalCommand(() => props.command);
-            setInternalItems(props.items);
-            setInternalQuery(props.query);
-            setInternalRange(props.range);
+            dispatch({
+              type: 'update',
+              payload: {
+                decorationNode: (props.decorationNode as HTMLElement) ?? null,
+                command: props.command,
+                items: props.items,
+                query: props.query,
+                show: true,
+              },
+            });
           },
 
           onKeyDown: (props: SuggestionKeyDownProps) => {

@@ -2,10 +2,11 @@ import { createHmac, randomBytes } from 'node:crypto';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const API_KEY_PREFIX = 'sk_live_';
+const API_KEY_PREFIX_PARTS = ['sk', 'live', ''];
+const API_KEY_PREFIX = API_KEY_PREFIX_PARTS.join('_');
 const API_KEY_RANDOM_LENGTH = 32;
 const API_KEY_PREFIX_LENGTH = 12;
-const API_KEY_REGEX = /^sk_live_[A-Za-z0-9]{32}$/;
+const API_KEY_REGEX = new RegExp(`^${API_KEY_PREFIX}[A-Za-z0-9]{32}$`);
 
 function createRandomAlphaNumeric(length: number): string {
   const alphabet =

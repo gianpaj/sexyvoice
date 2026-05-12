@@ -1,7 +1,7 @@
 'use client';
 
 import { FileAudio, Mic, Square, Upload } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -50,48 +50,39 @@ export function AudioInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const processFile = useCallback(
-    async (file: File) => {
-      setAudioFile(file);
-      onFileSelected?.(file);
-      try {
-        const audioData = await decodeAudioFile(file);
-        onAudioReady(audioData);
-      } catch (error) {
-        setAudioFile(null);
-        console.error('Failed to decode audio file:', error);
-        toast.error(
-          errorMessages?.decodeError ||
-            'Failed to decode audio file. Please try a different format.',
-        );
-      }
-    },
-    [onAudioReady, onFileSelected, errorMessages],
-  );
+  const processFile = async (file: File) => {
+    setAudioFile(file);
+    onFileSelected?.(file);
+    try {
+      const audioData = await decodeAudioFile(file);
+      onAudioReady(audioData);
+    } catch (error) {
+      setAudioFile(null);
+      console.error('Failed to decode audio file:', error);
+      toast.error(
+        errorMessages?.decodeError ||
+          'Failed to decode audio file. Please try a different format.',
+      );
+    }
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
-        processFile(file);
-      }
-    },
-    [processFile],
-  );
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
+      processFile(file);
+    }
+  };
 
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        processFile(file);
-      }
-    },
-    [processFile],
-  );
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
 
-  const startRecording = useCallback(async () => {
+  const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -124,7 +115,7 @@ export function AudioInput({
           'Microphone access denied or not available.',
       );
     }
-  }, [processFile, errorMessages]);
+  };
 
   // Cleanup MediaRecorder on unmount
   useEffect(() => {
@@ -135,17 +126,17 @@ export function AudioInput({
     };
   }, []);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = () => {
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
-  }, []);
+  };
 
-  const handleRemove = useCallback(() => {
+  const handleRemove = () => {
     setAudioFile(null);
     onRemove?.();
-  }, [onRemove]);
+  };
 
   if (audioFile) {
     return (

@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { type ComponentType, type ReactNode, useMemo } from 'react';
+import { type ComponentType, type ReactNode, useEffect, useState } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -117,30 +117,40 @@ export function BillingUsageChart() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [defaultDateRange, setDefaultDateRange] = useState<{
+    endingBefore: string;
+    startingOn: string;
+  } | null>(null);
 
-  const endingBefore = searchParams.get('ending_before') ?? isoDate(new Date());
+  useEffect(() => {
+    setDefaultDateRange({
+      endingBefore: isoDate(new Date()),
+      startingOn: isoDate(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000)),
+    });
+  }, []);
+
+  const endingBefore =
+    searchParams.get('ending_before') ?? defaultDateRange?.endingBefore ?? '';
   const startingOn =
-    searchParams.get('starting_on') ??
-    isoDate(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000));
+    searchParams.get('starting_on') ?? defaultDateRange?.startingOn ?? '';
   const groupBy = searchParams.get('group_by') ?? 'source_type';
   const bucketWidth = searchParams.get('bucket_width') ?? '1d';
   const sourceType = searchParams.get('source_type') ?? 'all';
 
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set('starting_on', startingOn);
-    params.set('ending_before', addDaysToIsoDate(endingBefore, 1));
-    params.set('group_by', groupBy);
-    params.set('bucket_width', bucketWidth);
-    if (sourceType !== 'all') {
-      params.set('source_type', sourceType);
-    }
-    return params.toString();
-  }, [bucketWidth, endingBefore, groupBy, sourceType, startingOn]);
+  const queryParams = new URLSearchParams();
+  queryParams.set('starting_on', startingOn);
+  queryParams.set('ending_before', addDaysToIsoDate(endingBefore, 1));
+  queryParams.set('group_by', groupBy);
+  queryParams.set('bucket_width', bucketWidth);
+  if (sourceType !== 'all') {
+    queryParams.set('source_type', sourceType);
+  }
+  const queryString = queryParams.toString();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['billing-usage', queryString],
     queryFn: () => fetchBillingUsage(queryString),
+    enabled: !!(endingBefore && startingOn),
   });
 
   const updateParam = (key: string, value: string) => {
@@ -153,37 +163,35 @@ export function BillingUsageChart() {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const bucketTotals = useMemo(() => {
-    // Build a lookup from date → aggregated totals from the API response.
-    const byDate = new Map<
-      string,
-      { requests: number; cost: number; credits: number }
-    >();
-    for (const bucket of data?.data ?? []) {
-      const date = bucket.start_time_iso.slice(0, 10);
-      const totals = bucket.results.reduce(
-        (accumulator, result) => {
-          accumulator.requests += result.requests;
-          accumulator.cost += result.total_dollar_amount;
-          accumulator.credits += result.total_credits_used;
-          return accumulator;
-        },
-        { requests: 0, cost: 0, credits: 0 },
-      );
-      byDate.set(date, totals);
-    }
-
-    // Generate the full spine so empty days still appear in the chart.
-    const spine = buildDateSpine(
-      startingOn,
-      addDaysToIsoDate(endingBefore, 1),
-      bucketWidth,
+  // Build a lookup from date → aggregated totals from the API response.
+  const byDate = new Map<
+    string,
+    { requests: number; cost: number; credits: number }
+  >();
+  for (const bucket of data?.data ?? []) {
+    const date = bucket.start_time_iso.slice(0, 10);
+    const totals = bucket.results.reduce(
+      (accumulator, result) => {
+        accumulator.requests += result.requests;
+        accumulator.cost += result.total_dollar_amount;
+        accumulator.credits += result.total_credits_used;
+        return accumulator;
+      },
+      { requests: 0, cost: 0, credits: 0 },
     );
-    return spine.map((date) => ({
-      date,
-      ...(byDate.get(date) ?? { requests: 0, cost: 0, credits: 0 }),
-    }));
-  }, [data, startingOn, endingBefore, bucketWidth]);
+    byDate.set(date, totals);
+  }
+
+  // Generate the full spine so empty days still appear in the chart.
+  const spine = buildDateSpine(
+    startingOn,
+    addDaysToIsoDate(endingBefore, 1),
+    bucketWidth,
+  );
+  const bucketTotals = spine.map((date) => ({
+    date,
+    ...(byDate.get(date) ?? { requests: 0, cost: 0, credits: 0 }),
+  }));
 
   return (
     <div className="space-y-4 rounded-lg border p-4">

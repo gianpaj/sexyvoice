@@ -55,7 +55,7 @@ export function AudioPreviewCard({
   };
 
   return (
-    <div className="flex flex-col rounded-xl bg-white/10 p-6 backdrop-blur-sm">
+    <div className="flex flex-col rounded-xl border border-white/10 bg-white/[0.07] p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-semibold text-lg text-white">{name}</h3>
         <Button
@@ -73,7 +73,7 @@ export function AudioPreviewCard({
         </Button>
       </div>
       <div
-        className="line-clamp-5 whitespace-break-spaces rounded border-12 border-transparent bg-accent text-justify text-gray-200 text-sm"
+        className="line-clamp-5 whitespace-break-spaces rounded border-12 border-transparent bg-accent text-justify text-sm text-zinc-200"
         dir={dir}
         lang={lang}
         title={prompt}

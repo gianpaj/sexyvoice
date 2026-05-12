@@ -1453,8 +1453,10 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
 
       // Both requests should use the same cache key
       // This is verified by the consistent mocking behavior
-      const response1 = await POST(request1);
-      const response2 = await POST(request2);
+      const [response1, response2] = await Promise.all([
+        POST(request1),
+        POST(request2),
+      ]);
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);

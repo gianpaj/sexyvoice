@@ -32,18 +32,18 @@ export function FeatureCard({
     >
       <div className="relative px-6 py-5">
         {/* Arrow icon — visible on hover */}
-        <ArrowUpRight className="absolute top-5 right-5 h-4 w-4 text-gray-500 opacity-0 transition-opacity group-hover:opacity-100" />
+        <ArrowUpRight className="absolute top-5 right-5 size-4 text-zinc-500 opacity-0 transition-opacity group-hover:opacity-100" />
 
         {/* Lucide icon */}
-        <Icon className="h-6 w-6 text-gray-100 transition-colors" />
+        <Icon className="size-6 text-zinc-100 transition-colors" />
 
         {/* Title */}
-        <h3 className="mt-4 font-semibold text-base text-gray-800 text-white">
+        <h3 className="mt-4 font-semibold text-base text-white">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="mt-1 font-normal text-base text-gray-400 leading-6">
+        <p className="mt-1 font-normal text-base text-zinc-400 leading-6">
           {children}
         </p>
       </div>

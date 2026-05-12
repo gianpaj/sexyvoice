@@ -144,7 +144,7 @@ export default async function LandingPage(props: {
       {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
+        <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
@@ -286,10 +286,10 @@ export default async function LandingPage(props: {
               <h2 className="mb-4 font-bold text-2xl">
                 {dictLanding.latestPosts}
               </h2>
-              {get3PostsByLang(lang).map((post, idx) => (
+              {get3PostsByLang(lang).map((post) => (
                 <Card
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
-                  key={idx}
+                  key={post.url}
                 >
                   <Link href={post.url} prefetch>
                     <CardHeader>
@@ -347,8 +347,8 @@ export default async function LandingPage(props: {
 }
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="relative mx-auto size-36">
-    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
+  <div className="mx-auto grid size-36 place-items-center">
+    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
       {children}
     </div>
   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 export interface TranscriptChunk {
   text: string;
@@ -34,83 +34,171 @@ interface UseTranscriberReturn {
   transcript: TranscriptionResult | null;
 }
 
+interface TranscriberDataState {
+  downloadProgress: DownloadProgress[];
+  error: string | null;
+  partialTranscript: string;
+  state: TranscriberState;
+  transcript: TranscriptionResult | null;
+}
+
+type TranscriberAction =
+  | { type: 'load-model' }
+  | { type: 'transcribe-start' }
+  | { type: 'ready' }
+  | { data: DownloadProgress; type: 'download' }
+  | { data: string; type: 'update' }
+  | { data: TranscriptionResult; type: 'complete' }
+  | { data: string; type: 'error' }
+  | { type: 'reset' };
+
+const initialTranscriberState: TranscriberDataState = {
+  downloadProgress: [],
+  error: null,
+  partialTranscript: '',
+  state: 'idle',
+  transcript: null,
+};
+
+function transcriberReducer(
+  state: TranscriberDataState,
+  action: TranscriberAction,
+): TranscriberDataState {
+  switch (action.type) {
+    case 'load-model':
+      return {
+        ...state,
+        state: 'loading',
+        error: null,
+        downloadProgress: [],
+      };
+    case 'transcribe-start':
+      return {
+        ...state,
+        state: 'transcribing',
+        error: null,
+        transcript: null,
+        partialTranscript: '',
+      };
+    case 'ready':
+      return {
+        ...state,
+        state: 'ready',
+      };
+    case 'download': {
+      const existing = state.downloadProgress.findIndex(
+        (progress) =>
+          progress.file === action.data.file &&
+          progress.name === action.data.name,
+      );
+
+      if (existing >= 0) {
+        const updated = [...state.downloadProgress];
+        updated[existing] = action.data;
+        return {
+          ...state,
+          downloadProgress: updated,
+        };
+      }
+
+      return {
+        ...state,
+        downloadProgress: [...state.downloadProgress, action.data],
+      };
+    }
+    case 'update':
+      return action.data
+        ? {
+            ...state,
+            partialTranscript: action.data,
+          }
+        : state;
+    case 'complete':
+      return {
+        ...state,
+        state: 'ready',
+        transcript: action.data,
+        partialTranscript: '',
+        error: null,
+      };
+    case 'error':
+      return {
+        ...state,
+        state: 'idle',
+        downloadProgress: [],
+        transcript: null,
+        partialTranscript: '',
+        error: action.data,
+      };
+    case 'reset':
+      return {
+        ...state,
+        state: state.state === 'ready' ? 'ready' : 'idle',
+        transcript: null,
+        partialTranscript: '',
+        error: null,
+      };
+    default:
+      return state;
+  }
+}
+
 export function useTranscriber(): UseTranscriberReturn {
   const workerRef = useRef<Worker | null>(null);
-  const [state, setState] = useState<TranscriberState>('idle');
-  const [transcript, setTranscript] = useState<TranscriptionResult | null>(
-    null,
+  const [transcriberState, dispatch] = useReducer(
+    transcriberReducer,
+    initialTranscriberState,
   );
-  const [partialTranscript, setPartialTranscript] = useState('');
-  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress[]>(
-    [],
-  );
-  const [error, setError] = useState<string | null>(null);
+  const { state, transcript, partialTranscript, downloadProgress, error } =
+    transcriberState;
 
   useEffect(() => {
     const worker = new Worker(new URL('../worker.ts', import.meta.url), {
       type: 'module',
     });
 
-    worker.addEventListener('message', (event) => {
+    const handleMessage = (event: MessageEvent) => {
       const { type, data } = event.data;
 
       switch (type) {
         case 'download':
-          setDownloadProgress((prev) => {
-            const existing = prev.findIndex(
-              (p) => p.file === data.file && p.name === data.name,
-            );
-            if (existing >= 0) {
-              const updated = [...prev];
-              updated[existing] = data;
-              return updated;
-            }
-            return [...prev, data];
-          });
+          dispatch({ type: 'download', data });
           break;
         case 'ready':
-          setState('ready');
+          dispatch({ type: 'ready' });
           break;
         case 'update':
-          if (data?.text) {
-            setPartialTranscript(data.text);
-          }
+          dispatch({ type: 'update', data: data?.text ?? '' });
           break;
         case 'complete':
-          setState('ready');
-          setTranscript(data);
-          setPartialTranscript('');
+          dispatch({ type: 'complete', data });
           break;
         case 'error':
-          setState('idle');
-          setDownloadProgress([]);
-          setTranscript(null);
-          setPartialTranscript('');
-          setError(data);
+          dispatch({ type: 'error', data });
+          break;
+        default:
           break;
       }
-    });
+    };
 
+    worker.addEventListener('message', handleMessage);
     workerRef.current = worker;
 
     return () => {
+      worker.removeEventListener('message', handleMessage);
+      workerRef.current = null;
       worker.terminate();
     };
   }, []);
 
   const loadModel = useCallback((model: string, quantized: boolean) => {
-    setState('loading');
-    setError(null);
-    setDownloadProgress([]);
+    dispatch({ type: 'load-model' });
     workerRef.current?.postMessage({ type: 'load', model, quantized });
   }, []);
 
   const transcribe = useCallback(
     (audio: Float32Array, language: string, subtask: string) => {
-      setState('transcribing');
-      setError(null);
-      setTranscript(null);
-      setPartialTranscript('');
+      dispatch({ type: 'transcribe-start' });
       workerRef.current?.postMessage({
         type: 'transcribe',
         audio,
@@ -122,10 +210,7 @@ export function useTranscriber(): UseTranscriberReturn {
   );
 
   const reset = useCallback(() => {
-    setState((prev) => (prev === 'ready' ? 'ready' : 'idle'));
-    setTranscript(null);
-    setPartialTranscript('');
-    setError(null);
+    dispatch({ type: 'reset' });
   }, []);
 
   return {
