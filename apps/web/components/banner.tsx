@@ -95,6 +95,7 @@ export function Banner({
     }
 
     if (initial.expired) {
+      setIsVisible(false);
       return;
     }
 
@@ -110,6 +111,7 @@ export function Banner({
       setTimeRemaining(remaining);
 
       if (remaining.expired) {
+        setIsVisible(false);
         clearInterval(interval);
       }
     }, 1000);
