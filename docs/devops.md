@@ -206,7 +206,8 @@ Notes:
 Notes:
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
 - `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
-  and verifying the short-lived OAuth callback marker cookie.
+  and verifying the short-lived auth callback marker cookie used after OAuth
+  callbacks and email confirmations.
 - If `OAUTH_CALLBACK_MARKER_SECRET` is unset, code may fall back to
   `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
 
@@ -345,7 +346,7 @@ Example structure:
 - Rotate secrets carefully and document the blast radius before doing so.
 - Validate auth, payments, storage uploads, and API key flows after secret
   changes.
-- Keep OAuth callback marker signing isolated from API key hashing where
+- Keep auth callback marker signing isolated from API key hashing where
   possible.
 - Use production-only secure cookies where supported.
 
@@ -478,7 +479,7 @@ output of `sentry-cli issues list` (first column).
 
 ## Troubleshooting Checklist
 
-### OAuth callback/session issues
+### Auth callback/session issues
 
 Check:
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -486,7 +487,7 @@ Check:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `OAUTH_CALLBACK_MARKER_SECRET`
 - redirect URL configuration in Supabase / OAuth provider
-- Sentry events tagged for OAuth callback flow
+- Sentry events tagged for auth callback or OAuth callback flow
 - Supabase email templates use `/auth/confirm?token_hash={{ .TokenHash }}` for
   email confirmation and password recovery, not `/auth/callback`
 

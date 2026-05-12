@@ -8,7 +8,7 @@ import {
   getLocaleFromRedirectPath,
   getSafeAuthRedirectPath,
 } from '@/lib/supabase/auth-redirect';
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
+import { AUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { createClient } from '@/lib/supabase/server';
 import { routing } from '@/src/i18n/routing';
 
@@ -64,7 +64,7 @@ const isPkceCodeVerifierMissingError = (error: unknown) => {
   );
 };
 
-const getOauthCallbackCookieContext = (request: Request) => {
+const getAuthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const cookieNames = cookieHeader
     .split(';')
@@ -85,8 +85,8 @@ const getOauthCallbackCookieContext = (request: Request) => {
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
       name.includes('code-verifier'),
     ),
-    hasOauthCallbackMarkerCookie: cookieNames.includes(
-      OAUTH_CALLBACK_COOKIE_NAME,
+    hasAuthCallbackMarkerCookie: cookieNames.includes(
+      AUTH_CALLBACK_COOKIE_NAME,
     ),
   };
 };
@@ -103,7 +103,7 @@ export async function GET(request: Request) {
   const locale = getLocaleFromRedirectPath(safeRedirectPath);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
-  const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const authCookieContext = getAuthCallbackCookieContext(request);
   const reportPkceCodeVerifierMissing = (error: unknown) => {
     captureMessage('OAuth callback missing PKCE code verifier.', {
       level: 'warning',
@@ -116,7 +116,7 @@ export async function GET(request: Request) {
         redirectTo,
         locale,
         ...oauthCodeContext,
-        ...oauthCookieContext,
+        ...authCookieContext,
         errorMessage: getErrorMessage(error),
       },
     });
@@ -148,7 +148,7 @@ export async function GET(request: Request) {
           redirectTo,
           locale,
           ...oauthCodeContext,
-          ...oauthCookieContext,
+          ...authCookieContext,
         },
       });
 
@@ -199,7 +199,7 @@ export async function GET(request: Request) {
         redirectTo,
         locale,
         ...oauthCodeContext,
-        ...oauthCookieContext,
+        ...authCookieContext,
       },
     });
 

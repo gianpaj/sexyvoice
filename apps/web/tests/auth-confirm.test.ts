@@ -73,7 +73,7 @@ describe('Email auth confirm route', () => {
       'https://sexyvoice.ai/es/dashboard?source=email',
     );
     expect(response.headers.get('set-cookie')).toContain(
-      'sv_oauth_callback_ok=',
+      'sv_auth_callback_ok=',
     );
     expect(verifyOtp).toHaveBeenCalledWith({
       token_hash: 'pkce_hash',

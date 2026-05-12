@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
-import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import {
-  createOauthCallbackMarkerValue,
-  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-} from './oauth-callback-marker';
+  AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+  createAuthCallbackMarkerValue,
+} from './auth-callback-marker';
+import { AUTH_CALLBACK_COOKIE_NAME } from './constants';
 
 export const getSafeAuthRedirectPath = (
   value: string | null,
@@ -44,14 +44,14 @@ export const getLocaleFromRedirectPath = (
 
 export const createAuthRedirectResponse = (url: string) => {
   const response = NextResponse.redirect(url);
-  const markerValue = createOauthCallbackMarkerValue();
+  const markerValue = createAuthCallbackMarkerValue();
 
   if (markerValue) {
     response.cookies.set({
-      name: OAUTH_CALLBACK_COOKIE_NAME,
+      name: AUTH_CALLBACK_COOKIE_NAME,
       value: markerValue,
       httpOnly: true,
-      maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+      maxAge: AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
