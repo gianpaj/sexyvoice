@@ -111,13 +111,21 @@ function CreditsSection({
   }, [creditsData, lang, posthog, supabase]);
 
   if (!creditsData) {
-    return <Skeleton className="h-[150px] w-full rounded-lg" />;
+    return (
+      <Skeleton
+        className="h-[150px] w-full rounded-lg"
+        data-visual-test-no-radius
+      />
+    );
   }
 
   const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
 
   return (
-    <div className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0">
+    <div
+      className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0"
+      data-visual-test-no-radius
+    >
       <div className="mb-4 flex w-50 items-center justify-between">
         <div className="flex items-center">
           <span className="whitespace-nowrap text-gray-200 text-xs">
@@ -146,25 +154,27 @@ function CreditsSection({
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('totalCredits')}</span>
-            <span className="font-medium">{totalCredits.toLocaleString()}</span>
+            <span className="font-medium" data-visual-test="transparent">
+              {totalCredits.toLocaleString()}
+            </span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('remainingCredits')}</span>
-            <span className="font-medium">
+            <span className="font-medium" data-visual-test="transparent">
               {creditsData.amount.toLocaleString()}
             </span>
           </div>
           {showMinutes && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-200">{t('remainingTime')}</span>
-              <span className="font-medium">
+              <span className="font-medium" data-visual-test="transparent">
                 ~{minutesRemaining.toLocaleString()} min
               </span>
             </div>
           )}
         </div>
 
-        <div className="relative h-10 w-10">
+        <div className="relative h-10 w-10" data-visual-test="transparent">
           <ProgressCircle
             className="size-10"
             value={Math.round((creditsData.amount / 10_000) * 100)}
