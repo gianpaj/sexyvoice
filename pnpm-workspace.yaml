@@ -5,7 +5,7 @@ packages:
 
 catalog:
   "@ai-sdk/react": "3.0.118"
-  "@biomejs/biome": "2.4.11"
+  "@biomejs/biome": "2.4.15"
   "@supabase/supabase-js": "2.99.2"
   "@tailwindcss/postcss": "4.2.2"
   "@types/node": "24.10.4"
