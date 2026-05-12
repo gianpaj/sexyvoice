@@ -32,14 +32,57 @@ export const getSafeAuthRedirectPath = (
   }
 };
 
+const getSupportedLocale = (
+  value: string | null | undefined,
+): Locale | null => {
+  const locale = value?.trim().toLowerCase().split('-')[0];
+
+  return i18n.locales.includes(locale as Locale) ? (locale as Locale) : null;
+};
+
+const getLocaleFromAcceptLanguage = (
+  acceptLanguage: string | null,
+): Locale | null =>
+  acceptLanguage
+    ?.split(',')
+    .map((languageRange) => {
+      const [languageTag, ...parameters] = languageRange.trim().split(';');
+      const qualityParameter = parameters
+        .map((parameter) => parameter.trim())
+        .find((parameter) => parameter.startsWith('q='));
+      const quality = qualityParameter
+        ? Number(qualityParameter.slice('q='.length))
+        : 1;
+
+      return {
+        locale: getSupportedLocale(languageTag),
+        quality: Number.isFinite(quality) ? quality : 0,
+      };
+    })
+    .filter(({ locale, quality }) => locale && quality > 0)
+    .sort((a, b) => b.quality - a.quality)[0]?.locale ?? null;
+
 export const getLocaleFromRedirectPath = (
   redirectPath: string | null,
 ): Locale => {
-  const locale = redirectPath?.split('/')[1];
+  return getSupportedLocale(redirectPath?.split('/')[1]) ?? i18n.defaultLocale;
+};
 
-  return i18n.locales.includes(locale as Locale)
-    ? (locale as Locale)
-    : i18n.defaultLocale;
+export const getLocaleFromAuthHints = ({
+  acceptLanguage,
+  locale,
+  redirectPath,
+}: {
+  acceptLanguage: string | null;
+  locale: string | null;
+  redirectPath: string | null;
+}): Locale => {
+  return (
+    getSupportedLocale(redirectPath?.split('/')[1]) ??
+    getSupportedLocale(locale) ??
+    getLocaleFromAcceptLanguage(acceptLanguage) ??
+    i18n.defaultLocale
+  );
 };
 
 export const createAuthRedirectResponse = (url: string) => {

@@ -137,12 +137,12 @@ describe('Email auth confirm route', () => {
 
   it('reports malformed confirmation links without calling Supabase', async () => {
     const response = await GET(
-      new Request('https://sexyvoice.ai/auth/confirm?type=email'),
+      new Request('https://sexyvoice.ai/auth/confirm?type=email&lang=fr'),
     );
 
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe(
-      'https://sexyvoice.ai/en/login',
+      'https://sexyvoice.ai/fr/login',
     );
     expect(createClient).not.toHaveBeenCalled();
     expect(captureMessage).toHaveBeenCalledWith(
@@ -160,6 +160,22 @@ describe('Email auth confirm route', () => {
         }),
       }),
     );
+  });
+
+  it('falls back to Accept-Language when confirmation links omit locale hints', async () => {
+    const response = await GET(
+      new Request('https://sexyvoice.ai/auth/confirm?type=email', {
+        headers: {
+          'accept-language': 'es-ES,es;q=0.9,en;q=0.8',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/es/login',
+    );
+    expect(createClient).not.toHaveBeenCalled();
   });
 
   it('reports verifyOtp failures and returns users to localized login', async () => {

@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
 import {
   createAuthRedirectResponse,
-  getLocaleFromRedirectPath,
+  getLocaleFromAuthHints,
   getSafeAuthRedirectPath,
 } from '@/lib/supabase/auth-redirect';
 import { createClient } from '@/lib/supabase/server';
@@ -44,7 +44,11 @@ export async function GET(request: Request) {
     requestUrl.searchParams.get('redirect_to') ??
     requestUrl.searchParams.get('next');
   const safeRedirectPath = getSafeAuthRedirectPath(redirectTo, origin);
-  const locale = getLocaleFromRedirectPath(safeRedirectPath);
+  const locale = getLocaleFromAuthHints({
+    acceptLanguage: request.headers.get('accept-language'),
+    locale: requestUrl.searchParams.get('lang'),
+    redirectPath: safeRedirectPath,
+  });
   const loginPath = `/${locale}/login`;
 
   if (!(tokenHash && isEmailOtpType(type))) {
