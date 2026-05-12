@@ -26,7 +26,7 @@ export const getSafeAuthRedirectPath = (
       return null;
     }
 
-    return `${redirectUrl.pathname}${redirectUrl.search}`;
+    return `${redirectUrl.pathname}${redirectUrl.search}${redirectUrl.hash}`;
   } catch {
     return null;
   }

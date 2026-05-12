@@ -64,13 +64,13 @@ describe('Email auth confirm route', () => {
 
     const response = await GET(
       new Request(
-        'https://sexyvoice.ai/auth/confirm?token_hash=pkce_hash&type=email&redirect_to=https%3A%2F%2Fsexyvoice.ai%2Fes%2Fdashboard%3Fsource%3Demail',
+        'https://sexyvoice.ai/auth/confirm?token_hash=pkce_hash&type=email&redirect_to=https%3A%2F%2Fsexyvoice.ai%2Fes%2Fdashboard%3Fsource%3Demail%23billing',
       ),
     );
 
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe(
-      'https://sexyvoice.ai/es/dashboard?source=email',
+      'https://sexyvoice.ai/es/dashboard?source=email#billing',
     );
     expect(response.headers.get('set-cookie')).toContain(
       'sv_auth_callback_ok=',
