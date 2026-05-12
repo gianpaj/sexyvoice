@@ -109,12 +109,20 @@ function buildDateSpine(
   endingBefore: string,
   bucketWidth: string,
 ): string[] {
+  if (!(startingOn && endingBefore)) {
+    return [];
+  }
+
   const stepDays = bucketWidth === '7d' ? 7 : 1;
   const spine: string[] = [];
   let current = startingOn;
   while (current < endingBefore) {
     spine.push(current);
-    current = addDaysToIsoDate(current, stepDays);
+    const next = addDaysToIsoDate(current, stepDays);
+    if (next === current) {
+      break;
+    }
+    current = next;
   }
   return spine;
 }
