@@ -92,6 +92,11 @@ pnpm clean               # Check unused dependencies with knip
 - Use 2-space indentation, single quotes, and the repo's import ordering.
 - Keep TypeScript strict. Use `import type` and `export type` where appropriate.
 - Follow React Server Component patterns in App Router code.
+- React Compiler is enabled in `apps/web/next.config.js`. Do not add or restore
+  `useMemo`, `useCallback`, or similar memoization only because a generic code
+  review suggests it. Prefer simpler code unless manual memoization is required
+  for correctness, third-party identity semantics, or a profiler-backed
+  performance issue.
 - Use kebab-case for files, PascalCase for components, lowercase hyphenated API
   route segments, and snake_case for database names.
 
