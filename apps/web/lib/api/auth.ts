@@ -2,6 +2,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 
+// Built via Array.join to avoid secret scanners flagging the literal prefix.
 const API_KEY_PREFIX_PARTS = ['sk', 'live', ''];
 const API_KEY_PREFIX = API_KEY_PREFIX_PARTS.join('_');
 const API_KEY_RANDOM_LENGTH = 32;
