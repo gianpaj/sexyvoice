@@ -257,6 +257,12 @@ Deployment order matters for these template changes:
 Avoid generating production auth links while the dashboard templates and
 deployed app route support are intentionally out of sync.
 
+Before testing signup or recovery links, verify the Supabase Auth URL
+configuration allows every destination the app sends through
+`emailRedirectTo` / `redirectTo`, including localized dashboard URLs for `en`,
+`es`, `de`, `da`, `it`, and `fr`. If Supabase rejects the provided redirect, it
+can fall back to the Site URL and drop the intended `redirect_to` destination.
+
 ### Stripe
 
 - `STRIPE_SECRET_KEY`
