@@ -10,16 +10,19 @@ import {
 } from '@/lib/supabase/auth-redirect';
 import { createClient } from '@/lib/supabase/server';
 
-const EMAIL_OTP_TYPES = new Set<EmailOtpType>([
+const EMAIL_OTP_TYPES: ReadonlySet<EmailOtpType> = new Set([
   'signup',
   'invite',
   'magiclink',
   'recovery',
   'email_change',
   'email',
-]);
+] satisfies EmailOtpType[]);
 
-const SIGNUP_EMAIL_OTP_TYPES = new Set<EmailOtpType>(['signup', 'email']);
+const SIGNUP_EMAIL_OTP_TYPES: ReadonlySet<EmailOtpType> = new Set([
+  'signup',
+  'email',
+] satisfies EmailOtpType[]);
 
 const isEmailOtpType = (value: string | null): value is EmailOtpType =>
   Boolean(value && EMAIL_OTP_TYPES.has(value as EmailOtpType));
