@@ -48,7 +48,7 @@ async function Footer({ lang }: { lang: Locale }) {
 
           {/* Tools column */}
           <div>
-            <h3 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+            <h3 className="mb-3 font-semibold text-white text-xs uppercase tracking-wider">
               {dict.toolsHeading}
             </h3>
             <ul className="space-y-2.5">
@@ -81,7 +81,7 @@ async function Footer({ lang }: { lang: Locale }) {
 
           {/* Company column */}
           <div>
-            <h3 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+            <h3 className="mb-3 font-semibold text-white text-xs uppercase tracking-wider">
               {dict.companyHeading}
             </h3>
             <ul className="space-y-2.5">
@@ -100,7 +100,7 @@ async function Footer({ lang }: { lang: Locale }) {
 
           {/* Legal column */}
           <div>
-            <h3 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+            <h3 className="mb-3 font-semibold text-white text-xs uppercase tracking-wider">
               {dict.legalHeading}
             </h3>
             <ul className="space-y-2.5">

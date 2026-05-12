@@ -60,15 +60,14 @@ export function AudioPreviewCard({
         <h3 className="font-semibold text-lg text-white">{name}</h3>
         <Button
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="hit-area-2 border-none bg-blue-600/20 text-blue-400 hover:bg-blue-600/40 hover:text-blue-200"
+          className="sample-play hit-area-2 border-none"
           onClick={togglePlay}
           size="icon"
-          variant="outline"
         >
           {isPlaying ? (
-            <Pause className="size-4" />
+            <Pause className="size-5" fill="white" strokeWidth={0} />
           ) : (
-            <Play className="size-4" />
+            <Play className="size-5" fill="white" strokeWidth={0} />
           )}
         </Button>
       </div>
