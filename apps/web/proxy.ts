@@ -89,6 +89,7 @@ export async function proxy(request: NextRequest) {
 
   if (
     pathname === '/auth/callback' ||
+    pathname === '/auth/confirm' ||
     pathname.startsWith('/markdown-internal/')
   ) {
     return NextResponse.next();

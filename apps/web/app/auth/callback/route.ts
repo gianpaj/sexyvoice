@@ -4,24 +4,14 @@ import { NextResponse } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import {
-  createOauthCallbackMarkerValue,
-  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-} from '@/lib/supabase/oauth-callback-marker';
+  createAuthRedirectResponse,
+  getLocaleFromRedirectPath,
+  getSafeAuthRedirectPath,
+} from '@/lib/supabase/auth-redirect';
+import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { createClient } from '@/lib/supabase/server';
 import { routing } from '@/src/i18n/routing';
-
-const isSafeRedirectPath = (value: string | null) =>
-  Boolean(value?.startsWith('/') && !value.startsWith('//'));
-
-const getLocaleFromRedirectPath = (redirectPath: string | null) => {
-  const locale = redirectPath?.split('/')[1];
-
-  return routing.locales.includes(locale as (typeof routing.locales)[number])
-    ? locale
-    : routing.defaultLocale;
-};
 
 const getOauthCodeFingerprint = (code: string | null) => {
   if (!code) {
@@ -102,25 +92,6 @@ const getOauthCallbackCookieContext = (request: Request) => {
   };
 };
 
-const createOauthRedirectResponse = (url: string) => {
-  const response = NextResponse.redirect(url);
-  const markerValue = createOauthCallbackMarkerValue();
-
-  if (markerValue) {
-    response.cookies.set({
-      name: OAUTH_CALLBACK_COOKIE_NAME,
-      value: markerValue,
-      httpOnly: true,
-      maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    });
-  }
-
-  return response;
-};
-
 export async function GET(request: Request) {
   // The `/auth/callback` route is required for the server-side auth flow implemented
   // by the SSR package. It exchanges an auth code for the user's session.
@@ -129,7 +100,8 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get('redirect_to');
-  const locale = getLocaleFromRedirectPath(redirectTo);
+  const safeRedirectPath = getSafeAuthRedirectPath(redirectTo, origin);
+  const locale = getLocaleFromRedirectPath(safeRedirectPath);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
   const oauthCookieContext = getOauthCallbackCookieContext(request);
@@ -229,12 +201,12 @@ export async function GET(request: Request) {
       await posthog.shutdown();
     }
 
-    if (isSafeRedirectPath(redirectTo)) {
-      return createOauthRedirectResponse(`${origin}${redirectTo}`);
+    if (safeRedirectPath) {
+      return createAuthRedirectResponse(`${origin}${safeRedirectPath}`);
     }
 
     // URL to redirect to after sign up process completes
-    return createOauthRedirectResponse(
+    return createAuthRedirectResponse(
       `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {

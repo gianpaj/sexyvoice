@@ -216,6 +216,36 @@ Generate secure secrets with:
 openssl rand -hex 32
 ```
 
+### Supabase Auth email templates
+
+SSR auth uses `/auth/callback` for OAuth code exchanges. Email confirmation and
+password recovery links should use `/auth/confirm` with `token_hash`, so users
+can open links from email clients, webviews, or another browser without needing
+the original PKCE code verifier in local browser storage.
+
+Configure the Supabase dashboard email templates like this:
+
+Confirm signup:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}">
+  Confirm your email
+</a>
+```
+
+Reset password:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&redirect_to={{ .RedirectTo }}">
+  Reset your password
+</a>
+```
+
+Do not route email templates through `/auth/callback` and do not rely on
+`{{ .ConfirmationURL }}` for SSR email auth links. The app passes final
+same-origin destinations through Supabase `emailRedirectTo` / `redirectTo`, and
+`/auth/confirm` validates the destination before redirecting.
+
 ### Stripe
 
 - `STRIPE_SECRET_KEY`
@@ -457,6 +487,8 @@ Check:
 - `OAUTH_CALLBACK_MARKER_SECRET`
 - redirect URL configuration in Supabase / OAuth provider
 - Sentry events tagged for OAuth callback flow
+- Supabase email templates use `/auth/confirm?token_hash={{ .TokenHash }}` for
+  email confirmation and password recovery, not `/auth/callback`
 
 ### LiveKit call issues
 
