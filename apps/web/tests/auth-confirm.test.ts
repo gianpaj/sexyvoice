@@ -178,6 +178,29 @@ describe('Email auth confirm route', () => {
     expect(createClient).not.toHaveBeenCalled();
   });
 
+  it('redirects recovery confirmations without redirect destinations to update password', async () => {
+    const verifyOtp = vi.fn().mockResolvedValue({
+      data: { user: { id: 'user-id', email: 'user@example.com' } },
+      error: null,
+    });
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { verifyOtp },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/confirm?token_hash=pkce_hash&type=recovery',
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/en/protected/update-password',
+    );
+    expect(recordSignupSideEffects).not.toHaveBeenCalled();
+  });
+
   it('reports verifyOtp failures and returns users to localized login', async () => {
     const verifyError = new Error('Token has expired or is invalid');
     const verifyOtp = vi.fn().mockResolvedValue({
