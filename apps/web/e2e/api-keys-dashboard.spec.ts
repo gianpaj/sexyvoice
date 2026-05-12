@@ -24,7 +24,7 @@ test.describe('API Keys Dashboard - Authenticated User', () => {
   });
 
   test.afterEach(async ({ page }) => {
-    await page.unroute('**/*');
+    await page.unroute('**/api/api-keys');
   });
 
   test('should display existing API keys', async ({ page }) => {
