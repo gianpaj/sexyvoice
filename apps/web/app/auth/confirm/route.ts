@@ -2,6 +2,7 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
+import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
 import {
   createAuthRedirectResponse,
   getLocaleFromRedirectPath,
@@ -18,8 +19,13 @@ const EMAIL_OTP_TYPES = new Set<EmailOtpType>([
   'email',
 ]);
 
+const SIGNUP_EMAIL_OTP_TYPES = new Set<EmailOtpType>(['signup', 'email']);
+
 const isEmailOtpType = (value: string | null): value is EmailOtpType =>
   Boolean(value && EMAIL_OTP_TYPES.has(value as EmailOtpType));
+
+const isSignupEmailOtpType = (type: EmailOtpType) =>
+  SIGNUP_EMAIL_OTP_TYPES.has(type);
 
 const getDefaultSuccessPath = (type: EmailOtpType, locale: string) =>
   type === 'recovery'
@@ -64,7 +70,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({
+  const { data, error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
     type,
   });
@@ -84,6 +90,28 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.redirect(`${origin}${loginPath}`);
+  }
+
+  if (isSignupEmailOtpType(type)) {
+    const user = data.user ?? (await supabase.auth.getUser()).data.user;
+
+    if (user) {
+      await recordSignupSideEffects(user, 'email');
+    } else {
+      captureMessage('Email signup confirmation completed without a user.', {
+        level: 'error',
+        tags: {
+          area: 'auth',
+          flow: 'email-auth-confirm',
+          error_type: 'missing-confirmed-user',
+        },
+        extra: {
+          type,
+          redirectTo,
+          safeRedirectPath,
+        },
+      });
+    }
   }
 
   return createAuthRedirectResponse(

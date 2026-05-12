@@ -2,8 +2,7 @@ import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
-import PostHogClient from '@/lib/posthog';
-import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
+import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
 import {
   createAuthRedirectResponse,
   getLocaleFromRedirectPath,
@@ -156,8 +155,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${loginPath}`);
     }
 
-    const email = user?.email;
-    if (!email) {
+    if (!user?.email) {
       captureMessage('OAuth callback completed without a user email.', {
         level: 'error',
         tags: {
@@ -174,32 +172,10 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${loginPath}`);
     }
 
-    // Add Stripe customer creation
-    if (user) {
-      const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-      if (!stripe_id) {
-        console.error('Failed to create Stripe customer.');
-        captureMessage('Failed to create Stripe customer.', {
-          level: 'error',
-          user: { id: user.id, email: user.email },
-        });
-      }
-
-      const posthog = PostHogClient();
-
-      const login_type =
-        user.app_metadata.provider === 'email' ? 'email' : 'social';
-
-      posthog.capture({
-        distinctId: user.id,
-        event: 'sign-up',
-        properties: {
-          login_type,
-          //   is_free_trial: true,
-        },
-      });
-      await posthog.shutdown();
-    }
+    await recordSignupSideEffects(
+      user,
+      user.app_metadata.provider === 'email' ? 'email' : 'social',
+    );
 
     if (safeRedirectPath) {
       return createAuthRedirectResponse(`${origin}${safeRedirectPath}`);

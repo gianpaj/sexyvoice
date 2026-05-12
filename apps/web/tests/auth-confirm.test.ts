@@ -2,7 +2,12 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/auth/confirm/route';
+import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
 import { createClient } from '@/lib/supabase/server';
+
+vi.mock('@/lib/auth/signup-side-effects', () => ({
+  recordSignupSideEffects: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock('next/server', () => ({
   NextResponse: {
@@ -74,6 +79,10 @@ describe('Email auth confirm route', () => {
       token_hash: 'pkce_hash',
       type: 'email',
     });
+    expect(recordSignupSideEffects).toHaveBeenCalledWith(
+      { id: 'user-id', email: 'user@example.com' },
+      'email',
+    );
     expect(captureException).not.toHaveBeenCalled();
     expect(captureMessage).not.toHaveBeenCalled();
   });
