@@ -23,8 +23,6 @@
       "@opentelemetry/auto-instrumentations-node": "0.75.0",
       "@opentelemetry/exporter-prometheus": "0.217.0",
       "@opentelemetry/sdk-node": "0.217.0",
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3",
       "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7",
       "require-in-the-middle": "7.5.2",
       "undici@<5.28.4": ">=5.28.4",
