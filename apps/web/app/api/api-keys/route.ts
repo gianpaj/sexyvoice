@@ -61,14 +61,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const [isPaidUser, { count, error: countError }] = await Promise.all([
-    hasUserPaid(user.id),
-    supabase
-      .from('api_keys')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('is_active', true),
-  ]);
+  const isPaidUser = await hasUserPaid(user.id);
 
   if (!isPaidUser) {
     return NextResponse.json(
@@ -76,6 +69,12 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
+
+  const { count, error: countError } = await supabase
+    .from('api_keys')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('is_active', true);
 
   if (countError) {
     return NextResponse.json(
