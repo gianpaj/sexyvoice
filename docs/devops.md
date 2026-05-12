@@ -247,6 +247,16 @@ Do not route email templates through `/auth/callback` and do not rely on
 same-origin destinations through Supabase `emailRedirectTo` / `redirectTo`, and
 `/auth/confirm` validates the destination before redirecting.
 
+Deployment order matters for these template changes:
+
+1. Update the Supabase dashboard Confirm signup and Reset password templates.
+2. Deploy the app version that serves `/auth/confirm` immediately after the
+   dashboard update.
+3. On rollback, roll the app back first and revert the Supabase templates last.
+
+Avoid generating production auth links while the dashboard templates and
+deployed app route support are intentionally out of sync.
+
 ### Stripe
 
 - `STRIPE_SECRET_KEY`
