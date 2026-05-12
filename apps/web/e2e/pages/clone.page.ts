@@ -54,6 +54,7 @@ export class ClonePage {
 
   // Sample audio accordion
   readonly sampleAccordionItems: Locator;
+  readonly sampleAccordionContents: Locator;
 
   // Error / alert elements
   readonly errorAlert: Locator;
@@ -107,6 +108,9 @@ export class ClonePage {
     this.sampleAccordionItems = page.locator(
       '[data-testid^="clone-sample-trigger-"]',
     );
+    this.sampleAccordionContents = page.locator(
+      '[data-testid^="clone-sample-content-"]',
+    );
 
     // Error alerts
     this.errorAlert = page.locator('[role="alert"]').filter({
@@ -131,6 +135,19 @@ export class ClonePage {
     // Wait for the main clone UI to appear
     await this.textInput.waitFor({ state: 'visible', timeout: 15_000 });
     await expect(this.cardTitle).toBeVisible();
+    // SSR markup appears before React hydration completes. Wait for the
+    // controlled checkbox to receive React internals so interactions hit the
+    // real onCheckedChange handler instead of inert HTML.
+    await this.page.waitForFunction(
+      () => {
+        const el = document.querySelector(
+          '[data-testid="clone-legal-consent"]',
+        );
+        if (!el) return false;
+        return Object.keys(el).some((key) => key.startsWith('__react'));
+      },
+      { timeout: 15_000 },
+    );
   }
 
   // --- Actions ---
@@ -161,12 +178,14 @@ export class ClonePage {
   async checkLegalConsent() {
     const state = await this.legalConsentCheckbox.getAttribute('data-state');
     if (state !== 'checked') {
-      await this.legalConsentCheckbox.evaluate((el) =>
-        (el as HTMLElement).click(),
-      );
+      await this.legalConsentLabel.click({ force: true });
       await expect(this.legalConsentCheckbox).toHaveAttribute(
         'data-state',
         'checked',
+      );
+      await expect(this.legalConsentCheckbox).toHaveAttribute(
+        'aria-checked',
+        'true',
       );
     }
   }
@@ -177,12 +196,14 @@ export class ClonePage {
   async uncheckLegalConsent() {
     const state = await this.legalConsentCheckbox.getAttribute('data-state');
     if (state === 'checked') {
-      await this.legalConsentCheckbox.evaluate((el) =>
-        (el as HTMLElement).click(),
-      );
+      await this.legalConsentLabel.click({ force: true });
       await expect(this.legalConsentCheckbox).toHaveAttribute(
         'data-state',
         'unchecked',
+      );
+      await expect(this.legalConsentCheckbox).toHaveAttribute(
+        'aria-checked',
+        'false',
       );
     }
   }
@@ -345,10 +366,17 @@ export class ClonePage {
    * Verify sample audio expanded content is visible
    * (shows source audio and example output sections)
    */
-  async expectSampleAudioExpanded() {
-    await expect(
-      this.page.locator('[data-testid^="clone-sample-content-"]').first(),
-    ).toHaveAttribute('data-state', 'open', { timeout: 5000 });
+  async expectSampleAudioExpanded(rowIndex = 0) {
+    await expect(this.sampleAccordionItems.nth(rowIndex)).toHaveAttribute(
+      'data-state',
+      'open',
+      { timeout: 5000 },
+    );
+    await expect(this.sampleAccordionContents.nth(rowIndex)).toHaveAttribute(
+      'data-state',
+      'open',
+      { timeout: 5000 },
+    );
   }
 
   /**
