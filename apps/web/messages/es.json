@@ -91,8 +91,8 @@
     "readMore": "Leer más",
     "more": "Más publicaciones",
     "hero": {
-      "title": "Voces Expresivas, Sin Censura",
-      "subtitle": "Generador de IA texto a voz gratis para adultos.\nPerfecto para creadores de contenido y narradores. 😉",
+      "title": "Voces expresivas, posibilidades sin límites",
+      "subtitle": "Generador de voz y texto a voz con IA gratis.\nPerfecto para creadores de contenido y narradores.",
       "buttonCTA": "Empezar",
       "noCreditCard": "Sin tarjeta de crédito",
       "signIn": "Iniciar Sesión"
@@ -112,7 +112,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Comienza con 10,000 créditos gratis ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Comienza con 10,000 créditos gratis",
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
       "action": "Crea tu primera voz"
@@ -202,10 +202,6 @@
             {
               "question": "¿Para qué puedo utilizar las voces generadas?",
               "answer": "Los creadores utilizan nuestras voces para vídeos, podcasts, audiolibros, contenido en redes sociales, juegos, e-learning y más. Es una forma fácil de mantener una calidad de audio consistente. Solo recuerda que nuestros términos prohíben el engaño o la suplantación de identidad."
-            },
-            {
-              "question": "¿Está permitida la generación de contenido erótico o para adultos?",
-              "answer": "Sí, permitimos la generación de contenido para adultos y erótico en nuestra plataforma. Creemos en la libertad creativa manteniendo un uso responsable. Sin embargo, todo el contenido debe cumplir con nuestros términos de servicio y las leyes aplicables. Prohibimos contenido que involucre menores, escenarios no consensuales o actividades ilegales."
             }
           ]
         },
@@ -265,7 +261,7 @@
         "description": "Para particulares que quieran probar la generación de audio de IA más avanzada.",
         "creditsWithAudio": "{numCredits} créditos (~4 min de audio)",
         "features": [
-          "Genera voz con sonidos de gemidos realistas",
+          "Genera voz con sonidos realistas",
           "Clona tu voz con tan solo 10 segundos de audio"
         ]
       },
@@ -694,8 +690,8 @@
     "description": "Monitorea el uso de la API, las solicitudes y los costos a lo largo del tiempo."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis para adultos & texto a voz",
-    "description": "Genera voces IA expresivas con emociones para contenido adulto en 24+ idiomas. Texto a voz gratis con clonación de voz y soporte NSFW. Empieza con créditos gratis – sin tarjeta requerida.",
+    "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis y texto a voz",
+    "description": "Genera voz IA expresiva con emociones en 24+ idiomas. Prueba gratis texto a voz con clonación de voz y síntesis de habla natural. Empieza con créditos gratis – sin tarjeta requerida.",
     "skipToMainContent": "Saltar al contenido principal",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
@@ -718,7 +714,7 @@
     "descriptionTranscribe": "Transcripción de audio online gratuita – Transcribe archivos de audio y vídeo a texto en más de 99 idiomas con OpenAI Whisper. 100% privado, se ejecuta en tu navegador. Sin subir archivos.",
     "keywordsAudioConverter": "conversor de audio gratis, convertir mp3, convertir wav, convertir flac, convertir ogg, convertir aac, conversor de audio online, conversor de audio en navegador, conversor de audio offline, mp3 a wav, wav a mp3, convertidor de formato de audio, ffmpeg online, conversor de audio sin subir archivos, conversor de audio privado",
     "keywordsTranscribe": "transcripción de audio gratis, transcribir audio, voz a texto, audio a texto, transcripción whisper, openai whisper, transcripción offline, transcripción en navegador, reconocimiento de voz gratis, transcripción de audio online, transcribir vídeo, transcripción 99 idiomas, transcripción privada",
-    "keywordsLanding": "texto a voz, generador de voz IA, clonación de voz, texto a voz para adultos, texto a voz NSFW, síntesis de voz IA, generación de voz, TTS gratis, voces IA expresivas, clonar voz IA, síntesis de habla, contenido adulto IA, voz IA adultos",
+    "keywordsLanding": "texto a voz, generador de voz IA, clonación de voz, síntesis de voz IA, generación de voz, TTS gratis, voces IA expresivas, clonar voz IA, síntesis de habla",
     "titleAudioJoiner": "Unificador de Audio Gratuito – Une y Recorta Audio",
     "descriptionAudioJoiner": "Une varios archivos de audio y recorta cada segmento directamente en tu navegador. Privado, gratuito y sin subidas.",
     "keywordsAudioJoiner": "unificador de audio gratis, unir archivos de audio, combinar mp3 online, combinar archivos wav, recortar segmentos de audio, editor de audio en navegador, unificador de audio sin subir, editor de audio privado, unificador de audio ffmpeg wasm",

@@ -91,8 +91,8 @@
     "readMore": "Read more",
     "more": "More posts",
     "hero": {
-      "title": "Expressive Voices, Uncensored",
-      "subtitle": "Free AI Text-to-Speech & Voice Generator for Adults.\nPerfect for content creators and storytellers. 😉",
+      "title": "Expressive Voices, Limitless Possibilities",
+      "subtitle": "Free AI Text-to-Speech & Voice Generator.\nPerfect for content creators and storytellers.",
       "buttonCTA": "Sign up for Free",
       "noCreditCard": "No credit card required",
       "signIn": "Sign In"
@@ -112,7 +112,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start with 10,000 free credits ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start with 10,000 free credits",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
@@ -202,10 +202,6 @@
             {
               "question": "What can I use the generated voices for?",
               "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
-            },
-            {
-              "question": "Is erotica or adult content generation allowed?",
-              "answer": "Yes, we allow adult and erotica content generation on our platform. We believe in creative freedom while maintaining responsible use. However, all content must comply with our terms of service and applicable laws. We prohibit content involving minors, non-consensual scenarios, or illegal activities."
             }
           ]
         },
@@ -265,7 +261,7 @@
         "description": "For individuals who want to try out the most advanced AI audio generation.",
         "creditsWithAudio": "{numCredits} credits (~4 min of audio)",
         "features": [
-          "Generate speech with realistic moaning sounds",
+          "Generate speech with realistic sounds",
           "Clone your voice with as little as 10 seconds of audio"
         ]
       },
@@ -694,8 +690,8 @@
     "description": "Monitor API usage, requests, and costs over time."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator for Adults - NSFW and moan",
-    "description": "Generate expressive AI speech with emotions for adult content in 24+ languages. Free to try text-to-speech with voice cloning, NSFW support & natural speech synthesis. Start with free credits – no card required.",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator",
+    "description": "Generate expressive AI speech with emotions in 24+ languages. Free to try text-to-speech with voice cloning, support & natural speech synthesis. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
@@ -705,7 +701,7 @@
     "descriptionTranscribe": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
     "keywordsAudioConverter": "free audio converter, online audio converter, convert mp3 to wav, wav to mp3, flac converter, ogg converter, aac converter, m4a converter, browser audio converter, offline audio converter, audio format converter, change audio format, private audio converter, no upload converter, audio file converter",
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
-    "keywordsLanding": "text to speech, AI voice generator, voice cloning, adult text to speech, NSFW text to speech, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis, adult content AI, AI voice adult",
+    "keywordsLanding": "text to speech, AI voice generator, voice cloning, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis",
     "/": "",
     "/login": "Sign In",
     "/signup": "Sign Up Free – 10,000 Credits",
