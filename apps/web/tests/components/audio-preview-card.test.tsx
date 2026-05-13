@@ -17,7 +17,11 @@ describe('AudioPreviewCard', () => {
       />,
     );
 
-    expect(screen.getByText('[laugh]')).toHaveClass('bg-muted', 'font-mono');
+    expect(screen.getByText('[laugh]')).toHaveClass(
+      'inline-flex',
+      'rounded',
+      'font-mono',
+    );
   });
 
   it('highlights wrapping tags while keeping the wrapped text visible', () => {
@@ -31,13 +35,19 @@ describe('AudioPreviewCard', () => {
       />,
     );
 
-    expect(screen.getByText('<emphasis>')).toHaveClass('bg-muted', 'font-mono');
+    expect(screen.getByText('<emphasis>')).toHaveClass(
+      'inline-flex',
+      'rounded',
+      'font-mono',
+    );
     expect(screen.getByText('</emphasis>')).toHaveClass(
-      'bg-muted',
+      'inline-flex',
+      'rounded',
       'font-mono',
     );
     expect(screen.getByText('[long-pause]')).toHaveClass(
-      'bg-muted',
+      'inline-flex',
+      'rounded',
       'font-mono',
     );
     expect(
