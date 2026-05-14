@@ -442,7 +442,7 @@
       "statusGenerating": "Wird generiert...",
       "statusFailed": "Fehlgeschlagen",
       "statusPending": "Ausstehend",
-      "splitToggleLabel": "Texte aufteilen",
+      "splitToggleLabel": "In Segmente aufteilen",
       "splitToggleDisabled": "Das Aufteilen von Text in Audios ist für kostenlose Nutzer nicht verfügbar.",
       "downloadAllFailed": "Alle Segmente konnten nicht als eine WAV-Datei heruntergeladen werden."
     }

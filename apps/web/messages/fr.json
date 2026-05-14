@@ -442,7 +442,7 @@
       "statusGenerating": "En cours...",
       "statusFailed": "Échoué",
       "statusPending": "En attente",
-      "splitToggleLabel": "Diviser le texte en audios",
+      "splitToggleLabel": "Diviser en segments",
       "splitToggleDisabled": "La division du texte en audios n'est pas disponible pour les utilisateurs gratuits.",
       "downloadAllFailed": "Impossible de télécharger tous les segments en un seul fichier WAV."
     }

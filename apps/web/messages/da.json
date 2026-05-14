@@ -442,7 +442,7 @@
       "statusGenerating": "Genererer...",
       "statusFailed": "Fejlet",
       "statusPending": "Afventer",
-      "splitToggleLabel": "Opdel tekstlyd",
+      "splitToggleLabel": "Opdel i segmenter",
       "splitToggleDisabled": "Opdeling af tekst i lydfiler er ikke tilgængelig for gratis brugere.",
       "downloadAllFailed": "Kunne ikke downloade alle segmenter som én WAV-fil."
     }

@@ -130,6 +130,7 @@ export function SplitSegmentsPanel({
                   waveformClassName="w-40"
                 />
                 <Button
+                  aria-label={t('downloadAudio')}
                   onClick={() => onDownloadSegment(segment.audioUrl)}
                   size="icon"
                   title={t('downloadAudio')}

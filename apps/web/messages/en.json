@@ -442,7 +442,7 @@
       "statusGenerating": "Generating...",
       "statusFailed": "Failed",
       "statusPending": "Pending",
-      "splitToggleLabel": "Split text audios",
+      "splitToggleLabel": "Split into segments",
       "splitToggleDisabled": "Split text audios are not available for free users.",
       "downloadAllFailed": "Failed to download all segments as one WAV file."
     }

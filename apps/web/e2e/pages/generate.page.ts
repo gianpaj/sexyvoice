@@ -61,7 +61,7 @@ export class GeneratePage {
       name: /enhance/i,
     });
     this.splitToggle = this.audioGeneratorCard.getByRole('checkbox', {
-      name: /split text audios/i,
+      name: /split into segments/i,
     });
     this.segmentPreviewsHeading =
       this.audioGeneratorCard.getByText(/segment previews/i);
