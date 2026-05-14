@@ -443,7 +443,8 @@
       "statusFailed": "Failed",
       "statusPending": "Pending",
       "splitToggleLabel": "Split into segments",
-      "splitToggleDisabled": "Split text audios are not available for free users.",
+      "splitToggleDisabled": "Split text audios is available for paid users.",
+      "tooManySegments": "Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.",
       "downloadAllFailed": "Failed to download all segments as one WAV file."
     }
   },

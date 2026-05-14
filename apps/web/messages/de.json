@@ -443,7 +443,8 @@
       "statusFailed": "Fehlgeschlagen",
       "statusPending": "Ausstehend",
       "splitToggleLabel": "In Segmente aufteilen",
-      "splitToggleDisabled": "Das Aufteilen von Text in Audios ist für kostenlose Nutzer nicht verfügbar.",
+      "splitToggleDisabled": "Das Aufteilen von Text in Audios ist für zahlende Nutzer verfügbar.",
+      "tooManySegments": "Aufgeteilter Text darf höchstens __COUNT__ Segmente haben. Kürzen Sie den Text oder führen Sie Segmente vor der Generierung zusammen.",
       "downloadAllFailed": "Alle Segmente konnten nicht als eine WAV-Datei heruntergeladen werden."
     }
   },

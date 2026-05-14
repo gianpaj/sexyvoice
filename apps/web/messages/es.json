@@ -443,7 +443,8 @@
       "statusFailed": "Fallido",
       "statusPending": "Pendiente",
       "splitToggleLabel": "Dividir en segmentos",
-      "splitToggleDisabled": "La división de texto en audios no está disponible para usuarios gratuitos.",
+      "splitToggleDisabled": "La división de texto en audios está disponible para usuarios de pago.",
+      "tooManySegments": "El texto dividido puede tener como máximo __COUNT__ segmentos. Acorta el texto o combina segmentos antes de generar.",
       "downloadAllFailed": "No se pudieron descargar todos los segmentos como un único archivo WAV."
     }
   },

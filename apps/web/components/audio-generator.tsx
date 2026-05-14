@@ -35,6 +35,7 @@ import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
   generateRetrySeed,
+  SPLIT_SEGMENT_MAX_COUNT,
   splitLongTextIntoSegments,
 } from './audio-generator/split-segments-utils';
 import {
@@ -187,6 +188,10 @@ export function AudioGenerator({
       }),
     [text, isGrokVoice],
   );
+  const previewSplitSegmentTexts = useMemo(
+    () => splitSegmentTexts.slice(0, SPLIT_SEGMENT_MAX_COUNT),
+    [splitSegmentTexts],
+  );
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
     shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
@@ -204,7 +209,7 @@ export function AudioGenerator({
     selectedVoiceName: selectedVoice?.name,
     text,
     shouldUseSplitMode,
-    splitSegmentTexts,
+    splitSegmentTexts: previewSplitSegmentTexts,
   });
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
     useGenerationProgressToast(selectedVoice?.name, dict.split);
@@ -390,6 +395,19 @@ export function AudioGenerator({
   const handleGenerate = useCallback(async () => {
     if (!selectedVoice) return;
 
+    if (
+      shouldUseSplitMode &&
+      splitSegmentTexts.length > SPLIT_SEGMENT_MAX_COUNT
+    ) {
+      toast.error(
+        dict.split.tooManySegments.replace(
+          '__COUNT__',
+          String(SPLIT_SEGMENT_MAX_COUNT),
+        ),
+      );
+      return;
+    }
+
     setIsGenerating(true);
     try {
       if (shouldUseSplitMode) {
@@ -414,11 +432,13 @@ export function AudioGenerator({
     }
   }, [
     dict.error,
+    dict.split.tooManySegments,
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
     selectedVoice,
     shouldUseSplitMode,
+    splitSegmentTexts.length,
   ]);
 
   const handleCancel = useCallback(() => {

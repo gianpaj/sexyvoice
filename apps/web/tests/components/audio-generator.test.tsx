@@ -152,7 +152,9 @@ const baseDict = {
     segmentRetryFailed: 'Retry failed for segment __INDEX__',
     segmentGenerated: 'Segment __INDEX__ generated',
     splitToggleLabel: 'Split long text',
-    splitToggleDisabled: 'Split text audios are not available for free users.',
+    splitToggleDisabled: 'Split text audios is available for paid users.',
+    tooManySegments:
+      'Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.',
     downloadAllFailed: 'Failed to download all segments',
     segmentPreviews: 'Segment previews',
     downloadAll: 'Download all',
@@ -665,6 +667,40 @@ describe('AudioGenerator', () => {
       styleVariant: '',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  it('blocks split generation when the text creates more than 20 segments', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const tooManySegmentsText = Array.from(
+      { length: 21 },
+      (_, index) => `${String.fromCharCode(65 + index).repeat(300)}.`,
+    ).join(' ');
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+    });
+
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: tooManySegmentsText } },
+    );
+    await waitFor(() => {
+      expect(screen.getByText('Segment 20')).toBeVisible();
+    });
+    expect(screen.queryByText('Segment 21')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockToastFn.error).toHaveBeenCalledWith(
+      'Split text can have at most 20 segments. Shorten the text or combine segments before generating.',
+    );
+    expect(mockToastFn.success).not.toHaveBeenCalled();
   });
 
   it('generates each Gemini split segment separately with the selected style', async () => {

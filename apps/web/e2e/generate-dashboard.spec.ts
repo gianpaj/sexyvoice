@@ -188,7 +188,6 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     });
   });
 
-  // biome-ignore lint/suspicious/noSkippedTests: intentionally skipped — test is too slow (types 1000+ chars)
   test.skip('should show warning when text exceeds character limit', async () => {
     // SKIPPED: This test is slow due to typing 1000+ characters
     // TODO: Find a faster way to test character limit validation
