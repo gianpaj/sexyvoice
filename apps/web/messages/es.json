@@ -357,18 +357,22 @@
     "ctaButton": "Generar audio",
     "ctaButtonPlural": "Generar audios",
     "downloadAudio": "Descargar Audio",
+    "enhanceTextTitle": "Mejorar texto con etiquetas de emoción de IA",
     "estimateCreditsButton": "Estimar créditos",
     "error": "Error al generar audio",
     "errorEstimating": "Error al estimar créditos",
+    "fullscreenTitle": "Pantalla completa",
     "generating": "Generando",
     "gproLimitExceeded": "Has excedido el límite de __COUNT__ generaciones de voz multilingües como usuario gratuito. Por favor, prueba una voz diferente o mejora tu plan para acceso ilimitado.",
     "notEnoughCredits": "No tienes suficientes créditos para generar audio.",
+    "paidCharacterLimitTooltip": "Los usuarios de pago disfrutan de un límite de caracteres 2×",
     "playAudio": "Escucha Audio",
     "resetPlayer": "Reiniciar reproductor",
     "subtitle": "Selecciona una voz y genera audio a partir de texto",
     "success": "¡Audio generado con éxito!",
     "textAreaPlaceholder": "Escribe el texto que quieres convertir en voz...",
     "title": "Generar audio",
+    "upgradeCharacterLimitTooltip": "Actualiza a un plan de pago para obtener un límite de caracteres 2×",
     "grok": {
       "inlineEffectPlaceholder": "Insertar efecto en línea",
       "wrappingEffectPlaceholder": "Envolver con etiqueta de estilo",
@@ -427,8 +431,8 @@
     "split": {
       "segmentPreviews": "Vistas previas de segmentos",
       "segmentLabel": "Segmento __INDEX__",
-      "downloadAll": "Descargar todo (WAV)",
-      "joiningWav": "Uniendo WAV...",
+      "downloadAll": "Descargar todo",
+      "joiningWav": "Uniendo audio...",
       "preparingJoiner": "Preparando el unificador de audio...",
       "retry": "Reintentar",
       "segmentCannotBeEmpty": "El texto del segmento no puede estar vacío.",
@@ -445,7 +449,7 @@
       "splitToggleLabel": "Dividir en segmentos",
       "splitToggleDisabled": "La división de texto en audios está disponible para usuarios de pago.",
       "tooManySegments": "El texto dividido puede tener como máximo __COUNT__ segmentos. Acorta el texto o combina segmentos antes de generar.",
-      "downloadAllFailed": "No se pudieron descargar todos los segmentos como un único archivo WAV."
+      "downloadAllFailed": "No se pudieron descargar todos los segmentos."
     }
   },
   "call": {

@@ -52,9 +52,17 @@ async function hashText(text: string): Promise<string> {
 export async function buildSplitStorageKey(
   voiceName: string,
   text: string,
+  generationContext = '',
 ): Promise<string> {
-  const hash = await hashText(text);
+  const hash = await hashText(JSON.stringify({ generationContext, text }));
   return `${SPLIT_STORAGE_PREFIX}:${voiceName}:${hash}`;
+}
+
+export function buildSplitGeneratedByTextKey(
+  text: string,
+  generationContext = '',
+): string {
+  return JSON.stringify({ generationContext, text });
 }
 
 function getGrokWrappingTagAt(input: string, index: number): string | null {
@@ -152,6 +160,17 @@ function splitIntoGrokProtectedChunks(text: string): SplitChunk[] {
   return chunks;
 }
 
+function getHardSplitIndex(text: string): number {
+  const splitWindow = text.slice(0, SPLIT_SEGMENT_MAX_LENGTH + 1);
+  const whitespaceMatches = [...splitWindow.matchAll(/\s+/g)];
+  const lastWhitespaceIndex = whitespaceMatches
+    .map((match) => match.index ?? -1)
+    .filter((index) => index > 0 && index <= SPLIT_SEGMENT_MAX_LENGTH)
+    .at(-1);
+
+  return lastWhitespaceIndex ?? SPLIT_SEGMENT_MAX_LENGTH;
+}
+
 function splitPlainTextIntoUnits(text: string): string[] {
   const trimmedText = text.trim();
   if (!trimmedText) {
@@ -174,8 +193,9 @@ function splitPlainTextIntoUnits(text: string): string[] {
 
     let remaining = sentence;
     while (remaining.length > SPLIT_SEGMENT_MAX_LENGTH) {
-      units.push(remaining.slice(0, SPLIT_SEGMENT_MAX_LENGTH).trim());
-      remaining = remaining.slice(SPLIT_SEGMENT_MAX_LENGTH).trim();
+      const splitIndex = getHardSplitIndex(remaining);
+      units.push(remaining.slice(0, splitIndex).trim());
+      remaining = remaining.slice(splitIndex).trim();
     }
 
     if (remaining) {

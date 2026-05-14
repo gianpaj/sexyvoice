@@ -188,6 +188,14 @@ export function AudioGenerator({
       }),
     [text, isGrokVoice],
   );
+  const splitGenerationContext = useMemo(
+    () =>
+      JSON.stringify({
+        language: isGrokVoice ? selectedGrokLanguage : '',
+        styleVariant: isGeminiVoice ? selectedStyle : '',
+      }),
+    [isGeminiVoice, isGrokVoice, selectedGrokLanguage, selectedStyle],
+  );
   const previewSplitSegmentTexts = useMemo(
     () => splitSegmentTexts.slice(0, SPLIT_SEGMENT_MAX_COUNT),
     [splitSegmentTexts],
@@ -206,6 +214,7 @@ export function AudioGenerator({
     markSegmentFailed,
     updateSegmentText,
   } = useSplitSegments({
+    generationContext: splitGenerationContext,
     selectedVoiceName: selectedVoice?.name,
     text,
     shouldUseSplitMode,
@@ -481,11 +490,12 @@ export function AudioGenerator({
           ),
         );
       } catch (error) {
-        markSegmentFailed(segmentIndex);
         if (error instanceof DOMException && error.name === 'AbortError') {
+          markSegmentIdle(segmentIndex);
           return;
         }
 
+        markSegmentFailed(segmentIndex);
         if (error instanceof APIError) {
           toast.error(error.message || dict.error);
         } else {
@@ -509,6 +519,7 @@ export function AudioGenerator({
       isGenerating,
       markSegmentFailed,
       markSegmentGenerating,
+      markSegmentIdle,
       markSegmentSuccess,
       requestGenerateVoice,
       selectedVoice,
@@ -813,6 +824,8 @@ export function AudioGenerator({
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
+              characterLimitPaidTooltip={dict.paidCharacterLimitTooltip}
+              characterLimitUpgradeTooltip={dict.upgradeCharacterLimitTooltip}
               charactersLimit={charactersLimit}
               dict={dict.grok}
               enforceCharactersLimit={!shouldDisableCharactersLimit}

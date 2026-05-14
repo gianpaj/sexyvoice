@@ -357,18 +357,22 @@
     "ctaButton": "Générer l'audio",
     "ctaButtonPlural": "Générer des audios",
     "downloadAudio": "Télécharger l'audio",
+    "enhanceTextTitle": "Améliorer le texte avec des balises d'émotion IA",
     "error": "Échec de la génération de l'audio",
     "errorEstimating": "Impossible d'estimer les crédits",
     "estimateCreditsButton": "Estimer les crédits",
+    "fullscreenTitle": "Plein écran",
     "generating": "Génération",
     "gproLimitExceeded": "Vous avez dépassé la limite de __COUNT__ générations de voix multilingues en tant qu'utilisateur gratuit. Veuillez essayer une voix différente ou mettre à niveau votre forfait pour un accès illimité.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
+    "paidCharacterLimitTooltip": "Les utilisateurs payants bénéficient d'une limite de caractères 2×",
     "playAudio": "Lire l'audio",
     "resetPlayer": "Réinitialiser le lecteur",
     "subtitle": "Sélectionnez une voix et générez de l'audio à partir du texte",
     "success": "Audio généré avec succès !",
     "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
     "title": "Générer de l'audio",
+    "upgradeCharacterLimitTooltip": "Passez à un forfait payant pour une limite de caractères 2×",
     "grok": {
       "inlineEffectPlaceholder": "Insérer un effet inline",
       "wrappingEffectPlaceholder": "Entourer avec une balise de style",
@@ -427,8 +431,8 @@
     "split": {
       "segmentPreviews": "Aperçus des segments",
       "segmentLabel": "Segment __INDEX__",
-      "downloadAll": "Tout télécharger (WAV)",
-      "joiningWav": "Assemblage WAV...",
+      "downloadAll": "Tout télécharger",
+      "joiningWav": "Assemblage audio...",
       "preparingJoiner": "Préparation de l'assembleur audio...",
       "retry": "Réessayer",
       "segmentCannotBeEmpty": "Le texte du segment ne peut pas être vide.",
@@ -445,7 +449,7 @@
       "splitToggleLabel": "Diviser en segments",
       "splitToggleDisabled": "La division du texte en audios est disponible pour les utilisateurs payants.",
       "tooManySegments": "Le texte divisé peut contenir au maximum __COUNT__ segments. Raccourcissez le texte ou combinez des segments avant de générer.",
-      "downloadAllFailed": "Impossible de télécharger tous les segments en un seul fichier WAV."
+      "downloadAllFailed": "Impossible de télécharger tous les segments."
     }
   },
   "call": {

@@ -357,18 +357,22 @@
     "ctaButton": "Generate Audio",
     "ctaButtonPlural": "Generate Audios",
     "downloadAudio": "Download Audio",
+    "enhanceTextTitle": "Enhance text with AI emotion tags",
     "error": "Failed to generate audio",
     "errorEstimating": "Failed to estimate credits",
     "estimateCreditsButton": "Estimate credits",
+    "fullscreenTitle": "Fullscreen",
     "generating": "Generating",
     "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
+    "paidCharacterLimitTooltip": "Paid users enjoy 2× character limit",
     "playAudio": "Play Audio",
     "resetPlayer": "Reset Player",
     "subtitle": "Select a voice and generate audio from text",
     "success": "Audio generated successfully!",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "title": "Generate Audio",
+    "upgradeCharacterLimitTooltip": "Upgrade to a paid plan for 2× character limit",
     "grok": {
       "inlineEffectPlaceholder": "Insert tags",
       "wrappingEffectPlaceholder": "Wrap with style tag",
@@ -427,8 +431,8 @@
     "split": {
       "segmentPreviews": "Segment previews",
       "segmentLabel": "Segment __INDEX__",
-      "downloadAll": "Download All (WAV)",
-      "joiningWav": "Joining WAV...",
+      "downloadAll": "Download All",
+      "joiningWav": "Joining audio...",
       "preparingJoiner": "Preparing audio joiner...",
       "retry": "Retry",
       "segmentCannotBeEmpty": "Segment text cannot be empty.",
@@ -445,7 +449,7 @@
       "splitToggleLabel": "Split into segments",
       "splitToggleDisabled": "Split text audios is available for paid users.",
       "tooManySegments": "Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.",
-      "downloadAllFailed": "Failed to download all segments as one WAV file."
+      "downloadAllFailed": "Failed to download all segments."
     }
   },
   "call": {

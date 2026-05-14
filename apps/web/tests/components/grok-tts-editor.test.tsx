@@ -62,6 +62,10 @@ function renderEditor({
 } = {}) {
   return render(
     <GrokTTSEditor
+      characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
+      characterLimitUpgradeTooltip={
+        messages.generate.upgradeCharacterLimitTooltip
+      }
       charactersLimit={charactersLimit}
       dict={baseDict}
       enforceCharactersLimit={enforceCharactersLimit}

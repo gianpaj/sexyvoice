@@ -141,8 +141,12 @@ const baseDict = {
   playAudio: 'Play audio',
   resetPlayer: 'Reset player',
   downloadAudio: 'Download audio',
+  enhanceTextTitle: 'Enhance text with AI emotion tags',
   notEnoughCredits: 'Not enough credits',
+  fullscreenTitle: 'Fullscreen',
+  paidCharacterLimitTooltip: 'Paid users enjoy 2× character limit',
   success: 'Success',
+  upgradeCharacterLimitTooltip: 'Upgrade to a paid plan for 2× character limit',
   error: 'Something went wrong',
   errorEstimating: 'Failed to estimate credits',
   dailyLimitError: 'Daily limit reached (__COUNT__)',
@@ -158,7 +162,7 @@ const baseDict = {
     downloadAllFailed: 'Failed to download all segments',
     segmentPreviews: 'Segment previews',
     downloadAll: 'Download all',
-    joiningWav: 'Joining WAV',
+    joiningWav: 'Joining audio',
     preparingJoiner: 'Preparing joiner',
     segmentLabel: 'Segment __INDEX__',
     retry: 'Retry',
@@ -293,6 +297,15 @@ function stubAudioMetadata(duration = 1) {
   }
 
   vi.stubGlobal('Audio', MockAudio);
+}
+
+function getFetchRequestBody(
+  fetchMock: ReturnType<typeof vi.fn>,
+  index: number,
+) {
+  const request = fetchMock.mock.calls[index]?.[1] as RequestInit | undefined;
+  expect(request).toBeDefined();
+  return JSON.parse(String(request?.body));
 }
 
 describe('AudioGenerator', () => {
@@ -801,6 +814,62 @@ describe('AudioGenerator', () => {
     expect(mockToastFn.success).not.toHaveBeenCalled();
   });
 
+  it('resets a retried split segment to pending when retry is aborted', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      })
+      .mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedStyle: 'calm',
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+    });
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith('Server error (500)');
+    });
+    const retryButton = screen.getByRole('button', {
+      name: baseDict.split.retry,
+    });
+    expect(retryButton).toBeVisible();
+
+    mockToastFn.error.mockClear();
+    await user.click(retryButton);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: baseDict.split.retry }),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getAllByText(baseDict.split.statusPending).length).toBe(2);
+    expect(mockToastFn.error).not.toHaveBeenCalled();
+  });
+
   it('skips already-generated Gemini segments on re-run', async () => {
     const user = userEvent.setup();
     const firstSegment = `${'A'.repeat(300)}.`;
@@ -860,6 +929,79 @@ describe('AudioGenerator', () => {
       text: secondSegment,
       voice: 'achernar',
       styleVariant: 'dramatic',
+    });
+  });
+
+  it('regenerates cached Gemini split segments when the style changes', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const selectedVoice = createVoice({ name: 'achernar', model: 'gpro' });
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        url: `https://example.com/gemini-${fetchMock.mock.calls.length}.wav`,
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const view = renderAudioGenerator({
+      selectedStyle: 'dramatic',
+      selectedVoice,
+    });
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.getAllByText(baseDict.split.statusGenerated)).toHaveLength(2);
+
+    view.rerender(
+      <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+        <AudioGenerator
+          dict={
+            baseDict as unknown as typeof import('@/messages/en.json')['generate']
+          }
+          hasEnoughCredits
+          isPaidUser
+          selectedStyle="calm"
+          selectedVoice={selectedVoice}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText(baseDict.split.statusPending)).toHaveLength(2);
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+    });
+    expect(getFetchRequestBody(fetchMock, 2)).toEqual({
+      text: firstSegment,
+      voice: 'achernar',
+      styleVariant: 'calm',
+    });
+    expect(getFetchRequestBody(fetchMock, 3)).toEqual({
+      text: secondSegment,
+      voice: 'achernar',
+      styleVariant: 'calm',
     });
   });
 
@@ -1018,6 +1160,72 @@ describe('AudioGenerator', () => {
       voice: 'eve',
       styleVariant: '',
       language: 'auto',
+    });
+  });
+
+  it('regenerates cached Grok split segments when the language changes', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        url: `https://example.com/grok-${fetchMock.mock.calls.length}.mp3`,
+      }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+    });
+
+    const languageLabel = screen.getByText(baseDict.grok.languageLabel);
+    const languageField = languageLabel.parentElement as HTMLElement;
+    const trigger = within(languageField).getByRole('combobox');
+    await user.selectOptions(trigger, 'en');
+
+    fireEvent.change(
+      screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.getAllByText(baseDict.split.statusGenerated)).toHaveLength(2);
+
+    await user.selectOptions(trigger, 'ar-EG');
+
+    await waitFor(() => {
+      expect(screen.getAllByText(baseDict.split.statusPending)).toHaveLength(2);
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+    });
+    expect(getFetchRequestBody(fetchMock, 2)).toEqual({
+      text: firstSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'ar-EG',
+    });
+    expect(getFetchRequestBody(fetchMock, 3)).toEqual({
+      text: secondSegment,
+      voice: 'eve',
+      styleVariant: '',
+      language: 'ar-EG',
     });
   });
 

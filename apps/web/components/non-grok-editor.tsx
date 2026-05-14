@@ -80,7 +80,7 @@ export function NonGrokPromptEditor({
             disabled={!text.trim() || isEnhancingText || isGenerating}
             onClick={onEnhanceText}
             size="icon"
-            title="Enhance text with AI emotion tags"
+            title={t('enhanceTextTitle')}
             variant="ghost"
           >
             {isEnhancingText ? (
@@ -95,7 +95,7 @@ export function NonGrokPromptEditor({
           className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
           onClick={onToggleFullscreen}
           size="icon"
-          title="Fullscreen"
+          title={t('fullscreenTitle')}
           variant="ghost"
         >
           {isFullscreen ? (
@@ -131,8 +131,8 @@ export function NonGrokPromptEditor({
                 <TooltipContent>
                   <p>
                     {isPaidUser
-                      ? 'Paid users enjoy 2× character limit'
-                      : 'Upgrade to a paid plan for 2× character limit'}
+                      ? t('paidCharacterLimitTooltip')
+                      : t('upgradeCharacterLimitTooltip')}
                   </p>
                 </TooltipContent>
               </Tooltip>

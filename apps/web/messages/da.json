@@ -357,18 +357,22 @@
     "ctaButton": "Generer lyd",
     "ctaButtonPlural": "Generer lydfiler",
     "downloadAudio": "Download lyd",
+    "enhanceTextTitle": "Forbedr tekst med AI-følelsestags",
     "error": "Kunne ikke generere lyd",
     "errorEstimating": "Kunne ikke estimere credits",
     "estimateCreditsButton": "Estimér credits",
+    "fullscreenTitle": "Fuld skærm",
     "generating": "Genererer",
     "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
+    "paidCharacterLimitTooltip": "Betalende brugere får 2× tegngrænse",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
     "subtitle": "Vælg en stemme og generer lyd fra tekst",
     "success": "Lyd genereret!",
     "textAreaPlaceholder": "Indtast teksten, du vil omdanne til tale...",
     "title": "Generer lyd",
+    "upgradeCharacterLimitTooltip": "Opgrader til en betalt plan for 2× tegngrænse",
     "grok": {
       "inlineEffectPlaceholder": "Indsæt inline-effekt",
       "wrappingEffectPlaceholder": "Omslut med stil-tag",
@@ -427,8 +431,8 @@
     "split": {
       "segmentPreviews": "Segmentforhåndsvisninger",
       "segmentLabel": "Segment __INDEX__",
-      "downloadAll": "Download alle (WAV)",
-      "joiningWav": "Sammensætter WAV...",
+      "downloadAll": "Download alle",
+      "joiningWav": "Sammensætter lyd...",
       "preparingJoiner": "Forbereder lydsammensætter...",
       "retry": "Prøv igen",
       "segmentCannotBeEmpty": "Segmenttekst må ikke være tom.",
@@ -445,7 +449,7 @@
       "splitToggleLabel": "Opdel i segmenter",
       "splitToggleDisabled": "Opdeling af tekst i lydfiler er tilgængelig for betalende brugere.",
       "tooManySegments": "Opdelt tekst må højst have __COUNT__ segmenter. Forkort teksten eller saml segmenter, før du genererer.",
-      "downloadAllFailed": "Kunne ikke downloade alle segmenter som én WAV-fil."
+      "downloadAllFailed": "Kunne ikke downloade alle segmenter."
     }
   },
   "call": {

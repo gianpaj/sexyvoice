@@ -357,18 +357,22 @@
     "ctaButton": "Audio generieren",
     "ctaButtonPlural": "Audios generieren",
     "downloadAudio": "Audio herunterladen",
+    "enhanceTextTitle": "Text mit KI-Emotion-Tags verbessern",
     "error": "Audio konnte nicht generiert werden",
     "errorEstimating": "Credits konnten nicht geschätzt werden",
     "estimateCreditsButton": "Credits schätzen",
+    "fullscreenTitle": "Vollbild",
     "generating": "Wird generiert",
     "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
+    "paidCharacterLimitTooltip": "Zahlende Nutzer haben ein 2× Zeichenlimit",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
     "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
     "success": "Audio erfolgreich generiert!",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
     "title": "Audio generieren",
+    "upgradeCharacterLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2× Zeichenlimit zu erhalten",
     "grok": {
       "inlineEffectPlaceholder": "Inline-Effekt einfügen",
       "wrappingEffectPlaceholder": "Mit Stil-Tag umschließen",
@@ -427,8 +431,8 @@
     "split": {
       "segmentPreviews": "Segmentvorschauen",
       "segmentLabel": "Segment __INDEX__",
-      "downloadAll": "Alle herunterladen (WAV)",
-      "joiningWav": "WAV wird zusammengeführt...",
+      "downloadAll": "Alle herunterladen",
+      "joiningWav": "Audio wird zusammengeführt...",
       "preparingJoiner": "Audio-Verbinder wird vorbereitet...",
       "retry": "Wiederholen",
       "segmentCannotBeEmpty": "Segmenttext darf nicht leer sein.",
@@ -445,7 +449,7 @@
       "splitToggleLabel": "In Segmente aufteilen",
       "splitToggleDisabled": "Das Aufteilen von Text in Audios ist für zahlende Nutzer verfügbar.",
       "tooManySegments": "Aufgeteilter Text darf höchstens __COUNT__ Segmente haben. Kürzen Sie den Text oder führen Sie Segmente vor der Generierung zusammen.",
-      "downloadAllFailed": "Alle Segmente konnten nicht als eine WAV-Datei heruntergeladen werden."
+      "downloadAllFailed": "Alle Segmente konnten nicht heruntergeladen werden."
     }
   },
   "call": {

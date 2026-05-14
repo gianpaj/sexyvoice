@@ -18,13 +18,14 @@ export function useGenerationProgressToast(
   const generationToastIdRef = useRef<ExternalToast['id'] | null>(null);
 
   const showGenerationProgressToast = useCallback(
-    (segmentIndex: number, totalSegments: number, isComplete = false) => {
+    (segmentNumber: number, totalSegments: number, isComplete = false) => {
       const safeTotal = Math.max(1, totalSegments);
-      // Show (segmentIndex - 1) / total while a segment is in progress so we
+      const safeSegmentNumber = Math.max(1, segmentNumber);
+      // Show (segmentNumber - 1) / total while a segment is in progress so we
       // only reach 100% once the final segment has actually finished.
       const progressPercent = isComplete
         ? 100
-        : Math.round(((segmentIndex - 1) / safeTotal) * 100);
+        : Math.max(0, Math.round(((safeSegmentNumber - 1) / safeTotal) * 100));
       const title = voiceName
         ? (dict?.progressTitleWithVoice ?? `${voiceName} generation`).replace(
             '__VOICE__',
@@ -34,7 +35,7 @@ export function useGenerationProgressToast(
       const segmentLabel = (
         dict?.progressSegment ?? 'Segment __CURRENT__/__TOTAL__'
       )
-        .replace('__CURRENT__', String(segmentIndex))
+        .replace('__CURRENT__', String(safeSegmentNumber))
         .replace('__TOTAL__', String(safeTotal));
 
       const toastId = toast.loading(

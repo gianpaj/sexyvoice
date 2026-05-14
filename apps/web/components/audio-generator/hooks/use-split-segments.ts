@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
+  buildSplitGeneratedByTextKey,
   buildSplitStorageKey,
   type PersistedSplitSegments,
   type SplitSegmentItem,
@@ -25,6 +26,7 @@ function useStableSegmentIds() {
 }
 
 interface UseSplitSegmentsParams {
+  generationContext?: string;
   selectedVoiceName?: string;
   shouldUseSplitMode: boolean;
   splitSegmentTexts: string[];
@@ -32,6 +34,7 @@ interface UseSplitSegmentsParams {
 }
 
 export function useSplitSegments({
+  generationContext = '',
   selectedVoiceName,
   text,
   shouldUseSplitMode,
@@ -51,23 +54,26 @@ export function useSplitSegments({
       setSplitStorageKey('');
       return;
     }
+    setSplitStorageKey('');
     let cancelled = false;
-    buildSplitStorageKey(selectedVoiceName, text).then((key) => {
-      if (!cancelled) {
-        // Remove the old localStorage entry when the key changes to prevent
-        // unbounded growth from unique text hashes accumulating over time.
-        const prevKey = prevSplitStorageKeyRef.current;
-        if (prevKey && prevKey !== key && typeof window !== 'undefined') {
-          window.localStorage.removeItem(prevKey);
+    buildSplitStorageKey(selectedVoiceName, text, generationContext).then(
+      (key) => {
+        if (!cancelled) {
+          // Remove the old localStorage entry when the key changes to prevent
+          // unbounded growth from unique text hashes accumulating over time.
+          const prevKey = prevSplitStorageKeyRef.current;
+          if (prevKey && prevKey !== key && typeof window !== 'undefined') {
+            window.localStorage.removeItem(prevKey);
+          }
+          prevSplitStorageKeyRef.current = key;
+          setSplitStorageKey(key);
         }
-        prevSplitStorageKeyRef.current = key;
-        setSplitStorageKey(key);
-      }
-    });
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [shouldUseSplitMode, selectedVoiceName, text]);
+  }, [generationContext, shouldUseSplitMode, selectedVoiceName, text]);
 
   useEffect(() => {
     if (!(shouldUseSplitMode && splitStorageKey)) {
@@ -106,8 +112,12 @@ export function useSplitSegments({
 
       const merged = baseSegments.map((segment, index) => {
         const persistedSegment = parsed.segments[index];
+        const generatedByTextKey = buildSplitGeneratedByTextKey(
+          segment.text,
+          generationContext,
+        );
         if (!persistedSegment || persistedSegment.text !== segment.text) {
-          const cachedUrl = generatedByText[segment.text];
+          const cachedUrl = generatedByText[generatedByTextKey];
           if (cachedUrl) {
             return {
               ...segment,
@@ -129,7 +139,7 @@ export function useSplitSegments({
           };
         }
 
-        const cachedUrl = generatedByText[segment.text];
+        const cachedUrl = generatedByText[generatedByTextKey];
         if (cachedUrl) {
           return {
             ...segment,
@@ -147,7 +157,13 @@ export function useSplitSegments({
       setSplitSegments(baseSegments);
       setSplitGeneratedByText({});
     }
-  }, [getStableId, shouldUseSplitMode, splitStorageKey, splitSegmentTexts]);
+  }, [
+    generationContext,
+    getStableId,
+    shouldUseSplitMode,
+    splitStorageKey,
+    splitSegmentTexts,
+  ]);
 
   useEffect(() => {
     if (
@@ -204,7 +220,7 @@ export function useSplitSegments({
     );
     setSplitGeneratedByText((current) => ({
       ...current,
-      [textValue]: url,
+      [buildSplitGeneratedByTextKey(textValue, generationContext)]: url,
     }));
   };
 
@@ -233,7 +249,10 @@ export function useSplitSegments({
           return item;
         }
 
-        const cachedUrl = splitGeneratedByText[nextText];
+        const cachedUrl =
+          splitGeneratedByText[
+            buildSplitGeneratedByTextKey(nextText, generationContext)
+          ];
         if (cachedUrl) {
           return {
             ...item,

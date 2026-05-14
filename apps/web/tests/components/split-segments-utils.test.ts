@@ -46,6 +46,15 @@ describe('splitLongTextIntoSegments', () => {
     expectSegmentsWithinLimit(segments);
   });
 
+  it('prefers whitespace boundaries when hard chunking a long sentence', () => {
+    const text = `${'word '.repeat(100)}tail.`;
+
+    const segments = splitLongTextIntoSegments(text);
+
+    expect(segments).toEqual(['word '.repeat(100).trim(), 'tail.']);
+    expectSegmentsWithinLimit(segments);
+  });
+
   it('normalizes blank lines and surrounding whitespace while preserving sentence content', () => {
     const segments = splitLongTextIntoSegments(`
       First line with spaces.  

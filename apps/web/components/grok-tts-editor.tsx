@@ -111,6 +111,8 @@ const XAI_LANGUAGE_OPTIONS = [
 ] as const;
 
 interface GrokTTSEditorProps {
+  characterLimitPaidTooltip: string;
+  characterLimitUpgradeTooltip: string;
   charactersLimit: number;
   dict: (typeof messages)['generate']['grok'];
   enforceCharactersLimit?: boolean;
@@ -241,6 +243,8 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 }
 
 export function GrokTTSEditor({
+  characterLimitPaidTooltip,
+  characterLimitUpgradeTooltip,
   dict,
   enforceCharactersLimit = true,
   isPaidUser,
@@ -659,8 +663,8 @@ export function GrokTTSEditor({
                   <TooltipContent>
                     <p>
                       {isPaidUser
-                        ? 'Paid users enjoy 2× character limit'
-                        : 'Upgrade to a paid plan for 2× character limit'}
+                        ? characterLimitPaidTooltip
+                        : characterLimitUpgradeTooltip}
                     </p>
                   </TooltipContent>
                 </Tooltip>
