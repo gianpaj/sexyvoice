@@ -1,21 +1,20 @@
 'use client';
 
 import { CheckCircle2, Download, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from '../audio-player-with-context';
 import {
-  getSplitSegmentStatusLabel,
+  getSplitSegmentStatusLabelKey,
   SPLIT_SEGMENT_MAX_LENGTH,
   type SplitSegmentItem,
 } from './split-segments-utils';
 
 interface SplitSegmentsPanelProps {
   allSegmentsGenerated: boolean;
-  dict: (typeof messages)['generate'];
   isDownloadingAllSegments: boolean;
   isGenerating: boolean;
   isJoinerLoading: boolean;
@@ -34,12 +33,13 @@ export function SplitSegmentsPanel({
   isJoiningSegments,
   isDownloadingAllSegments,
   allSegmentsGenerated,
-  dict,
   onDownloadAllSegments,
   onRetrySegment,
   onSegmentTextChange,
   onDownloadSegment,
 }: SplitSegmentsPanelProps) {
+  const t = useTranslations('generate');
+
   if (segments.length === 0) {
     return null;
   }
@@ -47,7 +47,7 @@ export function SplitSegmentsPanel({
   return (
     <div className="space-y-3 rounded-lg border-0 p-0 md:border md:border-input md:p-3">
       <div className="flex items-center justify-between">
-        <p className="font-medium text-sm">{dict.split.segmentPreviews}</p>
+        <p className="font-medium text-sm">{t('split.segmentPreviews')}</p>
         {allSegmentsGenerated && (
           <Button
             className="h-8 text-xs"
@@ -59,10 +59,10 @@ export function SplitSegmentsPanel({
             {isDownloadingAllSegments || isJoiningSegments ? (
               <>
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                {dict.split.joiningWav}
+                {t('split.joiningWav')}
               </>
             ) : (
-              dict.split.downloadAll
+              t('split.downloadAll')
             )}
           </Button>
         )}
@@ -88,14 +88,14 @@ export function SplitSegmentsPanel({
               <div className="flex items-center gap-2">
                 {segmentStatusIcon}
                 <p className="font-medium text-sm">
-                  {dict.split.segmentLabel.replace(
+                  {t('split.segmentLabel').replace(
                     '__INDEX__',
                     String(index + 1),
                   )}
                 </p>
               </div>
               <p className="text-muted-foreground text-xs">
-                {getSplitSegmentStatusLabel(segment.status, dict.split)}
+                {t(getSplitSegmentStatusLabelKey(segment.status))}
               </p>
               {segment.status === 'failed' && (
                 <Button
@@ -105,7 +105,7 @@ export function SplitSegmentsPanel({
                   size="sm"
                   variant="outline"
                 >
-                  {dict.split.retry}
+                  {t('split.retry')}
                 </Button>
               )}
             </div>
@@ -122,7 +122,7 @@ export function SplitSegmentsPanel({
               <div className="flex items-center gap-2">
                 <AudioPlayerWithContext
                   className="rounded-md"
-                  playAudioTitle={dict.playAudio}
+                  playAudioTitle={t('playAudio')}
                   progressColor="#8b5cf6"
                   showWaveform
                   url={segment.audioUrl}
@@ -132,7 +132,7 @@ export function SplitSegmentsPanel({
                 <Button
                   onClick={() => onDownloadSegment(segment.audioUrl)}
                   size="icon"
-                  title={dict.downloadAudio}
+                  title={t('downloadAudio')}
                   variant="secondary"
                 >
                   <Download className="size-5" />
@@ -144,7 +144,7 @@ export function SplitSegmentsPanel({
       })}
       {isJoinerLoading && (
         <p className="text-muted-foreground text-xs">
-          {dict.split.preparingJoiner}
+          {t('split.preparingJoiner')}
         </p>
       )}
     </div>

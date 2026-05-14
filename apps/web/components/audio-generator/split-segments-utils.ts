@@ -278,24 +278,24 @@ export function splitLongTextIntoSegments(
   return segments;
 }
 
-export function getSplitSegmentStatusLabel(
+export type SplitSegmentStatusLabelKey =
+  | 'split.statusGenerated'
+  | 'split.statusGenerating'
+  | 'split.statusFailed'
+  | 'split.statusPending';
+
+export function getSplitSegmentStatusLabelKey(
   status: SplitSegmentStatus,
-  dict: {
-    statusGenerated: string;
-    statusGenerating: string;
-    statusFailed: string;
-    statusPending: string;
-  },
-): string {
+): SplitSegmentStatusLabelKey {
   switch (status) {
     case 'success':
-      return dict.statusGenerated;
+      return 'split.statusGenerated';
     case 'generating':
-      return dict.statusGenerating;
+      return 'split.statusGenerating';
     case 'failed':
-      return dict.statusFailed;
+      return 'split.statusFailed';
     default:
-      return dict.statusPending;
+      return 'split.statusPending';
   }
 }
 

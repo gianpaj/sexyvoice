@@ -8,6 +8,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
@@ -246,7 +247,11 @@ function renderAudioGenerator(
     selectedVoice: createVoice(),
   };
 
-  return render(<AudioGenerator {...defaultProps} {...overrides} />);
+  return render(
+    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+      <AudioGenerator {...defaultProps} {...overrides} />
+    </NextIntlClientProvider>,
+  );
 }
 
 function ensureLocalStorage() {

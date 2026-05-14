@@ -811,7 +811,6 @@ export function AudioGenerator({
                   : undefined
               }
               charactersLimit={charactersLimit}
-              dict={dict}
               isEnhancingText={isEnhancingText}
               isFullscreen={isFullscreen}
               isGenerating={isGenerating}
@@ -954,7 +953,6 @@ export function AudioGenerator({
         {shouldUseSplitMode && (
           <SplitSegmentsPanel
             allSegmentsGenerated={allSegmentsGenerated}
-            dict={dict}
             isDownloadingAllSegments={isDownloadingAllSegments}
             isGenerating={isGenerating}
             isJoinerLoading={isJoinerLoading}

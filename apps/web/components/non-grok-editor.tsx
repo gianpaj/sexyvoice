@@ -1,10 +1,10 @@
 'use client';
 
 import { Crown, Loader2, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 
 import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { AnimatedPromptTextarea } from './audio-generator';
 import { Button } from './ui/button';
 import {
@@ -17,7 +17,6 @@ import {
 interface NonGrokPromptEditorProps {
   characterCountText?: ReactNode;
   charactersLimit: number;
-  dict: (typeof messages)['generate'];
   isEnhancingText: boolean;
   isFullscreen: boolean;
   isGenerating: boolean;
@@ -36,7 +35,6 @@ interface NonGrokPromptEditorProps {
 export function NonGrokPromptEditor({
   charactersLimit,
   characterCountText,
-  dict,
   isEnhancingText,
   isFullscreen,
   isGenerating,
@@ -51,6 +49,8 @@ export function NonGrokPromptEditor({
   textareaRightPadding,
   textIsOverLimit,
 }: NonGrokPromptEditorProps) {
+  const t = useTranslations('generate');
+
   return (
     <>
       <AnimatedPromptTextarea
@@ -65,7 +65,7 @@ export function NonGrokPromptEditor({
             : (textareaMaxLength ?? charactersLimit + 10)
         }
         onChange={(e) => onTextChange(e.target.value)}
-        placeholder={dict.textAreaPlaceholder}
+        placeholder={t('textAreaPlaceholder')}
         ref={textareaRef}
         style={
           {
