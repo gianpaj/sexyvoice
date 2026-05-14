@@ -113,6 +113,7 @@ const XAI_LANGUAGE_OPTIONS = [
 interface GrokTTSEditorProps {
   charactersLimit: number;
   dict: (typeof messages)['generate']['grok'];
+  enforceCharactersLimit?: boolean;
   isPaidUser?: boolean;
   onChange: (text: string) => void;
   placeholder?: string;
@@ -241,6 +242,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 
 export function GrokTTSEditor({
   dict,
+  enforceCharactersLimit = true,
   isPaidUser,
   charactersLimit,
   onChange,
@@ -251,11 +253,18 @@ export function GrokTTSEditor({
 }: GrokTTSEditorProps) {
   const [effectsOpen, setEffectsOpen] = useState(false);
   const [currentLength, setCurrentLength] = useState(value.length);
+  const charactersLimitRef = useRef(charactersLimit);
+  const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
     from: 1,
     to: 1,
   });
+
+  useEffect(() => {
+    charactersLimitRef.current = charactersLimit;
+    enforceCharactersLimitRef.current = enforceCharactersLimit;
+  }, [charactersLimit, enforceCharactersLimit]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -312,7 +321,9 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const text = fullText.slice(0, charactersLimit + 10);
+      const text = enforceCharactersLimitRef.current
+        ? fullText.slice(0, charactersLimitRef.current + 10)
+        : fullText;
 
       if (text !== fullText) {
         nextEditor.commands.setContent(plainTextToDoc(text));
@@ -353,7 +364,7 @@ export function GrokTTSEditor({
       const nextLength =
         serialized.length - selectedTextLength + tag.tag.length;
 
-      if (nextLength > charactersLimit) {
+      if (enforceCharactersLimit && nextLength > charactersLimit) {
         return;
       }
 
@@ -365,7 +376,7 @@ export function GrokTTSEditor({
         .run();
       setEffectsOpen(false);
     },
-    [editor, charactersLimit],
+    [editor, charactersLimit, enforceCharactersLimit],
   );
 
   const insertWrapperTag = useCallback(
@@ -380,7 +391,7 @@ export function GrokTTSEditor({
       const serialized = grokTipTapDocToText(editor.getJSON());
       const nextLength = serialized.length + wrapperLength;
 
-      if (nextLength > charactersLimit) {
+      if (enforceCharactersLimit && nextLength > charactersLimit) {
         return;
       }
 
@@ -436,7 +447,7 @@ export function GrokTTSEditor({
 
       setEffectsOpen(false);
     },
-    [editor, charactersLimit],
+    [editor, charactersLimit, enforceCharactersLimit],
   );
 
   const preserveSelection = useCallback(
@@ -624,11 +635,15 @@ export function GrokTTSEditor({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                currentLength > charactersLimit ? 'font-bold text-red-500' : '',
+                enforceCharactersLimit && currentLength > charactersLimit
+                  ? 'font-bold text-red-500'
+                  : '',
               )}
               data-testid="generate-character-count"
             >
-              {currentLength} / {charactersLimit}
+              {enforceCharactersLimit
+                ? `${currentLength} / ${charactersLimit}`
+                : currentLength}
               <TooltipProvider>
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>

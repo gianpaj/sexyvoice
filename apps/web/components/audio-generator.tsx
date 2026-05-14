@@ -180,8 +180,6 @@ export function AudioGenerator({
     selectedVoice?.model ?? '',
     isPaidUser,
   );
-  const shouldUseSplitMode = isPaidUser && splitTextAudios;
-  const textIsOverLimit = !shouldUseSplitMode && text.length > charactersLimit;
   const splitSegmentTexts = useMemo(
     () =>
       splitLongTextIntoSegments(text, {
@@ -189,6 +187,11 @@ export function AudioGenerator({
       }),
     [text, isGrokVoice],
   );
+  const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
+  const shouldUseSplitMode =
+    shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
+  const textIsOverLimit =
+    !shouldDisableCharactersLimit && text.length > charactersLimit;
   const {
     splitSegments,
     allSegmentsGenerated,
@@ -791,6 +794,7 @@ export function AudioGenerator({
             <GrokTTSEditor
               charactersLimit={charactersLimit}
               dict={dict.grok}
+              enforceCharactersLimit={!shouldDisableCharactersLimit}
               isPaidUser={isPaidUser}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}
@@ -816,7 +820,9 @@ export function AudioGenerator({
               onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               showEnhanceButton={showEnhanceButton}
               text={text}
-              textareaMaxLength={shouldUseSplitMode ? null : undefined}
+              textareaMaxLength={
+                shouldDisableCharactersLimit ? null : undefined
+              }
               textareaRef={textareaRef}
               textareaRightPadding={textareaRightPadding}
               textIsOverLimit={textIsOverLimit}
@@ -880,7 +886,9 @@ export function AudioGenerator({
           <div className="flex grow-0 gap-2">
             <GenerateButton
               className="h-10 w-full sm:w-fit"
-              ctaText={splitTextAudios ? dict.ctaButtonPlural : dict.ctaButton}
+              ctaText={
+                shouldUseSplitMode ? dict.ctaButtonPlural : dict.ctaButton
+              }
               data-testid="generate-button"
               disabled={
                 isGenerating ||

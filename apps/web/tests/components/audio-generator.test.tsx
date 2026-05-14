@@ -43,14 +43,18 @@ vi.mock('@/components/audio-player-with-context', () => ({
 
 vi.mock('@/components/grok-tts-editor', () => ({
   GrokTTSEditor: ({
+    charactersLimit,
     dict,
+    enforceCharactersLimit = true,
     onChange,
     placeholder,
     selectedGrokLanguage,
     setSelectedGrokLanguage,
     value,
   }: {
+    charactersLimit: number;
     dict: typeof baseDict.grok;
+    enforceCharactersLimit?: boolean;
     onChange: (text: string) => void;
     placeholder?: string;
     selectedGrokLanguage: string;
@@ -77,6 +81,7 @@ vi.mock('@/components/grok-tts-editor', () => ({
       </div>
       <textarea
         aria-label={placeholder}
+        maxLength={enforceCharactersLimit ? charactersLimit : undefined}
         onChange={(event) => onChange(event.currentTarget.value)}
         value={value}
       />
@@ -450,6 +455,47 @@ describe('AudioGenerator', () => {
     expect(screen.getByText('Segment 2')).toBeInTheDocument();
   });
 
+  it('does not show a single split segment for text below the split threshold', async () => {
+    const user = userEvent.setup();
+    const shortText = 'Short text that should generate as one audio.';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: 'https://example.com/audio.mp3' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator();
+
+    const input = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    await user.type(input, shortText);
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    expect(
+      screen.queryByText(baseDict.split.segmentPreviews),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Segment 1')).not.toBeInTheDocument();
+    expect(screen.getByTestId('generate-button')).toHaveTextContent(
+      baseDict.ctaButton,
+    );
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      text: shortText,
+      voice: 'tara',
+      styleVariant: '',
+    });
+  });
+
   it('disables split mode for free users', () => {
     renderAudioGenerator({
       isPaidUser: false,
@@ -466,7 +512,7 @@ describe('AudioGenerator', () => {
     ).toHaveAttribute('maxlength', '510');
   });
 
-  it('uses the paid Gemini character limit before split mode removes the native cap', async () => {
+  it('removes the paid non-Grok character limit when split audios is enabled', async () => {
     const user = userEvent.setup();
 
     renderAudioGenerator({
@@ -483,6 +529,9 @@ describe('AudioGenerator', () => {
     );
 
     expect(input).not.toHaveAttribute('maxlength');
+    expect(
+      screen.queryByText(baseDict.split.segmentPreviews),
+    ).not.toBeInTheDocument();
   });
 
   it('enables split mode for paid Grok users', () => {
@@ -498,6 +547,30 @@ describe('AudioGenerator', () => {
         name: baseDict.split.splitToggleLabel,
       }),
     ).toBeEnabled();
+  });
+
+  it('removes the paid Grok character limit when split audios is enabled', async () => {
+    const user = userEvent.setup();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: 'eve',
+        model: 'xai',
+      }),
+    });
+
+    const input = screen.getByRole('textbox', {
+      name: baseDict.textAreaPlaceholder,
+    });
+    expect(input).toHaveAttribute('maxlength', '1000');
+
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    expect(input).not.toHaveAttribute('maxlength');
   });
 
   it('generates each Replicate split segment separately', async () => {

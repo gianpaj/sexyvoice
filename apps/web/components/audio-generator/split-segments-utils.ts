@@ -151,7 +151,7 @@ function splitIntoGrokProtectedChunks(text: string): SplitChunk[] {
   return chunks;
 }
 
-function splitPlainTextIntoSegments(text: string): string[] {
+function splitPlainTextIntoUnits(text: string): string[] {
   const trimmedText = text.trim();
   if (!trimmedText) {
     return [];
@@ -163,6 +163,29 @@ function splitPlainTextIntoSegments(text: string): string[] {
       ?.map((chunk) => chunk.trim())
       .filter(Boolean) ?? [];
 
+  const units: string[] = [];
+
+  for (const sentence of sentenceLikeChunks) {
+    if (sentence.length <= SPLIT_SEGMENT_MAX_LENGTH) {
+      units.push(sentence);
+      continue;
+    }
+
+    let remaining = sentence;
+    while (remaining.length > SPLIT_SEGMENT_MAX_LENGTH) {
+      units.push(remaining.slice(0, SPLIT_SEGMENT_MAX_LENGTH).trim());
+      remaining = remaining.slice(SPLIT_SEGMENT_MAX_LENGTH).trim();
+    }
+
+    if (remaining) {
+      units.push(remaining);
+    }
+  }
+
+  return units;
+}
+
+function splitPlainTextIntoSegments(text: string): string[] {
   const segments: string[] = [];
   let currentSegment = '';
 
@@ -174,32 +197,18 @@ function splitPlainTextIntoSegments(text: string): string[] {
     currentSegment = '';
   };
 
-  for (const sentence of sentenceLikeChunks) {
+  for (const unit of splitPlainTextIntoUnits(text)) {
     const candidate = currentSegment
-      ? `${currentSegment} ${sentence}`.trim()
-      : sentence;
+      ? `${currentSegment} ${unit}`.trim()
+      : unit;
 
     if (candidate.length <= SPLIT_SEGMENT_MAX_LENGTH) {
       currentSegment = candidate;
       continue;
     }
 
-    if (currentSegment) {
-      pushCurrentSegment();
-    }
-
-    if (sentence.length <= SPLIT_SEGMENT_MAX_LENGTH) {
-      currentSegment = sentence;
-      continue;
-    }
-
-    let remaining = sentence;
-    while (remaining.length > SPLIT_SEGMENT_MAX_LENGTH) {
-      segments.push(remaining.slice(0, SPLIT_SEGMENT_MAX_LENGTH).trim());
-      remaining = remaining.slice(SPLIT_SEGMENT_MAX_LENGTH).trim();
-    }
-
-    currentSegment = remaining;
+    pushCurrentSegment();
+    currentSegment = unit;
   }
 
   pushCurrentSegment();
@@ -232,7 +241,7 @@ export function splitLongTextIntoSegments(
 
   for (const chunk of splitIntoGrokProtectedChunks(trimmedText)) {
     if (chunk.canSplit) {
-      for (const segment of splitPlainTextIntoSegments(chunk.text)) {
+      for (const segment of splitPlainTextIntoUnits(chunk.text)) {
         const candidate = currentSegment
           ? `${currentSegment} ${segment}`.trim()
           : segment;
