@@ -45,6 +45,7 @@ const baseDict = messages.generate.grok;
 
 function renderEditor({
   charactersLimit = 500,
+  enforceCharactersLimit = true,
   onChange = vi.fn(),
   placeholder = messages.generate.textAreaPlaceholder,
   selectedGrokLanguage = 'auto',
@@ -52,6 +53,7 @@ function renderEditor({
   value = '',
 }: {
   charactersLimit?: number;
+  enforceCharactersLimit?: boolean;
   onChange?: (text: string) => void;
   placeholder?: string;
   selectedGrokLanguage?: string;
@@ -60,8 +62,13 @@ function renderEditor({
 } = {}) {
   return render(
     <GrokTTSEditor
+      characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
+      characterLimitUpgradeTooltip={
+        messages.generate.upgradeCharacterLimitTooltip
+      }
       charactersLimit={charactersLimit}
       dict={baseDict}
+      enforceCharactersLimit={enforceCharactersLimit}
       onChange={onChange}
       placeholder={placeholder}
       selectedGrokLanguage={selectedGrokLanguage}
@@ -241,6 +248,24 @@ describe('GrokTTSEditor', () => {
       screen.queryByText(messages.generate.textAreaPlaceholder),
     ).not.toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello');
+  });
+
+  it('allows text beyond the character limit when limit enforcement is disabled', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const longText = 'A'.repeat(20);
+
+    renderEditor({
+      charactersLimit: 5,
+      enforceCharactersLimit: false,
+      onChange,
+    });
+
+    const editor = await findEditor();
+    await user.type(editor, longText);
+
+    expect(onChange).toHaveBeenLastCalledWith(longText);
+    expect(screen.getByText('20')).toBeInTheDocument();
   });
 
   it('inserts an instant tag at the current caret position', async () => {

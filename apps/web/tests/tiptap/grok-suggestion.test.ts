@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { exitSuggestion, Suggestion } from '@tiptap/suggestion';
 import { describe, expect, it, vi } from 'vitest';
 
+import { isGrokWrapperSuggestionAllowed } from '@/components/grok-tts/suggestion-rules';
 import { GROK_INSTANT_TAGS, GROK_WRAPPING_TAGS } from '@/lib/tts-editor';
 
 const WRAPPING_TAGS = GROK_WRAPPING_TAGS.map(([openTag]) => openTag);
@@ -46,6 +47,7 @@ function createGrokSuggestionExtension(options: {
   shouldAllow?: (props: {
     editor: Editor;
     range: { from: number; to: number };
+    state: Editor['state'];
   }) => boolean;
   onStart?: ReturnType<typeof vi.fn<(props: unknown) => void>>;
   onUpdate?: ReturnType<typeof vi.fn<(props: { query: string }) => void>>;
@@ -74,7 +76,8 @@ function createGrokSuggestionExtension(options: {
               item.title.toLowerCase().includes(query.toLowerCase()),
             ),
           allow: shouldAllow
-            ? ({ editor, range }) => shouldAllow({ editor, range })
+            ? ({ editor, range, state }) =>
+                shouldAllow({ editor, range, state })
             : undefined,
           render: () => ({
             onStart: (props) => {
@@ -199,26 +202,7 @@ describe('grok suggestion lifecycle', () => {
       char: '<',
       items: createItems(WRAPPING_TAGS),
       pluginKey: GROK_WRAPPER_TAG_MENU_PLUGIN_KEY,
-      shouldAllow: ({ editor, range }) => {
-        const resolvedPosition = editor.state.doc.resolve(
-          Math.min(range.to, editor.state.doc.content.size),
-        );
-        const previousNode = resolvedPosition.nodeBefore;
-        const nextNode = resolvedPosition.nodeAfter;
-        const previousText = previousNode?.isText
-          ? (previousNode.text ?? '')
-          : '';
-        const nextText = nextNode?.isText ? (nextNode.text ?? '') : '';
-        const combinedTagText = `${previousText}${nextText}`;
-
-        return !WRAPPING_TAGS.some((tag) => {
-          const partialOpenTag = tag.slice(1);
-          return (
-            combinedTagText.startsWith(partialOpenTag) ||
-            combinedTagText.startsWith(tag)
-          );
-        });
-      },
+      shouldAllow: isGrokWrapperSuggestionAllowed,
     });
 
     const editor = createEditor([suggestion.extension], '<p>emphasis&gt;</p>');
@@ -238,26 +222,7 @@ describe('grok suggestion lifecycle', () => {
       char: '<',
       items: createItems(WRAPPING_TAGS),
       pluginKey: GROK_WRAPPER_TAG_MENU_PLUGIN_KEY,
-      shouldAllow: ({ editor, range }) => {
-        const resolvedPosition = editor.state.doc.resolve(
-          Math.min(range.to, editor.state.doc.content.size),
-        );
-        const previousNode = resolvedPosition.nodeBefore;
-        const nextNode = resolvedPosition.nodeAfter;
-        const previousText = previousNode?.isText
-          ? (previousNode.text ?? '')
-          : '';
-        const nextText = nextNode?.isText ? (nextNode.text ?? '') : '';
-        const combinedTagText = `${previousText}${nextText}`;
-
-        return !WRAPPING_TAGS.some((tag) => {
-          const partialOpenTag = tag.slice(1);
-          return (
-            combinedTagText.startsWith(partialOpenTag) ||
-            combinedTagText.startsWith(tag)
-          );
-        });
-      },
+      shouldAllow: isGrokWrapperSuggestionAllowed,
     });
 
     const editor = createEditor([suggestion.extension]);
@@ -267,6 +232,31 @@ describe('grok suggestion lifecycle', () => {
 
     expect(suggestion.onStart).toHaveBeenCalledTimes(1);
     expect(suggestion.onExit).not.toHaveBeenCalled();
+
+    editor.destroy();
+  });
+
+  it('blocks stale wrapper suggestion ranges without resolving out-of-bounds positions', () => {
+    const editor = createEditor([]);
+    const staleRange = {
+      from: editor.state.doc.content.size + 1,
+      to: editor.state.doc.content.size + 10,
+    };
+
+    expect(() =>
+      isGrokWrapperSuggestionAllowed({
+        editor,
+        range: staleRange,
+        state: editor.state,
+      }),
+    ).not.toThrow();
+    expect(
+      isGrokWrapperSuggestionAllowed({
+        editor,
+        range: staleRange,
+        state: editor.state,
+      }),
+    ).toBe(false);
 
     editor.destroy();
   });

@@ -81,7 +81,7 @@ function renderVoiceSelector(
       id: 'voice-grok',
       name: 'eve',
       language: 'en',
-      model: 'grok',
+      model: 'xai',
     }),
   ];
 
@@ -120,7 +120,7 @@ describe('VoiceSelector', () => {
       selectedVoice: createVoice({
         id: 'voice-grok',
         name: 'eve',
-        model: 'grok',
+        model: 'xai',
       }),
       selectedStyle: 'should not render',
     });
@@ -157,7 +157,7 @@ describe('VoiceSelector', () => {
       selectedVoice: createVoice({
         id: 'voice-grok',
         name: 'eve',
-        model: 'grok',
+        model: 'xai',
       }),
     });
 
@@ -224,7 +224,7 @@ describe('VoiceSelector', () => {
       selectedVoice: createVoice({
         id: 'voice-grok',
         name: 'eve',
-        model: 'grok',
+        model: 'xai',
       }),
     });
 
@@ -246,14 +246,14 @@ describe('VoiceSelector', () => {
           id: 'voice-grok',
           name: 'eve',
           language: 'en',
-          model: 'grok',
+          model: 'xai',
         }),
       ],
       selectedVoice: createVoice({
         id: 'voice-grok',
         name: 'eve',
         language: 'en',
-        model: 'grok',
+        model: 'xai',
       }),
     });
 

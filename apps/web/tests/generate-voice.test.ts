@@ -92,7 +92,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should return 400 when text exceeds maximum length for Gemini voices', async () => {
-      const longText = 'a'.repeat(1001); // Exceeds 1000 char limit
+      const longText = 'a'.repeat(501); // Exceeds 500 char limit
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -107,6 +107,28 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.error).toContain('Text exceeds the maximum length');
+    });
+
+    it('should return 400 when paid Gemini text exceeds maximum length', async () => {
+      const longText = 'a'.repeat(1001); // Exceeds 1000 char paid Gemini limit
+
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Text exceeds the maximum length');
+      expect(json.error).toContain('1000 characters');
     });
 
     it('should return 400 when text exceeds maximum length for Grok voices', async () => {
@@ -638,6 +660,54 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Voice Generation - Google Gemini', () => {
+    it('passes optional seed to Gemini provider config', async () => {
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      } as GenerateContentResponse);
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent,
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'kore',
+          seed: 1_234_567,
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalled();
+      expect(generateContent.mock.calls[0][0].config.seed).toBe(1_234_567);
+    });
+
     it('should successfully generate voice using Google Gemini', async () => {
       const {
         reduceCredits,
@@ -648,14 +718,10 @@ describe('Generate Voice API Route', () => {
       } = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(getCredits).mockResolvedValueOnce(3000);
-      // Text is 1000 chars — requires paid limit; mock as paid user
+      // Keep paid user flow coverage; Gemini paid users have a 1000 char limit.
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      const text = `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
-
-And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
-
-As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`;
+      const text = 'Hello world';
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
