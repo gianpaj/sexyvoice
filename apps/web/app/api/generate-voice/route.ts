@@ -213,6 +213,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         creditUsed: 0,
         model: voiceObj.model,
+        split: isSplit,
       });
 
       // Return existing audio file URL
@@ -639,6 +640,7 @@ export async function POST(request: Request) {
           textLength: text.length,
           isGeminiVoice,
           userHasPaid,
+          split: isSplit,
           predictionId: replicateResponse?.id ?? null,
           ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
@@ -651,6 +653,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         creditUsed: estimate,
         model: modelUsed,
+        split: isSplit,
       });
     });
 
@@ -765,6 +768,7 @@ async function sendPosthogEvent({
   predictionId,
   creditUsed,
   model,
+  split,
 }: {
   userId: string;
   text: string;
@@ -772,6 +776,7 @@ async function sendPosthogEvent({
   predictionId?: string;
   creditUsed: number;
   model: string;
+  split?: boolean;
 }) {
   const posthog = PostHogClient();
   posthog.capture({
@@ -785,6 +790,7 @@ async function sendPosthogEvent({
       voiceId,
       credits_used: creditUsed,
       textLength: text.length,
+      split,
     },
   });
   await posthog.shutdown();

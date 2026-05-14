@@ -408,6 +408,7 @@ describe('AudioGenerator', () => {
             voice: 'eve',
             styleVariant: '',
             language: 'ar-EG',
+            split: false,
           }),
           signal: expect.any(AbortSignal),
         }),
@@ -547,6 +548,7 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: shortText,
       voice: 'tara',
+      split: false,
       styleVariant: '',
     });
   });

@@ -257,7 +257,7 @@ export function AudioGenerator({
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
           ...(seed === undefined ? {} : { seed }),
-          ...(split ? { split: true } : {}),
+          split,
         }),
         signal,
       });
