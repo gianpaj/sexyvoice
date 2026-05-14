@@ -643,11 +643,12 @@ export function AudioGenerator({
         });
       }
 
-      const outputBlob = await joinSegments(segmentInputs, 'wav');
+      const outputFormat = isGrokVoice ? 'mp3' : 'wav';
+      const outputBlob = await joinSegments(segmentInputs, outputFormat);
       const outputUrl = URL.createObjectURL(outputBlob);
       const anchor = document.createElement('a');
       anchor.href = outputUrl;
-      anchor.download = 'generated-audio.wav';
+      anchor.download = `generated-audio.${outputFormat}`;
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);

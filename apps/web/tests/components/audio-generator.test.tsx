@@ -20,10 +20,24 @@ const mockToastFn = vi.hoisted(() =>
     dismiss: vi.fn(),
   }),
 );
+const mockJoinSegments = vi.hoisted(() =>
+  vi.fn(async () => new Blob(['joined'], { type: 'audio/mpeg' })),
+);
 
 vi.mock('@ai-sdk/react', () => ({
   useCompletion: () => ({
     complete: vi.fn(),
+  }),
+}));
+
+vi.mock('@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner', () => ({
+  useFFmpegJoiner: () => ({
+    cancel: vi.fn(),
+    error: null,
+    isLoading: false,
+    isProcessing: false,
+    join: mockJoinSegments,
+    progress: 0,
   }),
 }));
 
@@ -251,6 +265,27 @@ function ensureLocalStorage() {
       setItem: (key: string, value: string) => storage.set(key, value),
     },
   });
+}
+
+function stubAudioMetadata(duration = 1) {
+  class MockAudio {
+    duration = duration;
+    private readonly listeners = new Map<string, EventListener>();
+
+    addEventListener(type: string, listener: EventListener) {
+      this.listeners.set(type, listener);
+    }
+
+    removeEventListener(type: string) {
+      this.listeners.delete(type);
+    }
+
+    load() {
+      this.listeners.get('loadedmetadata')?.(new Event('loadedmetadata'));
+    }
+  }
+
+  vi.stubGlobal('Audio', MockAudio);
 }
 
 describe('AudioGenerator', () => {
@@ -943,6 +978,84 @@ describe('AudioGenerator', () => {
       styleVariant: '',
       language: 'auto',
     });
+  });
+
+  it('downloads all generated Grok split segments as an mp3', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const grokAudioBlob = new Blob(['segment'], { type: 'audio/mpeg' });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
+      })
+      .mockResolvedValue({
+        ok: true,
+        blob: async () => grokAudioBlob,
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    stubAudioMetadata();
+    const createObjectURL = vi.fn(() => 'blob:joined-audio');
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+      () => undefined,
+    );
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({
+        name: 'eve',
+        model: 'xai',
+      }),
+    });
+
+    fireEvent.change(
+      screen.getByRole('textbox', {
+        name: baseDict.textAreaPlaceholder,
+      }),
+      {
+        target: { value: longText },
+      },
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: baseDict.split.downloadAll }),
+    );
+
+    await waitFor(() => {
+      expect(mockJoinSegments).toHaveBeenCalledWith(expect.any(Array), 'mp3');
+    });
+    expect(createObjectURL).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'audio/mpeg' }),
+    );
   });
 
   it('generates Grok split segments without breaking wrapping tags', async () => {
