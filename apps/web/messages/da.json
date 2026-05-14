@@ -91,8 +91,8 @@
     "readMore": "Læs mere",
     "more": "Flere indlæg",
     "hero": {
-      "title": "Udtryksfulde stemmer, ucensureret",
-      "subtitle": "Gratis AI tekst-til-tale & stemmegenerator til voksne.\nPerfekt til indholdsskabere og historiefortællere. 😉",
+      "title": "Udtryksfulde stemmer, ubegrænsede muligheder",
+      "subtitle": "Gratis AI tekst-til-tale & stemmegenerator.\nPerfekt til indholdsskabere og historiefortællere.",
       "buttonCTA": "Tilmeld dig gratis",
       "noCreditCard": "Intet kreditkort påkrævet",
       "signIn": "Log ind"
@@ -112,7 +112,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start med 10.000 gratis kreditter ( ͡° ͜ʖ ͡°)",
+      "freeCredits": "Start med 10.000 gratis kreditter",
       "title": "Klar til at finde din stemme?",
       "subtitle": "Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.",
       "action": "Opret din første stemme"
@@ -202,10 +202,6 @@
             {
               "question": "Hvad kan jeg bruge de genererede stemmer til?",
               "answer": "Skabere bruger vores stemmer til videoer, podcasts, lydbøger, socialt indhold, spil, e-learning og mere. Det er en nem måde at bevare konsekvent lydkvalitet. Husk bare at vores vilkår forbyder bedrag eller efterligning."
-            },
-            {
-              "question": "Er erotik eller voksenindhold tilladt?",
-              "answer": "Ja, vi tillader voksen- og erotikaindhold på vores platform. Vi tror på kreativ frihed med ansvarlig brug. Dog skal alt indhold overholde vores servicevilkår og gældende love. Vi forbyder indhold, der involverer mindreårige, ikke-samtykkende scenarier eller ulovlige aktiviteter."
             }
           ]
         },
@@ -265,14 +261,18 @@
         "description": "For personer, der vil prøve den mest avancerede AI-lydgenerering.",
         "creditsWithAudio": "{numCredits} kreditter (~4 min lyd)",
         "features": [
-          "Generer tale med realistiske stønlyde",
+          "Generer tale med realistiske lyde",
           "Klon din stemme med kun 10 sekunders lyd"
         ]
       },
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
+        "features": [
+          "Alt i Gratis",
+          "2× længere tekstgenerering",
+          "API-adgang"
+        ]
       },
       "standard": {
         "name": "Standard",
@@ -713,8 +713,8 @@
     "description": "Overvåg API-brug, anmodninger og omkostninger over tid."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator til voksne",
-    "description": "Generer udtryksfulde AI-stemmer med følelser til voksenindhold på 24+ sprog. Gratis tekst-til-tale med stemmekloning og NSFW-support. Start med gratis credits – intet kort påkrævet.",
+    "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator",
+    "description": "Generer udtryksfuld AI-tale med følelser på 24+ sprog. Prøv gratis tekst-til-tale med stemmekloning og naturlig talesyntese. Start med gratis credits – intet kort påkrævet.",
     "skipToMainContent": "Spring til hovedindhold",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
@@ -737,7 +737,7 @@
     "descriptionTranscribe": "Gratis online lydtransskription – Transskriber lyd- og videofiler til tekst på 99+ sprog med OpenAI Whisper. 100% privat, kører direkte i din browser. Ingen upload påkrævet.",
     "keywordsAudioConverter": "gratis lydkonverter, konverter mp3, konverter wav, konverter flac, konverter ogg, konverter aac, online lydkonverter, browser lydkonverter, offline lydkonverter, mp3 til wav, wav til mp3, lydformat konverter, ffmpeg online, privat lydkonverter",
     "keywordsTranscribe": "gratis lydtransskription, transskriber lyd, tale til tekst, lyd til tekst, whisper transskription, openai whisper, offline transskription, browser transskription, stemme til tekst, gratis talegenkendelse, lydtransskription online, transskriber video, 99 sprog transskription, privat transskription",
-    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, tekst til tale for voksne, NSFW tekst til tale, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese, AI stemme voksen, voksenindhold AI",
+    "keywordsLanding": "tekst til tale, AI stemmegenerator, stemmekloning, AI talesyntese, stemmegenerering, gratis TTS, udtryksfulde AI-stemmer, AI stemmeklon, talesyntese",
     "titleAudioJoiner": "Gratis Lyd Samler – Flet og Trim Lydfiler",
     "descriptionAudioJoiner": "Flet flere lydfiler og trim hvert segment direkte i din browser. Privat, gratis og uden upload.",
     "keywordsAudioJoiner": "gratis lyd samler, flet lydfiler, join mp3 online, kombiner wav-filer, trim lydsegmenter, browser lydeditor, lyd samler uden upload, privat lydeditor, ffmpeg wasm lyd samler",

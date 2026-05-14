@@ -6,7 +6,7 @@
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
     "turbo": "2.9.5",
-    "ultracite": "^7.5.6"
+    "ultracite": "7.5.6"
   },
   "engines": {
     "node": "24.x"
@@ -20,8 +20,9 @@
   "pnpm": {
     "overrides": {
       "@babel/runtime@<7.26.10": ">=7.26.10",
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3",
+      "@opentelemetry/auto-instrumentations-node": "0.75.0",
+      "@opentelemetry/exporter-prometheus": "0.217.0",
+      "@opentelemetry/sdk-node": "0.217.0",
       "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7",
       "require-in-the-middle": "7.5.2",
       "undici@<5.28.4": ">=5.28.4",

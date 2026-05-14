@@ -32,6 +32,7 @@ import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
 import { isFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
+import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import {
@@ -244,7 +245,17 @@ export function VoiceSelector({
               <div>
                 <p className="text-muted-foreground text-sm">
                   <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
-                  prompt: <i>{selectedVoice.sample_prompt}</i>
+                  prompt:{' '}
+                  {isGrokVoice ? (
+                    <span className="whitespace-break-spaces">
+                      <GrokTaggedText
+                        className="inline-flex rounded bg-gray-700 px-1 py-0.5 font-mono text-gray-200 text-xs"
+                        text={selectedVoice.sample_prompt ?? ''}
+                      />
+                    </span>
+                  ) : (
+                    <i>{selectedVoice.sample_prompt}</i>
+                  )}
                 </p>
                 {getEmotionTags(selectedVoice.language) && (
                   <TooltipProvider>

@@ -9,6 +9,8 @@
 - change all `dict...replace()` to use next-intl functions
 - Generate: if a sample contains tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
 
+- Landing: add character images for each popular voice. Think about a way to generate avatar images
+
 ## Agents
 
 - create CLI for API auth <https://github.com/helius-labs/helius-cli>

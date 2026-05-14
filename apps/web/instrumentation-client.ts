@@ -8,6 +8,8 @@ import {
 } from 'posthog-js/dist/extension-bundles';
 import posthog from 'posthog-js/dist/module.slim';
 
+import { shouldDropClientSentryEvent } from '@/lib/sentry/client-filters';
+
 Sentry.init({
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
 
@@ -32,6 +34,10 @@ Sentry.init({
 
     // Additional filtering for app:// protocol (browser extensions)
     if (eventUrl.includes('app://')) {
+      return null;
+    }
+
+    if (shouldDropClientSentryEvent(event)) {
       return null;
     }
 

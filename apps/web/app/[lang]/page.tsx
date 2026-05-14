@@ -90,8 +90,8 @@ export default async function LandingPage(props: {
         url: 'https://sexyvoice.ai',
         logo: 'https://sexyvoice.ai/icon-192x192.png',
         sameAs: [
-          'https://x.com/sexyvoice_ai',
-          'https://instagram.com/sexyvoice.ai',
+          'https://x.com/sexyvoiceai',
+          'https://instagram.com/sexyvoice_ai',
         ],
       },
       {

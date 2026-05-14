@@ -16,6 +16,22 @@ import { OggOpusDecoder } from 'ogg-opus-decoder';
 
 export type SupportedAudioFormat = 'mp3' | 'ogg' | 'opus' | 'vorbis' | 'webm';
 
+export class AudioDecodeError extends Error {
+  decoderMessage?: string;
+  format: SupportedAudioFormat;
+
+  constructor(format: SupportedAudioFormat, cause: unknown) {
+    super(
+      `Failed to decode ${format} audio. Please upload a valid audio file.`,
+    );
+    this.name = 'AudioDecodeError';
+    this.decoderMessage =
+      cause instanceof Error ? cause.message : 'Unknown decoder error';
+    this.format = format;
+    this.cause = cause;
+  }
+}
+
 interface DecodedAudio {
   channelData: Float32Array[];
   sampleRate: number;
@@ -403,10 +419,7 @@ export async function convertToWav(
         return null;
     }
   } catch (error) {
-    console.error(`Failed to decode ${format} audio:`, error);
-    throw new Error(
-      `Failed to decode ${format} audio: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
+    throw new AudioDecodeError(format, error);
   }
 
   validateDecodedAudio(decoded, format);
