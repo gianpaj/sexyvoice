@@ -124,7 +124,7 @@
     "ioredis": "5.10.1",
     "jsdom": "28.1.0",
     "knip": "6.3.0",
-    "msw": "2.12.13",
+    "msw": "2.14.6",
     "postcss": "catalog:",
     "redis-memory-server": "0.16.0",
     "tsx": "catalog:",
