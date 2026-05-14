@@ -23,12 +23,13 @@
       "@opentelemetry/auto-instrumentations-node": "0.75.0",
       "@opentelemetry/exporter-prometheus": "0.217.0",
       "@opentelemetry/sdk-node": "0.217.0",
-      "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7",
+      "fast-xml-parser@<5.7.0": ">=5.7.0",
+      "postcss@<8.5.10": ">=8.5.10",
+      "protobufjs@>=8.0.0 <=8.0.1": ">=8.0.2",
       "require-in-the-middle": "7.5.2",
-      "undici@<5.28.4": ">=5.28.4",
-      "undici@<=5.28.2": ">=5.28.3",
-      "undici@>=4.5.0 <5.28.5": ">=5.28.5",
-      "whatwg-url": "^14.0.0"
+      "undici@<5.28.5": ">=5.28.5",
+      "vite@>=7.0.0 <=7.3.1": ">=7.3.2",
+      "webpack@>=5.49.0 <=5.104.0": ">=5.104.1"
     }
   },
   "private": true,

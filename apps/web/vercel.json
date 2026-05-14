@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "git log -1 --pretty=oneline --abbrev-commit | grep -E 'skip deploy|skip ci' && exit 0 || exit 1",
+  "ignoreCommand": "git --no-pager log -1 --pretty=%B | grep -Eiq 'skip deploy|skip ci' && exit 0; git --no-pager diff-tree --no-commit-id --name-only --root -r HEAD | grep -q '^apps/web/' && exit 1 || exit 0",
   "crons": [
     {
       "path": "/api/daily-stats",
