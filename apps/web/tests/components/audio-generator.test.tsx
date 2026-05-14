@@ -672,11 +672,13 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
       voice: 'tara',
+      split: true,
       styleVariant: '',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
       voice: 'tara',
+      split: true,
       styleVariant: '',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -766,11 +768,13 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
       voice: 'achernar',
+      split: true,
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
       voice: 'achernar',
+      split: true,
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -928,6 +932,7 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: secondSegment,
       voice: 'achernar',
+      split: true,
       styleVariant: 'dramatic',
     });
   });
@@ -996,11 +1001,13 @@ describe('AudioGenerator', () => {
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
       text: firstSegment,
       voice: 'achernar',
+      split: true,
       styleVariant: 'calm',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
       voice: 'achernar',
+      split: true,
       styleVariant: 'calm',
     });
   });
@@ -1052,12 +1059,14 @@ describe('AudioGenerator', () => {
       text: firstSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'en',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'en',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -1159,6 +1168,7 @@ describe('AudioGenerator', () => {
       text: secondSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
   });
@@ -1219,12 +1229,14 @@ describe('AudioGenerator', () => {
       text: firstSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'ar-EG',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'ar-EG',
     });
   });
@@ -1369,18 +1381,21 @@ describe('AudioGenerator', () => {
       text: firstSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: wrappedSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: lastSegment,
       voice: 'eve',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
