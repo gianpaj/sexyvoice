@@ -64,6 +64,7 @@ export async function POST(request: Request) {
   let styleVariant = '';
   let seed: number | undefined;
   let selectedLanguage = '';
+  let isSplit = false;
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
     voice = body.voice || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
+    isSplit = body.split === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
       seed = body.seed;
@@ -599,6 +601,7 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           userHasPaid,
+          split: isSplit,
         },
       });
 
