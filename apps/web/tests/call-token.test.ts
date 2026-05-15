@@ -22,7 +22,7 @@ describe('call-token API validation', () => {
   const sessionConfigSchema = z.object({
     model: z.string(),
     voice: z.string(),
-    temperature: z.number().min(0).max(2),
+    temperature: z.number().min(0.6).max(1.2),
     maxOutputTokens: z.number().nullable(),
   });
 
@@ -281,14 +281,14 @@ describe('call-token API validation', () => {
   });
 
   describe('edge cases', () => {
-    it('should accept temperature at minimum boundary (0)', () => {
+    it('should accept temperature at minimum boundary (0.6)', () => {
       const payload = {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
           model: 'test',
           voice: 'Ara',
-          temperature: 0,
+          temperature: 0.6,
           maxOutputTokens: null,
         },
       };
@@ -297,14 +297,14 @@ describe('call-token API validation', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept temperature at maximum boundary (2)', () => {
+    it('should accept temperature at maximum boundary (1.2)', () => {
       const payload = {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
           model: 'test',
           voice: 'Ara',
-          temperature: 2,
+          temperature: 1.2,
           maxOutputTokens: null,
         },
       };

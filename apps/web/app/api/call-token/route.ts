@@ -24,7 +24,7 @@ import { createClient } from '@/lib/supabase/server';
 const sessionConfigSchema = z.object({
   model: z.string(),
   voice: z.string(),
-  temperature: z.number().min(0).max(2),
+  temperature: z.number().min(0.6).max(1.2),
   maxOutputTokens: z.number().nullable(),
 });
 
