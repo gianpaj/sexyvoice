@@ -1,6 +1,5 @@
 import { defaultSessionConfig } from '@/data/default-config';
-import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
-import { getPresetInstructions } from '@/data/preset-instructions';
+import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
 
@@ -151,9 +150,8 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
      * resolving language-specific translations if available.
      *
      * Priority for instruction resolution:
-     * 1. Custom character localizedInstructions for the language
-     * 2. Built-in preset translations (from preset-instructions index)
-     * 3. Preset's default instructions field (English / fallback)
+     * 1. Character localizedInstructions for the language
+     * 2. Preset's default instructions field (fallback)
      */
     getStateWithFullInstructions: (
       state: PlaygroundState,
@@ -171,22 +169,13 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
         : state;
       let instructions = baseState.instructions;
 
-      // 1. Custom character localizedInstructions
+      // 1. Character localizedInstructions
       if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
         instructions = preset.localizedInstructions[
           baseState.language
         ] as string;
-      } else if (preset && baseState.language !== 'en') {
-        // 2. Built-in preset translations
-        const translatedInstructions = getPresetInstructions(
-          preset.id,
-          baseState.language as CallLanguage,
-        );
-        if (translatedInstructions) {
-          instructions = translatedInstructions;
-        }
       } else if (preset) {
-        // 3. Fallback to preset's default instructions
+        // 2. Fallback to preset's default instructions
         instructions = preset.instructions;
       }
 
