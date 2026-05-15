@@ -57,7 +57,6 @@ function toSessionConfig(value: unknown): {
   temperature?: number;
   maxOutputTokens?: number | null;
   max_output_tokens?: number | null;
-  grok_image_enabled?: boolean;
 } {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -69,7 +68,6 @@ function toSessionConfig(value: unknown): {
     temperature?: number;
     maxOutputTokens?: number | null;
     max_output_tokens?: number | null;
-    grok_image_enabled?: boolean;
   };
 }
 
