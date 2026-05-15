@@ -156,24 +156,13 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
     getStateWithFullInstructions: (
       state: PlaygroundState,
     ): CallTokenPlaygroundState => {
-      // Resolve the selected preset so we can sync sessionConfig
       const allPresets = [...defaultPresets, ...state.customCharacters];
       const preset = allPresets.find((p) => p.id === state.selectedPresetId);
-
-      // Sync sessionConfig from the selected preset so the correct voice
-      // (and other settings) are sent to the call-token API.
-      // Voice changes on custom characters only update the preset inside
-      // customCharacters, not the top-level sessionConfig.
-      const baseState = preset
-        ? { ...state, sessionConfig: preset.sessionConfig }
-        : state;
-      let instructions = baseState.instructions;
+      let instructions = state.instructions;
 
       // 1. Character localizedInstructions
-      if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
-        instructions = preset.localizedInstructions[
-          baseState.language
-        ] as string;
+      if (preset?.localizedInstructions?.[state.language] !== undefined) {
+        instructions = preset.localizedInstructions[state.language] as string;
       } else if (preset) {
         // 2. Fallback to preset's default instructions
         instructions = preset.instructions;
@@ -181,13 +170,13 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
 
       return {
         instructions,
-        language: baseState.language,
-        selectedPresetId: baseState.selectedPresetId,
+        language: state.language,
+        selectedPresetId: state.selectedPresetId,
         sessionConfig: {
-          maxOutputTokens: baseState.sessionConfig.maxOutputTokens,
-          model: baseState.sessionConfig.model,
-          temperature: baseState.sessionConfig.temperature,
-          voice: baseState.sessionConfig.voice,
+          maxOutputTokens: state.sessionConfig.maxOutputTokens,
+          model: state.sessionConfig.model,
+          temperature: state.sessionConfig.temperature,
+          voice: state.sessionConfig.voice,
         },
       };
     },
