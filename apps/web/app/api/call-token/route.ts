@@ -8,7 +8,6 @@ import { z } from 'zod';
 import {
   defaultLanguage,
   languageInitialInstructions,
-  type PlaygroundState,
 } from '@/data/playground-state';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
@@ -27,11 +26,10 @@ const sessionConfigSchema = z.object({
   voice: z.string(),
   temperature: z.number().min(0).max(2),
   maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
 });
 
-// Zod schema for playground state
-const playgroundStateSchema = z.object({
+// Zod schema for the minimal call-token request payload.
+const callTokenPlaygroundStateSchema = z.object({
   instructions: z.string(),
   language: z
     .enum([
@@ -59,10 +57,8 @@ const playgroundStateSchema = z.object({
     .optional(),
   selectedPresetId: z.uuid().nullable(),
   sessionConfig: sessionConfigSchema,
-  customCharacters: z.array(z.any()).optional(),
-  initialInstruction: z.string().optional(),
-  defaultPresets: z.array(z.any()).optional(),
 });
+type CallTokenPlaygroundState = z.infer<typeof callTokenPlaygroundStateSchema>;
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
@@ -102,11 +98,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let playgroundState: PlaygroundState;
+    let playgroundState: CallTokenPlaygroundState;
 
     try {
       const body = await request.json();
-      const validationResult = playgroundStateSchema.safeParse(body);
+      const validationResult = callTokenPlaygroundStateSchema.safeParse(body);
 
       if (!validationResult.success) {
         const formattedError = z.treeifyError(validationResult.error);
@@ -122,7 +118,7 @@ export async function POST(request: Request) {
         );
       }
 
-      playgroundState = validationResult.data as PlaygroundState;
+      playgroundState = validationResult.data;
     } catch (error) {
       logger.error('Invalid JSON in request body', {
         error: Error.isError(error) ? error.message : String(error),
@@ -147,13 +143,7 @@ export async function POST(request: Request) {
       instructions: clientInstructions,
       language = defaultLanguage,
       selectedPresetId,
-      sessionConfig: {
-        model,
-        voice,
-        temperature,
-        maxOutputTokens,
-        grokImageEnabled,
-      },
+      sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
     const selectedLanguage = languageInitialInstructions[language]
@@ -259,11 +249,9 @@ export async function POST(request: Request) {
       voice: voiceObj.id,
       temperature,
       max_output_tokens: maxOutputTokens,
-      grok_image_enabled: grokImageEnabled,
       language: selectedLanguage,
       initial_instruction: ' ',
       user_id: user.id,
-      character_id: selectedPresetId, // Track which character is being used
     };
 
     // Create access token

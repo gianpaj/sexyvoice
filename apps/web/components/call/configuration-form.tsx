@@ -45,7 +45,6 @@ export const ConfigurationFormSchema = z.object({
   voice: z.string().min(1),
   temperature: z.number().min(0.6).max(1.2),
   maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
 });
 
 export interface ConfigurationFormFieldProps {
@@ -105,7 +104,6 @@ export function ConfigurationForm({
       voice: values.voice,
       temperature: values.temperature,
       max_output_tokens: values.maxOutputTokens || '',
-      grok_image_enabled: values.grokImageEnabled,
     };
     if (!agent?.identity) {
       return;

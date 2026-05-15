@@ -19,7 +19,6 @@ export interface ApiCharacterResponse {
     temperature?: number;
     maxOutputTokens?: number | null;
     max_output_tokens?: number | null;
-    grokImageEnabled?: boolean;
     grok_image_enabled?: boolean;
   } | null;
   sort_order?: number;
@@ -55,17 +54,13 @@ export function mapApiCharacterToPreset(
     localizedInstructions: character.prompts?.localized_prompts ?? {},
     sessionConfig: {
       model: (sessionConfig.model ??
-        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+        'grok-voice-think-fast-1.0') as Preset['sessionConfig']['model'],
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
         null,
-      grokImageEnabled:
-        sessionConfig.grokImageEnabled ??
-        sessionConfig.grok_image_enabled ??
-        false,
     },
     promptId: character.prompt_id,
     voiceId: character.voice_id,

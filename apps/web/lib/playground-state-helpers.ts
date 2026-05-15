@@ -4,6 +4,16 @@ import { getPresetInstructions } from '@/data/preset-instructions';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
 
+export interface CallTokenPlaygroundState {
+  instructions: string;
+  language: PlaygroundState['language'];
+  selectedPresetId: PlaygroundState['selectedPresetId'];
+  sessionConfig: Pick<
+    SessionConfig,
+    'maxOutputTokens' | 'model' | 'temperature' | 'voice'
+  >;
+}
+
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
     getSelectedPreset: (state: PlaygroundState) =>
@@ -81,7 +91,23 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
           const configKey = key.split(
             '.',
           )[1] as keyof PlaygroundState['sessionConfig'];
-          sessionConfig[configKey] = value as any;
+          switch (configKey) {
+            case 'maxOutputTokens':
+              sessionConfig.maxOutputTokens =
+                value === 'null' ? null : Number(value);
+              break;
+            case 'model':
+              sessionConfig.model = value as SessionConfig['model'];
+              break;
+            case 'temperature':
+              sessionConfig.temperature = Number(value);
+              break;
+            case 'voice':
+              sessionConfig.voice = value;
+              break;
+            default:
+              break;
+          }
         }
       });
 
@@ -129,11 +155,9 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
      * 2. Built-in preset translations (from preset-instructions index)
      * 3. Preset's default instructions field (English / fallback)
      */
-    getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
-      if (!state.selectedPresetId) {
-        return state;
-      }
-
+    getStateWithFullInstructions: (
+      state: PlaygroundState,
+    ): CallTokenPlaygroundState => {
       // Resolve the selected preset so we can sync sessionConfig
       const allPresets = [...defaultPresets, ...state.customCharacters];
       const preset = allPresets.find((p) => p.id === state.selectedPresetId);
@@ -145,34 +169,38 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       const baseState = preset
         ? { ...state, sessionConfig: preset.sessionConfig }
         : state;
+      let instructions = baseState.instructions;
 
       // 1. Custom character localizedInstructions
       if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
-        return {
-          ...baseState,
-          instructions: preset.localizedInstructions[
-            baseState.language
-          ] as string,
-        };
-      }
-
-      // 2. Built-in preset translations
-      if (baseState.language !== 'en') {
+        instructions = preset.localizedInstructions[
+          baseState.language
+        ] as string;
+      } else if (preset && baseState.language !== 'en') {
+        // 2. Built-in preset translations
         const translatedInstructions = getPresetInstructions(
-          baseState.selectedPresetId!,
+          preset.id,
           baseState.language as CallLanguage,
         );
         if (translatedInstructions) {
-          return { ...baseState, instructions: translatedInstructions };
+          instructions = translatedInstructions;
         }
+      } else if (preset) {
+        // 3. Fallback to preset's default instructions
+        instructions = preset.instructions;
       }
 
-      // 3. Fallback to preset's default instructions
-      if (preset) {
-        return { ...baseState, instructions: preset.instructions };
-      }
-
-      return baseState;
+      return {
+        instructions,
+        language: baseState.language,
+        selectedPresetId: baseState.selectedPresetId,
+        sessionConfig: {
+          maxOutputTokens: baseState.sessionConfig.maxOutputTokens,
+          model: baseState.sessionConfig.model,
+          temperature: baseState.sessionConfig.temperature,
+          voice: baseState.sessionConfig.voice,
+        },
+      };
     },
   };
 

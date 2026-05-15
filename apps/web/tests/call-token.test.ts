@@ -24,10 +24,9 @@ describe('call-token API validation', () => {
     voice: z.string(),
     temperature: z.number().min(0).max(2),
     maxOutputTokens: z.number().nullable(),
-    grokImageEnabled: z.boolean(),
   });
 
-  // Zod schema for playground state (duplicated from route.ts for testing)
+  // Zod schema for the minimal call-token payload (duplicated from route.ts for testing)
   const playgroundStateSchema = z.object({
     instructions: z.string(),
     language: z
@@ -56,9 +55,6 @@ describe('call-token API validation', () => {
       .optional(),
     selectedPresetId: z.string().uuid().nullable(),
     sessionConfig: sessionConfigSchema,
-    customCharacters: z.array(z.any()).optional(),
-    initialInstruction: z.string().optional(),
-    defaultPresets: z.array(z.any()).optional(),
   });
 
   describe('valid payloads', () => {
@@ -67,11 +63,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -85,11 +80,10 @@ describe('call-token API validation', () => {
         language: 'en' as const,
         selectedPresetId: '123e4567-e89b-12d3-a456-426614174000',
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: 1000,
-          grokImageEnabled: true,
         },
       };
 
@@ -97,25 +91,27 @@ describe('call-token API validation', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept a payload with all optional fields', () => {
+    it('should ignore client fields not needed for the call token', () => {
       const payload = {
         instructions: 'Test instructions',
         language: 'es' as const,
         selectedPresetId: '123e4567-e89b-12d3-a456-426614174000',
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Eve',
           temperature: 1.2,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
         customCharacters: [],
         initialInstruction: 'Say hello',
-        defaultPresets: [],
       };
 
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).not.toHaveProperty('customCharacters');
+        expect(result.data).not.toHaveProperty('initialInstruction');
+      }
     });
 
     it('should accept all valid language codes', () => {
@@ -152,7 +148,6 @@ describe('call-token API validation', () => {
             voice: 'Ara',
             temperature: 0.8,
             maxOutputTokens: null,
-            grokImageEnabled: false,
           },
         };
 
@@ -167,11 +162,10 @@ describe('call-token API validation', () => {
       const payload = {
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -194,11 +188,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: 'not-a-valid-uuid',
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -212,11 +205,10 @@ describe('call-token API validation', () => {
         language: 'invalid',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -229,11 +221,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 2.5, // Max is 2.0
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -246,11 +237,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: -0.5, // Min is 0
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -263,27 +253,9 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
-        },
-      };
-
-      const result = playgroundStateSchema.safeParse(payload);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject payload with wrong type for grokImageEnabled', () => {
-      const payload = {
-        instructions: 'Test instructions',
-        selectedPresetId: null,
-        sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
-          voice: 'Ara',
-          temperature: 0.8,
-          maxOutputTokens: null,
-          grokImageEnabled: 'true', // Should be boolean
         },
       };
 
@@ -296,11 +268,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-4-1-fast-non-reasoning',
+          model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: '1000', // Should be number or null
-          grokImageEnabled: false,
         },
       };
 
@@ -319,7 +290,6 @@ describe('call-token API validation', () => {
           voice: 'Ara',
           temperature: 0,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -336,7 +306,6 @@ describe('call-token API validation', () => {
           voice: 'Ara',
           temperature: 2,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -353,7 +322,6 @@ describe('call-token API validation', () => {
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -370,7 +338,6 @@ describe('call-token API validation', () => {
           voice: 'Ara',
           temperature: 0.8,
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -389,7 +356,6 @@ describe('call-token API validation', () => {
           voice: 'Ara',
           temperature: 3.0, // Out of range
           maxOutputTokens: null,
-          grokImageEnabled: false,
         },
       };
 
@@ -422,7 +388,6 @@ describe('call-token API validation', () => {
           voice: 'Ara',
           temperature: -1, // Below minimum
           maxOutputTokens: 'invalid', // Should be number or null
-          grokImageEnabled: false,
         },
       };
 
