@@ -252,6 +252,7 @@ export async function POST(request: Request) {
       language: selectedLanguage,
       initial_instruction: ' ',
       user_id: user.id,
+      character_id: selectedPresetId,
     };
 
     // Create access token
