@@ -1,7 +1,7 @@
 'use client';
 
 import { Languages } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
@@ -36,21 +36,18 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const isEnglishOnly =
     WHISPER_MODELS.find((m) => m.id === model)?.multilingual === false;
 
-  const handleAudioReady = useCallback((audio: Float32Array) => {
+  const handleAudioReady = (audio: Float32Array) => {
     audioRef.current = audio;
     setHasAudio(true);
-  }, []);
+  };
 
-  const handleFileSelected = useCallback(
-    (file: File) => {
-      if (audioFileUrl) {
-        URL.revokeObjectURL(audioFileUrl);
-      }
-      setAudioFileUrl(URL.createObjectURL(file));
-      setCurrentTime(null);
-    },
-    [audioFileUrl],
-  );
+  const handleFileSelected = (file: File) => {
+    if (audioFileUrl) {
+      URL.revokeObjectURL(audioFileUrl);
+    }
+    setAudioFileUrl(URL.createObjectURL(file));
+    setCurrentTime(null);
+  };
 
   // Revoke blob URL on unmount
   useEffect(() => {
@@ -61,13 +58,13 @@ export default function TranscribeClient({ lang, dict }: Props) {
     };
   }, [audioFileUrl]);
 
-  const handleRemoveAudio = useCallback(() => {
+  const handleRemoveAudio = () => {
     audioRef.current = null;
     setHasAudio(false);
     transcriber.reset();
-  }, [transcriber]);
+  };
 
-  const handleLoadAndTranscribe = useCallback(() => {
+  const handleLoadAndTranscribe = () => {
     if (!audioRef.current) return;
 
     if (transcriber.state === 'idle' || loadedModelRef.current !== model) {
@@ -79,7 +76,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
         isEnglishOnly ? 'transcribe' : subtask,
       );
     }
-  }, [transcriber, model, language, subtask, isEnglishOnly]);
+  };
 
   // Auto-transcribe when model finishes loading (loading → ready transition)
   useEffect(() => {
@@ -107,9 +104,9 @@ export default function TranscribeClient({ lang, dict }: Props) {
     idle: dict.loadAndTranscribe,
   };
 
-  const handleTimeUpdate = useCallback((time: number) => {
+  const handleTimeUpdate = (time: number) => {
     setCurrentTime(time);
-  }, []);
+  };
 
   return (
     <>
@@ -119,13 +116,26 @@ export default function TranscribeClient({ lang, dict }: Props) {
           className="mb-5 flex items-end justify-center gap-[3px] opacity-40"
           style={{ height: '28px' }}
         >
-          {[10, 18, 26, 14, 28, 20, 24, 12, 22, 16, 28, 18].map((height, i) => (
+          {[
+            { key: 'hero-wave-1', height: 10, delay: '0s' },
+            { key: 'hero-wave-2', height: 18, delay: '0.09s' },
+            { key: 'hero-wave-3', height: 26, delay: '0.18s' },
+            { key: 'hero-wave-4', height: 14, delay: '0.27s' },
+            { key: 'hero-wave-5', height: 28, delay: '0.36s' },
+            { key: 'hero-wave-6', height: 20, delay: '0.45s' },
+            { key: 'hero-wave-7', height: 24, delay: '0.54s' },
+            { key: 'hero-wave-8', height: 12, delay: '0.63s' },
+            { key: 'hero-wave-9', height: 22, delay: '0.72s' },
+            { key: 'hero-wave-10', height: 16, delay: '0.81s' },
+            { key: 'hero-wave-11', height: 28, delay: '0.9s' },
+            { key: 'hero-wave-12', height: 18, delay: '0.99s' },
+          ].map((wave) => (
             <div
               className="wave-bar"
-              key={i}
+              key={wave.key}
               style={{
-                height: `${height}px`,
-                animationDelay: `${i * 0.09}s`,
+                height: `${wave.height}px`,
+                animationDelay: wave.delay,
               }}
             />
           ))}

@@ -138,6 +138,42 @@ interface AudioGeneratorProps {
   selectedVoice?: Tables<'voices'>;
 }
 
+function throwGenerateVoiceError(
+  dict: (typeof messages)['generate'],
+  data: {
+    error?: string;
+    errorCode?: string;
+    serverMessage?: string;
+  },
+  response: Response,
+): never {
+  if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
+    const errorMessage = dict[data.errorCode as keyof typeof dict] as string;
+    throw new APIError(
+      errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+      response,
+    );
+  }
+
+  throw new APIError(data.error || data.serverMessage || dict.error, response);
+}
+
+function handleGenerateVoiceError(
+  dict: (typeof messages)['generate'],
+  error: unknown,
+) {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return;
+  }
+
+  if (error instanceof APIError) {
+    toast.error(error.message || dict.error);
+    return;
+  }
+
+  toast.error(dict.error);
+}
+
 export function AudioGenerator({
   dict,
   hasEnoughCredits,
@@ -178,7 +214,7 @@ export function AudioGenerator({
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit(
-    selectedVoice?.model ?? '',
+    selectedVoice?.model || '',
     isPaidUser,
   );
   const splitSegmentTexts = useMemo(
@@ -223,17 +259,13 @@ export function AudioGenerator({
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
     useGenerationProgressToast(selectedVoice?.name, dict.split);
 
-  const textareaRightPadding = useMemo(() => {
-    if (isGeminiVoice) {
-      return 'pr-10';
-    }
+  let textareaRightPadding = 'pr-16';
 
-    if (showEnhanceButton) {
-      return 'pr-20';
-    }
-
-    return 'pr-16';
-  }, [isGeminiVoice, showEnhanceButton]);
+  if (isGeminiVoice) {
+    textareaRightPadding = 'pr-10';
+  } else if (showEnhanceButton) {
+    textareaRightPadding = 'pr-20';
+  }
 
   const requestGenerateVoice = useCallback(
     async (segmentText: string, signal: AbortSignal, seed?: number) => {
@@ -258,17 +290,7 @@ export function AudioGenerator({
 
       const data = await response.json();
       if (!response.ok) {
-        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
-          const errorMessage = dict[
-            data.errorCode as keyof typeof dict
-          ] as string;
-          throw new APIError(
-            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-            response,
-          );
-        }
-
-        throw new APIError(data.error || data.serverMessage, response);
+        throwGenerateVoiceError(dict, data, response);
       }
 
       return data.url as string;
@@ -426,15 +448,7 @@ export function AudioGenerator({
 
       await generateSingleAudio();
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return;
-      }
-
-      if (error instanceof APIError) {
-        toast.error(error.message || dict.error);
-      } else {
-        toast.error(dict.error);
-      }
+      handleGenerateVoiceError(dict, error);
     } finally {
       dismissGenerationProgressToast();
       setIsGenerating(false);

@@ -50,7 +50,12 @@ export function CreditHistory({
               key={transaction.id}
             >
               <TableCell className="font-medium">
-                {format(new Date(transaction.created_at), 'MMM d, yyyy')}
+                <time
+                  dateTime={transaction.created_at}
+                  suppressHydrationWarning
+                >
+                  {format(new Date(transaction.created_at), 'MMM d, yyyy')}
+                </time>
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
               <TableCell className="capitalize">{transaction.type}</TableCell>

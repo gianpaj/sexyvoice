@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import {
   Select,
   SelectContent,
@@ -69,12 +67,11 @@ export function LanguageSelector({
   isEnglishOnly,
   dict,
 }: Props) {
-  const translatedLanguages = useMemo(() => {
-    const all = getTranslatedLanguages(lang, WHISPER_LANGUAGE_CODES);
-    const current = all.find((l) => l.value === lang);
-    const rest = all.filter((l) => l.value !== lang);
-    return current ? [current, ...rest] : all;
-  }, [lang]);
+  const allLanguages = getTranslatedLanguages(lang, WHISPER_LANGUAGE_CODES);
+  const currentLanguage = allLanguages.find((item) => item.value === lang);
+  const translatedLanguages = currentLanguage
+    ? [currentLanguage, ...allLanguages.filter((item) => item.value !== lang)]
+    : allLanguages;
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

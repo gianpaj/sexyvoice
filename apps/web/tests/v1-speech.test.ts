@@ -43,9 +43,12 @@ vi.mock('@/lib/api/rate-limit', async () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_AUTH_HEADER = `Bearer sk_live_${TEST_API_KEY_SUFFIX}`;
+
 function speechRequest(
   body: Record<string, unknown>,
-  authHeader = 'Bearer sk_live_aaaabbbbccccddddeeeeffffgggghhhh',
+  authHeader = TEST_AUTH_HEADER,
 ) {
   return new Request('http://localhost/api/v1/speech', {
     method: 'POST',

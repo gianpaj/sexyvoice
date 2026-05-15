@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { useCallback } from 'react';
 
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import {
@@ -37,56 +36,49 @@ export default function CloneSampleCard({
   setErrorMessage: (message: string) => void;
   setStatus: (status: Status) => void;
 }) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no need
-  const handleLoadSampleAudio = useCallback(
-    async (sampleAudio: SampleAudio) => {
-      try {
-        // we need a local file otherwise we have a CORS error with R2 on https://files.sexyvoice.ai
-        const localPath = sampleAudio.audioSrc.replace(
-          'clone-en-audio-samples/',
-          '',
-        );
-        const audioPath = `/sv-samples/${localPath}`;
-        const res = await fetch(audioPath);
+  const handleLoadSampleAudio = async (sampleAudio: SampleAudio) => {
+    try {
+      // we need a local file otherwise we have a CORS error with R2 on https://files.sexyvoice.ai
+      const localPath = sampleAudio.audioSrc.replace(
+        'clone-en-audio-samples/',
+        '',
+      );
+      const audioPath = `/sv-samples/${localPath}`;
+      const res = await fetch(audioPath);
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch audio: ${res.statusText}`);
-        }
-
-        const blob = await res.blob();
-
-        // Use the blob's actual type if available, otherwise infer from filename
-        let mimeType = blob.type;
-        if (!mimeType || mimeType === 'application/octet-stream') {
-          const extension = sampleAudio.audioSrc
-            .split('.')
-            .pop()
-            ?.toLowerCase();
-          if (extension === 'mp3') {
-            mimeType = 'audio/mpeg';
-          } else if (extension === 'wav') {
-            mimeType = 'audio/wav';
-          } else if (extension === 'm4a') {
-            mimeType = 'audio/mp4';
-          } else {
-            mimeType = 'audio/mpeg'; // default
-          }
-        }
-
-        const file = new File([blob], sampleAudio.audioSrc, {
-          type: mimeType,
-        });
-
-        addFiles([file]);
-        onSelectSample(sampleAudio);
-      } catch (err) {
-        const error = err as Error;
-        setErrorMessage(`Failed to load sample audio: ${error.message}`);
-        setStatus('error');
+      if (!res.ok) {
+        throw new Error(`Failed to fetch audio: ${res.statusText}`);
       }
-    },
-    [addFiles],
-  );
+
+      const blob = await res.blob();
+
+      // Use the blob's actual type if available, otherwise infer from filename
+      let mimeType = blob.type;
+      if (!mimeType || mimeType === 'application/octet-stream') {
+        const extension = sampleAudio.audioSrc.split('.').pop()?.toLowerCase();
+        if (extension === 'mp3') {
+          mimeType = 'audio/mpeg';
+        } else if (extension === 'wav') {
+          mimeType = 'audio/wav';
+        } else if (extension === 'm4a') {
+          mimeType = 'audio/mp4';
+        } else {
+          mimeType = 'audio/mpeg'; // default
+        }
+      }
+
+      const file = new File([blob], sampleAudio.audioSrc, {
+        type: mimeType,
+      });
+
+      addFiles([file]);
+      onSelectSample(sampleAudio);
+    } catch (err) {
+      const error = err as Error;
+      setErrorMessage(`Failed to load sample audio: ${error.message}`);
+      setStatus('error');
+    }
+  };
 
   return (
     <AccordionItem

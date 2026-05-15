@@ -5,7 +5,8 @@ import { GET as getOpenApi } from '@/app/api/v1/openapi/route';
 import { GET as getVoices } from '@/app/api/v1/voices/route';
 import { createClient } from '@/lib/supabase/server';
 
-const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_API_KEY = `sk_live_${TEST_API_KEY_SUFFIX}`;
 const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 
 describe('/api/v1 metadata endpoints', () => {

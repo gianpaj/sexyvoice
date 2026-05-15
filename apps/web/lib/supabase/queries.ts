@@ -1,6 +1,4 @@
-'use server';
-
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -266,7 +264,7 @@ export const insertUsageEvent = async (
       .single();
 
     if (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         extra: {
           params,
           context: 'insertUsageEvent',
@@ -278,7 +276,7 @@ export const insertUsageEvent = async (
 
     return data?.id ?? null;
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: {
         params,
         context: 'insertUsageEvent',
@@ -517,7 +515,7 @@ export const getTotalCallDurationSeconds = async (
     .eq('user_id', userId);
 
   if (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: { userId, context: 'getTotalCallDurationSeconds' },
     });
     throw error;

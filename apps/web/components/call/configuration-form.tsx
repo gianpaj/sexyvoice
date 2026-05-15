@@ -7,7 +7,7 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -80,13 +80,9 @@ export function ConfigurationForm({
   // const { toast } = useToast();
   const { agent } = useVoiceAssistant();
 
-  const translatedLanguages = useMemo(
-    () =>
-      getTranslatedLanguages(
-        lang,
-        callLanguageCodes.map(({ value }) => value),
-      ),
-    [lang],
+  const translatedLanguages = getTranslatedLanguages(
+    lang,
+    callLanguageCodes.map(({ value }) => value),
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine

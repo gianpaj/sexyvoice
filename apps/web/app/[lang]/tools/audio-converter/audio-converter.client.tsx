@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowDown, Music } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import type langDict from '@/messages/en.json';
@@ -38,29 +38,26 @@ export default function AudioConverterClient({ dict }: Props) {
 
   const isDisabled = ffmpegLoading || !!ffmpegError;
 
-  const resetConversionState = useCallback(() => {
+  const resetConversionState = () => {
     setConversionState('idle');
     setProgress(0);
     if (convertedUrl) {
       URL.revokeObjectURL(convertedUrl);
       setConvertedUrl(null);
     }
-  }, [convertedUrl]);
+  };
 
-  const handleFileSelect = useCallback(
-    (file: File) => {
-      setSelectedFile(file);
-      resetConversionState();
-    },
-    [resetConversionState],
-  );
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    resetConversionState();
+  };
 
-  const handleRemoveFile = useCallback(() => {
+  const handleRemoveFile = () => {
     setSelectedFile(null);
     resetConversionState();
-  }, [resetConversionState]);
+  };
 
-  const handleConvert = useCallback(async () => {
+  const handleConvert = async () => {
     if (!selectedFile) return;
 
     setConversionState('converting');
@@ -84,9 +81,9 @@ export default function AudioConverterClient({ dict }: Props) {
       console.error('Conversion error:', error);
       resetConversionState();
     }
-  }, [selectedFile, outputFormat, convert, resetConversionState]);
+  };
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = () => {
     if (!(convertedUrl && selectedFile)) return;
 
     const a = document.createElement('a');
@@ -96,12 +93,12 @@ export default function AudioConverterClient({ dict }: Props) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [convertedUrl, selectedFile, outputFormat]);
+  };
 
-  const handleConvertAnother = useCallback(() => {
+  const handleConvertAnother = () => {
     setSelectedFile(null);
     resetConversionState();
-  }, [resetConversionState]);
+  };
 
   return (
     <>
