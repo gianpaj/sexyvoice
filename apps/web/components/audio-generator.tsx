@@ -9,15 +9,19 @@ import {
   type ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { useFFmpegJoiner } from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
 import { toast } from '@/components/services/toast';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getCharactersLimit } from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
@@ -26,6 +30,14 @@ import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getTtsProvider } from '@/lib/utils';
 import type messages from '@/messages/en.json';
+import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
+import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
+import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
+import {
+  generateRetrySeed,
+  SPLIT_SEGMENT_MAX_COUNT,
+  splitLongTextIntoSegments,
+} from './audio-generator/split-segments-utils';
 import {
   type AudioPlayerControls,
   AudioPlayerWithContext,
@@ -39,6 +51,12 @@ const NonGrokPromptEditor = dynamic(
 
 import { GrokTTSEditor } from './grok-tts-editor';
 import { Alert, AlertDescription } from './ui/alert';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
 
 interface AnimatedPromptTextareaProps
   extends ComponentPropsWithoutRef<typeof Textarea> {
@@ -170,6 +188,9 @@ export function AudioGenerator({
   const [isEnhancingText, setIsEnhancingText] = useState(false);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedCredits, setEstimatedCredits] = useState<number | null>(null);
+  const [splitTextAudios, setSplitTextAudios] = useState(false);
+  const [isDownloadingAllSegments, setIsDownloadingAllSegments] =
+    useState(false);
   const [playerControls, setPlayerControls] =
     useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -177,18 +198,66 @@ export function AudioGenerator({
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
+  const retryAbortController = useRef<AbortController | null>(null);
 
   const audio = useAudio();
+  const {
+    join: joinSegments,
+    isProcessing: isJoiningSegments,
+    isLoading: isJoinerLoading,
+  } = useFFmpegJoiner();
 
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const showEnhanceButton = provider === 'replicate';
+  const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit(
     selectedVoice?.model || '',
     isPaidUser,
   );
+  const splitSegmentTexts = useMemo(
+    () =>
+      splitLongTextIntoSegments(text, {
+        preserveGrokWrappingTags: isGrokVoice,
+      }),
+    [text, isGrokVoice],
+  );
+  const splitGenerationContext = useMemo(
+    () =>
+      JSON.stringify({
+        language: isGrokVoice ? selectedGrokLanguage : '',
+        styleVariant: isGeminiVoice ? selectedStyle : '',
+      }),
+    [isGeminiVoice, isGrokVoice, selectedGrokLanguage, selectedStyle],
+  );
+  const previewSplitSegmentTexts = useMemo(
+    () => splitSegmentTexts.slice(0, SPLIT_SEGMENT_MAX_COUNT),
+    [splitSegmentTexts],
+  );
+  const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
+  const shouldUseSplitMode =
+    shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
+  const textIsOverLimit =
+    !shouldDisableCharactersLimit && text.length > charactersLimit;
+  const {
+    splitSegments,
+    allSegmentsGenerated,
+    markSegmentGenerating,
+    markSegmentIdle,
+    markSegmentSuccess,
+    markSegmentFailed,
+    updateSegmentText,
+  } = useSplitSegments({
+    generationContext: splitGenerationContext,
+    selectedVoiceName: selectedVoice?.name,
+    text,
+    shouldUseSplitMode,
+    splitSegmentTexts: previewSplitSegmentTexts,
+  });
+  const { showGenerationProgressToast, dismissGenerationProgressToast } =
+    useGenerationProgressToast(selectedVoice?.name, dict.split);
 
   let textareaRightPadding = 'pr-16';
 
@@ -198,17 +267,11 @@ export function AudioGenerator({
     textareaRightPadding = 'pr-20';
   }
 
-  const textIsOverLimit = text.length > charactersLimit;
-
-  const handleCancel = useCallback(() => {
-    setIsGenerating(false);
-    abortController.current?.abort();
-  }, []);
-
-  const handleGenerate = useCallback(async () => {
-    setIsGenerating(true);
-    try {
-      abortController.current = new AbortController();
+  const requestGenerateVoice = useCallback(
+    async (segmentText: string, signal: AbortSignal, seed?: number) => {
+      if (!selectedVoice) {
+        throw new APIError(dict.error, new Response(null, { status: 400 }));
+      }
 
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
@@ -216,43 +279,281 @@ export function AudioGenerator({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text,
-          voice: selectedVoice?.name,
+          text: segmentText,
+          voice: selectedVoice.name,
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
+          ...(seed === undefined ? {} : { seed }),
         }),
-        signal: abortController.current.signal,
+        signal,
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throwGenerateVoiceError(dict, data, response);
       }
 
-      setAudioURL(data.url);
+      return data.url as string;
+    },
+    [
+      dict,
+      isGeminiVoice,
+      isGrokVoice,
+      selectedGrokLanguage,
+      selectedStyle,
+      selectedVoice,
+    ],
+  );
+
+  const generateSingleAudio = useCallback(async () => {
+    if (!selectedVoice) return;
+
+    abortController.current = new AbortController();
+    showGenerationProgressToast(1, 1);
+    const url = await requestGenerateVoice(
+      text,
+      abortController.current.signal,
+    );
+    setAudioURL(url);
+    toast.success(dict.success);
+  }, [
+    dict.success,
+    requestGenerateVoice,
+    selectedVoice,
+    showGenerationProgressToast,
+    text,
+  ]);
+
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
+  const generateSplitAudios = useCallback(async () => {
+    if (!(selectedVoice && splitSegments.length > 0)) return;
+
+    const currentSegmentTexts = splitSegments.map((segment) =>
+      segment.text.trim(),
+    );
+    if (currentSegmentTexts.some((segmentText) => !segmentText)) {
+      toast.error(dict.split.segmentCannotBeEmpty);
+      return;
+    }
+
+    abortController.current = new AbortController();
+    setAudioURL('');
+
+    let latestSegments = [...splitSegments];
+    let encounteredFailure = false;
+
+    for (let index = 0; index < currentSegmentTexts.length; index++) {
+      const existing = latestSegments[index];
+      if (existing?.status === 'success' && existing.audioUrl) {
+        continue;
+      }
+
+      latestSegments = latestSegments.map((segment, segmentIndex) =>
+        segmentIndex === index
+          ? { ...segment, status: 'generating', audioUrl: '' }
+          : segment,
+      );
+      markSegmentGenerating(index);
+      const isLastSegment = index === currentSegmentTexts.length - 1;
+      showGenerationProgressToast(index + 1, currentSegmentTexts.length);
+
+      try {
+        const generatedUrl = await requestGenerateVoice(
+          currentSegmentTexts[index],
+          abortController.current.signal,
+        );
+
+        latestSegments = latestSegments.map((segment, segmentIndex) =>
+          segmentIndex === index
+            ? { ...segment, status: 'success', audioUrl: generatedUrl }
+            : segment,
+        );
+        markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
+        if (isLastSegment) {
+          showGenerationProgressToast(
+            index + 1,
+            currentSegmentTexts.length,
+            true,
+          );
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          latestSegments = latestSegments.map((segment, segmentIndex) =>
+            segmentIndex === index
+              ? { ...segment, status: 'idle', audioUrl: '' }
+              : segment,
+          );
+          markSegmentIdle(index);
+          throw error;
+        }
+
+        latestSegments = latestSegments.map((segment, segmentIndex) =>
+          segmentIndex === index ? { ...segment, status: 'failed' } : segment,
+        );
+        markSegmentFailed(index);
+
+        if (error instanceof APIError) {
+          toast.error(error.message || dict.error);
+        } else {
+          toast.error(
+            dict.split.segmentFailed.replace('__INDEX__', String(index + 1)),
+          );
+        }
+
+        encounteredFailure = true;
+        break;
+      }
+    }
+
+    if (!encounteredFailure) {
       toast.success(dict.success);
+    }
+  }, [
+    dict.error,
+    dict.success,
+    dict.split.segmentCannotBeEmpty,
+    dict.split.segmentFailed,
+    markSegmentFailed,
+    markSegmentGenerating,
+    markSegmentIdle,
+    markSegmentSuccess,
+    requestGenerateVoice,
+    selectedVoice,
+    showGenerationProgressToast,
+    splitSegments,
+  ]);
+
+  const handleGenerate = useCallback(async () => {
+    if (!selectedVoice) return;
+
+    if (
+      shouldUseSplitMode &&
+      splitSegmentTexts.length > SPLIT_SEGMENT_MAX_COUNT
+    ) {
+      toast.error(
+        dict.split.tooManySegments.replace(
+          '__COUNT__',
+          String(SPLIT_SEGMENT_MAX_COUNT),
+        ),
+      );
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      if (shouldUseSplitMode) {
+        await generateSplitAudios();
+        return;
+      }
+
+      await generateSingleAudio();
     } catch (error) {
       handleGenerateVoiceError(dict, error);
     } finally {
+      dismissGenerationProgressToast();
       setIsGenerating(false);
     }
   }, [
-    dict,
-    isGeminiVoice,
-    isGrokVoice,
-    selectedGrokLanguage,
-    selectedStyle,
-    selectedVoice?.name,
-    text,
+    dict.error,
+    dict.split.tooManySegments,
+    dismissGenerationProgressToast,
+    generateSingleAudio,
+    generateSplitAudios,
+    selectedVoice,
+    shouldUseSplitMode,
+    splitSegmentTexts.length,
   ]);
+
+  const handleCancel = useCallback(() => {
+    setIsGenerating(false);
+    abortController.current?.abort();
+    retryAbortController.current?.abort();
+  }, []);
+
+  const handleRetrySegment = useCallback(
+    async (segmentIndex: number) => {
+      const segment = splitSegments[segmentIndex];
+      if (!segment || isGenerating || !selectedVoice) {
+        return;
+      }
+
+      const seed = generateRetrySeed();
+      retryAbortController.current = new AbortController();
+
+      setIsGenerating(true);
+      markSegmentGenerating(segmentIndex);
+      showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
+
+      try {
+        const generatedUrl = await requestGenerateVoice(
+          segment.text,
+          retryAbortController.current.signal,
+          seed,
+        );
+
+        markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
+        showGenerationProgressToast(
+          segmentIndex + 1,
+          splitSegments.length,
+          true,
+        );
+        toast.success(
+          dict.split.segmentGenerated.replace(
+            '__INDEX__',
+            String(segmentIndex + 1),
+          ),
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          markSegmentIdle(segmentIndex);
+          return;
+        }
+
+        markSegmentFailed(segmentIndex);
+        if (error instanceof APIError) {
+          toast.error(error.message || dict.error);
+        } else {
+          toast.error(
+            dict.split.segmentRetryFailed.replace(
+              '__INDEX__',
+              String(segmentIndex + 1),
+            ),
+          );
+        }
+      } finally {
+        setIsGenerating(false);
+        dismissGenerationProgressToast();
+      }
+    },
+    [
+      dict.error,
+      dict.split.segmentGenerated,
+      dict.split.segmentRetryFailed,
+      dismissGenerationProgressToast,
+      isGenerating,
+      markSegmentFailed,
+      markSegmentGenerating,
+      markSegmentIdle,
+      markSegmentSuccess,
+      requestGenerateVoice,
+      selectedVoice,
+      showGenerationProgressToast,
+      splitSegments,
+    ],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();
 
-        if (!isGenerating && text.trim() && selectedVoice && hasEnoughCredits) {
+        if (
+          !isGenerating &&
+          text.trim() &&
+          selectedVoice &&
+          hasEnoughCredits &&
+          !textIsOverLimit
+        ) {
           handleGenerate().catch((error) => {
             console.error('Keyboard shortcut generation failed:', error);
           });
@@ -265,7 +566,14 @@ export function AudioGenerator({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleGenerate, hasEnoughCredits, isGenerating, selectedVoice, text]);
+  }, [
+    handleGenerate,
+    hasEnoughCredits,
+    isGenerating,
+    selectedVoice,
+    text,
+    textIsOverLimit,
+  ]);
 
   const resetPlayer = () => {
     if (playerControls) {
@@ -275,6 +583,20 @@ export function AudioGenerator({
 
     if (audio) {
       audio.reset();
+    }
+  };
+
+  const downloadSegmentAudio = async (segmentUrl: string) => {
+    const anchorElement = document.createElement('a');
+    document.body.appendChild(anchorElement);
+    anchorElement.style.display = 'none';
+
+    try {
+      await downloadUrl(segmentUrl, anchorElement);
+    } catch {
+      toast.error(dict.error);
+    } finally {
+      document.body.removeChild(anchorElement);
     }
   };
 
@@ -289,6 +611,98 @@ export function AudioGenerator({
       await downloadUrl(audioURL, anchorElement);
     } catch {
       toast.error(dict.error);
+    } finally {
+      document.body.removeChild(anchorElement);
+    }
+  };
+
+  const getAudioDurationSeconds = (file: File) =>
+    new Promise<number>((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const element = new Audio(objectUrl);
+
+      const cleanup = () => {
+        URL.revokeObjectURL(objectUrl);
+        element.removeEventListener('loadedmetadata', onLoadedMetadata);
+        element.removeEventListener('error', onError);
+      };
+
+      const onLoadedMetadata = () => {
+        const duration = element.duration;
+        if (!Number.isFinite(duration) || duration <= 0) {
+          cleanup();
+          reject(new Error('Unable to read segment duration'));
+          return;
+        }
+        cleanup();
+        resolve(duration);
+      };
+
+      const onError = () => {
+        cleanup();
+        reject(new Error('Unable to read segment duration'));
+      };
+
+      element.addEventListener('loadedmetadata', onLoadedMetadata);
+      element.addEventListener('error', onError);
+      element.load();
+    });
+
+  const handleDownloadAllSegments = async () => {
+    if (!allSegmentsGenerated || isDownloadingAllSegments) {
+      return;
+    }
+
+    setIsDownloadingAllSegments(true);
+    try {
+      const segmentInputs: Array<{
+        file: File;
+        startSec: number;
+        endSec: number;
+      }> = [];
+
+      for (let index = 0; index < splitSegments.length; index++) {
+        const currentSegment = splitSegments[index];
+
+        if (!currentSegment.audioUrl) {
+          throw new Error('Missing segment URL');
+        }
+
+        const response = await fetch(currentSegment.audioUrl);
+        if (!response.ok) {
+          throw new Error('Could not fetch generated segment');
+        }
+
+        const blob = await response.blob();
+        const mimeType = blob.type || 'audio/wav';
+        const extension = mimeType.includes('mpeg') ? 'mp3' : 'wav';
+        const file = new File([blob], `segment-${index + 1}.${extension}`, {
+          type: mimeType,
+        });
+        const durationSec = await getAudioDurationSeconds(file);
+
+        segmentInputs.push({
+          file,
+          startSec: 0,
+          endSec: durationSec,
+        });
+      }
+
+      const outputFormat = isGrokVoice ? 'mp3' : 'wav';
+      const outputBlob = await joinSegments(segmentInputs, outputFormat);
+      const outputUrl = URL.createObjectURL(outputBlob);
+      const anchor = document.createElement('a');
+      anchor.href = outputUrl;
+      anchor.download = `generated-audio.${outputFormat}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      setTimeout(() => URL.revokeObjectURL(outputUrl), 5000);
+    } catch (error) {
+      console.error('Failed to download all segments:', error);
+      toast.error(dict.split.downloadAllFailed);
+    } finally {
+      setIsDownloadingAllSegments(false);
     }
   };
 
@@ -341,21 +755,24 @@ export function AudioGenerator({
     }
   }, [text, isFullscreen]);
 
-  const handleEstimateCredits = async () => {
-    if (!(selectedVoice && (isGeminiVoice || isGrokVoice) && text.trim()))
-      return;
+  const requestEstimateCredits = useCallback(
+    async (textToEstimate: string) => {
+      if (!(selectedVoice && canEstimateCredits)) {
+        throw new APIError(
+          dict.errorEstimating,
+          new Response(null, { status: 400 }),
+        );
+      }
 
-    setIsEstimating(true);
-    try {
       const response = await fetch('/api/estimate-credits', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          text,
+          text: textToEstimate,
           voice: selectedVoice.name,
-          styleVariant: selectedStyle,
+          styleVariant: isGeminiVoice ? selectedStyle : '',
         }),
       });
 
@@ -365,8 +782,40 @@ export function AudioGenerator({
         throw new APIError(data.error || dict.error, response);
       }
 
-      const nextEstimatedCredits = Number(data.estimatedCredits);
-      if (Number.isFinite(nextEstimatedCredits)) {
+      const value = Number(data.estimatedCredits);
+      if (!Number.isFinite(value)) {
+        throw new APIError(dict.errorEstimating, response);
+      }
+
+      return value;
+    },
+    [
+      canEstimateCredits,
+      dict.error,
+      dict.errorEstimating,
+      isGeminiVoice,
+      selectedStyle,
+      selectedVoice,
+    ],
+  );
+
+  const handleEstimateCredits = async () => {
+    if (!(selectedVoice && canEstimateCredits && text.trim())) return;
+
+    setIsEstimating(true);
+    try {
+      if (shouldUseSplitMode) {
+        const creditPromises = splitSegments.map((segment) =>
+          requestEstimateCredits(segment.text),
+        );
+        const creditsPerSegment = await Promise.all(creditPromises);
+        const totalEstimatedCredits = creditsPerSegment.reduce(
+          (total, credits) => total + credits,
+          0,
+        );
+        setEstimatedCredits(totalEstimatedCredits);
+      } else {
+        const nextEstimatedCredits = await requestEstimateCredits(text);
         setEstimatedCredits(nextEstimatedCredits);
       }
     } catch (error) {
@@ -389,8 +838,11 @@ export function AudioGenerator({
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
+              characterLimitPaidTooltip={dict.paidCharacterLimitTooltip}
+              characterLimitUpgradeTooltip={dict.upgradeCharacterLimitTooltip}
               charactersLimit={charactersLimit}
               dict={dict.grok}
+              enforceCharactersLimit={!shouldDisableCharactersLimit}
               isPaidUser={isPaidUser}
               onChange={setText}
               placeholder={dict.textAreaPlaceholder}
@@ -400,8 +852,12 @@ export function AudioGenerator({
             />
           ) : (
             <NonGrokPromptEditor
+              characterCountText={
+                shouldUseSplitMode
+                  ? `${text.length} chars -> ${splitSegmentTexts.length} segments`
+                  : undefined
+              }
               charactersLimit={charactersLimit}
-              dict={dict}
               isEnhancingText={isEnhancingText}
               isFullscreen={isFullscreen}
               isGenerating={isGenerating}
@@ -411,13 +867,46 @@ export function AudioGenerator({
               onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               showEnhanceButton={showEnhanceButton}
               text={text}
+              textareaMaxLength={
+                shouldDisableCharactersLimit ? null : undefined
+              }
               textareaRef={textareaRef}
               textareaRightPadding={textareaRightPadding}
               textIsOverLimit={textIsOverLimit}
             />
           )}
 
-          {(isGeminiVoice || isGrokVoice) && (
+          <TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-between rounded-lg border border-input border-dashed px-3 py-2">
+                  <Label
+                    className={cn('text-sm', {
+                      'cursor-not-allowed': !isPaidUser,
+                    })}
+                    htmlFor="split-text-audios"
+                  >
+                    {dict.split.splitToggleLabel}
+                  </Label>
+                  <Checkbox
+                    checked={splitTextAudios}
+                    disabled={!isPaidUser}
+                    id="split-text-audios"
+                    onCheckedChange={(checked) =>
+                      setSplitTextAudios(Boolean(checked))
+                    }
+                  />
+                </div>
+              </TooltipTrigger>
+              {!isPaidUser && (
+                <TooltipContent>
+                  <p>{dict.split.splitToggleDisabled}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
+          {canEstimateCredits && (
             <CreditEstimator
               buttonLabel={dict.estimateCreditsButton}
               estimatedCredits={estimatedCredits}
@@ -444,7 +933,9 @@ export function AudioGenerator({
           <div className="flex grow-0 gap-2">
             <GenerateButton
               className="h-10 w-full sm:w-fit"
-              ctaText={dict.ctaButton}
+              ctaText={
+                shouldUseSplitMode ? dict.ctaButtonPlural : dict.ctaButton
+              }
               data-testid="generate-button"
               disabled={
                 isGenerating ||
@@ -473,7 +964,7 @@ export function AudioGenerator({
           </div>
 
           <div className="flex justify-start gap-2 sm:w-full">
-            {audioURL && (
+            {!shouldUseSplitMode && audioURL && (
               <>
                 <AudioPlayerWithContext
                   autoPlay
@@ -506,6 +997,20 @@ export function AudioGenerator({
             )}
           </div>
         </div>
+        {shouldUseSplitMode && (
+          <SplitSegmentsPanel
+            allSegmentsGenerated={allSegmentsGenerated}
+            isDownloadingAllSegments={isDownloadingAllSegments}
+            isGenerating={isGenerating}
+            isJoinerLoading={isJoinerLoading}
+            isJoiningSegments={isJoiningSegments}
+            onDownloadAllSegments={handleDownloadAllSegments}
+            onDownloadSegment={downloadSegmentAudio}
+            onRetrySegment={handleRetrySegment}
+            onSegmentTextChange={updateSegmentText}
+            segments={splitSegments}
+          />
+        )}
       </CardContent>
     </Card>
   );

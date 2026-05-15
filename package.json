@@ -5,7 +5,7 @@
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
     "lint-staged": "16.4.0",
-    "turbo": "2.9.5",
+    "turbo": "2.9.14",
     "ultracite": "7.5.6"
   },
   "engines": {

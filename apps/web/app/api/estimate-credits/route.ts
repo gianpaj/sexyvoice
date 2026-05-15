@@ -110,10 +110,10 @@ async function validateVoice(
 
 function validateTextLength(
   text: string,
-  voiceModel: string,
-  isPaidUser = false,
+  model: string,
+  isPaidUser: boolean,
 ): ValidationResult<null> {
-  const maxLength = getCharactersLimit(voiceModel, isPaidUser);
+  const maxLength = getCharactersLimit(model, isPaidUser);
 
   if (text.length > maxLength) {
     return {

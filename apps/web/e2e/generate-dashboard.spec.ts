@@ -188,7 +188,6 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     });
   });
 
-  // biome-ignore lint/suspicious/noSkippedTests: intentionally skipped — test is too slow (types 1000+ chars)
   test.skip('should show warning when text exceeds character limit', async () => {
     // SKIPPED: This test is slow due to typing 1000+ characters
     // TODO: Find a faster way to test character limit validation
@@ -235,6 +234,128 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     await generatePage.clickGenerate();
     await generatePage.waitForGenerationComplete();
     await generatePage.expectAudioPlayerVisible();
+  });
+});
+
+test.describe('Generate Dashboard - Split Mode', () => {
+  let generatePage: GeneratePage;
+
+  // Two 300-char segments separated by a sentence boundary so the splitter
+  // produces exactly 2 segments of ≤500 chars each.
+  const LONG_TEXT = `${'A'.repeat(300)}. ${'B'.repeat(300)}.`;
+
+  test.beforeEach(async ({ page }) => {
+    await setupDefaultMocks(page);
+    generatePage = new GeneratePage(page);
+    await generatePage.goto();
+  });
+
+  test.afterEach(async ({ page }) => {
+    await page.unroute('**/*');
+  });
+
+  test('should generate Gemini split segments for long text', async ({
+    page,
+  }) => {
+    const generatedUrls: string[] = [];
+    await page.unroute('**/api/generate-voice');
+    await page.route('**/api/generate-voice', async (route) => {
+      generatedUrls.push(route.request().postDataJSON()?.text ?? '');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          url: `https://files.sexyvoice.ai/segment-${generatedUrls.length}.wav`,
+          creditsUsed: 5,
+          creditsRemaining: 995,
+        }),
+      });
+    });
+
+    await generatePage.selectVoice('Poe|Zephyr');
+    await generatePage.enableSplitMode();
+    await generatePage.enterText(LONG_TEXT);
+    await generatePage.expectSegmentCount(2);
+
+    await expect(generatePage.generateButton).toContainText(/generate audios/i);
+
+    await generatePage.clickGenerate();
+    await generatePage.waitForGenerationComplete();
+
+    expect(generatedUrls).toHaveLength(2);
+    await generatePage.expectSuccessToast();
+  });
+
+  test('should generate Grok split segments for long text', async ({
+    page,
+  }) => {
+    const generatedRequests: Array<{ text: string; language: string }> = [];
+    await page.unroute('**/api/generate-voice');
+    await page.route('**/api/generate-voice', async (route) => {
+      const body = route.request().postDataJSON();
+      generatedRequests.push({
+        text: body?.text ?? '',
+        language: body?.language ?? '',
+      });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          url: `https://files.sexyvoice.ai/grok-segment-${generatedRequests.length}.mp3`,
+          creditsUsed: 5,
+          creditsRemaining: 995,
+        }),
+      });
+    });
+
+    await generatePage.selectVoice('Eve|Rex|Sal');
+    await generatePage.enableSplitMode();
+    await generatePage.enterText(LONG_TEXT);
+    await generatePage.expectSegmentCount(2);
+
+    await generatePage.clickGenerate();
+    await generatePage.waitForGenerationComplete();
+
+    expect(generatedRequests).toHaveLength(2);
+    for (const req of generatedRequests) {
+      expect(req.language).toBe('auto');
+    }
+    await generatePage.expectSuccessToast();
+  });
+
+  test('should generate Grok split segments with a specific language', async ({
+    page,
+  }) => {
+    const capturedLanguages: string[] = [];
+    await page.unroute('**/api/generate-voice');
+    await page.route('**/api/generate-voice', async (route) => {
+      const body = route.request().postDataJSON();
+      capturedLanguages.push(body?.language ?? '');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          url: `https://files.sexyvoice.ai/grok-fr-${capturedLanguages.length}.mp3`,
+          creditsUsed: 5,
+          creditsRemaining: 995,
+        }),
+      });
+    });
+
+    await generatePage.selectVoice('Eve|Rex|Sal');
+    await generatePage.selectGrokLanguage('en');
+    await generatePage.enableSplitMode();
+    await generatePage.enterText(LONG_TEXT);
+    await generatePage.expectSegmentCount(2);
+
+    await generatePage.clickGenerate();
+    await generatePage.waitForGenerationComplete();
+
+    expect(capturedLanguages).toHaveLength(2);
+    for (const lang of capturedLanguages) {
+      expect(lang).toBe('en');
+    }
+    await generatePage.expectSuccessToast();
   });
 });
 

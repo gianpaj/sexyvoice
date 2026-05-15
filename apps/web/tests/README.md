@@ -82,7 +82,7 @@ The voice generation tests cover:
 ### Input Validation
 - Empty request body
 - Missing required parameters (text, voice)
-- Text length limits (500 chars for Replicate, 1000 for Gemini)
+- Text length limits (500 chars for both Replicate and Gemini)
 - Invalid voice names
 
 ### Authentication & Authorization

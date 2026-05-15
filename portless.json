@@ -1,7 +1,7 @@
 {
   "apps": {
     "apps/web": {
-      "name": "sexyvoice"
+      "name": "sv.dev"
     },
     "apps/docs": {
       "name": "sexyvoice-docs"
