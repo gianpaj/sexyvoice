@@ -49,8 +49,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        env:
-          REDISMS_DISABLE_POSTINSTALL: 1
 
       - name: Install Playwright browsers
         working-directory: apps/web
