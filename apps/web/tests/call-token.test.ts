@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { callTokenPlaygroundStateSchema } from '@/lib/call-token-schema';
+
 // Type for z.treeifyError() return value
 interface TreeifiedError {
   errors: string[];
@@ -18,44 +20,7 @@ describe('call-token API validation', () => {
   // Helper to get treeified error (matching what API returns)
   const getTreeifiedError = (error: z.ZodError): TreeifiedError =>
     z.treeifyError(error) as TreeifiedError;
-  // Zod schema for session config (duplicated from route.ts for testing)
-  const sessionConfigSchema = z.object({
-    model: z.string(),
-    voice: z.string(),
-    temperature: z.number().min(0.6).max(1.2),
-    maxOutputTokens: z.number().nullable(),
-  });
-
-  // Zod schema for the minimal call-token payload (duplicated from route.ts for testing)
-  const playgroundStateSchema = z.object({
-    instructions: z.string(),
-    language: z
-      .enum([
-        'ar',
-        'cs',
-        'da',
-        'de',
-        'en',
-        'es',
-        'fi',
-        'fr',
-        'hi',
-        'it',
-        'ja',
-        'ko',
-        'nl',
-        'no',
-        'pl',
-        'pt',
-        'ru',
-        'sv',
-        'tr',
-        'zh',
-      ] as const)
-      .optional(),
-    selectedPresetId: z.string().uuid().nullable(),
-    sessionConfig: sessionConfigSchema,
-  });
+  const playgroundStateSchema = callTokenPlaygroundStateSchema;
 
   describe('valid payloads', () => {
     it('should accept a minimal valid payload', () => {

@@ -9,6 +9,10 @@ import {
   defaultLanguage,
   languageInitialInstructions,
 } from '@/data/playground-state';
+import {
+  type CallTokenPlaygroundState,
+  callTokenPlaygroundStateSchema,
+} from '@/lib/call-token-schema';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
@@ -19,46 +23,6 @@ import {
   resolveCharacterPrompt,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-
-// Zod schema for session config
-const sessionConfigSchema = z.object({
-  model: z.string(),
-  voice: z.string(),
-  temperature: z.number().min(0.6).max(1.2),
-  maxOutputTokens: z.number().nullable(),
-});
-
-// Zod schema for the minimal call-token request payload.
-const callTokenPlaygroundStateSchema = z.object({
-  instructions: z.string(),
-  language: z
-    .enum([
-      'ar',
-      'cs',
-      'da',
-      'de',
-      'en',
-      'es',
-      'fi',
-      'fr',
-      'hi',
-      'it',
-      'ja',
-      'ko',
-      'nl',
-      'no',
-      'pl',
-      'pt',
-      'ru',
-      'sv',
-      'tr',
-      'zh',
-    ] as const)
-    .optional(),
-  selectedPresetId: z.uuid().nullable(),
-  sessionConfig: sessionConfigSchema,
-});
-type CallTokenPlaygroundState = z.infer<typeof callTokenPlaygroundStateSchema>;
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
