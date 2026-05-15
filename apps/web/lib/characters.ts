@@ -19,7 +19,6 @@ export interface ApiCharacterResponse {
     temperature?: number;
     maxOutputTokens?: number | null;
     max_output_tokens?: number | null;
-    grok_image_enabled?: boolean;
   } | null;
   sort_order?: number;
   voice_id?: string;
