@@ -38,7 +38,7 @@ import { PresetSelector } from './preset-selector';
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
-const RECONNECT_REQUIRED_FIELDS = ['voice', 'grok_image_enabled'];
+const RECONNECT_REQUIRED_FIELDS = ['voice'];
 
 export const ConfigurationFormSchema = z.object({
   model: z.enum(Object.values(ModelId)),
