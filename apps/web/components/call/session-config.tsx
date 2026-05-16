@@ -5,7 +5,6 @@
 import type { ConfigurationFormFieldProps } from './configuration-form';
 // import { TemperatureSelector } from "./temperature-selector";
 // import { MaxOutputTokensSelector } from "./max-output-tokens-selector";
-// import { GrokImageToggle } from './grok-image-toggle';
 // import { ModelSelector } from "./model-selector";
 
 export function SessionConfig({ form }: ConfigurationFormFieldProps) {
@@ -15,7 +14,6 @@ export function SessionConfig({ form }: ConfigurationFormFieldProps) {
       {/*<VoiceSelector form={form} />*/}
       {/*<TemperatureSelector form={form} />*/}
       {/*<MaxOutputTokensSelector form={form} />*/}
-      {/*<GrokImageToggle form={form} />*/}
     </div>
   );
 }

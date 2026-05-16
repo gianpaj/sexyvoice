@@ -138,7 +138,6 @@ declare type Database = {
           end_reason: string | null;
           ended_at: string | null;
           free_call: boolean | null;
-          grok_image_enabled: boolean | null;
           id: string;
           last_metered_at: string;
           max_output_tokens: number | null;
@@ -159,7 +158,6 @@ declare type Database = {
           end_reason?: string | null;
           ended_at?: string | null;
           free_call?: boolean | null;
-          grok_image_enabled?: boolean | null;
           id?: string;
           last_metered_at?: string;
           max_output_tokens?: number | null;
@@ -180,7 +178,6 @@ declare type Database = {
           end_reason?: string | null;
           ended_at?: string | null;
           free_call?: boolean | null;
-          grok_image_enabled?: boolean | null;
           id?: string;
           last_metered_at?: string;
           max_output_tokens?: number | null;

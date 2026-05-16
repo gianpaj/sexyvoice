@@ -52,7 +52,7 @@ export async function getPublicCallCharacters() {
     `,
     )
     // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
-    // Only prompt metadata (type) is joined. Public prompts are readable via RLS (is_public=true).
+    // Only prompt metadata (type) is joined.
     .eq('is_public', true)
     .order('sort_order');
   if (error) throw error;

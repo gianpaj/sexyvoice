@@ -13,7 +13,6 @@ import { toast } from 'sonner';
 
 import { SessionControls } from '@/components/call/session-controls';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
-// import { GrokImageFeed } from '@/components/grok-image-feed';
 import { useAgent } from '@/hooks/use-agent';
 import { useConnection } from '@/hooks/use-connection';
 import { ConnectButton } from './connect-button';
@@ -121,8 +120,6 @@ export function Chat() {
 
             <RoomAudioRenderer />
           </div>
-
-          {/*<GrokImageFeed />*/}
         </div>
 
         {/* Button for normal screens - show after visualizer */}
