@@ -214,9 +214,9 @@ export async function POST(request: Request) {
       temperature,
       max_output_tokens: maxOutputTokens,
       language: selectedLanguage,
-      // Keep a non-empty placeholder for the Python agent metadata parser;
-      // character prompts are resolved through `instructions` above.
-      initial_instruction: ' ',
+      initial_instruction:
+        languageInitialInstructions[selectedLanguage] ||
+        languageInitialInstructions[defaultLanguage],
       user_id: user.id,
       character_id: selectedPresetId,
     };
