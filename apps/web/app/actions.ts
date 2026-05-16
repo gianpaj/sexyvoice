@@ -30,11 +30,17 @@ export const forgotPasswordAction = async (formData: FormData) => {
   }
 
   const supabase = await createClient();
-  const origin = (await headers()).get('origin');
+  const origin =
+    (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL;
   const callbackUrl = formData.get('callbackUrl')?.toString();
+  const updatePasswordPath = `/${lang}/protected/update-password?email=${encodeURIComponent(email)}`;
+
+  if (!origin) {
+    return encodedRedirect('error', `/${lang}/reset-password`, 'generic_error');
+  }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?redirect_to=/${lang}/protected/update-password&email=${encodeURIComponent(email)}`,
+    redirectTo: new URL(updatePasswordPath, origin).toString(),
   });
 
   if (error) {

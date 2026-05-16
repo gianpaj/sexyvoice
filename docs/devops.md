@@ -206,7 +206,8 @@ Notes:
 Notes:
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
 - `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
-  and verifying the short-lived OAuth callback marker cookie.
+  and verifying the short-lived auth callback marker cookie used after OAuth
+  callbacks and email confirmations.
 - If `OAUTH_CALLBACK_MARKER_SECRET` is unset, code may fall back to
   `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
 
@@ -215,6 +216,52 @@ Generate secure secrets with:
 ```bash
 openssl rand -hex 32
 ```
+
+### Supabase Auth email templates
+
+SSR auth uses `/auth/callback` for OAuth code exchanges. Email confirmation and
+password recovery links should use `/auth/confirm` with `token_hash`, so users
+can open links from email clients, webviews, or another browser without needing
+the original PKCE code verifier in local browser storage.
+
+Configure the Supabase dashboard email templates like this:
+
+Confirm signup:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}">
+  Confirm your email
+</a>
+```
+
+Reset password:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&redirect_to={{ .RedirectTo }}">
+  Reset your password
+</a>
+```
+
+Do not route email templates through `/auth/callback` and do not rely on
+`{{ .ConfirmationURL }}` for SSR email auth links. The app passes final
+same-origin destinations through Supabase `emailRedirectTo` / `redirectTo`, and
+`/auth/confirm` validates the destination before redirecting.
+
+Deployment order matters for these template changes:
+
+1. Update the Supabase dashboard Confirm signup and Reset password templates.
+2. Deploy the app version that serves `/auth/confirm` immediately after the
+   dashboard update.
+3. On rollback, roll the app back first and revert the Supabase templates last.
+
+Avoid generating production auth links while the dashboard templates and
+deployed app route support are intentionally out of sync.
+
+Before testing signup or recovery links, verify the Supabase Auth URL
+configuration allows every destination the app sends through
+`emailRedirectTo` / `redirectTo`, including localized dashboard URLs for `en`,
+`es`, `de`, `da`, `it`, and `fr`. If Supabase rejects the provided redirect, it
+can fall back to the Site URL and drop the intended `redirect_to` destination.
 
 ### Stripe
 
@@ -315,7 +362,7 @@ Example structure:
 - Rotate secrets carefully and document the blast radius before doing so.
 - Validate auth, payments, storage uploads, and API key flows after secret
   changes.
-- Keep OAuth callback marker signing isolated from API key hashing where
+- Keep auth callback marker signing isolated from API key hashing where
   possible.
 - Use production-only secure cookies where supported.
 
@@ -448,7 +495,7 @@ output of `sentry-cli issues list` (first column).
 
 ## Troubleshooting Checklist
 
-### OAuth callback/session issues
+### Auth callback/session issues
 
 Check:
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -456,7 +503,9 @@ Check:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `OAUTH_CALLBACK_MARKER_SECRET`
 - redirect URL configuration in Supabase / OAuth provider
-- Sentry events tagged for OAuth callback flow
+- Sentry events tagged for auth callback or OAuth callback flow
+- Supabase email templates use `/auth/confirm?token_hash={{ .TokenHash }}` for
+  email confirmation and password recovery, not `/auth/callback`
 
 ### LiveKit call issues
 

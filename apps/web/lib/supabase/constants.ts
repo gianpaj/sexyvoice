@@ -1,5 +1,5 @@
 export const MAX_FREE_GENERATIONS = 10;
-export const OAUTH_CALLBACK_COOKIE_NAME = 'sv_oauth_callback_ok';
+export const AUTH_CALLBACK_COOKIE_NAME = 'sv_auth_callback_ok';
 
 export const MINIMUM_CREDITS_FOR_CALL = 999;
 export const CREDITS_PER_MINUTE = 2000;
