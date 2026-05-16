@@ -451,7 +451,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
-        usage: { userHasPaid: false },
+        usage: { split: false, userHasPaid: false },
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
@@ -475,6 +475,7 @@ describe('Generate Voice API Route', () => {
           model:
             'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
           provider: 'replicate',
+          split: false,
           textPreview: 'Hello world',
           textLength: 11,
           isGeminiVoice: false,
@@ -569,9 +570,7 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model: 'xai',
-        usage: {
-          userHasPaid: false,
-        },
+        usage: { split: false, userHasPaid: false },
         predictionId: undefined,
         text: 'Hello [laugh]',
         url: expect.stringMatching(
@@ -594,6 +593,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'eve',
           model: 'xai',
           provider: 'grok',
+          split: false,
           textPreview: 'Hello [laugh]',
           textLength: 13,
           isGeminiVoice: false,
@@ -752,6 +752,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
+          split: false,
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
@@ -779,6 +780,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'kore',
           model: 'gemini-2.5-pro-preview-tts',
           provider: 'gemini',
+          split: false,
           textPreview: text.slice(0, 100),
           textLength: text.length,
           isGeminiVoice: true,
@@ -849,6 +851,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
         usage: {
+          split: false,
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
@@ -943,6 +946,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
         usage: {
+          split: false,
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
