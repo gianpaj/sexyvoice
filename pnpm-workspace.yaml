@@ -4,7 +4,7 @@ packages:
   - "scripts"
 
 catalog:
-  "@ai-sdk/react": "3.0.118"
+  "@ai-sdk/react": "3.0.184"
   "@biomejs/biome": "2.4.11"
   "@supabase/supabase-js": "2.99.2"
   "@tailwindcss/postcss": "4.2.2"
