@@ -581,6 +581,7 @@
       "guardrailViolation": "Diese Anfrage wurde durch die Sicherheitsrichtlinie eines Drittanbieters für das Klonen von Stimmen blockiert. Bitte versuchen Sie es mit anderem Text oder anderem Referenz-Audio.",
       "insufficientCredits": "Sie benötigen __CREDITS__ Credits, um dieses Audio zu klonen.",
       "internalError": "Die Stimme konnte nicht geklont werden. Bitte versuchen Sie es erneut.",
+      "providerUnavailable": "Der Anbieter für das Klonen von Stimmen ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
       "invalidContentType": "Die Upload-Anfrage ist ungültig. Bitte versuchen Sie es erneut.",
       "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
       "missingLocale": "Bitte wählen Sie eine Sprache.",
