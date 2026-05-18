@@ -309,7 +309,7 @@ export function GrokTTSEditor({
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
-  const selectionResetFromContentRef = useRef(false);
+  const contentResetSelectionRef = useRef<EditorSelectionSnapshot | null>(null);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
     from: 1,
@@ -370,7 +370,18 @@ export function GrokTTSEditor({
       lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
-      lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
+      const selection = getEditorSelectionSnapshot(nextEditor);
+      const resetSelection = contentResetSelectionRef.current;
+      lastSelectionRef.current = selection;
+
+      if (
+        resetSelection &&
+        (!selection.empty ||
+          selection.from !== resetSelection.from ||
+          selection.to !== resetSelection.to)
+      ) {
+        contentResetSelectionRef.current = null;
+      }
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
@@ -380,8 +391,9 @@ export function GrokTTSEditor({
 
       if (text !== fullText) {
         nextEditor.commands.setContent(plainTextToDoc(text));
-        lastSelectionRef.current = moveEditorSelectionToEnd(nextEditor);
-        selectionResetFromContentRef.current = true;
+        const resetSelection = moveEditorSelectionToEnd(nextEditor);
+        lastSelectionRef.current = resetSelection;
+        contentResetSelectionRef.current = resetSelection;
       }
 
       setCurrentLength(text.length);
@@ -401,8 +413,9 @@ export function GrokTTSEditor({
     }
 
     editor.commands.setContent(plainTextToDoc(value));
-    lastSelectionRef.current = moveEditorSelectionToEnd(editor);
-    selectionResetFromContentRef.current = true;
+    const resetSelection = moveEditorSelectionToEnd(editor);
+    lastSelectionRef.current = resetSelection;
+    contentResetSelectionRef.current = resetSelection;
     setCurrentLength(value.length);
   }, [editor, value]);
 
@@ -526,16 +539,16 @@ export function GrokTTSEditor({
     (event: MouseEvent<HTMLButtonElement>) => {
       if (editor) {
         const snapshot = getDomSelectionSnapshot(editor);
+        const resetSelection = contentResetSelectionRef.current;
+        const isContentResetSnapshot =
+          snapshot && resetSelection && snapshot.empty;
 
-        if (
-          snapshot &&
-          !(snapshot.empty && selectionResetFromContentRef.current)
-        ) {
+        if (snapshot && !isContentResetSnapshot) {
           lastSelectionRef.current = snapshot;
-        } else if (!selectionResetFromContentRef.current) {
+        } else if (!isContentResetSnapshot) {
           lastSelectionRef.current = getEditorSelectionSnapshot(editor);
         }
-        selectionResetFromContentRef.current = false;
+        contentResetSelectionRef.current = null;
       }
 
       event.preventDefault();
