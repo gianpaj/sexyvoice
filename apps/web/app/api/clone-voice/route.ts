@@ -815,8 +815,7 @@ function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
     errorName === 'TimeoutError' ||
     errorName === 'ValidationError' ||
     errorMessage.includes('unprocessable entity') ||
-    errorMessage.includes('aborted due to timeout') ||
-    errorMessage.includes('operation was aborted due to timeout')
+    errorMessage.includes('aborted due to timeout')
   );
 }
 
