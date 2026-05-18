@@ -725,7 +725,7 @@ export async function POST(request: Request) {
               'voice-generation',
             ),
           },
-          { status: 500 },
+          { status: 429 },
         );
       }
 

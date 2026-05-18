@@ -1123,7 +1123,7 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(429);
       expect(json.error).toContain(
         getErrorMessage('FREE_QUOTA_EXCEEDED', 'voice-generation'),
       );
