@@ -51,6 +51,14 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(false);
   });
 
+  it('does not drop DOM mutation text without React frame evidence', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        message: "Cannot read properties of null (reading 'removeChild')",
+      }),
+    ).toBe(false);
+  });
+
   it('drops recoverable hydration and RSC connection messages', () => {
     expect(
       shouldDropClientSentryEvent({

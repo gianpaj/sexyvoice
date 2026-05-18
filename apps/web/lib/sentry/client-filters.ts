@@ -71,7 +71,6 @@ export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
   const message = event.message ?? '';
 
   return (
-    reactDomMutationNoisePatterns.some((pattern) => pattern.test(message)) ||
     reactHydrationRecoverablePattern.test(message) ||
     rscConnectionClosedPattern.test(message)
   );
