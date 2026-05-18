@@ -750,26 +750,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // if Gemini error
-    if (Error.isError(error) && error.message.includes('googleapis')) {
-      const message = JSON.parse(error.message);
-      // You exceeded your current quota
-      if (message.error.code === 429) {
-        return NextResponse.json(
-          {
-            error: getErrorMessage(
-              userHasPaid
-                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
-                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
-              'voice-generation',
-            ),
-          },
-          { status: 500 },
-        );
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
     const errorObj = {
       text,
       voice,
