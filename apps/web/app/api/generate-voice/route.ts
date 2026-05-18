@@ -742,8 +742,10 @@ export async function POST(request: Request) {
 
         return NextResponse.json(
           {
-            error:
-              'Voice generation service temporarily unavailable. Please retry.',
+            error: getErrorMessage(
+              ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
+              'voice-generation',
+            ),
           },
           { status: 503 },
         );
