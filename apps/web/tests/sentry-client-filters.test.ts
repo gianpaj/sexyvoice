@@ -52,6 +52,12 @@ describe('shouldDropClientSentryEvent', () => {
   });
 
   it('drops recoverable hydration and RSC connection messages', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        message:
+          "Hydration failed because the server rendered HTML didn't match the client.",
+      }),
+    ).toBe(true);
     expect(shouldDropClientSentryEvent({ message: 'Hydration Error' })).toBe(
       true,
     );

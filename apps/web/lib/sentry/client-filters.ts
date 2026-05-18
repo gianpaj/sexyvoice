@@ -30,7 +30,7 @@ const reactDomMutationNoisePatterns = [
 ];
 
 const reactHydrationRecoverablePattern =
-  /^(Hydration Error|Hydration failed - the server rendered HTML didn't match the client\.)/i;
+  /^(Hydration failed because the server rendered HTML didn't match the client|There was an error while hydrating|Text content does not match server-rendered HTML|Hydration Error)/i;
 
 const rscConnectionClosedPattern = /^Connection closed\.$/i;
 
