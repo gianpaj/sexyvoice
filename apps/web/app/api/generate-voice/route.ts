@@ -63,7 +63,7 @@ function isGoogleTransientProviderError(errorPayload: GoogleApiError): boolean {
   return (
     status === 'INTERNAL' ||
     status === 'UNAVAILABLE' ||
-    errorPayload.code >= 500
+    status === 'DEADLINE_EXCEEDED'
   );
 }
 
