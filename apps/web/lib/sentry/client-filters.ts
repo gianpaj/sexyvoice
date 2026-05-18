@@ -22,37 +22,57 @@ interface SentryClientEvent {
 const reactRemoveChildNotFoundPattern =
   /Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node/i;
 
-const reactCommitDeletionFramePattern =
-  /commitDeletionEffectsOnFiber|commitMutationEffectsOnFiber|recursivelyTraverseMutationEffects|react-dom-client/i;
+const reactDomMutationNoisePatterns = [
+  reactRemoveChildNotFoundPattern,
+  /Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node/i,
+  /Cannot read properties of null \(reading 'removeChild'\)/i,
+  /NotFoundError: The object can not be found here/i,
+];
 
-function frameMatchesReactCommitDeletion(frame: SentryStackFrame): boolean {
+const reactHydrationRecoverablePattern =
+  /^(Hydration Error|Hydration failed - the server rendered HTML didn't match the client\.)/i;
+
+const rscConnectionClosedPattern = /^Connection closed\.$/i;
+
+const reactCommitDeletionFramePattern =
+  /commitDeletionEffectsOnFiber|commitMutationEffectsOnFiber|recursivelyTraverseMutationEffects|react-dom-client|react-server-dom/i;
+
+function frameMatchesReactInternals(frame: SentryStackFrame): boolean {
   return reactCommitDeletionFramePattern.test(
     [frame.filename, frame.function, frame.module].filter(Boolean).join(' '),
   );
 }
 
-function isReactRemoveChildNotFoundException(
-  exception: SentryException,
-): boolean {
+function isReactDomNoiseException(exception: SentryException): boolean {
   const exceptionText = [exception.type, exception.value]
     .filter(Boolean)
     .join(' ');
 
-  if (!reactRemoveChildNotFoundPattern.test(exceptionText)) {
+  if (
+    !reactDomMutationNoisePatterns.some((pattern) =>
+      pattern.test(exceptionText),
+    )
+  ) {
     return false;
   }
 
   const frames = exception.stacktrace?.frames ?? [];
 
-  return frames.length === 0 || frames.some(frameMatchesReactCommitDeletion);
+  return frames.length === 0 || frames.some(frameMatchesReactInternals);
 }
 
 export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
   const exceptions = event.exception?.values ?? [];
 
-  if (exceptions.some(isReactRemoveChildNotFoundException)) {
+  if (exceptions.some(isReactDomNoiseException)) {
     return true;
   }
 
-  return reactRemoveChildNotFoundPattern.test(event.message ?? '');
+  const message = event.message ?? '';
+
+  return (
+    reactDomMutationNoisePatterns.some((pattern) => pattern.test(message)) ||
+    reactHydrationRecoverablePattern.test(message) ||
+    rscConnectionClosedPattern.test(message)
+  );
 }

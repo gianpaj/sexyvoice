@@ -308,6 +308,44 @@ describe('GrokTTSEditor', () => {
     });
   });
 
+  it('clamps a saved selection after external value changes', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const rendered = renderEditor({ onChange, value: 'Hello world' });
+
+    const editor = await findEditor();
+    selectEditorText(editor, 'world');
+
+    rendered.rerender(
+      <GrokTTSEditor
+        characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
+        characterLimitUpgradeTooltip={
+          messages.generate.upgradeCharacterLimitTooltip
+        }
+        charactersLimit={500}
+        dict={baseDict}
+        onChange={onChange}
+        placeholder={messages.generate.textAreaPlaceholder}
+        selectedGrokLanguage="auto"
+        setSelectedGrokLanguage={vi.fn()}
+        value="Hi"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent('Hi');
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+    );
+    await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('Hi[pause]');
+    });
+  });
+
   it('wraps selected text with a wrapping tag', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

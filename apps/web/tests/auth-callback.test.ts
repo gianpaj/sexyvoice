@@ -137,4 +137,52 @@ describe('OAuth callback route', () => {
       }),
     );
   });
+
+  it('downgrades expired auth flow state errors to warning telemetry', async () => {
+    const exchangeError = new Error('invalid flow state, flow state has expired');
+    exchangeError.name = 'AuthApiError';
+    const exchangeCodeForSession = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: exchangeError,
+    });
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { exchangeCodeForSession },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fes%2Fdashboard',
+        {
+          headers: {
+            cookie:
+              'sb-test-auth-token=token; sb-test-auth-token-code-verifier=verifier',
+          },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/es/login',
+    );
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).toHaveBeenCalledWith(
+      'OAuth callback flow state expired.',
+      expect.objectContaining({
+        level: 'warning',
+        tags: {
+          area: 'auth',
+          flow: 'oauth-callback',
+          error_type: 'flow-state-expired',
+        },
+        extra: expect.objectContaining({
+          errorMessage: 'invalid flow state, flow state has expired',
+          hasSupabaseCodeVerifierCookie: true,
+          locale: 'es',
+          redirectTo: '/es/dashboard',
+        }),
+      }),
+    );
+  });
 });

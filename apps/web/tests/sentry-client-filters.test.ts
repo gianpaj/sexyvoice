@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { shouldDropClientSentryEvent } from '@/lib/sentry/client-filters';
 
 describe('shouldDropClientSentryEvent', () => {
-  it('drops React commit-phase removeChild NotFoundError events', () => {
+  it('drops known React DOM mutation noise with React internals frames', () => {
     expect(
       shouldDropClientSentryEvent({
         exception: {
@@ -11,13 +11,12 @@ describe('shouldDropClientSentryEvent', () => {
             {
               type: 'NotFoundError',
               value:
-                "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
+                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
-                    filename:
-                      'node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.production.js',
-                    function: 'commitDeletionEffectsOnFiber',
+                    filename: 'react-dom-client.production.js',
+                    function: 'commitMutationEffectsOnFiber',
                   },
                 ],
               },
@@ -28,19 +27,20 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(true);
   });
 
-  it('keeps unrelated NotFoundError events', () => {
+  it('does not drop app exceptions that only look superficially similar', () => {
     expect(
       shouldDropClientSentryEvent({
         exception: {
           values: [
             {
-              type: 'NotFoundError',
-              value: 'Microphone input device was not found.',
+              type: 'Error',
+              value:
+                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
-                    filename: 'https://sexyvoice.ai/_next/static/app.js',
-                    function: 'connectCall',
+                    filename: 'apps/web/components/example.tsx',
+                    function: 'insertUserNode',
                   },
                 ],
               },
@@ -49,5 +49,14 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(false);
+  });
+
+  it('drops recoverable hydration and RSC connection messages', () => {
+    expect(shouldDropClientSentryEvent({ message: 'Hydration Error' })).toBe(
+      true,
+    );
+    expect(shouldDropClientSentryEvent({ message: 'Connection closed.' })).toBe(
+      true,
+    );
   });
 });

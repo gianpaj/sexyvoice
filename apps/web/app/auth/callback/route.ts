@@ -75,6 +75,15 @@ const isPkceCodeVerifierMissingError = (error: unknown) => {
   );
 };
 
+const isExpiredAuthFlowStateError = (error: unknown) => {
+  const errorMessage = getErrorStringProperty(error, 'message').toLowerCase();
+
+  return (
+    errorMessage.includes('invalid flow state') ||
+    errorMessage.includes('flow state has expired')
+  );
+};
+
 const getOauthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const cookieNames = cookieHeader
@@ -133,13 +142,17 @@ export async function GET(request: Request) {
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
   const oauthCookieContext = getOauthCallbackCookieContext(request);
-  const reportPkceCodeVerifierMissing = (error: unknown) => {
-    captureMessage('OAuth callback missing PKCE code verifier.', {
+  const reportKnownOauthCallbackFailure = (
+    message: string,
+    errorType: string,
+    error: unknown,
+  ) => {
+    captureMessage(message, {
       level: 'warning',
       tags: {
         area: 'auth',
         flow: 'oauth-callback',
-        error_type: 'pkce-code-verifier-missing',
+        error_type: errorType,
       },
       extra: {
         redirectTo,
@@ -152,6 +165,18 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(`${origin}${loginPath}`);
   };
+  const reportPkceCodeVerifierMissing = (error: unknown) =>
+    reportKnownOauthCallbackFailure(
+      'OAuth callback missing PKCE code verifier.',
+      'pkce-code-verifier-missing',
+      error,
+    );
+  const reportExpiredAuthFlowState = (error: unknown) =>
+    reportKnownOauthCallbackFailure(
+      'OAuth callback flow state expired.',
+      'flow-state-expired',
+      error,
+    );
 
   try {
     if (!code) {
@@ -166,6 +191,10 @@ export async function GET(request: Request) {
     if (exchangeError) {
       if (isPkceCodeVerifierMissingError(exchangeError)) {
         return reportPkceCodeVerifierMissing(exchangeError);
+      }
+
+      if (isExpiredAuthFlowStateError(exchangeError)) {
+        return reportExpiredAuthFlowState(exchangeError);
       }
 
       captureException(exchangeError, {
@@ -240,6 +269,10 @@ export async function GET(request: Request) {
   } catch (error) {
     if (isPkceCodeVerifierMissingError(error)) {
       return reportPkceCodeVerifierMissing(error);
+    }
+
+    if (isExpiredAuthFlowStateError(error)) {
+      return reportExpiredAuthFlowState(error);
     }
 
     captureException(error, {

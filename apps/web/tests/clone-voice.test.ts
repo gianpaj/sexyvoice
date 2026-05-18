@@ -1400,11 +1400,12 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(json.error).toBe(
-        'An unexpected error occurred while cloning voice. Please try again.',
+        'Voice cloning provider is temporarily unavailable. Please try again. (503)',
       );
       expect(json.code).toBe('errors.internalError');
+      expect(json.details).toEqual({ provider: 'replicate' });
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -1642,19 +1643,13 @@ describe('Clone Voice API Route', () => {
       expect(json.code).toBe('errors.internalError');
     });
 
-    it('should log errors to Sentry', async () => {
+    it('should log unexpected errors to Sentry', async () => {
       const { captureException } = await import('@sentry/nextjs');
 
-      // Mock an error scenario on the Replicate fallback path
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Test error',
-      });
-
-      const formData = createFormDataWithAudio(
-        'こんにちは',
-        createMockAudioFile(),
-        'ja',
+      vi.mocked(queries.getCredits).mockRejectedValueOnce(
+        new Error('Database connection failed'),
       );
+      const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -1664,6 +1659,58 @@ describe('Clone Voice API Route', () => {
       await POST(request);
 
       expect(captureException).toHaveBeenCalled();
+    });
+
+    it('does not log expected fal.ai validation failures to Sentry when falling back to original audio', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const validationError = new Error('Unprocessable Entity');
+      validationError.name = 'ValidationError';
+      mockFalSubscribe.mockRejectedValueOnce(validationError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('does not log expected fal.ai timeout failures to Sentry when falling back to original audio', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const timeoutError = new Error('The operation was aborted due to timeout');
+      timeoutError.name = 'TimeoutError';
+      mockFalSubscribe.mockRejectedValueOnce(timeoutError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should handle R2 storage upload failures', async () => {

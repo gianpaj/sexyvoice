@@ -168,6 +168,56 @@ function getDomSelectionSnapshot(
   }
 }
 
+function clampEditorPosition(editor: EditorInstance, position: number): number {
+  const maxPosition = Math.max(1, editor.state.doc.content.size - 1);
+
+  return Math.min(Math.max(position, 1), maxPosition);
+}
+
+function normalizeEditorSelectionSnapshot(
+  editor: EditorInstance,
+  selection: EditorSelectionSnapshot,
+): EditorSelectionSnapshot {
+  const from = clampEditorPosition(editor, selection.from);
+  const to = clampEditorPosition(editor, selection.to);
+  const normalizedFrom = Math.min(from, to);
+  const normalizedTo = Math.max(from, to);
+
+  return {
+    empty: normalizedFrom === normalizedTo,
+    from: normalizedFrom,
+    to: normalizedTo,
+  };
+}
+
+function getEditorSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const { empty, from, to } = editor.state.selection;
+
+  return { empty, from, to };
+}
+
+function getEditorEndSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const position = clampEditorPosition(
+    editor,
+    editor.state.doc.content.size - 1,
+  );
+
+  return { empty: true, from: position, to: position };
+}
+
+function moveEditorSelectionToEnd(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const selection = getEditorEndSelectionSnapshot(editor);
+  editor.commands.setTextSelection(selection.from);
+
+  return selection;
+}
+
 interface GrokSlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
@@ -259,6 +309,7 @@ export function GrokTTSEditor({
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
+  const selectionResetFromContentRef = useRef(false);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
     from: 1,
@@ -316,12 +367,10 @@ export function GrokTTSEditor({
       handleTextInput: () => false,
     },
     onCreate: ({ editor: nextEditor }) => {
-      const { empty, from, to } = nextEditor.state.selection;
-      lastSelectionRef.current = { empty, from, to };
+      lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
-      const { empty, from, to } = nextEditor.state.selection;
-      lastSelectionRef.current = { empty, from, to };
+      lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
@@ -331,6 +380,8 @@ export function GrokTTSEditor({
 
       if (text !== fullText) {
         nextEditor.commands.setContent(plainTextToDoc(text));
+        lastSelectionRef.current = moveEditorSelectionToEnd(nextEditor);
+        selectionResetFromContentRef.current = true;
       }
 
       setCurrentLength(text.length);
@@ -350,6 +401,8 @@ export function GrokTTSEditor({
     }
 
     editor.commands.setContent(plainTextToDoc(value));
+    lastSelectionRef.current = moveEditorSelectionToEnd(editor);
+    selectionResetFromContentRef.current = true;
     setCurrentLength(value.length);
   }, [editor, value]);
 
@@ -359,7 +412,11 @@ export function GrokTTSEditor({
         return;
       }
 
-      const selection = lastSelectionRef.current;
+      const selection = normalizeEditorSelectionSnapshot(
+        editor,
+        lastSelectionRef.current,
+      );
+      lastSelectionRef.current = selection;
       const serialized = grokTipTapDocToText(editor.getJSON());
       const selectedTextLength = selection.empty
         ? 0
@@ -389,7 +446,11 @@ export function GrokTTSEditor({
         return;
       }
 
-      const selection = lastSelectionRef.current;
+      const selection = normalizeEditorSelectionSnapshot(
+        editor,
+        lastSelectionRef.current,
+      );
+      lastSelectionRef.current = selection;
       const wrapperLength = tag.tag.length + tag.closeTag.length;
 
       const serialized = grokTipTapDocToText(editor.getJSON());
@@ -466,9 +527,15 @@ export function GrokTTSEditor({
       if (editor) {
         const snapshot = getDomSelectionSnapshot(editor);
 
-        if (snapshot) {
+        if (
+          snapshot &&
+          !(snapshot.empty && selectionResetFromContentRef.current)
+        ) {
           lastSelectionRef.current = snapshot;
+        } else if (!selectionResetFromContentRef.current) {
+          lastSelectionRef.current = getEditorSelectionSnapshot(editor);
         }
+        selectionResetFromContentRef.current = false;
       }
 
       event.preventDefault();

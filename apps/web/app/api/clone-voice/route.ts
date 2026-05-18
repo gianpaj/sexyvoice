@@ -222,6 +222,14 @@ function routeErrorResponse(
   );
 }
 
+function getUnknownErrorName(error: unknown): string {
+  return Error.isError(error) ? error.name : typeof error;
+}
+
+function getUnknownErrorMessage(error: unknown): string {
+  return Error.isError(error) ? error.message : String(error);
+}
+
 // ============================================================================
 // Utilities
 // ============================================================================
@@ -799,6 +807,19 @@ function isMistralGuardrailError(error: unknown): boolean {
   );
 }
 
+function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
+  const errorName = getUnknownErrorName(error);
+  const errorMessage = getUnknownErrorMessage(error).toLowerCase();
+
+  return (
+    errorName === 'TimeoutError' ||
+    errorName === 'ValidationError' ||
+    errorMessage.includes('unprocessable entity') ||
+    errorMessage.includes('aborted due to timeout') ||
+    errorMessage.includes('operation was aborted due to timeout')
+  );
+}
+
 // ============================================================================
 // Voice Generation Functions
 // ============================================================================
@@ -913,27 +934,20 @@ async function cloneVoiceWithReplicate(
   )) as ReplicateResponse;
 
   if (typeof output === 'object' && 'error' in output) {
-    const errorObj = {
-      text,
-      locale,
-      language,
-      audioReferenceUrl,
-      model,
-      errorData: output.error,
-    };
-    const error = new Error(
-      output.error || 'Voice cloning failed, please try again',
-      {
-        cause: 'REPLICATE_ERROR',
+    logger.warn('Replicate voice cloning provider failed', {
+      extra: {
+        locale,
+        language,
+        model,
+        errorMessage: output.error || null,
       },
+    });
+    throw createRouteError(
+      'Voice cloning provider is temporarily unavailable. Please try again.',
+      503,
+      'errors.internalError',
+      { provider: 'replicate' },
     );
-    captureException(error, {
-      extra: errorObj,
-    });
-    console.error(errorObj);
-    throw new Error(output.error || 'Voice cloning failed, please try again', {
-      cause: 'REPLICATE_ERROR',
-    });
   }
 
   const audioBlob = await (output as ReplicateOutput).blob();
@@ -1292,19 +1306,27 @@ export async function POST(request: Request) {
           wasTrimmed: processedAudio.wasTrimmed,
         };
       } catch (enhancementError) {
-        captureException(enhancementError, {
-          user: { id: user.id },
-          extra: {
-            locale,
-            mimeType: processedAudio.mimeType,
-            filename: referenceAudioFile.name,
-          },
-        });
+        const expectedEnhancementFailure =
+          isExpectedReferenceAudioEnhancementFailure(enhancementError);
+
+        if (!expectedEnhancementFailure) {
+          captureException(enhancementError, {
+            user: { id: user.id },
+            extra: {
+              locale,
+              mimeType: processedAudio.mimeType,
+              filename: referenceAudioFile.name,
+            },
+          });
+        }
         logger.info(
           'Reference audio enhancement failed; using original audio',
           {
             user: { id: user.id },
             extra: {
+              errorMessage: getUnknownErrorMessage(enhancementError),
+              errorName: getUnknownErrorName(enhancementError),
+              expectedEnhancementFailure,
               locale,
               mimeType: processedAudio.mimeType,
               filename: referenceAudioFile.name,
