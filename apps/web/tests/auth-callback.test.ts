@@ -185,4 +185,42 @@ describe('OAuth callback route', () => {
       }),
     );
   });
+
+  it('downgrades typed expired auth flow state errors to warning telemetry', async () => {
+    const exchangeError = Object.assign(new Error('OAuth flow is no longer valid'), {
+      code: 'flow_state_expired',
+      name: 'AuthApiError',
+    });
+    const exchangeCodeForSession = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: exchangeError,
+    });
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { exchangeCodeForSession },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request('https://sexyvoice.ai/auth/callback?code=abc123', {
+        headers: {
+          cookie:
+            'sb-test-auth-token=token; sb-test-auth-token-code-verifier=verifier',
+        },
+      }),
+    );
+
+    expect(response.status).toBe(307);
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).toHaveBeenCalledWith(
+      'OAuth callback flow state expired.',
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          error_type: 'flow-state-expired',
+        }),
+        extra: expect.objectContaining({
+          errorName: 'AuthApiError',
+        }),
+      }),
+    );
+  });
 });

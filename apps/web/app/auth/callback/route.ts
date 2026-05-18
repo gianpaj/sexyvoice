@@ -44,9 +44,9 @@ const getOauthCodeFingerprint = (code: string | null) => {
 
 const getErrorStringProperty = (
   error: unknown,
-  property: 'message' | 'name',
+  property: 'code' | 'message' | 'name',
 ) => {
-  if (error instanceof Error) {
+  if (error instanceof Error && property !== 'code') {
     return error[property];
   }
 
@@ -76,9 +76,14 @@ const isPkceCodeVerifierMissingError = (error: unknown) => {
 };
 
 const isExpiredAuthFlowStateError = (error: unknown) => {
+  const errorName = getErrorStringProperty(error, 'name');
+  const errorCode = getErrorStringProperty(error, 'code');
   const errorMessage = getErrorStringProperty(error, 'message').toLowerCase();
 
   return (
+    (errorName === 'AuthApiError' &&
+      (errorCode === 'flow_state_expired' ||
+        errorCode === 'flow_state_not_found')) ||
     errorMessage.includes('invalid flow state') ||
     errorMessage.includes('flow state has expired')
   );
@@ -159,7 +164,9 @@ export async function GET(request: Request) {
         locale,
         ...oauthCodeContext,
         ...oauthCookieContext,
+        errorCode: getErrorStringProperty(error, 'code') || null,
         errorMessage: getErrorMessage(error),
+        errorName: getErrorStringProperty(error, 'name') || null,
       },
     });
 
