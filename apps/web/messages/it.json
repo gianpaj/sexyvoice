@@ -581,6 +581,7 @@
       "guardrailViolation": "Questa richiesta è stata bloccata da una policy di sicurezza di terze parti per la clonazione vocale. Prova con un testo diverso o con un altro audio di riferimento.",
       "insufficientCredits": "Servono __CREDITS__ crediti per clonare questo audio.",
       "internalError": "Impossibile clonare la voce. Riprova.",
+      "providerUnavailable": "Il provider di clonazione vocale è temporaneamente non disponibile. Riprova.",
       "invalidContentType": "La richiesta di caricamento non è valida. Riprova.",
       "invalidFileType": "Tipo di file non valido. Carica MP3, OGG, Opus, M4A, WAV o WebM.",
       "missingLocale": "Seleziona una lingua.",

@@ -581,6 +581,7 @@
       "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
       "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
       "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
+      "providerUnavailable": "Le fournisseur de clonage vocal est temporairement indisponible. Veuillez réessayer.",
       "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
       "missingLocale": "Veuillez sélectionner une langue.",
