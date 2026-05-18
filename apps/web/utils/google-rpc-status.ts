@@ -35,6 +35,8 @@ export function mapHttpToGoogleRpcStatus(
       return 'PERMISSION_DENIED';
     case 404:
       return 'NOT_FOUND';
+    case 408:
+      return 'DEADLINE_EXCEEDED';
     case 409:
       return 'ALREADY_EXISTS';
     case 429:
@@ -43,12 +45,13 @@ export function mapHttpToGoogleRpcStatus(
       return 'INTERNAL';
     case 501:
       return 'UNIMPLEMENTED';
+    case 502:
     case 503:
       return 'UNAVAILABLE';
     case 504:
       return 'DEADLINE_EXCEEDED';
     default:
-      return 'INTERNAL';
+      return 'UNKNOWN';
   }
 }
 
