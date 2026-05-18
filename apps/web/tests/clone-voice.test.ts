@@ -1687,6 +1687,39 @@ describe('Clone Voice API Route', () => {
       expect(captureException).not.toHaveBeenCalled();
     });
 
+    it('logs generic validation failures to Sentry when enhancement falls back', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const validationError = new Error('Invalid local state');
+      validationError.name = 'ValidationError';
+      mockFalSubscribe.mockRejectedValueOnce(validationError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).toHaveBeenCalledWith(
+        validationError,
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            locale: 'en',
+          }),
+        }),
+      );
+    });
+
     it('does not log expected fal.ai timeout failures to Sentry when falling back to original audio', async () => {
       const { captureException } = await import('@sentry/nextjs');
       const timeoutError = new Error('The operation was aborted due to timeout');
