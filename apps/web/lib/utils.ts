@@ -244,6 +244,7 @@ export const ERROR_CODES = {
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   XAI_TTS_ERROR: 'XAI_TTS_ERROR',
   GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
+  PROVIDER_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
 
@@ -260,6 +261,7 @@ export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   REPLICATE_ERROR: 500,
   XAI_TTS_ERROR: 500,
   GEMINI_PROVIDER_UNAVAILABLE: 503,
+  PROVIDER_UNAVAILABLE: 503,
   THIRD_P_QUOTA_EXCEEDED: 503,
   INTERNAL_SERVER_ERROR: 500,
 };
@@ -317,6 +319,11 @@ export const getErrorMessage = (
     GEMINI_PROVIDER_UNAVAILABLE: {
       default:
         'Voice generation service temporarily unavailable. Please retry.',
+    },
+    PROVIDER_UNAVAILABLE: {
+      default: 'Provider is temporarily unavailable. Please try again.',
+      'voice-cloning':
+        'Voice cloning provider is temporarily unavailable. Please try again.',
     },
     INTERNAL_SERVER_ERROR: {
       default: 'An internal server error occurred. Please try again later.',

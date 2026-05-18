@@ -1404,7 +1404,7 @@ describe('Clone Voice API Route', () => {
       expect(json.error).toBe(
         'Voice cloning provider is temporarily unavailable. Please try again. (503)',
       );
-      expect(json.code).toBe('errors.internalError');
+      expect(json.code).toBe('errors.providerUnavailable');
       expect(json.details).toEqual({ provider: 'replicate' });
     });
 

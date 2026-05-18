@@ -34,7 +34,12 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits, getDollarCost } from '@/lib/utils';
+import {
+  ERROR_CODES,
+  estimateCredits,
+  getDollarCost,
+  getErrorMessage,
+} from '@/lib/utils';
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -151,6 +156,7 @@ type CloneRouteErrorCode =
   | 'errors.invalidFileType'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
+  | 'errors.providerUnavailable'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'
@@ -932,7 +938,7 @@ async function cloneVoiceWithReplicate(
     onProgress,
   )) as ReplicateResponse;
 
-  if (typeof output === 'object' && 'error' in output) {
+  if (output && typeof output === 'object' && 'error' in output) {
     logger.warn('Replicate voice cloning provider failed', {
       extra: {
         locale,
@@ -942,9 +948,9 @@ async function cloneVoiceWithReplicate(
       },
     });
     throw createRouteError(
-      'Voice cloning provider is temporarily unavailable. Please try again.',
+      getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-cloning'),
       503,
-      'errors.internalError',
+      'errors.providerUnavailable',
       { provider: 'replicate' },
     );
   }
