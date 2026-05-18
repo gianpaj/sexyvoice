@@ -27,7 +27,7 @@
     "@iconify-json/logos": "1.2.10",
     "@iconify/tailwind": "^1.2.0",
     "@iconify/tailwind4": "^1.2.3",
-    "@livekit/components-react": "2.9.20",
+    "@livekit/components-react": "2.9.21",
     "@livekit/components-styles": "^1.1.6",
     "@livekit/krisp-noise-filter": "^0.3.4",
     "@livekit/protocol": "1.45.1",
