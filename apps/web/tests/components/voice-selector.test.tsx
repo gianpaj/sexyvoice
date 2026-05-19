@@ -50,7 +50,7 @@ function createVoice(
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
     description: null,
     type: null,
-    sort_order: 0,
+    sort_order: 1,
     feature: 'tts',
     sample_url: null,
     sample_prompt: null,
@@ -225,6 +225,7 @@ describe('VoiceSelector', () => {
         id: 'voice-grok',
         name: 'eve',
         model: 'xai',
+        sort_order: 0,
       }),
     });
 
@@ -247,6 +248,7 @@ describe('VoiceSelector', () => {
           name: 'eve',
           language: 'en',
           model: 'xai',
+          sort_order: 0,
         }),
       ],
       selectedVoice: createVoice({
@@ -254,6 +256,7 @@ describe('VoiceSelector', () => {
         name: 'eve',
         language: 'en',
         model: 'xai',
+        sort_order: 0,
       }),
     });
 

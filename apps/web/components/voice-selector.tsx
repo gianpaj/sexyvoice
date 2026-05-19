@@ -58,15 +58,9 @@ function isGrokVoice(voice: Tables<'voices'>) {
 }
 
 function sortVoices(voices: Tables<'voices'>[]) {
-  return [...voices].sort((voiceA, voiceB) => {
-    const isFeaturedA = isFeaturedVoice(voiceA);
-    const isFeaturedB = isFeaturedVoice(voiceB);
-
-    if (isFeaturedA && !isFeaturedB) return -1;
-    if (!isFeaturedA && isFeaturedB) return 1;
-
-    return voiceA.name.localeCompare(voiceB.name);
-  });
+  return [...voices].sort(
+    (voiceA, voiceB) => voiceA.sort_order - voiceB.sort_order,
+  );
 }
 
 function getGroupLabel(voice: Tables<'voices'>): string {

@@ -50,7 +50,8 @@ export default async function GeneratePage(props: {
         .from('voices')
         .select('*')
         .eq('feature', 'tts')
-        .eq('is_public', true),
+        .eq('is_public', true)
+        .order('sort_order'),
     ]);
 
   if (!publicVoices) {
