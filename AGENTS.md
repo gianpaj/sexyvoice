@@ -147,6 +147,8 @@ Use package filters when you only want one app, e.g.
 - Database functions should default to `SECURITY INVOKER`, set
   `search_path = ''`, and use fully qualified names.
 - Migration files use `YYYYMMDDHHmmss_description.sql`.
+- Do not add migrations for one-off data backfills or production data fixes unless
+  explicitly requested; provide the SQL for the user to run instead.
 - Enable RLS on new tables and add granular policies.
 
 ## External API v1
