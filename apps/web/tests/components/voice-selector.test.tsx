@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { VoiceSelector } from '@/components/voice-selector';
+import { getVoiceGroups, VoiceSelector } from '@/components/voice-selector';
 
 vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -34,7 +34,7 @@ const baseDict = {
     toolTipEmotionTags: 'Emotion tags',
     selectStyleTextareaPlaceholder: 'Describe the speaking style',
     featuredBadge: 'Featured',
-    featuredGroupLabel: 'Grok',
+    featuredGroupLabel: 'Featured',
     multilingualGroupLabel: 'Gemini',
   },
 } as const;
@@ -231,6 +231,71 @@ describe('VoiceSelector', () => {
 
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
     expect(screen.getByRole('combobox')).toHaveTextContent(/featured/i);
+  });
+
+  it('keeps featured voices first and preserves query order for non-featured groups', () => {
+    const voiceGroups = getVoiceGroups(
+      [
+        createVoice({
+          id: 'voice-featured-zephyr',
+          name: 'zephyr',
+          language: 'multiple',
+          model: 'gpro',
+          sort_order: 0,
+        }),
+        createVoice({
+          id: 'voice-featured-achernar',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro',
+          sort_order: 0,
+        }),
+        createVoice({
+          id: 'voice-grok-sal',
+          name: 'sal',
+          language: 'multiple',
+          model: 'xai',
+          sort_order: 1,
+        }),
+        createVoice({
+          id: 'voice-grok-ara',
+          name: 'ara',
+          language: 'multiple',
+          model: 'xai',
+          sort_order: 1,
+        }),
+        createVoice({
+          id: 'voice-replicate-dan',
+          name: 'dan',
+          language: 'en-GB 🇬🇧',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          sort_order: 2,
+        }),
+        createVoice({
+          id: 'voice-replicate-emma',
+          name: 'emma',
+          language: 'en-US 🇺🇸',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          sort_order: 2,
+        }),
+      ],
+      {
+        featuredGroupLabel: baseDict.voiceSelector.featuredGroupLabel,
+        geminiGroupLabel: baseDict.voiceSelector.multilingualGroupLabel,
+      },
+    );
+
+    expect(voiceGroups.map((group) => group.label)).toEqual([
+      'Featured',
+      'Grok ✨',
+      'en-GB 🇬🇧',
+      'en-US 🇺🇸',
+    ]);
+    expect(
+      voiceGroups.map((group) => group.voices.map((voice) => voice.name)),
+    ).toEqual([['achernar', 'zephyr'], ['ara', 'sal'], ['dan'], ['emma']]);
   });
 
   it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
