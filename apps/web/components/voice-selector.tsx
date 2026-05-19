@@ -47,8 +47,9 @@ interface VoiceGroup {
   voices: Tables<'voices'>[];
 }
 
-const featuredGroupLabel = 'Grok ✨';
-const geminiGroupLabel = 'Gemini 🌍';
+const defaultFeaturedGroupLabel = 'Featured';
+const defaultGeminiGroupLabel = 'Gemini 🌍';
+const grokGroupLabel = 'Grok ✨';
 
 function isMultilingualVoice(voice: Tables<'voices'>) {
   return voice.model === 'gpro';
@@ -59,13 +60,18 @@ function isGrokVoice(voice: Tables<'voices'>) {
 
 function sortVoices(voices: Tables<'voices'>[]) {
   return [...voices].sort(
-    (voiceA, voiceB) => voiceA.sort_order - voiceB.sort_order,
+    (voiceA, voiceB) =>
+      voiceA.sort_order - voiceB.sort_order ||
+      voiceA.name.localeCompare(voiceB.name),
   );
 }
 
-function getGroupLabel(voice: Tables<'voices'>): string {
+function getGroupLabel(
+  voice: Tables<'voices'>,
+  geminiGroupLabel: string,
+): string {
   if (isMultilingualVoice(voice)) return geminiGroupLabel;
-  if (isGrokVoice(voice)) return featuredGroupLabel;
+  if (isGrokVoice(voice)) return grokGroupLabel;
   return voice.language;
 }
 
@@ -93,7 +99,13 @@ export function VoiceSelector({
   const voiceSelectorLabels =
     dict.voiceSelector as typeof dict.voiceSelector & {
       featuredBadge?: string;
+      featuredGroupLabel?: string;
+      multilingualGroupLabel?: string;
     };
+  const featuredGroupLabel =
+    voiceSelectorLabels.featuredGroupLabel ?? defaultFeaturedGroupLabel;
+  const geminiGroupLabel =
+    voiceSelectorLabels.multilingualGroupLabel ?? defaultGeminiGroupLabel;
   const featuredBadgeLabel =
     voiceSelectorLabels.featuredBadge ?? featuredGroupLabel;
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -119,7 +131,7 @@ export function VoiceSelector({
     const groupedVoices = Object.entries(
       nonFeaturedVoices.reduce(
         (acc, voice) => {
-          const group = getGroupLabel(voice);
+          const group = getGroupLabel(voice, geminiGroupLabel);
 
           if (!acc[group]) {
             acc[group] = [];
@@ -154,7 +166,7 @@ export function VoiceSelector({
     }
 
     return [...groups, ...groupedVoices];
-  }, [publicVoices]);
+  }, [featuredGroupLabel, geminiGroupLabel, publicVoices]);
 
   return (
     <Card>
