@@ -1,8 +1,17 @@
 import { defaultSessionConfig } from '@/data/default-config';
-import type { CallLanguage, PlaygroundState } from '@/data/playground-state';
-import { getPresetInstructions } from '@/data/preset-instructions';
+import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
+
+export interface CallTokenPlaygroundState {
+  instructions: string;
+  language: PlaygroundState['language'];
+  selectedPresetId: PlaygroundState['selectedPresetId'];
+  sessionConfig: Pick<
+    SessionConfig,
+    'maxOutputTokens' | 'model' | 'temperature' | 'voice'
+  >;
+}
 
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
@@ -81,7 +90,23 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
           const configKey = key.split(
             '.',
           )[1] as keyof PlaygroundState['sessionConfig'];
-          sessionConfig[configKey] = value as any;
+          switch (configKey) {
+            case 'maxOutputTokens':
+              sessionConfig.maxOutputTokens =
+                value === 'null' ? null : Number(value);
+              break;
+            case 'model':
+              sessionConfig.model = value as SessionConfig['model'];
+              break;
+            case 'temperature':
+              sessionConfig.temperature = Number(value);
+              break;
+            case 'voice':
+              sessionConfig.voice = value;
+              break;
+            default:
+              break;
+          }
         }
       });
 
@@ -125,54 +150,35 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
      * resolving language-specific translations if available.
      *
      * Priority for instruction resolution:
-     * 1. Custom character localizedInstructions for the language
-     * 2. Built-in preset translations (from preset-instructions index)
-     * 3. Preset's default instructions field (English / fallback)
+     * 1. Character localizedInstructions for the language
+     * 2. Preset's default instructions field (fallback)
      */
-    getStateWithFullInstructions: (state: PlaygroundState): PlaygroundState => {
-      if (!state.selectedPresetId) {
-        return state;
-      }
-
-      // Resolve the selected preset so we can sync sessionConfig
+    getStateWithFullInstructions: (
+      state: PlaygroundState,
+    ): CallTokenPlaygroundState => {
       const allPresets = [...defaultPresets, ...state.customCharacters];
       const preset = allPresets.find((p) => p.id === state.selectedPresetId);
+      let instructions = state.instructions;
 
-      // Sync sessionConfig from the selected preset so the correct voice
-      // (and other settings) are sent to the call-token API.
-      // Voice changes on custom characters only update the preset inside
-      // customCharacters, not the top-level sessionConfig.
-      const baseState = preset
-        ? { ...state, sessionConfig: preset.sessionConfig }
-        : state;
-
-      // 1. Custom character localizedInstructions
-      if (preset?.localizedInstructions?.[baseState.language] !== undefined) {
-        return {
-          ...baseState,
-          instructions: preset.localizedInstructions[
-            baseState.language
-          ] as string,
-        };
+      // 1. Character localizedInstructions
+      if (preset?.localizedInstructions?.[state.language] !== undefined) {
+        instructions = preset.localizedInstructions[state.language] as string;
+      } else if (preset) {
+        // 2. Fallback to preset's default instructions
+        instructions = preset.instructions;
       }
 
-      // 2. Built-in preset translations
-      if (baseState.language !== 'en') {
-        const translatedInstructions = getPresetInstructions(
-          baseState.selectedPresetId!,
-          baseState.language as CallLanguage,
-        );
-        if (translatedInstructions) {
-          return { ...baseState, instructions: translatedInstructions };
-        }
-      }
-
-      // 3. Fallback to preset's default instructions
-      if (preset) {
-        return { ...baseState, instructions: preset.instructions };
-      }
-
-      return baseState;
+      return {
+        instructions,
+        language: state.language,
+        selectedPresetId: state.selectedPresetId,
+        sessionConfig: {
+          maxOutputTokens: state.sessionConfig.maxOutputTokens,
+          model: state.sessionConfig.model,
+          temperature: state.sessionConfig.temperature,
+          voice: state.sessionConfig.voice,
+        },
+      };
     },
   };
 

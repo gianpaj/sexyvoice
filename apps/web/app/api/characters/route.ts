@@ -20,7 +20,6 @@ const sessionConfigSchema = z.object({
   voice: z.string().min(1, 'Voice is required'),
   temperature: z.number().min(0.6).max(1.2),
   maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
 });
 
 const createOrUpdateSchema = z.object({
