@@ -581,6 +581,7 @@
       "guardrailViolation": "Denne anmodning blev blokeret af en tredjeparts sikkerhedspolitik for stemmekloning. Prøv med en anden tekst eller en anden referencelyd.",
       "insufficientCredits": "Du skal bruge __CREDITS__ kreditter for at klone denne lyd.",
       "internalError": "Kunne ikke klone stemmen. Prøv igen.",
+      "providerUnavailable": "Udbyderen af stemmekloning er midlertidigt utilgængelig. Prøv igen.",
       "invalidContentType": "Uploadanmodningen er ugyldig. Prøv igen.",
       "invalidFileType": "Ugyldig filtype. Upload MP3, OGG, Opus, M4A, WAV eller WebM.",
       "missingLocale": "Vælg et sprog.",

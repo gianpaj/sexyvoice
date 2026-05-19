@@ -259,8 +259,8 @@ importers:
         specifier: ^0.3.4
         version: 0.3.4(livekit-client@2.19.0(@types/dom-mediacapture-record@1.0.22))
       '@livekit/protocol':
-        specifier: 1.45.1
-        version: 1.45.1
+        specifier: 1.45.8
+        version: 1.45.8
       '@mistralai/mistralai':
         specifier: ^2.1.2
         version: 2.1.2
@@ -1966,9 +1966,6 @@ packages:
 
   '@livekit/mutex@1.1.1':
     resolution: {integrity: sha512-EsshAucklmpuUAfkABPxJNhzj9v2sG7JuzFDL4ML1oJQSV14sqrpTYnsaOudMAw9yOaW53NU3QQTlUQoRs4czw==}
-
-  '@livekit/protocol@1.45.1':
-    resolution: {integrity: sha512-sr6p0TwKofHO5KW6kUzjq4hH2de4Al5scQo824xFnyI1XYo0qQn6fTG+bdr+Uj4EedjYAOqjezwUju5OErVIRA==}
 
   '@livekit/protocol@1.45.8':
     resolution: {integrity: sha512-Q+l57E7w/xxOBFVWzdX5rkAZO7ffyF+rlDzNUYq2SU114+5aTyCq+PK4unaEVDNd4952Af7wteKr3sOgasGuaA==}
@@ -10833,10 +10830,6 @@ snapshots:
       livekit-client: 2.19.0(@types/dom-mediacapture-record@1.0.22)
 
   '@livekit/mutex@1.1.1': {}
-
-  '@livekit/protocol@1.45.1':
-    dependencies:
-      '@bufbuild/protobuf': 1.10.1
 
   '@livekit/protocol@1.45.8':
     dependencies:
