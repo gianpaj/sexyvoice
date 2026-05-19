@@ -75,7 +75,7 @@
     "motion": "^12.38.0",
     "mpg123-decoder": "^1.0.3",
     "music-metadata": "11.12.3",
-    "nanoid": "5.1.7",
+    "nanoid": "5.1.11",
     "negotiator": "^1.0.0",
     "next": "catalog:",
     "next-contentlayer2": "^0.5.8",
