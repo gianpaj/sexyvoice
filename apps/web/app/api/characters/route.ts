@@ -18,7 +18,7 @@ const MAX_PROMPT_LENGTH = 5000;
 const sessionConfigSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   voice: z.string().min(1, 'Voice is required'),
-  temperature: z.number().min(0.6).max(1.2),
+  temperature: z.number().min(0).max(1.2),
   maxOutputTokens: z.number().nullable(),
 });
 
