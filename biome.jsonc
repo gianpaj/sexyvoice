@@ -15,7 +15,8 @@
       "!**/.next",
       "!**/dist",
       "!**/build",
-      "!apps/web/components/ui"
+      "!apps/web/components/ui",
+      "!apps/web/app/globals.css"
     ]
   },
   "formatter": {

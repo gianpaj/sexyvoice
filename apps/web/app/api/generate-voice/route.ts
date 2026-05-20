@@ -37,6 +37,8 @@ import {
   getErrorStatusCode,
   getTtsProvider,
 } from '@/lib/utils';
+import { getGoogleApiErrorStatus } from '@/utils/google-rpc-status';
+import { type GoogleApiError, parseGoogleApiError } from '@/utils/googleErrors';
 
 const { logger, captureException } = Sentry;
 
@@ -50,6 +52,19 @@ function isAbortError(error: unknown): boolean {
   if (error.name === 'AbortError') return true;
   const msg = error.message.toLowerCase();
   return /\babort(?:ed| ?error)\b/.test(msg);
+}
+
+function isGoogleQuotaError(errorPayload: GoogleApiError): boolean {
+  return getGoogleApiErrorStatus(errorPayload) === 'RESOURCE_EXHAUSTED';
+}
+
+function isGoogleTransientProviderError(errorPayload: GoogleApiError): boolean {
+  const status = getGoogleApiErrorStatus(errorPayload);
+  return (
+    status === 'INTERNAL' ||
+    status === 'UNAVAILABLE' ||
+    status === 'DEADLINE_EXCEEDED'
+  );
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration
@@ -687,6 +702,56 @@ export async function POST(request: Request) {
       );
     }
 
+    const googleApiError = parseGoogleApiError(error);
+    if (googleApiError) {
+      const googleStatus = getGoogleApiErrorStatus(googleApiError);
+      if (isGoogleQuotaError(googleApiError)) {
+        logger.warn('Gemini quota exhausted', {
+          user: user ? { id: user.id, email: user.email } : undefined,
+          extra: {
+            textLength: text.length,
+            voice,
+            googleStatus,
+            googleCode: googleApiError.code,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: getErrorMessage(
+              userHasPaid
+                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
+                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
+              'voice-generation',
+            ),
+          },
+          { status: 429 },
+        );
+      }
+
+      if (isGoogleTransientProviderError(googleApiError)) {
+        logger.warn('Gemini provider temporarily unavailable', {
+          user: user ? { id: user.id, email: user.email } : undefined,
+          extra: {
+            textLength: text.length,
+            voice,
+            googleStatus,
+            googleCode: googleApiError.code,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: getErrorMessage(
+              ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
+              'voice-generation',
+            ),
+          },
+          { status: 503 },
+        );
+      }
+    }
+
     const errorObj = {
       text,
       voice,
@@ -699,43 +764,6 @@ export async function POST(request: Request) {
     console.error(errorObj);
     console.error('Voice generation error:', error);
 
-    // Check for transient errors (INTERNAL status) from Google API
-    if (Error.isError(error)) {
-      try {
-        const message = JSON.parse(error.message);
-        if (message.error?.status === 'INTERNAL') {
-          return NextResponse.json(
-            {
-              error:
-                'Voice generation service temporarily unavailable. Please retry.',
-            },
-            { status: 503 },
-          );
-        }
-      } catch {
-        // Not JSON or doesn't have the expected structure, continue to next check
-      }
-    }
-
-    // if Gemini error
-    if (Error.isError(error) && error.message.includes('googleapis')) {
-      const message = JSON.parse(error.message);
-      // You exceeded your current quota
-      if (message.error.code === 429) {
-        return NextResponse.json(
-          {
-            error: getErrorMessage(
-              userHasPaid
-                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
-                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
-              'voice-generation',
-            ),
-          },
-          { status: 500 },
-        );
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
     if (
       Error.isError(error) &&
       Object.keys(ERROR_CODES).includes(String(error.cause))

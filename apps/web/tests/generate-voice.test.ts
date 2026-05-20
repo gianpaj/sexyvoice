@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/generate-voice/route';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
-import type { GoogleApiError } from '@/utils/googleErrors';
+import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
   mockRedisGet,
   mockRedisKeys,
@@ -1003,8 +1003,16 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('should return 500 when flash model fails for free Gemini users', async () => {
-      const flashError = new Error('Flash model failed');
+    it('returns 503 without Sentry capture when flash model has a transient provider failure', async () => {
+      const flashError = new Error(
+        JSON.stringify({
+          error: {
+            code: 500,
+            message: 'An internal error has occurred.',
+            status: 'INTERNAL',
+          },
+        }),
+      );
 
       let callCount = 0;
 
@@ -1032,16 +1040,17 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(callCount).toBe(1);
-      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
-      expect(Sentry.captureException).toHaveBeenCalledWith(
-        flashError,
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini provider temporarily unavailable',
         expect.objectContaining({
           extra: expect.objectContaining({
-            text: 'dramatic: Hello world',
+            googleCode: 500,
+            googleStatus: 'INTERNAL',
+            textLength: 'dramatic: Hello world'.length,
             voice: 'kore',
-            errorData: flashError,
           }),
           user: {
             id: 'test-user-id',
@@ -1060,7 +1069,9 @@ describe('Generate Voice API Route', () => {
         expect.anything(),
       );
 
-      expect(json.error).toBe('Failed to generate voice');
+      expect(json.error).toBe(
+        'Voice generation service temporarily unavailable. Please retry.',
+      );
     });
 
     it('should handle Google API quota exceeded error', async () => {
@@ -1069,7 +1080,7 @@ describe('Generate Voice API Route', () => {
         models: {
           generateContent: vi.fn().mockImplementation(() => {
             // Both pro and flash models will throw the same quota error
-            const apiError: GoogleApiError = {
+            const apiError: GoogleApiErrorWithStatus = {
               code: 429,
               message:
                 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
@@ -1078,7 +1089,6 @@ describe('Generate Voice API Route', () => {
                 {
                   '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
                   violations: [
-                    // @ts-expect-error - taken from logs
                     {
                       quotaMetric:
                         'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
@@ -1113,10 +1123,11 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(429);
       expect(json.error).toContain(
         getErrorMessage('FREE_QUOTA_EXCEEDED', 'voice-generation'),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('should return 403 when freemium user exceeds gpro voice limit', async () => {

@@ -5,7 +5,6 @@ import {
   useConnectionState,
   // useVoiceAssistant,
 } from '@livekit/components-react';
-import * as Sentry from '@sentry/nextjs';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
 import { useEffect, useState } from 'react';
@@ -13,7 +12,6 @@ import { toast } from 'sonner';
 
 import { SessionControls } from '@/components/call/session-controls';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
-// import { GrokImageFeed } from '@/components/grok-image-feed';
 import { useAgent } from '@/hooks/use-agent';
 import { useConnection } from '@/hooks/use-connection';
 import { ConnectButton } from './connect-button';
@@ -37,8 +35,6 @@ export function Chat() {
         disconnect();
         setHasSeenAgent(false);
 
-        Sentry.captureMessage('Agent Unavailable');
-
         console.error('Agent Unavailable');
 
         toast.error(dict.agentUnavailable);
@@ -60,7 +56,6 @@ export function Chat() {
           disconnect();
           setHasSeenAgent(false);
           toast.info(dict.disconnected);
-          Sentry.captureMessage('Disconnected');
         }
       }, 5000);
     }
@@ -121,8 +116,6 @@ export function Chat() {
 
             <RoomAudioRenderer />
           </div>
-
-          {/*<GrokImageFeed />*/}
         </div>
 
         {/* Button for normal screens - show after visualizer */}

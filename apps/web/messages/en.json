@@ -581,6 +581,7 @@
       "guardrailViolation": "This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.",
       "insufficientCredits": "You need __CREDITS__ credits to clone this audio.",
       "internalError": "Failed to clone voice. Please try again.",
+      "providerUnavailable": "Voice cloning provider is temporarily unavailable. Please try again.",
       "invalidContentType": "The upload request is invalid. Please try again.",
       "invalidFileType": "Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.",
       "missingLocale": "Please select a language.",
