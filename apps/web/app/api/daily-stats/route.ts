@@ -274,7 +274,9 @@ export async function GET(request: NextRequest) {
       // (callSessions14dResult) Call sessions last 14 days with duration info
       supabase
         .from('call_sessions')
-        .select('id, started_at, duration_seconds, credits_used, status')
+        .select(
+          'id, started_at, duration_seconds, credits_used, status, free_call',
+        )
         .gte('started_at', fourteenDaysAgo.toISOString())
         .lt('started_at', today.toISOString()),
 
@@ -512,6 +514,27 @@ export async function GET(request: NextRequest) {
         ? callsDurationAllTime / callSessionsTotalCount
         : 0,
     ) || 0;
+
+  // Split yesterday and the rolling 14-day window into free vs paid calls
+  const isFreeCall = (call: Tables<'call_sessions'>) => call.free_call === true;
+  const freeCallsYesterday = callSessionsYesterdayData.filter(isFreeCall);
+  const paidCallsYesterday = callSessionsYesterdayData.filter(
+    (call) => !isFreeCall(call),
+  );
+  const freeCalls14d = callSessions14dData.filter(isFreeCall);
+  const paidCalls14d = callSessions14dData.filter((call) => !isFreeCall(call));
+  const freeCallsYesterdayCount = freeCallsYesterday.length;
+  const paidCallsYesterdayCount = paidCallsYesterday.length;
+  const freeCallsDurationYesterday = freeCallsYesterday.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const paidCallsDurationYesterday = paidCallsYesterday.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const freeCalls14dCount = freeCalls14d.length;
+  const paidCalls14dCount = paidCalls14d.length;
 
   // Call costs at $0.05 per minute
   const CALL_COST_PER_MINUTE = 0.05;
@@ -1292,6 +1315,7 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${calls14dCount} (avg ${(calls14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
+    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}) | ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free, ${paidCalls14dCount} paid`,
     `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDuration14d)} vs ${ROLLING_WINDOW_LABEL}) | ${ROLLING_WINDOW_LABEL}: ${formatDuration(callsDuration14d)} (avg ${formatDuration(callsAvgDuration14d)})`,
     `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
