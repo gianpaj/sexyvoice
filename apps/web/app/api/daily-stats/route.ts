@@ -518,23 +518,16 @@ export async function GET(request: NextRequest) {
   // Split yesterday and the rolling 14-day window into free vs paid calls
   const isFreeCall = (call: Tables<'call_sessions'>) => call.free_call === true;
   const freeCallsYesterday = callSessionsYesterdayData.filter(isFreeCall);
-  const paidCallsYesterday = callSessionsYesterdayData.filter(
-    (call) => !isFreeCall(call),
-  );
-  const freeCalls14d = callSessions14dData.filter(isFreeCall);
-  const paidCalls14d = callSessions14dData.filter((call) => !isFreeCall(call));
   const freeCallsYesterdayCount = freeCallsYesterday.length;
-  const paidCallsYesterdayCount = paidCallsYesterday.length;
   const freeCallsDurationYesterday = freeCallsYesterday.reduce(
     (sum, call) => sum + call.duration_seconds,
     0,
   );
-  const paidCallsDurationYesterday = paidCallsYesterday.reduce(
-    (sum, call) => sum + call.duration_seconds,
-    0,
-  );
-  const freeCalls14dCount = freeCalls14d.length;
-  const paidCalls14dCount = paidCalls14d.length;
+  const paidCallsYesterdayCount = callsYesterdayCount - freeCallsYesterdayCount;
+  const paidCallsDurationYesterday =
+    callsDurationYesterday - freeCallsDurationYesterday;
+  const freeCalls14dCount = callSessions14dData.filter(isFreeCall).length;
+  const paidCalls14dCount = calls14dCount - freeCalls14dCount;
 
   // Call costs at $0.05 per minute
   const CALL_COST_PER_MINUTE = 0.05;
