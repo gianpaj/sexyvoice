@@ -134,11 +134,18 @@ function playgroundStateReducer(
       const selectedScene = callScenes.find(
         (scene) => scene.id === action.payload,
       );
+      const currentScene = callScenes.find(
+        (scene) => scene.id === state.selectedSceneId,
+      );
+      const isTextModified =
+        state.sceneInstructions !== (currentScene?.text ?? '');
 
       return {
         ...state,
         selectedSceneId: action.payload,
-        sceneInstructions: selectedScene?.text || '',
+        sceneInstructions: isTextModified
+          ? state.sceneInstructions
+          : (selectedScene?.text ?? ''),
       };
     }
     case 'SAVE_CUSTOM_CHARACTER': {
