@@ -140,6 +140,7 @@ export async function POST(request: Request) {
     // Always resolve selected presets from DB (public and custom).
     // Only non-preset calls (no selectedPresetId) can use client-sent instructions.
     let resolvedInstructions = clientInstructions;
+    let isPaidUser: boolean | undefined;
 
     if (selectedPresetId) {
       try {
@@ -181,7 +182,7 @@ export async function POST(request: Request) {
           }
 
           // Verify user has paid (custom characters require paid account)
-          const isPaidUser = await hasUserPaid(user.id);
+          isPaidUser = await hasUserPaid(user.id);
           if (!isPaidUser) {
             return NextResponse.json(
               { error: 'Custom characters require a paid account' },
@@ -221,7 +222,9 @@ export async function POST(request: Request) {
     }
 
     if (sceneInstructions?.trim()) {
-      const isPaidUser = await hasUserPaid(user.id);
+      if (isPaidUser === undefined) {
+        isPaidUser = await hasUserPaid(user.id);
+      }
       if (!isPaidUser) {
         return NextResponse.json(
           { error: 'Scenes require a paid account' },
