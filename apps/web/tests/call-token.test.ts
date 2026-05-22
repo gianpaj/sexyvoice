@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
+import { callScenes } from '@/data/call-scenes';
 import { callTokenPlaygroundStateSchema } from '@/lib/call-token-schema';
 
 // Type for z.treeifyError() return value
@@ -73,6 +74,40 @@ describe('call-token API validation', () => {
 
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
+    });
+
+    it('should accept null selectedSceneId', () => {
+      const payload = {
+        instructions: 'Test',
+        selectedPresetId: null,
+        selectedSceneId: null,
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept every known scene ID', () => {
+      for (const scene of callScenes) {
+        const payload = {
+          instructions: 'Test',
+          selectedPresetId: null,
+          selectedSceneId: scene.id,
+          sessionConfig: {
+            model: 'grok-voice-think-fast-1.0',
+            voice: 'Ara',
+            temperature: 0.8,
+            maxOutputTokens: null,
+          },
+        };
+        const result = playgroundStateSchema.safeParse(payload);
+        expect(result.success).toBe(true);
+      }
     });
 
     it('should ignore client fields not needed for the call token', () => {
@@ -163,6 +198,22 @@ describe('call-token API validation', () => {
         selectedPresetId: null,
       };
 
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject an unknown selectedSceneId', () => {
+      const payload = {
+        instructions: 'Test',
+        selectedPresetId: null,
+        selectedSceneId: 'totally-made-up-scene',
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(false);
     });
