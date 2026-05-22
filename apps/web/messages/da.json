@@ -187,7 +187,7 @@
             },
             {
               "question": "Hvor meget koster det?",
-              "answer": "Live-opkald koster 350 kreditter pr. minut, mens du er forbundet."
+              "answer": "Live-opkald koster {count} kreditter pr. minut, mens du er forbundet."
             }
           ]
         },

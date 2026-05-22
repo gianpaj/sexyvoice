@@ -187,7 +187,7 @@
             },
             {
               "question": "¿Cuánto cuesta?",
-              "answer": "Las llamadas en vivo cuestan 350 créditos por minuto mientras estás conectado."
+              "answer": "Las llamadas en vivo cuestan {count} créditos por minuto mientras estás conectado."
             }
           ]
         },

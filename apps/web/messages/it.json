@@ -187,7 +187,7 @@
             },
             {
               "question": "Quanto costa?",
-              "answer": "Le chiamate live costano 350 crediti al minuto mentre sei connesso."
+              "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
             }
           ]
         },

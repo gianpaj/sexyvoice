@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 import {
   Collapsible,
@@ -16,6 +16,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import {
   Accordion,
   AccordionContent,
@@ -36,34 +37,15 @@ interface FaqLink {
   url: string;
 }
 
-function renderAnswer(answer: string, link?: FaqLink) {
-  if (!link) return answer;
-  const parts = answer.split('{link}');
-  if (parts.length !== 2) return answer;
-  return (
-    <>
-      {parts[0]}
-      <Link
-        className="text-primary underline underline-offset-4 hover:no-underline"
-        href={link.url}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {link.text}
-      </Link>
-      {parts[1]}
-    </>
-  );
-}
-
 export const FAQComponent = async ({ lang }: { lang: Locale }) => {
-  const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
-    .faq;
+  const t = await getTranslations({ locale: lang, namespace: 'landing.faq' });
+  const groups = t.raw('groups') as IntlMessages['landing']['faq']['groups'];
+
   return (
     <>
       <div className="mb-12 text-left md:text-center">
-        <h2 className="mb-2 font-bold text-3xl text-white">{dict.title}</h2>
-        <p className="text-gray-200">{dict.subtitle}</p>
+        <h2 className="mb-2 font-bold text-3xl text-white">{t('title')}</h2>
+        <p className="text-gray-200">{t('subtitle')}</p>
       </div>
 
       <Accordion
@@ -72,7 +54,7 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
         defaultValue="item-voiceCreation"
         type="single"
       >
-        {dict.groups.map((group) => {
+        {groups.map((group, gi) => {
           const Icon = faqIconMap[group.id] ?? Sparkles;
 
           return (
@@ -91,24 +73,42 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-0">
-                {group.questions.map((faq, i) => (
-                  <Collapsible
-                    className="border-gray-500 border-t bg-accent px-5 text-muted-foreground"
-                    defaultOpen={i === 0}
-                    key={i}
-                  >
-                    <CollapsibleTrigger className="flex items-center gap-4 py-4 text-left text-white focus-visible:z-10 [&[data-state=open]>svg]:rotate-90">
-                      <ChevronRightIcon className="size-4 shrink-0 transition-transform duration-200" />
-                      {faq.question}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="whitespace-pre-wrap pb-4 text-sm">
-                      {renderAnswer(
-                        faq.answer,
-                        (faq as { link?: FaqLink }).link,
-                      )}
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
+                {group.questions.map((faq, qi) => {
+                  const faqLink = (faq as { link?: FaqLink }).link;
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const answerKey = `groups.${gi}.questions.${qi}.answer` as any;
+                  const answer = faqLink
+                    ? t.rich(answerKey, {
+                        count: CREDITS_PER_MINUTE,
+                        link: (
+                          <Link
+                            className="text-primary underline underline-offset-4 hover:no-underline"
+                            href={faqLink.url}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            {faqLink.text}
+                          </Link>
+                        ),
+                      })
+                    : t(answerKey, { count: CREDITS_PER_MINUTE });
+
+                  return (
+                    <Collapsible
+                      className="border-gray-500 border-t bg-accent px-5 text-muted-foreground"
+                      defaultOpen={qi === 0}
+                      key={qi}
+                    >
+                      <CollapsibleTrigger className="flex items-center gap-4 py-4 text-left text-white focus-visible:z-10 [&[data-state=open]>svg]:rotate-90">
+                        <ChevronRightIcon className="size-4 shrink-0 transition-transform duration-200" />
+                        {faq.question}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="whitespace-pre-wrap pb-4 text-sm">
+                        {answer}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                })}
               </AccordionContent>
             </AccordionItem>
           );
