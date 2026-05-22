@@ -5,6 +5,7 @@ import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { callScenes } from '@/data/call-scenes';
 import {
   defaultLanguage,
   languageInitialInstructions,
@@ -238,6 +239,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const defaultSceneText = callScenes.find((s) => s.id === selectedSceneId)?.text;
+    const sceneModified =
+      selectedSceneId != null &&
+      (sceneInstructions?.trim() ?? '') !== (defaultSceneText?.trim() ?? '');
+
     // Create metadata for agent to start with
     const metadata = {
       instructions: resolvedInstructions,
@@ -251,6 +257,8 @@ export async function POST(request: Request) {
         languageInitialInstructions[defaultLanguage],
       user_id: user.id,
       character_id: selectedPresetId,
+      scene_id: selectedSceneId ?? null,
+      scene_modified: sceneModified,
     };
 
     // Create access token
