@@ -187,7 +187,7 @@
             },
             {
               "question": "Quanto costa?",
-              "answer": "Le chiamate live costano 2000 crediti al minuto mentre sei connesso."
+              "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
             }
           ]
         },
@@ -455,7 +455,7 @@
   "call": {
     "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
     "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
-    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è __COUNT__",
+    "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è {count}",
     "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
     "languageLabel": "Lingua",
