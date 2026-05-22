@@ -7,6 +7,9 @@ import { NextResponse } from 'next/server';
 
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
+// Bump when the cached query shape changes so stale fixtures are ignored.
+// v2: call_sessions now include free_call for the free/paid split.
+const CACHE_VERSION = 2;
 const ROLLING_WINDOW_DAYS = 14;
 const ROLLING_WINDOW_LABEL = `${ROLLING_WINDOW_DAYS}d`;
 
@@ -168,6 +171,12 @@ export async function GET(request: NextRequest) {
         '♻️ Ignoring legacy cache without reportDate:',
         CACHE_FILE,
         '(forcing refresh)',
+      );
+    } else if (cached.cacheVersion !== CACHE_VERSION) {
+      console.log(
+        '♻️ Ignoring cache from a different version:',
+        CACHE_FILE,
+        `(cached: ${cached.cacheVersion}, expected: ${CACHE_VERSION})`,
       );
     } else if (cached.reportDate === cacheReportDate) {
       console.log(
@@ -403,6 +412,7 @@ export async function GET(request: NextRequest) {
   // checks so we never persist a partial/failed response to disk
   if (!(isProd || loadedFromValidCache)) {
     const cacheData = {
+      cacheVersion: CACHE_VERSION,
       reportDate: cacheReportDate,
       audioYesterdayResult,
       audio14dResult,
@@ -526,10 +536,17 @@ export async function GET(request: NextRequest) {
   const paidCallsYesterdayCount = callsYesterdayCount - freeCallsYesterdayCount;
   const paidCallsDurationYesterday =
     callsDurationYesterday - freeCallsDurationYesterday;
-  const freeCalls14dCount = callSessions14dData.filter(isFreeCall).length;
+  const freeCalls14d = callSessions14dData.filter(isFreeCall);
+  const freeCalls14dCount = freeCalls14d.length;
+  const freeCallsDuration14d = freeCalls14d.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
   const paidCalls14dCount = calls14dCount - freeCalls14dCount;
+  const paidCallsDuration14d = callsDuration14d - freeCallsDuration14d;
 
-  // Call costs at $0.05 per minute
+  // Platform infra cost at $0.05 per minute — covers all calls (free included),
+  // not billable revenue, so free-call duration is intentionally part of this.
   const CALL_COST_PER_MINUTE = 0.05;
   const callCostYesterday =
     (callsDurationYesterday / 60) * CALL_COST_PER_MINUTE;
@@ -1308,7 +1325,8 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${calls14dCount} (avg ${(calls14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
-    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}) | ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free, ${paidCalls14dCount} paid`,
+    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)})`,
+    `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)})`,
     `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDuration14d)} vs ${ROLLING_WINDOW_LABEL}) | ${ROLLING_WINDOW_LABEL}: ${formatDuration(callsDuration14d)} (avg ${formatDuration(callsAvgDuration14d)})`,
     `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
