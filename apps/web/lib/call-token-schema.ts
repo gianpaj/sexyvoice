@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { callScenes } from '@/data/call-scenes';
+
 export const sessionConfigSchema = z.object({
   model: z.string(),
   voice: z.string(),
@@ -35,7 +37,10 @@ export const callTokenPlaygroundStateSchema = z.object({
     .optional(),
   sceneInstructions: z.string().nullable().optional(),
   selectedPresetId: z.uuid().nullable(),
-  selectedSceneId: z.string().nullable().optional(),
+  selectedSceneId: z
+    .enum(callScenes.map((s) => s.id) as [string, ...string[]])
+    .nullable()
+    .optional(),
   sessionConfig: sessionConfigSchema,
 });
 
