@@ -455,7 +455,7 @@
   "call": {
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
-    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__",
+    "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
     "languageLabel": "Language",

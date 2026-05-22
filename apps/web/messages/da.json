@@ -455,7 +455,7 @@
   "call": {
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
-    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__",
+    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er {count}",
     "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
     "languageLabel": "Sprog",

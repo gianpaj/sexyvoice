@@ -455,7 +455,7 @@
   "call": {
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
-    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
     "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 5 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
     "languageLabel": "Langue",
