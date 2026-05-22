@@ -210,6 +210,8 @@ export function createDefaultPgState(
     sessionConfig: { ...defaultSessionConfig },
     customCharacters: [],
     selectedPresetId: 'ramona',
+    selectedSceneId: null,
+    sceneInstructions: '',
     instructions: 'test instructions',
     language: 'en' as const,
     initialInstruction: 'Say hi',

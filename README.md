@@ -206,7 +206,20 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
    ```
 
 6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+   The web app runs through Portless at [https://sv.dev](https://sv.dev).
+   The `portless.json` app name only sets the route name; `PORTLESS_TLD=dev`
+   in `apps/web/package.json` makes the route use `.dev` instead of the
+   default `.localhost`.
+
+   If you previously installed the Portless startup service, it may restart the
+   default `.localhost` proxy on port 443 and block `.dev`. Remove the service
+   before starting the app:
+
+   ```bash
+   sudo portless service uninstall
+   sudo portless proxy stop
+   pnpm dev
+   ```
 
 ### Banner System
 

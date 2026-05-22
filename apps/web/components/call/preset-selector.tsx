@@ -419,6 +419,7 @@ export function PresetSelector({
             aria-label={dict.addCustomCharacter}
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
             disabled={isConnected}
+            isPaidUser={isPaidUser}
             onClick={handleOpenCreateDialog}
             premiumTooltip={dict.upgradePremiumTooltip}
           >

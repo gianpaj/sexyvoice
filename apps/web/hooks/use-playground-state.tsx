@@ -10,6 +10,7 @@ import {
   useReducer,
 } from 'react';
 
+import { callScenes } from '@/data/call-scenes';
 import { defaultSessionConfig } from '@/data/default-config';
 import {
   type CallLanguage,
@@ -65,8 +66,10 @@ type Action =
       payload: Partial<PlaygroundState['sessionConfig']>;
     }
   | { type: 'SET_INSTRUCTIONS'; payload: string }
+  | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
   | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
+  | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
@@ -89,6 +92,11 @@ function playgroundStateReducer(
       return {
         ...state,
         instructions: action.payload,
+      };
+    case 'SET_SCENE_INSTRUCTIONS':
+      return {
+        ...state,
+        sceneInstructions: action.payload,
       };
     case 'SET_CUSTOM_CHARACTERS':
       return {
@@ -121,6 +129,24 @@ function playgroundStateReducer(
       newState.sessionConfig =
         selectedPreset?.sessionConfig || defaultSessionConfig;
       return newState;
+    }
+    case 'SET_SELECTED_SCENE_ID': {
+      const selectedScene = callScenes.find(
+        (scene) => scene.id === action.payload,
+      );
+      const currentScene = callScenes.find(
+        (scene) => scene.id === state.selectedSceneId,
+      );
+      const isTextModified =
+        state.sceneInstructions !== (currentScene?.text ?? '');
+
+      return {
+        ...state,
+        selectedSceneId: action.payload,
+        sceneInstructions: isTextModified
+          ? state.sceneInstructions
+          : (selectedScene?.text ?? ''),
+      };
     }
     case 'SAVE_CUSTOM_CHARACTER': {
       const language = state.language;
