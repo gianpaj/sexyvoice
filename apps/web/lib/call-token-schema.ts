@@ -33,7 +33,9 @@ export const callTokenPlaygroundStateSchema = z.object({
       'zh',
     ] as const)
     .optional(),
+  sceneInstructions: z.string().nullable().optional(),
   selectedPresetId: z.uuid().nullable(),
+  selectedSceneId: z.string().nullable().optional(),
   sessionConfig: sessionConfigSchema,
 });
 

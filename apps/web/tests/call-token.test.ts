@@ -56,6 +56,25 @@ describe('call-token API validation', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should accept optional scene fields', () => {
+      const payload = {
+        instructions: 'Test instructions',
+        language: 'en' as const,
+        sceneInstructions: 'Use the late-night train setting.',
+        selectedPresetId: null,
+        selectedSceneId: 'stranger-on-the-train',
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
     it('should ignore client fields not needed for the call token', () => {
       const payload = {
         instructions: 'Test instructions',

@@ -24,6 +24,18 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
+function appendSceneInstructions(
+  instructions: string,
+  sceneInstructions?: string | null,
+): string {
+  const trimmedSceneInstructions = sceneInstructions?.trim();
+  if (!trimmedSceneInstructions) {
+    return instructions;
+  }
+
+  return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
+}
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
   let user: User | null = null;
@@ -106,7 +118,9 @@ export async function POST(request: Request) {
     const {
       instructions: clientInstructions,
       language = defaultLanguage,
+      sceneInstructions,
       selectedPresetId,
+      selectedSceneId,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
@@ -167,8 +181,8 @@ export async function POST(request: Request) {
           }
 
           // Verify user has paid (custom characters require paid account)
-          const isPaid = await hasUserPaid(user.id);
-          if (!isPaid) {
+          const isPaidUser = await hasUserPaid(user.id);
+          if (!isPaidUser) {
             return NextResponse.json(
               { error: 'Custom characters require a paid account' },
               { status: 403 },
@@ -204,6 +218,21 @@ export async function POST(request: Request) {
           { status: 500 },
         );
       }
+    }
+
+    if (sceneInstructions?.trim()) {
+      const isPaidUser = await hasUserPaid(user.id);
+      if (!isPaidUser) {
+        return NextResponse.json(
+          { error: 'Scenes require a paid account' },
+          { status: 403 },
+        );
+      }
+
+      resolvedInstructions = appendSceneInstructions(
+        resolvedInstructions,
+        sceneInstructions,
+      );
     }
 
     // Create metadata for agent to start with
@@ -252,6 +281,7 @@ export async function POST(request: Request) {
       extra: {
         roomName,
         selectedPresetId,
+        selectedSceneId,
         characterId: selectedPresetId,
         voice,
         model,

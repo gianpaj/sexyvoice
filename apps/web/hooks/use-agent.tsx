@@ -37,6 +37,8 @@ interface AgentContextType {
 }
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
+const TOAST_RPC_METHOD = 'pg.toast';
+const ERROR_RPC_METHOD = 'pg.error';
 
 export function AgentProvider({ children }: { children: React.ReactNode }) {
   const room = useMaybeRoomContext();
@@ -79,8 +81,11 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     if (!localParticipant) {
       return;
     }
+    localParticipant.unregisterRpcMethod(TOAST_RPC_METHOD);
+    localParticipant.unregisterRpcMethod(ERROR_RPC_METHOD);
+
     localParticipant.registerRpcMethod(
-      'pg.toast',
+      TOAST_RPC_METHOD,
       // biome-ignore lint/suspicious/useAwait: fine
       async (data: RpcInvocationData) => {
         const { title, description, variant } = JSON.parse(data.payload);
@@ -108,7 +113,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
 
     // Handle agent errors (e.g., active call, insufficient credits)
     localParticipant.registerRpcMethod(
-      'pg.error',
+      ERROR_RPC_METHOD,
       // biome-ignore lint/suspicious/useAwait: fine
       async (data: RpcInvocationData) => {
         const errorData = JSON.parse(data.payload);
@@ -126,6 +131,11 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         return JSON.stringify({ handled: true });
       },
     );
+
+    return () => {
+      localParticipant.unregisterRpcMethod(TOAST_RPC_METHOD);
+      localParticipant.unregisterRpcMethod(ERROR_RPC_METHOD);
+    };
   }, [localParticipant, dict, disconnect]);
 
   // Register byte stream handler for images
@@ -182,7 +192,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     );
     const mergedSorted = sorted.reduce((acc, current) => {
       if (acc.length === 0) {
-        return [current];
+        acc.push(current);
+        return acc;
       }
 
       // biome-ignore lint/style/useAtIndex: fine
@@ -197,20 +208,19 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         !current.segment.id.startsWith('status-')
       ) {
         // Merge segments from the same participant if they're within 1 second of each other
-        return [
-          ...acc.slice(0, -1),
-          {
-            ...current,
-            segment: {
-              ...current.segment,
-              text: `${last.segment.text} ${current.segment.text}`,
-              id: current.segment.id, // Use the id of the latest segment
-              firstReceivedTime: last.segment.firstReceivedTime, // Keep the original start time
-            },
+        acc[acc.length - 1] = {
+          ...current,
+          segment: {
+            ...current.segment,
+            text: `${last.segment.text} ${current.segment.text}`,
+            id: current.segment.id, // Use the id of the latest segment
+            firstReceivedTime: last.segment.firstReceivedTime, // Keep the original start time
           },
-        ];
+        };
+        return acc;
       }
-      return [...acc, current];
+      acc.push(current);
+      return acc;
     }, [] as Transcription[]);
     setDisplayTranscriptions(mergedSorted);
   }, [rawSegments]);

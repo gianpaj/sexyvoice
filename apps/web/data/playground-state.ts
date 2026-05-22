@@ -79,7 +79,9 @@ export interface PlaygroundState {
   initialInstruction: string;
   instructions: string;
   language: CallLanguage;
+  sceneInstructions: string;
   selectedPresetId: string | null;
+  selectedSceneId: string | null;
   sessionConfig: SessionConfig;
 }
 
@@ -90,6 +92,8 @@ export const defaultPlaygroundState: PlaygroundState = {
   sessionConfig: { ...defaultSessionConfig },
   customCharacters: [],
   selectedPresetId: null,
+  selectedSceneId: null,
+  sceneInstructions: '',
   instructions,
   language: defaultLanguage,
   initialInstruction,
