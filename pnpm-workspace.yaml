@@ -3,6 +3,18 @@ packages:
   - "packages/*"
   - "scripts"
 
+publicHoistPattern:
+  - "*import-in-the-middle*"
+  - "*require-in-the-middle*"
+
+minimumReleaseAge: 2880
+
+minimumReleaseAgeExclude:
+  - next
+  - "@next/*"
+  - react
+  - react-dom
+
 catalog:
   "@ai-sdk/react": "3.0.118"
   "@biomejs/biome": "2.4.11"
