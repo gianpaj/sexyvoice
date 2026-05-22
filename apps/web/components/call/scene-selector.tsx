@@ -57,9 +57,7 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
             <SelectValue placeholder={dict.scenePlaceholder} />
           </SelectTrigger>
           <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
-            <SelectItem disabled={!isPaidUser} value={NO_SCENE_VALUE}>
-              {dict.sceneNone}
-            </SelectItem>
+            <SelectItem value={NO_SCENE_VALUE}>{dict.sceneNone}</SelectItem>
             {callScenes.map((scene) => (
               <SelectItem
                 disabled={!isPaidUser}
