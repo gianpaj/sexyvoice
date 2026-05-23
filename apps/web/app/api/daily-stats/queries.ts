@@ -15,7 +15,7 @@ export const INTERNAL_USER_EMAILS = [
   'alex.kostinskyi@gmail.com',
 ] as const;
 
-const formatIdList = (ids: readonly string[]) => `(${ids.join(',')})`;
+export const formatIdList = (ids: readonly string[]) => `(${ids.join(',')})`;
 
 export interface DailyStatsCreditTransaction {
   amount: number;

@@ -22,6 +22,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
+  formatIdList,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
   getCreditTransactionsInRange,
@@ -219,7 +220,7 @@ export async function GET(request: NextRequest) {
   // Exclude internal users (e.g. founders) from all stats aggregations so the
   // numbers reflect real customer activity only.
   const internalUserIds = await getInternalUserIds(supabase);
-  const internalUserIdsFilter = `(${internalUserIds.join(',')})`;
+  const internalUserIdsFilter = formatIdList(internalUserIds);
   const hasInternalUserIds = internalUserIds.length > 0;
 
   if (!loadedFromValidCache) {
