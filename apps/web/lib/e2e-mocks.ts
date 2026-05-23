@@ -1,9 +1,15 @@
 // Mock data used when E2E_TEST_MODE=true so Argos screenshots are deterministic.
 // Branched inside RSC data-fetching paths to avoid hitting real Stripe/Supabase.
+// Marked server-only: isE2E() reads process.env, which Next.js silently inlines
+// as `undefined` in client bundles, so any client import would both bloat the
+// browser bundle and produce wrong results. The shared E2E_USER_ID constant
+// lives in a separate file because Playwright tests (which run outside the
+// Next.js bundler) need to import it.
+import 'server-only';
+
+import { E2E_USER_ID } from './e2e-mocks-shared';
 
 type CreditTransactionRow = Tables<'credit_transactions'>;
-
-export const E2E_USER_ID = 'e2e-test-user-id';
 
 export const E2E_CREDIT_TRANSACTIONS: CreditTransactionRow[] = [
   {
