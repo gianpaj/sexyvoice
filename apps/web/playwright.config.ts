@@ -157,6 +157,9 @@ export default defineConfig({
         command: `pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
         url: PLAYWRIGHT_BASE_URL,
         timeout: 300 * 1000,
+        // Pin Node process TZ so RSC date formatting (date-fns runs in the
+        // server process) matches the browser timezoneId pinned above.
+        env: { TZ: 'UTC' },
       }
     : undefined,
 });
