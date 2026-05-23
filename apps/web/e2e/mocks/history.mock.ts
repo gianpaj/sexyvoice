@@ -1,9 +1,11 @@
 import type { Route } from '@playwright/test';
 
+import { E2E_USER_ID } from '@/lib/e2e-mocks-shared';
+
 export const mockAudioFiles = [
   {
     id: 'file-001',
-    user_id: 'test-user-id',
+    user_id: E2E_USER_ID,
     storage_key: 'audio/test-hello-world.mp3',
     url: 'https://files.sexyvoice.ai/test-hello-world.mp3',
     text_content: 'Hello, this is a test message for voice generation.',
@@ -16,7 +18,7 @@ export const mockAudioFiles = [
   },
   {
     id: 'file-002',
-    user_id: 'test-user-id',
+    user_id: E2E_USER_ID,
     storage_key: 'audio/test-another-message.mp3',
     url: 'https://files.sexyvoice.ai/test-another-message.mp3',
     text_content: 'Another test message for voice generation.',
