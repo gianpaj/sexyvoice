@@ -44,4 +44,11 @@ export const E2E_CREDIT_TRANSACTIONS: CreditTransactionRow[] = [
   },
 ];
 
-export const isE2E = () => process.env.E2E_TEST_MODE === 'true';
+// Defense-in-depth: the env-var alone is too thin a gate, since a single
+// mis-set Vercel env var would silently serve hardcoded mock credits to every
+// signed-in user. Block on any Vercel environment (production/preview/
+// development) — CI runs `next start` outside Vercel so `VERCEL_ENV` is
+// undefined and mocks are allowed.
+export const isE2E = () =>
+  process.env.E2E_TEST_MODE === 'true' &&
+  process.env.VERCEL_ENV !== 'production';
