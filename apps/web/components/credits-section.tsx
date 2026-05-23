@@ -165,7 +165,7 @@ function CreditsSection({
           )}
         </div>
 
-        <div className="relative h-10 w-10" data-visual-test="transparent">
+        <div className="relative h-10 w-10" data-testid="credits-progress" data-visual-test="transparent">
           <ProgressCircle
             className="size-10"
             value={Math.round((creditsData.amount / 10_000) * 100)}
