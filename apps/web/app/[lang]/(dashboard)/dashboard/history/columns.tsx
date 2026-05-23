@@ -121,8 +121,11 @@ export function createColumns({
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at!), { withTime: true }),
+      cell: ({ row }) => (
+        <span data-visual-test="transparent">
+          {formatDate(new Date(row.original.created_at!), { withTime: true })}
+        </span>
+      ),
     },
     {
       id: 'Preview',
