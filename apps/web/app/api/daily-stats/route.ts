@@ -9,7 +9,8 @@ import { NextResponse } from 'next/server';
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 // Bump when the cached query shape changes so stale fixtures are ignored.
 // v2: call_sessions now include free_call for the free/paid split.
-const CACHE_VERSION = 2;
+// v3: queries exclude internal users (founders).
+const CACHE_VERSION = 3;
 const ROLLING_WINDOW_DAYS = 14;
 const ROLLING_WINDOW_LABEL = `${ROLLING_WINDOW_DAYS}d`;
 
@@ -24,6 +25,7 @@ import {
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
   getCreditTransactionsInRange,
+  getInternalUserIds,
   getProfilesInRange,
   getUsageEventsInRange,
   VOICE_CLONING_MODELS,
@@ -214,6 +216,12 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
+  // Exclude internal users (e.g. founders) from all stats aggregations so the
+  // numbers reflect real customer activity only.
+  const internalUserIds = await getInternalUserIds(supabase);
+  const internalUserIdsFilter = `(${internalUserIds.join(',')})`;
+  const hasInternalUserIds = internalUserIds.length > 0;
+
   if (!loadedFromValidCache) {
     // Fetch data in parallel - combine related queries and filter in memory
     [
@@ -233,67 +241,112 @@ export async function GET(request: NextRequest) {
       // (audio14dResult) Audio files last 14 days
       _timed(
         `audio_files:${ROLLING_WINDOW_LABEL}_count ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', fourteenDaysAgo.toISOString())
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
+        (() => {
+          let q = supabase
+            .from('audio_files')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', fourteenDaysAgo.toISOString())
+            .lt('created_at', today.toISOString());
+          if (hasInternalUserIds) {
+            q = q.or(
+              `user_id.is.null,user_id.not.in.${internalUserIdsFilter}`,
+            );
+          }
+          return q.then((result) => result);
+        })(),
       ),
 
       // (audioTotalCountResult) Approximate total audio files count
       _timed(
         `audio_files:total_count_estimated < ${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id', { count: 'planned', head: true })
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
+        (() => {
+          let q = supabase
+            .from('audio_files')
+            .select('id', { count: 'planned', head: true })
+            .lt('created_at', today.toISOString());
+          if (hasInternalUserIds) {
+            q = q.or(
+              `user_id.is.null,user_id.not.in.${internalUserIdsFilter}`,
+            );
+          }
+          return q.then((result) => result);
+        })(),
       ),
 
       // (clonesResult) Cloned audio files last 14 days (includes yesterday)
       _timed(
         `audio_files:clones ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id, created_at')
-          .in('model', VOICE_CLONING_MODELS)
-          .gte('created_at', fourteenDaysAgo.toISOString())
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
+        (() => {
+          let q = supabase
+            .from('audio_files')
+            .select('id, created_at')
+            .in('model', VOICE_CLONING_MODELS)
+            .gte('created_at', fourteenDaysAgo.toISOString())
+            .lt('created_at', today.toISOString());
+          if (hasInternalUserIds) {
+            q = q.or(
+              `user_id.is.null,user_id.not.in.${internalUserIdsFilter}`,
+            );
+          }
+          return q.then((result) => result);
+        })(),
       ),
 
       // (profilesTotalCountResult) Total profiles count
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .lt('created_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .lt('created_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.not('id', 'in', internalUserIdsFilter);
+        }
+        return q;
+      })(),
 
       // (apiKeysYesterdayResult) API keys created yesterday with usage
-      supabase
-        .from('api_keys')
-        .select('id, created_at, last_used_at')
-        .gte('created_at', previousDay.toISOString())
-        .lt('created_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('api_keys')
+          .select('id, created_at, last_used_at')
+          .gte('created_at', previousDay.toISOString())
+          .lt('created_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.not('user_id', 'in', internalUserIdsFilter);
+        }
+        return q;
+      })(),
 
       // Fetch active subscribers count
       countActiveCustomerSubscriptions(),
       findNextSubscriptionDueForPayment(),
 
       // (callSessions14dResult) Call sessions last 14 days with duration info
-      supabase
-        .from('call_sessions')
-        .select(
-          'id, started_at, duration_seconds, credits_used, status, free_call',
-        )
-        .gte('started_at', fourteenDaysAgo.toISOString())
-        .lt('started_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('call_sessions')
+          .select(
+            'id, started_at, duration_seconds, credits_used, status, free_call',
+          )
+          .gte('started_at', fourteenDaysAgo.toISOString())
+          .lt('started_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.not('user_id', 'in', internalUserIdsFilter);
+        }
+        return q;
+      })(),
 
       // (callSessionsTotalCountResult) Total call sessions count
-      supabase
-        .from('call_sessions')
-        .select('id', { count: 'exact', head: true })
-        .lt('started_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('call_sessions')
+          .select('id', { count: 'exact', head: true })
+          .lt('started_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.not('user_id', 'in', internalUserIdsFilter);
+        }
+        return q;
+      })(),
     ]);
 
     [
@@ -302,25 +355,42 @@ export async function GET(request: NextRequest) {
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
     ] = await Promise.all([
-      getUsageEventsInRange(supabase, fourteenDaysAgo, today).then((data) => ({
+      getUsageEventsInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ).then((data) => ({
         data,
         error: null,
       })),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        getAudioFilesInRange(supabase, previousDay, today).then((data) => ({
+        getAudioFilesInRange(
+          supabase,
+          previousDay,
+          today,
+          internalUserIds,
+        ).then((data) => ({
           data,
           error: null,
         })),
       ),
       _timed(
         `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
-        getCallSessionDurationsBefore(supabase, today).then((data) => ({
-          data,
-          error: null,
-        })),
+        getCallSessionDurationsBefore(supabase, today, internalUserIds).then(
+          (data) => ({
+            data,
+            error: null,
+          }),
+        ),
       ),
-      getProfilesInRange(supabase, fourteenDaysAgo, today).then((data) => ({
+      getProfilesInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ).then((data) => ({
         data,
         error: null,
       })),
@@ -336,29 +406,53 @@ export async function GET(request: NextRequest) {
       threeMonthsAgoToDateCreditTransactions,
       allTimeCreditTransactions,
     ] = await Promise.all([
-      getCreditTransactionsInRange(supabase, previousDay, today),
-      getCreditTransactionsInRange(supabase, fourteenDaysAgo, today),
-      getCreditTransactionsInRange(supabase, thirtyDaysAgo, today),
-      getCreditTransactionsInRange(supabase, monthStart, today),
+      getCreditTransactionsInRange(
+        supabase,
+        previousDay,
+        today,
+        internalUserIds,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
+        thirtyDaysAgo,
+        today,
+        internalUserIds,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
+        monthStart,
+        today,
+        internalUserIds,
+      ),
       getCreditTransactionsInRange(
         supabase,
         previousMonthStart,
         previousMonthPeriodEnd,
+        internalUserIds,
       ),
       getCreditTransactionsInRange(
         supabase,
         twoMonthsAgoStart,
         twoMonthsAgoPeriodEnd,
+        internalUserIds,
       ),
       getCreditTransactionsInRange(
         supabase,
         threeMonthsAgoStart,
         threeMonthsAgoPeriodEnd,
+        internalUserIds,
       ),
       getCreditTransactionsInRange(
         supabase,
         new Date('1970-01-01T00:00:00.000Z'),
         today,
+        internalUserIds,
       ),
     ]);
 
