@@ -56,6 +56,11 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: PLAYWRIGHT_BASE_URL,
 
+    /* Pin timezone + locale so date/time formatting is identical across CI
+       and local dev — required for Argos pixel comparisons on date columns. */
+    locale: 'en-US',
+    timezoneId: 'UTC',
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
