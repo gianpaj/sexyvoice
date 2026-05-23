@@ -81,7 +81,7 @@ export function getUsageEventsInRange(
       .gte('occurred_at', start.toISOString())
       .lt('occurred_at', end.toISOString());
     if (excludeUserIds.length > 0) {
-      query = query.not('user_id', 'in', formatIdList(excludeUserIds));
+      query = query.notIn('user_id', excludeUserIds);
     }
     return query
       .order('occurred_at', { ascending: true })
@@ -167,7 +167,7 @@ export function getProfilesInRange(
       .gte('created_at', start.toISOString())
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
-      query = query.not('id', 'in', formatIdList(excludeUserIds));
+      query = query.notIn('id', excludeUserIds);
     }
     return query
       .order('created_at', { ascending: true })
@@ -197,7 +197,7 @@ export function getCreditTransactionsInRange(
       .gte('created_at', start.toISOString())
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
-      query = query.not('user_id', 'in', formatIdList(excludeUserIds));
+      query = query.notIn('user_id', excludeUserIds);
     }
     return query
       .order('created_at', { ascending: true })
@@ -225,7 +225,7 @@ export function getPurchaseTransactionsBefore(
       .not('description', 'ilike', '%manual%')
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
-      query = query.not('user_id', 'in', formatIdList(excludeUserIds));
+      query = query.notIn('user_id', excludeUserIds);
     }
     return query
       .order('created_at', { ascending: true })
@@ -249,7 +249,7 @@ export function getCallSessionDurationsBefore(
       .select('duration_seconds')
       .lt('started_at', end.toISOString());
     if (excludeUserIds.length > 0) {
-      query = query.not('user_id', 'in', formatIdList(excludeUserIds));
+      query = query.notIn('user_id', excludeUserIds);
     }
     return query
       .order('started_at', { ascending: true })

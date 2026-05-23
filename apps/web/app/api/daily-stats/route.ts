@@ -299,7 +299,7 @@ export async function GET(request: NextRequest) {
           .select('id', { count: 'exact', head: true })
           .lt('created_at', today.toISOString());
         if (hasInternalUserIds) {
-          q = q.not('id', 'in', internalUserIdsFilter);
+          q = q.notIn('id', internalUserIds);
         }
         return q;
       })(),
@@ -312,7 +312,7 @@ export async function GET(request: NextRequest) {
           .gte('created_at', previousDay.toISOString())
           .lt('created_at', today.toISOString());
         if (hasInternalUserIds) {
-          q = q.not('user_id', 'in', internalUserIdsFilter);
+          q = q.notIn('user_id', internalUserIds);
         }
         return q;
       })(),
@@ -331,7 +331,7 @@ export async function GET(request: NextRequest) {
           .gte('started_at', fourteenDaysAgo.toISOString())
           .lt('started_at', today.toISOString());
         if (hasInternalUserIds) {
-          q = q.not('user_id', 'in', internalUserIdsFilter);
+          q = q.notIn('user_id', internalUserIds);
         }
         return q;
       })(),
@@ -343,7 +343,7 @@ export async function GET(request: NextRequest) {
           .select('id', { count: 'exact', head: true })
           .lt('started_at', today.toISOString());
         if (hasInternalUserIds) {
-          q = q.not('user_id', 'in', internalUserIdsFilter);
+          q = q.notIn('user_id', internalUserIds);
         }
         return q;
       })(),
