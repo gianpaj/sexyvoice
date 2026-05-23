@@ -119,7 +119,7 @@ function CreditsSection({
 
   return (
     <div className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0">
-      <div className="mb-4 flex w-50 items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center">
           <span className="whitespace-nowrap text-gray-200 text-xs">
             {t('title')}
@@ -127,7 +127,7 @@ function CreditsSection({
         </div>
         <Button
           asChild
-          className="bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text pr-0 text-transparent hover:no-underline"
+          className="bg-linear-to-r from-40% from-brand-purple to-brand-red/90 bg-clip-text pr-0 text-transparent hover:no-underline"
           size="sm"
           variant="link"
         >

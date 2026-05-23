@@ -19,12 +19,10 @@ interface SpotlightFieldProps {
   children: ReactNode;
 }
 
-const focusRingShadow =
-  '0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring))';
+const focusRingShadow = '0 0 0 2px var(--background), 0 0 0 4px var(--ring)';
 const hoverRingShadow =
-  '0 0 0 0 hsl(var(--background) / 0), 0 0 0 1px hsl(var(--primary) / 0.45)';
-const idleRingShadow =
-  '0 0 0 0 hsl(var(--background) / 0), 0 0 0 0 hsl(var(--ring) / 0)';
+  '0 0 0 0 transparent, 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent)';
+const idleRingShadow = '0 0 0 0 transparent, 0 0 0 0 transparent';
 
 type SpotlightPointerEvent =
   | MouseEvent<HTMLDivElement>
@@ -37,7 +35,7 @@ export function SpotlightField({ children }: SpotlightFieldProps) {
   const shouldReduceMotion = useReducedMotion();
   const spotlightX = useMotionValue(0);
   const spotlightY = useMotionValue(0);
-  const spotlightBackground = useMotionTemplate`radial-gradient(260px circle at ${spotlightX}px ${spotlightY}px, hsl(var(--primary) / 0.38), transparent 70%)`;
+  const spotlightBackground = useMotionTemplate`radial-gradient(260px circle at ${spotlightX}px ${spotlightY}px, color-mix(in srgb, var(--primary) 38%, transparent), transparent 70%)`;
 
   const handleMouseMove = useCallback(
     (event: SpotlightPointerEvent) => {

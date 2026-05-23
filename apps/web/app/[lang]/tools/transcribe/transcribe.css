@@ -14,8 +14,8 @@
 /* Glow shadow for icon containers */
 .shadow-glow {
   box-shadow:
-    0 0 24px hsl(var(--gradient-start) / 0.4),
-    0 0 8px hsl(var(--gradient-start) / 0.2);
+    0 0 24px color-mix(in srgb, var(--gradient-start) 40%, transparent),
+    0 0 8px color-mix(in srgb, var(--gradient-start) 20%, transparent);
 }
 
 /* Waveform bars — used in header decoration and progress display */
