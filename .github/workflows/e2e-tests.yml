@@ -23,8 +23,16 @@ concurrency:
 jobs:
   e2e:
     environment: Production
-    # Skip if PR is a draft
-    if: github.event.pull_request.draft == false || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Skip drafts and dependency-bot PRs (renovate/dependabot) to save CI cost.
+    # Allow github-actions[bot] so Claude-created PRs still get E2E coverage.
+    if: >-
+      (
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.user.login != 'renovate[bot]' &&
+        github.event.pull_request.user.login != 'dependabot[bot]'
+      ) ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
