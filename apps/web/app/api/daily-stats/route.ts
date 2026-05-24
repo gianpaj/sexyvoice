@@ -7,10 +7,6 @@ import { NextResponse } from 'next/server';
 
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
-// Bump when the cached query shape changes so stale fixtures are ignored.
-// v2: call_sessions now include free_call for the free/paid split.
-// v3: queries exclude internal users (founders).
-const CACHE_VERSION = 3;
 const ROLLING_WINDOW_DAYS = 14;
 const ROLLING_WINDOW_LABEL = `${ROLLING_WINDOW_DAYS}d`;
 
@@ -175,12 +171,6 @@ export async function GET(request: NextRequest) {
         CACHE_FILE,
         '(forcing refresh)',
       );
-    } else if (cached.cacheVersion !== CACHE_VERSION) {
-      console.log(
-        '♻️ Ignoring cache from a different version:',
-        CACHE_FILE,
-        `(cached: ${cached.cacheVersion}, expected: ${CACHE_VERSION})`,
-      );
     } else if (cached.reportDate === cacheReportDate) {
       console.log(
         '📦 Loading from cache:',
@@ -249,9 +239,7 @@ export async function GET(request: NextRequest) {
             .gte('created_at', fourteenDaysAgo.toISOString())
             .lt('created_at', today.toISOString());
           if (hasInternalUserIds) {
-            q = q.or(
-              `user_id.is.null,user_id.not.in.${internalUserIdsFilter}`,
-            );
+            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
           }
           return q.then((result) => result);
         })(),
@@ -266,9 +254,7 @@ export async function GET(request: NextRequest) {
             .select('id', { count: 'planned', head: true })
             .lt('created_at', today.toISOString());
           if (hasInternalUserIds) {
-            q = q.or(
-              `user_id.is.null,user_id.not.in.${internalUserIdsFilter}`,
-            );
+            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
           }
           return q.then((result) => result);
         })(),
@@ -285,9 +271,7 @@ export async function GET(request: NextRequest) {
             .gte('created_at', fourteenDaysAgo.toISOString())
             .lt('created_at', today.toISOString());
           if (hasInternalUserIds) {
-            q = q.or(
-              `user_id.is.null,user_id.not.in.${internalUserIdsFilter}`,
-            );
+            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
           }
           return q.then((result) => result);
         })(),
@@ -507,7 +491,6 @@ export async function GET(request: NextRequest) {
   // checks so we never persist a partial/failed response to disk
   if (!(isProd || loadedFromValidCache)) {
     const cacheData = {
-      cacheVersion: CACHE_VERSION,
       reportDate: cacheReportDate,
       audioYesterdayResult,
       audio14dResult,
@@ -1432,7 +1415,7 @@ export async function GET(request: NextRequest) {
     '',
     `🔌 API: ${usedNewApiKeysCount} new key${usedNewApiKeysCount === 1 ? '' : 's'} | ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
     '',
-    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, credits14dCount / ROLLING_WINDOW_DAYS)}) ${creditsTodayCount > (credits14dCount / ROLLING_WINDOW_DAYS) ? '🤑' : '😿'}`,
+    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, credits14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${credits14dCount} (avg ${(credits14dCount / ROLLING_WINDOW_DAYS).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount}: ${topCustomersList}`,
