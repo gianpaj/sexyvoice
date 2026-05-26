@@ -147,7 +147,9 @@ function CreditsSection({
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('totalCredits')}</span>
-            <span className="font-medium" data-visual-test="transparent">{totalCredits.toLocaleString()}</span>
+            <span className="font-medium" data-visual-test="transparent">
+              {totalCredits.toLocaleString()}
+            </span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('remainingCredits')}</span>
