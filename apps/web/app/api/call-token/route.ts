@@ -239,7 +239,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const defaultSceneText = callScenes.find((s) => s.id === selectedSceneId)?.text;
+    const defaultSceneText = callScenes.find(
+      (s) => s.id === selectedSceneId,
+    )?.text;
     const sceneModified =
       selectedSceneId != null &&
       (sceneInstructions?.trim() ?? '') !== (defaultSceneText?.trim() ?? '');
