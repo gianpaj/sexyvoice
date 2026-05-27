@@ -9,6 +9,7 @@ import { getMessages } from 'next-intl/server';
 
 import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import {
@@ -46,11 +47,15 @@ export default async function DashboardLayout(props: {
     placement: 'dashboard',
   });
 
-  const [{ data: creditTransactions }, isPaidUser] = await Promise.all([
-    getCreditTransactions(supabase, user.id),
-    hasUserPaid(user.id),
-  ]);
-  await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
+  const [{ data: creditTransactions }, isPaidUser] = isE2E()
+    ? [{ data: E2E_CREDIT_TRANSACTIONS }, false]
+    : await Promise.all([
+        getCreditTransactions(supabase, user.id),
+        hasUserPaid(user.id),
+      ]);
+  if (!isE2E()) {
+    await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
+  }
 
   return (
     <ReactQueryClientProvider>
