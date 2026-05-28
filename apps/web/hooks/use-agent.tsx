@@ -1,5 +1,4 @@
 import {
-  useLocalParticipant,
   useMaybeRoomContext,
   useVoiceAssistant,
 } from '@livekit/components-react';
@@ -47,7 +46,6 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
   const room = useMaybeRoomContext();
   const { shouldConnect, dict, disconnect } = useConnection();
   const { agent } = useVoiceAssistant();
-  const { localParticipant } = useLocalParticipant();
   const [rawSegments, setRawSegments] = useState<{
     [id: string]: Transcription;
   }>({});
@@ -81,13 +79,13 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
   }, [room]);
 
   useEffect(() => {
-    if (!localParticipant) {
+    if (!room) {
       return;
     }
-    localParticipant.unregisterRpcMethod(TOAST_RPC_METHOD);
-    localParticipant.unregisterRpcMethod(ERROR_RPC_METHOD);
+    room.unregisterRpcMethod(TOAST_RPC_METHOD);
+    room.unregisterRpcMethod(ERROR_RPC_METHOD);
 
-    localParticipant.registerRpcMethod(
+    room.registerRpcMethod(
       TOAST_RPC_METHOD,
       // biome-ignore lint/suspicious/useAwait: fine
       async (data: RpcInvocationData) => {
@@ -115,7 +113,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Handle agent errors (e.g., active call, insufficient credits)
-    localParticipant.registerRpcMethod(
+    room.registerRpcMethod(
       ERROR_RPC_METHOD,
       // biome-ignore lint/suspicious/useAwait: fine
       async (data: RpcInvocationData) => {
@@ -136,10 +134,10 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => {
-      localParticipant.unregisterRpcMethod(TOAST_RPC_METHOD);
-      localParticipant.unregisterRpcMethod(ERROR_RPC_METHOD);
+      room.unregisterRpcMethod(TOAST_RPC_METHOD);
+      room.unregisterRpcMethod(ERROR_RPC_METHOD);
     };
-  }, [localParticipant, dict, disconnect]);
+  }, [room, dict, disconnect, t]);
 
   // Register byte stream handler for images
   useEffect(() => {

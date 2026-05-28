@@ -118,7 +118,10 @@ function CreditsSection({
   const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
 
   return (
-    <div className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0">
+    <div
+      className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0"
+      data-testid="credits-section"
+    >
       <div className="mb-4 flex w-50 items-center justify-between">
         <div className="flex items-center">
           <span className="whitespace-nowrap text-gray-200 text-xs">
@@ -147,27 +150,25 @@ function CreditsSection({
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('totalCredits')}</span>
-            <span className="font-medium" data-visual-test="transparent">
-              {totalCredits.toLocaleString()}
-            </span>
+            <span className="font-medium">{totalCredits.toLocaleString()}</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('remainingCredits')}</span>
-            <span className="font-medium" data-visual-test="transparent">
+            <span className="font-medium">
               {creditsData.amount.toLocaleString()}
             </span>
           </div>
           {showMinutes && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-200">{t('remainingTime')}</span>
-              <span className="font-medium" data-visual-test="transparent">
+              <span className="font-medium">
                 ~{minutesRemaining.toLocaleString()} min
               </span>
             </div>
           )}
         </div>
 
-        <div className="relative h-10 w-10" data-visual-test="transparent">
+        <div className="relative h-10 w-10" data-testid="credits-progress">
           <ProgressCircle
             className="size-10"
             value={Math.round((creditsData.amount / 10_000) * 100)}

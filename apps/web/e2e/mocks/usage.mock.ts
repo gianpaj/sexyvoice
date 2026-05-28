@@ -18,7 +18,7 @@ export const mockUsageEvents = [
     quantity: 150,
     unit: 'chars',
     credits_used: 12,
-    occurred_at: '2026-01-15T10:30:00.000Z',
+    occurred_at: '2025-01-15T10:30:00.000Z',
     metadata: {
       voiceName: 'Zephyr',
       textPreview: 'Hello, this is a test message for voice generation.',
@@ -31,7 +31,7 @@ export const mockUsageEvents = [
     quantity: 1,
     unit: 'operation',
     credits_used: 50,
-    occurred_at: '2026-01-14T15:45:00.000Z',
+    occurred_at: '2025-01-14T15:45:00.000Z',
     metadata: {
       voiceName: 'My Custom Voice',
     },
@@ -43,7 +43,7 @@ export const mockUsageEvents = [
     quantity: 3,
     unit: 'mins',
     credits_used: 30,
-    occurred_at: '2026-01-13T09:00:00.000Z',
+    occurred_at: '2025-01-13T09:00:00.000Z',
     metadata: {
       voiceName: 'Ara',
       textPreview: 'Live call session with AI agent',
@@ -56,7 +56,7 @@ export const mockUsageEvents = [
     quantity: 300,
     unit: 'chars',
     credits_used: 24,
-    occurred_at: '2026-01-12T14:20:00.000Z',
+    occurred_at: '2025-01-12T14:20:00.000Z',
     metadata: {
       voiceName: 'Poe',
       textPreview: 'Another text-to-speech generation test.',
@@ -69,7 +69,7 @@ export const mockUsageEvents = [
     quantity: 45,
     unit: 'secs',
     credits_used: 5,
-    occurred_at: '2026-01-11T11:00:00.000Z',
+    occurred_at: '2025-01-11T11:00:00.000Z',
     metadata: {},
   },
 ];
