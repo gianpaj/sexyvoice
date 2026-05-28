@@ -124,6 +124,7 @@ function CreditsSection({
   return (
     <div
       className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0"
+      data-testid="credits-section"
       data-visual-test-no-radius
     >
       <div className="mb-4 flex w-50 items-center justify-between">
@@ -174,7 +175,7 @@ function CreditsSection({
           )}
         </div>
 
-        <div className="relative h-10 w-10" data-visual-test="transparent">
+        <div className="relative h-10 w-10" data-testid="credits-progress">
           <ProgressCircle
             className="size-10"
             value={Math.round((creditsData.amount / 10_000) * 100)}

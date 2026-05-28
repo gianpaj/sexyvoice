@@ -34,6 +34,7 @@ import {
 import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
+import { SceneSelector } from './scene-selector';
 
 // import { useToast } from "@/hooks/use-toast";
 
@@ -184,6 +185,7 @@ export function ConfigurationForm({
   }, [
     pgState.sessionConfig,
     pgState.instructions,
+    pgState.sceneInstructions,
     localParticipant,
     toast,
     agent?.identity,
@@ -310,6 +312,8 @@ export function ConfigurationForm({
               </div>
             )}
         </div>
+
+        <SceneSelector isPaidUser={isPaidUser} />
 
         <SessionConfig form={form} />
       </Form>

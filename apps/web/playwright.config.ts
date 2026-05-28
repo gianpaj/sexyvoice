@@ -44,7 +44,6 @@ export default defineConfig({
       '@argos-ci/playwright/reporter',
       createArgosReporterOptions({
         // Upload to Argos on CI only.
-        // uploadToArgos: true,
         uploadToArgos: !!process.env.CI,
 
         // Set your Argos token (required if not using GitHub Actions).
@@ -56,6 +55,11 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: PLAYWRIGHT_BASE_URL,
+
+    /* Pin timezone + locale so date/time formatting is identical across CI
+       and local dev — required for Argos pixel comparisons on date columns. */
+    locale: 'en-US',
+    timezoneId: 'UTC',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -153,6 +157,9 @@ export default defineConfig({
         command: `pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
         url: PLAYWRIGHT_BASE_URL,
         timeout: 300 * 1000,
+        // Pin Node process TZ so RSC date formatting (date-fns runs in the
+        // server process) matches the browser timezoneId pinned above.
+        env: { TZ: 'UTC' },
       }
     : undefined,
 });

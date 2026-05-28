@@ -187,7 +187,7 @@
             },
             {
               "question": "How much does it cost?",
-              "answer": "Live calling costs 2000 credits per minute while you're connected."
+              "answer": "Live calling costs {count} credits per minute while you're connected."
             }
           ]
         },
@@ -455,11 +455,16 @@
   "call": {
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
-    "notEnoughCredits": "You don't have enough credits. The minimum required is __COUNT__",
+    "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
+    "sceneLabel": "Scene",
+    "scenePlaceholder": "Choose scene",
+    "sceneNone": "No scene",
+    "sceneUpgradeRequired": "Upgrade to use scenes",
+    "sceneTextLabel": "Scene text",
     "startCall": "Start call",
     "connecting": "Connecting",
     "reconnected": "Reconnected",

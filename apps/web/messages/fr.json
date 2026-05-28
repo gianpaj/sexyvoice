@@ -187,7 +187,7 @@
             },
             {
               "question": "Combien ça coûte ?",
-              "answer": "Les appels en direct coûtent 2000 crédits par minute pendant que vous êtes connecté."
+              "answer": "Les appels en direct coûtent {count} crédits par minute pendant que vous êtes connecté."
             }
           ]
         },
@@ -455,11 +455,16 @@
   "call": {
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
-    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
     "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 5 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
+    "sceneLabel": "Scène",
+    "scenePlaceholder": "Choisir une scène",
+    "sceneNone": "Aucune scène",
+    "sceneUpgradeRequired": "Passez à une offre supérieure pour utiliser les scènes",
+    "sceneTextLabel": "Texte de la scène",
     "startCall": "Démarrer un appel",
     "connecting": "Connexion en cours",
     "reconnected": "Reconnecté",

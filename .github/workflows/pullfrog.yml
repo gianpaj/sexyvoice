@@ -25,8 +25,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 1
+          persist-credentials: false
       - name: Run agent
-        uses: pullfrog/pullfrog@5abb3072c739d634fe4f4312f32f6665a3f30a69 # v0
+        uses: pullfrog/pullfrog@fb22cb3ae3e85b594dc006e21e64dc58a091ca67 # v0
         with:
           prompt: ${{ inputs.prompt }}
         env:
@@ -41,4 +42,3 @@ jobs:
           MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-

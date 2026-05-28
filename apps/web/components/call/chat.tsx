@@ -5,16 +5,26 @@ import {
   useConnectionState,
   // useVoiceAssistant,
 } from '@livekit/components-react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
+import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { SessionControls } from '@/components/call/session-controls';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
 import { useAgent } from '@/hooks/use-agent';
 import { useConnection } from '@/hooks/use-connection';
 import { ConnectButton } from './connect-button';
+
+const SessionControls = dynamic(
+  () =>
+    import('@/components/call/session-controls').then(
+      (mod) => mod.SessionControls,
+    ),
+  {
+    loading: () => <div className="h-[72px]" />,
+    ssr: false,
+  },
+);
 
 export function Chat() {
   const connectionState = useConnectionState();
@@ -68,7 +78,14 @@ export function Chat() {
       if (disconnectTimer) clearTimeout(disconnectTimer);
       if (appearanceTimer) clearTimeout(appearanceTimer);
     };
-  }, [connectionState, agent, disconnect, hasSeenAgent]);
+  }, [
+    connectionState,
+    agent,
+    disconnect,
+    hasSeenAgent,
+    dict.agentUnavailable,
+    dict.disconnected,
+  ]);
 
   // const toggleInstructionsEdit = () =>
   //   setIsEditingInstructions(!isEditingInstructions);
@@ -86,17 +103,12 @@ export function Chat() {
   // );
 
   const renderConnectionControl = () => (
-    <AnimatePresence mode="wait">
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        initial={{ opacity: 0, y: 20 }}
-        key={isChatRunning ? 'session-controls' : 'connect-button'}
-        transition={{ type: 'tween', duration: 0.15, ease: 'easeInOut' }}
-      >
-        {isChatRunning ? <SessionControls /> : <ConnectButton />}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      className="fade-in-0 slide-in-from-bottom-2 animate-in duration-150"
+      key={isChatRunning ? 'session-controls' : 'connect-button'}
+    >
+      {isChatRunning ? <SessionControls /> : <ConnectButton />}
+    </div>
   );
 
   return (

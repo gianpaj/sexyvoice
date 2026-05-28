@@ -6,7 +6,9 @@ import type { SessionConfig } from '@/data/session-config';
 export interface CallTokenPlaygroundState {
   instructions: string;
   language: PlaygroundState['language'];
+  sceneInstructions: string | null;
   selectedPresetId: PlaygroundState['selectedPresetId'];
+  selectedSceneId: PlaygroundState['selectedSceneId'];
   sessionConfig: Pick<
     SessionConfig,
     'maxOutputTokens' | 'model' | 'temperature' | 'voice'
@@ -142,7 +144,12 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
      * Gets the full instructions for the current state.
      */
     getFullInstructions: (state: PlaygroundState): string => {
-      return state.instructions;
+      const sceneInstructions = state.sceneInstructions.trim();
+      if (!sceneInstructions) {
+        return state.instructions;
+      }
+
+      return `${state.instructions.trim()}\n\nScene instructions:\n${sceneInstructions}`.trim();
     },
 
     /**
@@ -171,7 +178,9 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       return {
         instructions,
         language: state.language,
+        sceneInstructions: state.sceneInstructions.trim() || null,
         selectedPresetId: state.selectedPresetId,
+        selectedSceneId: state.selectedSceneId,
         sessionConfig: {
           maxOutputTokens: state.sessionConfig.maxOutputTokens,
           model: state.sessionConfig.model,

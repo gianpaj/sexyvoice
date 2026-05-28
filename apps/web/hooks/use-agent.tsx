@@ -1,5 +1,4 @@
 import {
-  useLocalParticipant,
   useMaybeRoomContext,
   useVoiceAssistant,
 } from '@livekit/components-react';
@@ -12,11 +11,13 @@ import {
   type TrackPublication,
   type TranscriptionSegment,
 } from 'livekit-client';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useConnection } from '@/hooks/use-connection';
+import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 
 interface Transcription {
   participant?: Participant;
@@ -37,12 +38,14 @@ interface AgentContextType {
 }
 
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
+const TOAST_RPC_METHOD = 'pg.toast';
+const ERROR_RPC_METHOD = 'pg.error';
 
 export function AgentProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('call');
   const room = useMaybeRoomContext();
   const { shouldConnect, dict, disconnect } = useConnection();
   const { agent } = useVoiceAssistant();
-  const { localParticipant } = useLocalParticipant();
   const [rawSegments, setRawSegments] = useState<{
     [id: string]: Transcription;
   }>({});
@@ -76,11 +79,14 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
   }, [room]);
 
   useEffect(() => {
-    if (!localParticipant) {
+    if (!room) {
       return;
     }
-    localParticipant.registerRpcMethod(
-      'pg.toast',
+    room.unregisterRpcMethod(TOAST_RPC_METHOD);
+    room.unregisterRpcMethod(ERROR_RPC_METHOD);
+
+    room.registerRpcMethod(
+      TOAST_RPC_METHOD,
       // biome-ignore lint/suspicious/useAwait: fine
       async (data: RpcInvocationData) => {
         const { title, description, variant } = JSON.parse(data.payload);
@@ -107,8 +113,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Handle agent errors (e.g., active call, insufficient credits)
-    localParticipant.registerRpcMethod(
-      'pg.error',
+    room.registerRpcMethod(
+      ERROR_RPC_METHOD,
       // biome-ignore lint/suspicious/useAwait: fine
       async (data: RpcInvocationData) => {
         const errorData = JSON.parse(data.payload);
@@ -117,7 +123,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         if (errorData.error === 'active_call') {
           toast.error(dict.activeCallError);
         } else if (errorData.error === 'insufficient_credits') {
-          toast.error(dict.notEnoughCredits.replace('__COUNT__', '2000'));
+          toast.error(t('notEnoughCredits', { count: CREDITS_PER_MINUTE }));
         } else {
           toast.error(errorData.message || 'An error occurred');
         }
@@ -126,7 +132,12 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         return JSON.stringify({ handled: true });
       },
     );
-  }, [localParticipant, dict, disconnect]);
+
+    return () => {
+      room.unregisterRpcMethod(TOAST_RPC_METHOD);
+      room.unregisterRpcMethod(ERROR_RPC_METHOD);
+    };
+  }, [room, dict, disconnect, t]);
 
   // Register byte stream handler for images
   useEffect(() => {
@@ -182,7 +193,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
     );
     const mergedSorted = sorted.reduce((acc, current) => {
       if (acc.length === 0) {
-        return [current];
+        acc.push(current);
+        return acc;
       }
 
       // biome-ignore lint/style/useAtIndex: fine
@@ -197,20 +209,19 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         !current.segment.id.startsWith('status-')
       ) {
         // Merge segments from the same participant if they're within 1 second of each other
-        return [
-          ...acc.slice(0, -1),
-          {
-            ...current,
-            segment: {
-              ...current.segment,
-              text: `${last.segment.text} ${current.segment.text}`,
-              id: current.segment.id, // Use the id of the latest segment
-              firstReceivedTime: last.segment.firstReceivedTime, // Keep the original start time
-            },
+        acc[acc.length - 1] = {
+          ...current,
+          segment: {
+            ...current.segment,
+            text: `${last.segment.text} ${current.segment.text}`,
+            id: current.segment.id, // Use the id of the latest segment
+            firstReceivedTime: last.segment.firstReceivedTime, // Keep the original start time
           },
-        ];
+        };
+        return acc;
       }
-      return [...acc, current];
+      acc.push(current);
+      return acc;
     }, [] as Transcription[]);
     setDisplayTranscriptions(mergedSorted);
   }, [rawSegments]);

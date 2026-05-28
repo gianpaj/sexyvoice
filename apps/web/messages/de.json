@@ -187,7 +187,7 @@
             },
             {
               "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
+              "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
             }
           ]
         },
@@ -455,11 +455,16 @@
   "call": {
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
-    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
+    "sceneLabel": "Szene",
+    "scenePlaceholder": "Szene wählen",
+    "sceneNone": "Keine Szene",
+    "sceneUpgradeRequired": "Upgrade erforderlich, um Szenen zu nutzen",
+    "sceneTextLabel": "Szenentext",
     "startCall": "Anruf starten",
     "connecting": "Verbinden",
     "reconnected": "Wiederverbunden",

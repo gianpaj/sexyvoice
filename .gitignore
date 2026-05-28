@@ -63,4 +63,8 @@ playwright/.cache/
 
 agent-browser*.json
 
+# Global skill symlinks (absolute paths to ~/.agents/skills/, not available in CI)
+.claude/skills/brainstorming
+.claude/skills/writing-clearly-and-concisely
+
 *.csv
