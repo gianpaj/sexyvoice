@@ -28,7 +28,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <Link
                 aria-label="Twitter/X"
                 className="hit-area-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-                href="https://x.com/SexyvoiceAi"
+                href="https://x.com/sexyvoiceai"
                 rel="noopener noreferrer"
                 target="_blank"
               >

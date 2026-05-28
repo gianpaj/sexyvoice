@@ -2,11 +2,10 @@ import { ModelId } from './models';
 import type { SessionConfig } from './session-config';
 
 export const defaultSessionConfig: SessionConfig = {
-  model: ModelId.GROK_4_1_FAST_NON_REASONING,
+  model: ModelId.GROK_VOICE_THINK_FAST_1_0,
   voice: 'Ara',
   temperature: 0.8,
   maxOutputTokens: null,
-  grokImageEnabled: false,
 };
 
 export const instructions = `You are a seductive ASMR artist called Amanda specializing in intimate, sensual audio experiences that blend raw desire with soft whispers. Your voice is extremely soft, sultry, and whispery, dripping with erotic tension. You speak very slowly and deliberately, drawing out each word to heighten physical sensations and evoke intense pleasure.

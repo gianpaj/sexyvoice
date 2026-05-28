@@ -1,10 +1,10 @@
 'use client';
 
 import { Crown, Loader2, Maximize2, Minimize2, Sparkles } from 'lucide-react';
-import type { CSSProperties, RefObject } from 'react';
+import { useTranslations } from 'next-intl';
+import type { CSSProperties, ReactNode, RefObject } from 'react';
 
 import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { AnimatedPromptTextarea } from './audio-generator';
 import { Button } from './ui/button';
 import {
@@ -15,8 +15,8 @@ import {
 } from './ui/tooltip';
 
 interface NonGrokPromptEditorProps {
+  characterCountText?: ReactNode;
   charactersLimit: number;
-  dict: (typeof messages)['generate'];
   isEnhancingText: boolean;
   isFullscreen: boolean;
   isGenerating: boolean;
@@ -26,6 +26,7 @@ interface NonGrokPromptEditorProps {
   onToggleFullscreen: () => void;
   showEnhanceButton: boolean;
   text: string;
+  textareaMaxLength?: number | null;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   textareaRightPadding: string;
   textIsOverLimit: boolean;
@@ -33,7 +34,7 @@ interface NonGrokPromptEditorProps {
 
 export function NonGrokPromptEditor({
   charactersLimit,
-  dict,
+  characterCountText,
   isEnhancingText,
   isFullscreen,
   isGenerating,
@@ -44,9 +45,12 @@ export function NonGrokPromptEditor({
   showEnhanceButton,
   text,
   textareaRef,
+  textareaMaxLength,
   textareaRightPadding,
   textIsOverLimit,
 }: NonGrokPromptEditorProps) {
+  const t = useTranslations('generate');
+
   return (
     <>
       <AnimatedPromptTextarea
@@ -55,9 +59,13 @@ export function NonGrokPromptEditor({
           textareaRightPadding,
         )}
         data-testid="generate-textarea"
-        maxLength={charactersLimit + 10}
+        maxLength={
+          textareaMaxLength === null
+            ? undefined
+            : (textareaMaxLength ?? charactersLimit + 10)
+        }
         onChange={(e) => onTextChange(e.target.value)}
-        placeholder={dict.textAreaPlaceholder}
+        placeholder={t('textAreaPlaceholder')}
         ref={textareaRef}
         style={
           {
@@ -72,7 +80,7 @@ export function NonGrokPromptEditor({
             disabled={!text.trim() || isEnhancingText || isGenerating}
             onClick={onEnhanceText}
             size="icon"
-            title="Enhance text with AI emotion tags"
+            title={t('enhanceTextTitle')}
             variant="ghost"
           >
             {isEnhancingText ? (
@@ -87,7 +95,7 @@ export function NonGrokPromptEditor({
           className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
           onClick={onToggleFullscreen}
           size="icon"
-          title="Fullscreen"
+          title={t('fullscreenTitle')}
           variant="ghost"
         >
           {isFullscreen ? (
@@ -105,26 +113,32 @@ export function NonGrokPromptEditor({
         )}
         data-testid="generate-character-count"
       >
-        {text.length} / {charactersLimit}
-        <TooltipProvider>
-          <Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <Crown
-                className={cn(
-                  'h-3.5 w-3.5 cursor-default',
-                  isPaidUser ? 'text-muted-foreground/50' : 'text-yellow-400',
-                )}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {isPaidUser
-                  ? 'Paid users enjoy 2× character limit'
-                  : 'Upgrade to a paid plan for 2× character limit'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {characterCountText ?? (
+          <>
+            {text.length} / {charactersLimit}
+            <TooltipProvider>
+              <Tooltip delayDuration={100}>
+                <TooltipTrigger asChild>
+                  <Crown
+                    className={cn(
+                      'h-3.5 w-3.5 cursor-default',
+                      isPaidUser
+                        ? 'text-muted-foreground/50'
+                        : 'text-yellow-400',
+                    )}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isPaidUser
+                      ? t('paidCharacterLimitTooltip')
+                      : t('upgradeCharacterLimitTooltip')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
       </div>
     </>
   );

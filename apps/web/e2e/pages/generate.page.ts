@@ -26,6 +26,8 @@ export class GeneratePage {
   readonly pageHeading: Locator;
   readonly styleInput: Locator;
   readonly enhanceTextButton: Locator;
+  readonly splitToggle: Locator;
+  readonly segmentPreviewsHeading: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -58,6 +60,11 @@ export class GeneratePage {
     this.enhanceTextButton = this.audioGeneratorCard.getByRole('button', {
       name: /enhance/i,
     });
+    this.splitToggle = this.audioGeneratorCard.getByRole('checkbox', {
+      name: /split into segments/i,
+    });
+    this.segmentPreviewsHeading =
+      this.audioGeneratorCard.getByText(/segment previews/i);
   }
 
   /**
@@ -182,16 +189,12 @@ export class GeneratePage {
 
   /**
    * Wait for audio generation to complete
-   * Watches the generate button state change from "Generating..." back to "Generate"
+   * Watches for the stable final generate button state. Fast mocked requests can
+   * complete before Playwright observes the transient "Generating..." label.
    */
   async waitForGenerationComplete(timeout = 15_000) {
-    // Wait for generating state
-    await expect(this.generateButton).toContainText(/generating/i, {
-      timeout: 5000,
-    });
-
-    // Wait for completion (button returns to normal)
     await expect(this.generateButton).toContainText(/generate/i, { timeout });
+    await expect(this.generateButton).toBeEnabled({ timeout });
   }
 
   /**
@@ -290,5 +293,38 @@ export class GeneratePage {
     await expect(
       this.page.getByText(/don't have enough credits/i),
     ).toBeVisible();
+  }
+
+  /**
+   * Enable split mode via the toggle checkbox
+   */
+  async enableSplitMode() {
+    await this.splitToggle.check();
+    await expect(this.splitToggle).toBeChecked();
+  }
+
+  /**
+   * Expect segment previews section to be visible with at least N segments
+   */
+  async expectSegmentCount(count: number) {
+    for (let i = 1; i <= count; i++) {
+      await expect(
+        this.audioGeneratorCard.getByText(new RegExp(`Segment ${i}`, 'i')),
+      ).toBeVisible();
+    }
+  }
+
+  /**
+   * Select a Grok language from the language dropdown
+   */
+  async selectGrokLanguage(languageValue: string) {
+    const languageLabel =
+      languageValue === 'en' ? /^English$/i : new RegExp(languageValue, 'i');
+    const languageField = this.audioGeneratorCard
+      .getByText(/^Language$/)
+      .locator('..');
+
+    await languageField.getByRole('combobox').click();
+    await this.page.getByRole('option', { name: languageLabel }).click();
   }
 }

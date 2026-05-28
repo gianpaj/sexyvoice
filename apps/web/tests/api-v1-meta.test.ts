@@ -29,41 +29,45 @@ describe('/api/v1 metadata endpoints', () => {
   });
 
   it('returns voices list', async () => {
+    const voicesQuery = {
+      data: [
+        {
+          id: 'voice-kore-id',
+          name: 'kore',
+          language: 'en',
+          model: 'gpro',
+          feature: 'tts',
+          is_public: true,
+        },
+        {
+          id: 'voice-tara-id',
+          name: 'tara',
+          language: 'en',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          feature: 'tts',
+          is_public: true,
+        },
+        {
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'xai',
+          feature: 'tts',
+          is_public: true,
+        },
+      ],
+      eq: vi.fn(),
+      error: null,
+      order: vi.fn(),
+      select: vi.fn(),
+    };
+    voicesQuery.select.mockReturnValue(voicesQuery);
+    voicesQuery.eq.mockReturnValue(voicesQuery);
+    voicesQuery.order.mockReturnValue(voicesQuery);
+
     vi.mocked(createClient).mockResolvedValueOnce({
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [
-            {
-              id: 'voice-kore-id',
-              name: 'kore',
-              language: 'en',
-              model: 'gpro',
-              feature: 'tts',
-              is_public: true,
-            },
-            {
-              id: 'voice-tara-id',
-              name: 'tara',
-              language: 'en',
-              model:
-                'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-              feature: 'tts',
-              is_public: true,
-            },
-            {
-              id: 'voice-eve-id',
-              name: 'eve',
-              language: 'en',
-              model: 'xai',
-              feature: 'tts',
-              is_public: true,
-            },
-          ],
-          error: null,
-        }),
-      })),
+      from: vi.fn(() => voicesQuery),
     } as never);
 
     const request = new Request('http://localhost/api/v1/voices', {
@@ -85,6 +89,8 @@ describe('/api/v1 metadata endpoints', () => {
       formats: ['mp3', 'wav'],
       supports_style: false,
     });
+    expect(voicesQuery.order).toHaveBeenNthCalledWith(1, 'sort_order');
+    expect(voicesQuery.order).toHaveBeenNthCalledWith(2, 'name');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
 
