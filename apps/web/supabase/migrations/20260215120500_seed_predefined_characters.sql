@@ -98,7 +98,7 @@ SELECT
   true,
   'Ramona',
   '{"en":"Confident and commanding, with a playful edge."}'::jsonb,
-  '{"model":"grok-4-1-fast-non-reasoning","voice":"Eve","temperature":0.8,"maxOutputTokens":null,"grokImageEnabled":false}'::jsonb,
+  '{"model":"grok-voice-think-fast-1.0","voice":"Eve","temperature":0.8,"maxOutputTokens":null}'::jsonb,
   'ramona.webp',
   0
 FROM admin_user
@@ -130,7 +130,7 @@ SELECT
   true,
   'Lily',
   '{"en":"Soft-spoken and affectionate, with a gentle style."}'::jsonb,
-  '{"model":"grok-4-1-fast-non-reasoning","voice":"Ara","temperature":0.8,"maxOutputTokens":null,"grokImageEnabled":false}'::jsonb,
+  '{"model":"grok-voice-think-fast-1.0","voice":"Ara","temperature":0.8,"maxOutputTokens":null}'::jsonb,
   'lily.webp',
   1
 FROM admin_user
@@ -162,7 +162,7 @@ SELECT
   true,
   'Milo',
   '{"en":"Energetic and positive, always trying to keep momentum."}'::jsonb,
-  '{"model":"grok-4-1-fast-non-reasoning","voice":"Sal","temperature":0.8,"maxOutputTokens":null,"grokImageEnabled":false}'::jsonb,
+  '{"model":"grok-voice-think-fast-1.0","voice":"Sal","temperature":0.8,"maxOutputTokens":null}'::jsonb,
   'milo.webp',
   2
 FROM admin_user
@@ -194,7 +194,7 @@ SELECT
   true,
   'Rafal',
   '{"en":"Firm and disciplined, but still conversational and engaging."}'::jsonb,
-  '{"model":"grok-4-1-fast-non-reasoning","voice":"Rex","temperature":0.8,"maxOutputTokens":null,"grokImageEnabled":false}'::jsonb,
+  '{"model":"grok-voice-think-fast-1.0","voice":"Rex","temperature":0.8,"maxOutputTokens":null}'::jsonb,
   'rafal.webp',
   3
 FROM admin_user

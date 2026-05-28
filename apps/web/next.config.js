@@ -38,6 +38,7 @@ let nextConfig = {
     // turbopackFileSystemCacheForDev: true,
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -105,7 +106,7 @@ let nextConfig = {
       },
     ];
   },
-  allowedDevOrigins: ['sv.localhost', '*.sv.localhost'],
+  allowedDevOrigins: ['sv.dev', '*.sv.dev'],
 };
 
 if (process.env.ANALYZE === 'true') {

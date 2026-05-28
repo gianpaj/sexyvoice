@@ -1,6 +1,12 @@
 import { register } from 'node:module';
-import { type FileObject, printErrors, scanURLs, validateFiles } from 'next-validate-link';
 import type { InferPageType } from 'fumadocs-core/source';
+import {
+  type FileObject,
+  printErrors,
+  scanURLs,
+  validateFiles,
+} from 'next-validate-link';
+
 import type { source as SourceType } from '../lib/source';
 
 register('fumadocs-mdx/node/loader', import.meta.url);

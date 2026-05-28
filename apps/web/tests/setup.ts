@@ -66,6 +66,18 @@ export const handlers = [
 // Setup MSW server
 export const server = setupServer(...handlers);
 
+function installResizeObserverShim() {
+  if (typeof globalThis.ResizeObserver === 'function') {
+    return;
+  }
+
+  globalThis.ResizeObserver = class ResizeObserver {
+    disconnect = vi.fn();
+    observe = vi.fn();
+    unobserve = vi.fn();
+  };
+}
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: 'error' });
 
@@ -87,6 +99,8 @@ beforeAll(() => {
   }
 
   if (typeof document !== 'undefined') {
+    installResizeObserverShim();
+
     if (typeof document.elementFromPoint !== 'function') {
       document.elementFromPoint = () => document.body;
     }
@@ -117,6 +131,7 @@ beforeAll(() => {
       | (HTMLElement & {
           getClientRects?: () => DOMRectList;
           getBoundingClientRect?: () => DOMRect;
+          scrollIntoView?: () => void;
         })
       | undefined;
 
@@ -132,6 +147,10 @@ beforeAll(() => {
 
       if (typeof elementPrototype.getBoundingClientRect !== 'function') {
         elementPrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+      }
+
+      if (typeof elementPrototype.scrollIntoView !== 'function') {
+        elementPrototype.scrollIntoView = vi.fn();
       }
     }
   }

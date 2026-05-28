@@ -34,18 +34,18 @@ import {
 import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
+import { SceneSelector } from './scene-selector';
 
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
-const RECONNECT_REQUIRED_FIELDS = ['voice', 'grok_image_enabled'];
+const RECONNECT_REQUIRED_FIELDS = ['voice'];
 
 export const ConfigurationFormSchema = z.object({
   model: z.enum(Object.values(ModelId)),
   voice: z.string().min(1),
-  temperature: z.number().min(0.6).max(1.2),
+  temperature: z.number().min(0).max(1.2),
   maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
 });
 
 export interface ConfigurationFormFieldProps {
@@ -105,7 +105,6 @@ export function ConfigurationForm({
       voice: values.voice,
       temperature: values.temperature,
       max_output_tokens: values.maxOutputTokens || '',
-      grok_image_enabled: values.grokImageEnabled,
     };
     if (!agent?.identity) {
       return;
@@ -190,6 +189,7 @@ export function ConfigurationForm({
   }, [
     pgState.sessionConfig,
     pgState.instructions,
+    pgState.sceneInstructions,
     localParticipant,
     toast,
     agent?.identity,
@@ -316,6 +316,8 @@ export function ConfigurationForm({
               </div>
             )}
         </div>
+
+        <SceneSelector isPaidUser={isPaidUser} />
 
         <SessionConfig form={form} />
       </Form>

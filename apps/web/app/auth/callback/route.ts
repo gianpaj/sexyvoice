@@ -33,9 +33,9 @@ const getOauthCodeFingerprint = (code: string | null) => {
 
 const getErrorStringProperty = (
   error: unknown,
-  property: 'message' | 'name',
+  property: 'code' | 'message' | 'name',
 ) => {
-  if (error instanceof Error) {
+  if (error instanceof Error && property !== 'code') {
     return error[property];
   }
 
@@ -64,7 +64,21 @@ const isPkceCodeVerifierMissingError = (error: unknown) => {
   );
 };
 
-const getAuthCallbackCookieContext = (request: Request) => {
+const isExpiredAuthFlowStateError = (error: unknown) => {
+  const errorName = getErrorStringProperty(error, 'name');
+  const errorCode = getErrorStringProperty(error, 'code');
+  const errorMessage = getErrorStringProperty(error, 'message').toLowerCase();
+
+  return (
+    (errorName === 'AuthApiError' &&
+      (errorCode === 'flow_state_expired' ||
+        errorCode === 'flow_state_not_found')) ||
+    errorMessage.includes('invalid flow state') ||
+    errorMessage.includes('flow state has expired')
+  );
+};
+
+const getOauthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const cookieNames = cookieHeader
     .split(';')
@@ -103,26 +117,44 @@ export async function GET(request: Request) {
   const locale = getLocaleFromRedirectPath(safeRedirectPath);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
-  const authCookieContext = getAuthCallbackCookieContext(request);
-  const reportPkceCodeVerifierMissing = (error: unknown) => {
-    captureMessage('OAuth callback missing PKCE code verifier.', {
+  const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const reportKnownOauthCallbackFailure = (
+    message: string,
+    errorType: string,
+    error: unknown,
+  ) => {
+    captureMessage(message, {
       level: 'warning',
       tags: {
         area: 'auth',
         flow: 'oauth-callback',
-        error_type: 'pkce-code-verifier-missing',
+        error_type: errorType,
       },
       extra: {
         redirectTo,
         locale,
         ...oauthCodeContext,
-        ...authCookieContext,
+        ...oauthCookieContext,
+        errorCode: getErrorStringProperty(error, 'code') || null,
         errorMessage: getErrorMessage(error),
+        errorName: getErrorStringProperty(error, 'name') || null,
       },
     });
 
     return NextResponse.redirect(`${origin}${loginPath}`);
   };
+  const reportPkceCodeVerifierMissing = (error: unknown) =>
+    reportKnownOauthCallbackFailure(
+      'OAuth callback missing PKCE code verifier.',
+      'pkce-code-verifier-missing',
+      error,
+    );
+  const reportExpiredAuthFlowState = (error: unknown) =>
+    reportKnownOauthCallbackFailure(
+      'OAuth callback flow state expired.',
+      'flow-state-expired',
+      error,
+    );
 
   try {
     if (!code) {
@@ -139,6 +171,10 @@ export async function GET(request: Request) {
         return reportPkceCodeVerifierMissing(exchangeError);
       }
 
+      if (isExpiredAuthFlowStateError(exchangeError)) {
+        return reportExpiredAuthFlowState(exchangeError);
+      }
+
       captureException(exchangeError, {
         tags: {
           area: 'auth',
@@ -148,7 +184,7 @@ export async function GET(request: Request) {
           redirectTo,
           locale,
           ...oauthCodeContext,
-          ...authCookieContext,
+          ...oauthCookieContext,
         },
       });
 
@@ -190,6 +226,10 @@ export async function GET(request: Request) {
       return reportPkceCodeVerifierMissing(error);
     }
 
+    if (isExpiredAuthFlowStateError(error)) {
+      return reportExpiredAuthFlowState(error);
+    }
+
     captureException(error, {
       tags: {
         area: 'auth',
@@ -199,7 +239,7 @@ export async function GET(request: Request) {
         redirectTo,
         locale,
         ...oauthCodeContext,
-        ...authCookieContext,
+        ...oauthCookieContext,
       },
     });
 

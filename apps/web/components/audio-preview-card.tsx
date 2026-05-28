@@ -4,6 +4,7 @@ import { Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 
 import { attemptPlayback } from '@/lib/media-playback';
+import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
 
 export function AudioPreviewCard({
@@ -78,7 +79,7 @@ export function AudioPreviewCard({
         lang={lang}
         title={prompt}
       >
-        {prompt}
+        <GrokTaggedText text={prompt} />
       </div>
     </div>
   );

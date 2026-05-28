@@ -73,7 +73,6 @@ export async function generateMetadata({
       'voice cloning',
       'text-to-speech',
       'voice synthesis',
-      'uncensored voice',
       'AI voice call',
     ],
     authors: [{ name: 'SexyVoice.ai' }],

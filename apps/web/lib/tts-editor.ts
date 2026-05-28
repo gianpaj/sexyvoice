@@ -1,3 +1,6 @@
+export const GROK_TAG_CHIP_CLASS =
+  'inline-flex rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground';
+
 export const GROK_INSTANT_TAGS = [
   '[pause]',
   '[long-pause]',
