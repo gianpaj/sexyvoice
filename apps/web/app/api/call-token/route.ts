@@ -5,11 +5,15 @@ import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { callScenes } from '@/data/call-scenes';
 import {
   defaultLanguage,
   languageInitialInstructions,
-  type PlaygroundState,
 } from '@/data/playground-state';
+import {
+  type CallTokenPlaygroundState,
+  callTokenPlaygroundStateSchema,
+} from '@/lib/call-token-schema';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
@@ -21,51 +25,17 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-// Zod schema for session config
-const sessionConfigSchema = z.object({
-  model: z.string(),
-  voice: z.string(),
-  temperature: z.number().min(0).max(2),
-  maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
-});
+function appendSceneInstructions(
+  instructions: string,
+  sceneInstructions?: string | null,
+): string {
+  const trimmedSceneInstructions = sceneInstructions?.trim();
+  if (!trimmedSceneInstructions) {
+    return instructions;
+  }
 
-// Zod schema for playground state
-const playgroundStateSchema = z.object({
-  instructions: z.string(),
-  language: z
-    .enum([
-      'ar',
-      'cs',
-      'da',
-      'de',
-      'en',
-      'es',
-      'fi',
-      'fr',
-      'hi',
-      'it',
-      'ja',
-      'ko',
-      'nl',
-      'no',
-      'pl',
-      'pt',
-      'ru',
-      'sv',
-      'tr',
-      'zh',
-    ] as const)
-    .optional(),
-  selectedPresetId: z.uuid().nullable(),
-  sessionConfig: sessionConfigSchema,
-  customCharacters: z.array(z.any()).optional(),
-  characterOverrides: z
-    .record(z.string(), z.record(z.string(), z.string()))
-    .optional(),
-  initialInstruction: z.string().optional(),
-  defaultPresets: z.array(z.any()).optional(),
-});
+  return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
+}
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
@@ -105,11 +75,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let playgroundState: PlaygroundState;
+    let playgroundState: CallTokenPlaygroundState;
 
     try {
       const body = await request.json();
-      const validationResult = playgroundStateSchema.safeParse(body);
+      const validationResult = callTokenPlaygroundStateSchema.safeParse(body);
 
       if (!validationResult.success) {
         const formattedError = z.treeifyError(validationResult.error);
@@ -125,7 +95,7 @@ export async function POST(request: Request) {
         );
       }
 
-      playgroundState = validationResult.data as PlaygroundState;
+      playgroundState = validationResult.data;
     } catch (error) {
       logger.error('Invalid JSON in request body', {
         error: Error.isError(error) ? error.message : String(error),
@@ -149,14 +119,10 @@ export async function POST(request: Request) {
     const {
       instructions: clientInstructions,
       language = defaultLanguage,
+      sceneInstructions,
       selectedPresetId,
-      sessionConfig: {
-        model,
-        voice,
-        temperature,
-        maxOutputTokens,
-        grokImageEnabled,
-      },
+      selectedSceneId,
+      sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
     const selectedLanguage = languageInitialInstructions[language]
@@ -164,7 +130,7 @@ export async function POST(request: Request) {
       : defaultLanguage;
 
     // Validate voice exists in DB
-    const voiceObj = await getVoiceIdByName(voice, false);
+    const voiceObj = await getVoiceIdByName(voice);
 
     if (!voiceObj) {
       captureException('Voice not found', { extra: { voice } });
@@ -175,6 +141,7 @@ export async function POST(request: Request) {
     // Always resolve selected presets from DB (public and custom).
     // Only non-preset calls (no selectedPresetId) can use client-sent instructions.
     let resolvedInstructions = clientInstructions;
+    let isPaidUser: boolean | undefined;
 
     if (selectedPresetId) {
       try {
@@ -216,8 +183,8 @@ export async function POST(request: Request) {
           }
 
           // Verify user has paid (custom characters require paid account)
-          const isPaid = await hasUserPaid(user.id);
-          if (!isPaid) {
+          isPaidUser = await hasUserPaid(user.id);
+          if (!isPaidUser) {
             return NextResponse.json(
               { error: 'Custom characters require a paid account' },
               { status: 403 },
@@ -255,6 +222,30 @@ export async function POST(request: Request) {
       }
     }
 
+    if (sceneInstructions?.trim()) {
+      if (isPaidUser === undefined) {
+        isPaidUser = await hasUserPaid(user.id);
+      }
+      if (!isPaidUser) {
+        return NextResponse.json(
+          { error: 'Scenes require a paid account' },
+          { status: 403 },
+        );
+      }
+
+      resolvedInstructions = appendSceneInstructions(
+        resolvedInstructions,
+        sceneInstructions,
+      );
+    }
+
+    const defaultSceneText = callScenes.find(
+      (s) => s.id === selectedSceneId,
+    )?.text;
+    const sceneModified =
+      selectedSceneId != null &&
+      (sceneInstructions?.trim() ?? '') !== (defaultSceneText?.trim() ?? '');
+
     // Create metadata for agent to start with
     const metadata = {
       instructions: resolvedInstructions,
@@ -262,11 +253,14 @@ export async function POST(request: Request) {
       voice: voiceObj.id,
       temperature,
       max_output_tokens: maxOutputTokens,
-      grok_image_enabled: grokImageEnabled,
       language: selectedLanguage,
-      initial_instruction: ' ',
+      initial_instruction:
+        languageInitialInstructions[selectedLanguage] ||
+        languageInitialInstructions[defaultLanguage],
       user_id: user.id,
-      character_id: selectedPresetId, // Track which character is being used
+      character_id: selectedPresetId,
+      scene_id: selectedSceneId ?? null,
+      scene_modified: sceneModified,
     };
 
     // Create access token
@@ -300,6 +294,7 @@ export async function POST(request: Request) {
       extra: {
         roomName,
         selectedPresetId,
+        selectedSceneId,
         characterId: selectedPresetId,
         voice,
         model,

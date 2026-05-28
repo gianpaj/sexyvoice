@@ -25,6 +25,7 @@ import {
   InstantTag,
 } from '@/components/grok-tts/extensions/instant-tag';
 import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
+import { isGrokWrapperSuggestionAllowed } from '@/components/grok-tts/suggestion-rules';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import {
@@ -110,9 +111,12 @@ const XAI_LANGUAGE_OPTIONS = [
 ] as const;
 
 interface GrokTTSEditorProps {
+  characterLimitPaidTooltip: string;
+  characterLimitUpgradeTooltip: string;
+  charactersLimit: number;
   dict: (typeof messages)['generate']['grok'];
+  enforceCharactersLimit?: boolean;
   isPaidUser?: boolean;
-  maxLength: number;
   onChange: (text: string) => void;
   placeholder?: string;
   selectedGrokLanguage: string;
@@ -162,6 +166,56 @@ function getDomSelectionSnapshot(
   } catch {
     return null;
   }
+}
+
+function clampEditorPosition(editor: EditorInstance, position: number): number {
+  const maxPosition = Math.max(1, editor.state.doc.content.size - 1);
+
+  return Math.min(Math.max(position, 1), maxPosition);
+}
+
+function normalizeEditorSelectionSnapshot(
+  editor: EditorInstance,
+  selection: EditorSelectionSnapshot,
+): EditorSelectionSnapshot {
+  const from = clampEditorPosition(editor, selection.from);
+  const to = clampEditorPosition(editor, selection.to);
+  const normalizedFrom = Math.min(from, to);
+  const normalizedTo = Math.max(from, to);
+
+  return {
+    empty: normalizedFrom === normalizedTo,
+    from: normalizedFrom,
+    to: normalizedTo,
+  };
+}
+
+function getEditorSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const { empty, from, to } = editor.state.selection;
+
+  return { empty, from, to };
+}
+
+function getEditorEndSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const position = clampEditorPosition(
+    editor,
+    editor.state.doc.content.size - 1,
+  );
+
+  return { empty: true, from: position, to: position };
+}
+
+function moveEditorSelectionToEnd(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const selection = getEditorEndSelectionSnapshot(editor);
+  editor.commands.setTextSelection(selection.from);
+
+  return selection;
 }
 
 interface GrokSlashMenuConfig {
@@ -239,9 +293,12 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 }
 
 export function GrokTTSEditor({
+  characterLimitPaidTooltip,
+  characterLimitUpgradeTooltip,
   dict,
+  enforceCharactersLimit = true,
   isPaidUser,
-  maxLength,
+  charactersLimit,
   onChange,
   placeholder,
   selectedGrokLanguage,
@@ -250,11 +307,19 @@ export function GrokTTSEditor({
 }: GrokTTSEditorProps) {
   const [effectsOpen, setEffectsOpen] = useState(false);
   const [currentLength, setCurrentLength] = useState(value.length);
+  const charactersLimitRef = useRef(charactersLimit);
+  const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
+  const contentResetSelectionRef = useRef<EditorSelectionSnapshot | null>(null);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
     from: 1,
     to: 1,
   });
+
+  useEffect(() => {
+    charactersLimitRef.current = charactersLimit;
+    enforceCharactersLimitRef.current = enforceCharactersLimit;
+  }, [charactersLimit, enforceCharactersLimit]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -287,6 +352,7 @@ export function GrokTTSEditor({
     content: plainTextToDoc(value),
     editorProps: {
       attributes: {
+        'data-testid': 'generate-textarea',
         'aria-label': placeholder ?? 'TTS editor',
         role: 'textbox',
         'aria-multiline': 'true',
@@ -301,19 +367,33 @@ export function GrokTTSEditor({
       handleTextInput: () => false,
     },
     onCreate: ({ editor: nextEditor }) => {
-      const { empty, from, to } = nextEditor.state.selection;
-      lastSelectionRef.current = { empty, from, to };
+      lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
-      const { empty, from, to } = nextEditor.state.selection;
-      lastSelectionRef.current = { empty, from, to };
+      const selection = getEditorSelectionSnapshot(nextEditor);
+      const resetSelection = contentResetSelectionRef.current;
+      lastSelectionRef.current = selection;
+
+      if (
+        resetSelection &&
+        (!selection.empty ||
+          selection.from !== resetSelection.from ||
+          selection.to !== resetSelection.to)
+      ) {
+        contentResetSelectionRef.current = null;
+      }
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const text = fullText.slice(0, maxLength);
+      const text = enforceCharactersLimitRef.current
+        ? fullText.slice(0, charactersLimitRef.current + 10)
+        : fullText;
 
       if (text !== fullText) {
         nextEditor.commands.setContent(plainTextToDoc(text));
+        const resetSelection = moveEditorSelectionToEnd(nextEditor);
+        lastSelectionRef.current = resetSelection;
+        contentResetSelectionRef.current = resetSelection;
       }
 
       setCurrentLength(text.length);
@@ -333,6 +413,9 @@ export function GrokTTSEditor({
     }
 
     editor.commands.setContent(plainTextToDoc(value));
+    const resetSelection = moveEditorSelectionToEnd(editor);
+    lastSelectionRef.current = resetSelection;
+    contentResetSelectionRef.current = resetSelection;
     setCurrentLength(value.length);
   }, [editor, value]);
 
@@ -342,7 +425,11 @@ export function GrokTTSEditor({
         return;
       }
 
-      const selection = lastSelectionRef.current;
+      const selection = normalizeEditorSelectionSnapshot(
+        editor,
+        lastSelectionRef.current,
+      );
+      lastSelectionRef.current = selection;
       const serialized = grokTipTapDocToText(editor.getJSON());
       const selectedTextLength = selection.empty
         ? 0
@@ -351,7 +438,7 @@ export function GrokTTSEditor({
       const nextLength =
         serialized.length - selectedTextLength + tag.tag.length;
 
-      if (nextLength > maxLength) {
+      if (enforceCharactersLimit && nextLength > charactersLimit) {
         return;
       }
 
@@ -363,7 +450,7 @@ export function GrokTTSEditor({
         .run();
       setEffectsOpen(false);
     },
-    [editor, maxLength],
+    [editor, charactersLimit, enforceCharactersLimit],
   );
 
   const insertWrapperTag = useCallback(
@@ -372,13 +459,17 @@ export function GrokTTSEditor({
         return;
       }
 
-      const selection = lastSelectionRef.current;
+      const selection = normalizeEditorSelectionSnapshot(
+        editor,
+        lastSelectionRef.current,
+      );
+      lastSelectionRef.current = selection;
       const wrapperLength = tag.tag.length + tag.closeTag.length;
 
       const serialized = grokTipTapDocToText(editor.getJSON());
       const nextLength = serialized.length + wrapperLength;
 
-      if (nextLength > maxLength) {
+      if (enforceCharactersLimit && nextLength > charactersLimit) {
         return;
       }
 
@@ -434,7 +525,7 @@ export function GrokTTSEditor({
 
       setEffectsOpen(false);
     },
-    [editor, maxLength],
+    [editor, charactersLimit, enforceCharactersLimit],
   );
 
   const preserveSelection = useCallback(
@@ -448,10 +539,16 @@ export function GrokTTSEditor({
     (event: MouseEvent<HTMLButtonElement>) => {
       if (editor) {
         const snapshot = getDomSelectionSnapshot(editor);
+        const resetSelection = contentResetSelectionRef.current;
+        const isContentResetSnapshot =
+          snapshot && resetSelection && snapshot.empty;
 
-        if (snapshot) {
+        if (snapshot && !isContentResetSnapshot) {
           lastSelectionRef.current = snapshot;
+        } else if (!isContentResetSnapshot) {
+          lastSelectionRef.current = getEditorSelectionSnapshot(editor);
         }
+        contentResetSelectionRef.current = null;
       }
 
       event.preventDefault();
@@ -493,27 +590,8 @@ export function GrokTTSEditor({
         triggerChar: '[',
       },
       {
-        allow: ({
-          editor,
-          range,
-        }: Parameters<NonNullable<SuggestionMenuProps['allow']>>[0]) => {
-          const resolvedPosition = editor.state.doc.resolve(range.to);
-          const nodeAfter = resolvedPosition.nodeAfter;
-          const nextText = nodeAfter?.isText ? (nodeAfter.text ?? '') : '';
-          const previousNode = resolvedPosition.nodeBefore;
-          const previousText = previousNode?.isText
-            ? (previousNode.text ?? '')
-            : '';
-          const combinedTagText = `${previousText}${nextText}`;
-
-          return !WRAPPING_TAGS.some((tag) => {
-            const partialOpenTag = tag.tag.slice(1);
-            return (
-              combinedTagText.startsWith(partialOpenTag) ||
-              combinedTagText.startsWith(tag.tag)
-            );
-          });
-        },
+        allow: ({ editor, range, state }) =>
+          isGrokWrapperSuggestionAllowed({ editor, range, state }),
         customItems: WRAPPING_TAGS.map((tag) =>
           createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
         ),
@@ -641,10 +719,15 @@ export function GrokTTSEditor({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                currentLength > maxLength ? 'font-bold text-red-500' : '',
+                enforceCharactersLimit && currentLength > charactersLimit
+                  ? 'font-bold text-red-500'
+                  : '',
               )}
+              data-testid="generate-character-count"
             >
-              {currentLength} / {maxLength}
+              {enforceCharactersLimit
+                ? `${currentLength} / ${charactersLimit}`
+                : currentLength}
               <TooltipProvider>
                 <Tooltip delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -660,8 +743,8 @@ export function GrokTTSEditor({
                   <TooltipContent>
                     <p>
                       {isPaidUser
-                        ? 'Paid users enjoy 2× character limit'
-                        : 'Upgrade to a paid plan for 2× character limit'}
+                        ? characterLimitPaidTooltip
+                        : characterLimitUpgradeTooltip}
                     </p>
                   </TooltipContent>
                 </Tooltip>

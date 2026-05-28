@@ -1400,11 +1400,12 @@ describe('Clone Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(json.error).toBe(
-        'An unexpected error occurred while cloning voice. Please try again.',
+        'Voice cloning provider is temporarily unavailable. Please try again. (503)',
       );
-      expect(json.code).toBe('errors.internalError');
+      expect(json.code).toBe('errors.providerUnavailable');
+      expect(json.details).toEqual({ provider: 'replicate' });
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -1583,11 +1584,15 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Error Handling', () => {
-    it('should return 400 when audio conversion fails for non-English', async () => {
+    it('should return 400 without logging to Sentry when audio decoding fails for non-English', async () => {
+      const { captureException } = await import('@sentry/nextjs');
       // Mock convertToWav to throw an error for multilingual
       const convertToWavModule = await import('@/lib/audio-converter');
       vi.spyOn(convertToWavModule, 'convertToWav').mockRejectedValueOnce(
-        new Error('Decoder initialization failed'),
+        new convertToWavModule.AudioDecodeError(
+          'mp3',
+          new Error('mpg123-decoder: -1 MPG123_ERR'),
+        ),
       );
 
       const formData = createFormDataWithAudio(
@@ -1607,6 +1612,8 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(400);
       expect(json.error).toBeDefined();
       expect(json.error).toContain('Failed to convert audio format to WAV');
+      expect(json.code).toBe('errors.audioConversionFailed');
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should handle general errors and return 500', async () => {
@@ -1636,19 +1643,13 @@ describe('Clone Voice API Route', () => {
       expect(json.code).toBe('errors.internalError');
     });
 
-    it('should log errors to Sentry', async () => {
+    it('should log unexpected errors to Sentry', async () => {
       const { captureException } = await import('@sentry/nextjs');
 
-      // Mock an error scenario on the Replicate fallback path
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Test error',
-      });
-
-      const formData = createFormDataWithAudio(
-        'こんにちは',
-        createMockAudioFile(),
-        'ja',
+      vi.mocked(queries.getCredits).mockRejectedValueOnce(
+        new Error('Database connection failed'),
       );
+      const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -1658,6 +1659,91 @@ describe('Clone Voice API Route', () => {
       await POST(request);
 
       expect(captureException).toHaveBeenCalled();
+    });
+
+    it('does not log expected fal.ai validation failures to Sentry when falling back to original audio', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const validationError = new Error('Unprocessable Entity');
+      validationError.name = 'ValidationError';
+      mockFalSubscribe.mockRejectedValueOnce(validationError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('logs generic validation failures to Sentry when enhancement falls back', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const validationError = new Error('Invalid local state');
+      validationError.name = 'ValidationError';
+      mockFalSubscribe.mockRejectedValueOnce(validationError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).toHaveBeenCalledWith(
+        validationError,
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            locale: 'en',
+          }),
+        }),
+      );
+    });
+
+    it('does not log expected fal.ai timeout failures to Sentry when falling back to original audio', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const timeoutError = new Error('The operation was aborted due to timeout');
+      timeoutError.name = 'TimeoutError';
+      mockFalSubscribe.mockRejectedValueOnce(timeoutError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should handle R2 storage upload failures', async () => {

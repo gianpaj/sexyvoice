@@ -94,7 +94,7 @@ function createVoice(
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
     description: null,
     type: null,
-    sort_order: 0,
+    sort_order: 1,
     feature: 'tts',
     sample_url: null,
     sample_prompt: null,
@@ -205,6 +205,7 @@ describe('GenerateUI', () => {
       id: 'voice-featured',
       name: 'eve',
       model: 'grok',
+      sort_order: 0,
     });
     const thirdVoice = createVoice({
       id: 'voice-third',

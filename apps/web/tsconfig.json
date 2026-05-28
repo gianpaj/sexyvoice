@@ -50,6 +50,10 @@
     "node_modules",
     ".next",
     ".contentlayer",
+    "e2e",
+    "playwright.config.ts",
+    "playwright-report",
+    "test-results",
     "scripts/analyze-text-content.ts",
     "supabase/functions/telegram-bot"
   ]

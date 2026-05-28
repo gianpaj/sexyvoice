@@ -113,6 +113,10 @@ export function DataTable({ dict }: DataTableProps) {
         currentSourceType,
         currentPage === 1, // Include summary only on first page
       ),
+    // Don't retry on failure — errors are surfaced immediately.
+    // The API is a first-party server; transient failures are rare and
+    // retrying with exponential back-off just delays the error UI by ~7 s.
+    retry: 0,
   });
 
   // Memoize columns

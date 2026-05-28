@@ -15,7 +15,8 @@
       "!**/.next",
       "!**/dist",
       "!**/build",
-      "!apps/web/components/ui"
+      "!apps/web/components/ui",
+      "!apps/web/app/globals.css"
     ]
   },
   "formatter": {
@@ -65,7 +66,9 @@
       },
       "nursery": {
         "noShadow": "off",
-        "noLeakedRender": "off"
+        "noLeakedRender": "off",
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error"
       },
       "performance": {
         "noNamespaceImport": "warn",

@@ -44,14 +44,16 @@ function getSuggestionDecoration(editor: HTMLElement) {
 const baseDict = messages.generate.grok;
 
 function renderEditor({
-  maxLength = 500,
+  charactersLimit = 500,
+  enforceCharactersLimit = true,
   onChange = vi.fn(),
   placeholder = messages.generate.textAreaPlaceholder,
   selectedGrokLanguage = 'auto',
   setSelectedGrokLanguage = vi.fn(),
   value = '',
 }: {
-  maxLength?: number;
+  charactersLimit?: number;
+  enforceCharactersLimit?: boolean;
   onChange?: (text: string) => void;
   placeholder?: string;
   selectedGrokLanguage?: string;
@@ -60,8 +62,13 @@ function renderEditor({
 } = {}) {
   return render(
     <GrokTTSEditor
+      characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
+      characterLimitUpgradeTooltip={
+        messages.generate.upgradeCharacterLimitTooltip
+      }
+      charactersLimit={charactersLimit}
       dict={baseDict}
-      maxLength={maxLength}
+      enforceCharactersLimit={enforceCharactersLimit}
       onChange={onChange}
       placeholder={placeholder}
       selectedGrokLanguage={selectedGrokLanguage}
@@ -243,6 +250,24 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenLastCalledWith('Hello');
   });
 
+  it('allows text beyond the character limit when limit enforcement is disabled', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const longText = 'A'.repeat(20);
+
+    renderEditor({
+      charactersLimit: 5,
+      enforceCharactersLimit: false,
+      onChange,
+    });
+
+    const editor = await findEditor();
+    await user.type(editor, longText);
+
+    expect(onChange).toHaveBeenLastCalledWith(longText);
+    expect(screen.getByText('20')).toBeInTheDocument();
+  });
+
   it('inserts an instant tag at the current caret position', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -280,6 +305,44 @@ describe('GrokTTSEditor', () => {
 
     await waitFor(() => {
       expect(onChange).toHaveBeenLastCalledWith('Hello [pause]');
+    });
+  });
+
+  it('clamps a saved selection after external value changes', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const rendered = renderEditor({ onChange, value: 'Hello world' });
+
+    const editor = await findEditor();
+    selectEditorText(editor, 'world');
+
+    rendered.rerender(
+      <GrokTTSEditor
+        characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
+        characterLimitUpgradeTooltip={
+          messages.generate.upgradeCharacterLimitTooltip
+        }
+        charactersLimit={500}
+        dict={baseDict}
+        onChange={onChange}
+        placeholder={messages.generate.textAreaPlaceholder}
+        selectedGrokLanguage="auto"
+        setSelectedGrokLanguage={vi.fn()}
+        value="Hi"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent('Hi');
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+    );
+    await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('Hi[pause]');
     });
   });
 

@@ -635,6 +635,7 @@ function NewVoiceClientInner({
                   <button
                     className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
                     data-dragging={isDragging || undefined}
+                    data-testid="clone-upload-dropzone"
                     disabled={Boolean(micRecording)}
                     onClick={openFileDialog}
                     onDragEnter={handleDragEnter}
@@ -802,7 +803,11 @@ function NewVoiceClientInner({
                     }
                     value={selectedLocale.code}
                   >
-                    <SelectTrigger className="w-32" id="language">
+                    <SelectTrigger
+                      className="w-32"
+                      data-testid="clone-language-select"
+                      id="language"
+                    >
                       <SelectValue
                         placeholder={dict.languageSelectPlaceholder}
                       />
@@ -843,6 +848,7 @@ function NewVoiceClientInner({
                   <SpotlightField>
                     <Textarea
                       className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                      data-testid="clone-text-input"
                       disabled={status === 'generating'}
                       id="text-to-convert"
                       maxLength={textMaxLength + 30}
@@ -858,6 +864,7 @@ function NewVoiceClientInner({
                     '-mt-2 flex items-center justify-end gap-1.5 text-right text-muted-foreground text-sm',
                     [textIsOverLimit ? 'font-bold text-red-500' : ''],
                   )}
+                  data-testid="clone-character-count"
                 >
                   <span>
                     {text.length} / {textMaxLength}
@@ -930,6 +937,7 @@ function NewVoiceClientInner({
             <div className="flex items-start space-x-2">
               <Checkbox
                 checked={legalConsentChecked}
+                data-testid="clone-legal-consent"
                 id="legal-consent"
                 onCheckedChange={(checked) =>
                   setLegalConsentChecked(checked === true)
@@ -937,6 +945,7 @@ function NewVoiceClientInner({
               />
               <Label
                 className="font-normal text-muted-foreground text-sm leading-tight"
+                data-testid="clone-legal-consent-label"
                 htmlFor="legal-consent"
               >
                 {dict.legalConsentCheckbox}
@@ -946,6 +955,7 @@ function NewVoiceClientInner({
             <GenerateButton
               className="w-full"
               ctaText={dict.ctaButton}
+              data-testid="clone-generate-button"
               disabled={
                 !((file || micBlob) && text.trim()) ||
                 status === 'generating' ||

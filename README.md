@@ -23,23 +23,25 @@
 
 ## 🌟 About
 
-- Generate AI voices in 24+ languages (70+ with Gemini 3.1) with voice cloning support
+- Generate AI voices in 24+ languages, with 70+ languages available through Gemini 3.1
+- Major multilingual voice families from Google Gemini (`gpro`, `g31`) and xAI Grok (`xai`)
+- Voice cloning support across 20+ supported languages
 - Voice selection system with customizable options
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
 - User authentication and profile management (Google)
 - [Architecture Overview](./ARCHITECTURE.md)
 
-SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
+SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with featured Gemini and Grok voices, plus custom voice cloning capabilities.
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
 
-- **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
+- **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
-- **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices in 24 languages with Gemini 2.5 (default) or 70+ languages with Gemini 3.1 Flash TTS. Clone voices in 23 languages.
+- **Voice Selection System**: Choose from featured Gemini voices like `achernar`, `aoede`, `kore`, `puck`, `sulafat`, and `zephyr`, plus Grok voices like `ara`, `eve`, `leo`, `rex`, and `sal`
+- **Multi-language Support**: Generate voices in 24 languages with Gemini 2.5 (default) or 70+ languages with Gemini 3.1 Flash TTS, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
@@ -205,7 +207,20 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
    ```
 
 6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+   The web app runs through Portless at [https://sv.dev](https://sv.dev).
+   The `portless.json` app name only sets the route name; `PORTLESS_TLD=dev`
+   in `apps/web/package.json` makes the route use `.dev` instead of the
+   default `.localhost`.
+
+   If you previously installed the Portless startup service, it may restart the
+   default `.localhost` proxy on port 443 and block `.dev`. Remove the service
+   before starting the app:
+
+   ```bash
+   sudo portless service uninstall
+   sudo portless proxy stop
+   pnpm dev
+   ```
 
 ### Banner System
 
@@ -382,11 +397,25 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Real-time AI voice calls with configurable AI agents
 - ✅ API access
 
-### Supported Languages by Google Gemini TTS
+### Supported Voice Families and Languages
 
-#### Gemini 2.5 voices — 24 languages (default model: `gpro`)
+#### Google Gemini (`gpro`) multilingual voices
 
-Voices: Puck, Zephyr, Gacrux, Kore, Sulafat, and all other Gemini voices.
+Primary Gemini voices currently exposed in the app:
+
+- `achernar`
+- `aoede`
+- `autonoe`
+- `callirrhoe`
+- `despina`
+- `erinome`
+- `gacrux`
+- `kore`
+- `puck`
+- `sulafat`
+- `zephyr`
+
+These multilingual Gemini 2.5 voices support style prompting and the following 24-language/locale set:
 
 | Language               | BCP-47 Code              | Language             | BCP-47 Code |
 | ---------------------- | ------------------------ | -------------------- | ----------- |
@@ -422,6 +451,40 @@ Plus English, Spanish, French, Portuguese, and Arabic regional variants.
 > Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
 
 Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
+
+#### xAI Grok (`xai`) expressive voices
+
+Primary Grok voices currently exposed in the app:
+
+- `ara`
+- `eve`
+- `leo`
+- `rex`
+- `sal`
+
+These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
+
+| Language / Locale             | Code    | Language / Locale     | Code    |
+| ----------------------------- | ------- | --------------------- | ------- |
+| English                       | `en`    | Japanese              | `ja`    |
+| Arabic (Egypt)                | `ar-EG` | Korean                | `ko`    |
+| Arabic (Saudi Arabia)         | `ar-SA` | Portuguese (Brazil)   | `pt-BR` |
+| Arabic (United Arab Emirates) | `ar-AE` | Portuguese (Portugal) | `pt-PT` |
+| Bengali                       | `bn`    | Russian               | `ru`    |
+| Chinese (Simplified)          | `zh`    | Spanish (Spain)       | `es-ES` |
+| French                        | `fr`    | Spanish (Mexico)      | `es-MX` |
+| German                        | `de`    | Turkish               | `tr`    |
+| Hindi                         | `hi`    | Vietnamese            | `vi`    |
+| Indonesian                    | `id`    | Italian               | `it`    |
+
+#### Additional English voices
+
+We also expose English-focused Orpheus voices:
+
+- `dan` (`en-GB`)
+- `emma` (`en-US`)
+- `josh` (`en-US`)
+- `tara` (`en-US`)
 
 ---
 

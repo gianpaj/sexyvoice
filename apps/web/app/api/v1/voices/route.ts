@@ -45,7 +45,8 @@ export async function GET(request: Request) {
       .select('id, name, language, model, feature, is_public')
       .eq('feature', 'tts')
       .eq('is_public', true)
-      .order('sort_order');
+      .order('sort_order')
+      .order('name');
 
     if (error) {
       throw error;

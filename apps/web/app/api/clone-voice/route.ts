@@ -8,6 +8,7 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { generateHash } from '@/lib/audio';
 import {
+  AudioDecodeError,
   convertToWav,
   isConversionSupported,
   needsConversion,
@@ -33,7 +34,12 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits, getDollarCost } from '@/lib/utils';
+import {
+  ERROR_CODES,
+  estimateCredits,
+  getDollarCost,
+  getErrorMessage,
+} from '@/lib/utils';
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -150,6 +156,7 @@ type CloneRouteErrorCode =
   | 'errors.invalidFileType'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
+  | 'errors.providerUnavailable'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'
@@ -219,6 +226,14 @@ function routeErrorResponse(
     },
     { status },
   );
+}
+
+function getUnknownErrorName(error: unknown): string {
+  return Error.isError(error) ? error.name : typeof error;
+}
+
+function getUnknownErrorMessage(error: unknown): string {
+  return Error.isError(error) ? error.message : String(error);
 }
 
 // ============================================================================
@@ -642,20 +657,34 @@ async function processAudioFile(
         ? conversionError.stack
         : undefined;
 
-      console.error('Audio conversion failed:', {
-        error: errorMessage,
-        stack: errorStack,
-        normalizedMimeType,
-        isMicAudio,
-        locale,
-        filename: file.name,
-        bufferSize: buffer.length,
+      logger.info('Audio conversion rejected uploaded reference audio', {
+        user: { id: userId },
+        extra: {
+          error: errorMessage,
+          normalizedMimeType,
+          isMicAudio,
+          locale,
+          filename: file.name,
+          bufferSize: buffer.length,
+        },
       });
 
-      captureException(conversionError, {
-        user: { id: userId },
-        extra: { locale, mimeType: file.type, filename: file.name },
-      });
+      if (!(conversionError instanceof AudioDecodeError)) {
+        console.error('Audio conversion failed:', {
+          error: errorMessage,
+          stack: errorStack,
+          normalizedMimeType,
+          isMicAudio,
+          locale,
+          filename: file.name,
+          bufferSize: buffer.length,
+        });
+
+        captureException(conversionError, {
+          user: { id: userId },
+          extra: { locale, mimeType: file.type, filename: file.name },
+        });
+      }
 
       const errorMsg =
         normalizedMimeType === 'audio/webm' ||
@@ -784,6 +813,18 @@ function isMistralGuardrailError(error: unknown): boolean {
   );
 }
 
+function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
+  const errorName = getUnknownErrorName(error);
+  const errorMessage = getUnknownErrorMessage(error).toLowerCase();
+
+  return (
+    errorName === 'TimeoutError' ||
+    (errorName === 'ValidationError' &&
+      errorMessage.includes('unprocessable entity')) ||
+    errorMessage.includes('aborted due to timeout')
+  );
+}
+
 // ============================================================================
 // Voice Generation Functions
 // ============================================================================
@@ -897,28 +938,21 @@ async function cloneVoiceWithReplicate(
     onProgress,
   )) as ReplicateResponse;
 
-  if (typeof output === 'object' && 'error' in output) {
-    const errorObj = {
-      text,
-      locale,
-      language,
-      audioReferenceUrl,
-      model,
-      errorData: output.error,
-    };
-    const error = new Error(
-      output.error || 'Voice cloning failed, please try again',
-      {
-        cause: 'REPLICATE_ERROR',
+  if (output && typeof output === 'object' && 'error' in output) {
+    logger.warn('Replicate voice cloning provider failed', {
+      extra: {
+        locale,
+        language,
+        model,
+        errorMessage: output.error || null,
       },
+    });
+    throw createRouteError(
+      getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-cloning'),
+      503,
+      'errors.providerUnavailable',
+      { provider: 'replicate' },
     );
-    captureException(error, {
-      extra: errorObj,
-    });
-    console.error(errorObj);
-    throw new Error(output.error || 'Voice cloning failed, please try again', {
-      cause: 'REPLICATE_ERROR',
-    });
   }
 
   const audioBlob = await (output as ReplicateOutput).blob();
@@ -1277,19 +1311,27 @@ export async function POST(request: Request) {
           wasTrimmed: processedAudio.wasTrimmed,
         };
       } catch (enhancementError) {
-        captureException(enhancementError, {
-          user: { id: user.id },
-          extra: {
-            locale,
-            mimeType: processedAudio.mimeType,
-            filename: referenceAudioFile.name,
-          },
-        });
+        const expectedEnhancementFailure =
+          isExpectedReferenceAudioEnhancementFailure(enhancementError);
+
+        if (!expectedEnhancementFailure) {
+          captureException(enhancementError, {
+            user: { id: user.id },
+            extra: {
+              locale,
+              mimeType: processedAudio.mimeType,
+              filename: referenceAudioFile.name,
+            },
+          });
+        }
         logger.info(
           'Reference audio enhancement failed; using original audio',
           {
             user: { id: user.id },
             extra: {
+              errorMessage: getUnknownErrorMessage(enhancementError),
+              errorName: getUnknownErrorName(enhancementError),
+              expectedEnhancementFailure,
               locale,
               mimeType: processedAudio.mimeType,
               filename: referenceAudioFile.name,

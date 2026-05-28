@@ -22,7 +22,7 @@ export const getCharactersLimit = (model: string, isPaidUser = false) => {
   if (!isPaidUser) {
     return DEFAULT_LIMIT;
   }
-  if (model === 'gpro' || model === 'grok') {
+  if (model === 'gpro' || model === 'xai') {
     return PAID_LIMIT;
   }
   return DEFAULT_LIMIT;

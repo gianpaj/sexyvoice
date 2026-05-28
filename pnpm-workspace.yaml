@@ -3,6 +3,18 @@ packages:
   - "packages/*"
   - "scripts"
 
+publicHoistPattern:
+  - "*import-in-the-middle*"
+  - "*require-in-the-middle*"
+
+minimumReleaseAge: 2880
+
+minimumReleaseAgeExclude:
+  - next
+  - "@next/*"
+  - react
+  - react-dom
+
 catalog:
   "@ai-sdk/react": "3.0.118"
   "@biomejs/biome": "2.4.11"
@@ -12,10 +24,10 @@ catalog:
   "@types/react": "19.2.14"
   "@types/react-dom": "19.2.3"
   "ai": "6.0.116"
-  "next": "16.2.3"
-  "postcss": "8.5.10"
-  "react": "19.2.5"
-  "react-dom": "19.2.5"
+  "next": "16.2.6"
+  "postcss": "8.5.15"
+  "react": "19.2.6"
+  "react-dom": "19.2.6"
   "tailwindcss": "4.2.2"
   "tsx": "4.19.3"
   "typescript": "5.9.3"

@@ -21,6 +21,7 @@ import {
   getVoiceIdByName,
   hasUserPaid,
   insertUsageEvent,
+  isFreemiumUserOverLimit,
   reduceCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -28,6 +29,7 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
+  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
@@ -35,8 +37,35 @@ import {
   getErrorStatusCode,
   getTtsProvider,
 } from '@/lib/utils';
+import { getGoogleApiErrorStatus } from '@/utils/google-rpc-status';
+import { type GoogleApiError, parseGoogleApiError } from '@/utils/googleErrors';
 
 const { logger, captureException } = Sentry;
+
+/**
+ * The Google AI SDK wraps native AbortError into a generic Error whose name
+ * stays "Error" but whose message contains "AbortError" or "aborted".
+ * This helper covers both the native case and the SDK-wrapped case.
+ */
+function isAbortError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === 'AbortError') return true;
+  const msg = error.message.toLowerCase();
+  return /\babort(?:ed| ?error)\b/.test(msg);
+}
+
+function isGoogleQuotaError(errorPayload: GoogleApiError): boolean {
+  return getGoogleApiErrorStatus(errorPayload) === 'RESOURCE_EXHAUSTED';
+}
+
+function isGoogleTransientProviderError(errorPayload: GoogleApiError): boolean {
+  const status = getGoogleApiErrorStatus(errorPayload);
+  return (
+    status === 'INTERNAL' ||
+    status === 'UNAVAILABLE' ||
+    status === 'DEADLINE_EXCEEDED'
+  );
+}
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
@@ -48,6 +77,7 @@ export async function POST(request: Request) {
   let text = '';
   let voice = '';
   let styleVariant = '';
+  let seed: number | undefined;
   let selectedLanguage = '';
   const outputCodec = 'mp3';
   let user: User | null = null;
@@ -66,6 +96,10 @@ export async function POST(request: Request) {
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
     const useNewModel = body.useNewModel === true;
+
+    if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
+      seed = body.seed;
+    }
 
     if (!(text && voice)) {
       logger.error('Missing required parameters: text or voice', {
@@ -124,6 +158,16 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!userHasPaid && voiceObj.model === 'gpro') {
+      const isOverLimit = await isFreemiumUserOverLimit(user.id);
+      if (isOverLimit) {
+        return NextResponse.json(
+          { errorCode: 'gproLimitExceeded' },
+          { status: 403 },
+        );
+      }
+    }
+
     const currentAmount = await getCredits(user.id);
 
     const estimate = estimateCredits(text, voice, voiceObj.model);
@@ -145,8 +189,8 @@ export async function POST(request: Request) {
       isGeminiVoice && styleVariant ? `${styleVariant}: ${text}` : text;
     text = finalText;
 
-    // Resolve the effective model before hashing so paid/free and 2.5/3.1
-    // requests never share a cache entry.
+    // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
+    // seeded requests never share a cache entry.
     const effectiveModel = isGeminiVoice
       ? userHasPaid
         ? useNewModel
@@ -155,8 +199,11 @@ export async function POST(request: Request) {
         : 'gemini-2.5-flash-preview-tts'
       : voiceObj.model;
 
-    // Generate hash for the combination of text, voice and model
-    const hash = await generateHash(`${text}-${voice}-${effectiveModel}`);
+    const hashInput =
+      seed === undefined
+        ? `${text}-${voice}-${effectiveModel}`
+        : `${text}-${voice}-${effectiveModel}-${seed}`;
+    const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
 
@@ -182,7 +229,7 @@ export async function POST(request: Request) {
     });
 
     // const requestedGrokCodec = normalizeXaiTtsCodec(outputCodec);
-    const fileExtension = isGeminiVoice ? 'wav' : isGrokVoice ? 'mp3' : 'wav';
+    const fileExtension = isGrokVoice ? 'mp3' : 'wav';
     const filename = `${path}.${fileExtension}`;
     const result = await redis.get<string>(filename);
 
@@ -218,6 +265,7 @@ export async function POST(request: Request) {
       const geminiTTSConfig: GenerateContentConfig = {
         abortSignal: abortController.signal,
         responseModalities: ['AUDIO'],
+        ...(seed === undefined ? {} : { seed }),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -395,6 +443,22 @@ export async function POST(request: Request) {
             );
           }
         }
+        // Only capture non-PROHIBITED_CONTENT errors to Sentry.
+        // PROHIBITED_CONTENT is an expected user input block, not an error to report.
+        if (!isProhibitedContent) {
+          captureException(new Error('Gemini 200 — no audio data'), {
+            extra: {
+              finishReason,
+              blockReason,
+              hasData: !!data,
+              mimeType,
+              model: modelUsed,
+              textPreview: text.slice(0, 200),
+              voice,
+            },
+            user: { id: user.id },
+          });
+        }
         throw new Error(
           isProhibitedContent
             ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
@@ -541,6 +605,10 @@ export async function POST(request: Request) {
         );
       }
 
+      const grokDollarAmount = isGrokVoice
+        ? calculateGrokTtsDollarAmount(text)
+        : undefined;
+
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const audioFileDBResult = await saveAudioFile({
@@ -582,6 +650,9 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
+        ...(grokDollarAmount === undefined
+          ? {}
+          : { dollarAmount: grokDollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
@@ -615,7 +686,11 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (Error.isError(error) && error.name === 'AbortError') {
+    // Client disconnected — do not attempt to write to a dead socket (prevents write EPIPE)
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
+    if (isAbortError(error)) {
       console.info('Gemini voice generation aborted');
       return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
     }
@@ -627,6 +702,65 @@ export async function POST(request: Request) {
         },
         { status: getErrorStatusCode(error.cause) },
       );
+    }
+
+    if (Error.isError(error) && error.cause === 'OTHER_GEMINI_BLOCK') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation failed, please retry',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
+    const googleApiError = parseGoogleApiError(error);
+    if (googleApiError) {
+      const googleStatus = getGoogleApiErrorStatus(googleApiError);
+      if (isGoogleQuotaError(googleApiError)) {
+        logger.warn('Gemini quota exhausted', {
+          user: user ? { id: user.id, email: user.email } : undefined,
+          extra: {
+            textLength: text.length,
+            voice,
+            googleStatus,
+            googleCode: googleApiError.code,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: getErrorMessage(
+              userHasPaid
+                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
+                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
+              'voice-generation',
+            ),
+          },
+          { status: 429 },
+        );
+      }
+
+      if (isGoogleTransientProviderError(googleApiError)) {
+        logger.warn('Gemini provider temporarily unavailable', {
+          user: user ? { id: user.id, email: user.email } : undefined,
+          extra: {
+            textLength: text.length,
+            voice,
+            googleStatus,
+            googleCode: googleApiError.code,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: getErrorMessage(
+              ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
+              'voice-generation',
+            ),
+          },
+          { status: 503 },
+        );
+      }
     }
 
     const errorObj = {
@@ -641,25 +775,6 @@ export async function POST(request: Request) {
     console.error(errorObj);
     console.error('Voice generation error:', error);
 
-    // if Gemini error
-    if (Error.isError(error) && error.message.includes('googleapis')) {
-      const message = JSON.parse(error.message);
-      // You exceeded your current quota
-      if (message.error.code === 429) {
-        return NextResponse.json(
-          {
-            error: getErrorMessage(
-              userHasPaid
-                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
-                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
-              'voice-generation',
-            ),
-          },
-          { status: 500 },
-        );
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
     if (
       Error.isError(error) &&
       Object.keys(ERROR_CODES).includes(String(error.cause))
