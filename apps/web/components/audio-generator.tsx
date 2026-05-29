@@ -287,20 +287,13 @@ export function AudioGenerator({
     if (!selectedVoice) return;
 
     abortController.current = new AbortController();
-    showGenerationProgressToast(1, 1);
     const url = await requestGenerateVoice(
       text,
       abortController.current.signal,
     );
     setAudioURL(url);
     toast.success(dict.success);
-  }, [
-    dict.success,
-    requestGenerateVoice,
-    selectedVoice,
-    showGenerationProgressToast,
-    text,
-  ]);
+  }, [dict.success, requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -316,6 +309,10 @@ export function AudioGenerator({
 
     abortController.current = new AbortController();
     setAudioURL('');
+
+    // Only surface the progress toast when more than one segment will be
+    // generated. A single segment doesn't warrant a progress indicator.
+    const showProgress = currentSegmentTexts.length > 1;
 
     let latestSegments = [...splitSegments];
     let encounteredFailure = false;
@@ -333,7 +330,9 @@ export function AudioGenerator({
       );
       markSegmentGenerating(index);
       const isLastSegment = index === currentSegmentTexts.length - 1;
-      showGenerationProgressToast(index + 1, currentSegmentTexts.length);
+      if (showProgress) {
+        showGenerationProgressToast(index + 1, currentSegmentTexts.length);
+      }
 
       try {
         const generatedUrl = await requestGenerateVoice(
@@ -347,7 +346,7 @@ export function AudioGenerator({
             : segment,
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
-        if (isLastSegment) {
+        if (isLastSegment && showProgress) {
           showGenerationProgressToast(
             index + 1,
             currentSegmentTexts.length,
