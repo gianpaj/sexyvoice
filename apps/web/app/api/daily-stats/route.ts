@@ -270,10 +270,10 @@ export async function GET(request: NextRequest) {
           fourteenDaysAgo,
           today,
           internalUserIds,
-        ).then((data) => ({
-          data,
-          error: null,
-        })),
+        ).then(
+          (data) => ({ data, error: null }),
+          (error) => ({ data: null, error }),
+        ),
       ),
 
       // (profilesTotalCountResult) Total profiles count
