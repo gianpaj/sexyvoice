@@ -1,5 +1,5 @@
 type ExternalSourceType = 'api_tts' | 'api_voice_cloning';
-type ExternalProvider = 'google' | 'replicate' | 'xai';
+type ExternalProvider = 'google' | 'replicate' | 'xai' | 'mistral';
 type ExternalModel = 'gpro' | 'orpheus' | string;
 
 interface PricingInput {
@@ -45,11 +45,20 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perMinute: 0,
     perRequest: 0,
   },
-  'api_voice_cloning:replicate:*': {
-    perInputChar: 0,
+  // Voice cloning API
+  'api_voice_cloning:mistral:*': {
+    // Mistral Voxtral — $0.016 per 1k input characters
+    perInputChar: 0.000_016,
     perOutputChar: 0,
     perMinute: 0,
     perRequest: 0,
+  },
+  'api_voice_cloning:replicate:*': {
+    // resemble-ai/chatterbox-multilingual — ~$0.0121 average per prediction
+    perInputChar: 0,
+    perOutputChar: 0,
+    perMinute: 0,
+    perRequest: 0.0121,
   },
 };
 

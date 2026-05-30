@@ -291,9 +291,7 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": [
-          "Everything in Standard, just cheaper"
-        ]
+        "features": ["Everything in Standard, just cheaper"]
       }
     },
     "topup": {
@@ -706,6 +704,8 @@
         "title": "What can you do with SexyVoice API?",
         "generateTitle": "Generate",
         "generateDescription": "Convert text to natural speech with AI voices. Choose from multiple languages and add emotional expression (on supported voices).",
+        "cloneTitle": "Clone",
+        "cloneDescription": "Clone a voice from a short reference recording, then synthesize new speech with it in 20+ languages via the API.",
         "cliTitle": "CLI",
         "cliDescription": "Use the SexyVoice CLI for browser-based login, voice discovery, speech generation, curl output, and local playback from your terminal.",
         "moreInfo": "More info:",
