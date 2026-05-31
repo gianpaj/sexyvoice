@@ -23,7 +23,9 @@ export const ErrorResponseSchema = z.object({
 });
 
 export const VoiceGenerationRequestSchema = z.strictObject({
-  model: z.enum(['gpro', 'g31', 'orpheus', 'xai']).describe('The voice model to use'),
+  model: z
+    .enum(['gpro', 'g31', 'orpheus', 'xai'])
+    .describe('The voice model to use'),
   input: z
     .string()
     .min(1)
@@ -103,11 +105,7 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
         .string()
         .optional()
         .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
-      seed: z
-        .number()
-        .int()
-        .optional()
-        .describe('Optional deterministic seed'),
+      seed: z.number().int().optional().describe('Optional deterministic seed'),
     }),
     z.strictObject({
       model: z.literal('orpheus').describe('The voice model to use'),

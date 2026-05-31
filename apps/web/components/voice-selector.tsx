@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { VoiceSelect } from '@/components/audio-generator/voice-selector-v2';
 import {
   Card,
   CardContent,
@@ -17,7 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { VoiceSelect } from '@/components/audio-generator/voice-selector-v2';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter, getTtsProvider } from '@/lib/utils';
@@ -181,9 +181,9 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <VoiceSelect
-          voices={publicVoices}
-          value={selectedVoice?.id}
           onValueChange={setSelectedVoice}
+          value={selectedVoice?.id}
+          voices={publicVoices}
         />
         <AudioProvider>
           {selectedVoice?.sample_url && (

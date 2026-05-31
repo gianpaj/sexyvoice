@@ -20,15 +20,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { capitalizeFirstLetter, cn } from '@/lib/utils';
 import {
+  getDisplayModel,
   MODEL_COLORS,
   VOICE_GENDERS,
   VOICE_MODELS,
   type VoiceGender,
   type VoiceModel,
-  getDisplayModel,
 } from '@/lib/voices';
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
 
 type VoiceSelectProps = {
   voices?: Tables<'voices'>[];
@@ -64,15 +64,15 @@ function FilterChip({
 }) {
   return (
     <button
-      type="button"
-      onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-medium text-xs transition-colors',
         active
           ? 'border-primary bg-primary text-primary-foreground'
           : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
       )}
+      onClick={onClick}
+      type="button"
     >
       {children}
     </button>
@@ -178,14 +178,14 @@ export function VoiceSelect({
   const selectedModel = selected ? getDisplayModel(selected.model) : null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
-          role="combobox"
           aria-expanded={open}
           aria-label="Select a voice"
           className={cn('h-12 w-full justify-between px-3', className)}
+          role="combobox"
+          variant="outline"
         >
           {selected ? (
             <span className="flex min-w-0 items-center gap-2.5">
@@ -193,10 +193,10 @@ export function VoiceSelect({
                 <AudioLines className="size-4 text-muted-foreground" />
               </span>
               <span className="flex min-w-0 flex-col items-start">
-                <span className="truncate text-sm font-medium leading-tight">
+                <span className="truncate font-medium text-sm leading-tight">
                   {capitalizeFirstLetter(selected.name)}
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
                   {selectedModel} &middot; {selected.description ?? ''}
                 </span>
@@ -209,19 +209,19 @@ export function VoiceSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] min-w-80 p-0"
         align="start"
+        className="w-[var(--radix-popover-trigger-width)] min-w-80 p-0"
       >
         {/* Search */}
         <div className="border-b p-2">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               autoFocus
+              className="h-9 pl-8"
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Search name, style, or model..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="h-9 pl-8"
             />
           </div>
         </div>
@@ -232,14 +232,14 @@ export function VoiceSelect({
             {presentModels.length > 0 && (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">
+                  <span className="font-medium text-muted-foreground text-xs">
                     Model
                   </span>
                   {activeFilterCount > 0 && (
                     <button
-                      type="button"
+                      className="inline-flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
                       onClick={clearFilters}
-                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      type="button"
                     >
                       <X className="size-3" />
                       Clear
@@ -249,8 +249,8 @@ export function VoiceSelect({
                 <div className="flex flex-wrap gap-1.5">
                   {presentModels.map((model) => (
                     <FilterChip
-                      key={model}
                       active={modelFilter === model}
+                      key={model}
                       onClick={() =>
                         setModelFilter((prev) =>
                           prev === model ? null : model,
@@ -266,14 +266,14 @@ export function VoiceSelect({
             )}
             {presentGenders.length > 0 && (
               <>
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="font-medium text-muted-foreground text-xs">
                   Gender
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {presentGenders.map((gender) => (
                     <FilterChip
-                      key={gender}
                       active={genderFilter === gender}
+                      key={gender}
                       onClick={() =>
                         setGenderFilter((prev) =>
                           prev === gender ? null : gender,
@@ -294,33 +294,30 @@ export function VoiceSelect({
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1 px-4 py-10 text-center">
               <Search className="size-5 text-muted-foreground" />
-              <p className="text-sm font-medium">No voices found</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-medium text-sm">No voices found</p>
+              <p className="text-muted-foreground text-xs">
                 Try a different search or clear the filters.
               </p>
             </div>
           ) : (
-            <ul className="p-1" role="listbox" aria-label="Voices">
+            <ul aria-label="Voices" className="p-1" role="listbox">
               {filtered.map((voice) => {
                 const isSelected = voice.id === selectedId;
                 const isPlaying = voice.id === playingId;
                 const displayModel = getDisplayModel(voice.model);
                 const hasSample = Boolean(voice.sample_url);
                 return (
-                  <li key={voice.id} role="option" aria-selected={isSelected}>
+                  <li aria-selected={isSelected} key={voice.id} role="option">
                     <button
-                      type="button"
-                      onClick={() => handleSelect(voice.id)}
                       className={cn(
                         'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors',
                         isSelected ? 'bg-accent' : 'hover:bg-accent',
                       )}
+                      onClick={() => handleSelect(voice.id)}
+                      type="button"
                     >
                       {hasSample ? (
                         <span
-                          onClick={(e) => togglePreview(e, voice.id)}
-                          role="button"
-                          tabIndex={-1}
                           aria-label={
                             isPlaying
                               ? `Stop preview of ${voice.name}`
@@ -332,6 +329,9 @@ export function VoiceSelect({
                               ? 'border-primary bg-primary text-primary-foreground'
                               : 'bg-background text-foreground hover:border-primary hover:text-primary',
                           )}
+                          onClick={(e) => togglePreview(e, voice.id)}
+                          role="button"
+                          tabIndex={-1}
                         >
                           {isPlaying ? (
                             <Pause className="size-3.5" />
@@ -345,16 +345,16 @@ export function VoiceSelect({
 
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex items-center gap-2">
-                          <span className="truncate text-sm font-medium">
+                          <span className="truncate font-medium text-sm">
                             {capitalizeFirstLetter(voice.name)}
                           </span>
                           {voice.description && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-muted-foreground text-xs">
                               {voice.description}
                             </span>
                           )}
                         </span>
-                        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span className="mt-0.5 flex items-center gap-1.5 text-muted-foreground text-xs">
                           <ModelDot model={displayModel} />
                           {displayModel}
                           {voice.type && (
@@ -381,12 +381,12 @@ export function VoiceSelect({
         </ScrollArea>
 
         {/* Footer count */}
-        <div className="flex items-center justify-between border-t px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between border-t px-3 py-2 text-muted-foreground text-xs">
           <span>
             {filtered.length} of {voices.length} voices
           </span>
           {selected && (
-            <Badge variant="secondary" className="font-normal">
+            <Badge className="font-normal" variant="secondary">
               {capitalizeFirstLetter(selected.name)} selected
             </Badge>
           )}
