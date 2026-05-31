@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getVoiceGroups, VoiceSelector } from '@/components/voice-selector';
@@ -36,6 +37,17 @@ const baseDict = {
     featuredBadge: 'Featured',
     featuredGroupLabel: 'Featured',
     multilingualGroupLabel: 'Gemini',
+    selectVoicePlaceholder: 'Select a voice...',
+    searchPlaceholder: 'Search name, style, or model...',
+    filterModelLabel: 'Model',
+    filterGenderLabel: 'Gender',
+    clearFilters: 'Clear',
+    noVoicesFound: 'No voices found',
+    noVoicesFoundHint: 'Try a different search or clear the filters.',
+    previewVoice: 'Preview {name}',
+    stopPreview: 'Stop preview of {name}',
+    footerCount: '{filtered} of {total} voices',
+    voiceListLabel: 'Voices',
   },
 } as const;
 
@@ -94,7 +106,11 @@ function renderVoiceSelector(
     setSelectedVoice: vi.fn(),
   };
 
-  return render(<VoiceSelector {...defaultProps} {...overrides} />);
+  return render(
+    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+      <VoiceSelector {...defaultProps} {...overrides} />
+    </NextIntlClientProvider>,
+  );
 }
 
 describe('VoiceSelector', () => {

@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,7 @@ export function VoiceSelect({
   onValueChange,
   className,
 }: VoiceSelectProps) {
+  const t = useTranslations('generate.voiceSelector');
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [modelFilter, setModelFilter] = React.useState<VoiceModel | null>(null);
@@ -182,7 +184,7 @@ export function VoiceSelect({
       <PopoverTrigger asChild>
         <Button
           aria-expanded={open}
-          aria-label="Select a voice"
+          aria-label={t('selectVoicePlaceholder')}
           className={cn('h-12 w-full justify-between px-3', className)}
           role="combobox"
           variant="outline"
@@ -203,14 +205,14 @@ export function VoiceSelect({
               </span>
             </span>
           ) : (
-            <span className="text-muted-foreground">Select a voice...</span>
+            <span className="text-muted-foreground">{t('selectVoicePlaceholder')}</span>
           )}
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[var(--radix-popover-trigger-width)] min-w-80 p-0"
+        className="w-(--radix-popover-trigger-width) min-w-80 p-0"
       >
         {/* Search */}
         <div className="border-b p-2">
@@ -220,7 +222,7 @@ export function VoiceSelect({
               autoFocus
               className="h-9 pl-8"
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search name, style, or model..."
+              placeholder={t('searchPlaceholder')}
               value={query}
             />
           </div>
@@ -233,7 +235,7 @@ export function VoiceSelect({
               <>
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-muted-foreground text-xs">
-                    Model
+                    {t('filterModelLabel')}
                   </span>
                   {activeFilterCount > 0 && (
                     <button
@@ -242,7 +244,7 @@ export function VoiceSelect({
                       type="button"
                     >
                       <X className="size-3" />
-                      Clear
+                      {t('clearFilters')}
                     </button>
                   )}
                 </div>
@@ -267,7 +269,7 @@ export function VoiceSelect({
             {presentGenders.length > 0 && (
               <>
                 <span className="font-medium text-muted-foreground text-xs">
-                  Gender
+                  {t('filterGenderLabel')}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {presentGenders.map((gender) => (
@@ -294,13 +296,13 @@ export function VoiceSelect({
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1 px-4 py-10 text-center">
               <Search className="size-5 text-muted-foreground" />
-              <p className="font-medium text-sm">No voices found</p>
+              <p className="font-medium text-sm">{t('noVoicesFound')}</p>
               <p className="text-muted-foreground text-xs">
-                Try a different search or clear the filters.
+                {t('noVoicesFoundHint')}
               </p>
             </div>
           ) : (
-            <ul aria-label="Voices" className="p-1" role="listbox">
+            <ul aria-label={t('voiceListLabel')} className="p-1" role="listbox">
               {filtered.map((voice) => {
                 const isSelected = voice.id === selectedId;
                 const isPlaying = voice.id === playingId;
@@ -320,8 +322,8 @@ export function VoiceSelect({
                         <span
                           aria-label={
                             isPlaying
-                              ? `Stop preview of ${voice.name}`
-                              : `Preview ${voice.name}`
+                              ? t('stopPreview', { name: voice.name })
+                              : t('previewVoice', { name: voice.name })
                           }
                           className={cn(
                             'flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors',
@@ -383,13 +385,8 @@ export function VoiceSelect({
         {/* Footer count */}
         <div className="flex items-center justify-between border-t px-3 py-2 text-muted-foreground text-xs">
           <span>
-            {filtered.length} of {voices.length} voices
+            {t('footerCount', { filtered: filtered.length, total: voices.length })}
           </span>
-          {selected && (
-            <Badge className="font-normal" variant="secondary">
-              {capitalizeFirstLetter(selected.name)} selected
-            </Badge>
-          )}
         </div>
       </PopoverContent>
     </Popover>

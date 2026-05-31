@@ -10,7 +10,7 @@ import {
 } from 'react';
 
 import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
-import { VoiceSelect } from '@/components/audio-generator/voice-selector-v2';
+import { VoiceSelect } from '@/components/voice-select';
 import {
   Card,
   CardContent,
