@@ -136,7 +136,6 @@ interface AudioGeneratorProps {
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
-  useNewModel?: boolean;
 }
 
 export function AudioGenerator({
@@ -145,7 +144,6 @@ export function AudioGenerator({
   isPaidUser,
   selectedStyle,
   selectedVoice,
-  useNewModel,
 }: AudioGeneratorProps) {
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
@@ -178,7 +176,7 @@ export function AudioGenerator({
   const isGrokVoice = provider === 'grok';
   const showEnhanceButton =
     provider === 'replicate' ||
-    (provider === 'gemini' && (useNewModel ?? false));
+    (provider === 'gemini' && selectedVoice?.model === 'gpro31');
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit(
@@ -252,10 +250,9 @@ export function AudioGenerator({
         },
         body: JSON.stringify({
           text: segmentText,
-          voice: selectedVoice.name,
+          voiceId: selectedVoice.id,
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
-          ...(isGeminiVoice && useNewModel ? { useNewModel } : {}),
           ...(seed === undefined ? {} : { seed }),
         }),
         signal,
@@ -285,7 +282,6 @@ export function AudioGenerator({
       selectedGrokLanguage,
       selectedStyle,
       selectedVoice,
-      useNewModel,
     ],
   );
 
@@ -714,7 +710,7 @@ export function AudioGenerator({
         body: {
           selectedVoiceLanguage: selectedVoice.language,
           ttsProvider: provider,
-          useNewModel: useNewModel ?? false,
+          voiceModel: selectedVoice.model,
         },
       });
 

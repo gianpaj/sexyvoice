@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
+import { getTtsProvider } from '@/lib/utils';
 import { getFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
@@ -24,18 +25,16 @@ export function GenerateUI({
   isPaidUser,
   dict,
 }: GenerateUIProps) {
-  const initialVoiceName = useMemo(
-    () =>
-      getFeaturedVoice(publicVoices)?.name || publicVoices[0]?.name || 'zephyr',
+  const initialVoiceId = useMemo(
+    () => getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '',
     [publicVoices],
   );
-  const [selectedVoice, setSelectedVoice] = useState(initialVoiceName);
+  const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
-  const [useNewModel, setUseNewModel] = useState(false);
   const selectedVoiceSample = publicVoices.find(
-    (file) => file.name === selectedVoice,
+    (file) => file.id === selectedVoice,
   );
-  const isGeminiVoice = selectedVoiceSample?.model === 'gpro';
+  const isGeminiVoice = getTtsProvider(selectedVoiceSample?.model) === 'gemini';
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
@@ -45,8 +44,6 @@ export function GenerateUI({
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}
         setSelectedVoice={setSelectedVoice}
-        useNewModel={isGeminiVoice && isPaidUser ? useNewModel : undefined}
-        setUseNewModel={setUseNewModel}
       />
       <AudioProvider>
         <AudioGenerator
@@ -55,7 +52,6 @@ export function GenerateUI({
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
-          useNewModel={isGeminiVoice && isPaidUser ? useNewModel : undefined}
         />
       </AudioProvider>
     </div>

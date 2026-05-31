@@ -1,0 +1,397 @@
+'use client';
+
+import {
+  AudioLines,
+  Check,
+  ChevronsUpDown,
+  Pause,
+  Play,
+  Search,
+  X,
+} from 'lucide-react';
+import * as React from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  MODEL_COLORS,
+  VOICE_GENDERS,
+  VOICE_MODELS,
+  type VoiceGender,
+  type VoiceModel,
+  getDisplayModel,
+} from '@/lib/voices';
+import { capitalizeFirstLetter, cn } from '@/lib/utils';
+
+type VoiceSelectProps = {
+  voices?: Tables<'voices'>[];
+  value?: string;
+  onValueChange?: (voiceId: string) => void;
+  className?: string;
+};
+
+function ModelDot({
+  model,
+  className,
+}: {
+  model: VoiceModel;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn('inline-block size-2 shrink-0 rounded-full', className)}
+      style={{ backgroundColor: MODEL_COLORS[model] }}
+    />
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+        active
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function VoiceSelect({
+  voices = [],
+  value,
+  onValueChange,
+  className,
+}: VoiceSelectProps) {
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [modelFilter, setModelFilter] = React.useState<VoiceModel | null>(null);
+  const [genderFilter, setGenderFilter] = React.useState<VoiceGender | null>(
+    null,
+  );
+  const [internalValue, setInternalValue] = React.useState<string | undefined>(
+    value,
+  );
+  const [playingId, setPlayingId] = React.useState<string | null>(null);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const selectedId = value ?? internalValue;
+  const selected = voices.find((v) => v.id === selectedId);
+
+  // Start / stop audio preview when playingId changes
+  React.useEffect(() => {
+    if (!playingId) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      return;
+    }
+    const voice = voices.find((v) => v.id === playingId);
+    if (!voice?.sample_url) {
+      setPlayingId(null);
+      return;
+    }
+    const audio = new Audio(voice.sample_url);
+    audioRef.current = audio;
+    audio.play().catch(() => setPlayingId(null));
+    audio.addEventListener('ended', () => setPlayingId(null));
+    return () => {
+      audio.pause();
+    };
+  }, [playingId, voices]);
+
+  // Stop audio when popover closes
+  React.useEffect(() => {
+    if (!open) setPlayingId(null);
+  }, [open]);
+
+  const handleSelect = (id: string) => {
+    if (value === undefined) setInternalValue(id);
+    onValueChange?.(id);
+    setOpen(false);
+  };
+
+  const togglePreview = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setPlayingId((prev) => (prev === id ? null : id));
+  };
+
+  const filtered = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return voices.filter((v) => {
+      const displayModel = getDisplayModel(v.model);
+      const gender = v.type ?? '';
+      if (modelFilter && displayModel !== modelFilter) return false;
+      if (genderFilter && gender !== genderFilter) return false;
+      if (!q) return true;
+      return (
+        v.name.toLowerCase().includes(q) ||
+        (v.description ?? '').toLowerCase().includes(q) ||
+        displayModel.toLowerCase().includes(q) ||
+        gender.toLowerCase().includes(q)
+      );
+    });
+  }, [voices, query, modelFilter, genderFilter]);
+
+  const activeFilterCount = (modelFilter ? 1 : 0) + (genderFilter ? 1 : 0);
+
+  const clearFilters = () => {
+    setModelFilter(null);
+    setGenderFilter(null);
+  };
+
+  // Only show model filter chips that are represented in the voices list
+  const presentModels = React.useMemo(
+    () =>
+      VOICE_MODELS.filter((m) =>
+        voices.some((v) => getDisplayModel(v.model) === m),
+      ),
+    [voices],
+  );
+
+  const presentGenders = React.useMemo(
+    () => VOICE_GENDERS.filter((g) => voices.some((v) => v.type === g)),
+    [voices],
+  );
+
+  const selectedModel = selected ? getDisplayModel(selected.model) : null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-label="Select a voice"
+          className={cn('h-12 w-full justify-between px-3', className)}
+        >
+          {selected ? (
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
+                <AudioLines className="size-4 text-muted-foreground" />
+              </span>
+              <span className="flex min-w-0 flex-col items-start">
+                <span className="truncate text-sm font-medium leading-tight">
+                  {capitalizeFirstLetter(selected.name)}
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {selectedModel && <ModelDot model={selectedModel} />}
+                  {selectedModel} &middot; {selected.description ?? ''}
+                </span>
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Select a voice...</span>
+          )}
+          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] min-w-80 p-0"
+        align="start"
+      >
+        {/* Search */}
+        <div className="border-b p-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              autoFocus
+              placeholder="Search name, style, or model..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="h-9 pl-8"
+            />
+          </div>
+        </div>
+
+        {/* Filters */}
+        {(presentModels.length > 0 || presentGenders.length > 0) && (
+          <div className="space-y-2 border-b p-2">
+            {presentModels.length > 0 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Model
+                  </span>
+                  {activeFilterCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="size-3" />
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {presentModels.map((model) => (
+                    <FilterChip
+                      key={model}
+                      active={modelFilter === model}
+                      onClick={() =>
+                        setModelFilter((prev) =>
+                          prev === model ? null : model,
+                        )
+                      }
+                    >
+                      <ModelDot model={model} />
+                      {model}
+                    </FilterChip>
+                  ))}
+                </div>
+              </>
+            )}
+            {presentGenders.length > 0 && (
+              <>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Gender
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {presentGenders.map((gender) => (
+                    <FilterChip
+                      key={gender}
+                      active={genderFilter === gender}
+                      onClick={() =>
+                        setGenderFilter((prev) =>
+                          prev === gender ? null : gender,
+                        )
+                      }
+                    >
+                      {gender}
+                    </FilterChip>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Results */}
+        <ScrollArea className="h-72">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-1 px-4 py-10 text-center">
+              <Search className="size-5 text-muted-foreground" />
+              <p className="text-sm font-medium">No voices found</p>
+              <p className="text-xs text-muted-foreground">
+                Try a different search or clear the filters.
+              </p>
+            </div>
+          ) : (
+            <ul className="p-1" role="listbox" aria-label="Voices">
+              {filtered.map((voice) => {
+                const isSelected = voice.id === selectedId;
+                const isPlaying = voice.id === playingId;
+                const displayModel = getDisplayModel(voice.model);
+                const hasSample = Boolean(voice.sample_url);
+                return (
+                  <li key={voice.id} role="option" aria-selected={isSelected}>
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(voice.id)}
+                      className={cn(
+                        'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors',
+                        isSelected ? 'bg-accent' : 'hover:bg-accent',
+                      )}
+                    >
+                      {hasSample ? (
+                        <span
+                          onClick={(e) => togglePreview(e, voice.id)}
+                          role="button"
+                          tabIndex={-1}
+                          aria-label={
+                            isPlaying
+                              ? `Stop preview of ${voice.name}`
+                              : `Preview ${voice.name}`
+                          }
+                          className={cn(
+                            'flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors',
+                            isPlaying
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'bg-background text-foreground hover:border-primary hover:text-primary',
+                          )}
+                        >
+                          {isPlaying ? (
+                            <Pause className="size-3.5" />
+                          ) : (
+                            <Play className="size-3.5 translate-x-px" />
+                          )}
+                        </span>
+                      ) : (
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent" />
+                      )}
+
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium">
+                            {capitalizeFirstLetter(voice.name)}
+                          </span>
+                          {voice.description && (
+                            <span className="text-xs text-muted-foreground">
+                              {voice.description}
+                            </span>
+                          )}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <ModelDot model={displayModel} />
+                          {displayModel}
+                          {voice.type && (
+                            <>
+                              <span className="text-border">|</span>
+                              {voice.type}
+                            </>
+                          )}
+                        </span>
+                      </span>
+
+                      <Check
+                        className={cn(
+                          'size-4 shrink-0 text-primary transition-opacity',
+                          isSelected ? 'opacity-100' : 'opacity-0',
+                        )}
+                      />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ScrollArea>
+
+        {/* Footer count */}
+        <div className="flex items-center justify-between border-t px-3 py-2 text-xs text-muted-foreground">
+          <span>
+            {filtered.length} of {voices.length} voices
+          </span>
+          {selected && (
+            <Badge variant="secondary" className="font-normal">
+              {capitalizeFirstLetter(selected.name)} selected
+            </Badge>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}

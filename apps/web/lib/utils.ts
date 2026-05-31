@@ -41,7 +41,7 @@ const GROK_CREDITS_PER_BUCKET = 100;
 const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro') {
+  if (model === 'gpro' || model === 'gpro31') {
     return 'gemini';
   }
 
@@ -96,7 +96,7 @@ function getCreditMultiplier(voice: string, model?: string): number {
       break;
   }
 
-  if (model === 'gpro') {
+  if (model === 'gpro' || model === 'gpro31') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 

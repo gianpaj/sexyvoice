@@ -45,6 +45,7 @@
     "dev": "turbo run dev --filter=@sexyvoice/web",
     "fixall": "turbo run fixall",
     "format": "turbo run format",
+    "generate-gemini-speech-samples": "pnpm --filter @sexyvoice/scripts generate-gemini-speech-samples",
     "generate-supabase-types": "pnpm --filter @sexyvoice/web generate-supabase-types",
     "generate-supabase-types:local": "pnpm --filter @sexyvoice/web generate-supabase-types:local",
     "lint": "turbo run lint",

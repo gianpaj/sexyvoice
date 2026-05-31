@@ -92,7 +92,6 @@ function renderVoiceSelector(
     selectedVoice: publicVoices[0],
     setSelectedStyle: vi.fn(),
     setSelectedVoice: vi.fn(),
-    setUseNewModel: vi.fn(),
   };
 
   return render(<VoiceSelector {...defaultProps} {...overrides} />);
@@ -220,7 +219,7 @@ describe('VoiceSelector', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('exposes the featured badge copy in the selected value for the featured voice', () => {
+  it('shows the selected voice name in the trigger button', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-grok',
@@ -231,7 +230,6 @@ describe('VoiceSelector', () => {
     });
 
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
-    expect(screen.getByRole('combobox')).toHaveTextContent(/featured/i);
   });
 
   it('keeps featured voices first and preserves query order for non-featured groups', () => {

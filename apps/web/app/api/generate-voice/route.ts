@@ -18,7 +18,7 @@ import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCredits,
-  getVoiceIdByName,
+  getVoiceById,
   hasUserPaid,
   insertUsageEvent,
   isFreemiumUserOverLimit,
@@ -75,7 +75,8 @@ const redis = Redis.fromEnv();
 
 export async function POST(request: Request) {
   let text = '';
-  let voice = '';
+  let voiceId = '';
+  let voiceName = '';
   let styleVariant = '';
   let seed: number | undefined;
   let selectedLanguage = '';
@@ -92,17 +93,16 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     text = body.text || '';
-    voice = body.voice || '';
+    voiceId = body.voiceId || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
-    const useNewModel = body.useNewModel === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
       seed = body.seed;
     }
 
-    if (!(text && voice)) {
-      logger.error('Missing required parameters: text or voice', {
+    if (!(text && voiceId)) {
+      logger.error('Missing required parameters: text or voiceId', {
         body,
         headers: Object.fromEntries(request.headers.entries()),
       });
@@ -130,13 +130,15 @@ export async function POST(request: Request) {
       email: user.email,
     });
 
-    const voiceObj = await getVoiceIdByName(voice);
+    const voiceObj = await getVoiceById(voiceId);
 
     if (!voiceObj) {
       const error = new Error('Voice not found');
-      captureException(error, { extra: { voice, text } });
+      captureException(error, { extra: { voiceId, text } });
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
+
+    voiceName = voiceObj.name;
 
     const provider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = provider === 'gemini';
@@ -170,14 +172,14 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voice, voiceObj.model);
+    const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
 
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
       logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
-        extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
+        extra: { voiceName: voiceObj.name, text, estimate, currentCreditsAmount: currentAmount },
       });
       return NextResponse.json(
         { error: 'Insufficient credits' },
@@ -193,7 +195,7 @@ export async function POST(request: Request) {
     // seeded requests never share a cache entry.
     const effectiveModel = isGeminiVoice
       ? userHasPaid
-        ? useNewModel
+        ? voiceObj.model === 'gpro31'
           ? 'gemini-3.1-flash-tts-preview'
           : 'gemini-2.5-pro-preview-tts'
         : 'gemini-2.5-flash-preview-tts'
@@ -201,8 +203,8 @@ export async function POST(request: Request) {
 
     const hashInput =
       seed === undefined
-        ? `${text}-${voice}-${effectiveModel}`
-        : `${text}-${voice}-${effectiveModel}-${seed}`;
+        ? `${text}-${voiceObj.name}-${effectiveModel}`
+        : `${text}-${voiceObj.name}-${effectiveModel}-${seed}`;
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -212,7 +214,7 @@ export async function POST(request: Request) {
     if (userHasPaid) {
       folder = 'generated-audio';
     }
-    const path = `${folder}/${voice}-${hash}`;
+    const path = `${folder}/${voiceObj.name}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {
@@ -221,7 +223,7 @@ export async function POST(request: Request) {
         },
         extra: {
           hash,
-          voice,
+          voiceName: voiceObj.name,
           text,
         },
       });
@@ -269,7 +271,7 @@ export async function POST(request: Request) {
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
-              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
+              voiceName: voiceObj.name.charAt(0).toUpperCase() + voiceObj.name.slice(1),
             },
           },
         },
@@ -282,7 +284,7 @@ export async function POST(request: Request) {
       };
       if (userHasPaid) {
         try {
-          modelUsed = useNewModel
+          modelUsed = voiceObj.model === 'gpro31'
             ? 'gemini-3.1-flash-tts-preview'
             : 'gemini-2.5-pro-preview-tts';
 
@@ -304,7 +306,7 @@ export async function POST(request: Request) {
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
           const geminiRequestContext = {
-            voice,
+            voice: voiceObj.name,
             styleVariant,
             provider,
             textLength: text.length,
@@ -344,7 +346,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: useNewModel
+                originalModel: voiceObj.model === 'gpro31'
                   ? 'gemini-3.1-flash-tts-preview'
                   : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
@@ -359,7 +361,7 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: useNewModel
+                originalModel: voiceObj.model === 'gpro31'
                   ? 'gemini-3.1-flash-tts-preview'
                   : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
@@ -399,7 +401,7 @@ export async function POST(request: Request) {
           logger.warn('Content generation prohibited by Gemini', {
             user: { id: user.id, email: user.email },
             extra: {
-              voice,
+              voice: voiceObj.name,
               styleVariant,
               model: modelUsed,
               provider,
@@ -414,7 +416,7 @@ export async function POST(request: Request) {
           logger.error('Gemini voice generation failed', {
             user: { id: user.id, email: user.email },
             extra: {
-              voice,
+              voice: voiceObj.name,
               styleVariant,
               model: modelUsed,
               provider,
@@ -454,7 +456,7 @@ export async function POST(request: Request) {
               mimeType,
               model: modelUsed,
               textPreview: text.slice(0, 200),
-              voice,
+              voice: voiceObj.name,
             },
             user: { id: user.id },
           });
@@ -476,7 +478,7 @@ export async function POST(request: Request) {
           email: user.email,
         },
         extra: {
-          voice,
+          voice: voiceObj.name,
           styleVariant,
           model: modelUsed,
           provider,
@@ -504,7 +506,7 @@ export async function POST(request: Request) {
       } catch (error) {
         const errorObj = {
           text,
-          voice,
+          voice: voiceObj.name,
           model: voiceObj.model,
           codec: outputCodec,
           language: selectedLanguage || voiceObj.language,
@@ -516,7 +518,7 @@ export async function POST(request: Request) {
             email: user.email,
           },
           extra: {
-            voice,
+            voice: voiceObj.name,
             text,
             model: voiceObj.model,
             codec: outputCodec,
@@ -543,14 +545,14 @@ export async function POST(request: Request) {
       };
       const output = (await replicate.run(
         voiceObj.model as `${string}/${string}`,
-        { input: { text, voice }, signal: request.signal },
+        { input: { text, voice: voiceObj.name }, signal: request.signal },
         onProgress,
       )) as ReadableStream;
 
       if ('error' in output) {
         const errorObj = {
           text,
-          voice,
+          voice: voiceObj.name,
           model: voiceObj.model,
           errorData: output.error,
         };
@@ -631,7 +633,7 @@ export async function POST(request: Request) {
       if (audioFileDBResult.error) {
         const errorObj = {
           text,
-          voice,
+          voice: voiceObj.name,
           model: modelUsed,
           errorData: audioFileDBResult.error,
         };
@@ -655,7 +657,7 @@ export async function POST(request: Request) {
           : { dollarAmount: grokDollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
-          voiceName: voice,
+          voiceName: voiceObj.name,
           model: modelUsed,
           provider,
           textPreview: text.slice(0, 100),
@@ -721,7 +723,7 @@ export async function POST(request: Request) {
           user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
             textLength: text.length,
-            voice,
+            voice: voiceName,
             googleStatus,
             googleCode: googleApiError.code,
           },
@@ -745,7 +747,7 @@ export async function POST(request: Request) {
           user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
             textLength: text.length,
-            voice,
+            voice: voiceName,
             googleStatus,
             googleCode: googleApiError.code,
           },
@@ -765,7 +767,7 @@ export async function POST(request: Request) {
 
     const errorObj = {
       text,
-      voice,
+      voice: voiceName,
       errorData: error,
     };
     captureException(error, {

@@ -405,7 +405,7 @@ describe('AudioGenerator', () => {
           },
           body: JSON.stringify({
             text: 'مرحبا',
-            voice: 'eve',
+            voiceId: 'voice-id',
             styleVariant: '',
             language: 'ar-EG',
           }),
@@ -546,7 +546,7 @@ describe('AudioGenerator', () => {
     });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: shortText,
-      voice: 'tara',
+      voiceId: 'voice-id',
       styleVariant: '',
     });
   });
@@ -671,12 +671,12 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'tara',
+      voiceId: 'voice-id',
       styleVariant: '',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
-      voice: 'tara',
+      voiceId: 'voice-id',
       styleVariant: '',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -765,12 +765,12 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -927,7 +927,7 @@ describe('AudioGenerator', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: secondSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'dramatic',
     });
   });
@@ -995,12 +995,12 @@ describe('AudioGenerator', () => {
     });
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
       text: firstSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'calm',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'calm',
     });
   });
@@ -1050,13 +1050,13 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'en',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'en',
     });
@@ -1157,7 +1157,7 @@ describe('AudioGenerator', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: secondSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
@@ -1217,13 +1217,13 @@ describe('AudioGenerator', () => {
     });
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
       text: firstSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'ar-EG',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'ar-EG',
     });
@@ -1367,19 +1367,19 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: wrappedSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: lastSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });

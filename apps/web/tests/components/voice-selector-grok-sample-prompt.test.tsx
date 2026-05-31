@@ -70,7 +70,6 @@ function renderVoiceSelector(selectedVoice: Tables<'voices'>) {
       selectedVoice={selectedVoice}
       setSelectedStyle={vi.fn()}
       setSelectedVoice={vi.fn()}
-      setUseNewModel={vi.fn()}
     />,
   );
 }
