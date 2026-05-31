@@ -536,6 +536,32 @@ export { mockCheckUserPaidStatus };
 // Mock Google Generative AI module
 export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
 
+const DEFAULT_MOCK_AUDIO_DATA =
+  'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+const createDefaultStreamChunk = (): GenerateContentResponse => ({
+  candidates: [
+    {
+      content: {
+        parts: [
+          {
+            inlineData: {
+              data: DEFAULT_MOCK_AUDIO_DATA,
+              mimeType: 'audio/L16;rate=24000',
+            },
+          },
+        ],
+      },
+      finishReason: 'STOP',
+    } as any,
+  ],
+  usageMetadata: {
+    promptTokenCount: 11,
+    candidatesTokenCount: 12,
+    totalTokenCount: 23,
+  },
+} as GenerateContentResponse);
+
 // Create a configurable mock instance that tests can modify
 const createDefaultGoogleGenAIInstance = () => ({
   models: {
@@ -547,7 +573,7 @@ const createDefaultGoogleGenAIInstance = () => ({
             parts: [
               {
                 inlineData: {
-                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  data: DEFAULT_MOCK_AUDIO_DATA,
                   mimeType: 'audio/wav',
                 },
               },
@@ -562,6 +588,9 @@ const createDefaultGoogleGenAIInstance = () => ({
         totalTokenCount: 23,
       },
     } as GenerateContentResponse),
+    generateContentStream: vi.fn().mockImplementation(async function* () {
+      yield createDefaultStreamChunk();
+    }),
   },
 });
 
@@ -576,6 +605,8 @@ export const setMockGoogleGenAIFactory = (factory: () => any) => {
 export const resetMockGoogleGenAIFactory = () => {
   mockGoogleGenAIFactory = createDefaultGoogleGenAIInstance;
 };
+
+export { createDefaultStreamChunk, DEFAULT_MOCK_AUDIO_DATA };
 
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');

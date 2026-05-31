@@ -53,7 +53,9 @@ vi.mock('@/components/services/toast', () => ({
 }));
 
 vi.mock('@/components/audio-player-with-context', () => ({
-  AudioPlayerWithContext: () => null,
+  AudioPlayerWithContext: ({ url }: { url: string }) => (
+    <div data-testid="audio-player" data-url={url} />
+  ),
 }));
 
 vi.mock('@/components/grok-tts-editor', () => ({
@@ -1384,5 +1386,194 @@ describe('AudioGenerator', () => {
       language: 'auto',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  // ── Streaming tests ───────────────────────────────────────────────────────
+
+  function makeSseStreamResponse(frames: string[]) {
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const frame of frames) {
+          controller.enqueue(encoder.encode(frame));
+        }
+        controller.close();
+      },
+    });
+    return {
+      ok: true,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
+      body: readable,
+      json: async () => ({}),
+    };
+  }
+
+  const R2_AUDIO_URL = 'https://files.sexyvoice.ai/generated-audio/kore.wav';
+  // 4 zero bytes → 2 Int16 PCM samples → valid for Int16Array
+  const SSE_AUDIO_FRAME =
+    'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
+  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ url: R2_AUDIO_URL, creditsUsed: 26, creditsRemaining: 974 })}\n\n`;
+  const SSE_ERROR_FRAME =
+    'event: error\ndata: {"error":"Voice generation blocked"}\n\n';
+
+  const LONG_TEXT = 'a'.repeat(301);
+  const SHORT_TEXT = 'a'.repeat(10);
+
+  function setupAudioContextMock() {
+    const mockStart = vi.fn();
+    const mockConnect = vi.fn();
+    const mockCreateBufferSource = vi.fn(() => ({
+      buffer: null as unknown,
+      connect: mockConnect,
+      start: mockStart,
+    }));
+    const mockCopyToChannel = vi.fn();
+    const mockCreateBuffer = vi.fn().mockReturnValue({
+      copyToChannel: mockCopyToChannel,
+      duration: 0.1,
+    });
+    const mockClose = vi.fn();
+
+    const MockAudioContext = vi.fn().mockImplementation(function (this: any) {
+      this.currentTime = 0;
+      this.destination = {};
+      this.createBuffer = mockCreateBuffer;
+      this.createBufferSource = mockCreateBufferSource;
+      this.close = mockClose;
+    });
+
+    vi.stubGlobal('AudioContext', MockAudioContext);
+
+    return { MockAudioContext, mockCreateBuffer, mockCreateBufferSource, mockStart, mockClose };
+  }
+
+  it('sends stream: true when Gemini voice and text exceeds threshold', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(
+      makeSseStreamResponse([SSE_DONE_FRAME]),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    setupAudioContextMock();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBe(true);
+    expect(body.voiceId).toBe('voice-id');
+  });
+
+  it('omits stream for Gemini voice when text is at or below threshold', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: R2_AUDIO_URL }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    fireEvent.change(textarea, { target: { value: SHORT_TEXT } });
+
+    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeUndefined();
+  });
+
+  it('omits stream for Grok voice regardless of text length', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: R2_AUDIO_URL }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+    });
+
+    const textarea = screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder });
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeUndefined();
+  });
+
+  it('schedules audio chunks and sets final URL after SSE done event', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(
+      makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_DONE_FRAME]),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } = setupAudioContextMock();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(
+      () => expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success),
+      { timeout: 3000 },
+    );
+
+    expect(MockAudioContext).toHaveBeenCalledOnce();
+    expect(mockCreateBuffer).toHaveBeenCalledOnce();
+    expect(mockCreateBufferSource).toHaveBeenCalledOnce();
+
+    // Player should receive the final R2 URL
+    await waitFor(() => {
+      const player = screen.getByTestId('audio-player');
+      expect(player).toHaveAttribute('data-url', R2_AUDIO_URL);
+    });
+  });
+
+  it('shows error toast on SSE error event', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue(
+      makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_ERROR_FRAME]),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    setupAudioContextMock();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() =>
+      expect(mockToastFn.error).toHaveBeenCalledWith('Voice generation blocked (500)'),
+    );
   });
 });

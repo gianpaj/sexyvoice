@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
 import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
+  createDefaultStreamChunk,
+  DEFAULT_MOCK_AUDIO_DATA,
   mockRedisGet,
   mockRedisKeys,
   mockRedisSet,
@@ -17,6 +19,19 @@ import {
   server,
   setMockGoogleGenAIFactory,
 } from './setup';
+
+// ── SSE helpers ────────────────────────────────────────────────────────────
+async function readSseBody(response: Response): Promise<string> {
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let body = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    body += decoder.decode(value, { stream: true });
+  }
+  return body;
+}
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
@@ -1601,6 +1616,207 @@ describe('Generate Voice API Route', () => {
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
+    });
+  });
+
+  describe('Streaming - Gemini SSE', () => {
+    it('streams audio events and done event for Gemini voice', async () => {
+      const { hasUserPaid, saveAudioFile, insertUsageEvent, reduceCredits } =
+        await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const generateContentStream = vi.fn().mockImplementation(async function* () {
+        yield createDefaultStreamChunk();
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(response.headers.get('content-type')).toContain('text/event-stream');
+      expect(generateContentStream).toHaveBeenCalled();
+      expect(body).toContain('event: audio');
+      expect(body).toContain('event: done');
+      expect(body).toContain('files.sexyvoice.ai');
+      expect(mockUploadFileToR2).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'gemini-2.5-pro-preview-tts',
+          usage: expect.objectContaining({ stream: true }),
+        }),
+      );
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ stream: true }),
+        }),
+      );
+    });
+
+    it('uses Gemini 3.1 model when voice is gpro31 and stream: true', async () => {
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const generateContentStream = vi.fn().mockImplementation(async function* () {
+        yield createDefaultStreamChunk();
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-31-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      expect(response.headers.get('content-type')).toContain('text/event-stream');
+      expect(generateContentStream).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'gemini-3.1-flash-tts-preview' }),
+      );
+    });
+
+    it('returns SSE done-only on cache hit with stream: true', async () => {
+      const { reduceCredits } = await import('@/lib/supabase/queries');
+      const cachedUrl = 'https://files.sexyvoice.ai/generated-audio/kore-cached.wav';
+      mockRedisGet.mockResolvedValueOnce(cachedUrl);
+
+      const generateContentStream = vi.fn();
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(response.headers.get('content-type')).toContain('text/event-stream');
+      expect(body).toContain('event: done');
+      expect(body).toContain(cachedUrl);
+      expect(body).toContain('"cached":true');
+      expect(body).not.toContain('event: audio');
+      expect(generateContentStream).not.toHaveBeenCalled();
+      expect(reduceCredits).not.toHaveBeenCalled();
+    });
+
+    it('ignores stream: true for Grok voices and returns JSON', async () => {
+      server.use(
+        http.post('https://api.x.ai/v1/tts', () =>
+          HttpResponse.arrayBuffer(new Uint8Array([10, 20, 30]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-eve-id', stream: true }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.headers.get('content-type')).not.toContain('text/event-stream');
+      expect(response.status).toBe(200);
+    });
+
+    it('ignores stream: true for Replicate voices and returns JSON', async () => {
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.headers.get('content-type')).not.toContain('text/event-stream');
+      expect(json).toHaveProperty('url');
+    });
+
+    it('falls back to flash before first chunk when primary stream fails', async () => {
+      const { hasUserPaid, saveAudioFile } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(async function* () {
+        callCount++;
+        if (callCount === 1) throw new Error('Pro stream failed');
+        yield createDefaultStreamChunk();
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: done');
+      expect(callCount).toBe(2);
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'gemini-2.5-flash-preview-tts' }),
+      );
+    });
+
+    it('emits error event and skips billing when stream yields no audio chunks', async () => {
+      const { hasUserPaid, reduceCredits } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const generateContentStream = vi.fn().mockImplementation(async function* () {
+        // Yield a chunk with no inlineData
+        yield { candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }] };
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).not.toContain('event: done');
+      expect(reduceCredits).not.toHaveBeenCalled();
+    });
+
+    it('emits error event after audio started and skips billing when stream throws mid-flight', async () => {
+      const { hasUserPaid, reduceCredits } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const generateContentStream = vi.fn().mockImplementation(async function* () {
+        yield createDefaultStreamChunk();
+        throw new Error('Stream broke mid-flight');
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id', stream: true }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: audio');
+      expect(body).toContain('event: error');
+      expect(body).not.toContain('event: done');
+      expect(reduceCredits).not.toHaveBeenCalled();
     });
   });
 });
