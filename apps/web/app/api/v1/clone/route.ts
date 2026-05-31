@@ -1,3 +1,5 @@
+import { lookup } from 'node:dns/promises';
+import { isIP } from 'node:net';
 import { captureException } from '@sentry/nextjs';
 
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
@@ -50,6 +52,8 @@ const CLONE_VOICE_ID = '420c4014-7d6d-44ef-b87d-962a3124a170';
 
 // Guard against fetching arbitrarily large reference files.
 const REFERENCE_AUDIO_MAX_FETCH_BYTES = 25 * 1024 * 1024;
+// Bound the time spent downloading a user-supplied reference URL.
+const REFERENCE_AUDIO_FETCH_TIMEOUT_MS = 15_000;
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 800; // seconds - fluid compute is enabled
@@ -106,50 +110,178 @@ const CLONE_ERROR_MAP: Record<CloneServiceErrorCode, CloneErrorMapping> = {
   },
 };
 
+function isPrivateIPv4(ip: string): boolean {
+  const [a, b] = ip.split('.').map(Number);
+  if (a === 0 || a === 10 || a === 127) return true;
+  if (a === 169 && b === 254) return true; // link-local
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+  return a >= 224; // multicast / reserved
+}
+
+function isPrivateIPv6(ip: string): boolean {
+  const lower = ip.toLowerCase();
+  if (lower === '::1' || lower === '::') return true;
+  if (lower.startsWith('fe80')) return true; // link-local
+  if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // unique local
+  const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mapped) return isPrivateIPv4(mapped[1]);
+  return false;
+}
+
+// Reject loopback, link-local, private, CGNAT, and reserved address ranges so a
+// user-supplied URL cannot be used to reach internal services (SSRF).
+function isPrivateAddress(ip: string): boolean {
+  return isIP(ip) === 4 ? isPrivateIPv4(ip) : isPrivateIPv6(ip);
+}
+
+async function assertPublicHttpUrl(rawUrl: string): Promise<URL> {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'reference_audio_url is not a valid URL.',
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'reference_audio_url must use http or https.',
+      { param: 'reference_audio_url' },
+    );
+  }
+  if (url.username || url.password) {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'reference_audio_url must not contain credentials.',
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  const hostname = url.hostname.replace(/^\[|\]$/g, '');
+  let addresses: { address: string }[];
+  if (isIP(hostname)) {
+    addresses = [{ address: hostname }];
+  } else {
+    try {
+      addresses = await lookup(hostname, { all: true });
+    } catch {
+      throw new CloneServiceError(
+        'unsupported_audio_format',
+        'reference_audio_url host could not be resolved.',
+        { param: 'reference_audio_url' },
+      );
+    }
+  }
+
+  if (
+    addresses.length === 0 ||
+    addresses.some((a) => isPrivateAddress(a.address))
+  ) {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'reference_audio_url must point to a public host.',
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  return url;
+}
+
+async function fetchReferenceAudioFromUrl(
+  rawUrl: string,
+): Promise<{ buffer: Buffer; mimeType: string; filename: string }> {
+  const url = await assertPublicHttpUrl(rawUrl);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      // Block redirect-based SSRF bypasses: a public URL must not bounce to an
+      // internal host. Reference audio is expected to be a direct link.
+      redirect: 'error',
+      signal: AbortSignal.timeout(REFERENCE_AUDIO_FETCH_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const timedOut = error instanceof Error && error.name === 'TimeoutError';
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      timedOut
+        ? 'Timed out downloading reference_audio_url.'
+        : 'Failed to download reference_audio_url. Provide a direct, publicly reachable link.',
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  if (!response.ok) {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      `Failed to download reference audio (status ${response.status})`,
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  const contentLength = response.headers.get('content-length');
+  if (
+    contentLength &&
+    Number.isFinite(Number(contentLength)) &&
+    Number(contentLength) > REFERENCE_AUDIO_MAX_FETCH_BYTES
+  ) {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'Reference audio exceeds the maximum allowed size.',
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  // Stream the body and abort once the hard byte cap is exceeded, so a missing
+  // or spoofed content-length header cannot exhaust memory.
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'Failed to read reference audio stream.',
+      { param: 'reference_audio_url' },
+    );
+  }
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      totalBytes += value.byteLength;
+      if (totalBytes > REFERENCE_AUDIO_MAX_FETCH_BYTES) {
+        await reader.cancel();
+        throw new CloneServiceError(
+          'unsupported_audio_format',
+          'Reference audio exceeds the maximum allowed size.',
+          { param: 'reference_audio_url' },
+        );
+      }
+      chunks.push(value);
+    }
+  }
+
+  const mimeType =
+    response.headers.get('content-type')?.split(';')[0]?.trim() || 'audio/wav';
+  const filename = url.pathname.split('/').pop() || 'reference-audio';
+
+  return { buffer: Buffer.concat(chunks), mimeType, filename };
+}
+
 async function resolveReferenceAudio(data: {
   reference_audio_url?: string;
   reference_audio?: string;
   reference_audio_format?: string;
 }): Promise<{ buffer: Buffer; mimeType: string; filename: string }> {
   if (data.reference_audio_url) {
-    const response = await fetch(data.reference_audio_url);
-    if (!response.ok) {
-      throw new CloneServiceError(
-        'unsupported_audio_format',
-        `Failed to download reference audio (status ${response.status})`,
-        { param: 'reference_audio_url' },
-      );
-    }
-
-    const contentLength = response.headers.get('content-length');
-    if (
-      contentLength &&
-      Number.isFinite(Number(contentLength)) &&
-      Number(contentLength) > REFERENCE_AUDIO_MAX_FETCH_BYTES
-    ) {
-      throw new CloneServiceError(
-        'unsupported_audio_format',
-        'Reference audio exceeds the maximum allowed size.',
-        { param: 'reference_audio_url' },
-      );
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    if (arrayBuffer.byteLength > REFERENCE_AUDIO_MAX_FETCH_BYTES) {
-      throw new CloneServiceError(
-        'unsupported_audio_format',
-        'Reference audio exceeds the maximum allowed size.',
-        { param: 'reference_audio_url' },
-      );
-    }
-
-    const mimeType =
-      response.headers.get('content-type')?.split(';')[0]?.trim() ||
-      'audio/wav';
-    const urlPath = new URL(data.reference_audio_url).pathname;
-    const filename = urlPath.split('/').pop() || 'reference-audio';
-
-    return { buffer: Buffer.from(arrayBuffer), mimeType, filename };
+    return await fetchReferenceAudioFromUrl(data.reference_audio_url);
   }
 
   // base64 payload
@@ -162,6 +294,15 @@ async function resolveReferenceAudio(data: {
     throw new CloneServiceError(
       'unsupported_audio_format',
       'reference_audio is not valid base64-encoded audio.',
+      { param: 'reference_audio' },
+    );
+  }
+  // Enforce the same hard size cap as the URL path so a large base64 body
+  // cannot allocate unbounded memory.
+  if (buffer.length > REFERENCE_AUDIO_MAX_FETCH_BYTES) {
+    throw new CloneServiceError(
+      'unsupported_audio_format',
+      'Reference audio exceeds the maximum allowed size.',
       { param: 'reference_audio' },
     );
   }
@@ -294,11 +435,22 @@ export async function POST(request: Request) {
     let enhancementModelUsed: string | null = null;
     let enhancementRequestId: string | null = null;
 
+    // Reference audio must satisfy the provider's minimum length before we
+    // spend anything (credits or a paid enhancement call).
+    validateAudioDuration(processed.duration, provider);
+
     if (enhancementEnabled) {
       if (
         processed.duration !== null &&
         processed.duration > REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION
       ) {
+        await log({
+          status: 400,
+          errorCode: 'reference_audio_too_long',
+          userId,
+          apiKeyId: authResult.apiKeyId,
+          textLength: input.length,
+        });
         return respond(
           createApiError({
             message: `Reference audio enhancement supports clips up to ${REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION} seconds`,
@@ -312,6 +464,13 @@ export async function POST(request: Request) {
       if (
         processed.buffer.length > REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES
       ) {
+        await log({
+          status: 400,
+          errorCode: 'reference_audio_too_large',
+          userId,
+          apiKeyId: authResult.apiKeyId,
+          textLength: input.length,
+        });
         return respond(
           createApiError({
             message: 'Reference audio enhancement input exceeds size limit',
@@ -330,38 +489,14 @@ export async function POST(request: Request) {
       enhancementDollarAmount = getReferenceAudioEnhancementDollarCost(
         enhancementDurationSeconds,
       );
-
-      try {
-        const enhanced = await enhanceReferenceAudio({
-          abortSignal: request.signal,
-          buffer: processed.buffer,
-          filename: reference.filename,
-          mimeType: processed.mimeType,
-        });
-        cloneBuffer = enhanced.buffer;
-        cloneMimeType = enhanced.mimeType;
-        cloneAudioHash = await generateBufferHash(enhanced.buffer);
-        cloneDuration =
-          (await getAudioDuration(enhanced.buffer, enhanced.mimeType)) ??
-          cloneDuration;
-        referenceAudioEnhanced = true;
-        enhancementModelUsed = enhanced.modelUsed;
-        enhancementRequestId = enhanced.requestId;
-        creditsUsed = baseCloneCredits + enhancementCredits;
-      } catch (enhancementError) {
-        // Enhancement is best-effort: fall back to the original reference audio.
-        captureException(enhancementError, {
-          extra: { requestId, endpoint: ENDPOINT, locale },
-        });
-        enhancementCredits = 0;
-        enhancementDollarAmount = 0;
-        enhancementDurationSeconds = null;
-        creditsUsed = baseCloneCredits;
-      }
+      // Provisionally bill the enhancement; affordability is verified below
+      // before the paid enhancement call is made.
+      creditsUsed = baseCloneCredits + enhancementCredits;
     }
 
-    validateAudioDuration(cloneDuration, provider);
-
+    // Verify the user can afford the maximum cost BEFORE invoking any paid
+    // provider call (including the expensive enhancement step). This prevents a
+    // user with insufficient credits from forcing billable work that then 402s.
     const currentCredits = await getCreditsAdmin(userId);
     if (currentCredits < creditsUsed) {
       await log({
@@ -379,6 +514,36 @@ export async function POST(request: Request) {
         }),
         { status: 402 },
       );
+    }
+
+    if (enhancementEnabled) {
+      try {
+        const enhanced = await enhanceReferenceAudio({
+          abortSignal: request.signal,
+          buffer: processed.buffer,
+          filename: reference.filename,
+          mimeType: processed.mimeType,
+        });
+        cloneBuffer = enhanced.buffer;
+        cloneMimeType = enhanced.mimeType;
+        cloneAudioHash = generateBufferHash(enhanced.buffer);
+        cloneDuration =
+          (await getAudioDuration(enhanced.buffer, enhanced.mimeType)) ??
+          cloneDuration;
+        referenceAudioEnhanced = true;
+        enhancementModelUsed = enhanced.modelUsed;
+        enhancementRequestId = enhanced.requestId;
+      } catch (enhancementError) {
+        // Enhancement is best-effort: fall back to the original reference audio
+        // and only bill the base clone credits.
+        captureException(enhancementError, {
+          extra: { requestId, endpoint: ENDPOINT, locale },
+        });
+        enhancementCredits = 0;
+        enhancementDollarAmount = 0;
+        enhancementDurationSeconds = null;
+        creditsUsed = baseCloneCredits;
+      }
     }
 
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
@@ -503,6 +668,9 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fire-and-forget: do not await the log on the success path. A flush failure
+    // must never return a 500 after audio has been generated and credits have
+    // already been deducted. (Mirrors /api/v1/speech.)
     log({
       status: 200,
       userId,
@@ -533,6 +701,10 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof CloneServiceError) {
       const mapping = CLONE_ERROR_MAP[error.code];
+      // Prefer a more specific param from the error (e.g. reference_audio_url)
+      // so the failure is attributed to the field the caller actually sent.
+      const detailParam =
+        typeof error.details?.param === 'string' ? error.details.param : null;
       await log({
         status: mapping.status,
         errorCode: error.code,
@@ -545,7 +717,7 @@ export async function POST(request: Request) {
           message: error.message,
           type: mapping.type,
           code: mapping.code,
-          param: mapping.param ?? null,
+          param: detailParam ?? mapping.param ?? null,
         }),
         { status: mapping.status },
       );

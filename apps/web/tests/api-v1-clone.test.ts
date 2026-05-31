@@ -269,6 +269,42 @@ describe('/api/v1/clone', () => {
     );
   });
 
+  it('rejects a reference_audio_url that resolves to a private address (SSRF guard)', async () => {
+    const response = await POST(
+      cloneRequest({
+        input: 'Hello world',
+        locale: 'en',
+        reference_audio_url: 'http://169.254.169.254/latest/meta-data/',
+      }),
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('unsupported_audio_format');
+    expect(json.error.param).toBe('reference_audio_url');
+  });
+
+  it('does not invoke paid enhancement when credits are insufficient', async () => {
+    // base clone credits + 120 enhancement credits would exceed this balance.
+    vi.mocked(getCreditsAdmin).mockResolvedValueOnce(50);
+
+    const response = await POST(
+      cloneRequest({
+        input: 'Hello world',
+        locale: 'en',
+        reference_audio: createWavBase64(),
+        enhance_reference_audio: true,
+      }),
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(402);
+    expect(json.error.code).toBe('insufficient_credits');
+    // The expensive enhancement provider must not be called before the check.
+    expect(mockFalSubscribe).not.toHaveBeenCalled();
+    expect(vi.mocked(reduceCreditsAdmin)).not.toHaveBeenCalled();
+  });
+
   it('returns 422 when Mistral blocks the request via guardrail', async () => {
     const guardrailBody = {
       object: 'error',

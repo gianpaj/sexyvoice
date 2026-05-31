@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Mistral } from '@mistralai/mistralai';
 import { logger } from '@sentry/nextjs';
 import { parseBuffer } from 'music-metadata';
@@ -202,11 +202,10 @@ export function sanitizeFilename(filename: string): string {
     .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
 }
 
-export async function generateBufferHash(buffer: Buffer): Promise<string> {
-  const data = new Uint8Array(buffer);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+export function generateBufferHash(buffer: Buffer): string {
+  // Use Node's optimized, synchronous SHA-256 (node:crypto is already imported)
+  // instead of the Web Crypto API + manual hex formatting.
+  return createHash('sha256').update(buffer).digest('hex');
 }
 
 export async function getAudioDuration(
@@ -293,9 +292,14 @@ export async function processCloneReferenceAudio({
           },
         });
       }
+      const isWebm =
+        normalizedMimeType === 'audio/webm' ||
+        normalizedMimeType === 'video/webm';
       throw new CloneServiceError(
         'audio_conversion_failed',
-        'Failed to convert audio format to WAV. Reference audio must be MP3, OGG, Opus, or WAV.',
+        isWebm
+          ? 'WebM audio must be converted to WAV before sending. Please upload MP3, OGG, Opus, or WAV reference audio.'
+          : 'Failed to convert audio format to WAV. Reference audio must be MP3, OGG, Opus, or WAV.',
         { mimeType: normalizedMimeType },
       );
     }
@@ -330,7 +334,7 @@ export async function processCloneReferenceAudio({
     }
   }
 
-  const audioHash = await generateBufferHash(processedBuffer);
+  const audioHash = generateBufferHash(processedBuffer);
 
   return {
     audioHash,
