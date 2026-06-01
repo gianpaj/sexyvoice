@@ -12,7 +12,6 @@ import {
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -97,7 +96,9 @@ export function VoiceSelect({
     value,
   );
   const [playingId, setPlayingId] = React.useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const listRef = React.useRef<HTMLUListElement | null>(null);
 
   const selectedId = value ?? internalValue;
   const selected = voices.find((v) => v.id === selectedId);
@@ -123,9 +124,12 @@ export function VoiceSelect({
     };
   }, [playingId, voices]);
 
-  // Stop audio when popover closes
+  // Stop audio when popover closes; reset highlight
   React.useEffect(() => {
-    if (!open) setPlayingId(null);
+    if (!open) {
+      setPlayingId(null);
+      setHighlightedIndex(-1);
+    }
   }, [open]);
 
   const handleSelect = (id: string) => {
@@ -137,6 +141,41 @@ export function VoiceSelect({
   const togglePreview = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setPlayingId((prev) => (prev === id ? null : id));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          filtered.length === 0 ? -1 : prev < filtered.length - 1 ? prev + 1 : 0,
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          filtered.length === 0 ? -1 : prev > 0 ? prev - 1 : filtered.length - 1,
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex >= 0 && filtered[highlightedIndex]) {
+          handleSelect(filtered[highlightedIndex].id);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setOpen(false);
+        break;
+      case 'Home':
+        e.preventDefault();
+        if (filtered.length > 0) setHighlightedIndex(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        if (filtered.length > 0) setHighlightedIndex(filtered.length - 1);
+        break;
+    }
   };
 
   const filtered = React.useMemo(() => {
@@ -155,6 +194,18 @@ export function VoiceSelect({
       );
     });
   }, [voices, query, modelFilter, genderFilter]);
+
+  // Reset highlight whenever the filtered list changes
+  React.useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [filtered]);
+
+  // Scroll highlighted item into view
+  React.useEffect(() => {
+    if (highlightedIndex < 0 || !listRef.current) return;
+    const items = listRef.current.querySelectorAll<HTMLElement>('[data-voice-item]');
+    items[highlightedIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [highlightedIndex]);
 
   const activeFilterCount = (modelFilter ? 1 : 0) + (genderFilter ? 1 : 0);
 
@@ -219,10 +270,19 @@ export function VoiceSelect({
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              aria-activedescendant={
+                highlightedIndex >= 0 && filtered[highlightedIndex]
+                  ? `voice-item-${filtered[highlightedIndex].id}`
+                  : undefined
+              }
+              aria-autocomplete="list"
+              aria-controls="voice-select-listbox"
               autoFocus
               className="h-9 pl-8"
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={t('searchPlaceholder')}
+              role="combobox"
               value={query}
             />
           </div>
@@ -302,18 +362,31 @@ export function VoiceSelect({
               </p>
             </div>
           ) : (
-            <ul aria-label={t('voiceListLabel')} className="p-1" role="listbox">
-              {filtered.map((voice) => {
+            <ul
+              aria-label={t('voiceListLabel')}
+              className="p-1"
+              id="voice-select-listbox"
+              ref={listRef}
+              role="listbox"
+            >
+              {filtered.map((voice, index) => {
                 const isSelected = voice.id === selectedId;
                 const isPlaying = voice.id === playingId;
+                const isHighlighted = index === highlightedIndex;
                 const displayModel = getDisplayModel(voice.model);
                 const hasSample = Boolean(voice.sample_url);
                 return (
-                  <li aria-selected={isSelected} key={voice.id} role="option">
+                  <li
+                    aria-selected={isSelected}
+                    data-voice-item
+                    id={`voice-item-${voice.id}`}
+                    key={voice.id}
+                    role="option"
+                  >
                     <button
                       className={cn(
                         'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors',
-                        isSelected ? 'bg-accent' : 'hover:bg-accent',
+                        isSelected || isHighlighted ? 'bg-accent' : 'hover:bg-accent',
                       )}
                       onClick={() => handleSelect(voice.id)}
                       type="button"
