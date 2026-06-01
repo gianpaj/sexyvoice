@@ -236,6 +236,44 @@ function getUnknownErrorMessage(error: unknown): string {
   return Error.isError(error) ? error.message : String(error);
 }
 
+function getNumericErrorProperty(
+  error: unknown,
+  property: 'raw_status_code' | 'status' | 'statusCode',
+): number | null {
+  if (!(error && typeof error === 'object' && property in error)) {
+    return null;
+  }
+
+  const value = (error as Record<string, unknown>)[property];
+  return typeof value === 'number' ? value : null;
+}
+
+function isTransientProviderFailure(error: unknown): boolean {
+  const statusCode =
+    getNumericErrorProperty(error, 'status') ??
+    getNumericErrorProperty(error, 'statusCode') ??
+    getNumericErrorProperty(error, 'raw_status_code');
+  const message = getUnknownErrorMessage(error).toLowerCase();
+
+  return (
+    (typeof statusCode === 'number' && statusCode >= 500) ||
+    /status 5\d\d|bad gateway|internal server error|service unavailable|gateway timeout/.test(
+      message,
+    )
+  );
+}
+
+function createProviderUnavailableRouteError(
+  provider: CloneProvider,
+): RouteError {
+  return createRouteError(
+    getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-cloning'),
+    503,
+    'errors.providerUnavailable',
+    { provider },
+  );
+}
+
 // ============================================================================
 // Utilities
 // ============================================================================
@@ -819,6 +857,7 @@ function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
 
   return (
     errorName === 'TimeoutError' ||
+    isTransientProviderFailure(error) ||
     (errorName === 'ValidationError' &&
       errorMessage.includes('unprocessable entity')) ||
     errorMessage.includes('aborted due to timeout')
@@ -932,11 +971,29 @@ async function cloneVoiceWithReplicate(
     reference_audio: audioReferenceUrl,
   };
 
-  const output = (await replicate.run(
-    model,
-    { input },
-    onProgress,
-  )) as ReplicateResponse;
+  let output: ReplicateResponse;
+  try {
+    output = (await replicate.run(
+      model,
+      { input },
+      onProgress,
+    )) as ReplicateResponse;
+  } catch (error) {
+    if (isTransientProviderFailure(error)) {
+      logger.warn('Replicate voice cloning provider unavailable', {
+        extra: {
+          locale,
+          language,
+          model,
+          errorMessage: getUnknownErrorMessage(error),
+          errorName: getUnknownErrorName(error),
+        },
+      });
+      throw createProviderUnavailableRouteError('replicate');
+    }
+
+    throw error;
+  }
 
   if (output && typeof output === 'object' && 'error' in output) {
     logger.warn('Replicate voice cloning provider failed', {
@@ -947,12 +1004,7 @@ async function cloneVoiceWithReplicate(
         errorMessage: output.error || null,
       },
     });
-    throw createRouteError(
-      getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-cloning'),
-      503,
-      'errors.providerUnavailable',
-      { provider: 'replicate' },
-    );
+    throw createProviderUnavailableRouteError('replicate');
   }
 
   const audioBlob = await (output as ReplicateOutput).blob();

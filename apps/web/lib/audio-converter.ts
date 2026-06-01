@@ -418,11 +418,11 @@ export async function convertToWav(
       default:
         return null;
     }
+
+    validateDecodedAudio(decoded, format);
   } catch (error) {
     throw new AudioDecodeError(format, error);
   }
-
-  validateDecodedAudio(decoded, format);
 
   // Interleave channels if stereo/multi-channel
   const interleaved = interleaveChannels(decoded.channelData);

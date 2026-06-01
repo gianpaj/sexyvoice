@@ -33,9 +33,10 @@ vi.mock('next/server', () => ({
 describe('OAuth callback route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
 
-  it('downgrades missing PKCE verifier errors to warning telemetry', async () => {
+  it('handles missing PKCE verifier errors without Sentry telemetry', async () => {
     const exchangeError = new Error('PKCE code verifier not found in storage.');
     exchangeError.name = 'AuthPKCECodeVerifierMissingError';
     const exchangeCodeForSession = vi.fn().mockResolvedValue({
@@ -65,15 +66,13 @@ describe('OAuth callback route', () => {
     );
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc123');
     expect(captureException).not.toHaveBeenCalled();
-    expect(captureMessage).toHaveBeenCalledWith(
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
       'OAuth callback missing PKCE code verifier.',
-      expect.objectContaining({
-        level: 'warning',
-        tags: {
-          area: 'auth',
-          flow: 'oauth-callback',
-          error_type: 'pkce-code-verifier-missing',
-        },
+      {
+        area: 'auth',
+        errorType: 'pkce-code-verifier-missing',
+        flow: 'oauth-callback',
         extra: expect.objectContaining({
           redirectTo: '/en/dashboard',
           locale: 'en',
@@ -87,7 +86,7 @@ describe('OAuth callback route', () => {
           hasOauthCallbackMarkerCookie: true,
           errorMessage: 'PKCE code verifier not found in storage.',
         }),
-      }),
+      },
     );
   });
 
@@ -138,8 +137,10 @@ describe('OAuth callback route', () => {
     );
   });
 
-  it('downgrades expired auth flow state errors to warning telemetry', async () => {
-    const exchangeError = new Error('invalid flow state, flow state has expired');
+  it('handles expired auth flow state errors without Sentry telemetry', async () => {
+    const exchangeError = new Error(
+      'invalid flow state, flow state has expired',
+    );
     exchangeError.name = 'AuthApiError';
     const exchangeCodeForSession = vi.fn().mockResolvedValue({
       data: { user: null },
@@ -167,30 +168,31 @@ describe('OAuth callback route', () => {
       'https://sexyvoice.ai/es/login',
     );
     expect(captureException).not.toHaveBeenCalled();
-    expect(captureMessage).toHaveBeenCalledWith(
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
       'OAuth callback flow state expired.',
-      expect.objectContaining({
-        level: 'warning',
-        tags: {
-          area: 'auth',
-          flow: 'oauth-callback',
-          error_type: 'flow-state-expired',
-        },
+      {
+        area: 'auth',
+        errorType: 'flow-state-expired',
+        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorMessage: 'invalid flow state, flow state has expired',
           hasSupabaseCodeVerifierCookie: true,
           locale: 'es',
           redirectTo: '/es/dashboard',
         }),
-      }),
+      },
     );
   });
 
-  it('downgrades typed expired auth flow state errors to warning telemetry', async () => {
-    const exchangeError = Object.assign(new Error('OAuth flow is no longer valid'), {
-      code: 'flow_state_expired',
-      name: 'AuthApiError',
-    });
+  it('handles typed expired auth flow state errors without Sentry telemetry', async () => {
+    const exchangeError = Object.assign(
+      new Error('OAuth flow is no longer valid'),
+      {
+        code: 'flow_state_expired',
+        name: 'AuthApiError',
+      },
+    );
     const exchangeCodeForSession = vi.fn().mockResolvedValue({
       data: { user: null },
       error: exchangeError,
@@ -211,16 +213,64 @@ describe('OAuth callback route', () => {
 
     expect(response.status).toBe(307);
     expect(captureException).not.toHaveBeenCalled();
-    expect(captureMessage).toHaveBeenCalledWith(
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
       'OAuth callback flow state expired.',
-      expect.objectContaining({
-        tags: expect.objectContaining({
-          error_type: 'flow-state-expired',
-        }),
+      {
+        area: 'auth',
+        errorType: 'flow-state-expired',
+        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorName: 'AuthApiError',
         }),
-      }),
+      },
+    );
+  });
+
+  it('handles code challenge mismatch errors without Sentry telemetry', async () => {
+    const exchangeError = Object.assign(
+      new Error('code challenge does not match previously saved code verifier'),
+      { name: 'AuthApiError' },
+    );
+    const exchangeCodeForSession = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: exchangeError,
+    });
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { exchangeCodeForSession },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
+        {
+          headers: {
+            cookie:
+              'sb-test-auth-token=token; sb-test-auth-token-code-verifier=verifier',
+          },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/en/login',
+    );
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
+      'OAuth callback code challenge mismatch.',
+      {
+        area: 'auth',
+        errorType: 'code-challenge-mismatch',
+        flow: 'oauth-callback',
+        extra: expect.objectContaining({
+          errorName: 'AuthApiError',
+          hasSupabaseCodeVerifierCookie: true,
+          locale: 'en',
+        }),
+      },
     );
   });
 });

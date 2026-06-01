@@ -37,8 +37,12 @@ import {
   getErrorStatusCode,
   getTtsProvider,
 } from '@/lib/utils';
-import { getGoogleApiErrorStatus } from '@/utils/google-rpc-status';
-import { type GoogleApiError, parseGoogleApiError } from '@/utils/googleErrors';
+import {
+  getGoogleApiErrorStatus,
+  isGoogleQuotaError,
+  isGoogleTransientProviderError,
+} from '@/utils/google-rpc-status';
+import { parseGoogleApiError } from '@/utils/googleErrors';
 
 const { logger, captureException } = Sentry;
 
@@ -52,19 +56,6 @@ function isAbortError(error: unknown): boolean {
   if (error.name === 'AbortError') return true;
   const msg = error.message.toLowerCase();
   return /\babort(?:ed| ?error)\b/.test(msg);
-}
-
-function isGoogleQuotaError(errorPayload: GoogleApiError): boolean {
-  return getGoogleApiErrorStatus(errorPayload) === 'RESOURCE_EXHAUSTED';
-}
-
-function isGoogleTransientProviderError(errorPayload: GoogleApiError): boolean {
-  const status = getGoogleApiErrorStatus(errorPayload);
-  return (
-    status === 'INTERNAL' ||
-    status === 'UNAVAILABLE' ||
-    status === 'DEADLINE_EXCEEDED'
-  );
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration

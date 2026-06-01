@@ -60,3 +60,18 @@ export function getGoogleApiErrorStatus(
 ): GoogleRpcStatus {
   return error.status ?? mapHttpToGoogleRpcStatus(error.code);
 }
+
+export function isGoogleQuotaError(error: GoogleApiErrorWithStatus): boolean {
+  return getGoogleApiErrorStatus(error) === 'RESOURCE_EXHAUSTED';
+}
+
+export function isGoogleTransientProviderError(
+  error: GoogleApiErrorWithStatus,
+): boolean {
+  const status = getGoogleApiErrorStatus(error);
+  return (
+    status === 'INTERNAL' ||
+    status === 'UNAVAILABLE' ||
+    status === 'DEADLINE_EXCEEDED'
+  );
+}

@@ -73,4 +73,104 @@ describe('shouldDropClientSentryEvent', () => {
       true,
     );
   });
+
+  it('drops PostHog recorder security errors', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'SecurityError',
+              value: "Permission to call 'get parentNode' denied.",
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'app:///seguimiento/static/posthog-recorder.js',
+                    function: 'parentNode',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('drops injected script tagName errors without dropping app tagName errors', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
+              stacktrace: {
+                frames: [
+                  {
+                    filename: '<anonymous>',
+                    function: 'addEL_hook',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/components/example.tsx',
+                    function: 'renderTag',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('drops browser media and opaque event rejections without app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'InvalidAccessError',
+              value: 'Track has ended',
+              stacktrace: {
+                frames: [
+                  { filename: '[native code]', function: 'applyConstraints' },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'Event',
+              value: 'Event `Event` (type=error) captured as promise rejection',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
 });
