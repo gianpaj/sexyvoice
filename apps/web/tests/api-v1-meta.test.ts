@@ -106,6 +106,14 @@ describe('/api/v1 metadata endpoints', () => {
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
     ).toBe('gpro');
+    const voicesExample =
+      json.paths['/api/v1/voices'].get.responses[200].content[
+        'application/json'
+      ].examples.available_voices.value.data;
+    expect(voicesExample).toHaveLength(20);
+    expect(
+      voicesExample.some((voice: { model: string }) => voice.model === 'xai'),
+    ).toBe(true);
     const requestSchema =
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .schema;

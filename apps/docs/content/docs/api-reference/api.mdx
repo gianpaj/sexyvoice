@@ -31,7 +31,7 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "gpro",
-    "voice": "poe",
+    "voice": "achernar",
     "input": "Hello from SexyVoice API",
     "style": "calm",
     "seed": 1234
@@ -49,7 +49,7 @@ const response = await fetch('https://sexyvoice.ai/api/v1/speech', {
   },
   body: JSON.stringify({
     model: 'gpro',
-    voice: 'poe',
+    voice: 'achernar',
     input: 'Hello from TypeScript',
     style: 'happy',
     seed: 42,
@@ -101,7 +101,7 @@ response = requests.post(
     },
     json={
         'model': 'gpro',
-        'voice': 'poe',
+        'voice': 'achernar',
         'input': 'Hello from Python',
         'style': 'warm',
         'seed': 42,
