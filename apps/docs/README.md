@@ -1,35 +1,47 @@
 # SexyVoice.ai Documentation
 
 Documentation for [SexyVoice.ai](https://sexyvoice.ai) - AI-powered voice generation platform.
+This is a Next.js application generated with
+[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
 
 **Live docs:** [docs.sexyvoice.ai](https://docs.sexyvoice.ai)
+Run development server:
 
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
-npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
-mint dev
+```bash
+npm run dev
+# or
+pnpm dev
+# or
+yarn dev
 ```
 
-View your local preview at `http://localhost:3000`.
+Open http://localhost:3000 with your browser to see the result.
 
-## Publishing changes
+## Explore
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+In the project, you can see:
 
-## Need help?
+- `src/lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
+- `src/lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
 
-### Troubleshooting
+| Route                     | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `app/(home)`              | The route group for your landing page and other pages. |
+| `app/docs`                | The documentation layout and pages.                    |
+| `app/api/search/route.ts` | The Route Handler for search.                          |
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+### Fumadocs MDX
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
+
+Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
+
+## Learn More
+
+To learn more about Next.js and Fumadocs, take a look at the following
+resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
+  features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs

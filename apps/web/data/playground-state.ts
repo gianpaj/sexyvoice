@@ -73,16 +73,16 @@ export const languageInitialInstructions: Record<CallLanguage, string> = {
 export const defaultLanguage: CallLanguage = 'en';
 
 export interface PlaygroundState {
-  sessionConfig: SessionConfig;
   /** User-created custom characters */
   customCharacters: Preset[];
-  selectedPresetId: string | null;
-  instructions: string;
-  /** Per-character instruction overrides keyed by character ID, then by language */
-  characterOverrides: Record<string, Partial<Record<string, string>>>;
-  language: CallLanguage;
-  initialInstruction: string;
   defaultPresets: Preset[];
+  initialInstruction: string;
+  instructions: string;
+  language: CallLanguage;
+  sceneInstructions: string;
+  selectedPresetId: string | null;
+  selectedSceneId: string | null;
+  sessionConfig: SessionConfig;
 }
 
 export const initialInstruction = languageInitialInstructions[defaultLanguage];
@@ -92,8 +92,9 @@ export const defaultPlaygroundState: PlaygroundState = {
   sessionConfig: { ...defaultSessionConfig },
   customCharacters: [],
   selectedPresetId: null,
+  selectedSceneId: null,
+  sceneInstructions: '',
   instructions,
-  characterOverrides: {},
   language: defaultLanguage,
   initialInstruction,
   defaultPresets: [], // Now populated from DB via SSR props

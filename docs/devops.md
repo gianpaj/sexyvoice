@@ -145,10 +145,8 @@ template.
 
 ### Redis / caching
 
-- `KV_URL`
 - `KV_REST_API_URL`
 - `KV_REST_API_TOKEN`
-- `KV_REST_API_READ_ONLY_TOKEN`
 
 Used for:
 

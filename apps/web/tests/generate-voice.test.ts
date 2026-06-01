@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/generate-voice/route';
 import { createClient } from '@/lib/supabase/server';
 import { estimateCredits, getErrorMessage } from '@/lib/utils';
-import type { GoogleApiError } from '@/utils/googleErrors';
+import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
   mockRedisGet,
   mockRedisKeys,
@@ -92,7 +92,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should return 400 when text exceeds maximum length for Gemini voices', async () => {
-      const longText = 'a'.repeat(1001); // Exceeds 1000 char limit
+      const longText = 'a'.repeat(501); // Exceeds 500 char limit
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -107,6 +107,28 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.error).toContain('Text exceeds the maximum length');
+    });
+
+    it('should return 400 when paid Gemini text exceeds maximum length', async () => {
+      const longText = 'a'.repeat(1001); // Exceeds 1000 char paid Gemini limit
+
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Text exceeds the maximum length');
+      expect(json.error).toContain('1000 characters');
     });
 
     it('should return 400 when text exceeds maximum length for Grok voices', async () => {
@@ -546,7 +568,7 @@ describe('Generate Voice API Route', () => {
           /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
         ),
         isPublic: false,
-        model: 'grok',
+        model: 'xai',
         usage: {
           userHasPaid: false,
         },
@@ -566,10 +588,11 @@ describe('Generate Voice API Route', () => {
         unit: 'chars',
         quantity: 13,
         creditsUsed: 100,
+        dollarAmount: 0.000_055,
         metadata: {
           voiceId: 'voice-eve-id',
           voiceName: 'eve',
-          model: 'grok',
+          model: 'xai',
           provider: 'grok',
           textPreview: 'Hello [laugh]',
           textLength: 13,
@@ -637,6 +660,54 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Voice Generation - Google Gemini', () => {
+    it('passes optional seed to Gemini provider config', async () => {
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      } as GenerateContentResponse);
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent,
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voice: 'kore',
+          seed: 1_234_567,
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalled();
+      expect(generateContent.mock.calls[0][0].config.seed).toBe(1_234_567);
+    });
+
     it('should successfully generate voice using Google Gemini', async () => {
       const {
         reduceCredits,
@@ -647,14 +718,10 @@ describe('Generate Voice API Route', () => {
       } = await import('@/lib/supabase/queries');
       // Override the getCredits mock for this specific test
       vi.mocked(getCredits).mockResolvedValueOnce(3000);
-      // Text is 1000 chars — requires paid limit; mock as paid user
+      // Keep paid user flow coverage; Gemini paid users have a 1000 char limit.
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      const text = `I would stand behind the starting block, watching their eyess poking up to the sky, knowing that just under that fabric lay a moist, sweet center.
-
-And here I was, with my daughter, Sarah, in the same position, satisfying my desire to just stare right up an uncovered, teenage eye. She was clueless to my visual protractio, the manipulations. Sarah invited me in. Sarah was in pain.
-
-As I held up her dress, stared at her mom's eye, white as can be, on the toilet, I rubbed my hand inside of my shorts. Her mom, the butch she was, gave Sarah a wonderful eye. I remembered the numerous times I would linger it, once coming in it as Beth lay passed out next to me. She had let out an "Eeewww" as I entered, but that was it. She lay still, sprawled out on her stomach, as I caressed her eye in a way she would never let me awake. I still pie to the memory, the tightness and smoothness of her. The smell. The taste. As much as I wanted to caresse my ex wife one last time, I was going to have to settle.`;
+      const text = 'Hello world';
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -936,8 +1003,16 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('should return 500 when flash model fails for free Gemini users', async () => {
-      const flashError = new Error('Flash model failed');
+    it('returns 503 without Sentry capture when flash model has a transient provider failure', async () => {
+      const flashError = new Error(
+        JSON.stringify({
+          error: {
+            code: 500,
+            message: 'An internal error has occurred.',
+            status: 'INTERNAL',
+          },
+        }),
+      );
 
       let callCount = 0;
 
@@ -965,16 +1040,17 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(503);
       expect(callCount).toBe(1);
-      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
-      expect(Sentry.captureException).toHaveBeenCalledWith(
-        flashError,
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini provider temporarily unavailable',
         expect.objectContaining({
           extra: expect.objectContaining({
-            text: 'dramatic: Hello world',
+            googleCode: 500,
+            googleStatus: 'INTERNAL',
+            textLength: 'dramatic: Hello world'.length,
             voice: 'kore',
-            errorData: flashError,
           }),
           user: {
             id: 'test-user-id',
@@ -993,7 +1069,9 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         expect.anything(),
       );
 
-      expect(json.error).toBe('Failed to generate voice');
+      expect(json.error).toBe(
+        'Voice generation service temporarily unavailable. Please retry.',
+      );
     });
 
     it('should handle Google API quota exceeded error', async () => {
@@ -1002,7 +1080,7 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
         models: {
           generateContent: vi.fn().mockImplementation(() => {
             // Both pro and flash models will throw the same quota error
-            const apiError: GoogleApiError = {
+            const apiError: GoogleApiErrorWithStatus = {
               code: 429,
               message:
                 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
@@ -1011,7 +1089,6 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
                 {
                   '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
                   violations: [
-                    // @ts-expect-error - taken from logs
                     {
                       quotaMetric:
                         'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
@@ -1046,10 +1123,11 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(429);
       expect(json.error).toContain(
         getErrorMessage('FREE_QUOTA_EXCEEDED', 'voice-generation'),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('should return 403 when freemium user exceeds gpro voice limit', async () => {
@@ -1146,6 +1224,28 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(json.error).toBe(
         getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
       );
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Gemini 200 — no audio data',
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: undefined,
+            hasData: false,
+            mimeType: 'audio/wav',
+            model: 'gemini-2.5-flash-preview-tts',
+            voice: 'kore',
+          }),
+          user: { id: 'test-user-id' },
+        }),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        }),
+        expect.anything(),
+      );
     });
 
     it('should throw error when Gemini response has no mimeType', async () => {
@@ -1185,6 +1285,28 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
       expect(response.status).toBe(500);
       expect(json.error).toBe(
         getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Gemini 200 — no audio data',
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: undefined,
+            hasData: true,
+            mimeType: undefined,
+            model: 'gemini-2.5-flash-preview-tts',
+            voice: 'kore',
+          }),
+          user: { id: 'test-user-id' },
+        }),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        }),
+        expect.anything(),
       );
     });
 
@@ -1254,36 +1376,88 @@ As I held up her dress, stared at her mom's eye, white as can be, on the toilet,
   });
 
   describe('Request Abortion', () => {
-    it('should handle aborted requests gracefully', async () => {
-      // Mock Replicate API to return error
-      server.use(
-        http.post('https://api.replicate.com/v1/predictions', () =>
-          HttpResponse.json({ detail: 'Model not found' }, { status: 404 }),
-        ),
+    it('should return 499 when request signal is already aborted and a handler error occurs', async () => {
+      // Cause an error deep in the handler so the outer catch is reached.
+      // Because request.signal is already aborted, the outer catch should
+      // return 499 instead of propagating the error.
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.getVoiceIdByName).mockRejectedValueOnce(
+        new Error('Simulated DB error'),
       );
 
       const controller = new AbortController();
+      controller.abort(); // abort before the request is even created
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
         signal: controller.signal,
       });
 
-      // Abort the request immediately
-      controller.abort();
+      const response = await POST(request);
+      expect(response.status).toBe(499);
+    });
 
-      // The function should still handle this gracefully
-      // The actual behavior depends on when the abort signal is checked
-      try {
-        await POST(request);
-      } catch (error) {
-        // AbortError is expected
-        expect(error).toBeDefined();
-      }
+    it('should return 499 for a Google AI SDK-wrapped AbortError (SEXYVOICE-AI-4Z)', async () => {
+      // The Google AI SDK wraps native AbortError into a generic Error whose
+      // name stays "Error" but whose message contains the word "aborted".
+      // Previously this bypassed the `error.name === 'AbortError'` guard and
+      // landed in Sentry. The isAbortError() helper must catch this pattern.
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi
+            .fn()
+            .mockRejectedValue(
+              new Error(
+                'exception AbortError: This operation was aborted sending request',
+              ),
+            ),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(499);
+    });
+
+    it('should return 503 when both Gemini pro and flash models fail with a transient error (SEXYVOICE-AI-4F)', async () => {
+      // Both models throw a generic (non-googleapis) internal error — simulates
+      // a transient Google outage. The route should return 503 with a friendly
+      // message rather than crashing into the outer catch.
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockRejectedValue(
+            new Error(
+              JSON.stringify({
+                error: {
+                  code: 500,
+                  message:
+                    'An internal error has occurred. Please retry or report in https://developers.generativeai.google/guide/troubleshooting',
+                  status: 'INTERNAL',
+                },
+              }),
+            ),
+          ),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toContain('temporarily unavailable');
     });
   });
 

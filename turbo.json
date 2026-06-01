@@ -5,6 +5,10 @@
       "dependsOn": [
         "^build"
       ],
+      "env": [
+        "OPENROUTER_API_KEY",
+        "OPENROUTER_MODEL"
+      ],
       "outputs": [
         ".next/**",
         "!.next/cache/**",

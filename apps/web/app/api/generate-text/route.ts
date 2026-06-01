@@ -7,11 +7,10 @@ import { NextResponse } from 'next/server';
 import { getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
-// gemini-3.1-flash-lite-preview
-// Launch stage: n/a
-// Release date: March 3, 2026
-// Discontinuation date: n/a
-const model = google('gemini-3.1-flash-lite-preview');
+// gemini-3.1-flash-lite
+// Latest update: May 7, 2026
+// Discontinuation date: May 7, 2027
+const model = google('gemini-3.1-flash-lite');
 
 export async function POST(request: Request) {
   const {

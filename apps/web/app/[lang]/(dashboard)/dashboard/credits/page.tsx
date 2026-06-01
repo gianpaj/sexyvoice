@@ -5,6 +5,7 @@ import { getMessages, getTranslations } from 'next-intl/server';
 
 import PricingTable from '@/components/pricing-table';
 import { Button } from '@/components/ui/button';
+import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
@@ -29,50 +30,66 @@ export default async function CreditsPage(props: {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
-
   const userData = user && (await getUserById(user.id));
   if (!(user && userData)) {
     throw new Error('User not found');
   }
 
-  const stripeId = await createOrRetrieveCustomer(
-    user.id,
-    user.email!,
-    userData.stripe_id,
-  );
+  let shouldShowSubscriptionPlans = false;
+  let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
+  let existingTransactions:
+    | Pick<
+        Tables<'credit_transactions'>,
+        'id' | 'created_at' | 'description' | 'type' | 'amount'
+      >[]
+    | null = null;
 
-  if (!stripeId) {
-    const error = new Error('Failed to create or retrieve Stripe customer.');
-    console.error(error.message);
-    captureException(error, {
-      level: 'error',
-      user: { id: user.id, email: user.email },
-    });
-    throw error;
-  }
+  if (isE2E()) {
+    existingTransactions = E2E_CREDIT_TRANSACTIONS;
+  } else {
+    const stripeId = await createOrRetrieveCustomer(
+      user.id,
+      user.email!,
+      userData.stripe_id,
+    );
 
-  userData.stripe_id = stripeId;
-
-  let customerData = await getCustomerData(stripeId);
-  let shouldShowSubscriptionPlans =
-    !customerData || customerData.status !== 'active';
-
-  if (shouldShowSubscriptionPlans) {
-    try {
-      customerData = await refreshCustomerSubscriptionData(stripeId);
-      shouldShowSubscriptionPlans = customerData.status !== 'active';
-    } catch (error) {
-      console.error('Failed to refresh Stripe subscription data', error);
-      shouldShowSubscriptionPlans = false;
+    if (!stripeId) {
+      const error = new Error('Failed to create or retrieve Stripe customer.');
+      console.error(error.message);
+      captureException(error, {
+        level: 'error',
+        user: { id: user.id, email: user.email },
+      });
+      throw error;
     }
-  }
 
-  const { data: existingTransactions } = await supabase
-    .from('credit_transactions')
-    .select('id, created_at, description, type, amount')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(100);
+    userData.stripe_id = stripeId;
+
+    let customerData = await getCustomerData(stripeId);
+    shouldShowSubscriptionPlans =
+      !customerData || customerData.status !== 'active';
+
+    if (shouldShowSubscriptionPlans) {
+      try {
+        customerData = await refreshCustomerSubscriptionData(stripeId);
+        shouldShowSubscriptionPlans = customerData.status !== 'active';
+      } catch (error) {
+        console.error('Failed to refresh Stripe subscription data', error);
+        shouldShowSubscriptionPlans = false;
+      }
+    }
+
+    if (shouldShowSubscriptionPlans) {
+      clientSecret = await createCustomerSession(userData.id, stripeId);
+    }
+
+    ({ data: existingTransactions } = await supabase
+      .from('credit_transactions')
+      .select('id, created_at, description, type, amount')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100));
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -129,3 +146,29 @@ export default async function CreditsPage(props: {
     </div>
   );
 }
+
+const NextStripePricingTable = ({
+  clientSecret,
+}: {
+  clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
+}) => {
+  const pricingTableId = process.env.STRIPE_PRICING_ID;
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+
+  if (!(pricingTableId && publishableKey && clientSecret)) return null;
+
+  return (
+    <>
+      <Script
+        src="https://js.stripe.com/v3/pricing-table.js"
+        strategy="lazyOnload"
+      />
+      {/* @ts-ignore */}
+      <stripe-pricing-table
+        customer-session-client-secret={clientSecret.client_secret}
+        pricing-table-id={pricingTableId}
+        publishable-key={publishableKey}
+      />
+    </>
+  );
+};

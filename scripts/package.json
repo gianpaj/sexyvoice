@@ -1,17 +1,17 @@
 {
   "name": "@sexyvoice/scripts",
+  "dependencies": {
+    "@supabase/supabase-js": "catalog:",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "tsx": "catalog:"
+  },
   "private": true,
   "scripts": {
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
     "backfill-free-call": "tsx backfill-free-call.mts",
     "refund-credits": "tsx refund-credits.mts",
     "reset-freeloader-credits": "tsx reset-freeloader-credits.mts"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.86.2",
-    "dotenv": "^16.6.1"
-  },
-  "devDependencies": {
-    "tsx": "4.19.3"
   }
 }

@@ -32,6 +32,7 @@ import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
 import { isFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
+import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import {
@@ -41,25 +42,88 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 
-interface VoiceGroup {
+export interface VoiceGroup {
   label: string;
   voices: Tables<'voices'>[];
 }
 
+interface VoiceGroupLabels {
+  featuredGroupLabel: string;
+  geminiGroupLabel: string;
+}
+
+const defaultFeaturedGroupLabel = 'Featured';
+const defaultGeminiGroupLabel = 'Gemini 🌍';
+const grokGroupLabel = 'Grok ✨';
+
 function isMultilingualVoice(voice: Tables<'voices'>) {
-  return voice.model === 'grok' || voice.language === 'multiple';
+  return voice.model === 'gpro';
+}
+function isGrokVoice(voice: Tables<'voices'>) {
+  return voice.model === 'xai';
 }
 
 function sortVoices(voices: Tables<'voices'>[]) {
-  return [...voices].sort((voiceA, voiceB) => {
-    const isFeaturedA = isFeaturedVoice(voiceA);
-    const isFeaturedB = isFeaturedVoice(voiceB);
+  return [...voices].sort(
+    (voiceA, voiceB) =>
+      voiceA.sort_order - voiceB.sort_order ||
+      voiceA.name.localeCompare(voiceB.name),
+  );
+}
 
-    if (isFeaturedA && !isFeaturedB) return -1;
-    if (!isFeaturedA && isFeaturedB) return 1;
+function getGroupLabel(
+  voice: Tables<'voices'>,
+  geminiGroupLabel: string,
+): string {
+  if (isMultilingualVoice(voice)) return geminiGroupLabel;
+  if (isGrokVoice(voice)) return grokGroupLabel;
+  return voice.language;
+}
 
-    return voiceA.name.localeCompare(voiceB.name);
-  });
+export function getVoiceGroups(
+  publicVoices: Tables<'voices'>[],
+  { featuredGroupLabel, geminiGroupLabel }: VoiceGroupLabels,
+): VoiceGroup[] {
+  const featuredVoices = sortVoices(
+    publicVoices.filter((voice) => isFeaturedVoice(voice)),
+  );
+
+  const nonFeaturedVoices = publicVoices.filter(
+    (voice) => !isFeaturedVoice(voice),
+  );
+
+  const groupedVoices = Object.entries(
+    nonFeaturedVoices.reduce(
+      (acc, voice) => {
+        const group = getGroupLabel(voice, geminiGroupLabel);
+
+        if (!acc[group]) {
+          acc[group] = [];
+        }
+
+        acc[group].push(voice);
+        return acc;
+      },
+      {} as Record<string, Tables<'voices'>[]>,
+    ),
+  ).map(
+    ([label, voices]) =>
+      ({
+        label,
+        voices: sortVoices(voices),
+      }) satisfies VoiceGroup,
+  );
+
+  const groups: VoiceGroup[] = [];
+
+  if (featuredVoices.length > 0) {
+    groups.push({
+      label: featuredGroupLabel,
+      voices: featuredVoices,
+    });
+  }
+
+  return [...groups, ...groupedVoices];
 }
 
 export function VoiceSelector({
@@ -89,11 +153,12 @@ export function VoiceSelector({
       featuredGroupLabel?: string;
       multilingualGroupLabel?: string;
     };
-  const featuredBadgeLabel = voiceSelectorLabels.featuredBadge ?? 'Featured';
   const featuredGroupLabel =
-    voiceSelectorLabels.featuredGroupLabel ?? 'Featured  ✨';
-  const multilingualGroupLabel =
-    voiceSelectorLabels.multilingualGroupLabel ?? 'Multilingual 🌍';
+    voiceSelectorLabels.featuredGroupLabel ?? defaultFeaturedGroupLabel;
+  const geminiGroupLabel =
+    voiceSelectorLabels.multilingualGroupLabel ?? defaultGeminiGroupLabel;
+  const featuredBadgeLabel =
+    voiceSelectorLabels.featuredBadge ?? featuredGroupLabel;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -105,56 +170,14 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  const voiceGroups = useMemo(() => {
-    const featuredVoices = sortVoices(
-      publicVoices.filter((voice) => isFeaturedVoice(voice)),
-    );
-
-    const nonFeaturedVoices = publicVoices.filter(
-      (voice) => !isFeaturedVoice(voice),
-    );
-
-    const groupedVoices = Object.entries(
-      nonFeaturedVoices.reduce(
-        (acc, voice) => {
-          const language = isMultilingualVoice(voice)
-            ? multilingualGroupLabel
-            : voice.language;
-
-          if (!acc[language]) {
-            acc[language] = [];
-          }
-
-          acc[language].push(voice);
-          return acc;
-        },
-        {} as Record<string, Tables<'voices'>[]>,
-      ),
-    )
-      .map(
-        ([label, voices]) =>
-          ({
-            label,
-            voices: sortVoices(voices),
-          }) satisfies VoiceGroup,
-      )
-      .sort((groupA, groupB) => {
-        if (groupA.label === multilingualGroupLabel) return -1;
-        if (groupB.label === multilingualGroupLabel) return 1;
-        return groupA.label.localeCompare(groupB.label);
-      });
-
-    const groups: VoiceGroup[] = [];
-
-    if (featuredVoices.length > 0) {
-      groups.push({
-        label: featuredGroupLabel,
-        voices: featuredVoices,
-      });
-    }
-
-    return [...groups, ...groupedVoices];
-  }, [featuredGroupLabel, multilingualGroupLabel, publicVoices]);
+  const voiceGroups = useMemo(
+    () =>
+      getVoiceGroups(publicVoices, {
+        featuredGroupLabel,
+        geminiGroupLabel,
+      }),
+    [featuredGroupLabel, geminiGroupLabel, publicVoices],
+  );
 
   return (
     <Card>
@@ -162,7 +185,7 @@ export function VoiceSelector({
         <CardTitle className="flex flex-row">
           {dict.voiceSelector.title}
           <TooltipProvider>
-            <Tooltip delayDuration={100} /*supportMobileTap*/>
+            <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
                 <Button
                   className="h-auto w-auto self-end pb-[2px]"
@@ -189,7 +212,7 @@ export function VoiceSelector({
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger className="sm:w-1/3">
+          <SelectTrigger className="w-full sm:w-1/3">
             <span className="flex! items-center gap-2">
               <SelectValue placeholder="Select a voice" />
               {selectedVoice && isFeaturedVoice(selectedVoice) && (
@@ -229,7 +252,7 @@ export function VoiceSelector({
         </Select>
         <AudioProvider>
           {selectedVoice?.sample_url && (
-            <div className="flex flex-col items-center justify-start gap-2 py-2 sm:flex-row">
+            <div className="flex flex-col items-center justify-start gap-4 py-2 sm:flex-row">
               <AudioPlayerWithContext
                 playAudioTitle={dict.playAudio}
                 showWaveform
@@ -239,11 +262,21 @@ export function VoiceSelector({
               <div>
                 <p className="text-muted-foreground text-sm">
                   <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
-                  prompt: <i>{selectedVoice.sample_prompt}</i>
+                  prompt:{' '}
+                  {isGrokVoice ? (
+                    <span className="whitespace-break-spaces">
+                      <GrokTaggedText
+                        className="inline-flex rounded bg-gray-700 px-1 py-0.5 font-mono text-gray-200 text-xs"
+                        text={selectedVoice.sample_prompt ?? ''}
+                      />
+                    </span>
+                  ) : (
+                    <i>{selectedVoice.sample_prompt}</i>
+                  )}
                 </p>
                 {getEmotionTags(selectedVoice.language) && (
                   <TooltipProvider>
-                    <Tooltip delayDuration={100} /*supportMobileTap*/>
+                    <Tooltip delayDuration={100}>
                       <TooltipTrigger asChild>
                         <Button
                           className="h-auto w-auto p-1"
@@ -272,7 +305,8 @@ export function VoiceSelector({
         {isGeminiVoice && (
           <div className="relative">
             <Textarea
-              className="textarea-1 pr-16 transition-[height] duration-200 ease-in-out"
+              className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
+              data-testid="generate-style-textarea"
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
               ref={textareaRef}

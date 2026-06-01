@@ -366,7 +366,7 @@ export function PlatformWrappedClient() {
         {/* Footer */}
         <footer className="pt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            SexyVoice.ai — Expressive Voices, Uncensored
+            SexyVoice.ai — Expressive Voices, Limitless Possibilities
           </p>
         </footer>
       </div>

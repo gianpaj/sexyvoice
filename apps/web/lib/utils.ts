@@ -38,13 +38,14 @@ const DEFAULT_CREDIT_MULTIPLIER = 4;
 const GEMINI_CREDIT_MULTIPLIER = 1.1;
 const GROK_CHAR_BUCKET = 100;
 const GROK_CREDITS_PER_BUCKET = 100;
+const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 
 export function getTtsProvider(model?: string): TtsProvider {
   if (model === 'gpro') {
     return 'gemini';
   }
 
-  if (model === 'grok') {
+  if (model === 'xai') {
     return 'grok';
   }
 
@@ -130,6 +131,14 @@ export function estimateGrokCredits(text: string): number {
   }
 
   return Math.ceil(text.length / GROK_CHAR_BUCKET) * GROK_CREDITS_PER_BUCKET;
+}
+
+export function calculateGrokTtsDollarAmount(text: string): number {
+  const normalizedLength = Math.max(0, text.length);
+  const rawAmount =
+    (normalizedLength / 1_000_000) * GROK_TTS_DOLLARS_PER_MILLION_CHARS;
+
+  return Number.parseFloat(rawAmount.toFixed(6));
 }
 
 export function estimateCredits(
@@ -234,6 +243,8 @@ export const ERROR_CODES = {
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   XAI_TTS_ERROR: 'XAI_TTS_ERROR',
+  GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
+  PROVIDER_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
 } as const;
 
@@ -249,6 +260,8 @@ export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   OTHER_GEMINI_BLOCK: 500,
   REPLICATE_ERROR: 500,
   XAI_TTS_ERROR: 500,
+  GEMINI_PROVIDER_UNAVAILABLE: 503,
+  PROVIDER_UNAVAILABLE: 503,
   THIRD_P_QUOTA_EXCEEDED: 503,
   INTERNAL_SERVER_ERROR: 500,
 };
@@ -302,6 +315,15 @@ export const getErrorMessage = (
     },
     XAI_TTS_ERROR: {
       default: 'Voice generation failed, please retry',
+    },
+    GEMINI_PROVIDER_UNAVAILABLE: {
+      default:
+        'Voice generation service temporarily unavailable. Please retry.',
+    },
+    PROVIDER_UNAVAILABLE: {
+      default: 'Provider is temporarily unavailable. Please try again.',
+      'voice-cloning':
+        'Voice cloning provider is temporarily unavailable. Please try again.',
     },
     INTERNAL_SERVER_ERROR: {
       default: 'An internal server error occurred. Please try again later.',

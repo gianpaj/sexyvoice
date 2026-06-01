@@ -13,6 +13,8 @@ import { cn } from '@/lib/utils';
 
 export interface PremiumActionButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Whether the current user can access the premium action. */
+  isPaidUser?: boolean;
   /** Tooltip text shown when hovering over the button for free users. */
   premiumTooltip?: string;
   /** Extra class names applied to the outer wrapper. */
@@ -38,6 +40,7 @@ const PremiumActionButton = React.forwardRef<
 >(
   (
     {
+      isPaidUser = false,
       premiumTooltip = 'Upgrade to unlock',
       disabled,
       className,
@@ -49,48 +52,63 @@ const PremiumActionButton = React.forwardRef<
   ) => {
 
     const button = (
-      <div className={cn('relative inline-flex', wrapperClassName)}>
-        <button
-          ref={ref}
-          className={cn(
-            'inline-flex items-center justify-center transition-all',
-            disabled && 'pointer-events-none opacity-50',
-            className,
-          )}
-          disabled={disabled}
-          type="button"
-          {...props}
-        >
-          {children}
-        </button>
+      <button
+        ref={ref}
+        className={cn(
+          'inline-flex items-center justify-center transition-all',
+          disabled && 'pointer-events-none opacity-50',
+          className,
+        )}
+        disabled={disabled}
+        type="button"
+        {...props}
+      >
+        {children}
+      </button>
+    );
 
-          <span
-            aria-label="Premium feature"
-            className="pointer-events-none absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-linear-to-tr from-amber-500 to-yellow-400 shadow-sm"
-          >
-            <Sparkles className="h-2.5 w-2.5 text-white" />
-          </span>
+    if (isPaidUser) {
+      return (
+        <div
+          className={cn(
+            'inline-flex items-center justify-center',
+            wrapperClassName,
+          )}
+        >
+          {button}
+        </div>
+      );
+    }
+
+    const lockedButton = (
+      <div className={cn('relative inline-flex', wrapperClassName)}>
+        {button}
+
+        <span
+          aria-label="Premium feature"
+          className="pointer-events-none absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-linear-to-tr from-amber-500 to-yellow-400 shadow-sm"
+        >
+          <Sparkles className="h-2.5 w-2.5 text-white" />
+        </span>
       </div>
     );
 
     // Wrap with a tooltip for free users so they know why it's disabled
-      return (
-        <TooltipProvider>
-          <Tooltip delayDuration={200} /*supportMobileTap*/>
-            <TooltipTrigger asChild>
-              {/* Wrap in a span so the tooltip still triggers on a disabled button */}
-              <span className="inline-flex" tabIndex={0}>
-                {button}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-xs">{premiumTooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-
-    return button;
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={200}>
+          <TooltipTrigger asChild>
+            {/* Wrap in a span so the tooltip still triggers on a disabled button */}
+            <span className="inline-flex" tabIndex={0}>
+              {lockedButton}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs">{premiumTooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   },
 );
 

@@ -1,6 +1,6 @@
 'use server';
 
-import * as Sentry from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
 import {
@@ -12,10 +12,37 @@ import { hasEverHadRealSubscription, stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
+const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
+const CHECKOUT_INVALID_PACKAGE_ID = 'CHECKOUT_INVALID_PACKAGE_ID';
+
+type CheckoutPackageId = Exclude<PackageType, 'free'>;
+
+const CHECKOUT_PACKAGE_IDS = Object.keys(getTopupPackages('en')).filter(
+  (packageId): packageId is CheckoutPackageId => packageId !== 'free',
+);
+
+const isCheckoutPackageId = (value: unknown): value is CheckoutPackageId =>
+  typeof value === 'string' &&
+  CHECKOUT_PACKAGE_IDS.includes(value as CheckoutPackageId);
+
+const shouldReportCheckoutConfigurationError = () =>
+  process.env.VERCEL_ENV === 'production';
+
+const shouldReportInvalidCheckoutPackageId = () =>
+  process.env.VERCEL_ENV === 'production';
+
+const isCheckoutSetupError = (
+  error: unknown,
+): error is Error & { cause: unknown } =>
+  Error.isError(error) &&
+  [CHECKOUT_CONFIGURATION_ERROR, CHECKOUT_INVALID_PACKAGE_ID].includes(
+    String(error.cause),
+  );
+
 export interface CheckoutMetadata {
-  credits?: string;
-  dollarAmount?: string;
-  packageId: PackageType;
+  credits: string;
+  dollarAmount: string;
+  packageId: CheckoutPackageId;
   promo?: string;
   subscriptionDiscountCouponId?: string;
   type: 'subscription' | 'topup';
@@ -24,7 +51,7 @@ export interface CheckoutMetadata {
 
 export async function createCheckoutSession(
   data: FormData,
-  packageId: PackageType,
+  packageId: CheckoutPackageId,
 ): Promise<{ client_secret: string | null; url: string | null }> {
   try {
     const ui_mode = data.get(
@@ -34,38 +61,19 @@ export async function createCheckoutSession(
       (data.get('type') as CheckoutMetadata['type']) || 'topup';
     const lang = 'en';
 
-    const topupPackages = getTopupPackages(lang);
-    const subscriptionPackages = getSubscriptionPackages(lang);
-    const package_ =
-      checkoutType === 'subscription'
-        ? subscriptionPackages[
-            packageId as Exclude<keyof typeof subscriptionPackages, 'free'>
-          ]
-        : topupPackages[packageId];
+    if (!isCheckoutPackageId(packageId)) {
+      throw new Error('Invalid checkout package', {
+        cause: CHECKOUT_INVALID_PACKAGE_ID,
+      });
+    }
+
+    const package_ = getTopupPackages('en')[packageId];
 
     // Verify the price ID exists to avoid runtime errors
     if (!package_?.priceId) {
-      const error = new Error('Invalid package id');
-      console.error(
-        `Missing price ID for package id: ${packageId} - priceId: ${package_?.priceId}`,
-      );
-      Sentry.captureException(error, {
-        tags: {
-          section: 'stripe_actions',
-          event_type: 'missing_price_id',
-        },
-        extra: {
-          packageId,
-          checkoutType,
-          priceId: package_?.priceId,
-          available_packages: Object.keys(
-            checkoutType === 'subscription'
-              ? subscriptionPackages
-              : topupPackages,
-          ),
-        },
+      throw new Error('Checkout package missing price ID', {
+        cause: CHECKOUT_CONFIGURATION_ERROR,
       });
-      throw error;
     }
 
     const supabase = await createClient();
@@ -77,7 +85,7 @@ export async function createCheckoutSession(
     // biome-ignore lint/complexity/useOptionalChain: needed
     if (!(userData && userData.stripe_id)) {
       const error = new Error('User not found or Stripe ID missing');
-      Sentry.captureException(error, {
+      captureException(error, {
         user: { id: user?.id, email: user?.email },
         tags: {
           section: 'stripe_actions',
@@ -157,7 +165,46 @@ export async function createCheckoutSession(
     };
   } catch (error) {
     console.error('Error creating checkout session:', error);
-    Sentry.captureException(error, {
+    if (isCheckoutSetupError(error)) {
+      if (
+        error.cause === CHECKOUT_INVALID_PACKAGE_ID &&
+        shouldReportInvalidCheckoutPackageId()
+      ) {
+        captureMessage('Invalid checkout package id submitted.', {
+          level: 'info',
+          tags: {
+            section: 'stripe_actions',
+            event_type: 'invalid_package_id',
+          },
+          extra: {
+            packageId,
+            available_packages: CHECKOUT_PACKAGE_IDS,
+            vercelEnv: process.env.VERCEL_ENV ?? null,
+          },
+        });
+      }
+
+      if (
+        error.cause === CHECKOUT_CONFIGURATION_ERROR &&
+        shouldReportCheckoutConfigurationError()
+      ) {
+        captureException(error, {
+          tags: {
+            section: 'stripe_actions',
+            event_type: 'missing_price_id',
+          },
+          extra: {
+            packageId,
+            available_packages: Object.keys(getTopupPackages('en')),
+            vercelEnv: process.env.VERCEL_ENV ?? null,
+          },
+        });
+      }
+
+      throw error;
+    }
+
+    captureException(error, {
       tags: {
         section: 'stripe_actions',
         event_type: 'checkout_session_creation_error',

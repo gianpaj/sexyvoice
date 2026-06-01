@@ -419,6 +419,7 @@ export function PresetSelector({
             aria-label={dict.addCustomCharacter}
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
             disabled={isConnected}
+            isPaidUser={isPaidUser}
             onClick={handleOpenCreateDialog}
             premiumTooltip={dict.upgradePremiumTooltip}
           >
@@ -467,7 +468,7 @@ export function PresetSelector({
                             '__NAME__',
                             preset.name,
                           )}
-                          className="absolute -top-1 -right-1 z-10 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
+                          className="absolute top-0 -right-1 z-10 rounded-full bg-red-800 p-1 text-destructive-foreground transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
                           onClick={(e) => {
                             e.stopPropagation();
                             setCharacterToDelete({
@@ -482,7 +483,7 @@ export function PresetSelector({
                           )}
                           type="button"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-2.5 w-2.5 text-white" />
                         </button>
                       )}
                     </div>
@@ -645,7 +646,7 @@ export function PresetSelector({
       <CreateCharacterDialog
         callVoices={callVoices}
         dict={dict.createCharacter}
-        isPaidUser={!isPaidUser}
+        isPaidUser={isPaidUser}
         onOpenChange={setShowCreateDialog}
         onSave={handleCreateCharacter}
         open={showCreateDialog}

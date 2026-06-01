@@ -39,11 +39,10 @@ const fakeUserCharacter = {
   voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
   localized_descriptions: {},
   session_config: {
-    model: 'grok-4-1-fast-non-reasoning',
+    model: 'grok-voice-think-fast-1.0',
     voice: 'Ara',
     temperature: 0.8,
     maxOutputTokens: null,
-    grokImageEnabled: false,
   },
   sort_order: 0,
   image: null,
@@ -287,11 +286,10 @@ function validCreateBody(overrides: Record<string, unknown> = {}) {
     prompt: 'You are a helpful test character.',
     voiceName: 'Ara',
     sessionConfig: {
-      model: 'grok-4-1-fast-non-reasoning',
+      model: 'grok-voice-think-fast-1.0',
       voice: 'Ara',
       temperature: 0.8,
       maxOutputTokens: null,
-      grokImageEnabled: false,
     },
     ...overrides,
   };

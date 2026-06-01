@@ -31,6 +31,12 @@ export default async function GeneratePage(props: {
     .eq('user_id', userId)
     .single()) || { amount: 0 };
   const credits = creditsData || { amount: 0 };
+  const isPlaywrightCreditsBypassEnabled =
+    process.env.E2E_TEST_MODE === 'true' &&
+    !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
+    user?.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
+  const hasEnoughCredits =
+    credits.amount >= 10 || isPlaywrightCreditsBypassEnabled;
 
   const [{ data: creditTransactions }, isPaidUser, { data: publicVoices }] =
     await Promise.all([
@@ -44,7 +50,9 @@ export default async function GeneratePage(props: {
         .from('voices')
         .select('*')
         .eq('feature', 'tts')
-        .eq('is_public', true),
+        .eq('is_public', true)
+        .order('sort_order')
+        .order('name'),
     ]);
 
   if (!publicVoices) {
@@ -73,7 +81,7 @@ export default async function GeneratePage(props: {
       <div className="grid gap-6 pb-16">
         <GenerateUI
           dict={dict.generate}
-          hasEnoughCredits={credits.amount >= 10}
+          hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
           publicVoices={publicVoices}
         />
