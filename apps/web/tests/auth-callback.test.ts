@@ -1,5 +1,5 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/auth/callback/route';
 import { createClient } from '@/lib/supabase/server';
@@ -34,6 +34,10 @@ describe('OAuth callback route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('handles missing PKCE verifier errors without Sentry telemetry', async () => {
