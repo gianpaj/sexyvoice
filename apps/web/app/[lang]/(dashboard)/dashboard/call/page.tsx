@@ -15,7 +15,7 @@ export default async function Call(props: {
   const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
-  const callFaq = dict.landing.faq.groups.find(
+  const callFaq = dict.landing?.faq?.groups?.find(
     (group) => group.id === 'liveCalling',
   );
 

@@ -35,14 +35,14 @@ export function CallFaq({
       <dl className="flex flex-col gap-3">
         {questions.map((faq, i) => (
           <div
-            className="rounded-md border border-gray-500 bg-accent px-5 py-4"
+            className="rounded-md border border-border bg-accent px-5 py-4"
             key={i}
           >
             <dt className="font-medium text-foreground text-sm">
               {faq.question}
             </dt>
             <dd className="mt-1 whitespace-pre-wrap text-muted-foreground text-sm">
-              {faq.answer.replace('{count}', String(CREDITS_PER_MINUTE))}
+              {faq.answer.replaceAll('{count}', String(CREDITS_PER_MINUTE))}
             </dd>
           </div>
         ))}
