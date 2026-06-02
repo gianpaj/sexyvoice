@@ -70,7 +70,7 @@ function getGeminiProviderFailure(
   const proGoogleError = parseGoogleApiError(proError);
   const flashGoogleError = parseGoogleApiError(flashError);
   const parsedErrors = [proGoogleError, flashGoogleError].filter(
-    (error) => error !== null,
+    (error): error is NonNullable<typeof error> => error !== null,
   );
 
   if (flashGoogleError && isGoogleQuotaError(flashGoogleError)) {
