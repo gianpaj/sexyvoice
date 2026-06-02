@@ -12,8 +12,8 @@ import {
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 
 interface CallFaqQuestion {
-  question: string;
   answer: string;
+  question: string;
 }
 
 export function CallFaq({
