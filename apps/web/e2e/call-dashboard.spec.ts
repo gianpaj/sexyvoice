@@ -99,6 +99,10 @@ test.describe('Call Dashboard - Authenticated User', () => {
     await callPage.expectNoticeTextVisible();
   });
 
+  test('should display the FAQ section when disconnected', async () => {
+    await callPage.expectCallFaqVisible();
+  });
+
   test('should display configuration form with form element', async () => {
     await callPage.expectFormPresent();
   });

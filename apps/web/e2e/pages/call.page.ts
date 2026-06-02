@@ -36,6 +36,9 @@ export class CallPage {
   // Notice text
   readonly noticeText: Locator;
 
+  // FAQ section (shown only when no call is in progress)
+  readonly callFaq: Locator;
+
   constructor(page: Page) {
     this.page = page;
 
@@ -62,6 +65,9 @@ export class CallPage {
 
     // Notice text at the bottom of the page
     this.noticeText = page.getByTestId('call-notice-text');
+
+    // FAQ section — only rendered while disconnected
+    this.callFaq = page.getByTestId('call-faq');
   }
 
   /**
@@ -162,6 +168,13 @@ export class CallPage {
    */
   async expectNoticeTextVisible() {
     await expect(this.noticeText).toBeVisible();
+  }
+
+  /**
+   * Verify the FAQ section is visible (only when no call is in progress)
+   */
+  async expectCallFaqVisible() {
+    await expect(this.callFaq).toBeVisible();
   }
 
   /**

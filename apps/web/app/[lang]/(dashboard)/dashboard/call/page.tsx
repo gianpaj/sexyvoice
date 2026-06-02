@@ -72,7 +72,7 @@ export default async function Call(props: {
           {callFaq && (
             <CallFaq
               questions={callFaq.questions}
-              title={dict.landing.faq.title}
+              title={callFaq.category}
             />
           )}
         </div>
