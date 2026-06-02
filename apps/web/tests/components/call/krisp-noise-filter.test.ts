@@ -33,6 +33,12 @@ describe('Krisp noise filter guards', () => {
     expect(isExpectedKrispNoiseFilterError('WASM_OR_WORKER_NOT_READY')).toBe(
       true,
     );
+    expect(
+      isExpectedKrispNoiseFilterError({
+        message: 'Krisp WASM_OR_WORKER_NOT_READY',
+        name: 'DOMException',
+      }),
+    ).toBe(true);
     expect(isExpectedKrispNoiseFilterError(new Error('boom'))).toBe(false);
   });
 

@@ -35,9 +35,22 @@ export function shouldEnableKrispNoiseFilter(publication: unknown): boolean {
   return getMediaStreamReadyState(publication) === 'live';
 }
 
+function getStringProperty(value: object, property: string): string {
+  if (!(property in value)) {
+    return '';
+  }
+
+  const propertyValue = (value as Record<string, unknown>)[property];
+  return typeof propertyValue === 'string' ? propertyValue : '';
+}
+
 export function isExpectedKrispNoiseFilterError(error: unknown): boolean {
-  const name = error instanceof Error ? error.name : '';
-  const message = error instanceof Error ? error.message : String(error);
+  const name =
+    error && typeof error === 'object' ? getStringProperty(error, 'name') : '';
+  const message =
+    error && typeof error === 'object'
+      ? getStringProperty(error, 'message') || String(error)
+      : String(error);
   const normalizedMessage = message.toLowerCase();
 
   return (
