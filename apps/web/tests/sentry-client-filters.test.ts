@@ -49,6 +49,27 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(false);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'app:///_next/static/chunks/app/page.js',
+                    function: 'renderTag',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
   });
 
   it('does not drop DOM mutation text without React frame evidence', () => {

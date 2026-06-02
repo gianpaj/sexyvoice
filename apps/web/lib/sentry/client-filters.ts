@@ -36,8 +36,7 @@ const rscConnectionClosedPattern = /^Connection closed\.$/i;
 
 const reactCommitDeletionFramePattern =
   /commitDeletionEffectsOnFiber|commitMutationEffectsOnFiber|recursivelyTraverseMutationEffects|react-dom-client|react-server-dom/i;
-const thirdPartyScriptFramePattern =
-  /app:\/\/|posthog-recorder\.js|addEL_hook/i;
+const thirdPartyScriptFramePattern = /posthog-recorder\.js|addEL_hook/i;
 const localAppFramePattern = /apps\/web|\/_next\/static\/chunks\/app\//i;
 const browserMediaNoisePattern =
   /Track has ended|WASM_OR_WORKER_NOT_READY|Lock was stolen by another request/i;
