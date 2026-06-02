@@ -3,6 +3,12 @@
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 
 interface CallFaqQuestion {
@@ -32,21 +38,27 @@ export function CallFaq({
       <h2 className="mb-4 text-center font-semibold text-foreground text-lg">
         {title}
       </h2>
-      <dl className="flex flex-col gap-3">
+      <Accordion
+        className="w-full rounded-md border border-border"
+        collapsible
+        defaultValue="item-0"
+        type="single"
+      >
         {questions.map((faq, i) => (
-          <div
-            className="rounded-md border border-border bg-accent px-5 py-4"
+          <AccordionItem
+            className="border-border px-5"
             key={i}
+            value={`item-${i}`}
           >
-            <dt className="font-medium text-foreground text-sm">
+            <AccordionTrigger className="text-foreground">
               {faq.question}
-            </dt>
-            <dd className="mt-1 whitespace-pre-wrap text-muted-foreground text-sm">
+            </AccordionTrigger>
+            <AccordionContent className="whitespace-pre-wrap text-muted-foreground">
               {faq.answer.replaceAll('{count}', String(CREDITS_PER_MINUTE))}
-            </dd>
-          </div>
+            </AccordionContent>
+          </AccordionItem>
         ))}
-      </dl>
+      </Accordion>
     </section>
   );
 }
