@@ -14,13 +14,22 @@ import {
   EMAIL_TEMPLATE_KEYS,
   OPTIONAL_EMAIL_PREFERENCE_KEYS,
   RESEND_WEBHOOK_EVENT_NAMES,
+  type BillingSubscriptionCanceledEventData,
+  type BillingSubscriptionStartedEventData,
+  type BillingTopupSucceededEventData,
+  type CreditAllowanceThresholdReachedEventData,
+  type GenerationSucceededEventData,
+  type ResendWebhookEventData,
   type ResendWebhookEventName,
+  type UserRegistrationCompletedEventData,
 } from '@/lib/notifications/types';
 
 const sendRegistrationCompletedEmail = inngest.createFunction(
-  { id: 'send-registration-completed-email' },
-  { event: APP_NOTIFICATION_EVENT_NAMES.userRegistrationCompleted },
-  async ({ event, step }) => {
+  {
+    id: 'send-registration-completed-email',
+    triggers: [{ event: APP_NOTIFICATION_EVENT_NAMES.userRegistrationCompleted }],
+  },
+  async ({ event, step }: { event: { data: UserRegistrationCompletedEventData }; step: any }) => {
     await step.run('deliver-registration-completed-email', async () => {
       await dispatchNotificationEmail({
         userId: event.data.userId,
@@ -38,9 +47,11 @@ const sendRegistrationCompletedEmail = inngest.createFunction(
 );
 
 const sendBillingTopupSucceededEmail = inngest.createFunction(
-  { id: 'send-billing-topup-succeeded-email' },
-  { event: APP_NOTIFICATION_EVENT_NAMES.billingTopupSucceeded },
-  async ({ event, step }) => {
+  {
+    id: 'send-billing-topup-succeeded-email',
+    triggers: [{ event: APP_NOTIFICATION_EVENT_NAMES.billingTopupSucceeded }],
+  },
+  async ({ event, step }: { event: { data: BillingTopupSucceededEventData }; step: any }) => {
     await step.run('deliver-billing-topup-email', async () => {
       await dispatchNotificationEmail({
         userId: event.data.userId,
@@ -56,9 +67,11 @@ const sendBillingTopupSucceededEmail = inngest.createFunction(
 );
 
 const sendBillingSubscriptionStartedEmail = inngest.createFunction(
-  { id: 'send-billing-subscription-started-email' },
-  { event: APP_NOTIFICATION_EVENT_NAMES.billingSubscriptionStarted },
-  async ({ event, step }) => {
+  {
+    id: 'send-billing-subscription-started-email',
+    triggers: [{ event: APP_NOTIFICATION_EVENT_NAMES.billingSubscriptionStarted }],
+  },
+  async ({ event, step }: { event: { data: BillingSubscriptionStartedEventData }; step: any }) => {
     await step.run('deliver-billing-subscription-started-email', async () => {
       await dispatchNotificationEmail({
         userId: event.data.userId,
@@ -74,9 +87,11 @@ const sendBillingSubscriptionStartedEmail = inngest.createFunction(
 );
 
 const sendBillingSubscriptionCanceledEmail = inngest.createFunction(
-  { id: 'send-billing-subscription-canceled-email' },
-  { event: APP_NOTIFICATION_EVENT_NAMES.billingSubscriptionCanceled },
-  async ({ event, step }) => {
+  {
+    id: 'send-billing-subscription-canceled-email',
+    triggers: [{ event: APP_NOTIFICATION_EVENT_NAMES.billingSubscriptionCanceled }],
+  },
+  async ({ event, step }: { event: { data: BillingSubscriptionCanceledEventData }; step: any }) => {
     await step.run('deliver-billing-subscription-canceled-email', async () => {
       await dispatchNotificationEmail({
         userId: event.data.userId,
@@ -94,9 +109,11 @@ const sendBillingSubscriptionCanceledEmail = inngest.createFunction(
 );
 
 const sendFirstGenerationEmail = inngest.createFunction(
-  { id: 'send-first-generation-email' },
-  { event: APP_NOTIFICATION_EVENT_NAMES.generationSucceeded },
-  async ({ event, step }) => {
+  {
+    id: 'send-first-generation-email',
+    triggers: [{ event: APP_NOTIFICATION_EVENT_NAMES.generationSucceeded }],
+  },
+  async ({ event, step }: { event: { data: GenerationSucceededEventData }; step: any }) => {
     await step.run('deliver-first-generation-email', async () => {
       await dispatchNotificationEmail({
         userId: event.data.userId,
@@ -114,9 +131,11 @@ const sendFirstGenerationEmail = inngest.createFunction(
 );
 
 const sendCreditAllowanceThresholdEmail = inngest.createFunction(
-  { id: 'send-credit-allowance-threshold-email' },
-  { event: APP_NOTIFICATION_EVENT_NAMES.creditAllowanceThresholdReached },
-  async ({ event, step }) => {
+  {
+    id: 'send-credit-allowance-threshold-email',
+    triggers: [{ event: APP_NOTIFICATION_EVENT_NAMES.creditAllowanceThresholdReached }],
+  },
+  async ({ event, step }: { event: { data: CreditAllowanceThresholdReachedEventData }; step: any }) => {
     await step.run('deliver-credit-allowance-threshold-email', async () => {
       await dispatchNotificationEmail({
         userId: event.data.userId,
@@ -139,9 +158,8 @@ function createResendStatusSyncFunction(params: {
   id: string;
 }) {
   return inngest.createFunction(
-    { id: params.id },
-    { event: params.eventName },
-    async ({ event, step }) => {
+    { id: params.id, triggers: [{ event: params.eventName }] },
+    async ({ event, step }: { event: { data: ResendWebhookEventData }; step: any }) => {
       await step.run(`sync-${params.id}`, async () => {
         await syncNotificationDeliveryFromResendEvent({
           eventName: params.eventName,
