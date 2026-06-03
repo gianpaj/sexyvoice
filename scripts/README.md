@@ -308,6 +308,55 @@ Each refund transaction is recorded with:
 
 ---
 
+## Batch Notify Double-Billing Refund Script
+
+Sends a one-time billing-correction email to all users who received credits back after the double-billing voice call bug. Reads a CSV of affected `user_id`s, looks up the refund amount already applied, and emails each user via Resend. Safe to re-run — deduplication is enforced via `notification_events`.
+
+### Usage
+
+```bash
+# Dry run first (no emails sent, no DB writes)
+pnpm batch-notify-double-billing-refund -- users.csv --dry-run
+
+# Send emails (prompts for confirmation)
+pnpm batch-notify-double-billing-refund -- users.csv
+```
+
+### CSV Format
+
+Three columns — only `user_id` and `refund_credits` are used; `refund_date` is ignored:
+
+```csv
+user_id,refund_date,refund_credits
+8c56bc8d-b16f-4de3-acf7-2f58313b209b,2026-06-03 18:21:21.934942+00,34749
+26fb4371-1234-5678-abcd-000000000000,2026-06-03 18:21:47.835085+00,13518
+```
+
+### What it does
+
+1. Parses the CSV (`user_id` column only)
+2. Shows row count and env config, then prompts for confirmation
+3. For each user:
+   - Fetches their auth email and profile locale
+   - Sums their refund credits from `credit_transactions` where `type = 'refund'` and `metadata.reason = 'Double billing - voice call'`
+   - Skips if no matching refund transactions exist
+   - Skips if already sent (dedupe key `double-billing-refund-voice-call-2025:<userId>` in `notification_events`)
+   - Sends an HTML email via Resend explaining the billing correction and the credit amount restored
+   - Records the send in `notification_events` and `notification_deliveries`
+4. Prints a summary with counts per status (`sent`, `skipped`, `no_refund`, `failed`)
+5. Exits with code 1 if any rows failed
+
+### Requirements
+
+- `.env` or `.env.local` with:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `RESEND_API_KEY`
+  - `RESEND_FROM_EMAIL`
+  - `NEXT_PUBLIC_SITE_URL` (used for the CTA link; defaults to `https://sexyvoice.ai`)
+
+---
+
 ## Credit Transactions (Supabase)
 
 ### 1. Download Only Paid Transactions

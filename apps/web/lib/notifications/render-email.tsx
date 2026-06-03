@@ -14,11 +14,11 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import {
-  EMAIL_TEMPLATE_KEYS,
   type BillingSubscriptionCanceledEventData,
   type BillingSubscriptionStartedEventData,
   type BillingTopupSucceededEventData,
   type CreditAllowanceThresholdReachedEventData,
+  EMAIL_TEMPLATE_KEYS,
   type EmailTemplateKey,
   type EmailTemplatePayload,
   type GenerationSucceededEventData,
@@ -137,6 +137,7 @@ export function renderNotificationEmail<
 }): { react: ReactElement; subject: string } {
   const locale = resolveEmailLocale(params.locale);
 
+  // biome-ignore lint/style/useDefaultSwitchClause: not needed
   switch (params.templateKey) {
     case EMAIL_TEMPLATE_KEYS.registrationSuccess: {
       const payload = params.payload as UserRegistrationCompletedEventData;

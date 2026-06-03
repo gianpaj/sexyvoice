@@ -571,6 +571,9 @@ importers:
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
+      resend:
+        specifier: ^6.10.0
+        version: 6.12.4(@react-email/render@2.0.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
     devDependencies:
       tsx:
         specifier: 'catalog:'

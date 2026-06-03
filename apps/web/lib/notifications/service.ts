@@ -27,6 +27,7 @@ function resolveNotificationLocale(locale: string | null | undefined): Locale {
 function mapResendWebhookEventToDeliveryStatus(
   eventName: ResendWebhookEventName,
 ): NotificationDeliveryStatus | null {
+  // biome-ignore lint/style/useDefaultSwitchClause: not needed
   switch (eventName) {
     case RESEND_WEBHOOK_EVENT_NAMES.delivered:
       return 'delivered';
