@@ -39,14 +39,14 @@ const DEFAULT_VOICES = [
 ];
 
 const DEFAULT_TEXT =
-  'Hello from SexyVoice. This sample was generated through the external speech API.';
+  "O-oh, god, it's so f-fucking deep in me!";
 const DEFAULT_STYLE = 'warm, confident, and natural';
 
 function printHelp() {
   console.log(`Generate Gemini speech samples through /api/v1/speech.
 
 Usage:
-  pnpm generate-gemini-speech-samples -- --model gpro --style "calm" --text "Hello" --voices poe,zephyr
+  pnpm generate-gemini-speech-samples -- --model gpro --style "calm" --text "Hello" --voices achernar,zephyr
 
 Environment:
   SEXYVOICE_API_KEY       Required Bearer API key
@@ -124,7 +124,7 @@ function parseArgs(args) {
       readFlag(args, '--out') ?? path.join(scriptDir, 'generated-speech'),
     ),
     seed,
-    style: readFlag(args, '--style') ?? DEFAULT_STYLE,
+    style: readFlag(args, '--style') ?? process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN,
     text: readFlag(args, '--text') ?? DEFAULT_TEXT,
     voices,
   };
@@ -147,6 +147,7 @@ async function postSpeech({
   style,
   seed,
 }) {
+  console.log({}, `${baseUrl.replace(/\/$/, '')}/api/v1/speech`);
   const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/v1/speech`, {
     method: 'POST',
     headers: {
@@ -163,7 +164,8 @@ async function postSpeech({
   });
 
   const requestId = response.headers.get('request-id');
-  const bodyText = await response.text();
+  const bodyText = await response.json();
+
   let body = null;
   try {
     body = bodyText ? JSON.parse(bodyText) : null;
