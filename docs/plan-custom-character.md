@@ -199,7 +199,7 @@ CREATE TABLE public.characters (
   name text NOT NULL,
   localized_descriptions jsonb DEFAULT '{}'::jsonb,  -- { "en": "...", "es": "..." }
 
-  -- Session configuration snapshot (model, temperature, maxOutputTokens, grokImageEnabled)
+  -- Session configuration snapshot (model, temperature, maxOutputTokens)
   session_config jsonb NOT NULL DEFAULT '{}'::jsonb,
 
   -- Optional avatar filename
@@ -301,7 +301,7 @@ INSERT INTO public.characters (id, user_id, prompt_id, voice_id, is_public, name
     (SELECT id FROM public.voices WHERE name = 'Eve' AND model = 'xai' LIMIT 1),
     true, 'Ramona', 'ramona.webp',
     '{"en": "Dominant 40 y.o. businesswoman. Commands attention...", "es": "...", ...}'::jsonb,
-    '{"model": "grok-4-1-fast-non-reasoning", "temperature": 0.8, "maxOutputTokens": null, "grokImageEnabled": false}'::jsonb,
+    '{"model": "grok-voice-think-fast-1.0", "temperature": 0.8, "maxOutputTokens": null }'::jsonb,
     0
   ),
   (
@@ -311,7 +311,7 @@ INSERT INTO public.characters (id, user_id, prompt_id, voice_id, is_public, name
     (SELECT id FROM public.voices WHERE name = 'Ara' AND model = 'xai' LIMIT 1),
     true, 'Lily', 'lily.webp',
     '{"en": "22yo shy, submissive student girl...", "es": "...", ...}'::jsonb,
-    '{"model": "grok-4-1-fast-non-reasoning", "temperature": 0.8, "maxOutputTokens": null, "grokImageEnabled": false}'::jsonb,
+    '{"model": "grok-voice-think-fast-1.0", "temperature": 0.8, "maxOutputTokens": null }'::jsonb,
     1
   ),
   (
@@ -321,7 +321,7 @@ INSERT INTO public.characters (id, user_id, prompt_id, voice_id, is_public, name
     (SELECT id FROM public.voices WHERE name = 'Sal' AND model = 'xai' LIMIT 1),
     true, 'Milo', 'milo.webp',
     '{"en": "25yo bisexual blushing twink...", "es": "...", ...}'::jsonb,
-    '{"model": "grok-4-1-fast-non-reasoning", "temperature": 0.8, "maxOutputTokens": null, "grokImageEnabled": false}'::jsonb,
+    '{"model": "grok-voice-think-fast-1.0", "temperature": 0.8, "maxOutputTokens": null }'::jsonb,
     2
   ),
   (
@@ -331,7 +331,7 @@ INSERT INTO public.characters (id, user_id, prompt_id, voice_id, is_public, name
     (SELECT id FROM public.voices WHERE name = 'Rex' AND model = 'xai' LIMIT 1),
     true, 'Rafal', 'rafal.webp',
     '{"en": "35yo ex-military dominant commander...", "es": "...", ...}'::jsonb,
-    '{"model": "grok-4-1-fast-non-reasoning", "temperature": 0.8, "maxOutputTokens": null, "grokImageEnabled": false}'::jsonb,
+    '{"model": "grok-voice-think-fast-1.0", "temperature": 0.8, "maxOutputTokens": null }'::jsonb,
     3
   );
 ```
@@ -425,7 +425,6 @@ export interface SessionConfig {
   voice: string;           // was VoiceId, now a voice name string from DB
   temperature: number;
   maxOutputTokens: number | null;
-  grokImageEnabled: boolean;
 }
 ```
 
@@ -609,7 +608,7 @@ Only needed for **mutations** (create/update/delete custom characters + their pr
 //    }
 //
 // 3. VALIDATE VOICE:
-//      getVoiceIdByName(voiceName, false)
+//      getVoiceIdByName(voiceName)
 //      → not found? 400 "Voice no longer available"
 //      → found? Use voice.id for the character's voice_id FK
 //
@@ -664,7 +663,6 @@ Only needed for **mutations** (create/update/delete custom characters + their pr
 //       voice: string,
 //       temperature: number (0-2),
 //       maxOutputTokens: number | null,
-//       grokImageEnabled: boolean
 //     }
 //   }
 //
@@ -701,7 +699,6 @@ Only needed for **mutations** (create/update/delete custom characters + their pr
 //      voice: voiceObj.id,
 //      temperature,
 //      max_output_tokens: maxOutputTokens,
-//      grok_image_enabled: grokImageEnabled,
 //      language: selectedLanguage,
 //      initial_instruction: ' ',
 //      user_id: user.id,
@@ -900,7 +897,6 @@ When a **custom character is selected**, the UI shows an edit panel where ALL fi
 ### 6f-2. `PresetSave` simplification
 
 - **Remove** "Save" button for default (predefined) characters — they are immutable
-- **Remove** `SET_CHARACTER_OVERRIDE` / `RESET_CHARACTER_OVERRIDE` logic for default presets
 - "Save" button → only for existing custom characters → `POST /api/characters` with `id`
   - Saves: name, description, voice, prompt, sessionConfig
 - "Save as new" → `POST /api/characters` without `id` (creates a copy)
@@ -1197,7 +1193,7 @@ The provider receives data from SSR props instead of localStorage:
 |------|-------------|
 | Minimal valid payload | Accepts request with required fields only (instructions, selectedPresetId: null, sessionConfig) |
 | Payload with UUID character ID | Accepts request with valid UUID for selectedPresetId |
-| Payload with all optional fields | Accepts request with all optional fields populated (customCharacters, characterOverrides, etc.) |
+| Payload with all optional fields | Accepts request with all optional fields populated (customCharacters, etc.) |
 | All valid language codes | Accepts all 19 supported language codes: ar, cs, da, de, en, es, fi, fr, hi, it, ja, ko, nl, no, pl, pt, ru, sv, tr, zh |
 
 **Invalid Payloads (9 tests):**
@@ -1210,7 +1206,6 @@ The provider receives data from SSR props instead of localStorage:
 | Temperature out of range (high) | Rejects temperature > 2.0 |
 | Temperature out of range (negative) | Rejects temperature < 0 |
 | Missing voice in sessionConfig | Rejects sessionConfig without voice field |
-| Wrong type for grokImageEnabled | Rejects non-boolean values for grokImageEnabled |
 | Wrong type for maxOutputTokens | Rejects non-number values (excluding null) for maxOutputTokens |
 
 **Edge Cases (4 tests):**

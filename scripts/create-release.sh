@@ -5,7 +5,7 @@ set -euo pipefail
 VERSION=2026.4.7
 TAG=2026-04-07
 
-test "$(node -p "require('./package.json').version")" = "$VERSION"
+test "$(node -p "require('./apps/web/package.json').version")" = "$VERSION"
 
 release_header="## [$VERSION] - $TAG"
 

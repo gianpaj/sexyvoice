@@ -14,7 +14,7 @@ releases only.
 ## [<package-version>] - <YYYY-MM-DD>
 ```
 
-- The version in the release header must match `package.json`.
+- The version in the release header must match `apps/web/package.json`.
 - Organize each release by change type first, then by feature area.
 - Omit empty change-type sections and empty feature groups.
 - Use these change-type sections when they apply:
@@ -77,7 +77,7 @@ releases only.
 
 ## Checklist for future updates
 
-- Confirm the release version in `package.json`.
+- Confirm the release version in `apps/web/package.json`.
 - If the public API changed, also update the API version in
   `lib/api/openapi.ts`.
 - Confirm every item is supported by merged PRs or direct commits.
