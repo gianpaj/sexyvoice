@@ -129,7 +129,7 @@ pnpm refund-credits
 
 1. Fetches all credit transactions for the user
 2. Calculates total credits purchased (from `purchase` and `topup` transactions)
-3. Calculates total credits used (from `audio_files.credits_used`)
+3. Calculates total credits used (from `usage_events.credits_used`)
 4. Calculates total credits already refunded (from `refund` transactions)
 5. Fetches user's credit balance from `credits` table
 6. **Validates that calculated credits match actual balance** (throws error if mismatch)
@@ -201,13 +201,13 @@ This ensures:
 
 Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table.
 
-The calculated available credits = (purchase + topup + freemium credits) - (credits used from audio files) - (previously refunded credits)
+The calculated available credits = (purchase + topup + freemium credits) - (credits used from `usage_events`) - (previously refunded credits)
 
 If there's a mismatch, the script will throw an error:
 
 ```
 Credit mismatch detected!
-  Calculated from transactions: 3800
+  Calculated from usage_events: 3800
   Actual balance in credits table: 3750
   Please investigate data integrity before processing refund.
 ```
@@ -296,6 +296,7 @@ ORDER BY event_count DESC, last_event_at DESC;
 5. Exits with code 1 if any rows failed
 
 Each refund transaction is recorded with:
+
 - `type: 'refund'`
 - `description: "Refund - Double billing (voice call <source_id_prefix>)"`
 - `metadata.reason: "Double billing - voice call"`
