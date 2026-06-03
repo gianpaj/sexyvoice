@@ -4,6 +4,11 @@ import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
+import {
+  emitBillingSubscriptionCanceledEvent,
+  emitBillingSubscriptionStartedEvent,
+  emitBillingTopupSucceededEvent,
+} from '@/lib/notifications/events';
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
 import { getSubscriptionPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
@@ -75,7 +80,6 @@ async function processEvent(event: Stripe.Event) {
       // Subscription lifecycle events - only update Redis cache
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
       case 'customer.subscription.paused':
       case 'customer.subscription.resumed':
       case 'customer.subscription.pending_update_applied':
@@ -98,6 +102,12 @@ async function processEvent(event: Stripe.Event) {
         await syncStripeDataToKV(customerId);
         break;
       }
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
+        );
+        break;
 
       default:
         console.log(`[STRIPE HOOK] Unhandled event type: ${event.type}`);
@@ -151,6 +161,34 @@ export const isAllowedStripeEvent = (
 ): event is AllowedStripeEvent =>
   allowedEvents.includes(event.type as AllowedEventType);
 
+function resolveSubscriptionPackage(priceId: string) {
+  const subscriptionPackages = getSubscriptionPackages('en');
+
+  switch (priceId) {
+    case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
+      return {
+        credits: subscriptionPackages.starter.credits,
+        dollarAmount: subscriptionPackages.starter.dollarAmount,
+        planKey: 'starter' as const,
+      };
+    case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
+      return {
+        credits: subscriptionPackages.standard.credits,
+        dollarAmount: subscriptionPackages.standard.dollarAmount,
+        planKey: 'standard' as const,
+      };
+    // FIXME: change env var name to STRIPE_SUBSCRIPTION_PRO_PRICE_ID
+    case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
+      return {
+        credits: subscriptionPackages.pro.credits,
+        dollarAmount: subscriptionPackages.pro.dollarAmount,
+        planKey: 'pro' as const,
+      };
+    default:
+      return null;
+  }
+}
+
 // Handles completed Stripe checkout sessions for both one-time credit purchases and subscription checkouts
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
@@ -197,6 +235,21 @@ async function handleCheckoutSessionCompleted(
         packageId,
         promo,
       );
+
+      try {
+        await emitBillingTopupSucceededEvent({
+          userId,
+          paymentIntentId: session.payment_intent.toString(),
+          credits: creditAmount,
+          dollarAmount: dollarAmountNum,
+          packageId,
+        });
+      } catch (notificationError) {
+        console.error(
+          '[STRIPE HOOK] Failed to enqueue top-up notification event',
+          notificationError,
+        );
+      }
 
       console.log(
         `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
@@ -249,30 +302,12 @@ async function handleCheckoutSessionCompleted(
       // Get subscription details to determine credit amount
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const priceId = subscription.items.data[0].price.id;
-
-      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
-      let credits = 0;
-      let dollarAmount = 0;
-
-      switch (priceId) {
-        case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.starter.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
-          break;
-        case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.standard.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
-          break;
-        // TODO: use `pro_monthly` look up key
-        case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-          credits = SUBSCRIPTION_PACKAGES.pro.credits;
-          dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
-          break;
-        default:
-          console.error('[STRIPE HOOK] Invalid subscription price ID', {
-            priceId,
-          });
-          return;
+      const subscriptionPackage = resolveSubscriptionPackage(priceId);
+      if (!subscriptionPackage) {
+        console.error('[STRIPE HOOK] Invalid subscription price ID', {
+          priceId,
+        });
+        return;
       }
 
       // Get payment intent from the session (for initial subscription payment)
@@ -288,12 +323,28 @@ async function handleCheckoutSessionCompleted(
         userId,
         paymentIntentId,
         subscriptionId,
-        credits,
-        dollarAmount,
+        subscriptionPackage.credits,
+        subscriptionPackage.dollarAmount,
       );
 
+      try {
+        await emitBillingSubscriptionStartedEvent({
+          userId,
+          subscriptionId,
+          paymentIntentId,
+          planKey: subscriptionPackage.planKey,
+          credits: subscriptionPackage.credits,
+          dollarAmount: subscriptionPackage.dollarAmount,
+        });
+      } catch (notificationError) {
+        console.error(
+          '[STRIPE HOOK] Failed to enqueue subscription-started notification event',
+          notificationError,
+        );
+      }
+
       console.log(
-        `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
+        `[STRIPE HOOK] Initial subscription credits added: ${subscriptionPackage.credits} to user: ${userId}`,
       );
     }
   } catch (error) {
@@ -364,30 +415,12 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     // Get subscription details
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items.data[0].price.id;
-
-    const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
-    let credits = 0;
-    let dollarAmount = 0;
-
-    switch (priceId) {
-      case process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID:
-        credits = SUBSCRIPTION_PACKAGES.starter.credits;
-        dollarAmount = SUBSCRIPTION_PACKAGES.starter.dollarAmount;
-        break;
-      case process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID:
-        credits = SUBSCRIPTION_PACKAGES.standard.credits;
-        dollarAmount = SUBSCRIPTION_PACKAGES.standard.dollarAmount;
-        break;
-      // FIXME: change env var name to STRIPE_SUBSCRIPTION_PRO_PRICE_ID
-      case process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID:
-        credits = SUBSCRIPTION_PACKAGES.pro.credits;
-        dollarAmount = SUBSCRIPTION_PACKAGES.pro.dollarAmount;
-        break;
-      default:
-        console.error('[STRIPE HOOK] Invalid subscription price ID', {
-          priceId,
-        });
-        return;
+    const subscriptionPackage = resolveSubscriptionPackage(priceId);
+    if (!subscriptionPackage) {
+      console.error('[STRIPE HOOK] Invalid subscription price ID', {
+        priceId,
+      });
+      return;
     }
 
     // Insert credit transaction using payment_intent as reference_id
@@ -395,12 +428,12 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       userId,
       paymentIntentId,
       subscriptionId,
-      credits,
-      dollarAmount,
+      subscriptionPackage.credits,
+      subscriptionPackage.dollarAmount,
     );
 
     console.log(
-      `[STRIPE HOOK] Recurring subscription credits added: ${credits} to user: ${userId}`,
+      `[STRIPE HOOK] Recurring subscription credits added: ${subscriptionPackage.credits} to user: ${userId}`,
     );
 
     // Also update Redis cache with latest subscription status
@@ -422,6 +455,41 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       },
     });
     throw error;
+  }
+}
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const customerId = subscription.customer;
+
+  if (typeof customerId !== 'string') {
+    throw new Error(
+      "[STRIPE HOOK] Customer ID isn't string for subscription deletion.",
+    );
+  }
+
+  await syncStripeDataToKV(customerId);
+
+  const userId = await getUserIdByStripeCustomerId(customerId);
+  if (!userId) {
+    console.error(`User not found with stripe_id: "${customerId}"`);
+    return;
+  }
+
+  const priceId = subscription.items.data[0]?.price.id;
+  const subscriptionPackage =
+    typeof priceId === 'string' ? resolveSubscriptionPackage(priceId) : null;
+
+  try {
+    await emitBillingSubscriptionCanceledEvent({
+      userId,
+      subscriptionId: subscription.id,
+      planKey: subscriptionPackage?.planKey ?? null,
+    });
+  } catch (notificationError) {
+    console.error(
+      '[STRIPE HOOK] Failed to enqueue subscription-canceled notification event',
+      notificationError,
+    );
   }
 }
 

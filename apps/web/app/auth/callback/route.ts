@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
+import { type Locale } from '@/lib/i18n/i18n-config';
+import { emitUserRegistrationCompletedEvent } from '@/lib/notifications/events';
 import PostHogClient from '@/lib/posthog';
 import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
 import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
@@ -15,12 +17,12 @@ import { routing } from '@/src/i18n/routing';
 const isSafeRedirectPath = (value: string | null) =>
   Boolean(value?.startsWith('/') && !value.startsWith('//'));
 
-const getLocaleFromRedirectPath = (redirectPath: string | null) => {
+const getLocaleFromRedirectPath = (redirectPath: string | null): Locale => {
   const locale = redirectPath?.split('/')[1];
 
   return routing.locales.includes(locale as (typeof routing.locales)[number])
-    ? locale
-    : routing.defaultLocale;
+    ? (locale as Locale)
+    : (routing.defaultLocale as Locale);
 };
 
 const getOauthCodeFingerprint = (code: string | null) => {
@@ -143,9 +145,11 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get('redirect_to');
+  const flow = requestUrl.searchParams.get('flow');
   const locale = getLocaleFromRedirectPath(redirectTo);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
+  const isSignupFlow = flow === 'signup';
   const oauthCookieContext = getOauthCallbackCookieContext(request);
   const reportKnownOauthCallbackFailure = (
     message: string,
@@ -249,20 +253,43 @@ export async function GET(request: Request) {
         });
       }
 
-      const posthog = PostHogClient();
+      if (isSignupFlow) {
+        const posthog = PostHogClient();
+        const login_type =
+          user.app_metadata.provider === 'email' ? 'email' : 'social';
 
-      const login_type =
-        user.app_metadata.provider === 'email' ? 'email' : 'social';
+        posthog.capture({
+          distinctId: user.id,
+          event: 'sign-up',
+          properties: {
+            login_type,
+            //   is_free_trial: true,
+          },
+        });
+        await posthog.shutdown();
 
-      posthog.capture({
-        distinctId: user.id,
-        event: 'sign-up',
-        properties: {
-          login_type,
-          //   is_free_trial: true,
-        },
-      });
-      await posthog.shutdown();
+        try {
+          await emitUserRegistrationCompletedEvent({
+            userId: user.id,
+            locale,
+            authProvider:
+              user.app_metadata.provider === 'google' ? 'google' : login_type,
+          });
+        } catch (notificationError) {
+          captureException(notificationError, {
+            tags: {
+              area: 'auth',
+              flow: 'oauth-callback',
+              notification: 'registration-completed',
+            },
+            extra: {
+              userId: user.id,
+              locale,
+              redirectTo,
+            },
+          });
+        }
+      }
     }
 
     if (isSafeRedirectPath(redirectTo)) {
