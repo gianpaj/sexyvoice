@@ -9,11 +9,10 @@ config({
 });
 
 interface CreditTransaction {
-  id: string;
-  user_id: string;
   amount: number;
-  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  created_at: string;
   description: string;
+  id: string;
   metadata: {
     dollarAmount?: number;
     priceId?: string;
@@ -21,26 +20,27 @@ interface CreditTransaction {
     [key: string]: unknown;
   } | null;
   reference_id: string | null;
-  created_at: string;
+  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  user_id: string;
 }
 
 interface AudioFile {
-  id: string;
-  credits_used: number;
   created_at: string;
+  credits_used: number;
+  id: string;
 }
 
 interface RefundCalculation {
-  totalPurchased: number;
-  totalUsed: number;
-  totalRefunded: number;
-  totalRefundAdjustment: number;
   availableCredits: number;
-  totalSpentUSD: number;
   creditRate: number;
   maxRefundCredits: number;
   maxRefundUSD: number;
   purchaseTransactions: CreditTransaction[];
+  totalPurchased: number;
+  totalRefundAdjustment: number;
+  totalRefunded: number;
+  totalSpentUSD: number;
+  totalUsed: number;
 }
 
 /**

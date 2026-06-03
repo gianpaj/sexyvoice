@@ -45,11 +45,13 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 - Detailed progress reporting
 
 ### Performance
+
 - 50 users: ~10 seconds (vs ~50 seconds sequential)
 - 100 users: ~10 seconds (vs ~100 seconds sequential)
 - Processes 10 users per database query
 
 ### Documentation
+
 - [RESET_CREDITS_GUIDE.md](./RESET_CREDITS_GUIDE.md) - Complete guide with examples
 - [QUICKREF.md](./QUICKREF.md) - Quick reference card
 - [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
@@ -103,6 +105,7 @@ pnpm backfill-free-call
 Interactive Node.js/TypeScript script to process credit refunds for users.
 
 ### Features
+
 - Calculates maximum refundable amount based on credits purchased vs. used
 - Prevents refunds for freemium-only users
 - Links refund to original payment intent
@@ -122,7 +125,8 @@ pnpm refund-credits -- <user-id>
 pnpm refund-credits
 ```
 
-### What it does:
+### What it does
+
 1. Fetches all credit transactions for the user
 2. Calculates total credits purchased (from `purchase` and `topup` transactions)
 3. Calculates total credits used (from `audio_files.credits_used`)
@@ -139,11 +143,13 @@ pnpm refund-credits
 14. Updates the `credits` table by calling `decrement_user_credits` function
 
 ### Requirements
+
 - `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
 - User must have `purchase` or `topup` transactions with `metadata.dollarAmount`
 - Freemium-only users cannot be refunded
 
 ### Example Output
+
 ```
 Processing refund for user: xxx-xxx-xxx
 
@@ -164,11 +170,13 @@ Max Refund Amount: $38.00
 The script prevents duplicate refunds by tracking all previous refunds and automatically updates the user's credit balance:
 
 **Available Credits Formula:**
+
 ```
 Available Credits = (Purchased + Topup + Freemium) - Used - Refunded
 ```
 
 **Maximum Refundable Credits Formula:**
+
 ```
 Max Refundable = Total Purchased - Total Used - Total Already Refunded
 ```
@@ -181,6 +189,7 @@ Max Refundable = Total Purchased - Total Used - Total Already Refunded
 - Maximum refundable now: 5000 - 1200 - 500 = **3300 credits** ($33.00)
 
 This ensures:
+
 - Users can't be refunded more than they paid
 - Users can't get refunds for credits they've already used
 - Users can't receive multiple refunds for the same credits
@@ -190,7 +199,7 @@ This ensures:
 
 ### Data Integrity Check
 
-Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table. 
+Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table.
 
 The calculated available credits = (purchase + topup + freemium credits) - (credits used from audio files) - (previously refunded credits)
 
@@ -210,20 +219,91 @@ This prevents refunds when there are data inconsistencies that need to be resolv
 When you select a transaction to refund:
 
 **If refunding the full transaction amount:**
+
 ```
 💡 Note: Refunding full transaction amount. Suggested refund: $10.00
 Enter USD amount to refund [suggested: $10.00]:
 ```
+
 The script suggests the exact dollar amount from that transaction's metadata, preventing rounding errors.
 
 **If refunding a partial amount:**
+
 ```
 Calculated refund based on credit rate: $7.50
 Enter USD amount to refund [suggested: $7.50]:
 ```
+
 The script calculates the amount based on the credit rate (total spent / total credits).
 
 You can press Enter to accept the suggestion, or enter a custom amount.
+
+---
+
+## Batch Refund Credits Script
+
+Processes platform-bug credit refunds in bulk from a CSV of duplicate usage events. Adds credits back to affected users (no USD refund) one by one, with a single confirmation prompt before starting.
+
+### Usage
+
+```bash
+# Dry run first to verify CSV parsing and row count
+pnpm batch-refund-credits -- dupes.csv --dry-run
+
+# Apply refunds (prompts for confirmation)
+pnpm batch-refund-credits -- dupes.csv
+```
+
+### CSV Format
+
+Export the duplicate sessions query result as CSV:
+
+```csv
+source_id,user_id,event_count,first_event_at,last_event_at,duplicate_credits,duplicate_dollars,end_reasons
+38ae34f3-f7fd-48ec-88dc-0955f0722812,8c56bc8d-b16f-4de3-acf7-2f58313b209b,19,2026-05-15 16:45:07+00,2026-05-15 16:47:46+00,72000,null,"[""credit_limit""]"
+```
+
+Only `source_id`, `user_id`, and `duplicate_credits` are used. Rows with `duplicate_credits` ≤ 0 or null are skipped automatically.
+
+### SQL to identify duplicate sessions
+
+```sql
+WITH dupes AS (
+    SELECT
+        source_id,
+        user_id,
+        COUNT(*)                                  AS event_count,
+        MIN(occurred_at)                          AS first_event_at,
+        MAX(occurred_at)                          AS last_event_at,
+        SUM(credits_used)   - MAX(credits_used)   AS duplicate_credits,
+        SUM(dollar_amount)  - MAX(dollar_amount)  AS duplicate_dollars,
+        ARRAY_AGG(DISTINCT metadata ->> 'end_reason') AS end_reasons
+    FROM usage_events
+    WHERE source_type = 'live_call'
+    GROUP BY source_id, user_id
+    HAVING COUNT(*) > 1
+)
+SELECT * FROM dupes
+ORDER BY event_count DESC, last_event_at DESC;
+```
+
+### What it does
+
+1. Parses the CSV (handles quoted fields)
+2. Shows total rows and total credits to restore, then asks for confirmation
+3. For each row, inserts a `refund` credit transaction (positive amount, credits added back) and calls `increment_user_credits`
+4. Continues on per-row errors — failed rows are listed in the summary
+5. Exits with code 1 if any rows failed
+
+Each refund transaction is recorded with:
+- `type: 'refund'`
+- `description: "Refund - Double billing (voice call <source_id_prefix>)"`
+- `metadata.reason: "Double billing - voice call"`
+- `metadata.sourceId`: the full source_id for traceability
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
 
 ---
 
@@ -299,12 +379,12 @@ export SUPABASE_DB_URL="postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postg
 ```
 
 This will:
+
 1. Fetch 500 Stripe payment intents (with pagination)
 2. Export Supabase credit transactions
 3. Clean both datasets
 4. Detect duplicates in both systems
 5. Compare and generate reports including CSV exports
-
 
 ## Credit Transaction Analysis Scripts
 
