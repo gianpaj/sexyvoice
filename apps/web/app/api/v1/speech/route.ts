@@ -497,7 +497,7 @@ export async function POST(request: Request) {
         duration: '-1',
         credits_used: creditsUsed,
         usage: {
-          ...(usageMetadata ?? {}),
+          ...usageMetadata,
           userHasPaid,
           apiKeyId: authResult.apiKeyId,
           sourceType: 'api_tts',
