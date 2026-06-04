@@ -1408,6 +1408,34 @@ describe('Clone Voice API Route', () => {
       expect(json.details).toEqual({ provider: 'replicate' });
     });
 
+    it('returns a typed 503 without Sentry capture for Replicate 5xx failures', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      mockReplicateRun.mockRejectedValueOnce(
+        new Error(
+          'Request to https://api.replicate.com/v1/predictions failed with status 502 Bad Gateway',
+        ),
+      );
+
+      const formData = createFormDataWithAudio(
+        'こんにちは',
+        createMockAudioFile(),
+        'ja',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.code).toBe('errors.providerUnavailable');
+      expect(json.details).toEqual({ provider: 'replicate' });
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should handle request abortion gracefully', async () => {
       const controller = new AbortController();
 
@@ -1722,9 +1750,39 @@ describe('Clone Voice API Route', () => {
 
     it('does not log expected fal.ai timeout failures to Sentry when falling back to original audio', async () => {
       const { captureException } = await import('@sentry/nextjs');
-      const timeoutError = new Error('The operation was aborted due to timeout');
+      const timeoutError = new Error(
+        'The operation was aborted due to timeout',
+      );
       timeoutError.name = 'TimeoutError';
       mockFalSubscribe.mockRejectedValueOnce(timeoutError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('does not log fal.ai enhanced audio download 5xx failures to Sentry', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      server.use(
+        http.get('https://fal-cdn.com/test-enhanced-audio.wav', () =>
+          HttpResponse.text('provider unavailable', { status: 500 }),
+        ),
+      );
 
       const formData = createFormDataWithAudio(
         'Hello world',
