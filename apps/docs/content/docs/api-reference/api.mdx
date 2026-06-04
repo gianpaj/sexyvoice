@@ -88,6 +88,78 @@ curl -X GET 'https://sexyvoice.ai/api/v1/billing' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 ```
 
+## Voice Cloning
+
+Clone a voice from a short reference recording and synthesize new speech with it
+via `POST /api/v1/clone`. Provide the reference audio as **either** a public URL
+(`reference_audio_url`) **or** base64 (`reference_audio`) — not both. The
+language (`locale`, default `en`) selects the cloning provider automatically.
+
+Reference audio of **3–25 seconds** works best. Longer clips are trimmed
+automatically. Set `enhance_reference_audio: true` to denoise the reference
+before cloning (bills additional credits per second).
+
+### curl (reference audio URL)
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/clone' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "input": "Hello from my cloned voice!",
+    "locale": "en",
+    "reference_audio_url": "https://example.com/reference-sample.wav"
+  }'
+```
+
+### TypeScript (base64 reference audio)
+
+```ts
+import { readFileSync } from 'node:fs';
+
+const referenceAudio = readFileSync('sample.wav').toString('base64');
+
+const response = await fetch('https://sexyvoice.ai/api/v1/clone', {
+  method: 'POST',
+  headers: {
+    Authorization: `Bearer ${process.env.SEXYVOICE_API_KEY}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    input: 'Hello from TypeScript',
+    locale: 'en',
+    reference_audio: referenceAudio,
+    reference_audio_format: 'audio/wav',
+  }),
+});
+
+const json = await response.json();
+// json.url contains the generated cloned-voice audio URL
+```
+
+### Python (with enhancement)
+
+```python
+import requests
+
+response = requests.post(
+    'https://sexyvoice.ai/api/v1/clone',
+    headers={
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json',
+    },
+    json={
+        'input': 'Hello from Python',
+        'locale': 'en',
+        'reference_audio_url': 'https://example.com/reference-sample.wav',
+        'enhance_reference_audio': True,
+    },
+    timeout=120,
+)
+
+print(response.status_code, response.json())
+```
+
 ### Python (gpro)
 
 ```python

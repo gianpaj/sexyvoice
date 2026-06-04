@@ -5,6 +5,7 @@ import {
   Copy,
   ExternalLink,
   KeyRound,
+  Mic,
   Plus,
   Terminal,
   Trash2,
@@ -316,6 +317,14 @@ export function ApiKeys({
               <span className="text-sm">
                 {dict.infoCard.generateDescription}
               </span>
+            </FeatureCard>
+            <FeatureCard
+              external
+              href="https://docs.sexyvoice.ai/api-reference/endpoints/api/v1/clone/post"
+              icon={Mic}
+              title={dict.infoCard.cloneTitle}
+            >
+              <span className="text-sm">{dict.infoCard.cloneDescription}</span>
             </FeatureCard>
             <FeatureCard
               external

@@ -139,6 +139,84 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
   ],
 );
 
+export const VoiceCloneRequestSchema = z
+  .strictObject({
+    input: z
+      .string()
+      .min(1)
+      .max(4000)
+      .describe(
+        'The text to synthesize with the cloned voice (max 1000 chars on the free tier, 4000 for paid Voxtral locales, 300 for other languages)',
+      ),
+    locale: z
+      .string()
+      .min(2)
+      .max(10)
+      .optional()
+      .describe(
+        'Language of the input text (e.g. "en", "es", "fr"). Defaults to "en". Determines the cloning provider.',
+      ),
+    reference_audio_url: z
+      .string()
+      .url()
+      .optional()
+      .describe(
+        'Public URL to the reference audio to clone (MP3, WAV, OGG/Opus). 3-25s recommended.',
+      ),
+    reference_audio: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Base64-encoded reference audio (alternative to reference_audio_url).',
+      ),
+    reference_audio_format: z
+      .string()
+      .optional()
+      .describe(
+        'MIME type of the base64 reference_audio (e.g. "audio/wav", "audio/mpeg"). Defaults to audio/wav.',
+      ),
+    enhance_reference_audio: z
+      .boolean()
+      .optional()
+      .describe(
+        'Denoise/enhance the reference audio before cloning. Bills additional credits per second.',
+      ),
+    response_format: z
+      .enum(['wav'])
+      .optional()
+      .describe(
+        'Audio format of the generated output. Only "wav" is supported.',
+      ),
+  })
+  .refine(
+    (data) =>
+      Boolean(data.reference_audio_url) !== Boolean(data.reference_audio),
+    {
+      message:
+        'Provide exactly one of "reference_audio_url" or "reference_audio"',
+      path: ['reference_audio_url'],
+    },
+  );
+
+export const VoiceCloneResponseSchema = z.object({
+  url: z.string().url().describe('URL to the generated cloned-voice audio'),
+  credits_used: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('Credits consumed for this clone'),
+  credits_remaining: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('Remaining credits'),
+  usage: z.object({
+    input_characters: z.number().int().describe('Input characters processed'),
+    model: z.string().describe('Cloning model used'),
+  }),
+});
+
 export const VoiceGenerationResponseSchema = z.object({
   url: z.string().url().describe('URL to generated audio'),
   credits_used: z

@@ -33,12 +33,21 @@ describe('external API pricing', () => {
     expect(amount).toBe(0);
   });
 
-  it('supports api_voice_cloning pricing key (currently zero)', () => {
+  it('charges a per-request price for replicate voice cloning', () => {
     const amount = calculateExternalApiDollarAmount({
       sourceType: 'api_voice_cloning',
       provider: 'replicate',
       model: 'future-model',
     });
-    expect(amount).toBe(0);
+    expect(amount).toBe(0.0121);
+  });
+
+  it('charges per input character for mistral voice cloning', () => {
+    const amount = calculateExternalApiDollarAmount({
+      sourceType: 'api_voice_cloning',
+      provider: 'mistral',
+      inputChars: 1000,
+    });
+    expect(amount).toBe(0.016);
   });
 });

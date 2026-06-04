@@ -4,6 +4,8 @@ import {
   BillingResponseSchema,
   ErrorResponseSchema,
   ModelsResponseSchema,
+  VoiceCloneRequestSchema,
+  VoiceCloneResponseSchema,
   VoiceGenerationRequestSchema,
   VoiceGenerationResponseSchema,
   VoicesResponseSchema,
@@ -177,8 +179,8 @@ export function createExternalApiOpenApiDocument() {
     openapi: '3.1.0',
     info: {
       title: 'SexyVoice API',
-      version: '1.0.1',
-      description: 'API for text-to-speech generation.',
+      version: '1.1.0',
+      description: 'API for text-to-speech generation and voice cloning.',
     },
     components: {
       securitySchemes: {
@@ -191,6 +193,8 @@ export function createExternalApiOpenApiDocument() {
       schemas: {
         VoiceGenerationRequest: VoiceGenerationRequestSchema,
         VoiceGenerationResponse: VoiceGenerationResponseSchema,
+        VoiceCloneRequest: VoiceCloneRequestSchema,
+        VoiceCloneResponse: VoiceCloneResponseSchema,
         ErrorResponse: ErrorResponseSchema,
         VoicesResponse: VoicesResponseSchema,
         ModelsResponse: ModelsResponseSchema,
@@ -300,6 +304,102 @@ export function createExternalApiOpenApiDocument() {
                 'application/json': {
                   schema: ErrorResponseSchema,
                 },
+              },
+            },
+          },
+        },
+      },
+      '/api/v1/clone': {
+        post: {
+          security: [{ BearerAuth: [] }],
+          summary: 'Clone a voice from reference audio',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: VoiceCloneRequestSchema,
+                examples: {
+                  url: {
+                    summary: 'Clone from a reference audio URL',
+                    value: {
+                      input: 'Hello from the cloned voice!',
+                      locale: 'en',
+                      reference_audio_url:
+                        'https://example.com/reference-sample.wav',
+                    },
+                  },
+                  base64: {
+                    summary: 'Clone from base64-encoded reference audio',
+                    value: {
+                      input: 'Hola desde la voz clonada!',
+                      locale: 'es',
+                      reference_audio: 'UklGRiQAAABXQVZF...',
+                      reference_audio_format: 'audio/wav',
+                    },
+                  },
+                  enhanced: {
+                    summary: 'Clone with reference-audio enhancement',
+                    value: {
+                      input: 'Hello with cleaner reference audio.',
+                      locale: 'en',
+                      reference_audio_url:
+                        'https://example.com/noisy-sample.wav',
+                      enhance_reference_audio: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Voice cloned',
+              content: {
+                'application/json': {
+                  schema: VoiceCloneResponseSchema,
+                },
+              },
+            },
+            400: {
+              description: 'Bad request',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
+              },
+            },
+            401: {
+              description: 'Authentication failed',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
+              },
+            },
+            402: {
+              description: 'Insufficient credits',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
+              },
+            },
+            422: {
+              description: 'Content policy violation',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
+              },
+            },
+            429: {
+              description: 'Rate limit exceeded',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
+              },
+            },
+            500: {
+              description: 'Server error',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
+              },
+            },
+            503: {
+              description: 'Provider temporarily unavailable',
+              content: {
+                'application/json': { schema: ErrorResponseSchema },
               },
             },
           },
