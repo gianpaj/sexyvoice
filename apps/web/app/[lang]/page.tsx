@@ -1,7 +1,6 @@
 import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -58,14 +57,14 @@ export default async function LandingPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
-  const cookieStore = await cookies();
-  const dismissedCookieKeys = cookieStore
-    .getAll()
-    .filter((cookie) => cookie.value)
-    .map((cookie) => cookie.name);
+  // NOTE: intentionally do NOT read cookies() here. Doing so opts this page into
+  // dynamic rendering (`cache-control: private, no-store`), which both prevents
+  // CDN caching and disqualifies the page from the back/forward cache (bfcache).
+  // The <Banner> client component already re-reads the dismissal cookies on the
+  // client (it starts hidden and only reveals itself when no dismiss cookie is
+  // set), so server-side filtering here is redundant.
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
-    dismissedCookieKeys,
     lang,
     messages,
     placement: 'landing',
