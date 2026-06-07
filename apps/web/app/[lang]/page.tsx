@@ -176,7 +176,7 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href={`/${lang}/signup`}>
+                  <Link href="/signup">
                     {dictLanding.hero.buttonCTA}
                   </Link>
                 </Button>
@@ -339,7 +339,7 @@ export default async function LandingPage(props: {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href={`/${lang}/signup`}>{dictLanding.cta.action}</Link>
+                <Link href="/signup">{dictLanding.cta.action}</Link>
               </Button>
             </div>
           </div>
