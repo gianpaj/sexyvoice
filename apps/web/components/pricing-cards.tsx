@@ -1,10 +1,11 @@
 'use client';
 
 import clsx from 'clsx';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useActionState, useState } from 'react';
 
+import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,6 +18,23 @@ import { cn } from '@/lib/utils';
 
 export type BillingMode = 'monthly' | 'one-time';
 
+type CheckoutPlanId = 'starter' | 'standard' | 'pro';
+
+interface ActionState {
+  error: string | null;
+  success: boolean;
+}
+
+const initialState: ActionState = {
+  error: null,
+  success: false,
+};
+
+const isCheckoutPlanId = (
+  value: FormDataEntryValue | null,
+): value is CheckoutPlanId =>
+  value === 'starter' || value === 'standard' || value === 'pro';
+
 export interface PlanData {
   billing?: string;
   buttonText: string;
@@ -24,6 +42,7 @@ export interface PlanData {
   creditsText: string;
   description: string;
   features: string[];
+  id?: CheckoutPlanId;
   isPopular?: boolean;
   name: string;
   price: number;
@@ -35,6 +54,7 @@ export interface PlanData {
 }
 
 interface PricingCardsProps {
+  checkoutEnabled?: boolean;
   className?: string;
   disableSubscriptionToggle?: boolean;
   isPromoEnabled: boolean;
@@ -45,6 +65,7 @@ interface PricingCardsProps {
 }
 
 export function PricingCards({
+  checkoutEnabled = false,
   className,
   disableSubscriptionToggle = false,
   isPromoEnabled,
@@ -180,13 +201,22 @@ export function PricingCards({
               )}
             </div>
             <p className="text-muted-foreground text-sm">{plan.description}</p>
-            <Button
-              asChild
-              className="hit-area-6 my-4 w-full"
-              variant={plan.buttonVariant as 'outline' | 'default'}
-            >
-              <Link href="/signup">{plan.buttonText}</Link>
-            </Button>
+            {checkoutEnabled && plan.id ? (
+              <CheckoutForm
+                billingMode={billingMode}
+                buttonText={plan.buttonText}
+                buttonVariant={plan.buttonVariant}
+                planId={plan.id}
+              />
+            ) : (
+              <Button
+                asChild
+                className="hit-area-6 my-4 w-full"
+                variant={plan.buttonVariant as 'outline' | 'default'}
+              >
+                <Link href="/signup">{plan.buttonText}</Link>
+              </Button>
+            )}
             <div className="space-y-2">
               <div>
                 <div className="font-semibold text-base tabular-nums">
@@ -216,5 +246,85 @@ export function PricingCards({
         ))}
       </div>
     </div>
+  );
+}
+
+function CheckoutForm({
+  billingMode,
+  buttonText,
+  buttonVariant,
+  planId,
+}: {
+  billingMode: BillingMode;
+  buttonText: string;
+  buttonVariant: string;
+  planId: CheckoutPlanId;
+}) {
+  const creditsT = useTranslations('credits');
+  const formAction = async (
+    _prevState: ActionState,
+    formData: FormData,
+  ): Promise<ActionState> => {
+    try {
+      const packageId = formData.get('packageId');
+
+      if (!isCheckoutPlanId(packageId)) {
+        throw new Error('Invalid checkout package');
+      }
+
+      const { url } = await createCheckoutSession(formData, packageId);
+
+      if (url) {
+        window.location.assign(url);
+        return { error: null, success: true };
+      }
+
+      throw new Error('No checkout URL received');
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      return {
+        error: creditsT('status.checkoutError'),
+        success: false,
+      };
+    }
+  };
+
+  const [state, formActionDispatch, pending] = useActionState(
+    formAction,
+    initialState,
+  );
+
+  return (
+    <>
+      {state.error ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3">
+          <p className="text-red-600 text-xs">{state.error}</p>
+        </div>
+      ) : null}
+      <form action={formActionDispatch}>
+        <input name="packageId" type="hidden" value={planId} />
+        <input
+          name="type"
+          type="hidden"
+          value={billingMode === 'monthly' ? 'subscription' : 'topup'}
+        />
+        <input name="uiMode" type="hidden" value="hosted" />
+        <Button
+          className="hit-area-6 my-4 w-full"
+          disabled={pending}
+          type="submit"
+          variant={buttonVariant as 'outline' | 'default'}
+        >
+          {pending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {creditsT('topup.processing')}
+            </>
+          ) : (
+            buttonText
+          )}
+        </Button>
+      </form>
+    </>
   );
 }

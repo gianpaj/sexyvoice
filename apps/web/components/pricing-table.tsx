@@ -9,11 +9,13 @@ import {
 } from '@/lib/stripe/pricing';
 
 async function PricingTable({
+  checkoutEnabled = false,
   className,
   hideFreePlan = false,
   lang,
   shouldShowSubscriptionPlans = true,
 }: {
+  checkoutEnabled?: boolean;
   className?: string;
   hideFreePlan?: boolean;
   lang: Locale;
@@ -56,6 +58,7 @@ async function PricingTable({
   const topupPlans: PlanData[] = [
     ...(hideFreePlan ? [] : [freePlan]),
     {
+      id: 'starter',
       name: pPlans.starter.name,
       price: topupPackages.starter.dollarAmount,
       pricePer1kCredits: (
@@ -73,6 +76,7 @@ async function PricingTable({
       features: pPlans.starter.features,
     },
     {
+      id: 'standard',
       name: pPlans.standard.name,
       price: topupPackages.standard.dollarAmount,
       isPopular: true,
@@ -97,6 +101,7 @@ async function PricingTable({
       features: pPlans.standard.features,
     },
     {
+      id: 'pro',
       name: pPlans.pro.name,
       price: topupPackages.pro.dollarAmount,
       pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
@@ -121,6 +126,7 @@ async function PricingTable({
   const subscriptionPlans: PlanData[] = [
     ...(hideFreePlan ? [] : [freePlan]),
     {
+      id: 'starter',
       name: pPlans.starter.name,
       price: subscriptionPackages.starter.dollarAmount,
       pricePer1kCredits: (
@@ -141,6 +147,7 @@ async function PricingTable({
       features: pPlans.starter.features,
     },
     {
+      id: 'standard',
       name: pPlans.standard.name,
       price: subscriptionPackages.standard.dollarAmount,
       isPopular: true,
@@ -168,6 +175,7 @@ async function PricingTable({
       features: pPlans.standard.features,
     },
     {
+      id: 'pro',
       name: pPlans.pro.name,
       price: subscriptionPackages.pro.dollarAmount,
       pricePer1kCredits: subscriptionPackages.pro.pricePer1kCredits,
@@ -194,6 +202,7 @@ async function PricingTable({
 
   return (
     <PricingCards
+      checkoutEnabled={checkoutEnabled}
       className={className}
       disableSubscriptionToggle={!shouldShowSubscriptionPlans}
       isPromoEnabled={isPromoEnabled}

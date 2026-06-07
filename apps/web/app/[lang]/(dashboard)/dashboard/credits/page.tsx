@@ -131,6 +131,7 @@ export default async function CreditsPage(props: {
       ) : null}
 
       <PricingTable
+        checkoutEnabled
         className="py-0 pb-16 xl:px-0"
         hideFreePlan
         lang={lang}
