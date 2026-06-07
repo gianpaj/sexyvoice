@@ -198,8 +198,12 @@ const updateStripeId = async (userId: string, stripeId: string) => {
 };
 
 export async function hasEverHadRealSubscription(
-  customerId: string,
+  customerId: string | null | undefined,
 ): Promise<boolean> {
+  if (!customerId) {
+    return false;
+  }
+
   let startingAfter: string | undefined;
 
   while (true) {
