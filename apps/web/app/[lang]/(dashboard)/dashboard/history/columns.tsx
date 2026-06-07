@@ -24,14 +24,8 @@ type HistoryDict = (typeof langDict)['history'];
 const downloadFile = async (url: string, errorMessage: string) => {
   if (!url) return;
 
-  const anchorElement = document.createElement('a');
-  anchorElement.href = url;
-  const filename = url.split('/').pop()?.split('?')[0];
-  anchorElement.download = filename || 'generated_audio.mp3';
-  anchorElement.target = '_blank';
-
   try {
-    await downloadUrl(url, anchorElement);
+    await downloadUrl(url, document.createElement('a'));
   } catch {
     toast.error(errorMessage);
   }

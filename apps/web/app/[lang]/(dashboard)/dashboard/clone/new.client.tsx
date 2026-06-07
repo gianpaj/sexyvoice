@@ -262,7 +262,7 @@ function NewVoiceClientInner({
       if (usesVoxtral) {
         await ensureLoaded();
       }
-      startRecording();
+      await startRecording();
     } catch (error) {
       const errorMsg =
         error instanceof Error
@@ -559,7 +559,9 @@ function NewVoiceClientInner({
           hasEnoughCredits &&
           legalConsentChecked
         ) {
-          handleGenerate();
+          handleGenerate().catch((error) => {
+            console.error('Keyboard shortcut clone generation failed:', error);
+          });
         }
       }
     };
@@ -574,15 +576,10 @@ function NewVoiceClientInner({
   }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
 
   const downloadAudio = async () => {
-    // Prepare the anchor element once in a closure scope
-    const anchorElement = document.createElement('a');
-    document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
-
     if (!generatedAudioUrl) return;
 
     try {
-      await downloadUrl(generatedAudioUrl, anchorElement);
+      await downloadUrl(generatedAudioUrl, document.createElement('a'));
     } catch {
       toast.error(dict.errorCloning);
     }

@@ -1,6 +1,5 @@
 import {
   DeleteObjectCommand,
-  GetObjectCommand,
   PutObjectCommand,
   type PutObjectCommandInput,
   S3Client,
@@ -49,23 +48,6 @@ export const uploadFileToR2 = async (
 
   await s3Client.send(new PutObjectCommand(params));
   return `${publicBaseUrl}/${filename}`;
-};
-
-export const R2_PUBLIC_HOST = new URL(DEFAULT_PUBLIC_URL).host;
-
-/**
- * Fetch an object directly from R2 via the S3 API (authenticated).
- *
- * The public Cloudflare URL (files.sexyvoice.ai) cannot be fetched
- * server-side because Cloudflare's bot protection blocks datacenter requests,
- * and it cannot be fetched client-side because the origin sends no CORS
- * headers. Reading straight from the bucket sidesteps both.
- */
-export const getFileFromR2 = (
-  key: string,
-  bucketName: string = R2_BUCKET_NAME,
-) => {
-  return s3Client.send(new GetObjectCommand({ Bucket: bucketName, Key: key }));
 };
 
 export const deleteFileFromR2 = async (filename: string) => {
