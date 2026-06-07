@@ -3,7 +3,11 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
-import { getTopupPackages, type PackageType } from '@/lib/stripe/pricing';
+import {
+  getSubscriptionPackages,
+  getTopupPackages,
+  type PackageType,
+} from '@/lib/stripe/pricing';
 import { hasEverHadRealSubscription, stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -63,7 +67,10 @@ export async function createCheckoutSession(
       });
     }
 
-    const package_ = getTopupPackages('en')[packageId];
+    const package_ =
+      checkoutType === 'subscription'
+        ? getSubscriptionPackages('en')[packageId]
+        : getTopupPackages('en')[packageId];
 
     // Verify the price ID exists to avoid runtime errors
     if (!package_?.priceId) {
