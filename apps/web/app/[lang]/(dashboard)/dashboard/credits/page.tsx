@@ -86,6 +86,14 @@ export default async function CreditsPage(props: {
       .limit(100));
   }
 
+  const subscriptionDiscountPercent =
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
+  const shouldShowSubscriptionDiscountBanner =
+    shouldShowSubscriptionPlans &&
+    !!process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID &&
+    !!subscriptionDiscountPercent &&
+    Number.parseFloat(subscriptionDiscountPercent) > 0;
+
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <TopupStatus dict={dict.credits} />
@@ -108,19 +116,19 @@ export default async function CreditsPage(props: {
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
-        <Sparkles className="size-5 shrink-0 text-yellow-500" />
-        <span>
-          {tSidebar('subscriptionDiscount', {
-            discount:
-              process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT ??
-              '0',
-            extraCredits: String(
-              Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100),
-            ),
-          })}
-        </span>
-      </div>
+      {shouldShowSubscriptionDiscountBanner ? (
+        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
+          <Sparkles className="size-5 shrink-0 text-yellow-500" />
+          <span>
+            {tSidebar('subscriptionDiscount', {
+              discount: subscriptionDiscountPercent,
+              extraCredits: String(
+                Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100),
+              ),
+            })}
+          </span>
+        </div>
+      ) : null}
 
       <PricingTable
         className="py-0 pb-16 xl:px-0"
