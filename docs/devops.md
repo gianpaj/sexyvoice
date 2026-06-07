@@ -220,14 +220,17 @@ openssl rand -hex 32
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_PRICING_ID`
 - `STRIPE_TOPUP_STARTER_PRICE_ID`
 - `STRIPE_TOPUP_STANDARD_PRICE_ID`
 - `STRIPE_TOPUP_PRO_PRICE_ID`
 - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
 - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
 - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon
+  applied automatically for eligible first-time subscribers.
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month
+  discount percentage used to display discounted subscription pricing when the
+  coupon is configured.
 
 ### Edge Config
 
