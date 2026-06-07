@@ -197,34 +197,6 @@ const updateStripeId = async (userId: string, stripeId: string) => {
     .eq('id', userId);
 };
 
-export async function createCustomerSession(userId: string, stripeId: string) {
-  try {
-    const customerSession = await stripe.customerSessions.create({
-      customer: stripeId,
-      components: {
-        pricing_table: {
-          enabled: true,
-        },
-      },
-    });
-
-    return customerSession;
-  } catch (error) {
-    console.error(
-      '[STRIPE ADMIN] Error creating Stripe customer session:',
-      error,
-    );
-    if (process.env.NODE_ENV !== 'production') {
-      return null;
-    }
-    Sentry.captureException(error, {
-      user: { id: userId },
-      extra: { stripeId },
-    });
-    throw error;
-  }
-}
-
 export async function hasEverHadRealSubscription(
   customerId: string,
 ): Promise<boolean> {

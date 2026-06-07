@@ -89,6 +89,46 @@ const isExpiredAuthFlowStateError = (error: unknown) => {
   );
 };
 
+const isCodeChallengeMismatchError = (error: unknown) => {
+  const errorName = getErrorStringProperty(error, 'name');
+  const errorMessage = getErrorStringProperty(error, 'message').toLowerCase();
+
+  return (
+    errorName === 'AuthApiError' &&
+    errorMessage.includes(
+      'code challenge does not match previously saved code verifier',
+    )
+  );
+};
+
+function getKnownOauthCallbackFailure(error: unknown): {
+  errorType: string;
+  message: string;
+} | null {
+  if (isPkceCodeVerifierMissingError(error)) {
+    return {
+      errorType: 'pkce-code-verifier-missing',
+      message: 'OAuth callback missing PKCE code verifier.',
+    };
+  }
+
+  if (isExpiredAuthFlowStateError(error)) {
+    return {
+      errorType: 'flow-state-expired',
+      message: 'OAuth callback flow state expired.',
+    };
+  }
+
+  if (isCodeChallengeMismatchError(error)) {
+    return {
+      errorType: 'code-challenge-mismatch',
+      message: 'OAuth callback code challenge mismatch.',
+    };
+  }
+
+  return null;
+}
+
 const getOauthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const cookieNames = cookieHeader
@@ -152,13 +192,10 @@ export async function GET(request: Request) {
     errorType: string,
     error: unknown,
   ) => {
-    captureMessage(message, {
-      level: 'warning',
-      tags: {
-        area: 'auth',
-        flow: 'oauth-callback',
-        error_type: errorType,
-      },
+    console.warn(message, {
+      area: 'auth',
+      errorType,
+      flow: 'oauth-callback',
       extra: {
         redirectTo,
         locale,
@@ -172,19 +209,6 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(`${origin}${loginPath}`);
   };
-  const reportPkceCodeVerifierMissing = (error: unknown) =>
-    reportKnownOauthCallbackFailure(
-      'OAuth callback missing PKCE code verifier.',
-      'pkce-code-verifier-missing',
-      error,
-    );
-  const reportExpiredAuthFlowState = (error: unknown) =>
-    reportKnownOauthCallbackFailure(
-      'OAuth callback flow state expired.',
-      'flow-state-expired',
-      error,
-    );
-
   try {
     if (!code) {
       return NextResponse.redirect(`${origin}${loginPath}`);
@@ -196,12 +220,14 @@ export async function GET(request: Request) {
     } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
-      if (isPkceCodeVerifierMissingError(exchangeError)) {
-        return reportPkceCodeVerifierMissing(exchangeError);
-      }
-
-      if (isExpiredAuthFlowStateError(exchangeError)) {
-        return reportExpiredAuthFlowState(exchangeError);
+      const knownOauthCallbackFailure =
+        getKnownOauthCallbackFailure(exchangeError);
+      if (knownOauthCallbackFailure) {
+        return reportKnownOauthCallbackFailure(
+          knownOauthCallbackFailure.message,
+          knownOauthCallbackFailure.errorType,
+          exchangeError,
+        );
       }
 
       captureException(exchangeError, {
@@ -274,12 +300,13 @@ export async function GET(request: Request) {
       `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {
-    if (isPkceCodeVerifierMissingError(error)) {
-      return reportPkceCodeVerifierMissing(error);
-    }
-
-    if (isExpiredAuthFlowStateError(error)) {
-      return reportExpiredAuthFlowState(error);
+    const knownOauthCallbackFailure = getKnownOauthCallbackFailure(error);
+    if (knownOauthCallbackFailure) {
+      return reportKnownOauthCallbackFailure(
+        knownOauthCallbackFailure.message,
+        knownOauthCallbackFailure.errorType,
+        error,
+      );
     }
 
     captureException(error, {

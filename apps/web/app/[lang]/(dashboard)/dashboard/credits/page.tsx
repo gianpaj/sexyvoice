@@ -36,7 +36,6 @@ export default async function CreditsPage(props: {
   }
 
   let shouldShowSubscriptionPlans = false;
-  let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
   let existingTransactions:
     | Pick<
         Tables<'credit_transactions'>,
@@ -77,10 +76,6 @@ export default async function CreditsPage(props: {
         console.error('Failed to refresh Stripe subscription data', error);
         shouldShowSubscriptionPlans = false;
       }
-    }
-
-    if (shouldShowSubscriptionPlans) {
-      clientSecret = await createCustomerSession(userData.id, stripeId);
     }
 
     ({ data: existingTransactions } = await supabase
@@ -146,29 +141,3 @@ export default async function CreditsPage(props: {
     </div>
   );
 }
-
-const NextStripePricingTable = ({
-  clientSecret,
-}: {
-  clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
-}) => {
-  const pricingTableId = process.env.STRIPE_PRICING_ID;
-  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
-
-  if (!(pricingTableId && publishableKey && clientSecret)) return null;
-
-  return (
-    <>
-      <Script
-        src="https://js.stripe.com/v3/pricing-table.js"
-        strategy="lazyOnload"
-      />
-      {/* @ts-ignore */}
-      <stripe-pricing-table
-        customer-session-client-secret={clientSecret.client_secret}
-        pricing-table-id={pricingTableId}
-        publishable-key={publishableKey}
-      />
-    </>
-  );
-};

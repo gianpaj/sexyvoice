@@ -3,11 +3,7 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
-import {
-  getSubscriptionPackages,
-  getTopupPackages,
-  type PackageType,
-} from '@/lib/stripe/pricing';
+import { getTopupPackages, type PackageType } from '@/lib/stripe/pricing';
 import { hasEverHadRealSubscription, stripe } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -112,7 +108,7 @@ export async function createCheckoutSession(
       !!subscriptionDiscountCouponId &&
       !hasExistingSubscriptionHistory;
 
-    const metadata: CheckoutMetadata =
+    const metadata: Stripe.MetadataParam =
       checkoutType === 'subscription'
         ? {
             userId: user.id,
@@ -156,7 +152,7 @@ export async function createCheckoutSession(
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,
-        metadata: metadata as unknown as Stripe.MetadataParam,
+        metadata,
       });
 
     return {

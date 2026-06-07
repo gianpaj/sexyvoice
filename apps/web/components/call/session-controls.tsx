@@ -23,6 +23,10 @@ import {
 import { useCallTimer } from '@/hooks/use-call-timer';
 import { useConnection } from '@/hooks/use-connection';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
+import {
+  enableKrispNoiseFilterIfReady,
+  isExpectedKrispNoiseFilterError,
+} from './krisp-noise-filter';
 
 export function SessionControls() {
   const localParticipant = useLocalParticipant();
@@ -35,8 +39,26 @@ export function SessionControls() {
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
     useKrispNoiseFilter();
   useEffect(() => {
-    setNoiseFilterEnabled(true);
-  }, [setNoiseFilterEnabled]);
+    let cancelled = false;
+
+    enableKrispNoiseFilterIfReady({
+      microphonePublication: localParticipant.microphoneTrack,
+      onUnexpectedError: (error) => {
+        if (!cancelled) {
+          console.warn('Krisp noise filter could not be enabled', error);
+        }
+      },
+      setNoiseFilterEnabled,
+    }).catch((error) => {
+      if (!cancelled) {
+        console.warn('Krisp noise filter could not be enabled', error);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [localParticipant.microphoneTrack, setNoiseFilterEnabled]);
   useEffect(() => {
     setIsMuted(localParticipant.isMicrophoneEnabled === false);
   }, [localParticipant.isMicrophoneEnabled]);
@@ -112,9 +134,18 @@ export function SessionControls() {
                 checked={isNoiseFilterEnabled}
                 className="text-xs"
                 disabled={isNoiseFilterPending}
-                onCheckedChange={(checked) => {
-                  setNoiseFilterEnabled(checked);
-                }}
+                onCheckedChange={(checked) =>
+                  Promise.resolve(setNoiseFilterEnabled(checked)).catch(
+                    (error) => {
+                      if (!isExpectedKrispNoiseFilterError(error)) {
+                        console.warn(
+                          'Krisp noise filter could not be changed',
+                          error,
+                        );
+                      }
+                    },
+                  )
+                }
               >
                 {dict.enhancedNoiseFilter}
               </DropdownMenuCheckboxItem>
