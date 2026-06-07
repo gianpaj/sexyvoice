@@ -1,6 +1,15 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
+const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
+  'trialing',
+  'active',
+  'past_due',
+  'unpaid',
+  'paused',
+  'canceled',
+]);
+
 import { type CustomerData, setCustomerData } from '../redis/queries';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
@@ -188,31 +197,39 @@ const updateStripeId = async (userId: string, stripeId: string) => {
     .eq('id', userId);
 };
 
-export async function createCustomerSession(userId: string, stripeId: string) {
-  try {
-    const customerSession = await stripe.customerSessions.create({
-      customer: stripeId,
-      components: {
-        pricing_table: {
-          enabled: true,
-        },
-      },
+export async function hasEverHadRealSubscription(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  if (!customerId) {
+    return false;
+  }
+
+  let startingAfter: string | undefined;
+
+  while (true) {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      limit: 100,
+      status: 'all',
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
-    return customerSession;
-  } catch (error) {
-    console.error(
-      '[STRIPE ADMIN] Error creating Stripe customer session:',
-      error,
-    );
-    if (process.env.NODE_ENV !== 'production') {
-      return null;
+    if (
+      subscriptions.data.some((subscription) =>
+        REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+      )
+    ) {
+      return true;
     }
-    Sentry.captureException(error, {
-      user: { id: userId },
-      extra: { stripeId },
-    });
-    throw error;
+
+    if (!subscriptions.has_more) {
+      return false;
+    }
+
+    startingAfter = subscriptions.data.at(-1)?.id;
+    if (!startingAfter) {
+      return false;
+    }
   }
 }
 

@@ -9,7 +9,7 @@ import {
   FileText,
   KeyRound,
   Mic2,
-  PhoneCallIcon,
+  PhoneIcon,
   ReceiptText,
   Scissors,
   Wand2,
@@ -77,7 +77,7 @@ export default function DashboardUI({
     {
       name: dict.pages['/dashboard/call'],
       href: `/${lang}/dashboard/call`,
-      icon: PhoneCallIcon,
+      icon: PhoneIcon,
       current: pathname === `/${lang}/dashboard/call`,
     },
     {

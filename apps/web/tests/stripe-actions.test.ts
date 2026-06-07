@@ -4,7 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { stripe } from '@/lib/stripe/stripe-admin';
 
+vi.mock('@sentry/nextjs', () => ({
+  default: {},
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+}));
+
 vi.mock('@/lib/stripe/stripe-admin', () => ({
+  hasEverHadRealSubscription: vi.fn(),
   stripe: {
     checkout: {
       sessions: {
@@ -15,14 +22,21 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 }));
 
 describe('createCheckoutSession()', () => {
+  const originalE2ETestMode = process.env.E2E_TEST_MODE;
   const originalVercelEnv = process.env.VERCEL_ENV;
-  const originalStarterPriceId = process.env.STRIPE_TOPUP_5_PRICE_ID;
+  const originalStarterPriceId = process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    if (originalE2ETestMode === undefined) {
+      delete process.env.E2E_TEST_MODE;
+    } else {
+      process.env.E2E_TEST_MODE = originalE2ETestMode;
+    }
+
     if (originalVercelEnv === undefined) {
       delete process.env.VERCEL_ENV;
     } else {
@@ -30,9 +44,9 @@ describe('createCheckoutSession()', () => {
     }
 
     if (originalStarterPriceId === undefined) {
-      delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+      delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     } else {
-      process.env.STRIPE_TOPUP_5_PRICE_ID = originalStarterPriceId;
+      process.env.STRIPE_TOPUP_STARTER_PRICE_ID = originalStarterPriceId;
     }
   });
 
@@ -78,8 +92,25 @@ describe('createCheckoutSession()', () => {
     );
   });
 
+  it('returns a safe null checkout result in E2E mode without price IDs', async () => {
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    delete process.env.VERCEL_ENV;
+    process.env.E2E_TEST_MODE = 'true';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).resolves.toEqual({
+      client_secret: null,
+      url: null,
+    });
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+  });
+
   it('does not report missing top-up price IDs outside Vercel production', async () => {
-    delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     process.env.VERCEL_ENV = 'preview';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
@@ -93,7 +124,7 @@ describe('createCheckoutSession()', () => {
   });
 
   it('reports missing top-up price IDs in Vercel production', async () => {
-    delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     process.env.VERCEL_ENV = 'production';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
