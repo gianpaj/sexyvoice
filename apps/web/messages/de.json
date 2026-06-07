@@ -768,6 +768,7 @@
   "history": {
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
+    "downloadError": "Audio konnte nicht heruntergeladen werden",
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",

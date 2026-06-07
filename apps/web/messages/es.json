@@ -768,6 +768,7 @@
   "history": {
     "header": "Historial de Generación",
     "empty": "Sin historial aún",
+    "downloadError": "Error al descargar el audio",
     "ui": {
       "filterText": "Filtrar texto...",
       "customizeColumns": "Personalizar Columnas",
