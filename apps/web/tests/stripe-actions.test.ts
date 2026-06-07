@@ -23,7 +23,7 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 
 describe('createCheckoutSession()', () => {
   const originalVercelEnv = process.env.VERCEL_ENV;
-  const originalStarterPriceId = process.env.STRIPE_TOPUP_5_PRICE_ID;
+  const originalStarterPriceId = process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,9 +37,9 @@ describe('createCheckoutSession()', () => {
     }
 
     if (originalStarterPriceId === undefined) {
-      delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+      delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     } else {
-      process.env.STRIPE_TOPUP_5_PRICE_ID = originalStarterPriceId;
+      process.env.STRIPE_TOPUP_STARTER_PRICE_ID = originalStarterPriceId;
     }
   });
 
@@ -86,7 +86,7 @@ describe('createCheckoutSession()', () => {
   });
 
   it('does not report missing top-up price IDs outside Vercel production', async () => {
-    delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     process.env.VERCEL_ENV = 'preview';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
@@ -100,7 +100,7 @@ describe('createCheckoutSession()', () => {
   });
 
   it('reports missing top-up price IDs in Vercel production', async () => {
-    delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     process.env.VERCEL_ENV = 'production';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');

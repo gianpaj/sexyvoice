@@ -17,6 +17,19 @@ if (process.env.PLAYWRIGHT_TEST_USER_EMAIL) {
 const PLAYWRIGHT_PORT = Number(process.env.PLAYWRIGHT_PORT || '3100');
 const PLAYWRIGHT_BASE_URL =
   process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${PLAYWRIGHT_PORT}`;
+type PlaywrightBrowserChannel =
+  | 'chrome'
+  | 'chrome-beta'
+  | 'chrome-dev'
+  | 'chrome-canary'
+  | 'msedge'
+  | 'msedge-beta'
+  | 'msedge-dev'
+  | 'msedge-canary'
+  | undefined;
+
+const PLAYWRIGHT_BROWSER_CHANNEL = process.env
+  .PLAYWRIGHT_BROWSER_CHANNEL as PlaywrightBrowserChannel;
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -55,6 +68,9 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: PLAYWRIGHT_BASE_URL,
+    ...(PLAYWRIGHT_BROWSER_CHANNEL
+      ? { channel: PLAYWRIGHT_BROWSER_CHANNEL }
+      : {}),
 
     /* Pin timezone + locale so date/time formatting is identical across CI
        and local dev — required for Argos pixel comparisons on date columns. */
