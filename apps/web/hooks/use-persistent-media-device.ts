@@ -11,7 +11,10 @@ const AUDIO_DEVICE_STORAGE_KEY = 'sv_audio_device_id';
  * @returns The media device select object from useMediaDeviceSelect
  */
 export function usePersistentMediaDevice() {
-  const deviceSelect = useMediaDeviceSelect({ kind: 'audioinput' });
+  const deviceSelect = useMediaDeviceSelect({
+    kind: 'audioinput',
+    requestPermissions: false,
+  });
   const hasInitialized = useRef(false);
 
   // Load saved device on mount and when devices change
