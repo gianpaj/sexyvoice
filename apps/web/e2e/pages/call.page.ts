@@ -57,7 +57,7 @@ export class CallPage {
 
     // Connect button — the main CTA to start a call
     this.connectButton = page.getByRole('button', {
-      name: /connect|start|call/i,
+      name: 'Start call',
     });
 
     // Credits section (shown on mobile via lg:hidden)
