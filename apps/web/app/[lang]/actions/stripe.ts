@@ -49,6 +49,7 @@ export interface CheckoutMetadata {
   userId: string;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's okay
 export async function createCheckoutSession(
   data: FormData,
   packageId: CheckoutPackageId,
