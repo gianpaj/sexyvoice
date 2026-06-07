@@ -768,6 +768,7 @@
   "history": {
     "header": "Genereringshistorik",
     "empty": "Ingen historik endnu",
+    "downloadError": "Kunne ikke downloade lyd",
     "ui": {
       "filterText": "Filtrer tekst...",
       "customizeColumns": "Tilpas kolonner",

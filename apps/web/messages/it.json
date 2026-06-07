@@ -768,6 +768,7 @@
   "history": {
     "header": "Cronologia generazioni",
     "empty": "Nessuna cronologia ancora",
+    "downloadError": "Impossibile scaricare l'audio",
     "ui": {
       "filterText": "Filtra testo...",
       "customizeColumns": "Personalizza colonne",
