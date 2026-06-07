@@ -57,12 +57,29 @@ export function PricingCards({
   const billingT = useTranslations('credits.billing');
   const creditsT = useTranslations('credits');
   const format = useFormatter();
-  const [billingMode, setBillingMode] = useState<BillingMode>('monthly');
+  const [billingMode, setBillingMode] = useState<BillingMode>(
+    disableSubscriptionToggle ? 'one-time' : 'monthly',
+  );
 
-  const plans =
-    billingMode === 'monthly' && !disableSubscriptionToggle
-      ? subscriptionPlans
-      : topupPlans;
+  const plans = billingMode === 'monthly' ? subscriptionPlans : topupPlans;
+  const toggleButtonClassName =
+    'hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors';
+  const monthlyButtonClassName = cn(
+    toggleButtonClassName,
+    billingMode === 'monthly' && 'bg-primary text-primary-foreground shadow-sm',
+    billingMode !== 'monthly' &&
+      disableSubscriptionToggle &&
+      'cursor-not-allowed text-muted-foreground opacity-50',
+    billingMode !== 'monthly' &&
+      !disableSubscriptionToggle &&
+      'text-muted-foreground hover:text-foreground',
+  );
+  const oneTimeButtonClassName = cn(
+    toggleButtonClassName,
+    billingMode === 'one-time'
+      ? 'bg-primary text-primary-foreground shadow-sm'
+      : 'text-muted-foreground hover:text-foreground',
+  );
 
   return (
     <div
@@ -73,14 +90,8 @@ export function PricingCards({
       <div className="mx-auto flex items-center gap-1 rounded-full bg-muted p-1">
         <button
           aria-disabled={disableSubscriptionToggle}
-          aria-pressed={billingMode === 'monthly' && !disableSubscriptionToggle}
-          className={`hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
-            billingMode === 'monthly' && !disableSubscriptionToggle
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : disableSubscriptionToggle
-                ? 'cursor-not-allowed text-muted-foreground opacity-50'
-                : 'text-muted-foreground hover:text-foreground'
-          }`}
+          aria-pressed={billingMode === 'monthly'}
+          className={monthlyButtonClassName}
           disabled={disableSubscriptionToggle}
           onClick={() => setBillingMode('monthly')}
           type="button"
@@ -91,12 +102,8 @@ export function PricingCards({
           </span>
         </button>
         <button
-          aria-pressed={billingMode === 'one-time' || disableSubscriptionToggle}
-          className={`hit-area-2 rounded-full px-4 py-1.5 font-medium text-sm transition-colors ${
-            billingMode === 'one-time' || disableSubscriptionToggle
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          aria-pressed={billingMode === 'one-time'}
+          className={oneTimeButtonClassName}
           onClick={() => setBillingMode('one-time')}
           type="button"
         >
