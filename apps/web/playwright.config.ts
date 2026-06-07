@@ -83,8 +83,8 @@ export default defineConfig({
     /* Take screenshot only on failure */
     screenshot: 'only-on-failure',
 
-    /* Record video only on failure */
-    video: 'retain-on-failure',
+    /* Avoid Playwright's bundled ffmpeg download/lookup in CI. */
+    video: process.env.CI ? 'off' : 'retain-on-failure',
   },
 
   /* Configure projects for major browsers */

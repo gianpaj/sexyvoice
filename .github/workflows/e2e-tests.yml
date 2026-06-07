@@ -61,9 +61,11 @@ jobs:
         env:
           REDISMS_DISABLE_POSTINSTALL: 1
 
-      - name: Install Playwright Chrome
+      - name: Install Playwright system dependencies
         working-directory: apps/web
-        run: pnpm exec playwright install --with-deps chrome
+        run: |
+          pnpm exec playwright install-deps chrome
+          google-chrome --version
 
       - name: Build application
         working-directory: apps/web
