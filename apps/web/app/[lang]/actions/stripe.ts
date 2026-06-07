@@ -3,6 +3,7 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
 import type { Stripe } from 'stripe';
 
+import { isE2E } from '@/lib/e2e-mode';
 import {
   getSubscriptionPackages,
   getTopupPackages,
@@ -66,6 +67,13 @@ export async function createCheckoutSession(
       throw new Error('Invalid checkout package', {
         cause: CHECKOUT_INVALID_PACKAGE_ID,
       });
+    }
+
+    if (isE2E()) {
+      return {
+        client_secret: null,
+        url: null,
+      };
     }
 
     const package_ =

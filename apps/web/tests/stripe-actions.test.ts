@@ -22,6 +22,7 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 }));
 
 describe('createCheckoutSession()', () => {
+  const originalE2ETestMode = process.env.E2E_TEST_MODE;
   const originalVercelEnv = process.env.VERCEL_ENV;
   const originalStarterPriceId = process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
 
@@ -30,6 +31,12 @@ describe('createCheckoutSession()', () => {
   });
 
   afterEach(() => {
+    if (originalE2ETestMode === undefined) {
+      delete process.env.E2E_TEST_MODE;
+    } else {
+      process.env.E2E_TEST_MODE = originalE2ETestMode;
+    }
+
     if (originalVercelEnv === undefined) {
       delete process.env.VERCEL_ENV;
     } else {
@@ -83,6 +90,23 @@ describe('createCheckoutSession()', () => {
         }),
       }),
     );
+  });
+
+  it('returns a safe null checkout result in E2E mode without price IDs', async () => {
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    delete process.env.VERCEL_ENV;
+    process.env.E2E_TEST_MODE = 'true';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).resolves.toEqual({
+      client_secret: null,
+      url: null,
+    });
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
   });
 
   it('does not report missing top-up price IDs outside Vercel production', async () => {

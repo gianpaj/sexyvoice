@@ -8,6 +8,9 @@
 import 'server-only';
 
 import { E2E_USER_ID } from './e2e-mocks-shared';
+import { isE2E as isE2EMode } from './e2e-mode';
+
+export const isE2E = isE2EMode;
 
 type CreditTransactionRow = Tables<'credit_transactions'>;
 
@@ -52,9 +55,5 @@ export const E2E_CREDIT_TRANSACTIONS: CreditTransactionRow[] = [
 
 // Defense-in-depth: the env-var alone is too thin a gate, since a single
 // mis-set Vercel env var would silently serve hardcoded mock credits to every
-// signed-in user. Block on any Vercel environment (production/preview/
-// development) — CI runs `next start` outside Vercel so `VERCEL_ENV` is
-// undefined and mocks are allowed.
-export const isE2E = () =>
-  process.env.E2E_TEST_MODE === 'true' &&
-  process.env.VERCEL_ENV !== 'production';
+// signed-in user. The shared predicate is exported from `e2e-mode.ts` so server
+// actions can use it in tests without importing this server-only mock data file.
