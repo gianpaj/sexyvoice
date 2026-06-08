@@ -236,7 +236,12 @@ export function AudioGenerator({
   }, [isGeminiVoice, showEnhanceButton]);
 
   const requestGenerateVoice = useCallback(
-    async (segmentText: string, signal: AbortSignal, seed?: number) => {
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+      split = false,
+    ) => {
       if (!selectedVoice) {
         throw new APIError(dict.error, new Response(null, { status: 400 }));
       }
@@ -252,6 +257,7 @@ export function AudioGenerator({
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
           ...(seed === undefined ? {} : { seed }),
+          split,
         }),
         signal,
       });
@@ -339,6 +345,8 @@ export function AudioGenerator({
         const generatedUrl = await requestGenerateVoice(
           currentSegmentTexts[index],
           abortController.current.signal,
+          undefined,
+          true,
         );
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
@@ -475,6 +483,7 @@ export function AudioGenerator({
           segment.text,
           retryAbortController.current.signal,
           seed,
+          true,
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
