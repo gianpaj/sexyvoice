@@ -2,26 +2,15 @@ import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
-import PostHogClient from '@/lib/posthog';
-import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
+import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
 import {
-  createOauthCallbackMarkerValue,
-  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-} from '@/lib/supabase/oauth-callback-marker';
+  createAuthRedirectResponse,
+  getLocaleFromRedirectPath,
+  getSafeAuthRedirectPath,
+} from '@/lib/supabase/auth-redirect';
+import { AUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { createClient } from '@/lib/supabase/server';
 import { routing } from '@/src/i18n/routing';
-
-const isSafeRedirectPath = (value: string | null) =>
-  Boolean(value?.startsWith('/') && !value.startsWith('//'));
-
-const getLocaleFromRedirectPath = (redirectPath: string | null) => {
-  const locale = redirectPath?.split('/')[1];
-
-  return routing.locales.includes(locale as (typeof routing.locales)[number])
-    ? locale
-    : routing.defaultLocale;
-};
 
 const getOauthCodeFingerprint = (code: string | null) => {
   if (!code) {
@@ -150,29 +139,10 @@ const getOauthCallbackCookieContext = (request: Request) => {
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
       name.includes('code-verifier'),
     ),
-    hasOauthCallbackMarkerCookie: cookieNames.includes(
-      OAUTH_CALLBACK_COOKIE_NAME,
+    hasAuthCallbackMarkerCookie: cookieNames.includes(
+      AUTH_CALLBACK_COOKIE_NAME,
     ),
   };
-};
-
-const createOauthRedirectResponse = (url: string) => {
-  const response = NextResponse.redirect(url);
-  const markerValue = createOauthCallbackMarkerValue();
-
-  if (markerValue) {
-    response.cookies.set({
-      name: OAUTH_CALLBACK_COOKIE_NAME,
-      value: markerValue,
-      httpOnly: true,
-      maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    });
-  }
-
-  return response;
 };
 
 export async function GET(request: Request) {
@@ -183,7 +153,8 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get('redirect_to');
-  const locale = getLocaleFromRedirectPath(redirectTo);
+  const safeRedirectPath = getSafeAuthRedirectPath(redirectTo, origin);
+  const locale = getLocaleFromRedirectPath(safeRedirectPath);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
   const oauthCookieContext = getOauthCallbackCookieContext(request);
@@ -246,8 +217,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${loginPath}`);
     }
 
-    const email = user?.email;
-    if (!email) {
+    if (!user?.email) {
       captureMessage('OAuth callback completed without a user email.', {
         level: 'error',
         tags: {
@@ -264,39 +234,17 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}${loginPath}`);
     }
 
-    // Add Stripe customer creation
-    if (user) {
-      const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-      if (!stripe_id) {
-        console.error('Failed to create Stripe customer.');
-        captureMessage('Failed to create Stripe customer.', {
-          level: 'error',
-          user: { id: user.id, email: user.email },
-        });
-      }
+    await recordSignupSideEffects(
+      user,
+      user.app_metadata.provider === 'email' ? 'email' : 'social',
+    );
 
-      const posthog = PostHogClient();
-
-      const login_type =
-        user.app_metadata.provider === 'email' ? 'email' : 'social';
-
-      posthog.capture({
-        distinctId: user.id,
-        event: 'sign-up',
-        properties: {
-          login_type,
-          //   is_free_trial: true,
-        },
-      });
-      await posthog.shutdown();
-    }
-
-    if (isSafeRedirectPath(redirectTo)) {
-      return createOauthRedirectResponse(`${origin}${redirectTo}`);
+    if (safeRedirectPath) {
+      return createAuthRedirectResponse(`${origin}${safeRedirectPath}`);
     }
 
     // URL to redirect to after sign up process completes
-    return createOauthRedirectResponse(
+    return createAuthRedirectResponse(
       `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {

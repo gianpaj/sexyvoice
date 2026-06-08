@@ -3,7 +3,7 @@
 > **Status**: ✅ Implemented
 > **Last Updated**: 2026-05-10
 > **Scope**: `apps/web/e2e/*`
-> **Current Result**: 97 tests total — 96 passing, 1 intentionally skipped
+> **Current Result**: 99 tests total — 98 passing, 1 intentionally skipped
 
 ---
 
@@ -41,6 +41,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 | History | `/en/dashboard/history` | `history-dashboard.spec.ts` | `pages/history.page.ts` | none currently required | 12 |
 | Usage | `/en/dashboard/usage` | `usage-dashboard.spec.ts` | `pages/usage.page.ts` | `mocks/usage.mock.ts` | 14 |
 | Profile | `/en/dashboard/profile` | `profile-dashboard.spec.ts` | `pages/profile.page.ts` | one narrow auth-route passthrough in mismatch test | 13 |
+| Email auth | `/en/signup`, `/auth/confirm` | `auth-email.spec.ts` | none | mocked browser-side Supabase signup request | 2 |
 
 ---
 
@@ -56,6 +57,9 @@ Implemented behavior:
 - saves auth state to `.auth/user.json`
 - all authenticated specs depend on this setup project
 - unauthenticated specs override `storageState` with empty cookies/origins
+- server-side `/auth/confirm` token verification remains covered by Vitest route
+  tests because Playwright route mocks cannot intercept Next server outbound
+  fetches
 
 ### Page Object Models
 
@@ -419,6 +423,7 @@ apps/web/e2e/
 │   ├── history.page.ts
 │   ├── profile.page.ts
 │   └── usage.page.ts
+├── auth-email.spec.ts
 ├── call-dashboard.spec.ts
 ├── clone-dashboard.spec.ts
 ├── credits-dashboard.spec.ts

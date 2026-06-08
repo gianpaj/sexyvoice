@@ -58,7 +58,7 @@ describe('OAuth callback route', () => {
         {
           headers: {
             cookie:
-              'sb-test-auth-token=token; sv_oauth_callback_ok=marker-value',
+              'sb-test-auth-token=token; sv_auth_callback_ok=marker-value',
           },
         },
       ),
@@ -87,7 +87,7 @@ describe('OAuth callback route', () => {
           supabaseCookieCount: 1,
           hasSupabaseAuthCookie: true,
           hasSupabaseCodeVerifierCookie: false,
-          hasOauthCallbackMarkerCookie: true,
+          hasAuthCallbackMarkerCookie: true,
           errorMessage: 'PKCE code verifier not found in storage.',
         }),
       },

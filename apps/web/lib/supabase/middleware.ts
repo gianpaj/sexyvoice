@@ -2,8 +2,8 @@ import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { routing } from '@/src/i18n/routing';
-import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
-import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
+import { verifyAuthCallbackMarkerValue } from './auth-callback-marker';
+import { AUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] =>
@@ -13,9 +13,9 @@ const routesPerLocale = (routes: string[]): string[] =>
     ),
   );
 
-const clearOauthCallbackCookie = (response: NextResponse) => {
+const clearAuthCallbackCookie = (response: NextResponse) => {
   response.cookies.set({
-    name: OAUTH_CALLBACK_COOKIE_NAME,
+    name: AUTH_CALLBACK_COOKIE_NAME,
     value: '',
     httpOnly: true,
     maxAge: 0,
@@ -30,6 +30,7 @@ const clearOauthCallbackCookie = (response: NextResponse) => {
 const publicRoutes = [
   '/api/health',
   '/auth/callback',
+  '/auth/confirm',
   ...routesPerLocale([
     '/',
     '/signup',
@@ -64,11 +65,11 @@ export const updateSession = async (
   try {
     const { pathname } = request.nextUrl;
     const supabaseResponse = response;
-    const rawOauthCallbackMarker = request.cookies.get(
-      OAUTH_CALLBACK_COOKIE_NAME,
+    const rawAuthCallbackMarker = request.cookies.get(
+      AUTH_CALLBACK_COOKIE_NAME,
     )?.value;
-    const hasOauthCallbackMarker = verifyOauthCallbackMarkerValue(
-      rawOauthCallbackMarker,
+    const hasAuthCallbackMarker = verifyAuthCallbackMarkerValue(
+      rawAuthCallbackMarker,
     );
 
     const supabase = await createClient();
@@ -85,14 +86,14 @@ export const updateSession = async (
         supabaseResponse,
       );
 
-      if (hasOauthCallbackMarker) {
+      if (hasAuthCallbackMarker) {
         captureMessage(
-          'OAuth callback completed but dashboard session was missing.',
+          'Auth callback completed but dashboard session was missing.',
           {
             level: 'error',
             tags: {
               area: 'auth',
-              flow: 'oauth-callback',
+              flow: 'auth-callback',
             },
             extra: {
               pathname,
@@ -101,17 +102,17 @@ export const updateSession = async (
           },
         );
 
-        return clearOauthCallbackCookie(redirectResponse);
+        return clearAuthCallbackCookie(redirectResponse);
       }
 
       console.log(
-        'Dashboard request missing user without valid OAuth callback marker',
+        'Dashboard request missing user without valid auth callback marker',
         {
           pathname,
           locale,
-          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
-          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
-          hasOauthCallbackMarker,
+          hasRawAuthCallbackMarker: Boolean(rawAuthCallbackMarker),
+          rawAuthCallbackMarkerLength: rawAuthCallbackMarker?.length ?? 0,
+          hasAuthCallbackMarker,
         },
       );
 
@@ -138,8 +139,8 @@ export const updateSession = async (
       );
     }
 
-    if (hasOauthCallbackMarker && dashboardPath) {
-      return clearOauthCallbackCookie(supabaseResponse);
+    if (hasAuthCallbackMarker && dashboardPath) {
+      return clearAuthCallbackCookie(supabaseResponse);
     }
 
     // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
