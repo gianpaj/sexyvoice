@@ -16,20 +16,18 @@ import {
 import { downloadUrl } from '@/lib/download';
 import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
+import type langDict from '@/messages/en.json';
 import { DeleteButton } from './delete-button';
 
-const downloadFile = async (url: string) => {
-  const anchorElement = document.createElement('a');
-  anchorElement.href = url;
-  const filename = url.split('/').pop()?.split('?')[0];
-  anchorElement.download = filename || 'generated_audio.mp3';
-  anchorElement.target = '_blank';
+type HistoryDict = (typeof langDict)['history'];
+
+const downloadFile = async (url: string, errorMessage: string) => {
   if (!url) return;
 
   try {
-    await downloadUrl(url, anchorElement);
+    await downloadUrl(url, document.createElement('a'));
   } catch {
-    toast.error('errorCloning'); // TODO: translate - passing
+    toast.error(errorMessage);
   }
 };
 
@@ -64,8 +62,10 @@ function getUsageData(value: unknown): AudioUsageData | null {
 
 export function createColumns({
   showApiColumns,
+  dict,
 }: {
   showApiColumns: boolean;
+  dict: HistoryDict;
 }): ColumnDef<AudioFileAndVoicesRes>[] {
   const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
     {
@@ -139,7 +139,7 @@ export function createColumns({
       cell: ({ row }) => (
         <Button
           className="ml-2"
-          onClick={() => downloadFile(row.original.url)}
+          onClick={() => downloadFile(row.original.url, dict.downloadError)}
           size="icon"
           title="Download"
           variant="outline"

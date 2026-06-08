@@ -1,4 +1,4 @@
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
@@ -10,7 +10,7 @@ export default async function LoginPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const t = await getTranslations({ locale: lang, namespace: 'auth' });
 
   return (
     <>
@@ -22,13 +22,13 @@ export default async function LoginPage(props: {
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
             <h1 className="mb-2 text-center font-bold text-3xl">
-              {dict.auth.login.title}
+              {t('login.title')}
             </h1>
             <p className="mb-8 text-center text-muted-foreground">
-              {dict.auth.login.subtitle}
+              {t('login.subtitle')}
             </p>
             <Suspense>
-              <LoginForm dict={dict.auth.login} lang={lang} />
+              <LoginForm lang={lang} />
             </Suspense>
           </div>
         </div>

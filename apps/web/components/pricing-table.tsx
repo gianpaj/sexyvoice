@@ -8,7 +8,19 @@ import {
   getTopupPackages,
 } from '@/lib/stripe/pricing';
 
-async function PricingTable({ lang }: { lang: Locale }) {
+async function PricingTable({
+  checkoutEnabled = false,
+  className,
+  hideFreePlan = false,
+  lang,
+  shouldShowSubscriptionPlans = true,
+}: {
+  checkoutEnabled?: boolean;
+  className?: string;
+  hideFreePlan?: boolean;
+  lang: Locale;
+  shouldShowSubscriptionPlans?: boolean;
+}) {
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const { credits, promos } = messages;
   const plansT = createTranslator({
@@ -44,12 +56,41 @@ async function PricingTable({ lang }: { lang: Locale }) {
 
   // --- Top-up (one-time) plans ---
   const topupPlans: PlanData[] = [
-    freePlan,
+    ...(hideFreePlan ? [] : [freePlan]),
     {
+      id: 'starter',
+      name: pPlans.starter.name,
+      price: topupPackages.starter.dollarAmount,
+      pricePer1kCredits: (
+        (topupPackages.starter.dollarAmount /
+          topupPackages.starter.baseCredits) *
+        1000
+      ).toFixed(2),
+      description: pPlans.starter.description,
+      buttonText: pPlans.buyCredits,
+      buttonVariant: 'default',
+      creditsText: plansT('x_credits', {
+        numCredits: topupPackages.starter.baseCreditsLocale,
+      }),
+      promoBonus: topupPackages.starter.promoBonus,
+      features: pPlans.starter.features,
+    },
+    {
+      id: 'standard',
       name: pPlans.standard.name,
       price: topupPackages.standard.dollarAmount,
       isPopular: true,
       pricePer1kCredits: topupPackages.standard.pricePer1kCredits,
+      saveFromPrevPlanPer1kCredits: hideFreePlan
+        ? Number(
+            (
+              (topupPackages.starter.dollarAmount /
+                topupPackages.starter.baseCredits) *
+                1000 -
+              Number(topupPackages.standard.pricePer1kCredits)
+            ).toFixed(2),
+          )
+        : undefined,
       description: pPlans.standard.description,
       buttonText: pPlans.buyCredits,
       buttonVariant: 'default',
@@ -60,6 +101,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       features: pPlans.standard.features,
     },
     {
+      id: 'pro',
       name: pPlans.pro.name,
       price: topupPackages.pro.dollarAmount,
       pricePer1kCredits: topupPackages.pro.pricePer1kCredits,
@@ -82,12 +124,44 @@ async function PricingTable({ lang }: { lang: Locale }) {
 
   // --- Subscription (monthly) plans with 15% bonus ---
   const subscriptionPlans: PlanData[] = [
-    freePlan,
+    ...(hideFreePlan ? [] : [freePlan]),
     {
+      id: 'starter',
+      name: pPlans.starter.name,
+      price: subscriptionPackages.starter.dollarAmount,
+      pricePer1kCredits: (
+        (subscriptionPackages.starter.dollarAmount /
+          subscriptionPackages.starter.baseCredits) *
+        1000
+      ).toFixed(2),
+      description: pPlans.starter.description,
+      buttonText: pPlans.subscribe,
+      buttonVariant: 'default',
+      creditsText: plansT('x_credits', {
+        numCredits: subscriptionPackages.starter.baseCreditsLocale,
+      }),
+      subscriptionBonusCredits: (
+        subscriptionPackages.starter.credits -
+        subscriptionPackages.starter.baseCredits
+      ).toLocaleString(lang),
+      features: pPlans.starter.features,
+    },
+    {
+      id: 'standard',
       name: pPlans.standard.name,
       price: subscriptionPackages.standard.dollarAmount,
       isPopular: true,
       pricePer1kCredits: subscriptionPackages.standard.pricePer1kCredits,
+      saveFromPrevPlanPer1kCredits: hideFreePlan
+        ? Number(
+            (
+              (subscriptionPackages.starter.dollarAmount /
+                subscriptionPackages.starter.baseCredits) *
+                1000 -
+              Number(subscriptionPackages.standard.pricePer1kCredits)
+            ).toFixed(2),
+          )
+        : undefined,
       description: pPlans.standard.description,
       buttonText: pPlans.subscribe,
       buttonVariant: 'default',
@@ -101,6 +175,7 @@ async function PricingTable({ lang }: { lang: Locale }) {
       features: pPlans.standard.features,
     },
     {
+      id: 'pro',
       name: pPlans.pro.name,
       price: subscriptionPackages.pro.dollarAmount,
       pricePer1kCredits: subscriptionPackages.pro.pricePer1kCredits,
@@ -127,6 +202,9 @@ async function PricingTable({ lang }: { lang: Locale }) {
 
   return (
     <PricingCards
+      checkoutEnabled={checkoutEnabled}
+      className={className}
+      disableSubscriptionToggle={!shouldShowSubscriptionPlans}
       isPromoEnabled={isPromoEnabled}
       promoBannerText={bannerTranslations?.pricing.bannerText}
       promoTheme={promoTheme}

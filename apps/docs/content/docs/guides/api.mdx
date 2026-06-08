@@ -30,7 +30,7 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "gpro",
-    "voice": "poe",
+    "voice": "achernar",
     "input": "Hello from SexyVoice API",
     "style": "calm",
     "seed": 1234
@@ -108,5 +108,5 @@ Response includes:
 
 - Read full [API Reference](/api-reference/api)
 - Browse [Grok Voices & Speech Tags](/guides/grok-speech-tags) for the full tag reference
-- Add retries for `429` and transient `500` errors
+- Retry transient `503 provider_unavailable` responses with backoff, and treat `429 provider_quota_exceeded` as temporary provider quota exhaustion
 - Store `request-id` with your logs for support and tracing

@@ -812,32 +812,20 @@ export function AudioGenerator({
   };
 
   const downloadSegmentAudio = async (segmentUrl: string) => {
-    const anchorElement = document.createElement('a');
-    document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
-
     try {
-      await downloadUrl(segmentUrl, anchorElement);
+      await downloadUrl(segmentUrl, document.createElement('a'));
     } catch {
       toast.error(dict.error);
-    } finally {
-      document.body.removeChild(anchorElement);
     }
   };
 
   const downloadAudio = async () => {
     if (!audioURL) return;
 
-    const anchorElement = document.createElement('a');
-    document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
-
     try {
-      await downloadUrl(audioURL, anchorElement);
+      await downloadUrl(audioURL, document.createElement('a'));
     } catch {
       toast.error(dict.error);
-    } finally {
-      document.body.removeChild(anchorElement);
     }
   };
 

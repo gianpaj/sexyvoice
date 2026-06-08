@@ -769,7 +769,7 @@
     "profile": "Profilo",
     "signOut": "Esci",
     "freeTools": "Strumenti Gratuiti",
-    "subscriptionDiscount": "Ottieni {discount}% di crediti extra con un abbonamento"
+    "subscriptionDiscount": "Ottieni il {extraCredits}% di crediti extra e il {discount}% di sconto sul primo mese!"
   },
   "header": {
     "generate": "Genera",
@@ -779,6 +779,7 @@
   "history": {
     "header": "Cronologia generazioni",
     "empty": "Nessuna cronologia ancora",
+    "downloadError": "Impossibile scaricare l'audio",
     "ui": {
       "filterText": "Filtra testo...",
       "customizeColumns": "Personalizza colonne",
