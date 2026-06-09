@@ -84,15 +84,26 @@ function reportCheckoutSetupError(
   }
 }
 
-export interface CheckoutMetadata {
-  credits: string;
-  dollarAmount: string;
+interface CheckoutMetadataBase {
   packageId: CheckoutPackageId;
-  promo?: string;
-  subscriptionDiscountCouponId?: string;
-  type: 'subscription' | 'topup';
   userId: string;
 }
+
+export interface TopupCheckoutMetadata extends CheckoutMetadataBase {
+  credits: string;
+  dollarAmount: string;
+  promo?: string;
+  type: 'topup';
+}
+
+export interface SubscriptionCheckoutMetadata extends CheckoutMetadataBase {
+  subscriptionDiscountCouponId?: string;
+  type: 'subscription';
+}
+
+export type CheckoutMetadata =
+  | SubscriptionCheckoutMetadata
+  | TopupCheckoutMetadata;
 
 type CheckoutUser = NonNullable<
   Awaited<
@@ -190,23 +201,13 @@ export async function createCheckoutSession(
 
     const subscriptionDiscountCouponId =
       process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
-    const hasExistingSubscriptionHistory =
-      checkoutType === 'subscription'
-        ? await hasAnySubscriptionHistory(stripeId)
-        : false;
-    const hasUsableSubscriptionDiscountCoupon =
-      checkoutType === 'subscription' &&
-      !!subscriptionDiscountCouponId &&
-      !hasExistingSubscriptionHistory
-        ? await isStripeCouponUsable(subscriptionDiscountCouponId)
-        : false;
     const shouldApplySubscriptionDiscount =
       checkoutType === 'subscription' &&
       !!subscriptionDiscountCouponId &&
-      hasUsableSubscriptionDiscountCoupon &&
-      !hasExistingSubscriptionHistory;
+      !(await hasAnySubscriptionHistory(stripeId)) &&
+      (await isStripeCouponUsable(subscriptionDiscountCouponId));
 
-    const metadata: Stripe.MetadataParam =
+    const metadata: CheckoutMetadata =
       checkoutType === 'subscription'
         ? {
             userId: user.id,
@@ -237,20 +238,19 @@ export async function createCheckoutSession(
             price: package_.priceId,
           },
         ],
-        ...(checkoutType === 'subscription' &&
-          shouldApplySubscriptionDiscount && {
-            discounts: [
-              {
-                coupon: subscriptionDiscountCouponId,
-              },
-            ],
-          }),
+        ...(shouldApplySubscriptionDiscount && {
+          discounts: [
+            {
+              coupon: subscriptionDiscountCouponId,
+            },
+          ],
+        }),
         ...(ui_mode === 'hosted' && {
           success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,
-        metadata,
+        metadata: metadata as unknown as Stripe.MetadataParam,
       });
 
     return {
