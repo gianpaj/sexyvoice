@@ -9,7 +9,11 @@ import {
   getTopupPackages,
   type PackageType,
 } from '@/lib/stripe/pricing';
-import { hasEverHadRealSubscription, stripe } from '@/lib/stripe/stripe-admin';
+import {
+  hasAnySubscriptionHistory,
+  isStripeCouponUsable,
+  stripe,
+} from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -117,11 +121,18 @@ export async function createCheckoutSession(
       process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
     const hasExistingSubscriptionHistory =
       checkoutType === 'subscription'
-        ? await hasEverHadRealSubscription(userData.stripe_id)
+        ? await hasAnySubscriptionHistory(userData.stripe_id)
+        : false;
+    const hasUsableSubscriptionDiscountCoupon =
+      checkoutType === 'subscription' &&
+      !!subscriptionDiscountCouponId &&
+      !hasExistingSubscriptionHistory
+        ? await isStripeCouponUsable(subscriptionDiscountCouponId)
         : false;
     const shouldApplySubscriptionDiscount =
       checkoutType === 'subscription' &&
       !!subscriptionDiscountCouponId &&
+      hasUsableSubscriptionDiscountCoupon &&
       !hasExistingSubscriptionHistory;
 
     const metadata: Stripe.MetadataParam =

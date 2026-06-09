@@ -11,12 +11,32 @@ import { getCustomerData } from '@/lib/redis/queries';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
   createOrRetrieveCustomer,
+  hasAnySubscriptionHistory,
+  isStripeCouponUsable,
   refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 import { TopupStatus } from './topup-status';
+
+async function canApplyFirstMonthSubscriptionDiscount(stripeId: string) {
+  const subscriptionDiscountCouponId =
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+
+  if (!subscriptionDiscountCouponId) {
+    return false;
+  }
+
+  const hasExistingSubscriptionHistory =
+    await hasAnySubscriptionHistory(stripeId);
+
+  if (hasExistingSubscriptionHistory) {
+    return false;
+  }
+
+  return isStripeCouponUsable(subscriptionDiscountCouponId);
+}
 
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -36,6 +56,7 @@ export default async function CreditsPage(props: {
   }
 
   let shouldShowSubscriptionPlans = false;
+  let isEligibleForSubscriptionDiscount = false;
   let existingTransactions:
     | Pick<
         Tables<'credit_transactions'>,
@@ -78,6 +99,11 @@ export default async function CreditsPage(props: {
       }
     }
 
+    if (shouldShowSubscriptionPlans) {
+      isEligibleForSubscriptionDiscount =
+        await canApplyFirstMonthSubscriptionDiscount(stripeId);
+    }
+
     ({ data: existingTransactions } = await supabase
       .from('credit_transactions')
       .select('id, created_at, description, type, amount')
@@ -90,7 +116,7 @@ export default async function CreditsPage(props: {
     process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
   const shouldShowSubscriptionDiscountBanner =
     shouldShowSubscriptionPlans &&
-    !!process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID &&
+    isEligibleForSubscriptionDiscount &&
     !!subscriptionDiscountPercent &&
     Number.parseFloat(subscriptionDiscountPercent) > 0;
 
@@ -131,6 +157,7 @@ export default async function CreditsPage(props: {
       ) : null}
 
       <PricingTable
+        applyFirstMonthSubscriptionDiscount={isEligibleForSubscriptionDiscount}
         checkoutEnabled
         className="py-0 pb-16 xl:px-0"
         hideFreePlan

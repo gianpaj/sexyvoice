@@ -9,12 +9,14 @@ import {
 } from '@/lib/stripe/pricing';
 
 async function PricingTable({
+  applyFirstMonthSubscriptionDiscount,
   checkoutEnabled = false,
   className,
   hideFreePlan = false,
   lang,
   shouldShowSubscriptionPlans = true,
 }: {
+  applyFirstMonthSubscriptionDiscount?: boolean;
   checkoutEnabled?: boolean;
   className?: string;
   hideFreePlan?: boolean;
@@ -38,7 +40,9 @@ async function PricingTable({
   const { plans: pPlans, billing } = credits;
   const isPromoEnabled = process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
   const topupPackages = getTopupPackages(lang);
-  const subscriptionPackages = getSubscriptionPackages(lang);
+  const subscriptionPackages = getSubscriptionPackages(lang, {
+    applyFirstMonthDiscount: applyFirstMonthSubscriptionDiscount,
+  });
 
   // Free plan is the same regardless of billing mode
   const freePlan: PlanData = {

@@ -197,8 +197,9 @@ const updateStripeId = async (userId: string, stripeId: string) => {
     .eq('id', userId);
 };
 
-export async function hasEverHadRealSubscription(
+async function hasMatchingSubscriptionHistory(
   customerId: string | null | undefined,
+  matchesSubscription: (subscription: Stripe.Subscription) => boolean,
 ): Promise<boolean> {
   if (!customerId) {
     return false;
@@ -214,11 +215,7 @@ export async function hasEverHadRealSubscription(
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
-    if (
-      subscriptions.data.some((subscription) =>
-        REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
-      )
-    ) {
+    if (subscriptions.data.some(matchesSubscription)) {
       return true;
     }
 
@@ -230,6 +227,43 @@ export async function hasEverHadRealSubscription(
     if (!startingAfter) {
       return false;
     }
+  }
+}
+
+export function hasEverHadRealSubscription(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(customerId, (subscription) =>
+    REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+  );
+}
+
+export function hasAnySubscriptionHistory(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(customerId, () => true);
+}
+
+export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
+  try {
+    const coupon = await stripe.coupons.retrieve(couponId);
+
+    if ('deleted' in coupon && coupon.deleted) {
+      return false;
+    }
+
+    return coupon.valid;
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_admin',
+        event_type: 'coupon_validation_error',
+      },
+      extra: {
+        coupon_id: couponId,
+      },
+    });
+    return false;
   }
 }
 

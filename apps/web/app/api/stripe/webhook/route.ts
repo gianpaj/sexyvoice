@@ -250,7 +250,10 @@ async function handleCheckoutSessionCompleted(
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const priceId = subscription.items.data[0].price.id;
 
-      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
+      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en', {
+        applyFirstMonthDiscount:
+          !!session.metadata?.subscriptionDiscountCouponId,
+      });
       let credits = 0;
       let dollarAmount = 0;
 
@@ -365,7 +368,9 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items.data[0].price.id;
 
-    const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
+    const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en', {
+      applyFirstMonthDiscount: false,
+    });
     let credits = 0;
     let dollarAmount = 0;
 

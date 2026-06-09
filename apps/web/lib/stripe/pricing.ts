@@ -28,15 +28,23 @@ export const PRO_TOPUP_DISCOUNT_VS_STANDARD =
  */
 export const SUBSCRIPTION_BONUS_MULTIPLIER = 1.15;
 
-function getFirstMonthSubscriptionDiscountMultiplier() {
+interface SubscriptionPackageOptions {
+  applyFirstMonthDiscount?: boolean;
+}
+
+function getFirstMonthSubscriptionDiscountMultiplier({
+  applyFirstMonthDiscount,
+}: SubscriptionPackageOptions = {}) {
   const hasFirstMonthCoupon =
     !!process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+  const shouldApplyFirstMonthDiscount =
+    applyFirstMonthDiscount ?? hasFirstMonthCoupon;
   const discountPercent = Number.parseFloat(
     process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT || '0',
   );
 
   if (
-    !hasFirstMonthCoupon ||
+    !(shouldApplyFirstMonthDiscount && hasFirstMonthCoupon) ||
     Number.isNaN(discountPercent) ||
     discountPercent <= 0
   ) {
@@ -140,10 +148,13 @@ export const getTopupPackages = (lang: Locale) => {
  * Subscription tiers mirror top-up tiers at the same price points
  * but use separate Stripe recurring price IDs.
  */
-export const getSubscriptionPackages = (lang: Locale) => {
+export const getSubscriptionPackages = (
+  lang: Locale,
+  options: SubscriptionPackageOptions = {},
+) => {
   const topup = getTopupPackages(lang);
   const firstMonthDiscountMultiplier =
-    getFirstMonthSubscriptionDiscountMultiplier();
+    getFirstMonthSubscriptionDiscountMultiplier(options);
 
   return {
     starter: {
