@@ -4,7 +4,7 @@ import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
 import { NextResponse } from 'next/server';
 
-import { getEmotionTags } from '@/lib/ai';
+import { GEMINI_AUDIO_TAGS, getEmotionTags } from '@/lib/ai';
 import { createClient } from '@/lib/supabase/server';
 
 // gemini-3.1-flash-lite
@@ -16,7 +16,14 @@ export async function POST(request: Request) {
   const {
     prompt,
     selectedVoiceLanguage,
-  }: { prompt: string; selectedVoiceLanguage: string } = await request.json();
+    ttsProvider,
+    voiceModel,
+  }: {
+    prompt: string;
+    selectedVoiceLanguage: string;
+    ttsProvider?: string;
+    voiceModel?: string;
+  } = await request.json();
   let user: User | null = null;
   try {
     const supabase = await createClient();
@@ -40,8 +47,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create the prompt for emotion tag generation
-    const system = `Below is a text. The text is missing annotations for a voice actor.
+    const isGeminiVoice = ttsProvider === 'gemini' && voiceModel === 'gpro31';
+    const system = isGeminiVoice
+      ? `You are an expert at enhancing text for AI voice generation using Gemini audio tags.
+Add inline audio tags to make the voice output more expressive and engaging.
+
+Available tags: ${GEMINI_AUDIO_TAGS}
+
+Rules:
+1. Embed tags directly before the word or phrase they affect, e.g. "[cheerfully] Have a great day!"
+2. Use tags sparingly — 1-3 per sentence maximum
+3. Keep the original text completely intact, only add tags
+4. Return only the enhanced text with audio tags, no explanations`
+      : `Below is a text. The text is missing annotations for a voice actor.
 You are an expert at enhancing text for AI voice generation. Your task is to add emotion tags to make the voice output more expressive and engaging.
 
 Add emotion tags: '${getEmotionTags(selectedVoiceLanguage)}'. ONLY THESE exist

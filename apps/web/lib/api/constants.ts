@@ -1,7 +1,13 @@
 export const EXTERNAL_API_MODELS = {
   gpro: {
     id: 'gpro',
-    name: 'GPro (Gemini)',
+    name: 'GPro (Gemini 2.5)',
+    maxInputLength: 1000,
+    supportedFormats: ['wav'] as const,
+  },
+  g31: {
+    id: 'g31',
+    name: 'Gemini 3.1 Flash TTS',
     maxInputLength: 1000,
     supportedFormats: ['wav'] as const,
   },
@@ -12,7 +18,7 @@ export const EXTERNAL_API_MODELS = {
     supportedFormats: ['mp3'] as const,
   },
   xai: {
-    id: 'grok',
+    id: 'xai',
     name: 'Grok (xAI)',
     maxInputLength: 1000,
     supportedFormats: ['mp3', 'wav'] as const,

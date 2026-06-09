@@ -23,9 +23,10 @@
 
 ## 🌟 About
 
-- Generate AI voices in 24+ supported languages and locales
-- Major multilingual voice families from Google Gemini (`gpro`) and xAI Grok (`xai`)
+- Generate AI voices in 24+ languages, with 70+ languages available through Gemini 3.1
+- Major multilingual voice families from Google Gemini (`gpro`, `g31`) and xAI Grok (`xai`)
 - Voice cloning support across 20+ supported languages
+- Voice selection system with customizable options
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
 - User authentication and profile management (Google)
@@ -40,7 +41,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Voice Selection System**: Choose from featured Gemini voices like `achernar`, `aoede`, `kore`, `puck`, `sulafat`, and `zephyr`, plus Grok voices like `ara`, `eve`, `leo`, `rex`, and `sal`
-- **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
+- **Multi-language Support**: Generate voices in 24 languages with Gemini 2.5 (default) or 70+ languages with Gemini 3.1 Flash TTS, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
@@ -417,7 +418,7 @@ Primary Gemini voices currently exposed in the app:
 - `sulafat`
 - `zephyr`
 
-These multilingual Gemini voices support style prompting and the following language/locale set:
+These multilingual Gemini 2.5 voices support style prompting and the following 24-language/locale set:
 
 | Language               | BCP-47 Code              | Language             | BCP-47 Code |
 | ---------------------- | ------------------------ | -------------------- | ----------- |
@@ -434,6 +435,26 @@ These multilingual Gemini voices support style prompting and the following langu
 | English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
 | Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
 
+#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (model: `g31`)
+
+Supports all 24 languages above, plus (non-exhaustive):
+Afrikaans (`af-ZA`), Albanian (`sq-AL`), Amharic (`am-ET`), Armenian (`hy-AM`),
+Azerbaijani (`az-AZ`), Basque (`eu-ES`), Bulgarian (`bg-BG`), Catalan (`ca-ES`),
+Chinese Simplified (`zh-CN`), Chinese Traditional (`zh-TW`), Croatian (`hr-HR`),
+Czech (`cs-CZ`), Danish (`da-DK`), Estonian (`et-EE`), Filipino/Tagalog (`fil-PH`),
+Finnish (`fi-FI`), Galician (`gl-ES`), Georgian (`ka-GE`), Greek (`el-GR`),
+Gujarati (`gu-IN`), Hebrew (`he-IL`), Hungarian (`hu-HU`), Icelandic (`is-IS`),
+Irish (`ga-IE`), Javanese (`jv-ID`), Kannada (`kn-IN`), Kazakh (`kk-KZ`),
+Latvian (`lv-LV`), Lithuanian (`lt-LT`), Macedonian (`mk-MK`), Malay (`ms-MY`),
+Maltese (`mt-MT`), Norwegian Bokmål (`nb-NO`), Persian (`fa-IR`), Punjabi (`pa-IN`),
+Serbian (`sr-RS`), Slovak (`sk-SK`), Slovenian (`sl-SI`), Swahili (`sw-KE`),
+Swedish (`sv-SE`), Urdu (`ur-PK`), Uzbek (`uz-UZ`), Welsh (`cy-GB`), Zulu (`zu-ZA`).
+Plus English, Spanish, French, Portuguese, and Arabic regional variants.
+
+> Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
+
+Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
+
 #### xAI Grok (`xai`) expressive voices
 
 Primary Grok voices currently exposed in the app:
@@ -446,18 +467,18 @@ Primary Grok voices currently exposed in the app:
 
 These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
 
-| Language / Locale              | Code    | Language / Locale   | Code    |
-| ------------------------------ | ------- | ------------------- | ------- |
-| English                        | `en`    | Japanese            | `ja`    |
-| Arabic (Egypt)                 | `ar-EG` | Korean              | `ko`    |
-| Arabic (Saudi Arabia)          | `ar-SA` | Portuguese (Brazil) | `pt-BR` |
-| Arabic (United Arab Emirates)  | `ar-AE` | Portuguese (Portugal) | `pt-PT` |
-| Bengali                        | `bn`    | Russian             | `ru`    |
-| Chinese (Simplified)           | `zh`    | Spanish (Spain)     | `es-ES` |
-| French                         | `fr`    | Spanish (Mexico)    | `es-MX` |
-| German                         | `de`    | Turkish             | `tr`    |
-| Hindi                          | `hi`    | Vietnamese          | `vi`    |
-| Indonesian                     | `id`    | Italian             | `it`    |
+| Language / Locale             | Code    | Language / Locale     | Code    |
+| ----------------------------- | ------- | --------------------- | ------- |
+| English                       | `en`    | Japanese              | `ja`    |
+| Arabic (Egypt)                | `ar-EG` | Korean                | `ko`    |
+| Arabic (Saudi Arabia)         | `ar-SA` | Portuguese (Brazil)   | `pt-BR` |
+| Arabic (United Arab Emirates) | `ar-AE` | Portuguese (Portugal) | `pt-PT` |
+| Bengali                       | `bn`    | Russian               | `ru`    |
+| Chinese (Simplified)          | `zh`    | Spanish (Spain)       | `es-ES` |
+| French                        | `fr`    | Spanish (Mexico)      | `es-MX` |
+| German                        | `de`    | Turkish               | `tr`    |
+| Hindi                         | `hi`    | Vietnamese            | `vi`    |
+| Indonesian                    | `id`    | Italian               | `it`    |
 
 #### Additional English voices
 

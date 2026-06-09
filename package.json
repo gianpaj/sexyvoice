@@ -45,6 +45,8 @@
     "dev": "turbo run dev --filter=@sexyvoice/web",
     "fixall": "turbo run fixall",
     "format": "turbo run format",
+    "generate-gemini-speech-samples": "pnpm --filter @sexyvoice/scripts generate-gemini-speech-samples",
+    "generate-xai-speech-samples": "pnpm --filter @sexyvoice/scripts generate-xai-speech-samples",
     "generate-supabase-types": "pnpm --filter @sexyvoice/web generate-supabase-types",
     "generate-supabase-types:local": "pnpm --filter @sexyvoice/web generate-supabase-types:local",
     "lint": "turbo run lint",
@@ -53,6 +55,7 @@
     "refund-credits": "pnpm --filter @sexyvoice/scripts refund-credits",
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "test": "turbo run test",
+    "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
     "type-check": "turbo run type-check"

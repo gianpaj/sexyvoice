@@ -130,6 +130,98 @@ function CreditEstimator({
   );
 }
 
+const STREAM_TEXT_THRESHOLD = 300;
+
+// ── PCM → Float32 conversion ─────────────────────────────────────────────
+function pcmToFloat32(buffer: ArrayBuffer): Float32Array<ArrayBuffer> {
+  const int16 = new Int16Array(buffer);
+  const float32 = new Float32Array(int16.length) as Float32Array<ArrayBuffer>;
+  for (let i = 0; i < int16.length; i++) {
+    float32[i] = int16[i] / 32_768.0;
+  }
+  return float32;
+}
+
+function parseSampleRate(mimeType: string): number {
+  const match = mimeType.match(/rate=(\d+)/);
+  return match ? Number.parseInt(match[1], 10) : 24_000;
+}
+
+// ── SSE client parser ─────────────────────────────────────────────────────
+interface SseAudioEvent {
+  data: string;
+  mimeType: string;
+}
+
+interface SseDoneEvent {
+  cached?: boolean;
+  creditsRemaining: number;
+  creditsUsed: number;
+  url: string;
+}
+
+interface SseErrorEvent {
+  error: string;
+}
+
+interface ParseSseStreamCallbacks {
+  onAudio: (event: SseAudioEvent) => void;
+  onDone: (event: SseDoneEvent) => void;
+  onError: (event: SseErrorEvent) => void;
+}
+
+async function parseSseStream(
+  response: Response,
+  callbacks: ParseSseStreamCallbacks,
+): Promise<void> {
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete SSE blocks (separated by blank lines)
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop() ?? ''; // last incomplete block stays in buffer
+
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        let eventType = '';
+        let dataStr = '';
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            dataStr = line.slice(6).trim();
+          }
+        }
+
+        if (!(eventType && dataStr)) continue;
+
+        try {
+          const payload = JSON.parse(dataStr);
+          if (eventType === 'audio') {
+            callbacks.onAudio(payload as SseAudioEvent);
+          } else if (eventType === 'done') {
+            callbacks.onDone(payload as SseDoneEvent);
+          } else if (eventType === 'error') {
+            callbacks.onError(payload as SseErrorEvent);
+          }
+        } catch {
+          // malformed JSON — skip
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 interface AudioGeneratorProps {
   dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
@@ -159,10 +251,13 @@ export function AudioGenerator({
     useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
+  const [isStreamingAudio, setIsStreamingAudio] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
   const retryAbortController = useRef<AbortController | null>(null);
+  const streamingAudioContextRef = useRef<AudioContext | null>(null);
+  const streamingSourcesRef = useRef<AudioBufferSourceNode[]>([]);
 
   const audio = useAudio();
   const {
@@ -174,7 +269,9 @@ export function AudioGenerator({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  const showEnhanceButton = provider === 'replicate';
+  const showEnhanceButton =
+    provider === 'replicate' ||
+    (provider === 'gemini' && selectedVoice?.model === 'gpro31');
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit(
@@ -235,20 +332,40 @@ export function AudioGenerator({
     return 'pr-16';
   }, [isGeminiVoice, showEnhanceButton]);
 
-  const requestGenerateVoice = useCallback(
-    async (segmentText: string, signal: AbortSignal, seed?: number) => {
+  const stopStreamingAudio = useCallback(() => {
+    for (const source of streamingSourcesRef.current) {
+      try {
+        source.stop();
+      } catch {
+        // source may already be stopped
+      }
+    }
+    streamingSourcesRef.current = [];
+    try {
+      streamingAudioContextRef.current?.close();
+    } catch {
+      // already closed
+    }
+    streamingAudioContextRef.current = null;
+    setIsStreamingAudio(false);
+  }, []);
+
+  const requestGenerateVoiceJson = useCallback(
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+    ): Promise<string> => {
       if (!selectedVoice) {
         throw new APIError(dict.error, new Response(null, { status: 400 }));
       }
 
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: segmentText,
-          voice: selectedVoice.name,
+          voiceId: selectedVoice.id,
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
           ...(seed === undefined ? {} : { seed }),
@@ -267,7 +384,6 @@ export function AudioGenerator({
             response,
           );
         }
-
         throw new APIError(data.error || data.serverMessage, response);
       }
 
@@ -280,6 +396,128 @@ export function AudioGenerator({
       selectedGrokLanguage,
       selectedStyle,
       selectedVoice,
+    ],
+  );
+
+  const requestGenerateVoiceStream = useCallback(
+    async (segmentText: string, signal: AbortSignal): Promise<string> => {
+      if (!selectedVoice) {
+        throw new APIError(dict.error, new Response(null, { status: 400 }));
+      }
+
+      const response = await fetch('/api/generate-voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: segmentText,
+          voiceId: selectedVoice.id,
+          styleVariant: selectedStyle ?? '',
+          stream: true,
+        }),
+        signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
+          const errorMessage = dict[
+            data.errorCode as keyof typeof dict
+          ] as string;
+          throw new APIError(
+            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+            response,
+          );
+        }
+        throw new APIError(data.error || data.serverMessage, response);
+      }
+
+      // Set up AudioContext for real-time PCM playback.
+      const sampleRate = 24_000;
+      const audioCtx = new AudioContext({ sampleRate });
+      streamingAudioContextRef.current = audioCtx;
+      streamingSourcesRef.current = [];
+      let nextStartTime = audioCtx.currentTime;
+      setIsStreamingAudio(true);
+
+      const schedulePcmChunk = (samples: Float32Array<ArrayBuffer>) => {
+        const audioBuffer = audioCtx.createBuffer(
+          1,
+          samples.length,
+          sampleRate,
+        );
+        audioBuffer.copyToChannel(samples, 0);
+
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+
+        const startAt = Math.max(audioCtx.currentTime, nextStartTime);
+        source.start(startAt);
+        nextStartTime = startAt + audioBuffer.duration;
+        streamingSourcesRef.current.push(source);
+      };
+
+      return new Promise<string>((resolve, reject) => {
+        parseSseStream(response, {
+          onAudio: ({ data, mimeType }) => {
+            if (signal.aborted) return;
+            try {
+              // Use atob for browser-compatible base64 decoding
+              const binaryStr = atob(data);
+              const bytes = new Uint8Array(binaryStr.length);
+              for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+              }
+              const rawBuffer = bytes.buffer as ArrayBuffer;
+              const chunkSampleRate = parseSampleRate(mimeType);
+              // Re-create context if sample rate differs from first chunk
+              if (
+                chunkSampleRate !== sampleRate &&
+                streamingAudioContextRef.current
+              ) {
+                // keep playing at original rate; re-sampling not needed for typical TTS
+              }
+              const samples = pcmToFloat32(rawBuffer);
+              schedulePcmChunk(samples);
+            } catch {
+              // non-fatal: skip malformed chunk
+            }
+          },
+          onDone: ({ url }) => {
+            setIsStreamingAudio(false);
+            resolve(url);
+          },
+          onError: ({ error }) => {
+            stopStreamingAudio();
+            reject(new APIError(error, new Response(null, { status: 500 })));
+          },
+        }).catch(reject);
+      });
+    },
+    [dict, selectedStyle, selectedVoice, stopStreamingAudio],
+  );
+
+  const requestGenerateVoice = useCallback(
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+    ): Promise<string> => {
+      const useStream =
+        isGeminiVoice &&
+        !shouldUseSplitMode &&
+        segmentText.length > STREAM_TEXT_THRESHOLD;
+
+      if (useStream) {
+        return requestGenerateVoiceStream(segmentText, signal);
+      }
+      return requestGenerateVoiceJson(segmentText, signal, seed);
+    },
+    [
+      isGeminiVoice,
+      requestGenerateVoiceJson,
+      requestGenerateVoiceStream,
+      shouldUseSplitMode,
     ],
   );
 
@@ -454,7 +692,8 @@ export function AudioGenerator({
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-  }, []);
+    stopStreamingAudio();
+  }, [stopStreamingAudio]);
 
   const handleRetrySegment = useCallback(
     async (segmentIndex: number) => {
@@ -693,7 +932,11 @@ export function AudioGenerator({
 
     try {
       const enhancedText = await complete(text, {
-        body: { selectedVoiceLanguage: selectedVoice.language },
+        body: {
+          selectedVoiceLanguage: selectedVoice.language,
+          ttsProvider: provider,
+          voiceModel: selectedVoice.model,
+        },
       });
 
       if (enhancedText) {

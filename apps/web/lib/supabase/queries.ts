@@ -166,6 +166,22 @@ export async function getVoiceIdByName(
   return data;
 }
 
+export async function getVoiceById(
+  voiceId: string,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('id', voiceId)
+    .eq('is_public', true)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
 export async function reduceCredits({
   userId,
   amount,

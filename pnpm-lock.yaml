@@ -558,6 +558,9 @@ importers:
 
   scripts:
     dependencies:
+      "@google/genai":
+        specifier: 1.19.0
+        version: 1.19.0
       "@supabase/supabase-js":
         specifier: "catalog:"
         version: 2.99.2

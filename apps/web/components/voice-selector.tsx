@@ -1,5 +1,5 @@
 'use client';
-import { Info, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import { Info, Maximize2, Minimize2 } from 'lucide-react';
 import {
   type Dispatch,
   type SetStateAction,
@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { VoiceSelect } from '@/components/voice-select';
 import {
   Card,
   CardContent,
@@ -17,18 +18,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
+import { capitalizeFirstLetter, getTtsProvider } from '@/lib/utils';
 import { isFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
@@ -52,12 +44,11 @@ interface VoiceGroupLabels {
   geminiGroupLabel: string;
 }
 
-const defaultFeaturedGroupLabel = 'Featured';
 const defaultGeminiGroupLabel = 'Gemini 🌍';
 const grokGroupLabel = 'Grok ✨';
 
 function isMultilingualVoice(voice: Tables<'voices'>) {
-  return voice.model === 'gpro';
+  return voice.model === 'gpro' || voice.model === 'gpro31';
 }
 function isGrokVoice(voice: Tables<'voices'>) {
   return voice.model === 'xai';
@@ -147,37 +138,15 @@ export function VoiceSelector({
   );
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  const voiceSelectorLabels =
-    dict.voiceSelector as typeof dict.voiceSelector & {
-      featuredBadge?: string;
-      featuredGroupLabel?: string;
-      multilingualGroupLabel?: string;
-    };
-  const featuredGroupLabel =
-    voiceSelectorLabels.featuredGroupLabel ?? defaultFeaturedGroupLabel;
-  const geminiGroupLabel =
-    voiceSelectorLabels.multilingualGroupLabel ?? defaultGeminiGroupLabel;
-  const featuredBadgeLabel =
-    voiceSelectorLabels.featuredBadge ?? featuredGroupLabel;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: we need selectedStyle
   useEffect(() => {
-    // Auto-resize textarea when content changes
     if (textareaRef.current && !isFullscreen) {
       resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
     }
   }, [selectedStyle]);
-
-  const voiceGroups = useMemo(
-    () =>
-      getVoiceGroups(publicVoices, {
-        featuredGroupLabel,
-        geminiGroupLabel,
-      }),
-    [featuredGroupLabel, geminiGroupLabel, publicVoices],
-  );
 
   return (
     <Card>
@@ -211,45 +180,11 @@ export function VoiceSelector({
         <CardDescription>{dict.voiceSelector.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
-        <Select onValueChange={setSelectedVoice} value={selectedVoice?.name}>
-          <SelectTrigger className="w-full sm:w-1/3">
-            <span className="flex! items-center gap-2">
-              <SelectValue placeholder="Select a voice" />
-              {selectedVoice && isFeaturedVoice(selectedVoice) && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 font-semibold text-[10px] text-primary uppercase tracking-wide">
-                  <Sparkles className="size-3 text-primary" />
-                  {featuredBadgeLabel}
-                </span>
-              )}
-            </span>
-          </SelectTrigger>
-          <SelectContent>
-            {publicVoices.length > 0 &&
-              voiceGroups.map(({ label, voices }) => (
-                <SelectGroup key={label}>
-                  <SelectLabel className="font-light">{label}</SelectLabel>
-                  {voices.map((voice) => {
-                    const isFeatured = isFeaturedVoice(voice);
-
-                    return (
-                      <SelectItem
-                        className={cn(
-                          'cursor-pointer py-3',
-                          isFeatured && 'font-medium',
-                        )}
-                        key={voice.id}
-                        value={voice.name}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>{capitalizeFirstLetter(voice.name)}</span>
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectGroup>
-              ))}
-          </SelectContent>
-        </Select>
+        <VoiceSelect
+          onValueChange={setSelectedVoice}
+          value={selectedVoice?.id}
+          voices={publicVoices}
+        />
         <AudioProvider>
           {selectedVoice?.sample_url && (
             <div className="flex flex-col items-center justify-start gap-4 py-2 sm:flex-row">
@@ -318,9 +253,7 @@ export function VoiceSelector({
               value={selectedStyle}
             />
             <Button
-              className={
-                'absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-              }
+              className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
               onClick={() => setIsFullscreen(!isFullscreen)}
               size="icon"
               title="Fullscreen"
