@@ -64,50 +64,47 @@ export function TopupStatus({ dict }: TopupStatusProps) {
   return (
     <div className="mb-6 w-full lg:w-1/2">
       {status === 'success' && (
-        <Alert className="grid grid-cols-subgrid gap-2">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-            <CircleCheckIcon
-              aria-hidden="true"
-              className="me-3 -mt-0.5 inline-flex text-emerald-500!"
-            />
+        <Alert className="">
+          <CircleCheckIcon
+            aria-hidden="true"
+            className="me-3 -mt-0.5 h-4 w-4 text-emerald-500!"
+          />
 
-            <AlertTitle>{dict.status.success.title}</AlertTitle>
-            <Button
-              className="border-green-300 hover:bg-green-900"
-              onClick={handleDismiss}
-              size="sm"
-              variant="outline"
-            >
-              {dict.status.success.dismiss}
-            </Button>
-          </div>
-          <div className="grid grid-cols-[2fr_1fr_auto]">
-            <AlertDescription className="text-muted-foreground">
-              {creditsAmount
-                ? dict.status.success.descriptionWithAmount.replace(
-                    '{creditsAmount}',
-                    Number(creditsAmount).toLocaleString(),
-                  )
-                : dict.status.success.description}
-            </AlertDescription>
-          </div>
+          <AlertTitle>{dict.status.success.title}</AlertTitle>
+
+          <AlertDescription className="text-muted-foreground">
+            {creditsAmount
+              ? dict.status.success.descriptionWithAmount.replace(
+                  '{creditsAmount}',
+                  Number(creditsAmount).toLocaleString(),
+                )
+              : dict.status.success.description}
+            <div className="mt-2">
+              <Button
+                className="border-green-300 hover:bg-green-900"
+                onClick={handleDismiss}
+                size="sm"
+                variant="outline"
+              >
+                {dict.status.success.dismiss}
+              </Button>
+            </div>
+          </AlertDescription>
         </Alert>
       )}
 
       {status === 'canceled' && (
-        <Alert className="border-yellow-200 bg-yellow-50 text-yellow-800">
-          <XCircle className="h-4 w-4 text-yellow-600" />
-          <AlertTitle className="text-yellow-800">
-            {dict.status.canceled.title}
-          </AlertTitle>
-          <AlertDescription className="text-yellow-700">
+        <Alert className="border-amber-900 bg-amber-950 text-amber-50">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle>{dict.status.canceled.title}</AlertTitle>
+          <AlertDescription>
             {dict.status.canceled.description}
             <div className="mt-2">
               <Button
-                className="border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+                className="hover:bg-secondary/50"
                 onClick={handleDismiss}
                 size="sm"
-                variant="outline"
+                variant="secondary"
               >
                 {dict.status.canceled.dismiss}
               </Button>
@@ -117,20 +114,13 @@ export function TopupStatus({ dict }: TopupStatusProps) {
       )}
 
       {status === 'error' && (
-        <Alert className="border-red-200 bg-red-50 text-red-800">
-          <XCircle className="h-4 w-4 text-red-600" />
-          <AlertTitle className="text-red-800">
-            {dict.status.error.title}
-          </AlertTitle>
-          <AlertDescription className="text-red-700">
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4" />
+          <AlertTitle>{dict.status.error.title}</AlertTitle>
+          <AlertDescription>
             {dict.status.error.description}
             <div className="mt-2">
-              <Button
-                className="border-red-300 text-red-700 hover:bg-red-100"
-                onClick={handleDismiss}
-                size="sm"
-                variant="outline"
-              >
+              <Button onClick={handleDismiss} size="sm" variant="secondary">
                 {dict.status.error.dismiss}
               </Button>
             </div>
