@@ -18,7 +18,7 @@ import {
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
-import { TopupStatus } from './topup-status';
+import { PaymentStatus } from './payment-status';
 
 async function canApplyFirstMonthSubscriptionDiscount(stripeId: string) {
   const subscriptionDiscountCouponId =
@@ -122,7 +122,7 @@ export default async function CreditsPage(props: {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <TopupStatus dict={dict.credits} />
+      <PaymentStatus />
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
           <h3 className="mb-4 font-semibold text-lg">
