@@ -4,11 +4,11 @@ import type { User } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
-import { usePostHog } from 'posthog-js/react';
 import { useEffect } from 'react';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { initPostHog } from '@/lib/posthog-browser';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
@@ -31,7 +31,6 @@ function CreditsSection({
   showMinutes?: boolean;
 }) {
   const t = useTranslations('creditsSection');
-  const posthog = usePostHog();
   const supabase = useSupabaseBrowser();
   const { isMobile, toggleSidebar } = useSidebar();
   const totalCredits =
@@ -69,12 +68,16 @@ function CreditsSection({
     ) => {
       const creditsLeft = credits?.amount ?? -1;
 
-      posthog.identify(user.id, {
-        email: user.email,
-        name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft,
-        userHasPaid,
-      });
+      initPostHog()
+        .then((posthog) => {
+          posthog?.identify(user.id, {
+            email: user.email,
+            name: user.user_metadata.full_name || user.user_metadata.username,
+            creditsLeft,
+            userHasPaid,
+          });
+        })
+        .catch(() => undefined);
 
       if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
         return;
@@ -108,7 +111,7 @@ function CreditsSection({
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, [creditsData, lang, posthog, supabase]);
+  }, [creditsData, lang, supabase]);
 
   if (!creditsData) {
     return (

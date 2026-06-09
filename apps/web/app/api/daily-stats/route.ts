@@ -21,11 +21,11 @@ import {
   formatIdList,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
+  getClonedAudioFilesInRange,
   getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
   getUsageEventsInRange,
-  VOICE_CLONING_MODELS,
 } from './queries';
 import {
   _timed,
@@ -260,21 +260,20 @@ export async function GET(request: NextRequest) {
         })(),
       ),
 
-      // (clonesResult) Cloned audio files last 14 days (includes yesterday)
+      // (clonesResult) Cloned audio files last 14 days (includes yesterday).
+      // Paginated so the count isn't silently capped at PostgREST's 1000-row
+      // default — the 14d clone total can exceed that.
       _timed(
-        `audio_files:clones ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        (() => {
-          let q = supabase
-            .from('audio_files')
-            .select('id, created_at')
-            .in('model', VOICE_CLONING_MODELS)
-            .gte('created_at', fourteenDaysAgo.toISOString())
-            .lt('created_at', today.toISOString());
-          if (hasInternalUserIds) {
-            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
-          }
-          return q.then((result) => result);
-        })(),
+        `audio_files:clones paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getClonedAudioFilesInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then(
+          (data) => ({ data, error: null }),
+          (error) => ({ data: null, error }),
+        ),
       ),
 
       // (profilesTotalCountResult) Total profiles count

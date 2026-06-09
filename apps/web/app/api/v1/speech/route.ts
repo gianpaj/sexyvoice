@@ -45,8 +45,86 @@ import {
   getErrorMessage,
   getTtsProvider,
 } from '@/lib/utils';
+import {
+  getGoogleApiErrorStatus,
+  isGoogleQuotaError,
+  isGoogleTransientProviderError,
+} from '@/utils/google-rpc-status';
+import { parseGoogleApiError } from '@/utils/googleErrors';
 
 const ENDPOINT = '/api/v1/speech';
+
+interface GeminiProviderFailure {
+  code: string;
+  googleCode?: number;
+  googleStatus?: string;
+  message: string;
+  status: number;
+  type: 'rate_limit_error' | 'server_error';
+}
+
+function getGeminiProviderFailure(
+  proError: unknown,
+  flashError: unknown,
+): GeminiProviderFailure | null {
+  const proGoogleError = parseGoogleApiError(proError);
+  const flashGoogleError = parseGoogleApiError(flashError);
+  const parsedErrors = [proGoogleError, flashGoogleError].filter(
+    (error): error is NonNullable<typeof error> => error !== null,
+  );
+
+  if (flashGoogleError && isGoogleQuotaError(flashGoogleError)) {
+    return {
+      code: 'provider_quota_exceeded',
+      googleCode: flashGoogleError.code,
+      googleStatus: getGoogleApiErrorStatus(flashGoogleError),
+      message: getErrorMessage(
+        ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
+        'voice-generation',
+      ),
+      status: 429,
+      type: 'rate_limit_error',
+    };
+  }
+
+  const transientError = parsedErrors.find((error) =>
+    isGoogleTransientProviderError(error),
+  );
+
+  if (transientError) {
+    return {
+      code: 'provider_unavailable',
+      googleCode: transientError.code,
+      googleStatus: getGoogleApiErrorStatus(transientError),
+      message: getErrorMessage(
+        ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
+        'voice-generation',
+      ),
+      status: 503,
+      type: 'server_error',
+    };
+  }
+
+  return null;
+}
+
+function resolveProviderName({
+  isGeminiVoice,
+  isGrokVoice,
+}: {
+  isGeminiVoice: boolean;
+  isGrokVoice: boolean;
+}): 'google' | 'replicate' | 'xai' {
+  if (isGeminiVoice) {
+    return 'google';
+  }
+
+  if (isGrokVoice) {
+    return 'xai';
+  }
+
+  return 'replicate';
+}
 
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 800; // seconds - fluid compute is enabled
@@ -259,11 +337,7 @@ export async function POST(request: Request) {
     const extension = chosenFormat;
     const filename = `${folder}/${voice}-${Date.now()}.${extension}`;
 
-    const provider = isGeminiVoice
-      ? 'google'
-      : isGrokVoice
-        ? 'xai'
-        : 'replicate';
+    const provider = resolveProviderName({ isGeminiVoice, isGrokVoice });
     let modelUsed = voiceObj.model;
     let uploadUrl: string;
     let replicateResponse: Prediction | undefined;
@@ -307,6 +381,37 @@ export async function POST(request: Request) {
             config,
           });
         } catch (flashError) {
+          const providerFailure = getGeminiProviderFailure(
+            proError,
+            flashError,
+          );
+
+          if (providerFailure) {
+            await log({
+              status: providerFailure.status,
+              errorCode: providerFailure.code,
+              error: providerFailure.message,
+              userId,
+              apiKeyId: authResult.apiKeyId,
+              voice,
+              model: modelUsed,
+              textLength: finalText.length,
+              provider,
+              providerCode: providerFailure.googleCode,
+              providerStatus: providerFailure.googleStatus,
+              isGeminiVoice,
+            });
+
+            return respond(
+              createApiError({
+                message: providerFailure.message,
+                type: providerFailure.type,
+                code: providerFailure.code,
+              }),
+              { status: providerFailure.status },
+            );
+          }
+
           throw new Error(
             `Both Gemini models failed. Pro error: ${proError instanceof Error ? proError.message : String(proError)}. Flash error: ${flashError instanceof Error ? flashError.message : String(flashError)}`,
           );
@@ -497,7 +602,7 @@ export async function POST(request: Request) {
         duration: '-1',
         credits_used: creditsUsed,
         usage: {
-          ...(usageMetadata ?? {}),
+          ...usageMetadata,
           userHasPaid,
           apiKeyId: authResult.apiKeyId,
           sourceType: 'api_tts',

@@ -377,8 +377,6 @@ export const insertSubscriptionCreditTransaction = async (
     metadata: {
       dollarAmount,
       isFirstSubscription,
-      // Figure out how to send promo metadata with a Stripe pricing table
-      // ...(promo && { promo }),
     },
   });
 

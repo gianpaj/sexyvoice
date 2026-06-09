@@ -17,6 +17,8 @@ export interface LogFields {
   isGrokVoice?: boolean;
   model?: string;
   provider?: string;
+  providerCode?: number;
+  providerStatus?: string;
   status: number;
   textLength?: number;
   userHasPaid?: boolean;

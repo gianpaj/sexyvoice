@@ -1,6 +1,15 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
+const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
+  'trialing',
+  'active',
+  'past_due',
+  'unpaid',
+  'paused',
+  'canceled',
+]);
+
 import { type CustomerData, setCustomerData } from '../redis/queries';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
@@ -188,31 +197,73 @@ const updateStripeId = async (userId: string, stripeId: string) => {
     .eq('id', userId);
 };
 
-export async function createCustomerSession(userId: string, stripeId: string) {
-  try {
-    const customerSession = await stripe.customerSessions.create({
-      customer: stripeId,
-      components: {
-        pricing_table: {
-          enabled: true,
-        },
-      },
+async function hasMatchingSubscriptionHistory(
+  customerId: string | null | undefined,
+  matchesSubscription: (subscription: Stripe.Subscription) => boolean,
+): Promise<boolean> {
+  if (!customerId) {
+    return false;
+  }
+
+  let startingAfter: string | undefined;
+
+  while (true) {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      limit: 100,
+      status: 'all',
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
-    return customerSession;
-  } catch (error) {
-    console.error(
-      '[STRIPE ADMIN] Error creating Stripe customer session:',
-      error,
-    );
-    if (process.env.NODE_ENV !== 'production') {
-      return null;
+    if (subscriptions.data.some(matchesSubscription)) {
+      return true;
     }
+
+    if (!subscriptions.has_more) {
+      return false;
+    }
+
+    startingAfter = subscriptions.data.at(-1)?.id;
+    if (!startingAfter) {
+      return false;
+    }
+  }
+}
+
+export function hasEverHadRealSubscription(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(customerId, (subscription) =>
+    REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+  );
+}
+
+export function hasAnySubscriptionHistory(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(customerId, () => true);
+}
+
+export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
+  try {
+    const coupon = await stripe.coupons.retrieve(couponId);
+
+    if ('deleted' in coupon && coupon.deleted) {
+      return false;
+    }
+
+    return coupon.valid;
+  } catch (error) {
     Sentry.captureException(error, {
-      user: { id: userId },
-      extra: { stripeId },
+      tags: {
+        section: 'stripe_admin',
+        event_type: 'coupon_validation_error',
+      },
+      extra: {
+        coupon_id: couponId,
+      },
     });
-    throw error;
+    return false;
   }
 }
 

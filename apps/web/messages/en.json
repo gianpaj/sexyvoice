@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Buy Credits",
-      "description": "Top up your credits instantly with a one-time purchase",
+      "description": "Top up your credits instantly or subscribe and get more credits",
       "buyCredits": "Buy Credits",
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
@@ -758,7 +758,7 @@
     "profile": "Profile",
     "signOut": "Sign Out",
     "freeTools": "Free Tools",
-    "subscriptionDiscount": "Get {discount}% extra credits with a subscription"
+    "subscriptionDiscount": "Get {extraCredits}% extra credits & {discount}% off the first month!"
   },
   "header": {
     "generate": "Generate",
@@ -768,6 +768,7 @@
   "history": {
     "header": "Generation History",
     "empty": "No history yet",
+    "downloadError": "Failed to download audio",
     "ui": {
       "filterText": "Filter text...",
       "customizeColumns": "Customize Columns",

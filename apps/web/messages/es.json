@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Comprar Créditos",
-      "description": "Recarga tus créditos instantáneamente con una compra única",
+      "description": "Recarga tus créditos instantáneamente o suscríbete y obtén más créditos",
       "buyCredits": "Comprar Créditos",
       "onetimePurchase": "Compra única",
       "processing": "Procesando...",
@@ -758,7 +758,7 @@
     "profile": "Perfil",
     "signOut": "Cerrar sesión",
     "freeTools": "Herramientas Gratuitas",
-    "subscriptionDiscount": "Obtén {discount}% de créditos extra con una suscripción"
+    "subscriptionDiscount": "¡Obtén {extraCredits}% de créditos extra y {discount}% de descuento el primer mes!"
   },
   "header": {
     "generate": "Generar",
@@ -768,6 +768,7 @@
   "history": {
     "header": "Historial de Generación",
     "empty": "Sin historial aún",
+    "downloadError": "Error al descargar el audio",
     "ui": {
       "filterText": "Filtrar texto...",
       "customizeColumns": "Personalizar Columnas",

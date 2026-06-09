@@ -1,6 +1,6 @@
 import { argosScreenshot } from '@argos-ci/playwright';
-import { expect, test } from './fixtures';
 
+import { expect, test } from './fixtures';
 import { CreditsPage } from './pages/credits.page';
 
 /**
