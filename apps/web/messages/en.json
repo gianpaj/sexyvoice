@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Buy Credits",
-      "description": "Top up your credits instantly with a one-time purchase",
+      "description": "Top up your credits instantly or subscribe and get more credits",
       "buyCredits": "Buy Credits",
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
