@@ -56,24 +56,27 @@ export function Banner({
   useEffect(() => {
     let isCancelled = false;
 
+    // Hide immediately so a previously-visible banner doesn't flash while the
+    // async cookie check for the new banner resolves.
     setIsVisible(false);
 
-    if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
-      setIsVisible(true);
-      return;
-    }
+    const resolveVisibility = async () => {
+      if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
+        return true;
+      }
 
-    const checkCookies = async () => {
       const cookieValues = await Promise.all(
         banner.dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
       );
 
-      if (!isCancelled && cookieValues.every((cookieValue) => !cookieValue)) {
-        setIsVisible(true);
-      }
+      return cookieValues.every((cookieValue) => !cookieValue);
     };
 
-    checkCookies();
+    resolveVisibility().then((visible) => {
+      if (!isCancelled) {
+        setIsVisible(visible);
+      }
+    });
 
     return () => {
       isCancelled = true;

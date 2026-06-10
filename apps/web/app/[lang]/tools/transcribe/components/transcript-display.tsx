@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, ClipboardCopy } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -62,12 +62,12 @@ export function TranscriptDisplay({
     }
   }, [activeChunkIndex]);
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     if (!displayText) return;
     await navigator.clipboard.writeText(displayText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [displayText]);
+  };
 
   if (!displayText) return null;
 

@@ -62,6 +62,7 @@ export async function POST(request: Request) {
   }
 
   const isPaidUser = await hasUserPaid(user.id);
+
   if (!isPaidUser) {
     return NextResponse.json(
       { error: 'A subscription or top-up is required to create API keys' },

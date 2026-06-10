@@ -44,14 +44,97 @@ const isCheckoutSetupError = (
     String(error.cause),
   );
 
-export interface CheckoutMetadata {
+function reportCheckoutSetupError(
+  error: Error & { cause: unknown },
+  packageId: CheckoutPackageId,
+) {
+  if (
+    error.cause === CHECKOUT_INVALID_PACKAGE_ID &&
+    shouldReportInvalidCheckoutPackageId()
+  ) {
+    captureMessage('Invalid checkout package id submitted.', {
+      level: 'info',
+      tags: {
+        section: 'stripe_actions',
+        event_type: 'invalid_package_id',
+      },
+      extra: {
+        packageId,
+        available_packages: CHECKOUT_PACKAGE_IDS,
+        vercelEnv: process.env.VERCEL_ENV ?? null,
+      },
+    });
+  }
+
+  if (
+    error.cause === CHECKOUT_CONFIGURATION_ERROR &&
+    shouldReportCheckoutConfigurationError()
+  ) {
+    captureException(error, {
+      tags: {
+        section: 'stripe_actions',
+        event_type: 'missing_price_id',
+      },
+      extra: {
+        packageId,
+        available_packages: Object.keys(getTopupPackages('en')),
+        vercelEnv: process.env.VERCEL_ENV ?? null,
+      },
+    });
+  }
+}
+
+interface CheckoutMetadataBase {
+  packageId: CheckoutPackageId;
+  userId: string;
+}
+
+export interface TopupCheckoutMetadata extends CheckoutMetadataBase {
   credits: string;
   dollarAmount: string;
-  packageId: CheckoutPackageId;
   promo?: string;
+  type: 'topup';
+}
+
+export interface SubscriptionCheckoutMetadata extends CheckoutMetadataBase {
   subscriptionDiscountCouponId?: string;
-  type: 'subscription' | 'topup';
-  userId: string;
+  type: 'subscription';
+}
+
+export type CheckoutMetadata =
+  | SubscriptionCheckoutMetadata
+  | TopupCheckoutMetadata;
+
+type CheckoutUser = NonNullable<
+  Awaited<
+    ReturnType<Awaited<ReturnType<typeof createClient>>['auth']['getUser']>
+  >['data']['user']
+>;
+
+async function getCheckoutStripeId(
+  user: CheckoutUser,
+  packageId: CheckoutPackageId,
+): Promise<string> {
+  const userData = await getUserById(user.id);
+  // biome-ignore lint/complexity/useOptionalChain: needed
+  if (!(userData && userData.stripe_id)) {
+    const error = new Error('User not found or Stripe ID missing');
+    captureException(error, {
+      user: { id: user.id, email: user.email },
+      tags: {
+        section: 'stripe_actions',
+        event_type: 'user_validation_error',
+      },
+      extra: {
+        has_user_data: !!userData,
+        has_stripe_id: !!userData?.stripe_id,
+        packageId,
+      },
+    });
+    throw error;
+  }
+
+  return userData.stripe_id;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's okay
@@ -95,21 +178,18 @@ export async function createCheckoutSession(
     const supabase = await createClient();
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser();
 
-    const userData = user && (await getUserById(user.id));
-    // biome-ignore lint/complexity/useOptionalChain: needed
-    if (!(userData && userData.stripe_id)) {
-      const error = new Error('User not found or Stripe ID missing');
+    if (authError || !user) {
+      const error = new Error('Unauthorized checkout session request');
       captureException(error, {
-        user: { id: user?.id, email: user?.email },
         tags: {
           section: 'stripe_actions',
-          event_type: 'user_validation_error',
+          event_type: 'auth_error',
         },
         extra: {
-          has_user_data: !!userData,
-          has_stripe_id: !!userData?.stripe_id,
+          authError: authError?.message ?? null,
           packageId,
           checkoutType,
         },
@@ -117,25 +197,17 @@ export async function createCheckoutSession(
       throw error;
     }
 
+    const stripeId = await getCheckoutStripeId(user, packageId);
+
     const subscriptionDiscountCouponId =
       process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
-    const hasExistingSubscriptionHistory =
-      checkoutType === 'subscription'
-        ? await hasAnySubscriptionHistory(userData.stripe_id)
-        : false;
-    const hasUsableSubscriptionDiscountCoupon =
-      checkoutType === 'subscription' &&
-      !!subscriptionDiscountCouponId &&
-      !hasExistingSubscriptionHistory
-        ? await isStripeCouponUsable(subscriptionDiscountCouponId)
-        : false;
     const shouldApplySubscriptionDiscount =
       checkoutType === 'subscription' &&
       !!subscriptionDiscountCouponId &&
-      hasUsableSubscriptionDiscountCoupon &&
-      !hasExistingSubscriptionHistory;
+      !(await hasAnySubscriptionHistory(stripeId)) &&
+      (await isStripeCouponUsable(subscriptionDiscountCouponId));
 
-    const metadata: Stripe.MetadataParam =
+    const metadata: CheckoutMetadata =
       checkoutType === 'subscription'
         ? {
             userId: user.id,
@@ -159,27 +231,26 @@ export async function createCheckoutSession(
     const checkoutSession: Stripe.Checkout.Session =
       await stripe.checkout.sessions.create({
         mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
-        customer: userData.stripe_id,
+        customer: stripeId,
         line_items: [
           {
             quantity: 1,
             price: package_.priceId,
           },
         ],
-        ...(checkoutType === 'subscription' &&
-          shouldApplySubscriptionDiscount && {
-            discounts: [
-              {
-                coupon: subscriptionDiscountCouponId,
-              },
-            ],
-          }),
+        ...(shouldApplySubscriptionDiscount && {
+          discounts: [
+            {
+              coupon: subscriptionDiscountCouponId,
+            },
+          ],
+        }),
         ...(ui_mode === 'hosted' && {
           success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
         }),
         ui_mode,
-        metadata,
+        metadata: metadata as unknown as Stripe.MetadataParam,
       });
 
     return {
@@ -189,41 +260,7 @@ export async function createCheckoutSession(
   } catch (error) {
     console.error('Error creating checkout session:', error);
     if (isCheckoutSetupError(error)) {
-      if (
-        error.cause === CHECKOUT_INVALID_PACKAGE_ID &&
-        shouldReportInvalidCheckoutPackageId()
-      ) {
-        captureMessage('Invalid checkout package id submitted.', {
-          level: 'info',
-          tags: {
-            section: 'stripe_actions',
-            event_type: 'invalid_package_id',
-          },
-          extra: {
-            packageId,
-            available_packages: CHECKOUT_PACKAGE_IDS,
-            vercelEnv: process.env.VERCEL_ENV ?? null,
-          },
-        });
-      }
-
-      if (
-        error.cause === CHECKOUT_CONFIGURATION_ERROR &&
-        shouldReportCheckoutConfigurationError()
-      ) {
-        captureException(error, {
-          tags: {
-            section: 'stripe_actions',
-            event_type: 'missing_price_id',
-          },
-          extra: {
-            packageId,
-            available_packages: Object.keys(getTopupPackages('en')),
-            vercelEnv: process.env.VERCEL_ENV ?? null,
-          },
-        });
-      }
-
+      reportCheckoutSetupError(error, packageId);
       throw error;
     }
 

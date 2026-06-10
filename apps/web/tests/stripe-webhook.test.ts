@@ -300,6 +300,43 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
+
+    it('should fall back to the latest invoice payment intent when the session has none', async () => {
+      const paymentIntentId = 'pi_from_latest_invoice';
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
+      );
+      // Stripe leaves payment_intent null on subscription-mode sessions; the
+      // initial payment lives on the subscription's first invoice
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      (subscription as any).latest_invoice = {
+        id: 'in_initial_test',
+        object: 'invoice',
+        payment_intent: paymentIntentId,
+      };
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      const session = createMockCheckoutSession('subscription');
+      session.payment_intent = null;
+
+      const request = createMockRequest('checkout.session.completed', session);
+      await POST(request);
+
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+        'user_789',
+        paymentIntentId,
+        'sub_test123',
+        28_750, // 25,000 * 1.15 (subscription bonus)
+        10,
+      );
+    });
   });
 
   describe('Invoice Payment Succeeded - Recurring Subscription Payments', () => {
@@ -410,6 +447,69 @@ describe('Stripe Webhook Route', () => {
       // Should return 200 but not insert credits
       expect(response.status).toBe(200);
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should record the discounted first-month amount on the initial subscription invoice', async () => {
+      const originalCouponId =
+        process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+      const originalDiscountPercent =
+        process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
+      process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID = 'coupon_25_off';
+      process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT = '25';
+
+      try {
+        const customerId = 'cus_test123';
+        const subscriptionId = 'sub_test123';
+        const paymentIntentId = 'pi_initial_discounted';
+        const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
+
+        const subscription = createMockSubscription(priceId);
+        vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(
+          subscription,
+        );
+        vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+          data: [subscription],
+          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        } as any);
+        vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+        const invoice = createMockInvoice(
+          subscriptionId,
+          customerId,
+          paymentIntentId,
+          priceId,
+          'subscription_create', // initial subscription invoice
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        (invoice as any).discount = {
+          id: 'di_test',
+          coupon: { id: 'coupon_25_off' },
+        };
+
+        const request = createMockRequest('invoice.payment_succeeded', invoice);
+        await POST(request);
+
+        expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+          'user_789',
+          paymentIntentId,
+          subscriptionId,
+          28_750, // 25,000 * 1.15 (subscription bonus)
+          7.5, // $10 standard with 25% first-month discount
+        );
+      } finally {
+        if (originalCouponId === undefined) {
+          delete process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+        } else {
+          process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+            originalCouponId;
+        }
+        if (originalDiscountPercent === undefined) {
+          delete process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
+        } else {
+          process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT =
+            originalDiscountPercent;
+        }
+      }
     });
   });
 

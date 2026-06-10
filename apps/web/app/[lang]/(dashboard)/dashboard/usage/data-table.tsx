@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -88,20 +88,17 @@ export function DataTable({ dict }: DataTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   // Update URL with new params
-  const updateParams = useCallback(
-    (updates: Record<string, string | number>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [key, value] of Object.entries(updates)) {
-        if (value === 'all' || value === '') {
-          params.delete(key);
-        } else {
-          params.set(key, value.toString());
-        }
+  const updateParams = (updates: Record<string, string | number>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === 'all' || value === '') {
+        params.delete(key);
+      } else {
+        params.set(key, value.toString());
       }
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams],
-  );
+    }
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Fetch data with react-query
   const { data, isLoading, error } = useQuery({
@@ -157,10 +154,18 @@ export function DataTable({ dict }: DataTableProps) {
   // Render table content based on state
   const renderTableContent = () => {
     if (isLoading) {
-      return Array.from({ length: 5 }).map((_, i) => (
-        <TableRow key={i}>
-          {columns.map((_, j) => (
-            <TableCell key={j}>
+      const skeletonRows = [
+        'usage-skeleton-row-1',
+        'usage-skeleton-row-2',
+        'usage-skeleton-row-3',
+        'usage-skeleton-row-4',
+        'usage-skeleton-row-5',
+      ];
+
+      return skeletonRows.map((rowKey) => (
+        <TableRow key={rowKey}>
+          {columns.map((column) => (
+            <TableCell key={`${rowKey}-${column.id ?? 'column'}`}>
               <Skeleton className="h-6 w-full" />
             </TableCell>
           ))}
