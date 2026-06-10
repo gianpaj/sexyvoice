@@ -1231,9 +1231,11 @@ describe('Generate Voice API Route', () => {
         }),
         expect.objectContaining({
           extra: expect.objectContaining({
+            blockReason: undefined,
             finishReason: undefined,
             hasData: false,
-            mimeType: 'audio/wav',
+            isNoAudioData: false,
+            mimeType: undefined,
             model: 'gemini-2.5-flash-preview-tts',
             voice: 'kore',
           }),
