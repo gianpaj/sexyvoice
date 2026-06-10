@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useThrottledCallback } from '@/hooks/tiptap/use-throttled-callback';
 
@@ -59,7 +59,7 @@ export function useElementRect({
 }: ElementRectOptions = {}): RectState {
   const [rect, setRect] = useState<RectState>(initialRect);
 
-  const getTargetElement = useCallback((): Element | null => {
+  const getTargetElement = (): Element | null => {
     if (!(enabled && isClientSide())) return null;
 
     if (!element) {
@@ -75,7 +75,7 @@ export function useElementRect({
     }
 
     return element;
-  }, [element, enabled]);
+  };
 
   const updateRect = useThrottledCallback(
     () => {
@@ -135,6 +135,7 @@ export function useElementRect({
       window.removeEventListener('resize', handleUpdate, true);
       setRect(initialRect);
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes getTargetElement, keeping it referentially stable across renders.
   }, [enabled, getTargetElement, updateRect, useResizeObserver]);
 
   return rect;

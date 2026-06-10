@@ -2,7 +2,7 @@
 
 import WavesurferPlayer from '@wavesurfer/react';
 import { Pause, Play } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
@@ -69,31 +69,28 @@ export function AudioPlayerWithContext({
     }
   }, [showWaveform, wavesurfer, onControlsReady]);
 
-  const onReady = useCallback(
-    (ws: WaveSurfer) => {
-      setWavesurfer(ws);
-      setIsWaveformPlaying(false);
-      if (autoPlay) {
-        void attemptPlayback(
-          () => ws.play(),
-          () => {
-            setIsWaveformPlaying(false);
-          },
-        );
-      }
-    },
-    [autoPlay],
-  );
-
-  const onPlay = useCallback(() => {
-    setIsWaveformPlaying(true);
-  }, []);
-
-  const onPause = useCallback(() => {
+  const onReady = (ws: WaveSurfer) => {
+    setWavesurfer(ws);
     setIsWaveformPlaying(false);
-  }, []);
+    if (autoPlay) {
+      void attemptPlayback(
+        () => ws.play(),
+        () => {
+          setIsWaveformPlaying(false);
+        },
+      );
+    }
+  };
 
-  const handlePlayWithWaveform = useCallback(async () => {
+  const onPlay = () => {
+    setIsWaveformPlaying(true);
+  };
+
+  const onPause = () => {
+    setIsWaveformPlaying(false);
+  };
+
+  const handlePlayWithWaveform = async () => {
     if (!wavesurfer) return;
 
     if (isWaveformPlaying) {
@@ -108,9 +105,9 @@ export function AudioPlayerWithContext({
         setIsWaveformPlaying(false);
       },
     );
-  }, [isWaveformPlaying, wavesurfer]);
+  };
 
-  const handlePlayWithContext = useCallback(() => {
+  const handlePlayWithContext = () => {
     if (!audio) return;
     if (audio.url !== url) {
       audio.setUrlAndPlay(url);
@@ -119,7 +116,7 @@ export function AudioPlayerWithContext({
     } else {
       audio.play();
     }
-  }, [audio, url]);
+  };
 
   const handlePlay = showWaveform
     ? handlePlayWithWaveform

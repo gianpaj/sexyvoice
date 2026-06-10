@@ -1,8 +1,6 @@
-import { memo } from 'react';
-
 type SvgProps = React.ComponentPropsWithoutRef<'svg'>;
 
-export const Repeat2Icon = memo(({ className, ...props }: SvgProps) => {
+export const Repeat2Icon = ({ className, ...props }: SvgProps) => {
   return (
     <svg
       className={className}
@@ -21,6 +19,6 @@ export const Repeat2Icon = memo(({ className, ...props }: SvgProps) => {
       />
     </svg>
   );
-});
+};
 
 Repeat2Icon.displayName = 'Repeat2Icon';

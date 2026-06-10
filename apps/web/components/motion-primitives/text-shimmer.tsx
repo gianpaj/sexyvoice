@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'motion/react';
-import React, { useMemo } from 'react';
+import type React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -11,15 +11,13 @@ export interface TextShimmerProps {
   spread?: number;
 }
 
-function TextShimmerComponent({
+export function TextShimmer({
   children,
   className,
   duration = 2,
   spread = 2,
 }: TextShimmerProps) {
-  const dynamicSpread = useMemo(() => {
-    return children.length * spread;
-  }, [children, spread]);
+  const dynamicSpread = children.length * spread;
 
   return (
     <motion.p
@@ -49,5 +47,3 @@ function TextShimmerComponent({
     </motion.p>
   );
 }
-
-export const TextShimmer = React.memo(TextShimmerComponent);

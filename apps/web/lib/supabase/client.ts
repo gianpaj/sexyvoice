@@ -1,6 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { useMemo } from 'react';
 
 export type TypedSupabaseClient = SupabaseClient<Database>;
 
@@ -24,7 +23,7 @@ export function getSupabaseBrowserClient() {
 }
 
 function useSupabaseBrowser() {
-  return useMemo(() => getSupabaseBrowserClient(), []);
+  return getSupabaseBrowserClient();
 }
 
 export default useSupabaseBrowser;

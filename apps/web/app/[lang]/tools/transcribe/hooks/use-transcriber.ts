@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 
 export interface TranscriptChunk {
   text: string;
@@ -191,27 +191,28 @@ export function useTranscriber(): UseTranscriberReturn {
     };
   }, []);
 
-  const loadModel = useCallback((model: string, quantized: boolean) => {
+  const loadModel = (model: string, quantized: boolean) => {
     dispatch({ type: 'load-model' });
     workerRef.current?.postMessage({ type: 'load', model, quantized });
-  }, []);
+  };
 
-  const transcribe = useCallback(
-    (audio: Float32Array, language: string, subtask: string) => {
-      dispatch({ type: 'transcribe-start' });
-      workerRef.current?.postMessage({
-        type: 'transcribe',
-        audio,
-        language,
-        subtask,
-      });
-    },
-    [],
-  );
+  const transcribe = (
+    audio: Float32Array,
+    language: string,
+    subtask: string,
+  ) => {
+    dispatch({ type: 'transcribe-start' });
+    workerRef.current?.postMessage({
+      type: 'transcribe',
+      audio,
+      language,
+      subtask,
+    });
+  };
 
-  const reset = useCallback(() => {
+  const reset = () => {
     dispatch({ type: 'reset' });
-  }, []);
+  };
 
   return {
     state,

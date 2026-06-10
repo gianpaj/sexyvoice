@@ -2,7 +2,7 @@
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 export type JoinerOutputFormat = 'mp3' | 'wav' | 'm4a';
 
@@ -173,7 +173,7 @@ export function useFFmpegJoiner() {
   const [error, setError] = useState<string | null>(null);
   const cancelRequestedRef = useRef(false);
 
-  const ensureLoaded = useCallback(async () => {
+  const ensureLoaded = async () => {
     if (ffmpegRef.current) {
       return ffmpegRef.current;
     }
@@ -193,9 +193,9 @@ export function useFFmpegJoiner() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
-  const cancel = useCallback(() => {
+  const cancel = () => {
     cancelRequestedRef.current = true;
 
     if (ffmpegRef.current) {
@@ -205,78 +205,75 @@ export function useFFmpegJoiner() {
 
     setIsProcessing(false);
     setProgress(0);
-  }, []);
+  };
 
   const progressHandlerRef = useRef<
     (({ progress }: { progress: number }) => void) | null
   >(null);
 
-  const join = useCallback(
-    async (
-      segments: JoinerSegmentInput[],
-      outputFormat: JoinerOutputFormat,
-    ) => {
-      if (segments.length === 0) {
-        throw new Error('At least one segment is required.');
+  const join = async (
+    segments: JoinerSegmentInput[],
+    outputFormat: JoinerOutputFormat,
+  ) => {
+    if (segments.length === 0) {
+      throw new Error('At least one segment is required.');
+    }
+
+    cancelRequestedRef.current = false;
+    setIsProcessing(true);
+    setProgress(0);
+    setError(null);
+
+    const ffmpeg = await ensureLoaded();
+    const tempFiles: string[] = [];
+
+    try {
+      // Remove any stale listener from a previous join call to prevent
+      // handler accumulation causing redundant/noisy progress updates.
+      if (progressHandlerRef.current) {
+        ffmpeg.off('progress', progressHandlerRef.current);
+      }
+      // Ensure we don't accumulate multiple 'progress' listeners across joins
+      (ffmpeg as any).removeAllListeners?.('progress');
+
+      const onProgress = ({
+        progress: currentProgress,
+      }: {
+        progress: number;
+      }) => {
+        setProgress(Math.min(0.5 + currentProgress * 0.5, 0.99));
+      };
+      progressHandlerRef.current = onProgress;
+      ffmpeg.on('progress', onProgress);
+
+      await trimSegmentsToWav({
+        ffmpeg,
+        segments,
+        tempFiles,
+        cancelRequestedRef,
+        setProgress,
+      });
+
+      const concatListName = await concatSegments(ffmpeg, segments);
+      tempFiles.push(concatListName, 'joined.wav', `output.${outputFormat}`);
+
+      const outputBlob = await encodeOutput(ffmpeg, outputFormat);
+      setProgress(1);
+
+      return outputBlob;
+    } catch (err) {
+      if (cancelRequestedRef.current) {
+        throw new Error(CANCELLED_ERROR);
       }
 
-      cancelRequestedRef.current = false;
-      setIsProcessing(true);
-      setProgress(0);
-      setError(null);
-
-      const ffmpeg = await ensureLoaded();
-      const tempFiles: string[] = [];
-
-      try {
-        // Remove any stale listener from a previous join call to prevent
-        // handler accumulation causing redundant/noisy progress updates.
-        if (progressHandlerRef.current) {
-          ffmpeg.off('progress', progressHandlerRef.current);
-        }
-        // Ensure we don't accumulate multiple 'progress' listeners across joins
-        (ffmpeg as any).removeAllListeners?.('progress');
-
-        const onProgress = ({
-          progress: currentProgress,
-        }: {
-          progress: number;
-        }) => {
-          setProgress(Math.min(0.5 + currentProgress * 0.5, 0.99));
-        };
-        progressHandlerRef.current = onProgress;
-        ffmpeg.on('progress', onProgress);
-
-        await trimSegmentsToWav({
-          ffmpeg,
-          segments,
-          tempFiles,
-          cancelRequestedRef,
-          setProgress,
-        });
-
-        const concatListName = await concatSegments(ffmpeg, segments);
-        tempFiles.push(concatListName, 'joined.wav', `output.${outputFormat}`);
-
-        const outputBlob = await encodeOutput(ffmpeg, outputFormat);
-        setProgress(1);
-
-        return outputBlob;
-      } catch (err) {
-        if (cancelRequestedRef.current) {
-          throw new Error(CANCELLED_ERROR);
-        }
-
-        const message = err instanceof Error ? err.message : 'Join failed';
-        setError(message);
-        throw err;
-      } finally {
-        await cleanupTempFiles(ffmpeg, tempFiles);
-        setIsProcessing(false);
-      }
-    },
-    [ensureLoaded],
-  );
+      const message = err instanceof Error ? err.message : 'Join failed';
+      setError(message);
+      throw err;
+    } finally {
+      await cleanupTempFiles(ffmpeg, tempFiles);
+      setIsProcessing(false);
+    }
+  };
 
   return {
     ensureLoaded,

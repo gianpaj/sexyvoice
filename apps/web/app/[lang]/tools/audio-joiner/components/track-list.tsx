@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import { TrackRow } from './track-row';
 
 interface TrackItem {
@@ -41,32 +39,27 @@ function usePlayheadPercents(
 ): (number | null)[] {
   const globalOffsets = useGlobalOffsets(tracks);
 
-  return useMemo(() => {
-    return tracks.map((track, index) => {
-      const trimmedDuration = track.endSec - track.startSec;
+  return tracks.map((track, index) => {
+    const trimmedDuration = track.endSec - track.startSec;
 
-      if (trimmedDuration <= 0 || track.durationSec <= 0) {
-        return null;
-      }
+    if (trimmedDuration <= 0 || track.durationSec <= 0) {
+      return null;
+    }
 
-      const trackGlobalStart = globalOffsets[index];
-      const trackGlobalEnd = trackGlobalStart + trimmedDuration;
+    const trackGlobalStart = globalOffsets[index];
+    const trackGlobalEnd = trackGlobalStart + trimmedDuration;
 
-      // Playhead is not yet in this track, or has already passed it.
-      if (
-        currentTimeSec < trackGlobalStart ||
-        currentTimeSec > trackGlobalEnd
-      ) {
-        return null;
-      }
+    // Playhead is not yet in this track, or has already passed it.
+    if (currentTimeSec < trackGlobalStart || currentTimeSec > trackGlobalEnd) {
+      return null;
+    }
 
-      // How far into the trimmed region is the playhead?
-      const localSec = track.startSec + (currentTimeSec - trackGlobalStart);
+    // How far into the trimmed region is the playhead?
+    const localSec = track.startSec + (currentTimeSec - trackGlobalStart);
 
-      // Express as a percentage of the full (untrimmed) waveform width.
-      return (localSec / track.durationSec) * 100;
-    });
-  }, [tracks, currentTimeSec, globalOffsets]);
+    // Express as a percentage of the full (untrimmed) waveform width.
+    return (localSec / track.durationSec) * 100;
+  });
 }
 
 /**
@@ -75,15 +68,13 @@ function usePlayheadPercents(
  * tracks.
  */
 function useGlobalOffsets(tracks: TrackItem[]): number[] {
-  return useMemo(() => {
-    const offsets: number[] = [];
-    let accumulated = 0;
-    for (const track of tracks) {
-      offsets.push(accumulated);
-      accumulated += Math.max(0, track.endSec - track.startSec);
-    }
-    return offsets;
-  }, [tracks]);
+  const offsets: number[] = [];
+  let accumulated = 0;
+  for (const track of tracks) {
+    offsets.push(accumulated);
+    accumulated += Math.max(0, track.endSec - track.startSec);
+  }
+  return offsets;
 }
 
 export function TrackList({

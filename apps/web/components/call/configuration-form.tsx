@@ -7,7 +7,7 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -86,8 +86,7 @@ export function ConfigurationForm({
     callLanguageCodes.map(({ value }) => value),
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: fine
-  const updateConfig = useCallback(async () => {
+  const updateConfig = async () => {
     // Don't update if we're currently reconnecting to prevent loops
     if (isReconnectingRef.current) {
       console.log('Skipping config update - reconnection in progress');
@@ -183,21 +182,10 @@ export function ConfigurationForm({
     } catch {
       toast(dict.configurationUpdateError);
     }
-  }, [
-    pgState.sessionConfig,
-    pgState.instructions,
-    pgState.sceneInstructions,
-    localParticipant,
-    toast,
-    agent?.identity,
-    connect,
-    disconnect,
-    helpers,
-    dict,
-  ]);
+  };
 
   // Function to debounce updates when user stops interacting
-  const handleDebouncedUpdate = useCallback(() => {
+  const handleDebouncedUpdate = () => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current); // Clear existing timeout
     }
@@ -206,7 +194,7 @@ export function ConfigurationForm({
     debounceTimeoutRef.current = setTimeout(() => {
       updateConfig();
     }, 500); // Adjust delay as needed
-  }, [updateConfig]);
+  };
 
   // Reset connection flag when disconnected
   useEffect(() => {
@@ -236,6 +224,7 @@ export function ConfigurationForm({
     if (form.formState.isValid) {
       handleDebouncedUpdate();
     }
+    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes handleDebouncedUpdate, keeping it referentially stable across renders.
   }, [form.formState.isValid, handleDebouncedUpdate]);
 
   // Debug: log the current form values whenever they change

@@ -4,7 +4,6 @@ import {
   type Dispatch,
   type SetStateAction,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -141,10 +140,7 @@ export function VoiceSelector({
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
   dict: (typeof messages)['generate'];
 }) {
-  const provider = useMemo(
-    () => getTtsProvider(selectedVoice?.model),
-    [selectedVoice?.model],
-  );
+  const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const voiceSelectorLabels =
@@ -170,14 +166,10 @@ export function VoiceSelector({
     }
   }, [selectedStyle]);
 
-  const voiceGroups = useMemo(
-    () =>
-      getVoiceGroups(publicVoices, {
-        featuredGroupLabel,
-        geminiGroupLabel,
-      }),
-    [featuredGroupLabel, geminiGroupLabel, publicVoices],
-  );
+  const voiceGroups = getVoiceGroups(publicVoices, {
+    featuredGroupLabel,
+    geminiGroupLabel,
+  });
 
   return (
     <Card>

@@ -7,7 +7,7 @@ import {
   SuggestionPluginKey,
   type SuggestionProps,
 } from '@tiptap/suggestion';
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 
 import type {
   SuggestionItem,
@@ -159,22 +159,22 @@ export const SuggestionMenu = ({
     },
   );
 
-  const internalSuggestionPropsRef = useRef({ char, ...internalSuggestionProps });
-  const normalizedPluginKey = useMemo(
-    () =>
-      pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey),
-    [pluginKey],
-  );
+  const internalSuggestionPropsRef = useRef({
+    char,
+    ...internalSuggestionProps,
+  });
+  const normalizedPluginKey =
+    pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey);
 
   useEffect(() => {
     internalSuggestionPropsRef.current = { char, ...internalSuggestionProps };
   });
 
-  const resetMenuState = useCallback(() => {
+  const resetMenuState = () => {
     dispatch({ type: 'reset' });
-  }, []);
+  };
 
-  const closePopup = useCallback(() => {
+  const closePopup = () => {
     if (editor && !editor.isDestroyed) {
       const triggerChar = char;
       const { selection } = editor.state;
@@ -198,7 +198,7 @@ export const SuggestionMenu = ({
     }
 
     resetMenuState();
-  }, [char, editor, normalizedPluginKey, resetMenuState]);
+  };
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {
@@ -309,18 +309,16 @@ export const SuggestionMenu = ({
         editor.unregisterPlugin(normalizedPluginKey);
       }
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes closePopup/resetMenuState/normalizedPluginKey, keeping them referentially stable across renders.
   }, [editor, pluginKey, normalizedPluginKey, closePopup, resetMenuState]);
 
-  const onSelect = useCallback(
-    (item: SuggestionItem) => {
-      closePopup();
+  const onSelect = (item: SuggestionItem) => {
+    closePopup();
 
-      if (internalCommand) {
-        internalCommand(item);
-      }
-    },
-    [closePopup, internalCommand],
-  );
+    if (internalCommand) {
+      internalCommand(item);
+    }
+  };
 
   const { selectedIndex } = useMenuNavigation({
     editor,

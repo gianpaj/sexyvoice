@@ -2,7 +2,7 @@
 
 import WavesurferPlayer from '@wavesurfer/react';
 import { ArrowDown, ArrowUp, GripVertical, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
 import { Button } from '@/components/ui/button';
@@ -66,52 +66,37 @@ export function TrackRow({
   // Track whether the pointer moved enough to be considered a drag vs a click.
   const didDragRef = useRef(false);
 
-  const startPct = useMemo(
-    () => (durationSec > 0 ? (startSec / durationSec) * 100 : 0),
-    [durationSec, startSec],
-  );
+  const startPct = durationSec > 0 ? (startSec / durationSec) * 100 : 0;
 
-  const endPct = useMemo(
-    () => (durationSec > 0 ? (endSec / durationSec) * 100 : 100),
-    [durationSec, endSec],
-  );
+  const endPct = durationSec > 0 ? (endSec / durationSec) * 100 : 100;
 
-  const handleWaveReady = useCallback(
-    (ws: WaveSurfer) => {
-      const nextDurationSec = ws.getDuration();
-      if (nextDurationSec > 0) {
-        onReady(nextDurationSec);
-      }
-    },
-    [onReady],
-  );
+  const handleWaveReady = (ws: WaveSurfer) => {
+    const nextDurationSec = ws.getDuration();
+    if (nextDurationSec > 0) {
+      onReady(nextDurationSec);
+    }
+  };
 
-  const updateTrimFromPointer = useCallback(
-    (clientX: number) => {
-      const root = containerRef.current;
-      if (!root || durationSec <= 0) {
-        return;
-      }
+  const updateTrimFromPointer = (clientX: number) => {
+    const root = containerRef.current;
+    if (!root || durationSec <= 0) {
+      return;
+    }
 
-      const rect = root.getBoundingClientRect();
-      const ratio = Math.max(
-        0,
-        Math.min(1, (clientX - rect.left) / rect.width),
-      );
-      const positionSec = ratio * durationSec;
+    const rect = root.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const positionSec = ratio * durationSec;
 
-      if (dragTypeRef.current === 'start') {
-        const nextStartSec = Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC);
-        onTrimChange(Math.max(0, nextStartSec), endSec);
-      }
+    if (dragTypeRef.current === 'start') {
+      const nextStartSec = Math.min(positionSec, endSec - MIN_TRIM_GAP_SEC);
+      onTrimChange(Math.max(0, nextStartSec), endSec);
+    }
 
-      if (dragTypeRef.current === 'end') {
-        const nextEndSec = Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC);
-        onTrimChange(startSec, Math.min(durationSec, nextEndSec));
-      }
-    },
-    [durationSec, startSec, endSec, onTrimChange],
-  );
+    if (dragTypeRef.current === 'end') {
+      const nextEndSec = Math.max(positionSec, startSec + MIN_TRIM_GAP_SEC);
+      onTrimChange(startSec, Math.min(durationSec, nextEndSec));
+    }
+  };
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -132,84 +117,76 @@ export function TrackRow({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes updateTrimFromPointer, keeping it referentially stable across renders.
   }, [disabled, updateTrimFromPointer]);
 
-  const handleStartPointerDown = useCallback(
-    (event: React.PointerEvent) => {
-      if (disabled) {
-        return;
-      }
+  const handleStartPointerDown = (event: React.PointerEvent) => {
+    if (disabled) {
+      return;
+    }
 
-      // Prevent the button from gaining focus so Space always triggers
-      // the global play/pause handler instead of the button's click event.
-      event.preventDefault();
-      // Stop propagation so the event doesn't bubble to the waveform container
-      // and reset didDragRef to false via handleWaveformPointerDown.
-      event.stopPropagation();
-      dragTypeRef.current = 'start';
-      didDragRef.current = true; // treat handle interaction as a drag
-      updateTrimFromPointer(event.clientX);
-    },
-    [disabled, updateTrimFromPointer],
-  );
+    // Prevent the button from gaining focus so Space always triggers
+    // the global play/pause handler instead of the button's click event.
+    event.preventDefault();
+    // Stop propagation so the event doesn't bubble to the waveform container
+    // and reset didDragRef to false via handleWaveformPointerDown.
+    event.stopPropagation();
+    dragTypeRef.current = 'start';
+    didDragRef.current = true; // treat handle interaction as a drag
+    updateTrimFromPointer(event.clientX);
+  };
 
-  const handleEndPointerDown = useCallback(
-    (event: React.PointerEvent) => {
-      if (disabled) {
-        return;
-      }
+  const handleEndPointerDown = (event: React.PointerEvent) => {
+    if (disabled) {
+      return;
+    }
 
-      // Prevent the button from gaining focus so Space always triggers
-      // the global play/pause handler instead of the button's click event.
-      event.preventDefault();
-      // Stop propagation so the event doesn't bubble to the waveform container
-      // and reset didDragRef to false via handleWaveformPointerDown.
-      event.stopPropagation();
-      dragTypeRef.current = 'end';
-      didDragRef.current = true; // treat handle interaction as a drag
-      updateTrimFromPointer(event.clientX);
-    },
-    [disabled, updateTrimFromPointer],
-  );
+    // Prevent the button from gaining focus so Space always triggers
+    // the global play/pause handler instead of the button's click event.
+    event.preventDefault();
+    // Stop propagation so the event doesn't bubble to the waveform container
+    // and reset didDragRef to false via handleWaveformPointerDown.
+    event.stopPropagation();
+    dragTypeRef.current = 'end';
+    didDragRef.current = true; // treat handle interaction as a drag
+    updateTrimFromPointer(event.clientX);
+  };
 
   // Waveform body click → seek. Only fires when no trim handle drag occurred.
-  const handleWaveformPointerDown = useCallback(() => {
+  const handleWaveformPointerDown = () => {
     didDragRef.current = false;
-  }, []);
+  };
 
-  const handleWaveformClick = useCallback(
-    (event: React.MouseEvent) => {
-      if (disabled || didDragRef.current || !onSeek || durationSec <= 0) {
-        return;
-      }
+  const handleWaveformClick = (event: React.MouseEvent) => {
+    if (disabled || didDragRef.current || !onSeek || durationSec <= 0) {
+      return;
+    }
 
-      // Ignore keyboard-triggered clicks (Space/Enter on a focused child) which
-      // report clientX/clientY as 0 and would incorrectly seek to the start.
-      if (event.detail === 0) {
-        return;
-      }
+    // Ignore keyboard-triggered clicks (Space/Enter on a focused child) which
+    // report clientX/clientY as 0 and would incorrectly seek to the start.
+    if (event.detail === 0) {
+      return;
+    }
 
-      const root = containerRef.current;
-      if (!root) {
-        return;
-      }
+    const root = containerRef.current;
+    if (!root) {
+      return;
+    }
 
-      const rect = root.getBoundingClientRect();
-      const ratio = Math.max(
-        0,
-        Math.min(1, (event.clientX - rect.left) / rect.width),
-      );
-      const localSec = ratio * durationSec;
+    const rect = root.getBoundingClientRect();
+    const ratio = Math.max(
+      0,
+      Math.min(1, (event.clientX - rect.left) / rect.width),
+    );
+    const localSec = ratio * durationSec;
 
-      // Clamp to the trimmed region so seek stays within active audio.
-      const clampedLocalSec = Math.max(startSec, Math.min(endSec, localSec));
+    // Clamp to the trimmed region so seek stays within active audio.
+    const clampedLocalSec = Math.max(startSec, Math.min(endSec, localSec));
 
-      // Convert to global timeline position.
-      const globalTimeSec = globalOffsetSec + (clampedLocalSec - startSec);
-      onSeek(globalTimeSec);
-    },
-    [disabled, onSeek, durationSec, startSec, endSec, globalOffsetSec],
-  );
+    // Convert to global timeline position.
+    const globalTimeSec = globalOffsetSec + (clampedLocalSec - startSec);
+    onSeek(globalTimeSec);
+  };
 
   return (
     <div className="rounded-xl border border-border/60 bg-card/70 p-4">

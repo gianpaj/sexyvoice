@@ -1,8 +1,6 @@
-import { memo } from 'react';
-
 type SvgProps = React.ComponentPropsWithoutRef<'svg'>;
 
-export const GripVerticalIcon = memo(({ className, ...props }: SvgProps) => {
+export const GripVerticalIcon = ({ className, ...props }: SvgProps) => {
   return (
     <svg
       className={className}
@@ -39,6 +37,6 @@ export const GripVerticalIcon = memo(({ className, ...props }: SvgProps) => {
       />
     </svg>
   );
-});
+};
 
 GripVerticalIcon.displayName = 'GripVerticalIcon';

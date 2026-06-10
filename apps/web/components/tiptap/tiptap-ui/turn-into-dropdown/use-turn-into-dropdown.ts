@@ -2,7 +2,7 @@
 
 import { NodeSelection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // --- Hooks ---
 import { useTiptapEditor } from '@/hooks/tiptap/use-tiptap-editor';
@@ -188,14 +188,11 @@ export function useTurnIntoDropdown(config?: UseTurnIntoDropdownConfig) {
   const canToggle = canTurnInto(editor, blockTypes);
   const activeBlockType = getActiveBlockType(editor, blockTypes);
 
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!(editor && canToggle)) return;
-      setIsOpen(open);
-      onOpenChange?.(open);
-    },
-    [canToggle, editor, onOpenChange],
-  );
+  const handleOpenChange = (open: boolean) => {
+    if (!(editor && canToggle)) return;
+    setIsOpen(open);
+    onOpenChange?.(open);
+  };
 
   useEffect(() => {
     if (!editor) return;

@@ -6,7 +6,6 @@ import {
   type ReactNode,
   useContext,
   useEffect,
-  useMemo,
   useReducer,
 } from 'react';
 
@@ -265,23 +264,17 @@ export const PlaygroundStateProvider = ({
   initialState,
 }: PlaygroundStateProviderProps) => {
   const mergedDefaultPresets = defaultPresetsProp ?? [];
-  const helpers = useMemo(
-    () => createPlaygroundStateHelpers(mergedDefaultPresets),
-    [mergedDefaultPresets],
-  );
-  const mergedInitialState: PlaygroundState = useMemo(
-    () => ({
-      ...defaultPlaygroundState,
-      defaultPresets: mergedDefaultPresets,
-      customCharacters: initialCustomCharacters,
-      ...initialState,
-      sessionConfig: {
-        ...defaultPlaygroundState.sessionConfig,
-        ...(initialState?.sessionConfig ?? {}),
-      },
-    }),
-    [initialState, mergedDefaultPresets, initialCustomCharacters],
-  );
+  const helpers = createPlaygroundStateHelpers(mergedDefaultPresets);
+  const mergedInitialState: PlaygroundState = {
+    ...defaultPlaygroundState,
+    defaultPresets: mergedDefaultPresets,
+    customCharacters: initialCustomCharacters,
+    ...initialState,
+    sessionConfig: {
+      ...defaultPlaygroundState.sessionConfig,
+      ...(initialState?.sessionConfig ?? {}),
+    },
+  };
 
   const [state, dispatch] = useReducer(
     playgroundStateReducer,

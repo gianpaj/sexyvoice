@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   buildSplitGeneratedByTextKey,
@@ -16,13 +16,13 @@ import {
 function useStableSegmentIds() {
   const idMapRef = useRef<Map<string, string>>(new Map());
 
-  return useCallback((segmentText: string): string => {
+  return (segmentText: string): string => {
     const existing = idMapRef.current.get(segmentText);
     if (existing) return existing;
     const id = crypto.randomUUID();
     idMapRef.current.set(segmentText, id);
     return id;
-  }, []);
+  };
 }
 
 interface UseSplitSegmentsParams {

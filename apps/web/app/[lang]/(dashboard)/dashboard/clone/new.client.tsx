@@ -9,7 +9,7 @@ import {
   UploadIcon,
   XIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneMain } from '@/components/audio/microphone-main';
@@ -294,24 +294,17 @@ function NewVoiceClientInner({
     text,
   } = cloneState;
 
-  const usesVoxtral = useMemo(
-    () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
-    [selectedLocale.code],
-  );
+  const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code);
 
-  const audioDurationGuidance = useMemo(
-    () =>
-      usesVoxtral
-        ? {
-            min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
-            max: null,
-          }
-        : {
-            min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
-            max: null,
-          },
-    [usesVoxtral],
-  );
+  const audioDurationGuidance = usesVoxtral
+    ? {
+        min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
+        max: null,
+      }
+    : {
+        min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
+        max: null,
+      };
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
@@ -392,7 +385,7 @@ function NewVoiceClientInner({
 
   // FFmpeg for audio conversion
 
-  const supportedLocales = useMemo(() => {
+  const supportedLocales = (() => {
     const codes = Object.keys(SUPPORTED_LOCALE_CODES);
     const translated = getTranslatedLanguages(lang, codes);
     const merged = translated.map(({ value: code, label }) => ({
@@ -403,7 +396,7 @@ function NewVoiceClientInner({
     const current = merged.find((l) => l.code === lang);
     const rest = merged.filter((l) => l.code !== lang);
     return current ? [current, ...rest] : merged;
-  }, [lang]);
+  })();
 
   const onFilesAdded = () => {
     dispatch({
@@ -464,7 +457,7 @@ function NewVoiceClientInner({
   const abortController = useRef<AbortController | null>(null);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = async () => {
     if (!(file || micBlob)) {
       dispatch({
         type: 'patch',
@@ -642,17 +635,7 @@ function NewVoiceClientInner({
         },
       });
     }
-  }, [
-    clearErrors,
-    convertWithFFmpeg,
-    dict,
-    ensureLoaded,
-    file,
-    micBlob,
-    referenceAudioEnhancementEnabled,
-    selectedLocale,
-    text,
-  ]);
+  };
 
   const handleCancel = () => {
     abortController.current?.abort();
@@ -687,6 +670,7 @@ function NewVoiceClientInner({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes handleGenerate, keeping it referentially stable across renders.
   }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
 
   const downloadAudio = async () => {

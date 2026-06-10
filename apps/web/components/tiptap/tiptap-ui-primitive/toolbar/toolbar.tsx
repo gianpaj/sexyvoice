@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 
 import { Separator } from '@/components/tiptap/tiptap-ui-primitive/separator';
 import { useComposedRef } from '@/hooks/tiptap/use-composed-ref';
@@ -16,14 +16,14 @@ const useToolbarNavigation = (
 ) => {
   const [items, setItems] = useState<HTMLElement[]>([]);
 
-  const collectItems = useCallback(() => {
+  const collectItems = () => {
     if (!toolbarRef.current) return [];
     return Array.from(
       toolbarRef.current.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [role="button"]:not([disabled]), [tabindex="0"]:not([disabled])',
       ),
     );
-  }, [toolbarRef]);
+  };
 
   useEffect(() => {
     const toolbar = toolbarRef.current;
@@ -36,6 +36,7 @@ const useToolbarNavigation = (
     observer.observe(toolbar, { childList: true, subtree: true });
 
     return () => observer.disconnect();
+    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes collectItems, keeping it referentially stable across renders.
   }, [collectItems, toolbarRef]);
 
   const { selectedIndex } = useMenuNavigation<HTMLElement>({

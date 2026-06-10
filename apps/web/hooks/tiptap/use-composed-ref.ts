@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 
 // basically Exclude<React.ClassAttributes<T>["ref"], string>
 type UserRef<T> =
@@ -23,22 +23,19 @@ export const useComposedRef = <T extends HTMLElement>(
 ) => {
   const prevUserRef = useRef<UserRef<T>>(null);
 
-  return useCallback(
-    (instance: T | null) => {
-      libRef.current = instance;
+  return (instance: T | null) => {
+    libRef.current = instance;
 
-      if (prevUserRef.current) {
-        updateRef(prevUserRef.current, null);
-      }
+    if (prevUserRef.current) {
+      updateRef(prevUserRef.current, null);
+    }
 
-      prevUserRef.current = userRef;
+    prevUserRef.current = userRef;
 
-      if (userRef) {
-        updateRef(userRef, instance);
-      }
-    },
-    [libRef, userRef],
-  );
+    if (userRef) {
+      updateRef(userRef, instance);
+    }
+  };
 };
 
 export default useComposedRef;
