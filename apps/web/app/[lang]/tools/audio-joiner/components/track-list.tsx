@@ -37,7 +37,7 @@ function usePlayheadPercents(
   tracks: TrackItem[],
   currentTimeSec: number,
 ): (number | null)[] {
-  const globalOffsets = useGlobalOffsets(tracks);
+  const globalOffsets = computeGlobalOffsets(tracks);
 
   return tracks.map((track, index) => {
     const trimmedDuration = track.endSec - track.startSec;
@@ -67,14 +67,14 @@ function usePlayheadPercents(
  * trimmed region begins — i.e. the sum of trimmed durations of all preceding
  * tracks.
  */
-function useGlobalOffsets(tracks: TrackItem[]): number[] {
-  const offsets: number[] = [];
-  let accumulated = 0;
-  for (const track of tracks) {
-    offsets.push(accumulated);
-    accumulated += Math.max(0, track.endSec - track.startSec);
-  }
-  return offsets;
+function computeGlobalOffsets(tracks: TrackItem[]): number[] {
+  return tracks.reduce<{ offsets: number[]; sum: number }>(
+    (acc, track) => ({
+      offsets: [...acc.offsets, acc.sum],
+      sum: acc.sum + Math.max(0, track.endSec - track.startSec),
+    }),
+    { offsets: [], sum: 0 },
+  ).offsets;
 }
 
 export function TrackList({
@@ -89,7 +89,7 @@ export function TrackList({
   onSeek,
 }: TrackListProps) {
   const playheadPercents = usePlayheadPercents(tracks, currentTimeSec);
-  const globalOffsets = useGlobalOffsets(tracks);
+  const globalOffsets = computeGlobalOffsets(tracks);
 
   return (
     <div className="space-y-4">
