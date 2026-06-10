@@ -155,11 +155,17 @@ export function BillingUsageChart() {
   }
   const queryString = queryParams.toString();
 
+  const hasDateRange = !!(endingBefore && startingOn);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['billing-usage', queryString],
     queryFn: () => fetchBillingUsage(queryString),
-    enabled: !!(endingBefore && startingOn),
+    enabled: hasDateRange,
   });
+
+  // Until the default date range is resolved the query is disabled, so treat
+  // that window as loading instead of showing a misleading empty state.
+  const isPendingData = isLoading || !hasDateRange;
 
   const updateParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -262,7 +268,7 @@ export function BillingUsageChart() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isPendingData ? (
         <div className="space-y-2">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-8 w-full" />
@@ -274,13 +280,14 @@ export function BillingUsageChart() {
         <p className="text-destructive text-sm">Failed to load usage chart.</p>
       ) : null}
 
-      {!(isLoading || error) && bucketTotals.every((b) => b.requests === 0) ? (
+      {!(isPendingData || error) &&
+      bucketTotals.every((b) => b.requests === 0) ? (
         <p className="text-muted-foreground text-sm">
           No usage in selected period.
         </p>
       ) : null}
 
-      {isLoading || error ? null : (
+      {isPendingData || error ? null : (
         <ChartContainer className="h-[320px] w-full" config={chartConfig}>
           <BillingComposedChart accessibilityLayer data={bucketTotals}>
             <BillingCartesianGrid vertical={false} />
