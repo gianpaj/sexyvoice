@@ -24,7 +24,7 @@ export function getSupabaseBrowserClient() {
 }
 
 function useSupabaseBrowser() {
-  return useMemo(getSupabaseBrowserClient, []);
+  return useMemo(() => getSupabaseBrowserClient(), []);
 }
 
 export default useSupabaseBrowser;

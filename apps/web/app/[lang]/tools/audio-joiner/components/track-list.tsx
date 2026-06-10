@@ -39,20 +39,18 @@ function usePlayheadPercents(
   tracks: TrackItem[],
   currentTimeSec: number,
 ): (number | null)[] {
-  return useMemo(() => {
-    let globalOffset = 0;
+  const globalOffsets = useGlobalOffsets(tracks);
 
-    return tracks.map((track) => {
+  return useMemo(() => {
+    return tracks.map((track, index) => {
       const trimmedDuration = track.endSec - track.startSec;
 
       if (trimmedDuration <= 0 || track.durationSec <= 0) {
-        globalOffset += Math.max(0, trimmedDuration);
         return null;
       }
 
-      const trackGlobalStart = globalOffset;
-      const trackGlobalEnd = globalOffset + trimmedDuration;
-      globalOffset = trackGlobalEnd;
+      const trackGlobalStart = globalOffsets[index];
+      const trackGlobalEnd = trackGlobalStart + trimmedDuration;
 
       // Playhead is not yet in this track, or has already passed it.
       if (
@@ -68,7 +66,7 @@ function usePlayheadPercents(
       // Express as a percentage of the full (untrimmed) waveform width.
       return (localSec / track.durationSec) * 100;
     });
-  }, [tracks, currentTimeSec]);
+  }, [tracks, currentTimeSec, globalOffsets]);
 }
 
 /**

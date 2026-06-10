@@ -25,13 +25,14 @@ const defaultOptions: ThrottleSettings = {
 export function useThrottledCallback<T extends (...args: any[]) => any>(
   fn: T,
   wait = 250,
-  dependencies: React.DependencyList = [],
+  dependencies: React.DependencyList = [fn, wait],
   options: ThrottleSettings = defaultOptions,
 ): {
   (this: ThisParameterType<T>, ...args: Parameters<T>): ReturnType<T>;
   cancel: () => void;
   flush: () => void;
 } {
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const handler = useMemo(
     () => throttle<T>(fn, wait, options),
     // eslint-disable-next-line react-hooks/exhaustive-deps
