@@ -9,7 +9,7 @@ import {
   UploadIcon,
   XIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useEffectEvent, useReducer, useRef } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneMain } from '@/components/audio/microphone-main';
@@ -642,36 +642,35 @@ function NewVoiceClientInner({
     dispatch({ type: 'patch', patch: { status: 'idle' } });
   }, []);
 
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+
+      if (
+        status !== 'generating' &&
+        text.trim() &&
+        hasEnoughCredits &&
+        legalConsentChecked
+      ) {
+        handleGenerate().catch((error) => {
+          console.error('Keyboard shortcut clone generation failed:', error);
+        });
+      }
+    }
+  });
+
   // Keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        event.preventDefault();
-
-        // Only trigger if form can be submitted
-        if (
-          status !== 'generating' &&
-          text.trim() &&
-          hasEnoughCredits &&
-          legalConsentChecked
-        ) {
-          handleGenerate().catch((error) => {
-            console.error('Keyboard shortcut clone generation failed:', error);
-          });
-        }
-      }
+      onKeyDown(event);
     };
 
-    // Add event listener to document
     document.addEventListener('keydown', handleKeyDown);
 
-    // Cleanup
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes handleGenerate, keeping it referentially stable across renders.
-  }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
+  }, []);
 
   const downloadAudio = async () => {
     if (!generatedAudioUrl) return;

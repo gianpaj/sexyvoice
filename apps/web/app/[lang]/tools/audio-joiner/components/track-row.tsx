@@ -2,7 +2,7 @@
 
 import WavesurferPlayer from '@wavesurfer/react';
 import { ArrowDown, ArrowUp, GripVertical, Trash2 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
 import { Button } from '@/components/ui/button';
@@ -98,12 +98,14 @@ export function TrackRow({
     }
   };
 
+  const onPointerMove = useEffectEvent((clientX: number) => {
+    if (!dragTypeRef.current || disabled) return;
+    updateTrimFromPointer(clientX);
+  });
+
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
-      if (!dragTypeRef.current || disabled) {
-        return;
-      }
-      updateTrimFromPointer(event.clientX);
+      onPointerMove(event.clientX);
     };
 
     const handlePointerUp = () => {
@@ -117,8 +119,7 @@ export function TrackRow({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes updateTrimFromPointer, keeping it referentially stable across renders.
-  }, [disabled, updateTrimFromPointer]);
+  }, []);
 
   const handleStartPointerDown = (event: React.PointerEvent) => {
     if (disabled) {

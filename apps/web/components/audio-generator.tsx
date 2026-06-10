@@ -8,6 +8,7 @@ import {
   forwardRef,
   type ReactNode,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from 'react';
@@ -477,23 +478,27 @@ export function AudioGenerator({
     }
   };
 
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+
+      if (
+        !isGenerating &&
+        text.trim() &&
+        selectedVoice &&
+        hasEnoughCredits &&
+        !textIsOverLimit
+      ) {
+        handleGenerate().catch((error) => {
+          console.error('Keyboard shortcut generation failed:', error);
+        });
+      }
+    }
+  });
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        event.preventDefault();
-
-        if (
-          !isGenerating &&
-          text.trim() &&
-          selectedVoice &&
-          hasEnoughCredits &&
-          !textIsOverLimit
-        ) {
-          handleGenerate().catch((error) => {
-            console.error('Keyboard shortcut generation failed:', error);
-          });
-        }
-      }
+      onKeyDown(event);
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -501,15 +506,7 @@ export function AudioGenerator({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes handleGenerate, keeping it referentially stable across renders.
-    handleGenerate,
-    hasEnoughCredits,
-    isGenerating,
-    selectedVoice,
-    text,
-    textIsOverLimit,
-  ]);
+  }, []);
 
   const resetPlayer = () => {
     if (playerControls) {
