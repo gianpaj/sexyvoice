@@ -19,11 +19,13 @@ export default async function HistoryPage(props: {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: audioFiles } = await getMyAudioFilesQuery(supabase, user.id);
-  const { count: apiKeysCount } = await supabase
-    .from('api_keys')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+  const [{ data: audioFiles }, { count: apiKeysCount }] = await Promise.all([
+    getMyAudioFilesQuery(supabase, user.id),
+    supabase
+      .from('api_keys')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+  ]);
 
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
 

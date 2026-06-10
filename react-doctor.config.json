@@ -1,0 +1,7 @@
+{
+  "ignore": {
+    "files": [
+      "apps/web/components/ui/*"
+    ]
+  }
+}
