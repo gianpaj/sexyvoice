@@ -1612,6 +1612,33 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Error Handling', () => {
+    it('returns a typed 400 without Sentry capture for direct WebM uploads', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const convertToWavModule = await import('@/lib/audio-converter');
+      const convertSpy = vi.spyOn(convertToWavModule, 'convertToWav');
+      const webmFile = new File(['webm'], 'microphone-recording.webm', {
+        type: 'video/webm',
+      });
+
+      const formData = createFormDataWithAudio('Hello world', webmFile, 'en');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.code).toBe('errors.audioConversionRequiredWebm');
+      expect(json.serverMessage).toBe(
+        'WebM audio must be converted to WAV on the client before uploading. Please try recording again.',
+      );
+      expect(convertSpy).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should return 400 without logging to Sentry when audio decoding fails for non-English', async () => {
       const { captureException } = await import('@sentry/nextjs');
       // Mock convertToWav to throw an error for multilingual
