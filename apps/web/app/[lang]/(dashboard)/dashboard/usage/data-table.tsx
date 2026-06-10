@@ -119,6 +119,7 @@ export function DataTable({ dict }: DataTableProps) {
   // Memoize columns
   const columns = useMemo(() => createColumns(dict), [dict]);
 
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable({
     data: data?.data ?? [],
     columns,

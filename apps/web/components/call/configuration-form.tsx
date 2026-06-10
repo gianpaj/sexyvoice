@@ -73,6 +73,7 @@ export function ConfigurationForm({
     defaultValues: { ...defaultSessionConfig },
     mode: 'onChange',
   });
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const formValues = form.watch();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to track timeout
   const hasConnectedOnceRef = useRef(false); // Track if we've connected once
