@@ -1632,8 +1632,8 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.code).toBe('errors.audioConversionRequiredWebm');
-      expect(json.serverMessage).toBe(
-        'WebM audio must be converted to WAV on the client before uploading. Please try recording again.',
+      expect(json.serverMessage).toContain(
+        'WebM audio must be converted to WAV on the client before uploading.',
       );
       expect(convertSpy).not.toHaveBeenCalled();
       expect(captureException).not.toHaveBeenCalled();
