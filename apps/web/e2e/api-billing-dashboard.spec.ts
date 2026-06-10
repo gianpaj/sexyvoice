@@ -46,7 +46,7 @@ test.describe('API Billing Dashboard - Authenticated User', () => {
   });
 
   test.afterEach(async ({ page }) => {
-    await page.unroute('**/*');
+    await page.unroute('**/api/billing/usage**');
   });
 
   test('should display the billing dashboard and filters', async ({ page }) => {
