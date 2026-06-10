@@ -258,6 +258,13 @@ export async function GET(request: Request) {
       return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
     }
 
+    // Short-circuit a replayed/refreshed callback: the HMAC-signed marker cookie
+    // (60s TTL) proves we already exchanged the one-time `code` successfully, while
+    // the missing code-verifier cookie confirms the PKCE flow is no longer active.
+    // Invariant: the Supabase auth-token cookie written by that first exchange is
+    // still present, so downstream middleware reuses the existing session. If that
+    // cookie was somehow cleared while the marker survived, the dashboard simply
+    // redirects back to login — safe either way.
     if (
       oauthCookieContext.hasValidOauthCallbackMarkerCookie &&
       !oauthCookieContext.hasSupabaseCodeVerifierCookie
