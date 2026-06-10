@@ -2,7 +2,7 @@
 
 // import { VoiceSelector } from '@/components/call/voice-selector-call';
 // import { VoiceSelectorForm } from '@/components/call/voice-selector-form';
-import type { ConfigurationFormFieldProps } from './configuration-form';
+import type { ConfigurationFormFieldProps } from './configuration-form.schema';
 // import { TemperatureSelector } from "./temperature-selector";
 // import { MaxOutputTokensSelector } from "./max-output-tokens-selector";
 // import { ModelSelector } from "./model-selector";

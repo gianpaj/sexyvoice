@@ -8,7 +8,6 @@ import {
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { useEffect, useRef } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -16,7 +15,7 @@ import { z } from 'zod';
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
+
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
@@ -35,23 +34,15 @@ import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
 import { SceneSelector } from './scene-selector';
+import {
+  ConfigurationFormSchema,
+  type ConfigurationFormFieldProps,
+} from './configuration-form.schema';
 
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
 const RECONNECT_REQUIRED_FIELDS = ['voice'];
-
-export const ConfigurationFormSchema = z.object({
-  model: z.enum(Object.values(ModelId)),
-  voice: z.string().min(1),
-  temperature: z.number().min(0).max(1.2),
-  maxOutputTokens: z.number().nullable(),
-});
-
-export interface ConfigurationFormFieldProps {
-  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
-  schema?: typeof ConfigurationFormSchema;
-}
 
 interface ConfigurationFormProps {
   callVoices?: DBVoice[];

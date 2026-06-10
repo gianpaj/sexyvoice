@@ -18,7 +18,7 @@ import { useConnection } from '@/hooks/use-connection';
 import {
   type ConfigurationFormFieldProps,
   ConfigurationFormSchema,
-} from './configuration-form';
+} from './configuration-form.schema';
 import { VoicePlayButton } from './voice-play-button';
 
 // import { VoicesShowcase } from './voices-showcase';
