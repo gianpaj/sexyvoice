@@ -45,6 +45,10 @@ import {
   CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import {
+  createMicrophoneReferenceAudioFile,
+  isWebmAudioBlob,
+} from '@/lib/clone/microphone-reference-audio';
 import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
@@ -414,42 +418,38 @@ function NewVoiceClientInner({
     try {
       abortController.current = new AbortController();
 
-      // Use micBlob if available, otherwise use file
       let audioToProcess = file;
       if (micBlob && !file) {
-        // Convert WebM to WAV for non-English locales
-        // Check locale at GENERATION time, not recording time
-        if (micBlob.type.includes('webm') && selectedLocale.code !== 'en') {
+        const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+
+        if (shouldConvertMicAudio) {
           setConvertingMicAudio(true);
-          try {
-            const wavBlob = await convertWithFFmpeg(micBlob, 'wav');
-            audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
-              type: wavBlob.type,
-            });
-          } catch (convertError) {
-            console.error('WebM to WAV conversion error:', convertError);
-            // TODO send logs to Sentry
-            setErrorMessage(
-              convertError instanceof Error
-                ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
-                    ERROR: convertError.message,
-                  })
-                : dict.audioConversionFailed,
-            );
-            setStatus('error');
-            setConvertingMicAudio(false);
-            return;
-          } finally {
+        }
+
+        try {
+          if (shouldConvertMicAudio) {
+            await ensureLoaded();
+          }
+
+          audioToProcess = await createMicrophoneReferenceAudioFile(
+            micBlob,
+            convertWithFFmpeg,
+          );
+        } catch (convertError) {
+          console.error('WebM to WAV conversion error:', convertError);
+          setErrorMessage(
+            convertError instanceof Error
+              ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
+                  ERROR: convertError.message,
+                })
+              : dict.audioConversionFailed,
+          );
+          setStatus('error');
+          return;
+        } finally {
+          if (shouldConvertMicAudio) {
             setConvertingMicAudio(false);
           }
-        } else {
-          // For English or non-WebM formats, use blob directly
-          const mimeType = micBlob.type || 'audio/wav';
-          const isWebM = mimeType.includes('webm');
-          const filename = isWebM
-            ? 'microphone-recording.webm'
-            : 'microphone-recording.wav';
-          audioToProcess = new File([micBlob], filename, { type: mimeType });
         }
       }
 
@@ -532,6 +532,7 @@ function NewVoiceClientInner({
     clearErrors,
     convertWithFFmpeg,
     dict,
+    ensureLoaded,
     file,
     getCloneErrorMessage,
     micBlob,

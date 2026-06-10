@@ -8,6 +8,7 @@ import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import {
   createOauthCallbackMarkerValue,
   OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+  verifyOauthCallbackMarkerValue,
 } from '@/lib/supabase/oauth-callback-marker';
 import { createClient } from '@/lib/supabase/server';
 import { routing } from '@/src/i18n/routing';
@@ -64,6 +65,20 @@ const getErrorMessage = (error: unknown) => {
 
   return String(error);
 };
+
+const parseCookieHeader = (cookieHeader: string) =>
+  cookieHeader
+    .split(';')
+    .map((cookie) => {
+      const [rawName, ...rawValueParts] = cookie.split('=');
+      const name = rawName?.trim();
+      const value = rawValueParts.join('=').trim();
+
+      return name ? { name, value } : null;
+    })
+    .filter((cookie): cookie is { name: string; value: string } =>
+      Boolean(cookie),
+    );
 
 const isPkceCodeVerifierMissingError = (error: unknown) => {
   const errorName = getErrorStringProperty(error, 'name');
@@ -131,14 +146,15 @@ function getKnownOauthCallbackFailure(error: unknown): {
 
 const getOauthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
-  const cookieNames = cookieHeader
-    .split(';')
-    .map((cookie) => cookie.split('=')[0]?.trim())
-    .filter((name): name is string => Boolean(name));
+  const cookies = parseCookieHeader(cookieHeader);
+  const cookieNames = cookies.map(({ name }) => name);
   const supabaseCookieNames = cookieNames.filter((name) => {
     const lowerName = name.toLowerCase();
     return lowerName.startsWith('sb-') || lowerName.includes('supabase');
   });
+  const oauthCallbackMarkerCookie = cookies.find(
+    ({ name }) => name === OAUTH_CALLBACK_COOKIE_NAME,
+  );
 
   return {
     hasCookieHeader: Boolean(cookieHeader),
@@ -153,7 +169,24 @@ const getOauthCallbackCookieContext = (request: Request) => {
     hasOauthCallbackMarkerCookie: cookieNames.includes(
       OAUTH_CALLBACK_COOKIE_NAME,
     ),
+    hasValidOauthCallbackMarkerCookie: verifyOauthCallbackMarkerValue(
+      oauthCallbackMarkerCookie?.value,
+    ),
   };
+};
+
+const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
+  response.cookies.set({
+    name: OAUTH_CALLBACK_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+
+  return response;
 };
 
 const createOauthRedirectResponse = (url: string) => {
@@ -175,6 +208,9 @@ const createOauthRedirectResponse = (url: string) => {
   return response;
 };
 
+const createOauthFailureRedirectResponse = (url: string) =>
+  clearOauthCallbackMarkerCookie(NextResponse.redirect(url));
+
 export async function GET(request: Request) {
   // The `/auth/callback` route is required for the server-side auth flow implemented
   // by the SSR package. It exchanges an auth code for the user's session.
@@ -187,32 +223,48 @@ export async function GET(request: Request) {
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
   const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const createSafePostAuthRedirectResponse = () =>
+    createOauthRedirectResponse(
+      isSafeRedirectPath(redirectTo)
+        ? `${origin}${redirectTo}`
+        : `${origin}/${routing.defaultLocale}/dashboard`,
+    );
   const reportKnownOauthCallbackFailure = (
     message: string,
     errorType: string,
     error: unknown,
   ) => {
-    console.warn(message, {
-      area: 'auth',
-      errorType,
-      flow: 'oauth-callback',
-      extra: {
-        redirectTo,
-        locale,
-        ...oauthCodeContext,
-        ...oauthCookieContext,
-        errorCode: getErrorStringProperty(error, 'code') || null,
-        errorMessage: getErrorMessage(error),
-        errorName: getErrorStringProperty(error, 'name') || null,
-      },
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(message, {
+        area: 'auth',
+        errorType,
+        flow: 'oauth-callback',
+        extra: {
+          redirectTo,
+          locale,
+          ...oauthCodeContext,
+          ...oauthCookieContext,
+          errorCode: getErrorStringProperty(error, 'code') || null,
+          errorMessage: getErrorMessage(error),
+          errorName: getErrorStringProperty(error, 'name') || null,
+        },
+      });
+    }
 
-    return NextResponse.redirect(`${origin}${loginPath}`);
+    return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
   };
   try {
     if (!code) {
-      return NextResponse.redirect(`${origin}${loginPath}`);
+      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
     }
+
+    if (
+      oauthCookieContext.hasValidOauthCallbackMarkerCookie &&
+      !oauthCookieContext.hasSupabaseCodeVerifierCookie
+    ) {
+      return createSafePostAuthRedirectResponse();
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -243,7 +295,7 @@ export async function GET(request: Request) {
         },
       });
 
-      return NextResponse.redirect(`${origin}${loginPath}`);
+      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
     }
 
     const email = user?.email;
@@ -261,7 +313,7 @@ export async function GET(request: Request) {
         },
       });
 
-      return NextResponse.redirect(`${origin}${loginPath}`);
+      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
     }
 
     // Add Stripe customer creation
@@ -322,6 +374,6 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.redirect(`${origin}${loginPath}`);
+    return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
   }
 }

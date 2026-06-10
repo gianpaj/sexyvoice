@@ -444,6 +444,10 @@ function validateFileSize(file: File): void {
   }
 }
 
+function isWebmMimeType(mimeType: string): boolean {
+  return mimeType === 'audio/webm' || mimeType === 'video/webm';
+}
+
 function validateAudioDuration(
   duration: number | null,
   provider: CloneProvider,
@@ -658,6 +662,26 @@ async function processAudioFile(
 
   // Convert to WAV for providers that need normalized reference audio
   if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
+    if (isWebmMimeType(normalizedMimeType)) {
+      logger.info('Rejected WebM reference audio before server conversion', {
+        user: { id: userId },
+        extra: {
+          normalizedMimeType,
+          isMicAudio,
+          locale,
+          filename: file.name,
+          bufferSize: buffer.length,
+        },
+      });
+
+      throw createRouteError(
+        'WebM audio must be converted to WAV on the client before uploading. Please try recording again.',
+        400,
+        'errors.audioConversionRequiredWebm',
+        { mimeType: normalizedMimeType },
+      );
+    }
+
     if (!(isMicAudio || isConversionSupported(normalizedMimeType, file.name))) {
       throw createRouteError(
         'Unsupported audio format for voice cloning. Please use MP3, OGG/OPUS, WEBM, or WAV.',
@@ -724,20 +748,14 @@ async function processAudioFile(
         });
       }
 
-      const errorMsg =
-        normalizedMimeType === 'audio/webm' ||
-        normalizedMimeType === 'video/webm'
-          ? 'WebM audio must be converted to WAV on the client before uploading. Please try recording again.'
-          : 'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, Opus, or WAV';
-      const errorCode =
-        normalizedMimeType === 'audio/webm' ||
-        normalizedMimeType === 'video/webm'
-          ? 'errors.audioConversionRequiredWebm'
-          : 'errors.audioConversionFailed';
-
-      throw createRouteError(errorMsg, 400, errorCode, {
-        mimeType: normalizedMimeType,
-      });
+      throw createRouteError(
+        'Failed to convert audio format to WAV. Uploaded file must be MP3, OGG, Opus, or WAV',
+        400,
+        'errors.audioConversionFailed',
+        {
+          mimeType: normalizedMimeType,
+        },
+      );
     }
   }
 
