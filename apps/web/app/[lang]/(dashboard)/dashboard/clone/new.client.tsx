@@ -235,6 +235,47 @@ const getCloneErrorMessage = (
   return formatCloneMessage(message, details ?? {});
 };
 
+// ─── PreviewTabContent ────────────────────────────────────────────────────────
+
+function PreviewTabContent({
+  dict,
+  generatedAudioUrl,
+  downloadAudio,
+}: {
+  dict: (typeof messages)['clone'];
+  generatedAudioUrl: string | null;
+  downloadAudio: () => Promise<void>;
+}) {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-center font-medium text-xl">{dict.previewTitle}</h3>
+
+      <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
+        {generatedAudioUrl && (
+          <AudioPlayerWithContext
+            autoPlay
+            className="rounded-full"
+            playAudioTitle={dict.playAudio}
+            progressColor="#8b5cf6"
+            showWaveform
+            url={generatedAudioUrl}
+            waveColor="#888888"
+          />
+        )}
+      </div>
+
+      <div className="flex justify-center gap-4">
+        <Button className="flex items-center gap-2" onClick={downloadAudio}>
+          <Download className="h-4 w-4" />
+          {dict.downloadAudio}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Public wrapper ───────────────────────────────────────────────────────────
+
 export default function NewVoiceClient({
   dict,
   lang,
@@ -1128,35 +1169,11 @@ function NewVoiceClientInner({
           </TabsContent>
 
           <TabsContent className="space-y-4 py-4" value="preview">
-            <div className="space-y-4">
-              <h3 className="text-center font-medium text-xl">
-                {dict.previewTitle}
-              </h3>
-
-              <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
-                {generatedAudioUrl && (
-                  <AudioPlayerWithContext
-                    autoPlay
-                    className="rounded-full"
-                    playAudioTitle={dict.playAudio}
-                    progressColor="#8b5cf6"
-                    showWaveform
-                    url={generatedAudioUrl}
-                    waveColor="#888888"
-                  />
-                )}
-              </div>
-
-              <div className="flex justify-center gap-4">
-                <Button
-                  className="flex items-center gap-2"
-                  onClick={downloadAudio}
-                >
-                  <Download className="h-4 w-4" />
-                  {dict.downloadAudio}
-                </Button>
-              </div>
-            </div>
+            <PreviewTabContent
+              dict={dict}
+              downloadAudio={downloadAudio}
+              generatedAudioUrl={generatedAudioUrl}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>

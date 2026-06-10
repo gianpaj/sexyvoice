@@ -5,8 +5,8 @@ import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
   type ComponentPropsWithoutRef,
-  forwardRef,
   type ReactNode,
+  type Ref,
   useEffect,
   useEffectEvent,
   useRef,
@@ -60,12 +60,17 @@ import {
 interface AnimatedPromptTextareaProps
   extends ComponentPropsWithoutRef<typeof Textarea> {
   children?: ReactNode;
+  ref?: Ref<HTMLTextAreaElement>;
 }
 
-export const AnimatedPromptTextarea = forwardRef<
-  HTMLTextAreaElement,
-  AnimatedPromptTextareaProps
->(({ children, className, onBlur, onFocus, ...props }, ref) => {
+export function AnimatedPromptTextarea({
+  children,
+  className,
+  onBlur,
+  onFocus,
+  ref,
+  ...props
+}: AnimatedPromptTextareaProps) {
   return (
     <SpotlightField>
       <Textarea
@@ -81,8 +86,7 @@ export const AnimatedPromptTextarea = forwardRef<
       {children}
     </SpotlightField>
   );
-});
-AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
+}
 
 interface CreditEstimatorProps {
   buttonLabel: string;

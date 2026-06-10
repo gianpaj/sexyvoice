@@ -5,13 +5,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Crown, Sparkles } from 'lucide-react';
-import {
-  type MouseEvent,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { type MouseEvent, use, useEffect, useRef, useState } from 'react';
 
 import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
 import {
@@ -255,7 +249,7 @@ function createWrapperTagSuggestionItem(
  * EditorContent component that renders the actual editor
  */
 export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
-  const { editor } = useContext(EditorContext)!;
+  const { editor } = use(EditorContext)!;
   const { isDragging } = useUiEditorState(editor);
 
   // useScrollToHash()
