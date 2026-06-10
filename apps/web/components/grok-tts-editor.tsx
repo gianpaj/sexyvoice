@@ -51,7 +51,7 @@ import {
 import { cn } from '@/lib/utils';
 import type messages from '@/messages/en.json';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
-import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
+import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
 import type {
   SuggestionItem,
   SuggestionMenuProps,
