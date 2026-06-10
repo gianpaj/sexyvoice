@@ -568,6 +568,11 @@ export function GrokTTSEditor({
     [insertInstantTag, insertWrapperTag],
   );
 
+  const handleInsertTagRef = useRef(handleInsertTag);
+  useEffect(() => {
+    handleInsertTagRef.current = handleInsertTag;
+  }, [handleInsertTag]);
+
   const translatedGrokLanguages = useMemo(
     () => [
       { value: 'auto', label: dict.langAutomatic },
@@ -584,7 +589,7 @@ export function GrokTTSEditor({
     () => [
       {
         customItems: INSTANT_TAGS.map((tag) =>
-          createInstantTagSuggestionItem(tag, () => handleInsertTag(tag)),
+          createInstantTagSuggestionItem(tag, () => handleInsertTagRef.current(tag)),
         ),
         pluginKey: 'grokInstantTagMenu',
         triggerChar: '[',
@@ -593,13 +598,13 @@ export function GrokTTSEditor({
         allow: ({ editor, range, state }) =>
           isGrokWrapperSuggestionAllowed({ editor, range, state }),
         customItems: WRAPPING_TAGS.map((tag) =>
-          createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
+          createWrapperTagSuggestionItem(tag, () => handleInsertTagRef.current(tag)),
         ),
         pluginKey: 'grokWrapperTagMenu',
         triggerChar: '<',
       },
     ],
-    [handleInsertTag],
+    [],
   );
 
   if (!editor) {

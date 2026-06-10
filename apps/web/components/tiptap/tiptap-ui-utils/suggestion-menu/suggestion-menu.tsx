@@ -100,6 +100,7 @@ export const SuggestionMenu = ({
   children,
   maxHeight = 384,
   pluginKey = SuggestionPluginKey,
+  char,
   ...internalSuggestionProps
 }: SuggestionMenuProps) => {
   const { editor } = useTiptapEditor(providedEditor);
@@ -158,7 +159,7 @@ export const SuggestionMenu = ({
     },
   );
 
-  const internalSuggestionPropsRef = useRef(internalSuggestionProps);
+  const internalSuggestionPropsRef = useRef({ char, ...internalSuggestionProps });
   const normalizedPluginKey = useMemo(
     () =>
       pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey),
@@ -166,7 +167,7 @@ export const SuggestionMenu = ({
   );
 
   useEffect(() => {
-    internalSuggestionPropsRef.current = internalSuggestionProps;
+    internalSuggestionPropsRef.current = { char, ...internalSuggestionProps };
   });
 
   const resetMenuState = useCallback(() => {
@@ -175,7 +176,7 @@ export const SuggestionMenu = ({
 
   const closePopup = useCallback(() => {
     if (editor && !editor.isDestroyed) {
-      const triggerChar = internalSuggestionPropsRef.current.char;
+      const triggerChar = char;
       const { selection } = editor.state;
       const previousNode = selection.$head?.nodeBefore;
       const cursorPosition = selection.$from.pos;
@@ -197,7 +198,7 @@ export const SuggestionMenu = ({
     }
 
     resetMenuState();
-  }, [editor, normalizedPluginKey, resetMenuState]);
+  }, [char, editor, normalizedPluginKey, resetMenuState]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {
