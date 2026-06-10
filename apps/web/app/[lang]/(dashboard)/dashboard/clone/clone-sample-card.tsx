@@ -47,7 +47,9 @@ export default function CloneSampleCard({
       const res = await fetch(audioPath);
 
       if (!res.ok) {
-        throw new Error(`Failed to fetch audio: ${res.statusText}`);
+        setErrorMessage(`Failed to fetch audio: ${res.statusText}`);
+        setStatus('error');
+        return;
       }
 
       const blob = await res.blob();

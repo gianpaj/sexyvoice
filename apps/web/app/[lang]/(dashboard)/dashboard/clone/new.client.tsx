@@ -9,7 +9,7 @@ import {
   UploadIcon,
   XIcon,
 } from 'lucide-react';
-import { useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneMain } from '@/components/audio/microphone-main';
@@ -398,7 +398,7 @@ function NewVoiceClientInner({
     return current ? [current, ...rest] : merged;
   })();
 
-  const onFilesAdded = () => {
+  const onFilesAdded = useCallback(() => {
     dispatch({
       type: 'patch',
       patch: {
@@ -406,7 +406,7 @@ function NewVoiceClientInner({
         errorMessage: '',
       },
     });
-  };
+  }, []);
 
   const localeSpecificReferenceAudioGuidance = usesVoxtral
     ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
@@ -637,10 +637,10 @@ function NewVoiceClientInner({
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     abortController.current?.abort();
     dispatch({ type: 'patch', patch: { status: 'idle' } });
-  };
+  }, []);
 
   // Keyboard shortcut handler
   useEffect(() => {
