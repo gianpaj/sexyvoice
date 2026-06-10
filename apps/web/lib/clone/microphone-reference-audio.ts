@@ -6,6 +6,19 @@ export function isWebmAudioBlob(blob: Blob): boolean {
   return blob.type.toLowerCase().includes('webm');
 }
 
+// Keep the file extension aligned with the blob's MIME type so name and type
+// don't disagree (e.g. avoid `microphone-recording.wav` with `type: audio/ogg`).
+function extensionForMimeType(mimeType: string): string {
+  const normalized = mimeType.toLowerCase();
+  if (normalized.includes('ogg') || normalized.includes('opus')) {
+    return 'ogg';
+  }
+  if (normalized.includes('mpeg') || normalized.includes('mp3')) {
+    return 'mp3';
+  }
+  return 'wav';
+}
+
 export async function createMicrophoneReferenceAudioFile(
   micBlob: Blob,
   convert: AudioConverter,
@@ -18,7 +31,8 @@ export async function createMicrophoneReferenceAudioFile(
   }
 
   const mimeType = micBlob.type || 'audio/wav';
-  return new File([micBlob], 'microphone-recording.wav', {
+  const extension = extensionForMimeType(mimeType);
+  return new File([micBlob], `microphone-recording.${extension}`, {
     type: mimeType,
   });
 }
