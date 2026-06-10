@@ -56,6 +56,10 @@ export function Banner({
   useEffect(() => {
     let isCancelled = false;
 
+    // Hide immediately so a previously-visible banner doesn't flash while the
+    // async cookie check for the new banner resolves.
+    setIsVisible(false);
+
     const resolveVisibility = async () => {
       if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
         return true;
