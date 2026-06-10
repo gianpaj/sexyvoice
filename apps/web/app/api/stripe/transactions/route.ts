@@ -69,10 +69,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Combine transactions and sort by created date
-    const transactions = [
-      //   ...chargeTransactions,
-      ...subscriptionTransactions,
-    ].sort((a, b) => b.created - a.created);
+    const transactions = subscriptionTransactions.toSorted((a, b) => b.created - a.created);
 
     return NextResponse.json(transactions);
   } catch (error) {
