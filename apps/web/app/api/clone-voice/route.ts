@@ -675,7 +675,7 @@ async function processAudioFile(
       });
 
       throw createRouteError(
-        'WebM audio must be converted to WAV on the client before uploading. Please try recording again.',
+        'WebM audio must be converted to WAV on the client before uploading. Please record again or upload a different audio format (MP3, OGG, Opus, or WAV).',
         400,
         'errors.audioConversionRequiredWebm',
         { mimeType: normalizedMimeType },
