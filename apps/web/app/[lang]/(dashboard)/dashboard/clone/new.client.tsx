@@ -1,50 +1,25 @@
 'use client';
 
+import { AlertCircle, CircleStop, Download } from 'lucide-react';
 import {
-  AlertCircle,
-  CircleStop,
-  Crown,
-  Download,
-  PaperclipIcon,
-  UploadIcon,
-  XIcon,
-} from 'lucide-react';
-import { useCallback, useEffect, useEffectEvent, useReducer, useRef } from 'react';
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useReducer,
+  useRef,
+} from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
-import { MicrophoneMain } from '@/components/audio/microphone-main';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { GenerateButton } from '@/components/generate-button';
-import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
-import { SpotlightField } from '@/components/spotlight-field';
-import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
-import {
-  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
-  VOXTRAL_SUPPORTED_LOCALE_CODES,
-} from '@/lib/clone/constants';
+import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
@@ -54,44 +29,23 @@ import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import { cn } from '@/lib/utils';
 import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
+import { CloneAudioInput } from './clone-audio-input';
+import { CloneConsentFields } from './clone-consent-fields';
+import { CloneLanguageSelect } from './clone-language-select';
+import {
+  cloneStateReducer,
+  formatCloneMessage,
+  initialCloneState,
+} from './clone-state';
+import { CloneTextField } from './clone-text-field';
 import type { SampleAudio } from './clone-sample-card';
-import CloneSampleCard from './clone-sample-card';
 
-export type Status = 'idle' | 'generating' | 'complete' | 'error';
+export type { Status } from './clone-state';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
-
-const sampleAudios: readonly SampleAudio[] = [
-  {
-    id: 1,
-    name: 'Marilyn Monroe 🇺🇸',
-    language: 'english',
-    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
-    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
-    audioExampleOutputSrc:
-      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
-    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
-  },
-  // {
-  //   id: 2,
-  //   name: 'Morgan Freeman 🇺🇸',
-  //   prompt: 'The most important thing is the mission, not the money',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  // },
-  // {
-  //   id: 3,
-  //   name: 'Audrey Hepburn 🇬🇧',
-  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  // },
-  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
-];
 
 const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   ar: 'arabic',
@@ -120,23 +74,6 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   zh: 'chinese',
 };
 
-const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
-const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
-const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
-const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
-
-const formatCloneMessage = (
-  message: string,
-  values: Record<string, boolean | number | string | null | undefined>,
-) =>
-  Object.entries(values).reduce(
-    (formatted, [key, value]) =>
-      value === null || value === undefined
-        ? formatted
-        : formatted.replaceAll(`__${key}__`, String(value)),
-    message,
-  );
-
 type CloneErrorDetails = Record<string, boolean | number | string | null>;
 
 interface CloneErrorResponse {
@@ -145,59 +82,6 @@ interface CloneErrorResponse {
   error?: string;
   message?: string;
   serverMessage?: string;
-}
-
-interface CloneState {
-  activeTab: 'upload' | 'preview';
-  convertingMicAudio: boolean;
-  errorMessage: string;
-  ffmpegError: string | null;
-  generatedAudioUrl: string | null;
-  legalConsentChecked: boolean;
-  micBlob: Blob | null;
-  micRecording: boolean;
-  referenceAudioEnhancementEnabled: boolean;
-  selectedLocale: {
-    code: string;
-    value: string;
-  };
-  status: Status;
-  text: string;
-}
-
-interface CloneStateAction {
-  patch: Partial<CloneState>;
-  type: 'patch';
-}
-
-const initialCloneState: CloneState = {
-  activeTab: 'upload',
-  convertingMicAudio: false,
-  errorMessage: '',
-  ffmpegError: null,
-  generatedAudioUrl: null,
-  legalConsentChecked: false,
-  micBlob: null,
-  micRecording: false,
-  referenceAudioEnhancementEnabled: false,
-  selectedLocale: {
-    code: 'en',
-    value: 'english',
-  },
-  status: 'idle',
-  text: '',
-};
-
-function cloneStateReducer(
-  state: CloneState,
-  action: CloneStateAction,
-): CloneState {
-  switch (action.type) {
-    case 'patch':
-      return { ...state, ...action.patch };
-    default:
-      return state;
-  }
 }
 
 const getCloneDictMessage = (
@@ -299,7 +183,6 @@ export default function NewVoiceClient({
   );
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing clone form coordinates upload, recording, conversion, and preview state.
 function NewVoiceClientInner({
   dict,
   lang,
@@ -336,16 +219,6 @@ function NewVoiceClientInner({
   } = cloneState;
 
   const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code);
-
-  const audioDurationGuidance = usesVoxtral
-    ? {
-        min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
-        max: null,
-      }
-    : {
-        min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
-        max: null,
-      };
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
@@ -424,8 +297,6 @@ function NewVoiceClientInner({
     },
   });
 
-  // FFmpeg for audio conversion
-
   const supportedLocales = (() => {
     const codes = Object.keys(SUPPORTED_LOCALE_CODES);
     const translated = getTranslatedLanguages(lang, codes);
@@ -449,42 +320,16 @@ function NewVoiceClientInner({
     });
   }, []);
 
-  const localeSpecificReferenceAudioGuidance = usesVoxtral
-    ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
-        MIN: audioDurationGuidance.min,
-        TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
-      })
-    : formatCloneMessage(dict.referenceAudioGuidanceLong, {
-        MIN: audioDurationGuidance.min,
-        TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
-      });
-
   const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
-  const paidVoxtralTextMaxLength = CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID;
-  const textLimitTooltip = formatCloneMessage(
-    userHasPaid ? dict.paidTextLimitTooltip : dict.upgradeTextLimitTooltip,
-    { MAX: paidVoxtralTextMaxLength },
-  );
 
-  const [
-    { files, isDragging, errors },
-    {
-      handleDragEnter,
-      handleDragLeave,
-      handleDragOver,
-      handleDrop,
-      openFileDialog,
-      removeFile,
-      getInputProps,
-      clearErrors,
-      addFiles,
-    },
-  ] = useFileUpload({
+  const [fileState, fileActions] = useFileUpload({
     onFilesAdded,
     maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
   });
+  const { files, errors } = fileState;
+  const { clearErrors } = fileActions;
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
 
@@ -783,294 +628,44 @@ function NewVoiceClientInner({
 
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
-              <div className="grid w-full gap-2">
-                <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
-
-                {/* Drop area */}
-                {!(file || micRecording) && (
-                  <button
-                    className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
-                    data-dragging={isDragging || undefined}
-                    data-testid="clone-upload-dropzone"
-                    disabled={Boolean(micRecording)}
-                    onClick={openFileDialog}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    onKeyUp={openFileDialog}
-                    type="button"
-                  >
-                    <input
-                      {...getInputProps()}
-                      aria-label="Upload audio file"
-                      className="sr-only"
-                      disabled={Boolean(file) || Boolean(micBlob)}
-                    />
-
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <div
-                        aria-hidden="true"
-                        className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
-                      >
-                        <UploadIcon className="size-4 opacity-60" />
-                      </div>
-                      <p className="mb-1.5 font-medium text-sm">
-                        {dict.uploadAudioFile}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {dict.dragDropText}
-                      </p>
-                      <p className="mt-1 text-muted-foreground text-xs">
-                        {dict.fileFormatsText.replace(
-                          '__SIZE__',
-                          formatBytes(CLONING_FILE_MAX_SIZE),
-                        )}
-                      </p>
-                      <p className="mt-2 text-muted-foreground text-xs italic">
-                        {localeSpecificReferenceAudioGuidance}
-                      </p>
-                    </div>
-                  </button>
-                )}
-
-                {!file && (
-                  <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
-                    <p className="text-center text-xs">
-                      {dict.orUseMicrophone}
-                    </p>
-                    {ffmpegLoading && usesVoxtral && (
-                      <div className="flex items-center justify-center gap-2 py-2">
-                        <PulsatingDots />
-                        <span className="text-muted-foreground text-xs">
-                          {dict.loadingAudioProcessor}
-                        </span>
-                      </div>
-                    )}
-                    {ffmpegError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>{dict.audioProcessorError}</AlertTitle>
-                        <AlertDescription>{ffmpegError}</AlertDescription>
-                      </Alert>
-                    )}
-                    <MicrophoneMain
-                      mediaBlob={recorderMediaBlob}
-                      mediaStream={mediaStream}
-                      onClearMediaStream={onClearMediaStream}
-                      onToggleMicrophone={onToggleMicrophone}
-                      status={micStatus}
-                    />
-                  </div>
-                )}
-
-                {/* FFmpeg loading message for non-English locales */}
-                {ffmpegLoading && selectedLocale.code !== 'en' && (
-                  <div className="text-center text-muted-foreground text-xs">
-                    <span className="flex items-center justify-center gap-2">
-                      <PulsatingDots />
-                      {formatCloneMessage(dict.preparingAudioProcessor, {
-                        LANGUAGE: selectedLocale.value,
-                      })}
-                    </span>
-                  </div>
-                )}
-
-                {/* File upload errors */}
-                {errors.length > 0 && (
-                  <div
-                    className="flex items-center gap-1 text-destructive text-xs"
-                    role="alert"
-                  >
-                    <AlertCircle className="size-3 shrink-0" />
-                    <span>{errors[0]}</span>
-                  </div>
-                )}
-
-                {/* Selected file display */}
-                {file ? (
-                  <div
-                    className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
-                    key={files[0]?.id}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <PaperclipIcon
-                        aria-hidden="true"
-                        className="size-4 shrink-0 opacity-60"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate whitespace-normal break-all font-medium text-[13px]">
-                          {file.name}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {formatBytes(file.size)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      aria-label={dict.removeFile}
-                      className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
-                      onClick={() => removeFile(files[0]?.id)}
-                      size="icon"
-                      variant="ghost"
-                    >
-                      <XIcon aria-hidden="true" className="size-6!" />
-                    </Button>
-                  </div>
-                ) : (
-                  !micBlob && (
-                    // Sample audio demo buttons
-                    <div className="grid w-full gap-2">
-                      <p className="text-muted-foreground text-xs">
-                        {dict.tryDemo}
-                      </p>
-
-                      <Accordion className="w-full" collapsible type="single">
-                        {sampleAudios.map((sample) => (
-                          <CloneSampleCard
-                            addFiles={addFiles}
-                            dict={dict}
-                            key={sample.id}
-                            onSelectSample={onSelectSample}
-                            sample={sample}
-                            setErrorMessage={(nextErrorMessage) => {
-                              dispatch({
-                                type: 'patch',
-                                patch: { errorMessage: nextErrorMessage },
-                              });
-                            }}
-                            setStatus={(nextStatus) => {
-                              dispatch({
-                                type: 'patch',
-                                patch: { status: nextStatus },
-                              });
-                            }}
-                          />
-                        ))}
-                      </Accordion>
-                    </div>
-                  )
-                )}
-              </div>
+              <CloneAudioInput
+                dict={dict}
+                dispatch={dispatch}
+                ffmpeg={{ error: ffmpegError, loading: Boolean(ffmpegLoading) }}
+                fileActions={fileActions}
+                fileState={fileState}
+                mic={{
+                  blob: micBlob,
+                  mediaBlob: recorderMediaBlob,
+                  mediaStream,
+                  onClear: onClearMediaStream,
+                  onToggle: onToggleMicrophone,
+                  recording: micRecording,
+                  status: micStatus,
+                }}
+                onSelectSample={onSelectSample}
+                selectedLocale={selectedLocale}
+                usesVoxtral={usesVoxtral}
+              />
 
               <div className="grid w-full gap-6">
-                <div className="grid w-full gap-2">
-                  <Label htmlFor="language">{dict.languageLabel}</Label>
-                  <Select
-                    disabled={status === 'generating'}
-                    onValueChange={(code) =>
-                      dispatch({
-                        type: 'patch',
-                        patch: {
-                          selectedLocale: {
-                            code,
-                            value:
-                              supportedLocales.find((c) => c.code === code)
-                                ?.value || '',
-                          },
-                        },
-                      })
-                    }
-                    value={selectedLocale.code}
-                  >
-                    <SelectTrigger
-                      className="w-32"
-                      data-testid="clone-language-select"
-                      id="language"
-                    >
-                      <SelectValue
-                        placeholder={dict.languageSelectPlaceholder}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {supportedLocales.map((locale) => (
-                        <SelectItem key={locale.code} value={locale.code}>
-                          {locale.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <CloneLanguageSelect
+                  dict={dict}
+                  disabled={status === 'generating'}
+                  dispatch={dispatch}
+                  selectedLocale={selectedLocale}
+                  supportedLocales={supportedLocales}
+                />
 
-                {/*{selectedLocale.code !== 'en' && (
-                <Card className="border-blue-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <InfoIcon className="size-5 text-blue-600" />
-                      {dict.crossLanguageInfo.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-gray-200 text-sm">
-                      {dict.crossLanguageInfo.description}
-                    </p>
-                    <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
-                      {dict.crossLanguageInfo.example}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}*/}
-
-                <div className="grid w-full gap-2">
-                  <Label htmlFor="text-to-convert">
-                    {dict.textToConvertLabel}
-                  </Label>
-                  <SpotlightField>
-                    <Textarea
-                      className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-                      data-testid="clone-text-input"
-                      disabled={status === 'generating'}
-                      id="text-to-convert"
-                      maxLength={textMaxLength + 30}
-                      onChange={(e) => {
-                        dispatch({
-                          type: 'patch',
-                          patch: { text: e.target.value },
-                        });
-                      }}
-                      placeholder={dict.textAreaPlaceholder}
-                      rows={5}
-                      value={text}
-                    />
-                  </SpotlightField>
-                </div>
-                <div
-                  className={cn(
-                    '-mt-2 flex items-center justify-end gap-1.5 text-right text-muted-foreground text-sm',
-                    [textIsOverLimit ? 'font-bold text-red-500' : ''],
-                  )}
-                  data-testid="clone-character-count"
-                >
-                  <span>
-                    {text.length} / {textMaxLength}
-                  </span>
-                  {usesVoxtral && (
-                    <TooltipProvider>
-                      <Tooltip delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <button
-                            aria-label={textLimitTooltip}
-                            className="inline-flex"
-                            type="button"
-                          >
-                            <Crown
-                              className={cn(
-                                'h-3.5 w-3.5 cursor-default',
-                                userHasPaid
-                                  ? 'text-muted-foreground/50'
-                                  : 'text-yellow-400',
-                              )}
-                            />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{textLimitTooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
+                <CloneTextField
+                  dict={dict}
+                  disabled={status === 'generating'}
+                  dispatch={dispatch}
+                  text={text}
+                  textMaxLength={textMaxLength}
+                  usesVoxtral={usesVoxtral}
+                  userHasPaid={userHasPaid}
+                />
               </div>
             </div>
 
@@ -1088,53 +683,15 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                checked={referenceAudioEnhancementEnabled}
-                disabled={status === 'generating'}
-                id="reference-audio-enhancement"
-                onCheckedChange={(checked) => {
-                  dispatch({
-                    type: 'patch',
-                    patch: {
-                      referenceAudioEnhancementEnabled: checked === true,
-                    },
-                  });
-                }}
-              />
-              <div className="grid gap-1">
-                <Label
-                  className="font-normal text-muted-foreground text-sm leading-tight"
-                  htmlFor="reference-audio-enhancement"
-                >
-                  {dict.referenceAudioEnhancementLabel}
-                </Label>
-                <p className="text-muted-foreground text-xs leading-tight">
-                  {dict.referenceAudioEnhancementHelp}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                checked={legalConsentChecked}
-                data-testid="clone-legal-consent"
-                id="legal-consent"
-                onCheckedChange={(checked) => {
-                  dispatch({
-                    type: 'patch',
-                    patch: { legalConsentChecked: checked === true },
-                  });
-                }}
-              />
-              <Label
-                className="font-normal text-muted-foreground text-sm leading-tight"
-                data-testid="clone-legal-consent-label"
-                htmlFor="legal-consent"
-              >
-                {dict.legalConsentCheckbox}
-              </Label>
-            </div>
+            <CloneConsentFields
+              dict={dict}
+              disabled={status === 'generating'}
+              dispatch={dispatch}
+              legalConsentChecked={legalConsentChecked}
+              referenceAudioEnhancementEnabled={
+                referenceAudioEnhancementEnabled
+              }
+            />
 
             <GenerateButton
               className="w-full"

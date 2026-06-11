@@ -7,7 +7,7 @@ import {
   SuggestionPluginKey,
   type SuggestionProps,
 } from '@tiptap/suggestion';
-import { useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import type {
   SuggestionItem,
@@ -163,18 +163,21 @@ export const SuggestionMenu = ({
     char,
     ...internalSuggestionProps,
   });
-  const normalizedPluginKey =
-    pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey);
+  const normalizedPluginKey = useMemo(
+    () =>
+      pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey),
+    [pluginKey],
+  );
 
   useEffect(() => {
     internalSuggestionPropsRef.current = { char, ...internalSuggestionProps };
   });
 
-  const resetMenuState = () => {
+  const resetMenuState = useCallback(() => {
     dispatch({ type: 'reset' });
-  };
+  }, []);
 
-  const closePopup = () => {
+  const closePopup = useCallback(() => {
     if (editor && !editor.isDestroyed) {
       const triggerChar = char;
       const { selection } = editor.state;
@@ -198,7 +201,7 @@ export const SuggestionMenu = ({
     }
 
     resetMenuState();
-  };
+  }, [char, editor, normalizedPluginKey, resetMenuState]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {
@@ -309,16 +312,18 @@ export const SuggestionMenu = ({
         editor.unregisterPlugin(normalizedPluginKey);
       }
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes closePopup/resetMenuState/normalizedPluginKey, keeping them referentially stable across renders.
   }, [editor, pluginKey, normalizedPluginKey, closePopup, resetMenuState]);
 
-  const onSelect = (item: SuggestionItem) => {
-    closePopup();
+  const onSelect = useCallback(
+    (item: SuggestionItem) => {
+      closePopup();
 
-    if (internalCommand) {
-      internalCommand(item);
-    }
-  };
+      if (internalCommand) {
+        internalCommand(item);
+      }
+    },
+    [closePopup, internalCommand],
+  );
 
   const { selectedIndex } = useMenuNavigation({
     editor,

@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type langDict from '@/messages/en.json';
-import type { Status } from './new.client';
+import type { Status } from './clone-state';
 
 export interface SampleAudio {
   audioExampleOutputSrc: string;

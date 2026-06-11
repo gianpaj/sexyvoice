@@ -1,9 +1,4 @@
-import {
-  AlertCircle,
-  PaperclipIcon,
-  UploadIcon,
-  XIcon,
-} from 'lucide-react';
+import { AlertCircle, PaperclipIcon, UploadIcon, XIcon } from 'lucide-react';
 import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';

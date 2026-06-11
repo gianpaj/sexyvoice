@@ -9,6 +9,7 @@ import {
   type Ref,
   useEffect,
   useEffectEvent,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -220,16 +221,24 @@ export function AudioGenerator({
     selectedVoice?.model || '',
     isPaidUser,
   );
-  const splitSegmentTexts = splitLongTextIntoSegments(text, {
-    preserveGrokWrappingTags: isGrokVoice,
-  });
-  const splitGenerationContext = JSON.stringify({
-    language: isGrokVoice ? selectedGrokLanguage : '',
-    styleVariant: isGeminiVoice ? selectedStyle : '',
-  });
-  const previewSplitSegmentTexts = splitSegmentTexts.slice(
-    0,
-    SPLIT_SEGMENT_MAX_COUNT,
+  const splitSegmentTexts = useMemo(
+    () =>
+      splitLongTextIntoSegments(text, {
+        preserveGrokWrappingTags: isGrokVoice,
+      }),
+    [text, isGrokVoice],
+  );
+  const splitGenerationContext = useMemo(
+    () =>
+      JSON.stringify({
+        language: isGrokVoice ? selectedGrokLanguage : '',
+        styleVariant: isGeminiVoice ? selectedStyle : '',
+      }),
+    [isGrokVoice, isGeminiVoice, selectedGrokLanguage, selectedStyle],
+  );
+  const previewSplitSegmentTexts = useMemo(
+    () => splitSegmentTexts.slice(0, SPLIT_SEGMENT_MAX_COUNT),
+    [splitSegmentTexts],
   );
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
