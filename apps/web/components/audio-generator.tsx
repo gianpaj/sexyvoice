@@ -195,8 +195,7 @@ export function AudioGenerator({
   const [splitTextAudios, setSplitTextAudios] = useState(false);
   const [isDownloadingAllSegments, setIsDownloadingAllSegments] =
     useState(false);
-  const [playerControls, setPlayerControls] =
-    useState<AudioPlayerControls | null>(null);
+  const playerControlsRef = useRef<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
 
@@ -522,8 +521,8 @@ export function AudioGenerator({
   }, []);
 
   const resetPlayer = () => {
-    if (playerControls) {
-      playerControls.reset();
+    if (playerControlsRef.current) {
+      playerControlsRef.current.reset();
       return;
     }
 
@@ -671,10 +670,6 @@ export function AudioGenerator({
     } finally {
       setIsEnhancingText(false);
     }
-  };
-
-  const handleControlsReady = (controls: AudioPlayerControls) => {
-    setPlayerControls(controls);
   };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset estimate when voice or text changes
@@ -893,9 +888,9 @@ export function AudioGenerator({
                 <AudioPlayerWithContext
                   autoPlay
                   className="rounded-md"
-                  onControlsReady={handleControlsReady}
                   playAudioTitle={dict.playAudio}
                   progressColor="#8b5cf6"
+                  ref={playerControlsRef}
                   showWaveform
                   url={audioURL}
                   waveColor="#888888"
