@@ -29,7 +29,7 @@ export const VoiceGenerationRequestSchema = z.strictObject({
     .min(1)
     .max(1000)
     .describe(
-      'The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)',
+      'The text to synthesize (max 1000 chars for gpro/xai, 500 for orpheus)',
     ),
   voice: z
     .string()
@@ -67,9 +67,9 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
         .min(1)
         .describe('Voice name (see GET /api/v1/voices for available voices)'),
       response_format: z
-        .enum(['wav', 'mp3'])
+        .literal('wav')
         .optional()
-        .describe('Audio format. Default depends on model'),
+        .describe('Audio format. `gpro` always returns `wav`.'),
       style: z
         .string()
         .optional()
@@ -94,20 +94,15 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
         .min(1)
         .describe('Voice name (see GET /api/v1/voices for available voices)'),
       response_format: z
-        .enum(['wav', 'mp3'])
+        .literal('mp3')
         .optional()
-        .describe('Audio format. Default depends on model'),
-      style: z
-        .string()
-        .optional()
-        .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
+        .describe('Audio format. `orpheus` only supports `mp3`.'),
+      style: z.string().optional().describe('Ignored for `orpheus` requests.'),
       seed: z
         .number()
         .int()
         .optional()
-        .describe(
-          'Optional deterministic seed for providers that support it (e.g. Gemini)',
-        ),
+        .describe('Currently ignored for `orpheus` requests.'),
     }),
     z.strictObject({
       model: z.literal('xai').describe('The voice model to use'),
@@ -123,18 +118,18 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
       response_format: z
         .enum(['wav', 'mp3'])
         .optional()
-        .describe('Audio format. Default depends on model'),
+        .describe('Audio format. `xai` supports both `mp3` and `wav`.'),
       style: z
         .string()
         .optional()
-        .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
+        .describe(
+          'Ignored for `xai` requests. Use Grok speech tags in `input` instead.',
+        ),
       seed: z
         .number()
         .int()
         .optional()
-        .describe(
-          'Optional deterministic seed for providers that support it (e.g. Gemini)',
-        ),
+        .describe('Currently ignored for `xai` requests.'),
     }),
   ],
 );
@@ -173,11 +168,10 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'orpheus', 'grok']),
+  id: z.enum(['gpro', 'orpheus', 'xai']),
   name: z.string(),
   max_input_length: z.number().int().positive(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),
-  supported_styles: z.array(z.string()),
 });
 
 export const ModelsResponseSchema = z.object({

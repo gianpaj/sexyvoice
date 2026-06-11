@@ -12,6 +12,16 @@ export interface GenerateXaiTtsResult {
   audioBuffer: Buffer;
   codec: XaiTtsCodec;
   contentType: string;
+  /** Raw cost value from xAI response usage object (1 tick = $0.000_000_001 USD) */
+  costInUsdTicks?: number;
+}
+
+interface XaiTtsJsonResponse {
+  audio?: string;
+  usage?: {
+    cost_in_usd_ticks?: number;
+    characters?: number;
+  };
 }
 
 const XAI_TTS_URL = 'https://api.x.ai/v1/tts';
@@ -65,6 +75,15 @@ export function getXaiFileExtension(codec: XaiTtsCodec): string {
   return codec;
 }
 
+/**
+ * Convert xAI cost_in_usd_ticks to a dollar amount rounded to 6 decimal
+ * places, matching the numeric(12,6) precision used in the database.
+ * 1 tick = $0.000_000_001 (1 nanotick).
+ */
+export function usdTicksToDollarAmount(ticks: number): number {
+  return Number.parseFloat((ticks / 1_000_000_000).toFixed(6));
+}
+
 export function normalizeXaiTtsLanguage(language?: string): string {
   if (!language) {
     return 'auto';
@@ -91,6 +110,13 @@ export function normalizeXaiTtsLanguage(language?: string): string {
   }
 
   return XAI_LANGUAGE_MAP[primarySubtag] ?? 'auto';
+}
+
+function validateTicks(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+  return undefined;
 }
 
 export async function generateXaiTts({
@@ -137,6 +163,32 @@ export async function generateXaiTts({
         cause: 'XAI_TTS_ERROR',
       },
     );
+  }
+
+  const contentType = (
+    response.headers.get('content-type') ?? ''
+  ).toLowerCase();
+
+  if (contentType.includes('json')) {
+    const json = (await response.json()) as XaiTtsJsonResponse;
+    const audioBase64 = json.audio;
+    if (!audioBase64) {
+      throw new Error('xAI TTS JSON response missing audio field', {
+        cause: 'XAI_TTS_ERROR',
+      });
+    }
+    const audioBuffer = Buffer.from(audioBase64, 'base64');
+    if (audioBuffer.length === 0) {
+      throw new Error('xAI TTS JSON response contains empty audio data', {
+        cause: 'XAI_TTS_ERROR',
+      });
+    }
+    return {
+      audioBuffer,
+      codec: normalizedCodec,
+      contentType: getXaiContentType(normalizedCodec),
+      costInUsdTicks: validateTicks(json.usage?.cost_in_usd_ticks),
+    };
   }
 
   const audioBuffer = Buffer.from(await response.arrayBuffer());

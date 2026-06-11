@@ -135,7 +135,7 @@ describe('Estimate Credits API Route', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.estimatedCredits).toBe(100);
+    expect(json.estimatedCredits).toBe(50);
     expect(json.tokens).toBeUndefined();
     expect(mockCountTokens).not.toHaveBeenCalled();
   });

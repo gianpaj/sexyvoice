@@ -26,7 +26,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { generateXaiTts } from '@/lib/tts/xai';
+import { generateXaiTts, usdTicksToDollarAmount } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   calculateGrokTtsDollarAmount,
@@ -228,6 +228,7 @@ export async function POST(request: Request) {
     let modelUsed = '';
     let uploadUrl = '';
     let selectedGrokCodec = outputCodec;
+    let grokCostInUsdTicks: number | undefined;
 
     if (isGeminiVoice) {
       let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -473,14 +474,16 @@ export async function POST(request: Request) {
       modelUsed = voiceObj.model;
 
       try {
-        const { audioBuffer, codec, contentType } = await generateXaiTts({
-          text,
-          voiceId: voiceObj.name,
-          language: selectedLanguage || voiceObj.language,
-          codec: outputCodec,
-          signal: abortController.signal,
-        });
+        const { audioBuffer, codec, contentType, costInUsdTicks } =
+          await generateXaiTts({
+            text,
+            voiceId: voiceObj.name,
+            language: selectedLanguage || voiceObj.language,
+            codec: outputCodec,
+            signal: abortController.signal,
+          });
         selectedGrokCodec = codec;
+        grokCostInUsdTicks = costInUsdTicks;
         uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
       } catch (error) {
         const errorObj = {
@@ -586,11 +589,13 @@ export async function POST(request: Request) {
         );
       }
 
-      const grokDollarAmount = isGrokVoice
-        ? calculateGrokTtsDollarAmount(text)
-        : undefined;
-
       await reduceCredits({ userId: user.id, amount: creditsUsed });
+
+      const grokDollarAmount = isGrokVoice
+        ? grokCostInUsdTicks !== undefined
+          ? usdTicksToDollarAmount(grokCostInUsdTicks)
+          : calculateGrokTtsDollarAmount(text)
+        : undefined;
 
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
@@ -606,6 +611,14 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           userHasPaid,
+          ...(isGrokVoice
+            ? {
+                dollarAmount: grokDollarAmount,
+                ...(grokCostInUsdTicks !== undefined
+                  ? { costInUsdTicks: grokCostInUsdTicks }
+                  : {}),
+              }
+            : {}),
         },
       });
 
@@ -631,9 +644,9 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
-        ...(grokDollarAmount === undefined
-          ? {}
-          : { dollarAmount: grokDollarAmount }),
+        ...(isGrokVoice && grokDollarAmount !== undefined
+          ? { dollarAmount: grokDollarAmount }
+          : {}),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voice,
@@ -644,7 +657,14 @@ export async function POST(request: Request) {
           isGeminiVoice,
           userHasPaid,
           predictionId: replicateResponse?.id ?? null,
-          ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
+          ...(isGrokVoice
+            ? {
+                codec: selectedGrokCodec,
+                ...(grokCostInUsdTicks === undefined
+                  ? {}
+                  : { costInUsdTicks: grokCostInUsdTicks }),
+              }
+            : {}),
         },
       });
 

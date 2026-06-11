@@ -26,29 +26,79 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **PostHog** – Product analytics and feature flags
 - **Axiom** – Structured request logging for external API routes
 - **Inngest** – Background job processing and scheduled tasks
-- **External REST API** – `/api/v1/*` with HMAC-keyed API keys, rate limiting, and OpenAPI 3.1 spec
+- **External REST API** – public `/api/v1/*` speech, voices, models, billing, and OpenAPI endpoints with HMAC-keyed API keys, rate limiting, and shared request/response helpers
 
 ## External REST API
 
 Base path: `/api/v1/`
 
-The external API allows third-party integrations to generate speech programmatically using API keys.
+The external API is the public programmatic surface for third-party
+integrations. It currently exposes one generation endpoint
+(`POST /api/v1/speech`) and four metadata/discovery endpoints
+(`GET /api/v1/voices`, `GET /api/v1/models`, `GET /api/v1/billing`, and public
+`GET /api/v1/openapi`). The authenticated endpoints share API-key auth,
+request-id generation, rate-limit headers, structured errors, and persistence
+helpers from `apps/web/lib/api/`.
 
-### Authentication
+### Authentication and key lifecycle
 
-All endpoints except `GET /api/v1/openapi` require an `Authorization: Bearer sk_live_…` header. Keys are stored as HMAC-SHA256 hashes (`API_KEY_HMAC_SECRET`) — the raw key is shown only once at creation. Keys are managed via `/api/api-keys` (requires paid account, max 10 active keys).
+All `/api/v1/*` endpoints except `GET /api/v1/openapi` require an
+`Authorization: Bearer sk_live_…` header.
 
-### Endpoints
+- Keys are created in Dashboard → API Keys via `/api/api-keys`
+- Keys are stored as HMAC-SHA256 hashes using `API_KEY_HMAC_SECRET`
+- Users can have up to 10 active API keys
+- `validateApiKey()` resolves `userId`, `apiKeyId`, and `keyHash`
+- `updateApiKeyLastUsed()` runs in a `finally` block on authenticated routes so
+  last-use metadata updates on both success and failure
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/v1/speech` | Generate speech audio (always fresh, no cache) |
-| `GET` | `/api/v1/voices` | List available public TTS voices |
-| `GET` | `/api/v1/models` | List available model catalog |
-| `GET` | `/api/v1/billing` | Get credit balance and last transaction |
-| `GET` | `/api/v1/openapi` | OpenAPI 3.1 spec (public, no auth required) |
+### Endpoint surface
 
-### Error Shape
+| Method | Path | Purpose | Notes |
+|--------|------|---------|-------|
+| `POST` | `/api/v1/speech` | Generate speech audio and persist billing/usage | Always fresh generation, no cache; uploads to `R2_SPEECH_API_BUCKET_NAME` |
+| `GET` | `/api/v1/voices` | List public TTS voices | Returns `id`, `name`, `language`, `model`, `formats`, `supports_style` |
+| `GET` | `/api/v1/models` | List the external model catalog | Backed by `EXTERNAL_API_MODELS` with max input lengths and supported formats |
+| `GET` | `/api/v1/billing` | Return credits and the latest billing transaction | Latest transaction is limited to `purchase` / `topup` types |
+| `GET` | `/api/v1/openapi` | Return the OpenAPI 3.1 document | Public endpoint; no API-key auth or API-key rate limiting |
+
+### Model capabilities
+
+The public speech request currently accepts `model` values `gpro`, `orpheus`,
+and `xai`.
+
+| Request model | Provider | Max input length | Formats | Parameter behavior |
+|--------------|----------|------------------|---------|--------------------|
+| `gpro` | Google Gemini TTS | 1000 chars | `wav` | `style` is prepended to the input; `seed` is supported |
+| `orpheus` | Replicate Orpheus | 500 chars | `mp3` | `style` is ignored |
+| `xai` | xAI Grok TTS | 1000 chars | `mp3`, `wav` | `style` is ignored; language is normalized from the voice locale |
+
+The route layer maps DB model names to external IDs in `lib/api/model.ts`; keep
+`EXTERNAL_API_MODELS`, route validation, schemas, and docs aligned whenever the
+catalog changes.
+
+### Success and error conventions
+
+All authenticated `/api/v1/*` responses, including structured errors, include:
+
+- `X-RateLimit-Limit-Requests`
+- `X-RateLimit-Remaining-Requests`
+- `X-RateLimit-Reset-Requests`
+- `request-id` — prefixed `req_sv_` UUID for tracing
+
+`GET /api/v1/openapi` is the only v1 endpoint that currently skips this shared
+response wrapper.
+
+`POST /api/v1/speech` returns a hosted audio `url`, `credits_used`,
+`credits_remaining`, and a `usage` object with `input_characters` and the model
+used for generation.
+
+`GET /api/v1/billing` returns:
+
+- `creditsLeft`
+- `lastUpdated`
+- `userId`
+- `lastBillingTransaction`
 
 All errors follow a consistent nested structure:
 
@@ -63,67 +113,92 @@ All errors follow a consistent nested structure:
 }
 ```
 
-### Rate Limiting
+### Rate limiting and observability
 
-60 requests/minute per API key. Every response includes:
-- `X-RateLimit-Limit-Requests`
-- `X-RateLimit-Remaining-Requests`
-- `X-RateLimit-Reset-Requests`
-- `request-id` — prefixed `req_sv_` UUID for tracing
+Authenticated endpoints are limited to 60 requests/minute per API key via an
+Upstash token bucket in `lib/api/rate-limit.ts`.
+
+`/api/v1/speech` additionally emits structured logs through `createLogger()`
+with `requestId`, `apiKeyId`, `userId`, provider/model, credit usage, and
+dollar amount. Sentry captures failures across the v1 routes.
 
 ### External API Speech Generation Flow
 
 ```mermaid
 flowchart TD
-    A[POST /api/v1/speech] --> B[Validate Bearer token]
+    A[POST /api/v1/speech] --> B[Validate Bearer API key]
     B -->|Invalid| Z1[401 invalid_api_key]
-    B -->|Valid| C[Check rate limit]
+    B -->|Valid| C[Consume rate limit + assign request-id]
     C -->|Exceeded| Z2[429 rate_limit_exceeded]
-    C -->|OK| D[Validate request body with Zod]
+    C -->|OK| D[Validate request body with VoiceGenerationRequestSchema]
     D -->|Invalid| Z3[400 validation_error]
-    D -->|Valid| E[Lookup voice by name — admin client]
+    D -->|Valid| E[Lookup voice by name and resolve external model]
     E -->|Not found| Z4[404 voice_not_found]
-    E -->|Found| F[Check model compatibility + text length]
-    F -->|Invalid| Z5[400 Bad request]
-    F -->|OK| G[Fetch credit balance — admin client]
-    G -->|Insufficient| Z6[402 insufficient_credits]
-    G -->|Sufficient| H{Model?}
-    H -->|gpro| I[Gemini 2.5 Pro TTS → fallback Flash]
-    H -->|grok| J2[xAI Grok TTS — mp3 or wav]
-    H -->|orpheus| J[Replicate Orpheus model]
-    I --> K[Upload to R2_SPEECH_API_BUCKET]
-    J2 --> K
+    E -->|Found| F[Validate model match, format, text length, and credits]
+    F -->|Invalid| Z5[400/402 request error]
+    F -->|OK| G{Requested model}
+    G -->|gpro| H[Gemini Pro TTS → fallback Flash → WAV]
+    G -->|xai| I[xAI TTS → mp3/wav → exact cost_in_usd_ticks when available]
+    G -->|orpheus| J[Replicate Orpheus stream → mp3]
+    H --> K[Upload to R2_SPEECH_API_BUCKET_NAME]
+    I --> K
     J --> K
-    K --> L[Deduct credits — admin client]
+    K --> L[Deduct credits]
     L --> M[Save audio_file + insert usage_event]
-    M --> N[200 url + credits_used + usage]
+    M --> N[200 url + credits_used + credits_remaining + usage]
 ```
+
+Key route behavior:
+
+1. The request body is validated with `VoiceGenerationRequestSchema`.
+2. Voice lookup is by public `voice` name; the route enforces that the
+   requested `model` matches the resolved voice.
+3. Text length uses `getCharactersLimit()` and paid status from
+   `hasUserPaidAdmin()`.
+4. Credit pre-check uses `estimateCredits()`; Gemini requests recalculate final
+   billed credits from actual token usage when metadata is available.
+5. xAI/Grok requests normalize language from the stored voice locale and, when
+   xAI returns `cost_in_usd_ticks`, persist the exact USD cost instead of the
+   fallback pricing table.
+6. Every successful call saves an `audio_files` row and inserts a `usage_event`
+   with `sourceType: 'api_tts'`, `apiKeyId`, dollar amount, and
+   provider-specific metadata.
 
 ### Shared API Layer (`lib/api/`)
 
 | File | Purpose |
 |------|---------|
 | `auth.ts` | `generateApiKey()`, `hashApiKey()`, `validateApiKey()`, `updateApiKeyLastUsed()` |
-| `constants.ts` | `EXTERNAL_API_MODELS` catalog, `RATE_LIMIT_DEFAULT` |
-| `errors.ts` | `createApiError()`, `zodErrorToApiError()` |
-| `external-errors.ts` | Structured error key map + `externalApiErrorResponse()` |
+| `constants.ts` | External model catalog (`EXTERNAL_API_MODELS`) and default rate-limit settings |
+| `errors.ts` | `createApiError()` and `zodErrorToApiError()` |
+| `external-errors.ts` | Shared external error map, `getExternalApiRequestId()`, and `externalApiErrorResponse()` |
 | `logger.ts` | Axiom-backed per-request structured logger via `createLogger()` |
-| `model.ts` | `resolveExternalModelId()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
+| `model.ts` | DB-to-public model mapping, default formats, format support checks, and model catalog helpers |
 | `openapi.ts` | `createExternalApiOpenApiDocument()` using `zod-openapi` |
-| `pricing.ts` | `calculateExternalApiDollarAmount()` |
-| `rate-limit.ts` | `consumeRateLimit()` via Upstash Ratelimit (token bucket) |
-| `responses.ts` | `jsonWithRateLimitHeaders()` |
-| `schemas.ts` | Zod schemas for all v1 request/response types (shared with OpenAPI generator) |
+| `pricing.ts` | Fallback estimated dollar amounts when the provider does not return an exact cost |
+| `rate-limit.ts` | Upstash token-bucket limiting and response-header helpers |
+| `responses.ts` | `jsonWithRateLimitHeaders()` for shared JSON responses |
+| `schemas.ts` | Zod schemas for v1 request/response types shared by runtime validation and OpenAPI generation |
 
-### Admin Query Pattern
+### Data access pattern
 
-External API routes resolve `userId` from the API key, not a session cookie. `createClient()` (anon key + RLS) cannot see other users' data. All DB access in `/api/v1/*` uses `*Admin` variants from `lib/supabase/queries.ts`:
+External API routes resolve `userId` from the API key, not a session cookie.
+User-scoped/private reads and writes use admin access (`*Admin` queries or
+`createAdminClient()`), while public catalog routes like `/api/v1/voices` may
+use the regular server client when the query is explicitly constrained to
+public rows.
+
+Common user-scoped helpers include:
 
 - `getCreditsAdmin(userId)`
 - `getVoiceIdByNameAdmin(voiceName)`
+- `hasUserPaidAdmin(userId)`
 - `reduceCreditsAdmin({ userId, amount })`
 - `saveAudioFileAdmin(params)`
-- `hasUserPaidAdmin(userId)`
+- `insertUsageEvent(params)`
+
+`GET /api/v1/billing` uses `createAdminClient()` directly because it reads from
+both `credits` and `credit_transactions` for the API key owner.
 
 ## Voice Generation Flow (Dashboard)
 

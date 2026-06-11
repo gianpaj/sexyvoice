@@ -4,7 +4,7 @@ import {
   BillingResponseSchema,
   ErrorResponseSchema,
   ModelsResponseSchema,
-  VoiceGenerationRequestSchema,
+  VoiceGenerationRequestOpenApiSchema,
   VoiceGenerationResponseSchema,
   VoicesResponseSchema,
 } from '@/lib/api/schemas';
@@ -189,7 +189,7 @@ export function createExternalApiOpenApiDocument() {
         },
       },
       schemas: {
-        VoiceGenerationRequest: VoiceGenerationRequestSchema,
+        VoiceGenerationRequest: VoiceGenerationRequestOpenApiSchema,
         VoiceGenerationResponse: VoiceGenerationResponseSchema,
         ErrorResponse: ErrorResponseSchema,
         VoicesResponse: VoicesResponseSchema,
@@ -206,7 +206,7 @@ export function createExternalApiOpenApiDocument() {
             required: true,
             content: {
               'application/json': {
-                schema: VoiceGenerationRequestSchema,
+                schema: VoiceGenerationRequestOpenApiSchema,
                 examples: {
                   basic: {
                     summary: 'Basic voice generation',
@@ -231,6 +231,15 @@ export function createExternalApiOpenApiDocument() {
                       model: 'orpheus',
                       input: 'Hello, my name is Tara!',
                       voice: 'tara',
+                    },
+                  },
+                  xai_voice: {
+                    summary: 'xAI model with Grok voice tags',
+                    value: {
+                      model: 'xai',
+                      input: 'Hello from Grok! [laugh]',
+                      voice: 'eve',
+                      response_format: 'wav',
                     },
                   },
                 },
