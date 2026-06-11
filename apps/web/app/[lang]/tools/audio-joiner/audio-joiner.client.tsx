@@ -1,7 +1,7 @@
 'use client';
 
 import { ScissorsLineDashed } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import type langDict from '@/messages/en.json';
@@ -88,7 +88,7 @@ export default function AudioJoinerClient({ dict }: Props) {
     });
   }, [ensureLoaded, dict.errors.ffmpegLoadFailed]);
 
-  const stopPlayback = (resetTime = false) => {
+  const stopPlayback = useCallback((resetTime = false) => {
     for (const source of playbackSourcesRef.current) {
       try {
         source.stop();
@@ -104,66 +104,72 @@ export default function AudioJoinerClient({ dict }: Props) {
       playbackOffsetRef.current = 0;
       setCurrentTimeSec(0);
     }
-  };
+  }, []);
 
-  const totalDurationSec = computeTotalDuration(tracks);
+  const totalDurationSec = useMemo(
+    () => computeTotalDuration(tracks),
+    [tracks],
+  );
 
-  const schedulePlayback = async (startOffsetSec: number) => {
-    if (tracks.length === 0 || totalDurationSec <= 0) {
-      return;
-    }
-
-    const context =
-      audioContextRef.current ||
-      new window.AudioContext({ latencyHint: 'interactive' });
-    audioContextRef.current = context;
-
-    if (context.state === 'suspended') {
-      await context.resume();
-    }
-
-    stopPlayback();
-
-    let elapsedBeforeStart = 0;
-    let scheduledOffsetSec = 0;
-
-    for (const track of tracks) {
-      const segmentDurationSec = track.endSec - track.startSec;
-
-      if (segmentDurationSec <= 0) {
-        continue;
+  const schedulePlayback = useCallback(
+    async (startOffsetSec: number) => {
+      if (tracks.length === 0 || totalDurationSec <= 0) {
+        return;
       }
 
-      if (elapsedBeforeStart + segmentDurationSec <= startOffsetSec) {
+      const context =
+        audioContextRef.current ||
+        new window.AudioContext({ latencyHint: 'interactive' });
+      audioContextRef.current = context;
+
+      if (context.state === 'suspended') {
+        await context.resume();
+      }
+
+      stopPlayback();
+
+      let elapsedBeforeStart = 0;
+      let scheduledOffsetSec = 0;
+
+      for (const track of tracks) {
+        const segmentDurationSec = track.endSec - track.startSec;
+
+        if (segmentDurationSec <= 0) {
+          continue;
+        }
+
+        if (elapsedBeforeStart + segmentDurationSec <= startOffsetSec) {
+          elapsedBeforeStart += segmentDurationSec;
+          continue;
+        }
+
+        const localSkipSec = Math.max(0, startOffsetSec - elapsedBeforeStart);
+        const playDurationSec = segmentDurationSec - localSkipSec;
+
+        if (playDurationSec <= 0) {
+          elapsedBeforeStart += segmentDurationSec;
+          continue;
+        }
+
+        const source = context.createBufferSource();
+        source.buffer = track.decodedBuffer;
+        source.connect(context.destination);
+        source.start(
+          context.currentTime + scheduledOffsetSec,
+          track.startSec + localSkipSec,
+          playDurationSec,
+        );
+
+        playbackSourcesRef.current.push(source);
+        scheduledOffsetSec += playDurationSec;
         elapsedBeforeStart += segmentDurationSec;
-        continue;
       }
 
-      const localSkipSec = Math.max(0, startOffsetSec - elapsedBeforeStart);
-      const playDurationSec = segmentDurationSec - localSkipSec;
-
-      if (playDurationSec <= 0) {
-        elapsedBeforeStart += segmentDurationSec;
-        continue;
-      }
-
-      const source = context.createBufferSource();
-      source.buffer = track.decodedBuffer;
-      source.connect(context.destination);
-      source.start(
-        context.currentTime + scheduledOffsetSec,
-        track.startSec + localSkipSec,
-        playDurationSec,
-      );
-
-      playbackSourcesRef.current.push(source);
-      scheduledOffsetSec += playDurationSec;
-      elapsedBeforeStart += segmentDurationSec;
-    }
-
-    playbackStartAtRef.current = context.currentTime - startOffsetSec;
-    setIsPlaying(true);
-  };
+      playbackStartAtRef.current = context.currentTime - startOffsetSec;
+      setIsPlaying(true);
+    },
+    [tracks, totalDurationSec, stopPlayback],
+  );
 
   useEffect(() => {
     if (!(isPlaying && audioContextRef.current)) {
@@ -191,27 +197,35 @@ export default function AudioJoinerClient({ dict }: Props) {
     return () => {
       window.clearInterval(tick);
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes stopPlayback, keeping it referentially stable across renders.
   }, [isPlaying, totalDurationSec, stopPlayback]);
 
-  const handleSeek = async (globalTimeSec: number) => {
-    const clamped = Math.max(0, Math.min(globalTimeSec, totalDurationSec));
-    playbackOffsetRef.current = clamped;
-    setCurrentTimeSec(clamped);
+  const handleSeek = useCallback(
+    async (globalTimeSec: number) => {
+      const clamped = Math.max(0, Math.min(globalTimeSec, totalDurationSec));
+      playbackOffsetRef.current = clamped;
+      setCurrentTimeSec(clamped);
 
-    if (isPlaying) {
-      try {
-        await schedulePlayback(clamped);
-      } catch (_err) {
-        toast.error(dict.errors.previewFailed);
+      if (isPlaying) {
+        try {
+          await schedulePlayback(clamped);
+        } catch (_err) {
+          toast.error(dict.errors.previewFailed);
+        }
+      } else {
+        // Just stop any lingering sources without resetting the time.
+        stopPlayback(false);
       }
-    } else {
-      // Just stop any lingering sources without resetting the time.
-      stopPlayback(false);
-    }
-  };
+    },
+    [
+      totalDurationSec,
+      isPlaying,
+      schedulePlayback,
+      stopPlayback,
+      dict.errors.previewFailed,
+    ],
+  );
 
-  const handleTogglePlayPause = async () => {
+  const handleTogglePlayPause = useCallback(async () => {
     if (isPlaying) {
       stopPlayback();
       return;
@@ -222,7 +236,7 @@ export default function AudioJoinerClient({ dict }: Props) {
     } catch (_err) {
       toast.error(dict.errors.previewFailed);
     }
-  };
+  }, [dict.errors.previewFailed, isPlaying, schedulePlayback, stopPlayback]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -242,7 +256,6 @@ export default function AudioJoinerClient({ dict }: Props) {
     return () => {
       window.removeEventListener('keydown', handler);
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes handleTogglePlayPause, keeping it referentially stable across renders.
   }, [handleTogglePlayPause]);
 
   useEffect(() => {
@@ -257,7 +270,6 @@ export default function AudioJoinerClient({ dict }: Props) {
       stopPlayback(true);
       audioContextRef.current?.close().catch(() => undefined);
     };
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes stopPlayback, keeping it referentially stable across renders.
   }, [stopPlayback]);
 
   useEffect(() => {
@@ -266,134 +278,151 @@ export default function AudioJoinerClient({ dict }: Props) {
     }
   }, [error]);
 
-  const handleFilesSelected = async (files: File[]) => {
-    const context =
-      audioContextRef.current ||
-      new window.AudioContext({ latencyHint: 'interactive' });
-    audioContextRef.current = context;
+  const handleFilesSelected = useCallback(
+    async (files: File[]) => {
+      const context =
+        audioContextRef.current ||
+        new window.AudioContext({ latencyHint: 'interactive' });
+      audioContextRef.current = context;
 
-    const createdTracks: TrackSegment[] = [];
+      const createdTracks: TrackSegment[] = [];
 
-    for (const file of files) {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const decodedBuffer = await context.decodeAudioData(
-          arrayBuffer.slice(0),
-        );
-        const durationSec = decodedBuffer.duration;
+      for (const file of files) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const decodedBuffer = await context.decodeAudioData(
+            arrayBuffer.slice(0),
+          );
+          const durationSec = decodedBuffer.duration;
 
-        createdTracks.push({
-          id: crypto.randomUUID(),
-          file,
-          name: file.name,
-          url: URL.createObjectURL(file),
-          durationSec,
-          startSec: 0,
-          endSec: durationSec,
-          decodedBuffer,
-        });
-      } catch (_err) {
-        toast.error(dict.errors.decodeFailed.replace('{file}', file.name));
-      }
-    }
-
-    if (createdTracks.length > 0) {
-      setTracks((current) => [...current, ...createdTracks]);
-    }
-  };
-
-  const updateTrack = (
-    trackId: string,
-    updater: (track: TrackSegment) => TrackSegment,
-    shouldResetPreview = true,
-  ) => {
-    setTracks((current) =>
-      current.map((track) => (track.id === trackId ? updater(track) : track)),
-    );
-
-    if (shouldResetPreview) {
-      stopPlayback(true);
-    }
-  };
-
-  const handleMoveUp = (trackId: string) => {
-    setTracks((current) => {
-      const index = current.findIndex((track) => track.id === trackId);
-      if (index <= 0) {
-        return current;
+          createdTracks.push({
+            id: crypto.randomUUID(),
+            file,
+            name: file.name,
+            url: URL.createObjectURL(file),
+            durationSec,
+            startSec: 0,
+            endSec: durationSec,
+            decodedBuffer,
+          });
+        } catch (_err) {
+          toast.error(dict.errors.decodeFailed.replace('{file}', file.name));
+        }
       }
 
-      const next = [...current];
-      const [item] = next.splice(index, 1);
-      next.splice(index - 1, 0, item);
-      return next;
-    });
-    stopPlayback(true);
-  };
-
-  const handleMoveDown = (trackId: string) => {
-    setTracks((current) => {
-      const index = current.findIndex((track) => track.id === trackId);
-      if (index === -1 || index >= current.length - 1) {
-        return current;
+      if (createdTracks.length > 0) {
+        setTracks((current) => [...current, ...createdTracks]);
       }
+    },
+    [dict.errors.decodeFailed],
+  );
 
-      const next = [...current];
-      const [item] = next.splice(index, 1);
-      next.splice(index + 1, 0, item);
-      return next;
-    });
-    stopPlayback(true);
-  };
+  const updateTrack = useCallback(
+    (
+      trackId: string,
+      updater: (track: TrackSegment) => TrackSegment,
+      shouldResetPreview = true,
+    ) => {
+      setTracks((current) =>
+        current.map((track) => (track.id === trackId ? updater(track) : track)),
+      );
 
-  const handleDelete = (trackId: string) => {
-    setTracks((current) => {
-      const target = current.find((track) => track.id === trackId);
-      if (target) {
-        URL.revokeObjectURL(target.url);
+      if (shouldResetPreview) {
+        stopPlayback(true);
       }
+    },
+    [stopPlayback],
+  );
 
-      return current.filter((track) => track.id !== trackId);
-    });
-    stopPlayback(true);
-  };
-
-  const handleTrimChange = (
-    trackId: string,
-    startSec: number,
-    endSec: number,
-  ) => {
-    updateTrack(
-      trackId,
-      (track) => ({
-        ...track,
-        startSec,
-        endSec,
-      }),
-      true,
-    );
-  };
-
-  const handleDurationReady = (trackId: string, durationSec: number) => {
-    updateTrack(
-      trackId,
-      (track) => {
-        if (track.durationSec === durationSec) {
-          return track;
+  const handleMoveUp = useCallback(
+    (trackId: string) => {
+      setTracks((current) => {
+        const index = current.findIndex((track) => track.id === trackId);
+        if (index <= 0) {
+          return current;
         }
 
-        return {
-          ...track,
-          durationSec,
-          startSec: Math.min(track.startSec, Math.max(0, durationSec - 0.05)),
-          endSec: Math.min(track.endSec, durationSec),
-        };
-      },
-      false,
-    );
-  };
+        const next = [...current];
+        const [item] = next.splice(index, 1);
+        next.splice(index - 1, 0, item);
+        return next;
+      });
+      stopPlayback(true);
+    },
+    [stopPlayback],
+  );
 
-  const handleJoin = async () => {
+  const handleMoveDown = useCallback(
+    (trackId: string) => {
+      setTracks((current) => {
+        const index = current.findIndex((track) => track.id === trackId);
+        if (index === -1 || index >= current.length - 1) {
+          return current;
+        }
+
+        const next = [...current];
+        const [item] = next.splice(index, 1);
+        next.splice(index + 1, 0, item);
+        return next;
+      });
+      stopPlayback(true);
+    },
+    [stopPlayback],
+  );
+
+  const handleDelete = useCallback(
+    (trackId: string) => {
+      setTracks((current) => {
+        const target = current.find((track) => track.id === trackId);
+        if (target) {
+          URL.revokeObjectURL(target.url);
+        }
+
+        return current.filter((track) => track.id !== trackId);
+      });
+      stopPlayback(true);
+    },
+    [stopPlayback],
+  );
+
+  const handleTrimChange = useCallback(
+    (trackId: string, startSec: number, endSec: number) => {
+      updateTrack(
+        trackId,
+        (track) => ({
+          ...track,
+          startSec,
+          endSec,
+        }),
+        true,
+      );
+    },
+    [updateTrack],
+  );
+
+  const handleDurationReady = useCallback(
+    (trackId: string, durationSec: number) => {
+      updateTrack(
+        trackId,
+        (track) => {
+          if (track.durationSec === durationSec) {
+            return track;
+          }
+
+          return {
+            ...track,
+            durationSec,
+            startSec: Math.min(track.startSec, Math.max(0, durationSec - 0.05)),
+            endSec: Math.min(track.endSec, durationSec),
+          };
+        },
+        false,
+      );
+    },
+    [updateTrack],
+  );
+
+  const handleJoin = useCallback(async () => {
     if (tracks.length === 0 || isProcessing) {
       return;
     }
@@ -427,12 +456,12 @@ export default function AudioJoinerClient({ dict }: Props) {
 
       toast.error(dict.errors.joinFailed);
     }
-  };
+  }, [tracks, isProcessing, stopPlayback, join, outputFormat, dict]);
 
-  const handleCancel = async () => {
+  const handleCancel = useCallback(async () => {
     await cancel();
     toast.info(dict.success.cancelled);
-  };
+  }, [cancel, dict.success.cancelled]);
 
   const canJoin = tracks.length > 0 && !isLoading && !isProcessing;
 

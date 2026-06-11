@@ -10,7 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -85,7 +85,7 @@ export function ApiKeys({
   const [newApiKeyValue, setNewApiKeyValue] = useState<string | null>(null);
   const [name, setName] = useState('');
 
-  const loadApiKeys = async () => {
+  const loadApiKeys = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/api-keys', { method: 'GET' });
@@ -99,11 +99,10 @@ export function ApiKeys({
     } finally {
       setLoading(false);
     }
-  };
+  }, [dict.failedToLoad]);
 
   useEffect(() => {
     loadApiKeys().catch(() => undefined);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes loadApiKeys, keeping it referentially stable across renders.
   }, [loadApiKeys]);
 
   const createKey = async () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import { Loader2, PhoneCall } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ export function ConnectButton() {
     }
   };
 
-  const initiateConnection = async () => {
+  const initiateConnection = useCallback(async () => {
     setConnecting(true);
     try {
       // Verify microphone access before spending a token request
@@ -59,14 +59,13 @@ export function ConnectButton() {
     } finally {
       setConnecting(false);
     }
-  };
+  }, [connect, dict]);
 
   useEffect(() => {
     if (initiateConnectionFlag) {
       initiateConnection();
       setInitiateConnectionFlag(false);
     }
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes initiateConnection, keeping it referentially stable across renders.
   }, [initiateConnectionFlag, initiateConnection]);
 
   return (
