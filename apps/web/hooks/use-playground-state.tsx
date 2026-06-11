@@ -6,6 +6,7 @@ import {
   type ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useReducer,
 } from 'react';
 
@@ -264,7 +265,10 @@ export const PlaygroundStateProvider = ({
   initialState,
 }: PlaygroundStateProviderProps) => {
   const mergedDefaultPresets = defaultPresetsProp ?? [];
-  const helpers = createPlaygroundStateHelpers(mergedDefaultPresets);
+  const helpers = useMemo(
+    () => createPlaygroundStateHelpers(mergedDefaultPresets),
+    [mergedDefaultPresets],
+  );
   const mergedInitialState: PlaygroundState = {
     ...defaultPlaygroundState,
     defaultPresets: mergedDefaultPresets,
