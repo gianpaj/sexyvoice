@@ -534,8 +534,9 @@ export function PresetSelector({
                       maxLength={50}
                       onBlur={handleSaveNameOrDescription}
                       onChange={(e) => setEditableName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter')
+                          await handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
                       value={editableName}
@@ -563,8 +564,9 @@ export function PresetSelector({
                       maxLength={200}
                       onBlur={handleSaveNameOrDescription}
                       onChange={(e) => setEditableDescription(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter')
+                          await handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
                       placeholder={dict.addDescriptionPlaceholder}
