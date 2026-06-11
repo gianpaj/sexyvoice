@@ -621,6 +621,7 @@ export function PresetSelector({
                       </SelectContent>
                     </Select>
                     <VoicePlayButton
+                      key={resolvedVoiceName}
                       sampleUrl={resolvedVoice?.sample_url ?? null}
                       size="md"
                       voiceName={resolvedVoiceName}
