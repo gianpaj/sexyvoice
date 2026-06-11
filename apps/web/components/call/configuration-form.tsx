@@ -10,12 +10,11 @@ import { ConnectionState } from 'livekit-client';
 import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
-
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
@@ -30,14 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { ConfigurationFormSchema } from './configuration-form.schema';
 import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
 import { SceneSelector } from './scene-selector';
-import {
-  ConfigurationFormSchema,
-  type ConfigurationFormFieldProps,
-} from './configuration-form.schema';
 
 // import { useToast } from "@/hooks/use-toast";
 
@@ -50,10 +46,12 @@ interface ConfigurationFormProps {
   lang: Locale;
 }
 
+const EMPTY_ITEMS: DBVoice[] = [];
+
 export function ConfigurationForm({
   lang,
   isPaidUser = false,
-  callVoices = [],
+  callVoices = EMPTY_ITEMS,
 }: ConfigurationFormProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { connect, disconnect, dict } = useConnection();

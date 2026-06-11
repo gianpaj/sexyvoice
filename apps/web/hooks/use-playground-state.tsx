@@ -258,10 +258,12 @@ interface PlaygroundStateProviderProps {
   initialState?: Partial<PlaygroundState>;
 }
 
+const EMPTY_PRESETS: Preset[] = [];
+
 export const PlaygroundStateProvider = ({
   children,
   defaultPresets: defaultPresetsProp,
-  initialCustomCharacters = [],
+  initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
   const mergedDefaultPresets = defaultPresetsProp ?? [];

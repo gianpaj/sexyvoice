@@ -127,9 +127,11 @@ interface PresetSelectorProps {
   isPaidUser?: boolean;
 }
 
+const EMPTY_ITEMS: DBVoice[] = [];
+
 export function PresetSelector({
   isPaidUser = false,
-  callVoices = [],
+  callVoices = EMPTY_ITEMS,
 }: PresetSelectorProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();

@@ -25,7 +25,7 @@ function creditsHref(lang: Locale) {
   return `/${lang}/dashboard/credits`;
 }
 
-export const bannerRegistry = {
+const bannerRegistry = {
   blackFridayBanner: {
     cta: {
       loggedInHref: creditsHref,

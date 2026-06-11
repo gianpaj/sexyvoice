@@ -545,7 +545,7 @@ export function GrokTTSEditor({
   const handleInsertTagRef = useRef(handleInsertTag);
   useEffect(() => {
     handleInsertTagRef.current = handleInsertTag;
-    // biome-ignore lint/correctness/useExhaustiveDependencies: React Compiler memoizes handleInsertTag, keeping it referentially stable across renders.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional "latest ref" sync — handleInsertTag is rebuilt each render on purpose so the long-lived slash-menu callbacks always invoke the current closure.
   }, [handleInsertTag]);
 
   const translatedGrokLanguages = [
