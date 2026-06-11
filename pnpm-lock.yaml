@@ -231,9 +231,6 @@ importers:
       '@floating-ui/react':
         specifier: ^0.27.19
         version: 0.27.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@formatjs/intl-localematcher':
-        specifier: ^0.5.10
-        version: 0.5.10
       '@google/genai':
         specifier: 1.19.0
         version: 1.19.0
@@ -306,9 +303,6 @@ importers:
       '@tiptap/suggestion':
         specifier: ^3.22.4
         version: 3.22.4(@tiptap/core@3.22.4(@tiptap/pm@3.22.4))(@tiptap/pm@3.22.4)
-      '@types/lodash.throttle':
-        specifier: ^4.1.9
-        version: 4.1.9
       '@upstash/ratelimit':
         specifier: ^2.0.8
         version: 2.0.8(@upstash/redis@1.37.0)
@@ -354,9 +348,6 @@ importers:
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.7)
-      framer-motion:
-        specifier: 12.38.0
-        version: 12.38.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       globby:
         specifier: ^14.1.0
         version: 14.1.0
@@ -375,15 +366,9 @@ importers:
       livekit-server-sdk:
         specifier: 2.15.3
         version: 2.15.3
-      lodash.throttle:
-        specifier: ^4.1.1
-        version: 4.1.1
       lucide-react:
         specifier: ^0.523.0
         version: 0.523.0(react@19.2.7)
-      mdx-bundler:
-        specifier: ^10.1.1
-        version: 10.1.1(acorn@8.16.0)(esbuild@0.28.0)
       motion:
         specifier: ^12.38.0
         version: 12.38.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -396,9 +381,6 @@ importers:
       nanoid:
         specifier: 5.1.11
         version: 5.1.11
-      negotiator:
-        specifier: ^1.0.0
-        version: 1.0.0
       next:
         specifier: 'catalog:'
         version: 16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.53.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3)
@@ -429,9 +411,6 @@ importers:
       react-hook-form:
         specifier: ^7.62.0
         version: 7.71.2(react@19.2.7)
-      react-hotkeys-hook:
-        specifier: ^5.2.4
-        version: 5.2.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       recharts:
         specifier: 2.15.4
         version: 2.15.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -441,9 +420,6 @@ importers:
       rehype-highlight-code-lines:
         specifier: ^1.2.1
         version: 1.2.2(unified@11.0.5)
-      rehype-parse:
-        specifier: ^9.0.1
-        version: 9.0.1
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1
@@ -499,9 +475,6 @@ importers:
       '@testing-library/user-event':
         specifier: 14.6.1
         version: 14.6.1(@testing-library/dom@10.4.1)
-      '@types/negotiator':
-        specifier: 0.6.4
-        version: 0.6.4
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.4
@@ -1437,9 +1410,6 @@ packages:
 
   '@formatjs/icu-skeleton-parser@2.1.7':
     resolution: {integrity: sha512-cIw1SFP0bi0CUBiJ2jzp99ws3OJNQDfStcHq9Z0iHWzItmiIikihFO+npR8C80yDlp7ZuBCLXCcKjgWjHicksA==}
-
-  '@formatjs/intl-localematcher@0.5.10':
-    resolution: {integrity: sha512-af3qATX+m4Rnd9+wHcjJ4w2ijq+rAVP3CCinJQvFv1kgSu1W6jypUmvleJxcewdxmutM8dmIRZFxO/IQBZmP2Q==}
 
   '@formatjs/intl-localematcher@0.8.6':
     resolution: {integrity: sha512-AZRgUxj0q93lyF7Z5lFS85bLINXuBLX4R3tCKicO6fSWo6cvh9GQfoR3B1WlsqQwefZ1QORTivhInx7gM6HUzQ==}
@@ -5184,12 +5154,6 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/lodash.throttle@4.1.9':
-    resolution: {integrity: sha512-PCPVfpfueguWZQB7pJQK890F2scYKoDUL3iM522AptHWn7d5NQmeS/LTEHIcLr5PaTzl3dK2Z0xSUHHTHwaL5g==}
-
-  '@types/lodash@4.17.24':
-    resolution: {integrity: sha512-gIW7lQLZbue7lRSWEFql49QJJWThrTFFeIMJdp3eH4tKoxm1OvEPg02rm4wCCSHS0cL3/Fizimb35b7k8atwsQ==}
-
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
@@ -5204,9 +5168,6 @@ packages:
 
   '@types/mysql@2.15.27':
     resolution: {integrity: sha512-YfWiV16IY0OeBfBCk8+hXKmdTKrKlwKN1MNKAPBu5JYxLwBEZl7QzeEpGnlZb3VMGJrrGmB84gXiH+ofs/TezA==}
-
-  '@types/negotiator@0.6.4':
-    resolution: {integrity: sha512-elf6BsTq+AkyNsb2h5cGNst2Mc7dPliVoAPm1fXglC/BM3f2pFA40BaSSv3E5lyHteEawVKLP+8TwiY1DMNb3A==}
 
   '@types/node@22.19.0':
     resolution: {integrity: sha512-xpr/lmLPQEj+TUnHmR+Ab91/glhJvsqcjB+yY0Ix9GO70H6Lb4FHH5GeqdOE5btAx7eIMwuHkp4H2MSkLcqWbA==}
@@ -6686,9 +6647,6 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  hast-util-from-html@2.0.3:
-    resolution: {integrity: sha512-CUSRHXyKjzHov8yKsQjGOElXy/3EKpyX56ELnkHH34vDVw1N1XSQ1ZcAvTyAPtGqLTuKP/uxM+aLkSPqF/EtMw==}
-
   hast-util-from-parse5@8.0.3:
     resolution: {integrity: sha512-3kxEVkEKt0zvcZ3hCRYI8rqrgwtlIOFMWkbclACvjlDw8Li9S2hk/d51OI0nr/gIpdMHNepwgOKqZ/sy0Clpyg==}
 
@@ -7149,9 +7107,6 @@ packages:
 
   lodash.isarguments@3.1.0:
     resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
-
-  lodash.throttle@4.1.1:
-    resolution: {integrity: sha512-wIkUCfVKpVsWo3JSZlc+8MB5it+2AN5W8J7YVMST30UrvcQNZ1Okbj+rbVniijTWE6FGYy4XJq/rHkas8qJMLQ==}
 
   lodash@4.17.23:
     resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
@@ -8001,12 +7956,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-hotkeys-hook@5.2.4:
-    resolution: {integrity: sha512-BgKg+A1+TawkYluh5Bo4cTmcgMN5L29uhJbDUQdHwPX+qgXRjIPYU5kIDHyxnAwCkCBiu9V5OpB2mpyeluVF2A==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -8134,9 +8083,6 @@ packages:
 
   rehype-highlight@7.0.2:
     resolution: {integrity: sha512-k158pK7wdC2qL3M5NcZROZ2tR/l7zOzjxXd5VGdcfIyoijjQqpHd3JKtYSBDpDZ38UI2WJWuFAtkMDxmx5kstA==}
-
-  rehype-parse@9.0.1:
-    resolution: {integrity: sha512-ksCzCD0Fgfh7trPDxr2rSylbwq9iYDkSn8TCDmEJ49ljEUBxDVCzCHv7QNzZOfODanX4+bWQ4WZqLCRWYLfhag==}
 
   rehype-raw@7.0.0:
     resolution: {integrity: sha512-/aE8hCfKlQeA8LmyeyQvQF3eBiLRGNlfBJEvWH7ivp9sBqs7TNqBL5X3v157rM4IFETqDnIOO+z5M/biZbo9Ww==}
@@ -10230,10 +10176,6 @@ snapshots:
       '@formatjs/icu-skeleton-parser': 2.1.7
 
   '@formatjs/icu-skeleton-parser@2.1.7': {}
-
-  '@formatjs/intl-localematcher@0.5.10':
-    dependencies:
-      tslib: 2.8.1
 
   '@formatjs/intl-localematcher@0.8.6':
     dependencies:
@@ -14226,12 +14168,6 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/lodash.throttle@4.1.9':
-    dependencies:
-      '@types/lodash': 4.17.24
-
-  '@types/lodash@4.17.24': {}
-
   '@types/mdast@4.0.4':
     dependencies:
       '@types/unist': 3.0.3
@@ -14247,8 +14183,6 @@ snapshots:
   '@types/mysql@2.15.27':
     dependencies:
       '@types/node': 25.8.0
-
-  '@types/negotiator@0.6.4': {}
 
   '@types/node@22.19.0':
     dependencies:
@@ -15737,15 +15671,6 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hast-util-from-html@2.0.3:
-    dependencies:
-      '@types/hast': 3.0.4
-      devlop: 1.1.0
-      hast-util-from-parse5: 8.0.3
-      parse5: 7.3.0
-      vfile: 6.0.3
-      vfile-message: 4.0.2
-
   hast-util-from-parse5@8.0.3:
     dependencies:
       '@types/hast': 3.0.4
@@ -16292,8 +16217,6 @@ snapshots:
   lodash.defaults@4.2.0: {}
 
   lodash.isarguments@3.1.0: {}
-
-  lodash.throttle@4.1.1: {}
 
   lodash@4.17.23: {}
 
@@ -17569,11 +17492,6 @@ snapshots:
     dependencies:
       react: 19.2.7
 
-  react-hotkeys-hook@5.2.4(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
-    dependencies:
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-
   react-is@16.13.1: {}
 
   react-is@17.0.2: {}
@@ -17744,12 +17662,6 @@ snapshots:
       lowlight: 3.3.0
       unist-util-visit: 5.1.0
       vfile: 6.0.3
-
-  rehype-parse@9.0.1:
-    dependencies:
-      '@types/hast': 3.0.4
-      hast-util-from-html: 2.0.3
-      unified: 11.0.5
 
   rehype-raw@7.0.0:
     dependencies:
