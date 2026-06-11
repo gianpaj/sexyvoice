@@ -94,6 +94,7 @@ function AvatarButton({
                   isConnected && !isSelected ? 'opacity-40 grayscale' : ''
                 }`}
                 fill
+                sizes="(min-width: 640px) 64px, 56px"
                 src={`/characters/${image}`}
               />
             ) : (
