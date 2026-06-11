@@ -1,6 +1,5 @@
 'use client';
 
-// import { VoiceSelector } from '@/components/call/voice-selector-call';
 // import { VoiceSelectorForm } from '@/components/call/voice-selector-form';
 import type { ConfigurationFormFieldProps } from './configuration-form.schema';
 // import { TemperatureSelector } from "./temperature-selector";
@@ -11,7 +10,6 @@ export function SessionConfig({ form }: ConfigurationFormFieldProps) {
   return (
     <div className="w-1/3">
       {/*<ModelSelector form={form} />*/}
-      {/*<VoiceSelector form={form} />*/}
       {/*<TemperatureSelector form={form} />*/}
       {/*<MaxOutputTokensSelector form={form} />*/}
     </div>
