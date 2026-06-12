@@ -68,7 +68,7 @@ async function cleanupTempFiles(ffmpeg: FFmpeg, tempFiles: string[]) {
 }
 
 function assertNotCancelled(
-  cancelRequestedRef: React.MutableRefObject<boolean>,
+  cancelRequestedRef: React.RefObject<boolean>,
 ) {
   if (cancelRequestedRef.current) {
     throw new Error(CANCELLED_ERROR);
@@ -85,7 +85,7 @@ async function trimSegmentsToWav({
   ffmpeg: FFmpeg;
   segments: JoinerSegmentInput[];
   tempFiles: string[];
-  cancelRequestedRef: React.MutableRefObject<boolean>;
+  cancelRequestedRef: React.RefObject<boolean>;
   setProgress: React.Dispatch<React.SetStateAction<number>>;
 }) {
   for (let index = 0; index < segments.length; index++) {
@@ -236,8 +236,6 @@ export function useFFmpegJoiner() {
       if (progressHandlerRef.current) {
         ffmpeg.off('progress', progressHandlerRef.current);
       }
-      // Ensure we don't accumulate multiple 'progress' listeners across joins
-      (ffmpeg as any).removeAllListeners?.('progress');
 
       const onProgress = ({
         progress: currentProgress,
