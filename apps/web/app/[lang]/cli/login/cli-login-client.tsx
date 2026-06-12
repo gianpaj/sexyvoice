@@ -124,7 +124,12 @@ export function CliLoginClient({
         return;
       }
       const redirectUrl = new URL(json.redirect_url);
-      if (!['127.0.0.1', 'localhost'].includes(redirectUrl.hostname)) {
+      const isAllowedHost = ['127.0.0.1', 'localhost'].includes(
+        redirectUrl.hostname,
+      );
+      const isAllowedProtocol =
+        redirectUrl.protocol === 'http:' || redirectUrl.protocol === 'https:';
+      if (!(isAllowedHost && isAllowedProtocol)) {
         dispatch({
           type: 'patch',
           patch: { error: 'Invalid redirect target', isLoading: false },
