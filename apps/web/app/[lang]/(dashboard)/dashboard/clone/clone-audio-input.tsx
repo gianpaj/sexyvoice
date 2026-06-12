@@ -137,7 +137,6 @@ export function CloneAudioInput({
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          onKeyUp={openFileDialog}
           type="button"
         >
           <input
