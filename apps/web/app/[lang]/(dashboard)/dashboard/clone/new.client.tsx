@@ -545,16 +545,13 @@ function NewVoiceClientInner({
     }
   });
 
-  // Keyboard shortcut handler
+  // Keyboard shortcut handler. onKeyDown is a useEffectEvent, so it already has
+  // a stable identity and can be attached directly.
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      onKeyDown(event);
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', onKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', onKeyDown);
     };
   }, []);
 
