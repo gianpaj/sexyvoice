@@ -33,12 +33,11 @@ interface TrackListProps {
  * sequence.  The returned value is passed directly to `TrackRow`'s
  * `playheadPct` prop and used as a CSS `left` percentage.
  */
-function usePlayheadPercents(
+function computePlayheadPercents(
   tracks: TrackItem[],
+  globalOffsets: number[],
   currentTimeSec: number,
 ): (number | null)[] {
-  const globalOffsets = computeGlobalOffsets(tracks);
-
   return tracks.map((track, index) => {
     const trimmedDuration = track.endSec - track.startSec;
 
@@ -88,8 +87,12 @@ export function TrackList({
   onDurationReady,
   onSeek,
 }: TrackListProps) {
-  const playheadPercents = usePlayheadPercents(tracks, currentTimeSec);
   const globalOffsets = computeGlobalOffsets(tracks);
+  const playheadPercents = computePlayheadPercents(
+    tracks,
+    globalOffsets,
+    currentTimeSec,
+  );
 
   return (
     <div className="space-y-4">
