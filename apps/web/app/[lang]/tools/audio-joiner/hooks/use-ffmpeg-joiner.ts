@@ -2,7 +2,7 @@
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export type JoinerOutputFormat = 'mp3' | 'wav' | 'm4a';
 
@@ -173,7 +173,10 @@ export function useFFmpegJoiner() {
   const [error, setError] = useState<string | null>(null);
   const cancelRequestedRef = useRef(false);
 
-  const ensureLoaded = async () => {
+  // Stable identity is required for correctness: consumers depend on
+  // `ensureLoaded` in an effect, and a fresh identity each render restarts the
+  // load (and its failure toast) in a loop. React Compiler can't guarantee this.
+  const ensureLoaded = useCallback(async () => {
     if (ffmpegRef.current) {
       return ffmpegRef.current;
     }
@@ -193,7 +196,7 @@ export function useFFmpegJoiner() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const cancel = () => {
     cancelRequestedRef.current = true;
