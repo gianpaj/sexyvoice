@@ -51,7 +51,7 @@ export function normalizeXaiTtsCodec(codec?: string): XaiTtsCodec {
   return DEFAULT_XAI_TTS_CODEC;
 }
 
-export function getXaiContentType(codec: XaiTtsCodec): string {
+function getXaiContentType(codec: XaiTtsCodec): string {
   switch (codec) {
     case 'wav':
       return 'audio/wav';
@@ -61,11 +61,7 @@ export function getXaiContentType(codec: XaiTtsCodec): string {
   }
 }
 
-export function getXaiFileExtension(codec: XaiTtsCodec): string {
-  return codec;
-}
-
-export function normalizeXaiTtsLanguage(language?: string): string {
+function normalizeXaiTtsLanguage(language?: string): string {
   if (!language) {
     return 'auto';
   }

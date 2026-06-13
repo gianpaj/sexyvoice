@@ -102,7 +102,7 @@ export function ApiKeys({
   }, [dict.failedToLoad]);
 
   useEffect(() => {
-    loadApiKeys();
+    loadApiKeys().catch(() => undefined);
   }, [loadApiKeys]);
 
   const createKey = async () => {

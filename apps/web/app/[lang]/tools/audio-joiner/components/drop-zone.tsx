@@ -1,7 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -26,30 +26,24 @@ export function DropZone({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleSelect = useCallback(
-    (files: FileList | null) => {
-      if (!files) {
-        return;
-      }
+  const handleSelect = (files: FileList | null) => {
+    if (!files) {
+      return;
+    }
 
-      const audioFiles = Array.from(files).filter((file) =>
-        file.type.startsWith('audio/'),
-      );
+    const audioFiles = Array.from(files).filter((file) =>
+      file.type.startsWith('audio/'),
+    );
 
-      if (audioFiles.length > 0) {
-        onFilesSelected(audioFiles);
-      }
-    },
-    [onFilesSelected],
-  );
+    if (audioFiles.length > 0) {
+      onFilesSelected(audioFiles);
+    }
+  };
 
-  const handleInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      handleSelect(event.target.files);
-      event.currentTarget.value = '';
-    },
-    [handleSelect],
-  );
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleSelect(event.target.files);
+    event.currentTarget.value = '';
+  };
 
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: drop zone needs drag events

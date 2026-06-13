@@ -1,7 +1,6 @@
 'use client';
 
 import type { Editor } from '@tiptap/react';
-import { useCallback } from 'react';
 
 import { TypeIcon } from '@/components/tiptap/tiptap-icons/type-icon';
 // --- Tiptap UI ---
@@ -84,45 +83,42 @@ function organizeItemsByGroups(
  * Custom hook for slash dropdown menu functionality
  */
 export function useSlashDropdownMenu(config?: SlashMenuConfig) {
-  const getSlashMenuItems = useCallback(
-    (editor: Editor) => {
-      const items: SuggestionItem[] = [];
+  const getSlashMenuItems = (editor: Editor) => {
+    const items: SuggestionItem[] = [];
 
-      const enabledItems =
-        config?.enabledItems ?? (Object.keys(texts) as SlashMenuItemType[]);
-      const showGroups = config?.showGroups !== false;
+    const enabledItems =
+      config?.enabledItems ?? (Object.keys(texts) as SlashMenuItemType[]);
+    const showGroups = config?.showGroups !== false;
 
-      const itemImplementations = getItemImplementations();
+    const itemImplementations = getItemImplementations();
 
-      for (const itemType of enabledItems) {
-        const itemImpl = itemImplementations[itemType];
-        const itemText = texts[itemType];
+    for (const itemType of enabledItems) {
+      const itemImpl = itemImplementations[itemType];
+      const itemText = texts[itemType];
 
-        if (itemImpl && itemText && itemImpl.check(editor)) {
-          const item: SuggestionItem = {
-            onSelect: ({ editor }) => itemImpl.action({ editor }),
-            ...itemText,
-          };
+      if (itemImpl && itemText && itemImpl.check(editor)) {
+        const item: SuggestionItem = {
+          onSelect: ({ editor }) => itemImpl.action({ editor }),
+          ...itemText,
+        };
 
-          if (config?.itemGroups?.[itemType]) {
-            item.group = config.itemGroups[itemType];
-          } else if (!showGroups) {
-            item.group = '';
-          }
-
-          items.push(item);
+        if (config?.itemGroups?.[itemType]) {
+          item.group = config.itemGroups[itemType];
+        } else if (!showGroups) {
+          item.group = '';
         }
-      }
 
-      if (config?.customItems) {
-        items.push(...config.customItems);
+        items.push(item);
       }
+    }
 
-      // Reorganize items by groups to ensure keyboard navigation works correctly
-      return organizeItemsByGroups(items, showGroups);
-    },
-    [config],
-  );
+    if (config?.customItems) {
+      items.push(...config.customItems);
+    }
+
+    // Reorganize items by groups to ensure keyboard navigation works correctly
+    return organizeItemsByGroups(items, showGroups);
+  };
 
   return {
     getSlashMenuItems,

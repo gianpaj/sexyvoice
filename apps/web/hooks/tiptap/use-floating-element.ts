@@ -12,7 +12,7 @@ import {
   useInteractions,
   useTransitionStyles,
 } from '@floating-ui/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 interface FloatingElementReturn {
   /**
@@ -103,26 +103,15 @@ export function useFloatingElement(
     });
   }, [reference, refs]);
 
-  return useMemo(
-    () => ({
-      isMounted,
-      ref: refs.setFloating,
-      style: {
-        ...styles,
-        ...floatingStyles,
-        zIndex,
-      },
-      getFloatingProps,
-      getReferenceProps,
-    }),
-    [
-      floatingStyles,
-      isMounted,
-      refs.setFloating,
-      styles,
+  return {
+    isMounted,
+    ref: refs.setFloating,
+    style: {
+      ...styles,
+      ...floatingStyles,
       zIndex,
-      getFloatingProps,
-      getReferenceProps,
-    ],
-  );
+    },
+    getFloatingProps,
+    getReferenceProps,
+  };
 }

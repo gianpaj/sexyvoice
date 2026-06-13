@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import { captureException } from '@sentry/nextjs';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -122,7 +124,9 @@ export default async function CreditsPage(props: {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <PaymentStatus />
+      <Suspense>
+        <PaymentStatus />
+      </Suspense>
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
           <h3 className="mb-4 font-semibold text-lg">

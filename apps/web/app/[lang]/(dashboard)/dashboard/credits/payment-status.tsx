@@ -11,37 +11,25 @@ import { Button } from '@/components/ui/button';
 export function PaymentStatus() {
   const t = useTranslations('credits.status');
   const searchParams = useSearchParams();
-  const [isVisible, setIsVisible] = useState(false);
-  const [status, setStatus] = useState<'success' | 'error' | 'canceled' | null>(
-    null,
-  );
   const creditsAmount = searchParams.get('creditsAmount');
 
+  const success = searchParams.get('success');
+  const canceled = searchParams.get('canceled');
+  const error = searchParams.get('error');
+
+  const status: 'success' | 'canceled' | 'error' | null =
+    success === 'true' ? 'success'
+    : canceled === 'true' ? 'canceled'
+    : error ? 'error'
+    : null;
+
+  const [isVisible, setIsVisible] = useState(() => status !== null);
+
   useEffect(() => {
-    const success = searchParams.get('success');
-    const canceled = searchParams.get('canceled');
-    const error = searchParams.get('error');
-
-    if (success === 'true') {
-      setStatus('success');
-      setIsVisible(true);
-    } else if (canceled === 'true') {
-      setStatus('canceled');
-      setIsVisible(true);
-    } else if (error) {
-      setStatus('error');
-      setIsVisible(true);
-    }
-
-    // Auto-hide after 10 seconds
-    if (success || canceled || error) {
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, 10_000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [searchParams]);
+    if (!status) return;
+    const timer = setTimeout(() => setIsVisible(false), 10_000);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   const handleDismiss = () => {
     setIsVisible(false);

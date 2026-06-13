@@ -58,6 +58,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
   });
   const columns = createColumns({ showApiColumns, dict });
 
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable<AudioFileAndVoicesRes>({
     data: (data as AudioFileAndVoicesRes[]) ?? [],
     columns,

@@ -158,6 +158,7 @@ export function CreateCharacterDialog({
                 </SelectContent>
               </Select>
               <VoicePlayButton
+                key={voiceName}
                 ariaLabels={{
                   play: dict.playVoiceSample,
                   stop: dict.stopVoiceSample,

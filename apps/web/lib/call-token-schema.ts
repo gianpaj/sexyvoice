@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { callScenes } from '@/data/call-scenes';
 
-export const sessionConfigSchema = z.object({
+const sessionConfigSchema = z.object({
   model: z.string(),
   voice: z.string(),
   temperature: z.number().min(0).max(1.2),

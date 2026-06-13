@@ -5,10 +5,10 @@ import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import {
   type ComponentPropsWithoutRef,
-  forwardRef,
   type ReactNode,
-  useCallback,
+  type Ref,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -61,12 +61,17 @@ import {
 interface AnimatedPromptTextareaProps
   extends ComponentPropsWithoutRef<typeof Textarea> {
   children?: ReactNode;
+  ref?: Ref<HTMLTextAreaElement>;
 }
 
-export const AnimatedPromptTextarea = forwardRef<
-  HTMLTextAreaElement,
-  AnimatedPromptTextareaProps
->(({ children, className, onBlur, onFocus, ...props }, ref) => {
+export function AnimatedPromptTextarea({
+  children,
+  className,
+  onBlur,
+  onFocus,
+  ref,
+  ...props
+}: AnimatedPromptTextareaProps) {
   return (
     <SpotlightField>
       <Textarea
@@ -82,8 +87,7 @@ export const AnimatedPromptTextarea = forwardRef<
       {children}
     </SpotlightField>
   );
-});
-AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
+}
 
 interface CreditEstimatorProps {
   buttonLabel: string;
@@ -191,8 +195,7 @@ export function AudioGenerator({
   const [splitTextAudios, setSplitTextAudios] = useState(false);
   const [isDownloadingAllSegments, setIsDownloadingAllSegments] =
     useState(false);
-  const [playerControls, setPlayerControls] =
-    useState<AudioPlayerControls | null>(null);
+  const playerControlsRef = useRef<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
 
@@ -230,7 +233,7 @@ export function AudioGenerator({
         language: isGrokVoice ? selectedGrokLanguage : '',
         styleVariant: isGeminiVoice ? selectedStyle : '',
       }),
-    [isGeminiVoice, isGrokVoice, selectedGrokLanguage, selectedStyle],
+    [isGrokVoice, isGeminiVoice, selectedGrokLanguage, selectedStyle],
   );
   const previewSplitSegmentTexts = useMemo(
     () => splitSegmentTexts.slice(0, SPLIT_SEGMENT_MAX_COUNT),
@@ -267,45 +270,39 @@ export function AudioGenerator({
     textareaRightPadding = 'pr-20';
   }
 
-  const requestGenerateVoice = useCallback(
-    async (segmentText: string, signal: AbortSignal, seed?: number) => {
-      if (!selectedVoice) {
-        throw new APIError(dict.error, new Response(null, { status: 400 }));
-      }
+  const requestGenerateVoice = async (
+    segmentText: string,
+    signal: AbortSignal,
+    seed?: number,
+  ) => {
+    if (!selectedVoice) {
+      throw new APIError(dict.error, new Response(null, { status: 400 }));
+    }
 
-      const response = await fetch('/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: segmentText,
-          voice: selectedVoice.name,
-          styleVariant: isGeminiVoice ? selectedStyle : '',
-          language: isGrokVoice ? selectedGrokLanguage : undefined,
-          ...(seed === undefined ? {} : { seed }),
-        }),
-        signal,
-      });
+    const response = await fetch('/api/generate-voice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: segmentText,
+        voice: selectedVoice.name,
+        styleVariant: isGeminiVoice ? selectedStyle : '',
+        language: isGrokVoice ? selectedGrokLanguage : undefined,
+        ...(seed === undefined ? {} : { seed }),
+      }),
+      signal,
+    });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throwGenerateVoiceError(dict, data, response);
-      }
+    const data = await response.json();
+    if (!response.ok) {
+      throwGenerateVoiceError(dict, data, response);
+    }
 
-      return data.url as string;
-    },
-    [
-      dict,
-      isGeminiVoice,
-      isGrokVoice,
-      selectedGrokLanguage,
-      selectedStyle,
-      selectedVoice,
-    ],
-  );
+    return data.url as string;
+  };
 
-  const generateSingleAudio = useCallback(async () => {
+  const generateSingleAudio = async () => {
     if (!selectedVoice) return;
 
     abortController.current = new AbortController();
@@ -316,16 +313,10 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(dict.success);
-  }, [
-    dict.success,
-    requestGenerateVoice,
-    selectedVoice,
-    showGenerationProgressToast,
-    text,
-  ]);
+  };
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
-  const generateSplitAudios = useCallback(async () => {
+  const generateSplitAudios = async () => {
     if (!(selectedVoice && splitSegments.length > 0)) return;
 
     const currentSegmentTexts = splitSegments.map((segment) =>
@@ -408,22 +399,9 @@ export function AudioGenerator({
     if (!encounteredFailure) {
       toast.success(dict.success);
     }
-  }, [
-    dict.error,
-    dict.success,
-    dict.split.segmentCannotBeEmpty,
-    dict.split.segmentFailed,
-    markSegmentFailed,
-    markSegmentGenerating,
-    markSegmentIdle,
-    markSegmentSuccess,
-    requestGenerateVoice,
-    selectedVoice,
-    showGenerationProgressToast,
-    splitSegments,
-  ]);
+  };
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = async () => {
     if (!selectedVoice) return;
 
     if (
@@ -453,112 +431,86 @@ export function AudioGenerator({
       dismissGenerationProgressToast();
       setIsGenerating(false);
     }
-  }, [
-    dict.error,
-    dict.split.tooManySegments,
-    dismissGenerationProgressToast,
-    generateSingleAudio,
-    generateSplitAudios,
-    selectedVoice,
-    shouldUseSplitMode,
-    splitSegmentTexts.length,
-  ]);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-  }, []);
+  };
 
-  const handleRetrySegment = useCallback(
-    async (segmentIndex: number) => {
-      const segment = splitSegments[segmentIndex];
-      if (!segment || isGenerating || !selectedVoice) {
+  const handleRetrySegment = async (segmentIndex: number) => {
+    const segment = splitSegments[segmentIndex];
+    if (!segment || isGenerating || !selectedVoice) {
+      return;
+    }
+
+    const seed = generateRetrySeed();
+    retryAbortController.current = new AbortController();
+
+    setIsGenerating(true);
+    markSegmentGenerating(segmentIndex);
+    showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
+
+    try {
+      const generatedUrl = await requestGenerateVoice(
+        segment.text,
+        retryAbortController.current.signal,
+        seed,
+      );
+
+      markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
+      showGenerationProgressToast(segmentIndex + 1, splitSegments.length, true);
+      toast.success(
+        dict.split.segmentGenerated.replace(
+          '__INDEX__',
+          String(segmentIndex + 1),
+        ),
+      );
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        markSegmentIdle(segmentIndex);
         return;
       }
 
-      const seed = generateRetrySeed();
-      retryAbortController.current = new AbortController();
-
-      setIsGenerating(true);
-      markSegmentGenerating(segmentIndex);
-      showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
-
-      try {
-        const generatedUrl = await requestGenerateVoice(
-          segment.text,
-          retryAbortController.current.signal,
-          seed,
-        );
-
-        markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
-        showGenerationProgressToast(
-          segmentIndex + 1,
-          splitSegments.length,
-          true,
-        );
-        toast.success(
-          dict.split.segmentGenerated.replace(
+      markSegmentFailed(segmentIndex);
+      if (error instanceof APIError) {
+        toast.error(error.message || dict.error);
+      } else {
+        toast.error(
+          dict.split.segmentRetryFailed.replace(
             '__INDEX__',
             String(segmentIndex + 1),
           ),
         );
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          markSegmentIdle(segmentIndex);
-          return;
-        }
-
-        markSegmentFailed(segmentIndex);
-        if (error instanceof APIError) {
-          toast.error(error.message || dict.error);
-        } else {
-          toast.error(
-            dict.split.segmentRetryFailed.replace(
-              '__INDEX__',
-              String(segmentIndex + 1),
-            ),
-          );
-        }
-      } finally {
-        setIsGenerating(false);
-        dismissGenerationProgressToast();
       }
-    },
-    [
-      dict.error,
-      dict.split.segmentGenerated,
-      dict.split.segmentRetryFailed,
-      dismissGenerationProgressToast,
-      isGenerating,
-      markSegmentFailed,
-      markSegmentGenerating,
-      markSegmentIdle,
-      markSegmentSuccess,
-      requestGenerateVoice,
-      selectedVoice,
-      showGenerationProgressToast,
-      splitSegments,
-    ],
-  );
+    } finally {
+      setIsGenerating(false);
+      dismissGenerationProgressToast();
+    }
+  };
+
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+
+      if (
+        !isGenerating &&
+        text.trim() &&
+        selectedVoice &&
+        hasEnoughCredits &&
+        !textIsOverLimit
+      ) {
+        handleGenerate().catch((error) => {
+          console.error('Keyboard shortcut generation failed:', error);
+        });
+      }
+    }
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        event.preventDefault();
-
-        if (
-          !isGenerating &&
-          text.trim() &&
-          selectedVoice &&
-          hasEnoughCredits &&
-          !textIsOverLimit
-        ) {
-          handleGenerate().catch((error) => {
-            console.error('Keyboard shortcut generation failed:', error);
-          });
-        }
-      }
+      onKeyDown(event);
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -566,18 +518,11 @@ export function AudioGenerator({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [
-    handleGenerate,
-    hasEnoughCredits,
-    isGenerating,
-    selectedVoice,
-    text,
-    textIsOverLimit,
-  ]);
+  }, []);
 
   const resetPlayer = () => {
-    if (playerControls) {
-      playerControls.reset();
+    if (playerControlsRef.current) {
+      playerControlsRef.current.reset();
       return;
     }
 
@@ -727,10 +672,6 @@ export function AudioGenerator({
     }
   };
 
-  const handleControlsReady = useCallback((controls: AudioPlayerControls) => {
-    setPlayerControls(controls);
-  }, []);
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset estimate when voice or text changes
   useEffect(() => {
     setEstimatedCredits(null);
@@ -743,49 +684,39 @@ export function AudioGenerator({
     }
   }, [text, isFullscreen]);
 
-  const requestEstimateCredits = useCallback(
-    async (textToEstimate: string) => {
-      if (!(selectedVoice && canEstimateCredits)) {
-        throw new APIError(
-          dict.errorEstimating,
-          new Response(null, { status: 400 }),
-        );
-      }
+  const requestEstimateCredits = async (textToEstimate: string) => {
+    if (!(selectedVoice && canEstimateCredits)) {
+      throw new APIError(
+        dict.errorEstimating,
+        new Response(null, { status: 400 }),
+      );
+    }
 
-      const response = await fetch('/api/estimate-credits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: textToEstimate,
-          voice: selectedVoice.name,
-          styleVariant: isGeminiVoice ? selectedStyle : '',
-        }),
-      });
+    const response = await fetch('/api/estimate-credits', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: textToEstimate,
+        voice: selectedVoice.name,
+        styleVariant: isGeminiVoice ? selectedStyle : '',
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        throw new APIError(data.error || dict.error, response);
-      }
+    if (!response.ok) {
+      throw new APIError(data.error || dict.error, response);
+    }
 
-      const value = Number(data.estimatedCredits);
-      if (!Number.isFinite(value)) {
-        throw new APIError(dict.errorEstimating, response);
-      }
+    const value = Number(data.estimatedCredits);
+    if (!Number.isFinite(value)) {
+      throw new APIError(dict.errorEstimating, response);
+    }
 
-      return value;
-    },
-    [
-      canEstimateCredits,
-      dict.error,
-      dict.errorEstimating,
-      isGeminiVoice,
-      selectedStyle,
-      selectedVoice,
-    ],
-  );
+    return value;
+  };
 
   const handleEstimateCredits = async () => {
     if (!(selectedVoice && canEstimateCredits && text.trim())) return;
@@ -957,9 +888,9 @@ export function AudioGenerator({
                 <AudioPlayerWithContext
                   autoPlay
                   className="rounded-md"
-                  onControlsReady={handleControlsReady}
                   playAudioTitle={dict.playAudio}
                   progressColor="#8b5cf6"
+                  ref={playerControlsRef}
                   showWaveform
                   url={audioURL}
                   waveColor="#888888"

@@ -2,7 +2,7 @@
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
 
@@ -55,7 +55,7 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
     loadFFmpeg();
   }, [lazyLoad]);
 
-  const ensureLoaded = useCallback(async (): Promise<void> => {
+  const ensureLoaded = async (): Promise<void> => {
     if (ffmpegRef.current) {
       return;
     }
@@ -72,7 +72,7 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   const convert = async (
     file: File | Blob,
