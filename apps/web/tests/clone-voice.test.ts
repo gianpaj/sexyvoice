@@ -973,7 +973,7 @@ describe('Clone Voice API Route', () => {
           quantity: 10,
           durationSeconds: 10,
           creditsUsed: 100,
-          dollarAmount: 0.01,
+          dollarAmount: 0.002600646,
           metadata: expect.objectContaining({
             referenceAudioOriginalDurationSeconds: 61,
             referenceAudioTrimmed: true,
@@ -1068,7 +1068,7 @@ describe('Clone Voice API Route', () => {
           quantity: 25,
           durationSeconds: 25,
           creditsUsed: 250,
-          dollarAmount: 0.025,
+          dollarAmount: 0.002600646,
           metadata: expect.objectContaining({
             referenceAudioOriginalDurationSeconds: 30,
             referenceAudioTrimmed: true,
@@ -1211,7 +1211,7 @@ describe('Clone Voice API Route', () => {
           quantity: 12,
           durationSeconds: 12,
           creditsUsed: 120,
-          dollarAmount: 0.012,
+          dollarAmount: 0.002600646,
           metadata: expect.objectContaining({
             operation: 'reference_audio_enhancement',
             provider: 'fal',

@@ -515,6 +515,39 @@ function getReferenceAudioEnhancementDollarCost(
   );
 }
 
+async function getFalBillingEventCost(
+  requestId: string,
+): Promise<number | null> {
+  const adminKey = process.env.FAL_ADMIN_KEY;
+  if (!adminKey) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.fal.ai/v1/models/billing-events?request_id=${encodeURIComponent(requestId)}`,
+      { headers: { Authorization: `Key ${adminKey}` } },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      billing_events?: { cost_estimate_nano_usd?: number }[];
+    };
+    const nanoUsd = data.billing_events?.[0]?.cost_estimate_nano_usd;
+
+    if (typeof nanoUsd !== 'number' || nanoUsd <= 0) {
+      return null;
+    }
+
+    return parseFloat((nanoUsd / 1_000_000_000).toFixed(10));
+  } catch {
+    return null;
+  }
+}
+
 function validateCreditAmount({
   currentAmount,
   requiredCredits,
@@ -1186,6 +1219,12 @@ async function runBackgroundTasks(
     const enhancementDurationSeconds =
       audioFileData.referenceAudioEnhancementDurationSeconds ?? 0;
 
+    const actualDollarAmount = audioFileData.referenceAudioEnhancementRequestId
+      ? await getFalBillingEventCost(
+          audioFileData.referenceAudioEnhancementRequestId,
+        )
+      : null;
+
     await insertUsageEvent({
       userId,
       sourceType: 'audio_processing',
@@ -1196,7 +1235,8 @@ async function runBackgroundTasks(
       quantity: enhancementDurationSeconds,
       durationSeconds: enhancementDurationSeconds,
       creditsUsed: audioFileData.referenceAudioEnhancementCredits,
-      dollarAmount: audioFileData.referenceAudioEnhancementDollarAmount,
+      dollarAmount:
+        actualDollarAmount ?? audioFileData.referenceAudioEnhancementDollarAmount,
       metadata: {
         operation: 'reference_audio_enhancement',
         provider: 'fal',
