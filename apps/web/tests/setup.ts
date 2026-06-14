@@ -33,11 +33,19 @@ export const handlers = [
     });
   }),
   // fal.ai billing events API mock
-  http.get('https://api.fal.ai/v1/models/billing-events', () =>
-    HttpResponse.json({
+  http.get('https://api.fal.ai/v1/models/billing-events', ({ request }) => {
+    const auth = request.headers.get('authorization');
+    if (!auth?.startsWith('Key ')) {
+      return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const requestId = new URL(request.url).searchParams.get('request_id');
+    if (!requestId) {
+      return HttpResponse.json({ error: 'Missing request_id' }, { status: 400 });
+    }
+    return HttpResponse.json({
       billing_events: [
         {
-          request_id: 'test-fal-request-id',
+          request_id: requestId,
           endpoint_id: 'fal-ai/deepfilternet3',
           timestamp: '2026-06-13T03:44:17.164745000Z',
           output_units: 2.6006458333333335,
@@ -48,8 +56,8 @@ export const handlers = [
       ],
       next_cursor: null,
       has_more: false,
-    }),
-  ),
+    });
+  }),
   // fal.ai audio file fetch mock
   http.get('https://fal-cdn.com/test-audio.mp3', () => {
     // Return a minimal valid audio buffer
