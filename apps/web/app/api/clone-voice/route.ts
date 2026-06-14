@@ -526,10 +526,17 @@ async function getFalBillingEventCost(
   try {
     const response = await fetch(
       `https://api.fal.ai/v1/models/billing-events?request_id=${encodeURIComponent(requestId)}`,
-      { headers: { Authorization: `Key ${adminKey}` } },
+      {
+        headers: { Authorization: `Key ${adminKey}` },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      },
     );
 
     if (!response.ok) {
+      logger.warn('Fal billing events API returned non-ok response', {
+        extra: { requestId, status: response.status },
+      });
       return null;
     }
 
@@ -540,11 +547,17 @@ async function getFalBillingEventCost(
     const nanoUsd = data.billing_events?.[0]?.cost_estimate_nano_usd;
 
     if (typeof nanoUsd !== 'number' || nanoUsd < 0) {
+      logger.warn('Fal billing events API returned unexpected cost data', {
+        extra: { requestId, nanoUsd },
+      });
       return null;
     }
 
     return nanoUsd / 1_000_000_000;
-  } catch {
+  } catch (err) {
+    logger.warn('Failed to fetch Fal billing event cost', {
+      extra: { requestId, errorMessage: getUnknownErrorMessage(err) },
+    });
     return null;
   }
 }
