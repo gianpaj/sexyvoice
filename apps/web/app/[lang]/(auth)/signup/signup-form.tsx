@@ -25,6 +25,26 @@ export function SignUpForm({ lang }: { lang: Locale }) {
   const err = useTranslations('errorCodes');
   const t = useTranslations('auth.signup');
 
+  const resolveSignUpErrorMessage = (signUpError: {
+    message?: string;
+    seconds?: number;
+  }): string => {
+    const errorCode = signUpError?.message;
+
+    if (errorCode === 'AUTH_PROVIDER_RATELIMIT' && signUpError.seconds) {
+      return err('AUTH_PROVIDER_RATELIMIT', {
+        time: String(signUpError.seconds),
+      });
+    }
+
+    const messageKey = errorCode as Parameters<typeof err>[0];
+    if (errorCode && err.has(messageKey)) {
+      return err(messageKey);
+    }
+
+    return t('error');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -66,21 +86,13 @@ export function SignUpForm({ lang }: { lang: Locale }) {
 
       const { error: signUpError, data } = await res.json();
 
-      const errorCode = signUpError?.message;
-
       if (signUpError || !data.user) {
         console.error(signUpError, data);
         // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
         if (signUpError?.message === 'VALIDATION_ERROR_EMAIL_EXISTS') {
           router.push(`/${lang}/login?email=${encodeURIComponent(email)}`);
-        } else if (errorCode) {
-          if (signUpError.seconds) {
-            setError(err('AUTH_PROVIDER_RATELIMIT', { time: String(signUpError.seconds) }));
-          } else {
-            setError(err(errorCode));
-          }
         } else {
-          setError(signUpError?.message || t('error'));
+          setError(resolveSignUpErrorMessage(signUpError ?? {}));
         }
         return;
       }
@@ -131,7 +143,7 @@ export function SignUpForm({ lang }: { lang: Locale }) {
         <Input
           autoComplete="new-password"
           id="password"
-          maxLength={25}
+          maxLength={72}
           minLength={6}
           onChange={(e) => setPassword(e.target.value)}
           required

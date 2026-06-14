@@ -1038,6 +1038,6 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
-    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo _XX_ secondi."
+    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi."
   }
 }

@@ -37,13 +37,6 @@ function parseSignUpError(
     return null;
   }
 
-  // Try parsing as JSON first
-  try {
-    return JSON.parse(errorMessage);
-  } catch {
-    // Not JSON, continue with pattern matching
-  }
-
   // Check against known error patterns
   for (const { match, parse } of ERROR_PATTERNS) {
     if (match(errorMessage)) {
@@ -58,22 +51,33 @@ function parseSignUpError(
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  const { email, password } = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: { message: 'Invalid request body' } },
+      { status: 400 },
+    );
+  }
 
   const schema = z.object({
     email: z.email(),
     password: z.string().min(6).max(72),
   });
 
-  const result = schema.safeParse({ email, password });
+  const result = schema.safeParse(body);
 
   if (!result.success) {
-    const errors = JSON.parse(result.error.message);
+    const firstErrorMessage =
+      result.error.issues[0]?.message || 'Validation failed';
     return NextResponse.json(
-      { error: { message: errors[0]?.message || 'Validation failed' } },
+      { error: { message: firstErrorMessage } },
       { status: 400 },
     );
   }
+
+  const { email, password } = result.data;
 
   if (isDisposableEmail(email)) {
     return NextResponse.json(
@@ -91,12 +95,25 @@ export async function POST(request: Request) {
   });
 
   if (signUpError || !data.user) {
+    const parsedError = parseSignUpError(signUpError?.message);
+
+    const isRateLimitError = parsedError?.message === 'AUTH_PROVIDER_RATELIMIT';
+    const hasRetryAfter =
+      isRateLimitError &&
+      typeof parsedError?.seconds === 'number' &&
+      Number.isFinite(parsedError.seconds);
+
     return NextResponse.json(
       {
-        error: parseSignUpError(signUpError?.message),
+        error: parsedError,
         data,
       },
-      { status: 400 },
+      {
+        status: isRateLimitError ? 429 : 400,
+        headers: hasRetryAfter
+          ? { 'Retry-After': String(parsedError?.seconds) }
+          : undefined,
+      },
     );
   }
 
