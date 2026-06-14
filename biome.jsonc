@@ -12,10 +12,11 @@
       "!**/venv",
       "!**/.venv",
       "!**/node_modules",
-      "!components/ui",
-      "!.next",
-      "!dist",
-      "!build"
+      "!**/.next",
+      "!**/dist",
+      "!**/build",
+      "!apps/web/components/ui",
+      "!apps/web/app/globals.css"
     ]
   },
   "formatter": {
@@ -60,13 +61,17 @@
         "noUnknownAtRules": "off"
       },
       "correctness": {
-        "useUniqueElementIds": "off"
+        "useUniqueElementIds": "off",
+        "noNextAsyncClientComponent": "error"
       },
       "nursery": {
         "noShadow": "off",
-        "noLeakedRender": "off"
+        "noLeakedRender": "off",
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error"
       },
       "performance": {
+        "noNamespaceImport": "warn",
         "useTopLevelRegex": "off"
       }
     },
@@ -90,6 +95,7 @@
   "assist": {
     "actions": {
       "source": {
+        "noDuplicateClasses": "on",
         "organizeImports": {
           "level": "on",
           "options": {

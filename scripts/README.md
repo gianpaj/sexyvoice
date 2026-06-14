@@ -1,34 +1,40 @@
+# Scripts
+
 ## Reset Freeloader Credits Script
 
 Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.
 
 ### Quick Start
+
 ```bash
 # Show help
-pnpm tsx scripts/reset-freeloader-credits.ts --help
+pnpm reset-freeloader-credits --help
 
 # Test with dry-run flag (no changes made)
-pnpm tsx scripts/reset-freeloader-credits.ts --dryrun freeloaders.csv
+pnpm reset-freeloader-credits --dryrun freeloaders.csv
 
 # Test with limited records
-pnpm tsx scripts/reset-freeloader-credits.ts --dryrun --limit 10 freeloaders.csv
+pnpm reset-freeloader-credits --dryrun --limit 10 freeloaders.csv
 
 # Run for real (will prompt for confirmation)
-pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
+pnpm reset-freeloader-credits freeloaders.csv
 ```
 
 ### CLI Options
+
 - `--dryrun` - Run in dry-run mode (no database changes)
 - `-l, --limit <number>` - Limit number of records to process
 - `-h, --help` - Show help message
 
 ### CSV Format
+
 ```csv
 id,username,created_at,total_credits_received,total_credits_used,current_credits,usage_percentage
 26fb4371-...,user@email.com,2025-11-26 16:11:36.930227+00,10000,11856,2464,118.56
 ```
 
 ### Features
+
 - **Batch processing**: Fetches credit balances in batches of 10 (10x faster!)
 - **CLI options**: `--dryrun`, `--limit`, `--help` flags
 - Dry-run mode for safe testing
@@ -39,14 +45,58 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 - Detailed progress reporting
 
 ### Performance
+
 - 50 users: ~10 seconds (vs ~50 seconds sequential)
 - 100 users: ~10 seconds (vs ~100 seconds sequential)
 - Processes 10 users per database query
 
 ### Documentation
+
 - [RESET_CREDITS_GUIDE.md](./RESET_CREDITS_GUIDE.md) - Complete guide with examples
 - [QUICKREF.md](./QUICKREF.md) - Quick reference card
 - [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
+
+---
+
+## Backfill Free Call Script
+
+Retroactively sets the `free_call` column on `call_sessions` by checking whether the
+user had a paid transaction (`purchase` or `topup`) before the call started.
+
+### Quick Start
+
+```bash
+# Show help
+pnpm backfill-free-call --help
+
+# Dry-run to preview changes
+pnpm backfill-free-call --dryrun
+
+# Dry-run first 50 records
+pnpm backfill-free-call --dryrun --limit 50
+
+# Apply changes (prompts for confirmation)
+pnpm backfill-free-call
+```
+
+### CLI Options
+
+- `--dryrun` - Run in dry-run mode (no database changes)
+- `-l, --limit <number>` - Limit number of call sessions to process
+- `-h, --help` - Show help message
+
+### What it does
+
+- Fetches `call_sessions` in batches of 1000
+- Fetches paid credit transactions in batches of 50 users
+- Sets `free_call = true` if the user had **no** paid transaction before the call
+- Sets `free_call = false` if the user **had** paid before the call
+- Applies updates in batches of 100
+
+### Notes
+
+- Requires `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- Output timestamps are normalized to second precision
 
 ---
 
@@ -55,6 +105,7 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 Interactive Node.js/TypeScript script to process credit refunds for users.
 
 ### Features
+
 - Calculates maximum refundable amount based on credits purchased vs. used
 - Prevents refunds for freemium-only users
 - Links refund to original payment intent
@@ -68,16 +119,17 @@ Interactive Node.js/TypeScript script to process credit refunds for users.
 
 ```bash
 # Run with user ID as argument
-pnpm exec tsx scripts/refund-credits.ts <user-id>
+pnpm refund-credits -- <user-id>
 
 # Or run interactively (will prompt for user ID)
-pnpm exec tsx scripts/refund-credits.ts
+pnpm refund-credits
 ```
 
-### What it does:
+### What it does
+
 1. Fetches all credit transactions for the user
 2. Calculates total credits purchased (from `purchase` and `topup` transactions)
-3. Calculates total credits used (from `audio_files.credits_used`)
+3. Calculates total credits used (from `usage_events.credits_used`)
 4. Calculates total credits already refunded (from `refund` transactions)
 5. Fetches user's credit balance from `credits` table
 6. **Validates that calculated credits match actual balance** (throws error if mismatch)
@@ -91,11 +143,13 @@ pnpm exec tsx scripts/refund-credits.ts
 14. Updates the `credits` table by calling `decrement_user_credits` function
 
 ### Requirements
+
 - `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
 - User must have `purchase` or `topup` transactions with `metadata.dollarAmount`
 - Freemium-only users cannot be refunded
 
 ### Example Output
+
 ```
 Processing refund for user: xxx-xxx-xxx
 
@@ -116,11 +170,13 @@ Max Refund Amount: $38.00
 The script prevents duplicate refunds by tracking all previous refunds and automatically updates the user's credit balance:
 
 **Available Credits Formula:**
+
 ```
 Available Credits = (Purchased + Topup + Freemium) - Used - Refunded
 ```
 
 **Maximum Refundable Credits Formula:**
+
 ```
 Max Refundable = Total Purchased - Total Used - Total Already Refunded
 ```
@@ -133,6 +189,7 @@ Max Refundable = Total Purchased - Total Used - Total Already Refunded
 - Maximum refundable now: 5000 - 1200 - 500 = **3300 credits** ($33.00)
 
 This ensures:
+
 - Users can't be refunded more than they paid
 - Users can't get refunds for credits they've already used
 - Users can't receive multiple refunds for the same credits
@@ -142,15 +199,15 @@ This ensures:
 
 ### Data Integrity Check
 
-Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table. 
+Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table.
 
-The calculated available credits = (purchase + topup + freemium credits) - (credits used from audio files) - (previously refunded credits)
+The calculated available credits = (purchase + topup + freemium credits) - (credits used from `usage_events`) - (previously refunded credits)
 
 If there's a mismatch, the script will throw an error:
 
 ```
 Credit mismatch detected!
-  Calculated from transactions: 3800
+  Calculated from usage_events: 3800
   Actual balance in credits table: 3750
   Please investigate data integrity before processing refund.
 ```
@@ -162,20 +219,92 @@ This prevents refunds when there are data inconsistencies that need to be resolv
 When you select a transaction to refund:
 
 **If refunding the full transaction amount:**
+
 ```
 💡 Note: Refunding full transaction amount. Suggested refund: $10.00
 Enter USD amount to refund [suggested: $10.00]:
 ```
+
 The script suggests the exact dollar amount from that transaction's metadata, preventing rounding errors.
 
 **If refunding a partial amount:**
+
 ```
 Calculated refund based on credit rate: $7.50
 Enter USD amount to refund [suggested: $7.50]:
 ```
+
 The script calculates the amount based on the credit rate (total spent / total credits).
 
 You can press Enter to accept the suggestion, or enter a custom amount.
+
+---
+
+## Batch Refund Credits Script
+
+Processes platform-bug credit refunds in bulk from a CSV of duplicate usage events. Adds credits back to affected users (no USD refund) one by one, with a single confirmation prompt before starting.
+
+### Usage
+
+```bash
+# Dry run first to verify CSV parsing and row count
+pnpm batch-refund-credits -- dupes.csv --dry-run
+
+# Apply refunds (prompts for confirmation)
+pnpm batch-refund-credits -- dupes.csv
+```
+
+### CSV Format
+
+Export the duplicate sessions query result as CSV:
+
+```csv
+source_id,user_id,event_count,first_event_at,last_event_at,duplicate_credits,duplicate_dollars,end_reasons
+38ae34f3-f7fd-48ec-88dc-0955f0722812,8c56bc8d-b16f-4de3-acf7-2f58313b209b,19,2026-05-15 16:45:07+00,2026-05-15 16:47:46+00,72000,null,"[""credit_limit""]"
+```
+
+Only `source_id`, `user_id`, and `duplicate_credits` are used. Rows with `duplicate_credits` ≤ 0 or null are skipped automatically.
+
+### SQL to identify duplicate sessions
+
+```sql
+WITH dupes AS (
+    SELECT
+        source_id,
+        user_id,
+        COUNT(*)                                  AS event_count,
+        MIN(occurred_at)                          AS first_event_at,
+        MAX(occurred_at)                          AS last_event_at,
+        SUM(credits_used)   - MAX(credits_used)   AS duplicate_credits,
+        SUM(dollar_amount)  - MAX(dollar_amount)  AS duplicate_dollars,
+        ARRAY_AGG(DISTINCT metadata ->> 'end_reason') AS end_reasons
+    FROM usage_events
+    WHERE source_type = 'live_call'
+    GROUP BY source_id, user_id
+    HAVING COUNT(*) > 1
+)
+SELECT * FROM dupes
+ORDER BY event_count DESC, last_event_at DESC;
+```
+
+### What it does
+
+1. Parses the CSV (handles quoted fields)
+2. Shows total rows and total credits to restore, then asks for confirmation
+3. For each row, inserts a `refund` credit transaction (positive amount, credits added back) and calls `increment_user_credits`
+4. Continues on per-row errors — failed rows are listed in the summary
+5. Exits with code 1 if any rows failed
+
+Each refund transaction is recorded with:
+
+- `type: 'refund'`
+- `description: "Refund - Double billing (voice call <source_id_prefix>)"`
+- `metadata.reason: "Double billing - voice call"`
+- `metadata.sourceId`: the full source_id for traceability
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
 
 ---
 
@@ -251,28 +380,31 @@ export SUPABASE_DB_URL="postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postg
 ```
 
 This will:
+
 1. Fetch 500 Stripe payment intents (with pagination)
 2. Export Supabase credit transactions
 3. Clean both datasets
 4. Detect duplicates in both systems
 5. Compare and generate reports including CSV exports
 
-
 ## Credit Transaction Analysis Scripts
 
 Python scripts for analyzing credit transaction data from SexyVoice.ai to extract insights about user purchasing behavior and patterns.
 
 ### Basic Analysis
+
 ```bash
 python analyze-credit-transactions.py path/to/credit_transactions.csv
 ```
 
 ### Create Visualizations
+
 ```bash
 python visualize-transactions.py path/to/credit_transactions.csv
 ```
 
 ### Clean Data First (Optional)
+
 ```bash
 python clean-transactions.py path/to/raw_transactions.csv
 python analyze-credit-transactions.py path/to/raw_transactions_cleaned.csv
