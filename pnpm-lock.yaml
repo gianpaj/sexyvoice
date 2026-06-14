@@ -565,6 +565,9 @@ importers:
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.99.2
+      disposable-email-domains-js:
+        specifier: ^1.21.0
+        version: 1.21.0
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1

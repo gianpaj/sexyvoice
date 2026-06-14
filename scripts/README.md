@@ -308,6 +308,94 @@ Each refund transaction is recorded with:
 
 ---
 
+## Check Disposable Emails Script
+
+Node.js script (`check-disposable-emails.mjs`) that fetches the most recently
+created `profiles` and checks how many `username` values (which are actually the
+user's email) belong to a disposable / temporary email provider. It can
+optionally reset the flagged users' credits to 0.
+
+Two independent sources are cross-checked:
+
+1. The `disposable-email-domains-js` npm package (the same one used by the web
+   app's signup route, `apps/web/app/auth/signup/route.ts`).
+2. The `denyDomains.txt` list from
+   [amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains),
+   which is shallow-cloned into `scripts/.cache` on first run and `git pull`ed
+   on subsequent runs.
+
+### Quick Start
+
+```bash
+# Check the last 1000 profiles (default) and write a summary + CSV
+pnpm check-disposable-emails
+
+# Check the last 3000 profiles (paginates past Supabase's 1000-row cap)
+pnpm check-disposable-emails -- --limit 3000
+
+# Only profiles created in the last 14 days
+pnpm check-disposable-emails -- --days 14
+
+# Preview resetting flagged users' credits to 0 (no DB changes)
+pnpm check-disposable-emails -- --days 14 --reset-credits --dry-run
+
+# Apply the reset (prompts for a typed "RESET CREDITS" confirmation)
+pnpm check-disposable-emails -- --days 14 --reset-credits
+
+# Apply without the prompt (e.g. CI)
+pnpm check-disposable-emails -- --days 14 --reset-credits --yes
+```
+
+### CLI Options
+
+- `--limit <n>` - Number of most-recent profiles to fetch (default: 1000)
+- `--days <n>` - Only consider profiles created in the last `<n>` days
+- `--out <dir>` - Output directory for the summary / CSV (default: cwd)
+- `--no-clone` - Skip cloning/updating the amieiro repo (use cached copy)
+- `--reset-credits` - Reset flagged users' credits to 0
+- `--dry-run` - With `--reset-credits`, only report what would change
+- `--yes` - Skip the interactive confirmation for a live reset
+
+### Output
+
+- `disposable-emails-summary-<timestamp>.txt` - Counts and percentages by
+  source, plus the most common disposable domains (also printed to stdout)
+- `disposable-emails-<timestamp>.csv` - Every flagged profile with
+  `by_package` / `by_amieiro` columns (gitignored)
+
+### Credit reset
+
+When `--reset-credits` is passed, for each flagged user with a **positive**
+balance the script resets their credits. Users are **skipped** when they:
+
+- have ever paid — any `purchase` or `topup` `credit_transactions` row, or
+- already have a balance of ≤0.
+
+For each user that is reset, the script:
+
+1. Sets `credits.amount` to 0
+2. Inserts an audit `credit_transactions` row with:
+   - `type: 'refund'` — the `credit_transaction_type` enum has no `penalty` /
+     `ban` value, so this reuses `'refund'` (as
+     `reset-freeloader-credits.mts` does) and records the real reason in the
+     description / metadata. To change it later, edit the `RESET_TX_TYPE`
+     constant (and add the enum value via a migration first).
+   - `amount: -<previous balance>`
+   - `description: "Credits reset to 0 — disposable email signup (<domain>)"`
+   - `metadata.reason: "disposable_email"` plus `domain`, `detected_by`,
+     `previous_amount`, and a `timestamp`
+
+> ⚠️ Detection is **domain-based** and the amieiro list is broad. Spot-check the
+> generated CSV before a live reset to make sure no legitimate users are caught.
+
+### Requirements
+
+- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` — read
+  automatically from `apps/web/.env.local` (then `scripts/.env`)
+- `git` (for cloning the amieiro list on first run)
+
+---
+
 ## Credit Transactions (Supabase)
 
 ### 1. Download Only Paid Transactions

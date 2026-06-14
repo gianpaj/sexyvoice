@@ -2,6 +2,7 @@
   "name": "@sexyvoice/scripts",
   "dependencies": {
     "@supabase/supabase-js": "catalog:",
+    "disposable-email-domains-js": "^1.21.0",
     "dotenv": "^16.6.1"
   },
   "devDependencies": {
@@ -10,6 +11,7 @@
   "private": true,
   "scripts": {
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
+    "check-disposable-emails": "node check-disposable-emails.mjs",
     "backfill-free-call": "tsx backfill-free-call.mts",
     "batch-refund-credits": "tsx batch-refund-credits.mts",
     "refund-credits": "tsx refund-credits.mts",
