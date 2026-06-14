@@ -536,13 +536,14 @@ async function getFalBillingEventCost(
     const data = (await response.json()) as {
       billing_events?: { cost_estimate_nano_usd?: number }[];
     };
+    // Assumes one billing event per request_id; Fal may return multiple for retries.
     const nanoUsd = data.billing_events?.[0]?.cost_estimate_nano_usd;
 
-    if (typeof nanoUsd !== 'number' || nanoUsd <= 0) {
+    if (typeof nanoUsd !== 'number' || nanoUsd < 0) {
       return null;
     }
 
-    return parseFloat((nanoUsd / 1_000_000_000).toFixed(10));
+    return nanoUsd / 1_000_000_000;
   } catch {
     return null;
   }
