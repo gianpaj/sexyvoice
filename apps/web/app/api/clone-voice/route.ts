@@ -1195,7 +1195,9 @@ async function runBackgroundTasks(
     userId,
     sourceType: 'voice_cloning',
     sourceId: audioFileDBResult.data?.id,
+    model: audioFileData.modelUsed,
     unit: 'operation',
+    requestId: audioFileData.requestId,
     quantity: 1,
     creditsUsed: audioFileData.baseCloneCredits,
     dollarAmount: getDollarCost(
@@ -1210,9 +1212,6 @@ async function runBackgroundTasks(
       textPreview: audioFileData.text.slice(0, 100),
       textLength: audioFileData.text.length,
       audioDuration: audioFileData.duration,
-      referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
-      referenceAudioEnhancementModel:
-        audioFileData.referenceAudioEnhancementModel,
       referenceAudioEnhancementRequestId:
         audioFileData.referenceAudioEnhancementRequestId,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
@@ -1250,17 +1249,14 @@ async function runBackgroundTasks(
       durationSeconds: enhancementDurationSeconds,
       creditsUsed: audioFileData.referenceAudioEnhancementCredits,
       dollarAmount:
-        actualDollarAmount ?? audioFileData.referenceAudioEnhancementDollarAmount,
+        actualDollarAmount ??
+        audioFileData.referenceAudioEnhancementDollarAmount,
       metadata: {
         operation: 'reference_audio_enhancement',
         provider: 'fal',
         model: audioFileData.referenceAudioEnhancementModel,
         voiceCloningRequestId: audioFileData.requestId,
-        voiceCloningModel: audioFileData.modelUsed,
         locale: audioFileData.locale,
-        referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
-        referenceAudioOriginalDurationSeconds:
-          audioFileData.referenceAudioOriginalDurationSeconds,
         referenceAudioProcessedMimeType:
           audioFileData.referenceAudioProcessedMimeType,
         referenceAudioTrimmed: audioFileData.referenceAudioTrimmed,
