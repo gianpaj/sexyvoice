@@ -15,6 +15,7 @@
     "backfill-free-call": "tsx backfill-free-call.mts",
     "batch-refund-credits": "tsx batch-refund-credits.mts",
     "refund-credits": "tsx refund-credits.mts",
-    "reset-freeloader-credits": "tsx reset-freeloader-credits.mts"
+    "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
+    "sync-deny-domains": "node sync-deny-domains.mjs"
   }
 }

@@ -396,6 +396,31 @@ For each user that is reset, the script:
 
 ---
 
+## Sync Deny Domains Script
+
+`sync-deny-domains.mjs` regenerates the disposable-domain list bundled into the
+web app's signup route. It clones/updates
+[amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains)
+in `scripts/.cache`, normalizes its deny list (trim, lowercase, dedupe, sort)
+and writes it to `apps/web/lib/disposable-email/deny-domains.json` as a minified
+JSON array, which the web app imports and turns into a `Set`.
+
+The signup route (`apps/web/app/auth/signup/route.ts`) checks this list **in
+addition** to the `disposable-email-domains-js` package, which catches far more
+disposable signups (~16% vs ~1.6% of recent profiles in production).
+
+```bash
+# Refresh the bundled list (run after amieiro publishes updates)
+pnpm sync-deny-domains
+```
+
+The generated `deny-domains.json` is ~3 MB; it is committed (so deploys don't
+need network access) and excluded from the formatter via `.biomeignore` (kept
+minified). TypeScript widens the homogeneous array to `string[]`, so importing it
+stays cheap to type-check.
+
+---
+
 ## Credit Transactions (Supabase)
 
 ### 1. Download Only Paid Transactions

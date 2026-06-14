@@ -1,7 +1,7 @@
-import { isDisposableEmail } from 'disposable-email-domains-js';
 import { NextResponse } from 'next/server';
 import z from 'zod';
 
+import { isDisposableEmail } from '@/lib/disposable-email';
 import { createClient } from '@/lib/supabase/server';
 
 interface ParsedError {

@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { banList } from '@/lib/banlist';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -51,12 +50,9 @@ export function SignUpForm({ lang }: { lang: Locale }) {
     setError(null);
 
     try {
-      // Check if email is Gmail with + sign and block it
-      // Block email if it's in the ban list
-      if (
-        (email.includes('+') && email.toLowerCase().includes('@gmail.com')) ||
-        banList.includes(email)
-      ) {
+      // Check if email is Gmail with + sign and block it.
+      // Disposable domains are blocked server-side in /auth/signup.
+      if (email.includes('+') && email.toLowerCase().includes('@gmail.com')) {
         setTimeout(() => {
           setError('Error creating account');
           setIsLoading(false);
