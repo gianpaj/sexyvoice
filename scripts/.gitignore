@@ -1,4 +1,5 @@
 venv
+.cache
 *.csv
 __pycache__
 # Audio downloads for analysis scripts

@@ -1035,5 +1035,9 @@
       "audioConverterLink": "Kostenloses Audio-Konverter-Tool",
       "madeWith": "Mit ♡ von SexyVoice.ai – Kostenlos den KI-Audiogenerator ausprobieren"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
   }
 }
