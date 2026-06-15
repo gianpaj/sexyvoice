@@ -120,9 +120,11 @@ export function VoicesList({
                 {voice.created_at && (
                   <div className="text-muted-foreground text-sm">
                     Created{' '}
-                    {formatDistanceToNow(new Date(voice.created_at), {
-                      addSuffix: true,
-                    })}
+                    <time dateTime={voice.created_at} suppressHydrationWarning>
+                      {formatDistanceToNow(new Date(voice.created_at), {
+                        addSuffix: true,
+                      })}
+                    </time>
                   </div>
                 )}
               </div>

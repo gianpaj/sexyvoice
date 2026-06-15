@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
@@ -25,10 +25,8 @@ export function GenerateUI({
   isPaidUser,
   dict,
 }: GenerateUIProps) {
-  const initialVoiceId = useMemo(
-    () => getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '',
-    [publicVoices],
-  );
+  const initialVoiceId =
+    getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '';
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
   const selectedVoiceSample = publicVoices.find(

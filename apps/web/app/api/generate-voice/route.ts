@@ -10,7 +10,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { getCharactersLimit } from '@/lib/ai';
+import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -311,7 +311,7 @@ export async function POST(request: Request) {
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
-            contents: [{ parts: [{ text }] }],
+            contents: [{ role: 'user', parts: [{ text }] }],
             config: geminiTTSConfig,
           });
         } catch (error) {
@@ -356,7 +356,7 @@ export async function POST(request: Request) {
           try {
             genAIResponse = await ai.models.generateContent({
               model: modelUsed,
-              contents: [{ parts: [{ text }] }],
+              contents: [{ role: 'user', parts: [{ text }] }],
               config: geminiTTSConfig,
             });
 
@@ -404,21 +404,20 @@ export async function POST(request: Request) {
         modelUsed = 'gemini-2.5-flash-preview-tts';
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
-          contents: [{ parts: [{ text }] }],
+          contents: [{ role: 'user', parts: [{ text }] }],
           config: geminiTTSConfig,
         });
       }
-
-      const data =
-        genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      const mimeType =
-        genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData
-          ?.mimeType;
+      const { data, mimeType } = extractInlineAudio(genAIResponse);
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
       const blockReason = genAIResponse?.promptFeedback?.blockReason;
       const isProhibitedContent =
         finishReason === FinishReason.PROHIBITED_CONTENT ||
         blockReason === 'PROHIBITED_CONTENT';
+      // Finished normally but no audio came back — transient provider glitch
+      // rather than a content block, so surface it as retryable.
+      const isNoAudioData =
+        finishReason === FinishReason.STOP && !(data && mimeType);
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
         if (isProhibitedContent) {
@@ -478,6 +477,7 @@ export async function POST(request: Request) {
               blockReason,
               hasData: !!data,
               mimeType,
+              isNoAudioData,
               model: modelUsed,
               textPreview: text.slice(0, 200),
               voice: voiceObj.name,
@@ -485,16 +485,15 @@ export async function POST(request: Request) {
             user: { id: user.id },
           });
         }
-        throw new Error(
-          isProhibitedContent
-            ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
-            : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-          {
-            cause: isProhibitedContent
-              ? 'PROHIBITED_CONTENT'
-              : 'OTHER_GEMINI_BLOCK',
-          },
-        );
+        let noAudioErrorCode: keyof typeof ERROR_CODES = 'OTHER_GEMINI_BLOCK';
+        if (isProhibitedContent) {
+          noAudioErrorCode = 'PROHIBITED_CONTENT';
+        } else if (isNoAudioData) {
+          noAudioErrorCode = 'NO_AUDIO_DATA';
+        }
+        throw new Error(getErrorMessage(noAudioErrorCode, 'voice-generation'), {
+          cause: noAudioErrorCode,
+        });
       }
       logger.info('Gemini voice generation succeeded', {
         user: {

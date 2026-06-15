@@ -64,6 +64,14 @@ interface ApiKeyRow {
   name: string;
 }
 
+function DateCell({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {new Date(value).toLocaleDateString()}
+    </time>
+  );
+}
+
 export function ApiKeys({
   dict,
   isPaidUser,
@@ -249,12 +257,14 @@ export function ApiKeys({
                       </span>
                     </TableCell>
                     <TableCell>
-                      {new Date(key.created_at).toLocaleDateString()}
+                      <DateCell value={key.created_at} />
                     </TableCell>
                     <TableCell>
-                      {key.last_used_at
-                        ? new Date(key.last_used_at).toLocaleDateString()
-                        : dict.never}
+                      {key.last_used_at ? (
+                        <DateCell value={key.last_used_at} />
+                      ) : (
+                        dict.never
+                      )}
                     </TableCell>
                     <TableCell>
                       {key.is_active ? dict.statusActive : dict.statusRevoked}
@@ -303,7 +313,7 @@ export function ApiKeys({
       </Card>
       <Card>
         <CardContent className="mt-4 text-sm">
-          <h2 className="mb-1 font-semibold text-base text-primary leading-8 dark:text-white">
+          <h2 className="mb-1 font-semibold text-base text-white leading-8">
             {dict.infoCard.title}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

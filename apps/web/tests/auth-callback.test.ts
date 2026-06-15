@@ -2,7 +2,16 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/auth/callback/route';
+import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
+import {
+  createOauthCallbackMarkerValue,
+  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+} from '@/lib/supabase/oauth-callback-marker';
 import { createClient } from '@/lib/supabase/server';
+
+const { responseCookieSetMock } = vi.hoisted(() => ({
+  responseCookieSetMock: vi.fn(),
+}));
 
 vi.mock('@/lib/stripe/stripe-admin', () => ({
   createOrRetrieveCustomer: vi.fn().mockResolvedValue('cus_test'),
@@ -19,13 +28,23 @@ vi.mock('next/server', () => ({
   NextResponse: {
     redirect: (url: string | URL, init?: ResponseInit | number) => {
       const responseInit = typeof init === 'object' ? init : undefined;
-      return new Response(null, {
+      const response = new Response(null, {
         ...responseInit,
         status: typeof init === 'number' ? init : (responseInit?.status ?? 307),
         headers: {
           location: String(url),
         },
-      });
+      }) as Response & {
+        cookies: {
+          set: typeof responseCookieSetMock;
+        };
+      };
+
+      response.cookies = {
+        set: responseCookieSetMock,
+      };
+
+      return response;
     },
   },
 }));
@@ -38,6 +57,7 @@ describe('OAuth callback route', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('handles missing PKCE verifier errors without Sentry telemetry', async () => {
@@ -91,6 +111,81 @@ describe('OAuth callback route', () => {
           errorMessage: 'PKCE code verifier not found in storage.',
         }),
       },
+    );
+    expect(responseCookieSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: OAUTH_CALLBACK_COOKIE_NAME,
+        maxAge: 0,
+      }),
+    );
+  });
+
+  it('does not emit production console warnings for expected PKCE verifier misses', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const exchangeError = new Error('PKCE code verifier not found in storage.');
+    exchangeError.name = 'AuthPKCECodeVerifierMissingError';
+    const exchangeCodeForSession = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: exchangeError,
+    });
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { exchangeCodeForSession },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
+        {
+          headers: {
+            cookie: 'sb-test-auth-token=token',
+          },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/en/login',
+    );
+    expect(exchangeCodeForSession).toHaveBeenCalledWith('abc123');
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+    expect(responseCookieSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: OAUTH_CALLBACK_COOKIE_NAME,
+        maxAge: 0,
+        secure: true,
+      }),
+    );
+  });
+
+  it('treats valid marked callbacks without a verifier as already completed', async () => {
+    vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
+    const marker = createOauthCallbackMarkerValue();
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
+        {
+          headers: {
+            cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token`,
+          },
+        },
+      ),
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/en/dashboard',
+    );
+    expect(createClient).not.toHaveBeenCalled();
+    expect(responseCookieSetMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: OAUTH_CALLBACK_COOKIE_NAME,
+        maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+      }),
     );
   });
 

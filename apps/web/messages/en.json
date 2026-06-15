@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Buy Credits",
-      "description": "Top up your credits instantly with a one-time purchase",
+      "description": "Top up your credits instantly or subscribe and get more credits",
       "buyCredits": "Buy Credits",
       "onetimePurchase": "One-time purchase",
       "processing": "Processing...",
@@ -1046,5 +1046,9 @@
       "audioConverterLink": "Free Audio Converter Tool",
       "madeWith": "Made with ♡ from SexyVoice.ai - Free to try AI audio generator"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
+    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds."
   }
 }

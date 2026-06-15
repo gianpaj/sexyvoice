@@ -29,6 +29,14 @@ function formatDate(
   });
 }
 
+function DateTimeCell({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {formatDate(value, { withTime: true })}
+    </time>
+  );
+}
+
 const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
   tts: 'bg-purple-100 text-purple-900 border-purple-200',
   voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
@@ -165,11 +173,10 @@ export function createColumns(
           variant="ghost"
         >
           {dict.table.date}
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 size-4" />
         </Button>
       ),
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.occurred_at), { withTime: true }),
+      cell: ({ row }) => <DateTimeCell value={row.original.occurred_at} />,
     },
     {
       id: 'details',

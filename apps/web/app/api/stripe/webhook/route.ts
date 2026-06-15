@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
-import type { CheckoutMetadata } from '@/app/[lang]/actions/stripe';
+import type { TopupCheckoutMetadata } from '@/app/[lang]/actions/stripe';
 import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
 import { getSubscriptionPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
@@ -151,6 +151,13 @@ export const isAllowedStripeEvent = (
 ): event is AllowedStripeEvent =>
   allowedEvents.includes(event.type as AllowedEventType);
 
+const resolvePaymentIntentId = (
+  paymentIntent: string | Stripe.PaymentIntent | null | undefined,
+): string | null =>
+  typeof paymentIntent === 'string'
+    ? paymentIntent
+    : (paymentIntent?.id ?? null);
+
 // Handles completed Stripe checkout sessions for both one-time credit purchases and subscription checkouts
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
@@ -159,7 +166,7 @@ async function handleCheckoutSessionCompleted(
     if (session.mode === 'payment' && session.metadata?.type === 'topup') {
       // This is a one-time credit purchase
       const { userId, packageId, credits, dollarAmount, promo } =
-        session.metadata as unknown as CheckoutMetadata;
+        session.metadata as unknown as TopupCheckoutMetadata;
 
       if (!(userId && credits && dollarAmount && session.payment_intent)) {
         const error = new Error('Missing metadata for topup transaction');
@@ -246,11 +253,18 @@ async function handleCheckoutSessionCompleted(
         return;
       }
 
-      // Get subscription details to determine credit amount
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      // Get subscription details to determine credit amount. The latest
+      // invoice is expanded because subscription-mode checkout sessions have
+      // a null payment_intent — the initial payment lives on that invoice.
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['latest_invoice.payment_intent'],
+      });
       const priceId = subscription.items.data[0].price.id;
 
-      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
+      const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en', {
+        applyFirstMonthDiscount:
+          !!session.metadata?.subscriptionDiscountCouponId,
+      });
       let credits = 0;
       let dollarAmount = 0;
 
@@ -275,11 +289,21 @@ async function handleCheckoutSessionCompleted(
           return;
       }
 
-      // Get payment intent from the session (for initial subscription payment)
-      const paymentIntentId = session.payment_intent as string | null;
+      // Get the payment intent for the initial subscription payment,
+      // falling back to the subscription's first invoice
+      const latestInvoice =
+        typeof subscription.latest_invoice === 'object'
+          ? subscription.latest_invoice
+          : null;
+      const paymentIntentId =
+        resolvePaymentIntentId(session.payment_intent) ??
+        resolvePaymentIntentId(latestInvoice?.payment_intent);
       if (!paymentIntentId) {
-        console.error(
+        // No payment on the initial invoice (e.g. trial or 100% discount);
+        // recurring invoices are handled by invoice.payment_succeeded
+        console.warn(
           '[STRIPE HOOK] No payment intent in subscription checkout session',
+          { session_id: session.id, subscription_id: subscriptionId },
         );
         return;
       }
@@ -365,22 +389,36 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items.data[0].price.id;
 
-    const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en');
+    // The first invoice may carry the first-month discount coupon; record the
+    // discounted amount so this path matches checkout.session.completed
+    // (the reference_id dedupe makes the two paths idempotent)
+    const isInitialSubscriptionInvoice =
+      invoice.billing_reason === 'subscription_create';
+    const SUBSCRIPTION_PACKAGES = getSubscriptionPackages('en', {
+      applyFirstMonthDiscount:
+        isInitialSubscriptionInvoice && !!invoice.discount,
+    });
     let credits = 0;
     let dollarAmount = 0;
 
     switch (priceId) {
       case process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID:
         credits = SUBSCRIPTION_PACKAGES.starter.credits;
-        dollarAmount = SUBSCRIPTION_PACKAGES.starter.recurringDollarAmount;
+        dollarAmount = isInitialSubscriptionInvoice
+          ? SUBSCRIPTION_PACKAGES.starter.dollarAmount
+          : SUBSCRIPTION_PACKAGES.starter.recurringDollarAmount;
         break;
       case process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID:
         credits = SUBSCRIPTION_PACKAGES.standard.credits;
-        dollarAmount = SUBSCRIPTION_PACKAGES.standard.recurringDollarAmount;
+        dollarAmount = isInitialSubscriptionInvoice
+          ? SUBSCRIPTION_PACKAGES.standard.dollarAmount
+          : SUBSCRIPTION_PACKAGES.standard.recurringDollarAmount;
         break;
       case process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID:
         credits = SUBSCRIPTION_PACKAGES.pro.credits;
-        dollarAmount = SUBSCRIPTION_PACKAGES.pro.recurringDollarAmount;
+        dollarAmount = isInitialSubscriptionInvoice
+          ? SUBSCRIPTION_PACKAGES.pro.dollarAmount
+          : SUBSCRIPTION_PACKAGES.pro.recurringDollarAmount;
         break;
       default:
         console.error('[STRIPE HOOK] Invalid subscription price ID', {

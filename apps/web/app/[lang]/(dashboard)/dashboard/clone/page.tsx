@@ -10,37 +10,40 @@ import NewVoiceClient from './new.client';
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const { lang } = await props.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const [{ lang }, supabase] = await Promise.all([
+    props.params,
+    createClient(),
+  ]);
+  const [
+    {
+      data: { user },
+      error,
+    },
+    dict,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    getMessages({ locale: lang }),
+  ]);
 
   if (!user || error) {
     return <div>Not logged in</div>;
   }
 
-  const [
-    { data: creditsData },
-    { data: creditTransactions },
-    userHasPaid,
-    dict,
-  ] = await Promise.all([
-    supabase
-      .from('credits')
-      .select('amount')
-      .eq('user_id', user.id)
-      .single()
-      .then((res) => res ?? { data: { amount: 0 } }),
-    supabase
-      .from('credit_transactions')
-      .select('amount')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false }),
-    hasUserPaid(user.id),
-    getMessages({ locale: lang }),
-  ]);
+  const [{ data: creditsData }, { data: creditTransactions }, userHasPaid] =
+    await Promise.all([
+      supabase
+        .from('credits')
+        .select('amount')
+        .eq('user_id', user.id)
+        .single()
+        .then((res) => res ?? { data: { amount: 0 } }),
+      supabase
+        .from('credit_transactions')
+        .select('amount')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false }),
+      hasUserPaid(user.id),
+    ]);
 
   const credits = creditsData || { amount: 0 };
 

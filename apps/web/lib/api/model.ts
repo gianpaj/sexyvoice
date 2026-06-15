@@ -11,7 +11,7 @@ export function resolveExternalModelId(
   if (mapped && Object.hasOwn(EXTERNAL_API_MODELS, mapped)) {
     return mapped as ExternalApiModelId;
   }
-  return undefined;
+  return;
 }
 
 const GEMINI_FAMILY = new Set<ExternalApiModelId>(['gpro', 'g31']);

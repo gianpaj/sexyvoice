@@ -77,11 +77,12 @@ export function useGenerationProgressToast(
     generationToastIdRef.current = null;
   }, []);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       dismissGenerationProgressToast();
-    };
-  }, [dismissGenerationProgressToast]);
+    },
+    [dismissGenerationProgressToast],
+  );
 
   return {
     showGenerationProgressToast,

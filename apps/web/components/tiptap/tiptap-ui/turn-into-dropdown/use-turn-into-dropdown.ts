@@ -90,9 +90,7 @@ export function canTurnInto(
 export function getFilteredBlockTypeOptions(blockTypes?: string[]) {
   if (!blockTypes) return blockTypeOptions;
 
-  return blockTypeOptions.filter((option) => {
-    return blockTypes.includes(option.type);
-  });
+  return blockTypeOptions.filter((option) => blockTypes.includes(option.type));
 }
 
 /**

@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Køb kreditter",
-      "description": "Fyld op på dine kreditter med det samme med et engangskøb",
+      "description": "Fyld op på dine kreditter med det samme, eller abonner og få flere kreditter",
       "buyCredits": "Køb kreditter",
       "onetimePurchase": "Engangskøb",
       "processing": "Behandler...",
@@ -1046,5 +1046,9 @@
       "audioConverterLink": "Gratis Lydkonverter",
       "madeWith": "Lavet med ♡ af SexyVoice.ai - Prøv gratis AI lydgenerator"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder."
   }
 }

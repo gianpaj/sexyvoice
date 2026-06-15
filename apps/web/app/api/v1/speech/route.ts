@@ -9,7 +9,7 @@ import {
 import { captureException } from '@sentry/nextjs';
 import Replicate, { type Prediction } from 'replicate';
 
-import { getCharactersLimit } from '@/lib/ai';
+import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
 import {
@@ -371,7 +371,7 @@ export async function POST(request: Request) {
             : 'gemini-2.5-pro-preview-tts';
         geminiResponse = await ai.models.generateContent({
           model: modelUsed,
-          contents: [{ parts: [{ text: finalText }] }],
+          contents: [{ role: 'user', parts: [{ text: finalText }] }],
           config,
         });
       } catch (proError) {
@@ -379,7 +379,7 @@ export async function POST(request: Request) {
         try {
           geminiResponse = await ai.models.generateContent({
             model: modelUsed,
-            contents: [{ parts: [{ text: finalText }] }],
+            contents: [{ role: 'user', parts: [{ text: finalText }] }],
             config,
           });
         } catch (flashError) {
@@ -420,22 +420,28 @@ export async function POST(request: Request) {
         }
       }
 
-      const part = geminiResponse?.candidates?.[0]?.content?.parts?.[0];
-      const data = part?.inlineData?.data;
-      const mimeType = part?.inlineData?.mimeType;
+      const { data, mimeType } = extractInlineAudio(geminiResponse);
       const finishReason = geminiResponse?.candidates?.[0]?.finishReason;
       const blockReason = geminiResponse?.promptFeedback?.blockReason;
       const isProhibitedContent =
         finishReason === FinishReason.PROHIBITED_CONTENT ||
         blockReason === 'PROHIBITED_CONTENT';
+      // Finished normally but no audio came back — transient provider glitch
+      // rather than a content block, so surface it as retryable.
+      const isNoAudioData =
+        finishReason === FinishReason.STOP && !(data && mimeType);
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
         const code = isProhibitedContent
           ? 'content_policy_violation'
           : 'server_error';
-        const message = isProhibitedContent
-          ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
-          : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation');
+        let noAudioErrorCode: keyof typeof ERROR_CODES = 'OTHER_GEMINI_BLOCK';
+        if (isProhibitedContent) {
+          noAudioErrorCode = 'PROHIBITED_CONTENT';
+        } else if (isNoAudioData) {
+          noAudioErrorCode = 'NO_AUDIO_DATA';
+        }
+        const message = getErrorMessage(noAudioErrorCode, 'voice-generation');
         const httpStatus = isProhibitedContent ? 422 : 500;
         await log({
           status: httpStatus,

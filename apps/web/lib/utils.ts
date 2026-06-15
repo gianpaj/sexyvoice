@@ -241,6 +241,7 @@ export const ERROR_CODES = {
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
+  NO_AUDIO_DATA: 'NO_AUDIO_DATA',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   XAI_TTS_ERROR: 'XAI_TTS_ERROR',
   GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
@@ -258,6 +259,7 @@ export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   PROHIBITED_CONTENT: 422,
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
+  NO_AUDIO_DATA: 500,
   REPLICATE_ERROR: 500,
   XAI_TTS_ERROR: 500,
   GEMINI_PROVIDER_UNAVAILABLE: 503,
@@ -309,6 +311,9 @@ export const getErrorMessage = (
     },
     OTHER_GEMINI_BLOCK: {
       default: 'Voice generation failed, please retry',
+    },
+    NO_AUDIO_DATA: {
+      default: 'Voice generation returned no audio, please retry',
     },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',

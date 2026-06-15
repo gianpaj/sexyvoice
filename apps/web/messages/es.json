@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Comprar Créditos",
-      "description": "Recarga tus créditos instantáneamente con una compra única",
+      "description": "Recarga tus créditos instantáneamente o suscríbete y obtén más créditos",
       "buyCredits": "Comprar Créditos",
       "onetimePurchase": "Compra única",
       "processing": "Procesando...",
@@ -1046,5 +1046,9 @@
       "audioConverterLink": "Conversor de Audio Gratuito",
       "madeWith": "Hecho con ♡ por SexyVoice.ai - Generador de audio IA gratis"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Las direcciones de correo desechables no están permitidas",
+    "AUTH_PROVIDER_RATELIMIT": "Por razones de seguridad, solo puedes solicitar esto después de {time} segundos."
   }
 }

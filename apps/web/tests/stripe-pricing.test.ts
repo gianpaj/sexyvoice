@@ -48,6 +48,19 @@ describe('subscription pricing', () => {
     expect(packages.pro.recurringDollarAmount).toBe(75);
   });
 
+  it('can explicitly disable first-month discount pricing', () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID = 'coupon_25_off';
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT = '25';
+
+    const packages = getSubscriptionPackages('en', {
+      applyFirstMonthDiscount: false,
+    });
+
+    expect(packages.starter.dollarAmount).toBe(5);
+    expect(packages.standard.dollarAmount).toBe(10);
+    expect(packages.pro.dollarAmount).toBe(75);
+  });
+
   it('does not apply invalid first-month discount percentages', () => {
     process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID = 'coupon_invalid';
     process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT = 'invalid';

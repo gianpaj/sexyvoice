@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Acquista crediti",
-      "description": "Ricarica i tuoi crediti istantaneamente con un acquisto una tantum",
+      "description": "Ricarica i tuoi crediti istantaneamente o abbonati e ottieni più crediti",
       "buyCredits": "Acquista crediti",
       "onetimePurchase": "Acquisto una tantum",
       "processing": "Elaborazione...",
@@ -1046,5 +1046,9 @@
       "audioConverterLink": "Convertitore Audio Gratuito",
       "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio IA gratuito"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
+    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi."
   }
 }
