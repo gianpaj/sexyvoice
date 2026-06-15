@@ -1035,5 +1035,9 @@
       "audioConverterLink": "Convertitore Audio Gratuito",
       "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio IA gratuito"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
+    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi."
   }
 }

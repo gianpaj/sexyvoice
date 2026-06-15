@@ -354,6 +354,9 @@ importers:
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
+      disposable-email-domains-js:
+        specifier: ^1.21.0
+        version: 1.21.0
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.7)
@@ -562,6 +565,9 @@ importers:
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.99.2
+      disposable-email-domains-js:
+        specifier: ^1.21.0
+        version: 1.21.0
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1
@@ -6047,6 +6053,9 @@ packages:
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
+
+  disposable-email-domains-js@1.21.0:
+    resolution: {integrity: sha512-PKRzcII8n40uiMUYMVjFTlubk8VwWHdbJth1bBtWswjwiI88j1Uw8FVrfXQvHnj56Z8P9nCkcCn/i5VF4u47Cw==}
 
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
@@ -15064,6 +15073,8 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
+
+  disposable-email-domains-js@1.21.0: {}
 
   dom-accessibility-api@0.5.16: {}
 
