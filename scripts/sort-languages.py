@@ -5,7 +5,192 @@ from typing import Dict, List
 
 # Get the directory where this script is located
 script_dir = os.path.dirname(os.path.abspath(__file__))
-base_path = os.path.join(script_dir, "..", "lib", "i18n", "dictionaries")
+base_path = os.path.join(script_dir, "..", "messages")
+TARGET_QUESTIONS = {
+    "en.json": {
+        "voice_cloning": "Which languages are supported for Voice Cloning?",
+        "speech_generation": "Which languages are supported for Speech Generation?",
+    },
+    "es.json": {
+        "voice_cloning": "¿Qué idiomas soporta la clonación de voz?",
+        "speech_generation": "¿Qué idiomas soportan tus voces de IA?",
+    },
+    "de.json": {
+        "voice_cloning": "Welche Sprachen werden für das Stimmklonen unterstützt?",
+        "speech_generation": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
+    },
+    "fr.json": {
+        "voice_cloning": "Quelles langues sont supportées pour le clonage vocal ?",
+        "speech_generation": "Quelles langues sont supportées pour la génération vocale ?",
+    },
+    "it.json": {
+        "voice_cloning": "Quali lingue supporta la clonazione vocale?",
+        "speech_generation": "Quali lingue sono supportate per la generazione vocale?",
+    },
+    "da.json": {
+        "voice_cloning": "Hvilke sprog understøttes for stemmekloning?",
+        "speech_generation": "Hvilke sprog understøttes for talesyntese?",
+    },
+}
+
+SPEECH_GENERATION_LANGUAGES_BY_FILE: Dict[str, List[str]] = {
+    "en.json": [
+        "Arabic (Egyptian)",
+        "Bengali (Bangladesh)",
+        "Dutch (Netherlands)",
+        "English (US)",
+        "English/Hindi (India)",
+        "French (France)",
+        "German (Germany)",
+        "Hindi (India)",
+        "Indonesian (Indonesia)",
+        "Italian (Italy)",
+        "Japanese (Japan)",
+        "Korean (Korea)",
+        "Marathi (India)",
+        "Polish (Poland)",
+        "Portuguese (Brazil)",
+        "Romanian (Romania)",
+        "Russian (Russia)",
+        "Spanish (US)",
+        "Tamil (India)",
+        "Telugu (India)",
+        "Thai (Thailand)",
+        "Turkish (Turkey)",
+        "Ukrainian (Ukraine)",
+        "Vietnamese (Vietnam)",
+    ],
+    "es.json": [
+        "Alemán (Alemania)",
+        "Árabe (Egipcio)",
+        "Bengalí (Bangladesh)",
+        "Coreano (Corea)",
+        "Español (EE.UU.)",
+        "Francés (Francia)",
+        "Hindi (India)",
+        "Holandés (Países Bajos)",
+        "Indonesio (Indonesia)",
+        "Inglés (EE.UU.)",
+        "Inglés/Hindi (India)",
+        "Italiano (Italia)",
+        "Japonés (Japón)",
+        "Marathi (India)",
+        "Polaco (Polonia)",
+        "Portugués (Brasil)",
+        "Rumano (Rumania)",
+        "Ruso (Rusia)",
+        "Tailandés (Tailandia)",
+        "Tamil (India)",
+        "Telugu (India)",
+        "Turco (Turquía)",
+        "Ucraniano (Ucrania)",
+        "Vietnamita (Vietnam)",
+    ],
+    "de.json": [
+        "Arabisch (Ägyptisch)",
+        "Bengali (Bangladesch)",
+        "Deutsch (Deutschland)",
+        "Englisch (US)",
+        "Englisch/Hindi (Indien)",
+        "Französisch (Frankreich)",
+        "Hindi (Indien)",
+        "Indonesisch (Indonesien)",
+        "Italienisch (Italien)",
+        "Japanisch (Japan)",
+        "Koreanisch (Korea)",
+        "Marathi (Indien)",
+        "Niederländisch (Niederlande)",
+        "Polnisch (Polen)",
+        "Portugiesisch (Brasilien)",
+        "Rumänisch (Rumänien)",
+        "Russisch (Russland)",
+        "Spanisch (US)",
+        "Tamil (Indien)",
+        "Telugu (Indien)",
+        "Thailändisch (Thailand)",
+        "Türkisch (Türkei)",
+        "Ukrainisch (Ukraine)",
+        "Vietnamesisch (Vietnam)",
+    ],
+    "fr.json": [
+        "Allemand (Allemagne)",
+        "Anglais (US)",
+        "Anglais/Hindi (Inde)",
+        "Arabe (égyptien)",
+        "Bengali (Bangladesh)",
+        "Coréen (Corée)",
+        "Espagnol (US)",
+        "Français (France)",
+        "Hindi (Inde)",
+        "Indonésien (Indonésie)",
+        "Italien (Italie)",
+        "Japonais (Japon)",
+        "Marathi (Inde)",
+        "Néerlandais (Pays-Bas)",
+        "Polonais (Pologne)",
+        "Portugais (Brésil)",
+        "Roumain (Roumanie)",
+        "Russe (Russie)",
+        "Tamoul (Inde)",
+        "Telugu (Inde)",
+        "Thaï (Thaïlande)",
+        "Turc (Turquie)",
+        "Ukrainien (Ukraine)",
+        "Vietnamien (Vietnam)",
+    ],
+    "it.json": [
+        "Arabo (egiziano)",
+        "Bengalese (Bangladesh)",
+        "Coreano (Corea)",
+        "Francese (Francia)",
+        "Giapponese (Giappone)",
+        "Hindi (India)",
+        "Indonesiano (Indonesia)",
+        "Inglese (US)",
+        "Inglese/Hindi (India)",
+        "Italiano (Italia)",
+        "Marathi (India)",
+        "Olandese (Paesi Bassi)",
+        "Polacco (Polonia)",
+        "Portoghese (Brasile)",
+        "Rumeno (Romania)",
+        "Russo (Russia)",
+        "Spagnolo (US)",
+        "Tai (Thailandia)",
+        "Tamil (India)",
+        "Tedesco (Germania)",
+        "Telugu (India)",
+        "Turco (Turchia)",
+        "Ucraino (Ucraina)",
+        "Vietnamita (Vietnam)",
+    ],
+    "da.json": [
+        "Arabisk (egyptisk)",
+        "Bengalsk (Bangladesh)",
+        "Engelsk (US)",
+        "Engelsk/Hindi (Indien)",
+        "Fransk (Frankrig)",
+        "Hindi (Indien)",
+        "Hollandsk (Holland)",
+        "Indonesisk (Indonesien)",
+        "Italiensk (Italien)",
+        "Japansk (Japan)",
+        "Koreansk (Korea)",
+        "Marathi (Indien)",
+        "Polsk (Polen)",
+        "Portugisisk (Brasilien)",
+        "Rumænsk (Rumænien)",
+        "Russisk (Rusland)",
+        "Spansk (US)",
+        "Tamil (Indien)",
+        "Telugu (Indien)",
+        "Thai (Thailand)",
+        "Tyrkisk (Tyrkiet)",
+        "Tysk (Tyskland)",
+        "Ukrainsk (Ukraine)",
+        "Vietnamesisk (Vietnam)",
+    ],
+}
 
 
 def normalize_for_sort(s: str) -> str:
@@ -24,137 +209,285 @@ def sort_languages(languages: List[str]) -> List[str]:
 language_flags: Dict[str, str] = {
     # English
     "Arabic": "🇸🇦",
+    "Arabic (Egyptian)": "🇪🇬",
+    "Bengali (Bangladesh)": "🇧🇩",
     "Danish": "🇩🇰",
     "Dutch": "🇳🇱",
+    "Dutch (Netherlands)": "🇳🇱",
     "English": "🇬🇧",
+    "English (US)": "🇺🇸",
+    "English/Hindi (India)": "🇮🇳",
     "Finnish": "🇫🇮",
     "French": "🇫🇷",
+    "French (France)": "🇫🇷",
     "German": "🇩🇪",
+    "German (Germany)": "🇩🇪",
     "Greek": "🇬🇷",
     "Hebrew": "🇮🇱",
     "Hindi": "🇮🇳",
+    "Hindi (India)": "🇮🇳",
+    "Indonesian (Indonesia)": "🇮🇩",
     "Italian": "🇮🇹",
+    "Italian (Italy)": "🇮🇹",
     "Japanese": "🇯🇵",
+    "Japanese (Japan)": "🇯🇵",
     "Korean": "🇰🇷",
+    "Korean (Korea)": "🇰🇷",
     "Malay": "🇲🇾",
     "Mandarin Chinese": "🇨🇳",
+    "Marathi (India)": "🇮🇳",
     "Norwegian": "🇳🇴",
     "Polish": "🇵🇱",
+    "Polish (Poland)": "🇵🇱",
     "Portuguese": "🇵🇹",
+    "Portuguese (Brazil)": "🇧🇷",
+    "Romanian (Romania)": "🇷🇴",
     "Russian": "🇷🇺",
+    "Russian (Russia)": "🇷🇺",
     "Spanish": "🇪🇸",
+    "Spanish (US)": "🇺🇸",
     "Swahili": "🇰🇪",
     "Swedish": "🇸🇪",
+    "Tamil (India)": "🇮🇳",
+    "Telugu (India)": "🇮🇳",
+    "Thai (Thailand)": "🇹🇭",
     "Turkish": "🇹🇷",
+    "Turkish (Turkey)": "🇹🇷",
+    "Ukrainian (Ukraine)": "🇺🇦",
+    "Vietnamese (Vietnam)": "🇻🇳",
     # Spanish
     "Alemán": "🇩🇪",
+    "Alemán (Alemania)": "🇩🇪",
     "Árabe": "🇸🇦",
+    "Árabe (Egipcio)": "🇪🇬",
+    "Bengalí (Bangladesh)": "🇧🇩",
     "Chino mandarín": "🇨🇳",
     "Coreano": "🇰🇷",
+    "Coreano (Corea)": "🇰🇷",
     "Danés": "🇩🇰",
     "Español": "🇪🇸",
+    "Español (EE.UU.)": "🇺🇸",
     "Finlandés": "🇫🇮",
     "Francés": "🇫🇷",
+    "Francés (Francia)": "🇫🇷",
     "Griego": "🇬🇷",
     "Hebreo": "🇮🇱",
+    "Hindi (India)": "🇮🇳",
     "Holandés": "🇳🇱",
+    "Holandés (Países Bajos)": "🇳🇱",
+    "Indonesio (Indonesia)": "🇮🇩",
     "Inglés": "🇬🇧",
+    "Inglés (EE.UU.)": "🇺🇸",
+    "Inglés/Hindi (India)": "🇮🇳",
     "Italiano": "🇮🇹",
+    "Italiano (Italia)": "🇮🇹",
     "Japonés": "🇯🇵",
+    "Japonés (Japón)": "🇯🇵",
     "Malayo": "🇲🇾",
+    "Marathi (India)": "🇮🇳",
     "Noruego": "🇳🇴",
     "Polaco": "🇵🇱",
+    "Polaco (Polonia)": "🇵🇱",
     "Portugués": "🇵🇹",
+    "Portugués (Brasil)": "🇧🇷",
+    "Rumano (Rumania)": "🇷🇴",
     "Ruso": "🇷🇺",
+    "Ruso (Rusia)": "🇷🇺",
     "Suajili": "🇰🇪",
     "Sueco": "🇸🇪",
+    "Tailandés (Tailandia)": "🇹🇭",
+    "Tamil (India)": "🇮🇳",
+    "Telugu (India)": "🇮🇳",
     "Turco": "🇹🇷",
+    "Turco (Turquía)": "🇹🇷",
+    "Ucraniano (Ucrania)": "🇺🇦",
+    "Vietnamita (Vietnam)": "🇻🇳",
     # German
     "Arabisch": "🇸🇦",
+    "Arabisch (Ägyptisch)": "🇪🇬",
+    "Bengali (Bangladesch)": "🇧🇩",
     "Dänisch": "🇩🇰",
     "Deutsch": "🇩🇪",
+    "Deutsch (Deutschland)": "🇩🇪",
     "Englisch": "🇬🇧",
+    "Englisch (US)": "🇺🇸",
+    "Englisch/Hindi (Indien)": "🇮🇳",
     "Finnisch": "🇫🇮",
     "Französisch": "🇫🇷",
+    "Französisch (Frankreich)": "🇫🇷",
     "Griechisch": "🇬🇷",
     "Hebräisch": "🇮🇱",
+    "Hindi (Indien)": "🇮🇳",
+    "Indonesisch (Indonesien)": "🇮🇩",
     "Italienisch": "🇮🇹",
+    "Italienisch (Italien)": "🇮🇹",
     "Japanisch": "🇯🇵",
+    "Japanisch (Japan)": "🇯🇵",
     "Koreanisch": "🇰🇷",
+    "Koreanisch (Korea)": "🇰🇷",
     "Malaiisch": "🇲🇾",
     "Mandarin-Chinesisch": "🇨🇳",
+    "Marathi (Indien)": "🇮🇳",
     "Niederländisch": "🇳🇱",
+    "Niederländisch (Niederlande)": "🇳🇱",
     "Norwegisch": "🇳🇴",
     "Polnisch": "🇵🇱",
+    "Polnisch (Polen)": "🇵🇱",
     "Portugiesisch": "🇵🇹",
+    "Portugiesisch (Brasilien)": "🇧🇷",
+    "Rumänisch (Rumänien)": "🇷🇴",
     "Russisch": "🇷🇺",
+    "Russisch (Russland)": "🇷🇺",
     "Schwedisch": "🇸🇪",
     "Spanisch": "🇪🇸",
+    "Spanisch (US)": "🇺🇸",
     "Suaheli": "🇰🇪",
+    "Tamil (Indien)": "🇮🇳",
+    "Telugu (Indien)": "🇮🇳",
+    "Thailändisch (Thailand)": "🇹🇭",
     "Türkisch": "🇹🇷",
+    "Türkisch (Türkei)": "🇹🇷",
+    "Ukrainisch (Ukraine)": "🇺🇦",
+    "Vietnamesisch (Vietnam)": "🇻🇳",
     # French
     "Allemand": "🇩🇪",
+    "Allemand (Allemagne)": "🇩🇪",
     "Anglais": "🇬🇧",
+    "Anglais (US)": "🇺🇸",
+    "Anglais/Hindi (Inde)": "🇮🇳",
     "Arabe": "🇸🇦",
+    "Arabe (égyptien)": "🇪🇬",
+    "Bengali (Bangladesh)": "🇧🇩",
     "Chinois mandarin": "🇨🇳",
     "Coréen": "🇰🇷",
+    "Coréen (Corée)": "🇰🇷",
     "Danois": "🇩🇰",
     "Espagnol": "🇪🇸",
+    "Espagnol (US)": "🇺🇸",
     "Finnois": "🇫🇮",
     "Français": "🇫🇷",
+    "Français (France)": "🇫🇷",
     "Grec": "🇬🇷",
     "Hébreu": "🇮🇱",
+    "Hindi (Inde)": "🇮🇳",
+    "Indonésien (Indonésie)": "🇮🇩",
     "Italien": "🇮🇹",
+    "Italien (Italie)": "🇮🇹",
     "Japonais": "🇯🇵",
+    "Japonais (Japon)": "🇯🇵",
     "Malais": "🇲🇾",
+    "Marathi (Inde)": "🇮🇳",
     "Néerlandais": "🇳🇱",
+    "Néerlandais (Pays-Bas)": "🇳🇱",
     "Norvégien": "🇳🇴",
     "Polonais": "🇵🇱",
+    "Polonais (Pologne)": "🇵🇱",
     "Portugais": "🇵🇹",
+    "Portugais (Brésil)": "🇧🇷",
+    "Roumain (Roumanie)": "🇷🇴",
     "Russe": "🇷🇺",
+    "Russe (Russie)": "🇷🇺",
     "Suédois": "🇸🇪",
+    "Tamoul (Inde)": "🇮🇳",
+    "Telugu (Inde)": "🇮🇳",
+    "Thaï (Thaïlande)": "🇹🇭",
     "Turc": "🇹🇷",
+    "Turc (Turquie)": "🇹🇷",
+    "Ukrainien (Ukraine)": "🇺🇦",
+    "Vietnamien (Vietnam)": "🇻🇳",
     # Italian
     "Arabo": "🇸🇦",
+    "Arabo (egiziano)": "🇪🇬",
+    "Bengalese (Bangladesh)": "🇧🇩",
     "Cinese mandarino": "🇨🇳",
+    "Coreano": "🇰🇷",
+    "Coreano (Corea)": "🇰🇷",
     "Danese": "🇩🇰",
     "Ebraico": "🇮🇱",
     "Finlandese": "🇫🇮",
     "Francese": "🇫🇷",
+    "Francese (Francia)": "🇫🇷",
     "Giapponese": "🇯🇵",
+    "Giapponese (Giappone)": "🇯🇵",
     "Greco": "🇬🇷",
+    "Hindi (India)": "🇮🇳",
+    "Indonesiano (Indonesia)": "🇮🇩",
     "Inglese": "🇬🇧",
+    "Inglese (US)": "🇺🇸",
+    "Inglese/Hindi (India)": "🇮🇳",
+    "Italiano": "🇮🇹",
+    "Italiano (Italia)": "🇮🇹",
     "Malese": "🇲🇾",
+    "Marathi (India)": "🇮🇳",
     "Norvegese": "🇳🇴",
     "Olandese": "🇳🇱",
+    "Olandese (Paesi Bassi)": "🇳🇱",
     "Polacco": "🇵🇱",
+    "Polacco (Polonia)": "🇵🇱",
     "Portoghese": "🇵🇹",
+    "Portoghese (Brasile)": "🇧🇷",
+    "Rumeno (Romania)": "🇷🇴",
     "Russo": "🇷🇺",
+    "Russo (Russia)": "🇷🇺",
     "Spagnolo": "🇪🇸",
+    "Spagnolo (US)": "🇺🇸",
     "Svedese": "🇸🇪",
+    "Tai (Thailandia)": "🇹🇭",
+    "Tamil (India)": "🇮🇳",
     "Tedesco": "🇩🇪",
+    "Tedesco (Germania)": "🇩🇪",
+    "Telugu (India)": "🇮🇳",
+    "Turco": "🇹🇷",
+    "Turco (Turchia)": "🇹🇷",
+    "Ucraino (Ucraina)": "🇺🇦",
+    "Vietnamita (Vietnam)": "🇻🇳",
     # Danish
     "Arabisk": "🇸🇦",
+    "Arabisk (egyptisk)": "🇪🇬",
+    "Bengalsk (Bangladesh)": "🇧🇩",
     "Dansk": "🇩🇰",
     "Engelsk": "🇬🇧",
+    "Engelsk (US)": "🇺🇸",
+    "Engelsk/Hindi (Indien)": "🇮🇳",
     "Finsk": "🇫🇮",
     "Fransk": "🇫🇷",
+    "Fransk (Frankrig)": "🇫🇷",
     "Græsk": "🇬🇷",
     "Hebraisk": "🇮🇱",
+    "Hindi (Indien)": "🇮🇳",
     "Hollandsk": "🇳🇱",
+    "Hollandsk (Holland)": "🇳🇱",
+    "Indonesisk (Indonesien)": "🇮🇩",
     "Italiensk": "🇮🇹",
+    "Italiensk (Italien)": "🇮🇹",
     "Japansk": "🇯🇵",
+    "Japansk (Japan)": "🇯🇵",
     "Koreansk": "🇰🇷",
+    "Koreansk (Korea)": "🇰🇷",
     "Malajisk": "🇲🇾",
     "Mandarin-kinesisk": "🇨🇳",
+    "Marathi (Indien)": "🇮🇳",
     "Norsk": "🇳🇴",
     "Polsk": "🇵🇱",
+    "Polsk (Polen)": "🇵🇱",
     "Portugisisk": "🇵🇹",
+    "Portugisisk (Brasilien)": "🇧🇷",
+    "Rumænsk (Rumænien)": "🇷🇴",
     "Russisk": "🇷🇺",
+    "Russisk (Rusland)": "🇷🇺",
     "Spansk": "🇪🇸",
+    "Spansk (US)": "🇺🇸",
     "Svensk": "🇸🇪",
+    "Swahili": "🇰🇪",
+    "Tamil (Indien)": "🇮🇳",
+    "Telugu (Indien)": "🇮🇳",
+    "Thai (Thailand)": "🇹🇭",
     "Tyrkisk": "🇹🇷",
+    "Tyrkisk (Tyrkiet)": "🇹🇷",
     "Tysk": "🇩🇪",
+    "Tysk (Tyskland)": "🇩🇪",
+    "Ukrainsk (Ukraine)": "🇺🇦",
+    "Vietnamesisk (Vietnam)": "🇻🇳",
 }
 
 templates: Dict[str, Dict[str, str]] = {
@@ -344,33 +677,166 @@ languages_by_file: Dict[str, List[str]] = {
 }
 
 
+def build_voice_cloning_answer(filename: str) -> str:
+    template = templates[filename]
+    languages = languages_by_file[filename]
+
+    sorted_languages = sort_languages(languages)
+
+    print(f"{filename}: {sorted_languages[:5]}... {sorted_languages[-2:]}")
+
+    lines = [template["intro"], ""]
+    for i, lang in enumerate(sorted_languages):
+        flag = language_flags.get(lang, "🏳️")
+        if i == len(sorted_languages) - 1:
+            lines.append(f"{template['last_connector']}{flag} {lang}.")
+        else:
+            lines.append(f"{flag} {lang}{template['separator']}")
+
+    return "\n".join(lines)
+
+
+def build_speech_generation_answer(filename: str) -> str:
+    languages = SPEECH_GENERATION_LANGUAGES_BY_FILE[filename]
+    sorted_languages = sort_languages(languages)
+
+    speech_templates = {
+        "en.json": {
+            "intro_1": "Language support depends on the selected voice.",
+            "intro_2": "Some of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) support 24 languages including:",
+            "last_connector": "and ",
+            "other_voices": "Other voices are language-specific:",
+            "specific_voices": [
+                "🇬🇧 Dan (English UK),",
+                "🇮🇹 Pietro (Italian),",
+                "🇺🇸 Emma (English US),",
+                "🇪🇸 Javi (Spanish),",
+                "🇺🇸 Josh (English US),",
+                "🇺🇸 and Tara (English US).",
+            ],
+            "outro": "Choose your voice based on your target language for the most natural results.",
+        },
+        "es.json": {
+            "intro_1": "El soporte de idiomas depende de la voz seleccionada.",
+            "intro_2": "Algunas de nuestras voces de IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) soportan 24 idiomas incluyendo:",
+            "last_connector": "y ",
+            "other_voices": "Otras voces son específicas del idioma:",
+            "specific_voices": [
+                "🇬🇧 Dan (Inglés UK),",
+                "🇮🇹 Pietro (Italiano),",
+                "🇺🇸 Emma (Inglés EE.UU.),",
+                "🇪🇸 Javi (Español),",
+                "🇺🇸 Josh (Inglés EE.UU.),",
+                "🇺🇸 y Tara (Inglés EE.UU.).",
+            ],
+            "outro": "Elige tu voz según tu idioma objetivo para obtener los resultados más naturales.",
+        },
+        "de.json": {
+            "intro_1": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.",
+            "intro_2": "Einige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:",
+            "last_connector": "und ",
+            "other_voices": "Andere Stimmen sind sprachspezifisch:",
+            "specific_voices": [
+                "🇬🇧 Dan (Englisch UK),",
+                "🇮🇹 Pietro (Italienisch),",
+                "🇺🇸 Emma (Englisch US),",
+                "🇪🇸 Javi (Spanisch),",
+                "🇺🇸 Josh (Englisch US),",
+                "🇺🇸 und Tara (Englisch US).",
+            ],
+            "outro": "Wählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse.",
+        },
+        "fr.json": {
+            "intro_1": "Le support linguistique dépend de la voix sélectionnée.",
+            "intro_2": "Certaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) supportent 24 langues, notamment :",
+            "last_connector": "et ",
+            "other_voices": "D'autres voix sont spécifiques à une langue :",
+            "specific_voices": [
+                "🇬🇧 Dan (Anglais UK),",
+                "🇮🇹 Pietro (Italien),",
+                "🇺🇸 Emma (Anglais US),",
+                "🇪🇸 Javi (Espagnol),",
+                "🇺🇸 Josh (Anglais US),",
+                "🇺🇸 et Tara (Anglais US).",
+            ],
+            "outro": "Choisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels.",
+        },
+        "it.json": {
+            "intro_1": "Il supporto linguistico dipende dalla voce selezionata.",
+            "intro_2": "Alcune delle nostre voci IA (Puck, Zephyr, Gacrux, Kore, Sulafat, ecc.) supportano 24 lingue tra cui:",
+            "last_connector": "e ",
+            "other_voices": "Altre voci sono specifiche per lingua:",
+            "specific_voices": [
+                "🇬🇧 Dan (Inglese UK),",
+                "🇮🇹 Pietro (Italiano),",
+                "🇺🇸 Emma (Inglese US),",
+                "🇪🇸 Javi (Spagnolo),",
+                "🇺🇸 Josh (Inglese US),",
+                "🇺🇸 e Tara (Inglese US).",
+            ],
+            "outro": "Scegli la tua voce in base alla lingua target per i risultati più naturali.",
+        },
+        "da.json": {
+            "intro_1": "Sprogunderstøttelse afhænger af den valgte stemme.",
+            "intro_2": "Nogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:",
+            "last_connector": "og ",
+            "other_voices": "Andre stemmer er sprogspecifikke:",
+            "specific_voices": [
+                "🇬🇧 Dan (Engelsk UK),",
+                "🇮🇹 Pietro (Italiensk),",
+                "🇺🇸 Emma (Engelsk US),",
+                "🇪🇸 Javi (Spansk),",
+                "🇺🇸 Josh (Engelsk US),",
+                "🇺🇸 og Tara (Engelsk US).",
+            ],
+            "outro": "Vælg din stemme baseret på dit målsprog for de mest naturlige resultater.",
+        },
+    }
+
+    template = speech_templates[filename]
+    lines = [template["intro_1"], "", template["intro_2"]]
+
+    for i, lang in enumerate(sorted_languages):
+        flag = language_flags.get(lang, "🏳️")
+        if i == len(sorted_languages) - 1:
+            lines.append(f"{template['last_connector']}{flag} {lang}.")
+        else:
+            lines.append(f"{flag} {lang},")
+
+    lines.extend(
+        [
+            "",
+            template["other_voices"],
+            *template["specific_voices"],
+            "",
+            template["outro"],
+        ]
+    )
+
+    return "\n".join(lines)
+
+
 def main() -> None:
     """Main function to sort languages in all dictionary files"""
     for filename in templates.keys():
         filepath = os.path.join(base_path, filename)
-        template = templates[filename]
-        languages = languages_by_file[filename]
-
-        # Sort alphabetically using normalized (accent-free) comparison
-        sorted_languages = sort_languages(languages)
-
-        print(f"{filename}: {sorted_languages[:5]}... {sorted_languages[-2:]}")
-
-        # Build the answer string
-        lines = [template["intro"], ""]
-        for i, lang in enumerate(sorted_languages):
-            flag = language_flags.get(lang, "🏳️")
-            if i == len(sorted_languages) - 1:
-                lines.append(f"{template['last_connector']}{flag} {lang}.")
-            else:
-                lines.append(f"{flag} {lang}{template['separator']}")
-
-        answer = "\n".join(lines)
 
         with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        data["landing"]["faq"]["groups"][1]["questions"][3]["answer"] = answer
+        voice_cloning_answer = build_voice_cloning_answer(filename)
+        target_questions = TARGET_QUESTIONS[filename]
+
+        for group in data.get("landing", {}).get("faq", {}).get("groups", []):
+            for question in group.get("questions", []):
+                if question.get("question") == target_questions["voice_cloning"]:
+                    question["answer"] = voice_cloning_answer
+                if (
+                    "speech_generation" in target_questions
+                    and question.get("question")
+                    == target_questions["speech_generation"]
+                ):
+                    question["answer"] = build_speech_generation_answer(filename)
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

@@ -1,0 +1,121 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import { GET as getModels } from '@/app/api/v1/models/route';
+import { GET as getOpenApi } from '@/app/api/v1/openapi/route';
+import { GET as getVoices } from '@/app/api/v1/voices/route';
+import { createClient } from '@/lib/supabase/server';
+
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_API_KEY = `sk_live_${TEST_API_KEY_SUFFIX}`;
+const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
+
+describe('/api/v1 metadata endpoints', () => {
+  it('returns model catalog', async () => {
+    const request = new Request('http://localhost/api/v1/models', {
+      method: 'GET',
+      headers: { authorization: TEST_AUTH_HEADER },
+    });
+
+    const response = await getModels(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data).toHaveLength(3);
+    expect(json.data[0].id).toBe('gpro');
+    expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
+    expect(response.headers.get('request-id')).toBeTruthy();
+  });
+
+  it('returns voices list', async () => {
+    const voicesQuery = {
+      data: [
+        {
+          id: 'voice-kore-id',
+          name: 'kore',
+          language: 'en',
+          model: 'gpro',
+          feature: 'tts',
+          is_public: true,
+        },
+        {
+          id: 'voice-tara-id',
+          name: 'tara',
+          language: 'en',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          feature: 'tts',
+          is_public: true,
+        },
+        {
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'xai',
+          feature: 'tts',
+          is_public: true,
+        },
+      ],
+      eq: vi.fn(),
+      error: null,
+      order: vi.fn(),
+      select: vi.fn(),
+    };
+    voicesQuery.select.mockReturnValue(voicesQuery);
+    voicesQuery.eq.mockReturnValue(voicesQuery);
+    voicesQuery.order.mockReturnValue(voicesQuery);
+
+    vi.mocked(createClient).mockResolvedValueOnce({
+      from: vi.fn(() => voicesQuery),
+    } as never);
+
+    const request = new Request('http://localhost/api/v1/voices', {
+      method: 'GET',
+      headers: { authorization: TEST_AUTH_HEADER },
+    });
+
+    const response = await getVoices(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data).toHaveLength(3);
+    expect(json.data[0].model).toBe('gpro');
+    expect(json.data[1].model).toBe('orpheus');
+    expect(json.data[0].supports_style).toBe(true);
+    expect(json.data[1].supports_style).toBe(false);
+    expect(json.data[2]).toMatchObject({
+      model: 'xai',
+      formats: ['mp3', 'wav'],
+      supports_style: false,
+    });
+    expect(voicesQuery.order).toHaveBeenNthCalledWith(1, 'sort_order');
+    expect(voicesQuery.order).toHaveBeenNthCalledWith(2, 'name');
+    expect(response.headers.get('request-id')).toBeTruthy();
+  });
+
+  it('returns OpenAPI 3.1.0 document with speech path', async () => {
+    const response = await getOpenApi();
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.openapi).toBe('3.1.0');
+    expect(json.paths['/api/v1/speech']).toBeDefined();
+    expect(json.paths['/api/v1/billing']).toBeDefined();
+    expect(
+      json.paths['/api/v1/speech'].post.requestBody.content['application/json']
+        .examples.basic.value.model,
+    ).toBe('gpro');
+    const voicesExample =
+      json.paths['/api/v1/voices'].get.responses[200].content[
+        'application/json'
+      ].examples.available_voices.value.data;
+    expect(voicesExample).toHaveLength(20);
+    expect(
+      voicesExample.some((voice: { model: string }) => voice.model === 'xai'),
+    ).toBe(true);
+    const speechSchema = JSON.stringify(
+      json.paths['/api/v1/speech'].post.requestBody.content['application/json']
+        .schema,
+    );
+    expect(speechSchema).not.toContain('"speed"');
+  });
+});
