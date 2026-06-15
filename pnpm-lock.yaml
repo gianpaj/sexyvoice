@@ -68,6 +68,8 @@ overrides:
   undici@<5.28.4: '>=5.28.4'
   undici@<=5.28.2: '>=5.28.3'
   undici@>=4.5.0 <5.28.5: '>=5.28.5'
+  ultracite>zod: 4.3.6
+  unbash>zod: 4.3.6
   whatwg-url: ^14.0.0
 
 importers:
@@ -9585,9 +9587,6 @@ packages:
 
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
-
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -19328,7 +19327,7 @@ snapshots:
       jsonc-parser: 3.3.1
       nypm: 0.6.7
       yaml: 2.9.0
-      zod: 4.4.3
+      zod: 4.3.6
 
   unbash@2.2.0: {}
 
@@ -19711,7 +19710,5 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.3.6: {}
-
-  zod@4.4.3: {}
 
   zwitch@2.0.4: {}
