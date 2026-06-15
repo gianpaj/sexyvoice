@@ -253,13 +253,13 @@ export const ERROR_CODES = {
  * Maps error codes to appropriate HTTP status codes.
  * - 422: Client input issues (content policy violations)
  * - 500: Server/upstream errors (third-party API failures)
- * - 503: Service temporarily unavailable (quota exceeded)
+ * - 503: Service temporarily unavailable (quota exceeded / transient upstream)
  */
 export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   PROHIBITED_CONTENT: 422,
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
-  NO_AUDIO_DATA: 500,
+  NO_AUDIO_DATA: 503,
   REPLICATE_ERROR: 500,
   XAI_TTS_ERROR: 500,
   GEMINI_PROVIDER_UNAVAILABLE: 503,

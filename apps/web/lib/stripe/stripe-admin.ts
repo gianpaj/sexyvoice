@@ -130,13 +130,11 @@ export async function createOrRetrieveCustomer(
     const error = new Error(
       `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
     );
-    console.error(`[STRIPE ADMIN] ${error.message}`);
-    Sentry.captureMessage(error.message, {
-      level: 'warning',
+    console.warn(`[STRIPE ADMIN] ${error.message}`);
+    Sentry.logger.warn('Multiple Stripe customers found for Supabase user', {
       user: { id: userId, email },
-      extra: {
-        customerCount: customersResults.data.length,
-      },
+      customerCount: customersResults.data.length,
+      customerIds: customersResults.data.map((customer) => customer.id),
     });
   }
 
@@ -154,10 +152,10 @@ export async function createOrRetrieveCustomer(
       `Multiple customers found for email ${email}. Using the first one.`,
     );
     console.warn(error.message);
-    Sentry.captureMessage(error.message, {
-      level: 'warning',
+    Sentry.logger.warn('Multiple Stripe customers found for email', {
       user: { id: userId, email },
-      extra: { customerCount: customers.data.length },
+      customerCount: customers.data.length,
+      customerIds: customers.data.map((customer) => customer.id),
     });
   }
 

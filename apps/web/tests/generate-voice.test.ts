@@ -1,4 +1,4 @@
-import type { GenerateContentResponse } from '@google/genai';
+import { FinishReason, type GenerateContentResponse } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1074,6 +1074,56 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it('should return 422 without Sentry capture when Gemini rejects a TTS request as invalid', async () => {
+      const invalidArgumentError: GoogleApiErrorWithStatus = {
+        code: 400,
+        message:
+          'Model tried to generate text, but it should only be used for TTS.',
+        status: 'INVALID_ARGUMENT',
+        details: [],
+      };
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            throw new Error(JSON.stringify({ error: invalidArgumentError }));
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(422);
+      expect(json.error).toBe(
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini rejected TTS request',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            googleCode: 400,
+            googleStatus: 'INVALID_ARGUMENT',
+            textLength: 'Hello world'.length,
+            voice: 'kore',
+          }),
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+        }),
+      );
+    });
+
     it('should handle Google API quota exceeded error', async () => {
       // Mock Google API quota error - should fail on both pro and flash models
       setMockGoogleGenAIFactory(() => ({
@@ -1183,6 +1233,54 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
         'test-user-id',
+      );
+    });
+
+    it('should return 503 without Sentry capture when Gemini stops with no audio data', async () => {
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                finishReason: FinishReason.STOP,
+                content: {
+                  parts: [],
+                },
+              },
+            ],
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini voice generation returned no audio data',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: FinishReason.STOP,
+            model: 'gemini-2.5-flash-preview-tts',
+            voice: 'kore',
+          }),
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+        }),
       );
     });
 
