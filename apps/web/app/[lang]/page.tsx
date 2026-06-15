@@ -176,9 +176,7 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href="/signup">
-                    {dictLanding.hero.buttonCTA}
-                  </Link>
+                  <Link href="/signup">{dictLanding.hero.buttonCTA}</Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
                   {dictLanding.hero.noCreditCard}

@@ -446,10 +446,9 @@ export async function POST(request: Request) {
         } else if (isNoAudioData) {
           noAudioErrorCode = 'NO_AUDIO_DATA';
         }
-        throw new Error(
-          getErrorMessage(noAudioErrorCode, 'voice-generation'),
-          { cause: noAudioErrorCode },
-        );
+        throw new Error(getErrorMessage(noAudioErrorCode, 'voice-generation'), {
+          cause: noAudioErrorCode,
+        });
       }
       logger.info('Gemini voice generation succeeded', {
         user: {
