@@ -36,7 +36,12 @@ import {
   reduceCreditsAdmin,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  normalizeXaiTtsCodec,
+  usdTicksToDollarAmount,
+  type XaiTtsCodec,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -342,6 +347,8 @@ export async function POST(request: Request) {
     let uploadUrl: string;
     let replicateResponse: Prediction | undefined;
     let geminiResponse: GenerateContentResponse | null = null;
+    let grokCostInUsdTicks: number | undefined;
+    let grokCodec: XaiTtsCodec | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -476,14 +483,17 @@ export async function POST(request: Request) {
     } else if (isGrokVoice) {
       modelUsed = voiceObj.model;
       const codec = normalizeXaiTtsCodec(chosenFormat);
+      grokCodec = codec;
 
       try {
-        const { audioBuffer, contentType } = await generateXaiTts({
-          text: finalText,
-          voiceId: voice,
-          language: voiceObj.language ?? 'en',
-          codec,
-        });
+        const { audioBuffer, contentType, costInUsdTicks } =
+          await generateXaiTts({
+            text: finalText,
+            voiceId: voice,
+            language: voiceObj.language ?? 'en',
+            codec,
+          });
+        grokCostInUsdTicks = costInUsdTicks;
         uploadUrl = await uploadFileToR2(
           filename,
           audioBuffer,
@@ -589,12 +599,19 @@ export async function POST(request: Request) {
     }
 
     await reduceCreditsAdmin({ userId, amount: creditsUsed });
-    const dollarAmount = calculateExternalApiDollarAmount({
-      sourceType: 'api_tts',
-      provider,
-      model,
-      inputChars: finalText.length,
-    });
+
+    // For Grok voices use the exact cost reported by xAI (1 tick = $0.000_000_001).
+    // Fall back to our estimated pricing table for other providers.
+    const dollarAmount =
+      isGrokVoice && grokCostInUsdTicks !== undefined
+        ? usdTicksToDollarAmount(grokCostInUsdTicks)
+        : calculateExternalApiDollarAmount({
+            sourceType: 'api_tts',
+            provider,
+            model,
+            inputChars: finalText.length,
+          });
+
     const [audioFileResult, updatedCredits] = await Promise.all([
       saveAudioFileAdmin({
         userId,
@@ -614,6 +631,9 @@ export async function POST(request: Request) {
           sourceType: 'api_tts',
           dollarAmount,
           ...(seed === undefined ? {} : { seed }),
+          ...(isGrokVoice && grokCostInUsdTicks !== undefined
+            ? { costInUsdTicks: grokCostInUsdTicks }
+            : {}),
         },
       }),
       getCreditsAdmin(userId),
@@ -643,6 +663,14 @@ export async function POST(request: Request) {
         isGrokVoice,
         userHasPaid,
         predictionId: replicateResponse?.id ?? null,
+        ...(isGrokVoice
+          ? {
+              ...(grokCodec === undefined ? {} : { codec: grokCodec }),
+              ...(grokCostInUsdTicks === undefined
+                ? {}
+                : { costInUsdTicks: grokCostInUsdTicks }),
+            }
+          : {}),
       },
     });
 
