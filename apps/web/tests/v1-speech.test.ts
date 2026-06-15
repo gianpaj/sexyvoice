@@ -253,7 +253,7 @@ describe('V1 Speech API Route', () => {
       expect(generateContent).toHaveBeenCalledWith(
         expect.objectContaining({
           model: expectedGeminiModel,
-          contents: [{ parts: [{ text: 'Hello from Gemini' }] }],
+          contents: [{ parts: [{ text: 'Hello from Gemini' }], role: 'user' }],
         }),
       );
       expect(json.url).toContain('.wav');

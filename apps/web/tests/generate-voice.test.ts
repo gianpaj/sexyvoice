@@ -9,7 +9,6 @@ import { estimateCredits, getErrorMessage } from '@/lib/utils';
 import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
   createDefaultStreamChunk,
-  DEFAULT_MOCK_AUDIO_DATA,
   mockRedisGet,
   mockRedisKeys,
   mockRedisSet,
@@ -860,7 +859,7 @@ describe('Generate Voice API Route', () => {
       expect(generateContent).toHaveBeenCalledWith(
         expect.objectContaining({
           model: expectedModel,
-          contents: [{ parts: [{ text: 'Hello world' }] }],
+          contents: [{ parts: [{ text: 'Hello world' }], role: 'user' }],
         }),
       );
       expect(saveAudioFile).toHaveBeenCalledWith(
