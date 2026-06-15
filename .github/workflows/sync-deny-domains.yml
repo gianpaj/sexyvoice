@@ -1,0 +1,56 @@
+name: Sync disposable email domains
+
+# Refreshes apps/web/lib/disposable-email/deny-domains.json from
+# amieiro/disposable-email-domains and opens a PR when it changes, so the
+# blocklist update is reviewed instead of shipped automatically at build time.
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+    # Mondays at 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24.9.0
+
+      # The script only needs Node built-ins and git, so no install is required.
+      - name: Regenerate deny list
+        run: node scripts/sync-deny-domains.mjs
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
+        with:
+          add-paths: apps/web/lib/disposable-email/deny-domains.json
+          branch: chore/sync-deny-domains
+          delete-branch: true
+          commit-message: 'chore: sync disposable email deny list'
+          title: 'chore: sync disposable email deny list'
+          body: |
+            Automated weekly refresh of the disposable email blocklist from
+            [amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains).
+
+            Review the diff in `apps/web/lib/disposable-email/deny-domains.json`
+            before merging — additions here block matching signups, so watch for
+            any legitimate domains that may have been added upstream.
+          labels: dependencies

@@ -1035,5 +1035,9 @@
       "audioConverterLink": "Gratis Lydkonverter",
       "madeWith": "Lavet med ♡ af SexyVoice.ai - Prøv gratis AI lydgenerator"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder."
   }
 }

@@ -313,7 +313,7 @@ export function ApiKeys({
       </Card>
       <Card>
         <CardContent className="mt-4 text-sm">
-          <h2 className="mb-1 font-semibold text-base text-primary leading-8 dark:text-white">
+          <h2 className="mb-1 font-semibold text-base text-white leading-8">
             {dict.infoCard.title}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

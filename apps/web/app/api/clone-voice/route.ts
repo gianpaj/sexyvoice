@@ -515,6 +515,53 @@ function getReferenceAudioEnhancementDollarCost(
   );
 }
 
+async function getFalBillingEventCost(
+  requestId: string,
+): Promise<number | null> {
+  const adminKey = process.env.FAL_ADMIN_KEY;
+  if (!adminKey) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.fal.ai/v1/models/billing-events?request_id=${encodeURIComponent(requestId)}`,
+      {
+        headers: { Authorization: `Key ${adminKey}` },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
+      },
+    );
+
+    if (!response.ok) {
+      logger.warn('Fal billing events API returned non-ok response', {
+        extra: { requestId, status: response.status },
+      });
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      billing_events?: { cost_estimate_nano_usd?: number }[];
+    };
+    // Assumes one billing event per request_id; Fal may return multiple for retries.
+    const nanoUsd = data.billing_events?.[0]?.cost_estimate_nano_usd;
+
+    if (typeof nanoUsd !== 'number' || nanoUsd < 0) {
+      logger.warn('Fal billing events API returned unexpected cost data', {
+        extra: { requestId, nanoUsd },
+      });
+      return null;
+    }
+
+    return nanoUsd / 1_000_000_000;
+  } catch (err) {
+    logger.warn('Failed to fetch Fal billing event cost', {
+      extra: { requestId, errorMessage: getUnknownErrorMessage(err) },
+    });
+    return null;
+  }
+}
+
 function validateCreditAmount({
   currentAmount,
   requiredCredits,
@@ -1148,7 +1195,9 @@ async function runBackgroundTasks(
     userId,
     sourceType: 'voice_cloning',
     sourceId: audioFileDBResult.data?.id,
+    model: audioFileData.modelUsed,
     unit: 'operation',
+    requestId: audioFileData.requestId,
     quantity: 1,
     creditsUsed: audioFileData.baseCloneCredits,
     dollarAmount: getDollarCost(
@@ -1163,9 +1212,6 @@ async function runBackgroundTasks(
       textPreview: audioFileData.text.slice(0, 100),
       textLength: audioFileData.text.length,
       audioDuration: audioFileData.duration,
-      referenceAudioEnhanced: audioFileData.referenceAudioEnhanced,
-      referenceAudioEnhancementModel:
-        audioFileData.referenceAudioEnhancementModel,
       referenceAudioEnhancementRequestId:
         audioFileData.referenceAudioEnhancementRequestId,
       referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
@@ -1186,6 +1232,12 @@ async function runBackgroundTasks(
     const enhancementDurationSeconds =
       audioFileData.referenceAudioEnhancementDurationSeconds ?? 0;
 
+    const actualDollarAmount = audioFileData.referenceAudioEnhancementRequestId
+      ? await getFalBillingEventCost(
+          audioFileData.referenceAudioEnhancementRequestId,
+        )
+      : null;
+
     await insertUsageEvent({
       userId,
       sourceType: 'audio_processing',
@@ -1196,17 +1248,15 @@ async function runBackgroundTasks(
       quantity: enhancementDurationSeconds,
       durationSeconds: enhancementDurationSeconds,
       creditsUsed: audioFileData.referenceAudioEnhancementCredits,
-      dollarAmount: audioFileData.referenceAudioEnhancementDollarAmount,
+      dollarAmount:
+        actualDollarAmount ??
+        audioFileData.referenceAudioEnhancementDollarAmount,
       metadata: {
         operation: 'reference_audio_enhancement',
         provider: 'fal',
         model: audioFileData.referenceAudioEnhancementModel,
         voiceCloningRequestId: audioFileData.requestId,
-        voiceCloningModel: audioFileData.modelUsed,
         locale: audioFileData.locale,
-        referenceAudioFileMimeType: audioFileData.referenceAudioFileMimeType,
-        referenceAudioOriginalDurationSeconds:
-          audioFileData.referenceAudioOriginalDurationSeconds,
         referenceAudioProcessedMimeType:
           audioFileData.referenceAudioProcessedMimeType,
         referenceAudioTrimmed: audioFileData.referenceAudioTrimmed,

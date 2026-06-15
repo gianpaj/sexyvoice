@@ -70,10 +70,7 @@ export default async function Call(props: {
             {dict.call.notice2}
           </p>
           {callFaq && (
-            <CallFaq
-              questions={callFaq.questions}
-              title={callFaq.category}
-            />
+            <CallFaq questions={callFaq.questions} title={callFaq.category} />
           )}
         </div>
       </main>
