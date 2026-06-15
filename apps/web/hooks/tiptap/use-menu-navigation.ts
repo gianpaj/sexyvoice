@@ -182,7 +182,7 @@ export function useMenuNavigation<T>({
       };
     }
 
-    return undefined;
+    return;
   }, [
     editor,
     containerRef,

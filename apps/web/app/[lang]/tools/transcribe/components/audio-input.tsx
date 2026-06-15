@@ -118,13 +118,14 @@ export function AudioInput({
   };
 
   // Cleanup MediaRecorder on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (mediaRecorderRef.current?.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   const stopRecording = () => {
     if (mediaRecorderRef.current?.state === 'recording') {

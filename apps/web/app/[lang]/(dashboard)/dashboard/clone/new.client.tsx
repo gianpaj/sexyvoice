@@ -208,7 +208,7 @@ const getCloneDictMessage = (
 
   for (const segment of path.split('.')) {
     if (!(value && typeof value === 'object' && segment in value)) {
-      return undefined;
+      return;
     }
 
     value = (value as Record<string, unknown>)[segment];

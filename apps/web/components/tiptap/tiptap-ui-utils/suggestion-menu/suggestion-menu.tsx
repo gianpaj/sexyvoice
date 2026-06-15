@@ -248,56 +248,54 @@ export const SuggestionMenu = ({
         props.onSelect({ editor, range: rangeToUse, context: props.context });
       },
 
-      render: () => {
-        return {
-          onStart: (props: SuggestionProps<SuggestionItem>) => {
-            dispatch({
-              type: 'update',
-              payload: {
-                decorationNode: (props.decorationNode as HTMLElement) ?? null,
-                command: props.command,
-                items: props.items,
-                query: props.query,
-                show: true,
-              },
-            });
-          },
+      render: () => ({
+        onStart: (props: SuggestionProps<SuggestionItem>) => {
+          dispatch({
+            type: 'update',
+            payload: {
+              decorationNode: (props.decorationNode as HTMLElement) ?? null,
+              command: props.command,
+              items: props.items,
+              query: props.query,
+              show: true,
+            },
+          });
+        },
 
-          onUpdate: (props: SuggestionProps<SuggestionItem>) => {
-            if (
-              shouldCloseSuggestionForQuery(
-                internalSuggestionPropsRef.current.char,
-                props.query,
-              )
-            ) {
-              exitSuggestion(editor.view, normalizedPluginKey);
-              return;
-            }
+        onUpdate: (props: SuggestionProps<SuggestionItem>) => {
+          if (
+            shouldCloseSuggestionForQuery(
+              internalSuggestionPropsRef.current.char,
+              props.query,
+            )
+          ) {
+            exitSuggestion(editor.view, normalizedPluginKey);
+            return;
+          }
 
-            dispatch({
-              type: 'update',
-              payload: {
-                decorationNode: (props.decorationNode as HTMLElement) ?? null,
-                command: props.command,
-                items: props.items,
-                query: props.query,
-              },
-            });
-          },
+          dispatch({
+            type: 'update',
+            payload: {
+              decorationNode: (props.decorationNode as HTMLElement) ?? null,
+              command: props.command,
+              items: props.items,
+              query: props.query,
+            },
+          });
+        },
 
-          onKeyDown: (props: SuggestionKeyDownProps) => {
-            if (props.event.key === 'Escape') {
-              closePopup();
-              return true;
-            }
-            return false;
-          },
+        onKeyDown: (props: SuggestionKeyDownProps) => {
+          if (props.event.key === 'Escape') {
+            closePopup();
+            return true;
+          }
+          return false;
+        },
 
-          onExit: () => {
-            resetMenuState();
-          },
-        };
-      },
+        onExit: () => {
+          resetMenuState();
+        },
+      }),
       ...internalSuggestionPropsRef.current,
     });
 

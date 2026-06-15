@@ -66,23 +66,21 @@ interface AnimatedPromptTextareaProps
 export const AnimatedPromptTextarea = forwardRef<
   HTMLTextAreaElement,
   AnimatedPromptTextareaProps
->(({ children, className, onBlur, onFocus, ...props }, ref) => {
-  return (
-    <SpotlightField>
-      <Textarea
-        className={cn(
-          'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
-          className,
-        )}
-        onBlur={onBlur}
-        onFocus={onFocus}
-        ref={ref}
-        {...props}
-      />
-      {children}
-    </SpotlightField>
-  );
-});
+>(({ children, className, onBlur, onFocus, ...props }, ref) => (
+  <SpotlightField>
+    <Textarea
+      className={cn(
+        'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
+        className,
+      )}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      ref={ref}
+      {...props}
+    />
+    {children}
+  </SpotlightField>
+));
 AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
 
 interface CreditEstimatorProps {
