@@ -23,7 +23,7 @@ export type GoogleApiErrorWithStatus = GoogleApiError & {
   status?: GoogleRpcStatus;
 };
 
-export function mapHttpToGoogleRpcStatus(
+function mapHttpToGoogleRpcStatus(
   httpStatus: number | undefined,
 ): GoogleRpcStatus {
   switch (httpStatus) {

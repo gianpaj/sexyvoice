@@ -22,7 +22,7 @@ interface Props {
   value: string;
 }
 
-export const WHISPER_LANGUAGE_CODES = [
+const WHISPER_LANGUAGE_CODES = [
   'en',
   'es',
   'fr',

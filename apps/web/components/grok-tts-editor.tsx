@@ -5,15 +5,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Crown, Sparkles } from 'lucide-react';
-import {
-  type MouseEvent,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { type MouseEvent, use, useEffect, useRef, useState } from 'react';
 
 import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
 import {
@@ -59,7 +51,7 @@ import {
 import { cn } from '@/lib/utils';
 import type messages from '@/messages/en.json';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
-import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
+import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
 import type {
   SuggestionItem,
   SuggestionMenuProps,
@@ -257,7 +249,7 @@ function createWrapperTagSuggestionItem(
  * EditorContent component that renders the actual editor
  */
 export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
-  const { editor } = useContext(EditorContext)!;
+  const { editor } = use(EditorContext)!;
   const { isDragging } = useUiEditorState(editor);
 
   // useScrollToHash()
@@ -419,188 +411,174 @@ export function GrokTTSEditor({
     setCurrentLength(value.length);
   }, [editor, value]);
 
-  const insertInstantTag = useCallback(
-    (tag: InstantTagDef) => {
-      if (!editor) {
-        return;
-      }
+  const insertInstantTag = (tag: InstantTagDef) => {
+    if (!editor) {
+      return;
+    }
 
-      const selection = normalizeEditorSelectionSnapshot(
-        editor,
-        lastSelectionRef.current,
+    const selection = normalizeEditorSelectionSnapshot(
+      editor,
+      lastSelectionRef.current,
+    );
+    lastSelectionRef.current = selection;
+    const serialized = grokTipTapDocToText(editor.getJSON());
+    const selectedTextLength = selection.empty
+      ? 0
+      : editor.state.doc.textBetween(selection.from, selection.to, '\n').length;
+    const nextLength = serialized.length - selectedTextLength + tag.tag.length;
+
+    if (enforceCharactersLimit && nextLength > charactersLimit) {
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: selection.from, to: selection.to })
+      .insertContent(createInstantTagNode(tag.tag))
+      .run();
+    setEffectsOpen(false);
+  };
+
+  const insertWrapperTag = (tag: WrapperTagDef) => {
+    if (!editor) {
+      return;
+    }
+
+    const selection = normalizeEditorSelectionSnapshot(
+      editor,
+      lastSelectionRef.current,
+    );
+    lastSelectionRef.current = selection;
+    const wrapperLength = tag.tag.length + tag.closeTag.length;
+
+    const serialized = grokTipTapDocToText(editor.getJSON());
+    const nextLength = serialized.length + wrapperLength;
+
+    if (enforceCharactersLimit && nextLength > charactersLimit) {
+      return;
+    }
+
+    const openBoundary = createWrapperBoundaryNode(
+      'open',
+      tag.tag,
+      tag.closeTag,
+    );
+    const closeBoundary = createWrapperBoundaryNode(
+      'close',
+      tag.tag,
+      tag.closeTag,
+    );
+
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: selection.from, to: selection.to })
+      .run();
+
+    if (selection.empty) {
+      const insertFrom = selection.from;
+      const tr = editor.state.tr.replaceSelectionWith(
+        editor.schema.nodeFromJSON(openBoundary),
       );
-      lastSelectionRef.current = selection;
-      const serialized = grokTipTapDocToText(editor.getJSON());
-      const selectedTextLength = selection.empty
-        ? 0
-        : editor.state.doc.textBetween(selection.from, selection.to, '\n')
-            .length;
-      const nextLength =
-        serialized.length - selectedTextLength + tag.tag.length;
 
-      if (enforceCharactersLimit && nextLength > charactersLimit) {
-        return;
-      }
+      tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPING_TEXT));
+      tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
 
-      editor
-        .chain()
-        .focus()
-        .setTextSelection({ from: selection.from, to: selection.to })
-        .insertContent(createInstantTagNode(tag.tag))
-        .run();
-      setEffectsOpen(false);
-    },
-    [editor, charactersLimit, enforceCharactersLimit],
-  );
-
-  const insertWrapperTag = useCallback(
-    (tag: WrapperTagDef) => {
-      if (!editor) {
-        return;
-      }
-
-      const selection = normalizeEditorSelectionSnapshot(
-        editor,
-        lastSelectionRef.current,
+      const cursorPos = insertFrom + 2;
+      tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+      editor.view.dispatch(tr);
+      editor.chain().focus().setTextSelection(cursorPos).run();
+    } else {
+      const selectedSlice = editor.state.doc.slice(
+        selection.from,
+        selection.to,
       );
-      lastSelectionRef.current = selection;
-      const wrapperLength = tag.tag.length + tag.closeTag.length;
-
-      const serialized = grokTipTapDocToText(editor.getJSON());
-      const nextLength = serialized.length + wrapperLength;
-
-      if (enforceCharactersLimit && nextLength > charactersLimit) {
-        return;
-      }
-
-      const openBoundary = createWrapperBoundaryNode(
-        'open',
-        tag.tag,
-        tag.closeTag,
-      );
-      const closeBoundary = createWrapperBoundaryNode(
-        'close',
-        tag.tag,
-        tag.closeTag,
+      const tr = editor.state.tr.replaceSelectionWith(
+        editor.schema.nodeFromJSON(openBoundary),
       );
 
-      editor
-        .chain()
-        .focus()
-        .setTextSelection({ from: selection.from, to: selection.to })
-        .run();
+      tr.insert(selection.from + 1, selectedSlice.content);
+      const closeBoundaryPos = selection.from + 1 + selectedSlice.content.size;
+      tr.insert(closeBoundaryPos, editor.schema.nodeFromJSON(closeBoundary));
 
-      if (selection.empty) {
-        const insertFrom = selection.from;
-        const tr = editor.state.tr.replaceSelectionWith(
-          editor.schema.nodeFromJSON(openBoundary),
-        );
+      const cursorPos = closeBoundaryPos + 1;
+      tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+      editor.view.dispatch(tr);
+      editor.chain().focus().setTextSelection(cursorPos).run();
+    }
 
-        tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPING_TEXT));
-        tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
+    setEffectsOpen(false);
+  };
 
-        const cursorPos = insertFrom + 2;
-        tr.setSelection(TextSelection.create(tr.doc, cursorPos));
-        editor.view.dispatch(tr);
-        editor.chain().focus().setTextSelection(cursorPos).run();
-      } else {
-        const selectedSlice = editor.state.doc.slice(
-          selection.from,
-          selection.to,
-        );
-        const tr = editor.state.tr.replaceSelectionWith(
-          editor.schema.nodeFromJSON(openBoundary),
-        );
+  const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
 
-        tr.insert(selection.from + 1, selectedSlice.content);
-        const closeBoundaryPos =
-          selection.from + 1 + selectedSlice.content.size;
-        tr.insert(closeBoundaryPos, editor.schema.nodeFromJSON(closeBoundary));
+  const preserveEditorSelection = (event: MouseEvent<HTMLButtonElement>) => {
+    if (editor) {
+      const snapshot = getDomSelectionSnapshot(editor);
+      const resetSelection = contentResetSelectionRef.current;
+      const isContentResetSnapshot =
+        snapshot && resetSelection && snapshot.empty;
 
-        const cursorPos = closeBoundaryPos + 1;
-        tr.setSelection(TextSelection.create(tr.doc, cursorPos));
-        editor.view.dispatch(tr);
-        editor.chain().focus().setTextSelection(cursorPos).run();
+      if (snapshot && !isContentResetSnapshot) {
+        lastSelectionRef.current = snapshot;
+      } else if (!isContentResetSnapshot) {
+        lastSelectionRef.current = getEditorSelectionSnapshot(editor);
       }
+      contentResetSelectionRef.current = null;
+    }
 
-      setEffectsOpen(false);
-    },
-    [editor, charactersLimit, enforceCharactersLimit],
-  );
+    event.preventDefault();
+  };
 
-  const preserveSelection = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-    },
-    [],
-  );
+  const handleInsertTag = (tag: TagDef) => {
+    if ('closeTag' in tag) {
+      insertWrapperTag(tag);
+      return;
+    }
 
-  const preserveEditorSelection = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      if (editor) {
-        const snapshot = getDomSelectionSnapshot(editor);
-        const resetSelection = contentResetSelectionRef.current;
-        const isContentResetSnapshot =
-          snapshot && resetSelection && snapshot.empty;
+    insertInstantTag(tag);
+  };
 
-        if (snapshot && !isContentResetSnapshot) {
-          lastSelectionRef.current = snapshot;
-        } else if (!isContentResetSnapshot) {
-          lastSelectionRef.current = getEditorSelectionSnapshot(editor);
-        }
-        contentResetSelectionRef.current = null;
-      }
+  const handleInsertTagRef = useRef(handleInsertTag);
+  useEffect(() => {
+    handleInsertTagRef.current = handleInsertTag;
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional "latest ref" sync — handleInsertTag is rebuilt each render on purpose so the long-lived slash-menu callbacks always invoke the current closure.
+  }, [handleInsertTag]);
 
-      event.preventDefault();
-    },
-    [editor],
-  );
+  const translatedGrokLanguages = [
+    { value: 'auto', label: dict.langAutomatic },
+    { value: 'en', label: dict.langEnglish },
+    ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
+      value,
+      label: dict[label as keyof typeof dict] as string,
+    })),
+  ];
 
-  const handleInsertTag = useCallback(
-    (tag: TagDef) => {
-      if ('closeTag' in tag) {
-        insertWrapperTag(tag);
-        return;
-      }
-
-      insertInstantTag(tag);
-    },
-    [insertInstantTag, insertWrapperTag],
-  );
-
-  const translatedGrokLanguages = useMemo(
-    () => [
-      { value: 'auto', label: dict.langAutomatic },
-      { value: 'en', label: dict.langEnglish },
-      ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
-        value,
-        label: dict[label as keyof typeof dict] as string,
-      })),
-    ],
-    [dict],
-  );
-
-  const slashMenus = useMemo<GrokSlashMenuConfig[]>(
-    () => [
-      {
-        customItems: INSTANT_TAGS.map((tag) =>
-          createInstantTagSuggestionItem(tag, () => handleInsertTag(tag)),
+  const slashMenus: GrokSlashMenuConfig[] = [
+    {
+      customItems: INSTANT_TAGS.map((tag) =>
+        createInstantTagSuggestionItem(tag, () =>
+          handleInsertTagRef.current(tag),
         ),
-        pluginKey: 'grokInstantTagMenu',
-        triggerChar: '[',
-      },
-      {
-        allow: ({ editor, range, state }) =>
-          isGrokWrapperSuggestionAllowed({ editor, range, state }),
-        customItems: WRAPPING_TAGS.map((tag) =>
-          createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
+      ),
+      pluginKey: 'grokInstantTagMenu',
+      triggerChar: '[',
+    },
+    {
+      allow: ({ editor, range, state }) =>
+        isGrokWrapperSuggestionAllowed({ editor, range, state }),
+      customItems: WRAPPING_TAGS.map((tag) =>
+        createWrapperTagSuggestionItem(tag, () =>
+          handleInsertTagRef.current(tag),
         ),
-        pluginKey: 'grokWrapperTagMenu',
-        triggerChar: '<',
-      },
-    ],
-    [handleInsertTag],
-  );
+      ),
+      pluginKey: 'grokWrapperTagMenu',
+      triggerChar: '<',
+    },
+  ];
 
   if (!editor) {
     return (

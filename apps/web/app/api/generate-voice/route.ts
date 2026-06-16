@@ -566,14 +566,7 @@ export async function POST(request: Request) {
       }
 
       // Convert ReadableStream to Buffer before uploading
-      const chunks: Uint8Array[] = [];
-      const reader = output.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(value);
-      }
-      const audioBuffer = Buffer.concat(chunks);
+      const audioBuffer = Buffer.from(await new Response(output).arrayBuffer());
 
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
     }

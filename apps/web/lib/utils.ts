@@ -255,7 +255,7 @@ export const ERROR_CODES = {
  * - 500: Server/upstream errors (third-party API failures)
  * - 503: Service temporarily unavailable (quota exceeded / transient upstream)
  */
-export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
+const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   PROHIBITED_CONTENT: 422,
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 // --- Hooks ---
 import type { SlashMenuConfig } from '@/components/tiptap/tiptap-ui/slash-dropdown-menu/use-slash-dropdown-menu';
@@ -122,7 +122,7 @@ const List = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const renderedItems = useMemo(() => {
+  const renderedItems = (() => {
     const rendered: React.ReactElement[] = [];
     const showGroups = config?.showGroups !== false;
 
@@ -196,7 +196,7 @@ const List = ({
     });
 
     return rendered;
-  }, [items, selectedIndex, onSelect, config?.showGroups]);
+  })();
 
   if (!renderedItems.length) {
     return null;

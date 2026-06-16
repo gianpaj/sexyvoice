@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type langDict from '@/messages/en.json';
-import type { Status } from './new.client';
+import type { Status } from './clone-state';
 
 export interface SampleAudio {
   audioExampleOutputSrc: string;
@@ -47,7 +47,9 @@ export default function CloneSampleCard({
       const res = await fetch(audioPath);
 
       if (!res.ok) {
-        throw new Error(`Failed to fetch audio: ${res.statusText}`);
+        setErrorMessage(`Failed to fetch audio: ${res.statusText}`);
+        setStatus('error');
+        return;
       }
 
       const blob = await res.blob();

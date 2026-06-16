@@ -17,13 +17,12 @@ import { createClient } from '@/lib/supabase/server';
 const MAX_ACTIVE_API_KEYS = 10;
 
 const CreateCliLoginSessionSchema = z
-  .object({
-    api_key_id: z.string().uuid().optional(),
-    callback_url: z.string().url(),
+  .strictObject({
+    api_key_id: z.uuid().optional(),
+    callback_url: z.url(),
     name: z.string().trim().min(1).max(100).optional(),
     state: z.string().min(1).max(512),
   })
-  .strict()
   .refine((value) => value.api_key_id || value.name, {
     message: 'An API key selection or new key name is required',
     path: ['api_key_id'],

@@ -4,7 +4,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVoiceGroups, VoiceSelector } from '@/components/voice-selector';
+import { getVoiceGroups } from '@/components/voice-groups';
+import { VoiceSelector } from '@/components/voice-selector';
 
 vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (

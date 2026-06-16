@@ -117,11 +117,24 @@ export function CliLoginClient({
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? dict.errors.startFailed);
+        dispatch({
+          type: 'patch',
+          patch: { error: json.error ?? dict.errors.startFailed, isLoading: false },
+        });
+        return;
       }
       const redirectUrl = new URL(json.redirect_url);
-      if (!['127.0.0.1', 'localhost'].includes(redirectUrl.hostname)) {
-        throw new Error('Invalid redirect target');
+      const isAllowedHost = ['127.0.0.1', 'localhost'].includes(
+        redirectUrl.hostname,
+      );
+      const isAllowedProtocol =
+        redirectUrl.protocol === 'http:' || redirectUrl.protocol === 'https:';
+      if (!(isAllowedHost && isAllowedProtocol)) {
+        dispatch({
+          type: 'patch',
+          patch: { error: 'Invalid redirect target', isLoading: false },
+        });
+        return;
       }
       window.location.assign(json.redirect_url);
     } catch (caughtError) {

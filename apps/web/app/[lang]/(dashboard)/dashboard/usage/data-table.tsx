@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -116,9 +116,9 @@ export function DataTable({ dict }: DataTableProps) {
     retry: 0,
   });
 
-  // Memoize columns
-  const columns = useMemo(() => createColumns(dict), [dict]);
+  const columns = createColumns(dict);
 
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable({
     data: data?.data ?? [],
     columns,
