@@ -9,6 +9,8 @@ import { deleteFileFromR2 } from '@/lib/storage/upload';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
+const { logger, captureException } = Sentry;
+
 const EMAIL_SCHEMA = z.email({ message: 'Invalid email' });
 
 export const forgotPasswordAction = async (formData: FormData) => {
@@ -139,7 +141,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     deletionResults.forEach((result, index) => {
       if (result.status === 'rejected') {
         const file = audio_files[index];
-        Sentry.captureException(
+        captureException(
           new Error(result.reason || 'Failed to delete file from R2 storage.'),
           {
             user: { id: user.id, email: user.email },
@@ -189,7 +191,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .eq('user_id', user.id);
 
       if (deletePromptsError) {
-        Sentry.captureException(deletePromptsError, {
+        captureException(deletePromptsError, {
           user: { id: user.id, email: user.email },
           extra: {
             promptIds,
@@ -208,7 +210,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   if (error || deleteError || deleteUsageEventsError) {
     throw new Error('User deletion failed');
   }
-  Sentry.logger.info('User deleted', {
+  logger.info('User deleted', {
     userId: user.id,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
