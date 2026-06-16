@@ -1,23 +1,17 @@
 {
-  "name": "sexyvoice",
-  "version": "2026.4.7",
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
-    "lint-staged": "16.4.0",
+    "lint-staged": "17.0.7",
     "turbo": "2.9.18",
-    "ultracite": "7.5.6"
-  },
-  "engines": {
-    "node": "24.x"
+    "ultracite": "7.8.3"
   },
   "lint-staged": {
     "*.{js,cjs,ts,tsx,json,jsonc,css,md,mdx}": [
       "pnpm dlx ultracite fix"
     ]
   },
-  "packageManager": "pnpm@10.20.0",
-  "private": true,
+  "name": "sexyvoice",
   "scripts": {
     "analyze-free-users": "pnpm --filter @sexyvoice/scripts analyze-free-users",
     "backfill-free-call": "pnpm --filter @sexyvoice/scripts backfill-free-call",
@@ -39,6 +33,14 @@
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
-    "type-check": "turbo run type-check"
-  }
+    "type-check": "turbo run type-check",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  },
+  "version": "2026.4.7",
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "private": true
 }

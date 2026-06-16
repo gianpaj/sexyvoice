@@ -17,7 +17,7 @@ minimumReleaseAgeExclude:
 
 catalog:
   "@ai-sdk/react": "3.0.118"
-  "@biomejs/biome": "2.4.16"
+  "@biomejs/biome": "2.5.0"
   "@supabase/supabase-js": "2.99.2"
   "@tailwindcss/postcss": "4.2.2"
   "@types/node": "24.10.4"
@@ -46,4 +46,6 @@ overrides:
   "undici@<5.28.4": ">=5.28.4"
   "undici@<=5.28.2": ">=5.28.3"
   "undici@>=4.5.0 <5.28.5": ">=5.28.5"
+  "ultracite>zod": "4.3.6"
+  "unbash>zod": "4.3.6"
   "whatwg-url": "^14.0.0"

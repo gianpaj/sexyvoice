@@ -51,13 +51,14 @@ export default function TranscribeClient({ lang, dict }: Props) {
   };
 
   // Revoke blob URL on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (audioFileUrl) {
         URL.revokeObjectURL(audioFileUrl);
       }
-    };
-  }, [audioFileUrl]);
+    },
+    [audioFileUrl],
+  );
 
   const handleRemoveAudio = () => {
     audioRef.current = null;
