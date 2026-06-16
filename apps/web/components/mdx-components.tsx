@@ -3,7 +3,6 @@
 import Image from 'next/image';
 // biome-ignore lint/performance/noNamespaceImport: namespace import required for Object.keys/values injection into new Function scope
 import * as React from 'react';
-import { useMemo } from 'react';
 // biome-ignore lint/performance/noNamespaceImport: namespace import required for Object.keys/values injection into new Function scope
 import * as _jsx_runtime from 'react/jsx-runtime';
 // biome-ignore lint/performance/noNamespaceImport: namespace import required for Object.keys/values injection into new Function scope
@@ -33,7 +32,7 @@ interface MdxProps {
 }
 
 export function Mdx({ code }: MdxProps) {
-  const Component = useMemo(() => getMDXComponent(code), [code]);
+  const Component = getMDXComponent(code);
 
   return <Component components={components} />;
 }

@@ -130,7 +130,7 @@ function CreditsSection({
       data-testid="credits-section"
       data-visual-test-no-radius
     >
-      <div className="mb-4 flex w-50 items-center justify-between">
+      <div className="mb-4 flex w-min-50 items-center justify-between">
         <div className="flex items-center">
           <span className="whitespace-nowrap text-gray-200 text-xs">
             {t('title')}

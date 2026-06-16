@@ -445,6 +445,21 @@ export async function POST(request: Request) {
               finishReason,
             },
           });
+        } else if (isNoAudioData) {
+          logger.warn('Gemini voice generation returned no audio data', {
+            user: { id: user.id, email: user.email },
+            extra: {
+              voice: voiceName,
+              styleVariant,
+              model: modelUsed,
+              provider,
+              textLength: text.length,
+              textPreview: text.slice(0, 500),
+              responseId: genAIResponse?.responseId,
+              finishReason,
+              blockReason,
+            },
+          });
         } else {
           logger.error('Gemini voice generation failed', {
             user: { id: user.id, email: user.email },
@@ -478,9 +493,9 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Only capture non-PROHIBITED_CONTENT errors to Sentry.
-        // PROHIBITED_CONTENT is an expected user input block, not an error to report.
-        if (!isProhibitedContent) {
+        // Only capture unexpected Gemini blocks to Sentry. PROHIBITED_CONTENT
+        // and no-audio STOP responses are handled user/provider states.
+        if (!(isProhibitedContent || isNoAudioData)) {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
               finishReason,
@@ -606,14 +621,7 @@ export async function POST(request: Request) {
       }
 
       // Convert ReadableStream to Buffer before uploading
-      const chunks: Uint8Array[] = [];
-      const reader = output.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(value);
-      }
-      const audioBuffer = Buffer.concat(chunks);
+      const audioBuffer = Buffer.from(await new Response(output).arrayBuffer());
 
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
     }
@@ -748,6 +756,15 @@ export async function POST(request: Request) {
       );
     }
 
+    if (Error.isError(error) && error.cause === 'NO_AUDIO_DATA') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation returned no audio',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
     const googleApiError = parseGoogleApiError(error);
     if (googleApiError) {
       const googleStatus = getGoogleApiErrorStatus(googleApiError);
@@ -794,6 +811,28 @@ export async function POST(request: Request) {
             ),
           },
           { status: 503 },
+        );
+      }
+
+      if (googleStatus === 'INVALID_ARGUMENT') {
+        logger.warn('Gemini rejected TTS request', {
+          user: user ? { id: user.id, email: user.email } : undefined,
+          extra: {
+            textLength: text.length,
+            voice: voiceName,
+            googleStatus,
+            googleCode: googleApiError.code,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: getErrorMessage(
+              ERROR_CODES.OTHER_GEMINI_BLOCK,
+              'voice-generation',
+            ),
+          },
+          { status: 422 },
         );
       }
     }

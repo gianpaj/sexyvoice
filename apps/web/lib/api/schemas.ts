@@ -165,7 +165,7 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
 );
 
 export const VoiceGenerationResponseSchema = z.object({
-  url: z.string().url().describe('URL to generated audio'),
+  url: z.url().describe('URL to generated audio'),
   credits_used: z
     .number()
     .int()

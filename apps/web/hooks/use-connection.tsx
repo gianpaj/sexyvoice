@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
@@ -130,14 +130,14 @@ export const ConnectionProvider = ({
     });
   };
 
-  const disconnect = useCallback(async () => {
+  const disconnect = async () => {
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
     const { data } = await supabase.auth.getUser();
     if (data?.user?.id) {
       queryClient.refetchQueries({ queryKey: ['credits', data.user.id] });
       queryClient.invalidateQueries({ queryKey: ['credits', data.user.id] });
     }
-  }, [queryClient, supabase.auth]);
+  };
 
   return (
     <ConnectionContext.Provider

@@ -397,6 +397,15 @@ export const insertSubscriptionCreditTransaction = async (
   });
 
   if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Subscription transaction already exists', {
+        userId,
+        paymentIntentId,
+        subscriptionId,
+      });
+      return;
+    }
+
     console.error('Error inserting subscription transaction:', {
       userId,
       subscriptionId,
@@ -466,11 +475,28 @@ export const insertTopupCreditTransaction = async (
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Topup transaction already exists', {
+        userId,
+        paymentIntentId,
+      });
+      return;
+    }
+
+    throw error;
+  }
 
   // Update user's credit balance using the database function
   await updateUserCredits(userId, creditAmount);
 };
+
+const isCreditTransactionReferenceConflict = (error: {
+  code?: string;
+  message?: string;
+}): boolean =>
+  error.code === '23505' &&
+  /unique_reference|reference_id/i.test(error.message ?? '');
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();

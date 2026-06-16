@@ -4,7 +4,6 @@ import {
   type Dispatch,
   type SetStateAction,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -21,7 +20,6 @@ import { VoiceSelect } from '@/components/voice-select';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter, getTtsProvider } from '@/lib/utils';
-import { isFeaturedVoice } from '@/lib/voices';
 import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
@@ -33,88 +31,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
-
-export interface VoiceGroup {
-  label: string;
-  voices: Tables<'voices'>[];
-}
-
-interface VoiceGroupLabels {
-  featuredGroupLabel: string;
-  geminiGroupLabel: string;
-}
-
-const grokGroupLabel = 'Grok ✨';
-
-function isMultilingualVoice(voice: Tables<'voices'>) {
-  return voice.model === 'gpro' || voice.model === 'gpro31';
-}
-function isGrokVoice(voice: Tables<'voices'>) {
-  return voice.model === 'xai';
-}
-
-function sortVoices(voices: Tables<'voices'>[]) {
-  return [...voices].sort(
-    (voiceA, voiceB) =>
-      voiceA.sort_order - voiceB.sort_order ||
-      voiceA.name.localeCompare(voiceB.name),
-  );
-}
-
-function getGroupLabel(
-  voice: Tables<'voices'>,
-  geminiGroupLabel: string,
-): string {
-  if (isMultilingualVoice(voice)) return geminiGroupLabel;
-  if (isGrokVoice(voice)) return grokGroupLabel;
-  return voice.language;
-}
-
-export function getVoiceGroups(
-  publicVoices: Tables<'voices'>[],
-  { featuredGroupLabel, geminiGroupLabel }: VoiceGroupLabels,
-): VoiceGroup[] {
-  const featuredVoices = sortVoices(
-    publicVoices.filter((voice) => isFeaturedVoice(voice)),
-  );
-
-  const nonFeaturedVoices = publicVoices.filter(
-    (voice) => !isFeaturedVoice(voice),
-  );
-
-  const groupedVoices = Object.entries(
-    nonFeaturedVoices.reduce(
-      (acc, voice) => {
-        const group = getGroupLabel(voice, geminiGroupLabel);
-
-        if (!acc[group]) {
-          acc[group] = [];
-        }
-
-        acc[group].push(voice);
-        return acc;
-      },
-      {} as Record<string, Tables<'voices'>[]>,
-    ),
-  ).map(
-    ([label, voices]) =>
-      ({
-        label,
-        voices: sortVoices(voices),
-      }) satisfies VoiceGroup,
-  );
-
-  const groups: VoiceGroup[] = [];
-
-  if (featuredVoices.length > 0) {
-    groups.push({
-      label: featuredGroupLabel,
-      voices: featuredVoices,
-    });
-  }
-
-  return [...groups, ...groupedVoices];
-}
 
 export function VoiceSelector({
   publicVoices,
@@ -131,10 +47,7 @@ export function VoiceSelector({
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
   dict: (typeof messages)['generate'];
 }) {
-  const provider = useMemo(
-    () => getTtsProvider(selectedVoice?.model),
-    [selectedVoice?.model],
-  );
+  const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const [isFullscreen, setIsFullscreen] = useState(false);

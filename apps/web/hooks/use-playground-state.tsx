@@ -258,10 +258,12 @@ interface PlaygroundStateProviderProps {
   initialState?: Partial<PlaygroundState>;
 }
 
+const EMPTY_PRESETS: Preset[] = [];
+
 export const PlaygroundStateProvider = ({
   children,
   defaultPresets: defaultPresetsProp,
-  initialCustomCharacters = [],
+  initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
   const mergedDefaultPresets = defaultPresetsProp ?? [];
@@ -269,19 +271,16 @@ export const PlaygroundStateProvider = ({
     () => createPlaygroundStateHelpers(mergedDefaultPresets),
     [mergedDefaultPresets],
   );
-  const mergedInitialState: PlaygroundState = useMemo(
-    () => ({
-      ...defaultPlaygroundState,
-      defaultPresets: mergedDefaultPresets,
-      customCharacters: initialCustomCharacters,
-      ...initialState,
-      sessionConfig: {
-        ...defaultPlaygroundState.sessionConfig,
-        ...(initialState?.sessionConfig ?? {}),
-      },
-    }),
-    [initialState, mergedDefaultPresets, initialCustomCharacters],
-  );
+  const mergedInitialState: PlaygroundState = {
+    ...defaultPlaygroundState,
+    defaultPresets: mergedDefaultPresets,
+    customCharacters: initialCustomCharacters,
+    ...initialState,
+    sessionConfig: {
+      ...defaultPlaygroundState.sessionConfig,
+      ...(initialState?.sessionConfig ?? {}),
+    },
+  };
 
   const [state, dispatch] = useReducer(
     playgroundStateReducer,

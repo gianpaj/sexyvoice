@@ -5,11 +5,9 @@ import { decryptCliApiKey, hashCliExchangeToken } from '@/lib/api/cli-login';
 import { consumeRateLimit, createRateLimitHeaders } from '@/lib/api/rate-limit';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const RedeemCliLoginSessionSchema = z
-  .object({
-    exchange_token: z.string().min(1),
-  })
-  .strict();
+const RedeemCliLoginSessionSchema = z.strictObject({
+  exchange_token: z.string().min(1),
+});
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';

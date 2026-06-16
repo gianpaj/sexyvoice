@@ -116,11 +116,11 @@ export function SessionControls() {
                 {dict.availableInputs}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {deviceSelect.devices.map((device, index) => (
+              {deviceSelect.devices.map((device) => (
                 <DropdownMenuCheckboxItem
                   checked={device.deviceId === deviceSelect.activeDeviceId}
                   className="text-xs"
-                  key={`device-${index}`}
+                  key={`device-${device.deviceId}`}
                   onCheckedChange={() => handleDeviceChange(device.deviceId)}
                 >
                   {device.label}

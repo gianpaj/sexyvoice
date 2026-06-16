@@ -497,20 +497,13 @@ export function AudioGenerator({
     if (!selectedVoice) return;
 
     abortController.current = new AbortController();
-    showGenerationProgressToast(1, 1);
     const url = await requestGenerateVoice(
       text,
       abortController.current.signal,
     );
     setAudioURL(url);
     toast.success(dict.success);
-  }, [
-    dict.success,
-    requestGenerateVoice,
-    selectedVoice,
-    showGenerationProgressToast,
-    text,
-  ]);
+  }, [dict.success, requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -530,11 +523,27 @@ export function AudioGenerator({
     let latestSegments = [...splitSegments];
     let encounteredFailure = false;
 
+    // Only surface the progress toast when more than one segment will actually
+    // be generated. Segments that already succeeded are skipped below, so a
+    // retry-via-generate run that resolves to a single pending segment must
+    // not show the progress modal.
+    const pendingSegmentCount = currentSegmentTexts.reduce(
+      (count, _segmentText, segmentIndex) => {
+        const existing = latestSegments[segmentIndex];
+        const willSkip = existing?.status === 'success' && !!existing.audioUrl;
+        return willSkip ? count : count + 1;
+      },
+      0,
+    );
+    const showProgress = pendingSegmentCount > 1;
+    let pendingProgressIndex = 0;
+
     for (let index = 0; index < currentSegmentTexts.length; index++) {
       const existing = latestSegments[index];
       if (existing?.status === 'success' && existing.audioUrl) {
         continue;
       }
+      pendingProgressIndex += 1;
 
       latestSegments = latestSegments.map((segment, segmentIndex) =>
         segmentIndex === index
@@ -542,8 +551,10 @@ export function AudioGenerator({
           : segment,
       );
       markSegmentGenerating(index);
-      const isLastSegment = index === currentSegmentTexts.length - 1;
-      showGenerationProgressToast(index + 1, currentSegmentTexts.length);
+      const isLastPendingSegment = pendingProgressIndex === pendingSegmentCount;
+      if (showProgress) {
+        showGenerationProgressToast(pendingProgressIndex, pendingSegmentCount);
+      }
 
       try {
         const generatedUrl = await requestGenerateVoice(
@@ -557,10 +568,10 @@ export function AudioGenerator({
             : segment,
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
-        if (isLastSegment) {
+        if (isLastPendingSegment && showProgress) {
           showGenerationProgressToast(
-            index + 1,
-            currentSegmentTexts.length,
+            pendingProgressIndex,
+            pendingSegmentCount,
             true,
           );
         }

@@ -564,6 +564,39 @@ describe('AudioGenerator', () => {
       voiceId: 'voice-id',
       styleVariant: '',
     });
+    // A single segment doesn't warrant a progress modal.
+    expect(mockToastFn.loading).not.toHaveBeenCalled();
+  });
+
+  it('does not show the progress modal for non-split single generation', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: 'https://example.com/audio.mp3' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator();
+
+    const input = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    await user.type(input, 'A short single generation prompt.');
+
+    // Split is disabled by default, so this is a plain single generation.
+    expect(
+      screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      }),
+    ).not.toBeChecked();
+
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+    expect(mockToastFn.loading).not.toHaveBeenCalled();
   });
 
   it('disables split mode for free users', () => {
@@ -695,6 +728,10 @@ describe('AudioGenerator', () => {
       styleVariant: '',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+    // Multiple segments show the progress modal, reaching completion on the
+    // final segment.
+    expect(mockToastFn.loading).toHaveBeenCalled();
+    expect(mockToastFn.dismiss).toHaveBeenCalled();
   });
 
   it('blocks split generation when the text creates more than 20 segments', async () => {
@@ -945,6 +982,67 @@ describe('AudioGenerator', () => {
       voiceId: 'voice-id',
       styleVariant: 'dramatic',
     });
+  });
+
+  it('hides the progress modal when a re-run resolves to a single pending segment', async () => {
+    const user = userEvent.setup();
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+    const longText = `${firstSegment} ${secondSegment}`;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Server error' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedStyle: 'dramatic',
+      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+    });
+
+    fireEvent.change(
+      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+      { target: { value: longText } },
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+    });
+
+    // First run: progress modal shows for the two-segment generation, then the
+    // second segment fails.
+    await user.click(screen.getByTestId('generate-button'));
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith('Server error (500)');
+    });
+    expect(mockToastFn.loading).toHaveBeenCalled();
+    mockToastFn.loading.mockClear();
+    mockToastFn.dismiss.mockClear();
+
+    // Second run: only the previously-failed segment is generated. Because a
+    // single pending segment doesn't warrant a progress indicator, the toast
+    // must stay hidden.
+    await user.click(screen.getByTestId('generate-button'));
+    await waitFor(() => {
+      expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(mockToastFn.loading).not.toHaveBeenCalled();
   });
 
   it('regenerates cached Gemini split segments when the style changes', async () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, forwardRef, useMemo } from 'react';
+import { Fragment, forwardRef } from 'react';
 
 import {
   Tooltip,
@@ -63,10 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const shortcuts = useMemo<string[]>(
-      () => parseShortcutKeys({ shortcutKeys }),
-      [shortcutKeys],
-    );
+    const shortcuts = parseShortcutKeys({ shortcutKeys });
 
     // Handle data-style and data-size props from legacy code if passed
     const finalVariant = (props as any)['data-style'] || variant;

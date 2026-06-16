@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export function LoginForm({ lang }: { lang: Locale }) {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect_to');
   const [lastUsedAuth, setLastUsedAuth] = useLocalStorage('lastUsedAuth', '');
-  const lastUsedAuthFixed = useRef(lastUsedAuth);
+  const [lastUsedAuthFixed] = useState(lastUsedAuth);
 
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [password, setPassword] = useState('');
@@ -109,14 +109,14 @@ export function LoginForm({ lang }: { lang: Locale }) {
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="relative">
-        {lastUsedAuthFixed.current === 'email' && <LastUsedBanner />}
+        {lastUsedAuthFixed === 'email' && <LastUsedBanner />}
         <Button className="w-full" disabled={isLoading} type="submit">
           {isLoading ? 'Loading...' : t('submit')}
         </Button>
       </div>
 
       <div className="relative">
-        {lastUsedAuthFixed.current === 'google' && <LastUsedBanner />}
+        {lastUsedAuthFixed === 'google' && <LastUsedBanner />}
         <Button
           className="w-full gap-[10px]"
           disabled={isLoading}
