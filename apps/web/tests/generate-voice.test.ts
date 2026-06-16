@@ -1644,7 +1644,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-id',
+          voiceId: 'voice-kore-31-id',
           stream: true,
         }),
       });
@@ -1663,7 +1663,7 @@ describe('Generate Voice API Route', () => {
       expect(reduceCredits).toHaveBeenCalledOnce();
       expect(saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gemini-2.5-pro-preview-tts',
+          model: 'gemini-3.1-flash-tts-preview',
           usage: expect.objectContaining({ stream: true }),
         }),
       );
@@ -1718,7 +1718,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-id',
+          voiceId: 'voice-kore-31-id',
           stream: true,
         }),
       });
@@ -1784,6 +1784,31 @@ describe('Generate Voice API Route', () => {
       expect(json).toHaveProperty('url');
     });
 
+    it('treats stream: true as non-streaming JSON for 2.5 Gemini models', async () => {
+      // Only gpro31 (gemini-3.1) streams progressively; 2.5 models return the
+      // whole clip at once, so stream: true falls back to the JSON path.
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.headers.get('content-type')).not.toContain(
+        'text/event-stream',
+      );
+      expect(json).toHaveProperty('url');
+    });
+
     it('falls back to flash before first chunk when primary stream fails', async () => {
       const { hasUserPaid, saveAudioFile } = await import(
         '@/lib/supabase/queries'
@@ -1805,7 +1830,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-id',
+          voiceId: 'voice-kore-31-id',
           stream: true,
         }),
       });
@@ -1841,7 +1866,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-id',
+          voiceId: 'voice-kore-31-id',
           stream: true,
         }),
       });
@@ -1873,7 +1898,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-id',
+          voiceId: 'voice-kore-31-id',
           stream: true,
         }),
       });

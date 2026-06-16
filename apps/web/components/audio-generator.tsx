@@ -286,6 +286,9 @@ export function AudioGenerator({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
   const [isStreamingAudio, setIsStreamingAudio] = useState(false);
+  // True when the just-finished generation was played live via the streaming
+  // path, so the persisted-file player must NOT auto-play (avoids double audio).
+  const [didStreamPlayback, setDidStreamPlayback] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
@@ -303,6 +306,10 @@ export function AudioGenerator({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
+  // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
+  // synthesize the whole clip and return it in a single chunk, so streaming
+  // there gives no time-to-first-audio benefit — keep them on the JSON path.
+  const isStreamingModel = selectedVoice?.model === 'gpro31';
   const showEnhanceButton =
     provider === 'replicate' ||
     (provider === 'gemini' && selectedVoice?.model === 'gpro31');
@@ -457,6 +464,13 @@ export function AudioGenerator({
       const audioCtx = new AudioContext({ sampleRate });
       streamingAudioContextRef.current = audioCtx;
       streamingSourcesRef.current = [];
+      // The context is created after `await fetch(...)`, i.e. outside the
+      // original click handler, so browsers start it in the `suspended` state.
+      // Without resuming, `currentTime` never advances and scheduled chunks
+      // are silently dropped — explicitly resume before scheduling anything.
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
       let nextStartTime = audioCtx.currentTime;
       setIsStreamingAudio(true);
 
@@ -500,12 +514,26 @@ export function AudioGenerator({
               }
               const samples = pcmToFloat32(rawBuffer);
               schedulePcmChunk(samples);
+              // Real audio played live → suppress the player's auto-play later.
+              // (A cache hit sends only a `done` event with no audio chunks,
+              // so this stays false and the player auto-plays the cached file.)
+              setDidStreamPlayback(true);
             } catch {
               // non-fatal: skip malformed chunk
             }
           },
           onDone: ({ url }) => {
-            setIsStreamingAudio(false);
+            // `done` arrives after the upload finishes, but PCM chunks are
+            // scheduled ahead of real time and may still be playing. Keep the
+            // streaming state (and its Stop control) alive until the last
+            // buffered chunk actually ends.
+            const remainingMs = Math.max(
+              0,
+              (nextStartTime - audioCtx.currentTime) * 1000,
+            );
+            window.setTimeout(() => {
+              setIsStreamingAudio(false);
+            }, remainingMs);
             resolve(url);
           },
           onError: ({ error }) => {
@@ -519,13 +547,14 @@ export function AudioGenerator({
   );
 
   const requestGenerateVoice = useCallback(
-    async (
+    (
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
     ): Promise<string> => {
       const useStream =
         isGeminiVoice &&
+        isStreamingModel &&
         !shouldUseSplitMode &&
         segmentText.length > STREAM_TEXT_THRESHOLD;
 
@@ -536,6 +565,7 @@ export function AudioGenerator({
     },
     [
       isGeminiVoice,
+      isStreamingModel,
       requestGenerateVoiceJson,
       requestGenerateVoiceStream,
       shouldUseSplitMode,
@@ -677,6 +707,7 @@ export function AudioGenerator({
     }
 
     setIsGenerating(true);
+    setDidStreamPlayback(false);
     try {
       if (shouldUseSplitMode) {
         await generateSplitAudios();
@@ -1191,15 +1222,28 @@ export function AudioGenerator({
                 variant="outline"
               />
             )}
+            {!isGenerating && isStreamingAudio && (
+              <Button
+                aria-label={dict.cancel}
+                className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
+                icon={() => <CircleStop className="size-8!" name="stop" />}
+                iconPlacement="right"
+                onClick={stopStreamingAudio}
+                size="icon"
+                title={dict.cancel}
+                variant="outline"
+              />
+            )}
           </div>
 
           <div className="flex justify-start gap-2 sm:w-full">
             {!shouldUseSplitMode && audioURL && (
               <>
                 <AudioPlayerWithContext
-                  autoPlay
+                  autoPlay={!didStreamPlayback}
                   className="rounded-md"
                   onControlsReady={handleControlsReady}
+                  onPlaybackStart={stopStreamingAudio}
                   playAudioTitle={dict.playAudio}
                   progressColor="#8b5cf6"
                   showWaveform

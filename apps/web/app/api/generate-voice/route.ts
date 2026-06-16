@@ -140,8 +140,11 @@ export async function POST(request: Request) {
     const provider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = provider === 'gemini';
     const isGrokVoice = provider === 'grok';
-    // Streaming is only honoured for Gemini voices; Grok/Replicate keep the JSON path.
-    const shouldStream = stream && isGeminiVoice;
+    // Streaming is only honoured for the gemini-3.1 (gpro31) voices, which
+    // return audio progressively. The 2.5 models emit the whole clip in a
+    // single chunk, so streaming gives no benefit — they keep the JSON path,
+    // as do Grok/Replicate voices.
+    const shouldStream = stream && isGeminiVoice && voiceObj.model === 'gpro31';
 
     userHasPaid = await hasUserPaid(user.id);
 
@@ -286,7 +289,7 @@ export async function POST(request: Request) {
       });
 
       if (shouldStream) {
-        return await streamGeminiTtsResponse({
+        return streamGeminiTtsResponse({
           ai,
           text,
           config: geminiTTSConfig,
@@ -821,7 +824,7 @@ export async function POST(request: Request) {
 
 // ── Gemini streaming helper ────────────────────────────────────────────────
 
-async function streamGeminiTtsResponse({
+function streamGeminiTtsResponse({
   ai,
   text,
   config,
@@ -847,7 +850,7 @@ async function streamGeminiTtsResponse({
   styleVariant: string;
   provider: string;
   requestSignal: AbortSignal;
-}): Promise<Response> {
+}): Response {
   const encoder = new TextEncoder();
   const selectedModel =
     voiceObj.model === 'gpro31'

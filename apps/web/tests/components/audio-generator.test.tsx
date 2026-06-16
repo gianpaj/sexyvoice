@@ -1456,7 +1456,7 @@ describe('AudioGenerator', () => {
     setupAudioContextMock();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
     const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -1481,11 +1481,37 @@ describe('AudioGenerator', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
     const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
     fireEvent.change(textarea, { target: { value: SHORT_TEXT } });
+
+    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeUndefined();
+  });
+
+  it('omits stream for gpro (Gemini 2.5) voice even above threshold', async () => {
+    // Only gpro31 (Gemini 3.1) streams progressively; gpro returns the whole
+    // clip at once, so it must stay on the JSON path regardless of length.
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: R2_AUDIO_URL }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
 
     await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
     await user.click(screen.getByTestId('generate-button'));
@@ -1529,7 +1555,7 @@ describe('AudioGenerator', () => {
     const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } = setupAudioContextMock();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
     const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -1563,7 +1589,7 @@ describe('AudioGenerator', () => {
     setupAudioContextMock();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
     const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
