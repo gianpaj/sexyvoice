@@ -1032,7 +1032,7 @@ export function AudioGenerator({
         },
         body: JSON.stringify({
           text: textToEstimate,
-          voice: selectedVoice.name,
+          voiceId: selectedVoice.id,
           styleVariant: isGeminiVoice ? selectedStyle : '',
         }),
       });

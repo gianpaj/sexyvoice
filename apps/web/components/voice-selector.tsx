@@ -10,7 +10,6 @@ import {
 } from 'react';
 
 import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
-import { VoiceSelect } from '@/components/voice-select';
 import {
   Card,
   CardContent,
@@ -18,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { VoiceSelect } from '@/components/voice-select';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter, getTtsProvider } from '@/lib/utils';
@@ -44,7 +44,6 @@ interface VoiceGroupLabels {
   geminiGroupLabel: string;
 }
 
-const defaultGeminiGroupLabel = 'Gemini 🌍';
 const grokGroupLabel = 'Grok ✨';
 
 function isMultilingualVoice(voice: Tables<'voices'>) {

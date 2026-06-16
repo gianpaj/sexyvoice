@@ -1,9 +1,9 @@
 # TODO
 
+- fix e2e screenshot test: mock history and usage pages
 - update API to support Grok voices
 - check usage_logs have the correct dollar cost for Grok TTS generate-voice/route.ts
 - add e2e tests for Grok voices
-- Sidebar: close on click on mobile
 - api New Key button: add tooltip and crown showing that's for paid users
 - self-host Sentry on Hetzner machine
 - change all `dict...replace()` to use next-intl functions
