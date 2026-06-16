@@ -42,6 +42,14 @@ const browserMediaNoisePattern =
   /Track has ended|WASM_OR_WORKER_NOT_READY|Lock was stolen by another request/i;
 const opaqueBrowserEventRejectionPattern =
   /Event `Event` \(type=error\) captured as promise rejection/i;
+const injectedBrowserGlobalPattern =
+  /(?:Can't find variable: __firefox__|window\.__firefox__|window\.ethereum\.selectedAddress)/i;
+const externalWorkerImportPattern =
+  /Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https?:\/\/(?!([^/]+\.)?sexyvoice\.ai\/)[^']+' failed to load/i;
+const webViewBridgeNoisePattern =
+  /WKWebView API client did not respond to this postMessage/i;
+const transientBrowserNetworkPattern =
+  /(?:^|\s)(?:NetworkError:\s*)?Load failed$|(?:^|\s)network error$/i;
 const browserSecurityNoisePattern =
   /Permission to call 'get parentNode' denied|The request was denied/i;
 const nullTagNamePattern =
@@ -106,7 +114,11 @@ function isBrowserRuntimeNoiseException(exception: SentryException): boolean {
   if (
     !(
       browserMediaNoisePattern.test(exceptionText) ||
-      opaqueBrowserEventRejectionPattern.test(exceptionText)
+      opaqueBrowserEventRejectionPattern.test(exceptionText) ||
+      injectedBrowserGlobalPattern.test(exceptionText) ||
+      externalWorkerImportPattern.test(exceptionText) ||
+      webViewBridgeNoisePattern.test(exceptionText) ||
+      transientBrowserNetworkPattern.test(exceptionText)
     )
   ) {
     return false;
@@ -132,8 +144,12 @@ export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
   }
 
   const message = event.message ?? '';
+  const isMessageOnlyReactDomNoise =
+    exceptions.length === 0 &&
+    reactDomMutationNoisePatterns.some((pattern) => pattern.test(message));
 
   return (
+    isMessageOnlyReactDomNoise ||
     reactHydrationRecoverablePattern.test(message) ||
     rscConnectionClosedPattern.test(message)
   );

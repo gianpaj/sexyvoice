@@ -72,12 +72,12 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(false);
   });
 
-  it('does not drop DOM mutation text without React frame evidence', () => {
+  it('drops message-only React DOM mutation noise', () => {
     expect(
       shouldDropClientSentryEvent({
         message: "Cannot read properties of null (reading 'removeChild')",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('drops recoverable hydration and RSC connection messages', () => {
@@ -188,6 +188,109 @@ describe('shouldDropClientSentryEvent', () => {
             {
               type: 'Event',
               value: 'Event `Event` (type=error) captured as promise rejection',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('drops injected browser globals and external worker imports without app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'ReferenceError',
+              value: "Can't find variable: __firefox__",
+              stacktrace: {
+                frames: [{ filename: 'app:///en', function: 'global code' }],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'TypeError',
+              value:
+                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
+              stacktrace: {
+                frames: [{ filename: 'app:///en', function: 'global code' }],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              value:
+                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://propertydealersinindia.org/tojy/elha.wasm.wasm' failed to load.",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('does not drop injected browser global text with app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'TypeError',
+              value:
+                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/components/wallet-button.tsx',
+                    function: 'connectWallet',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('drops WebView bridge and transient network noise without app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'Error',
+              value: 'WKWebView API client did not respond to this postMessage',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'TypeError',
+              value: 'network error',
+              stacktrace: {
+                frames: [{ filename: '[native code]', function: 'fetch' }],
+              },
             },
           ],
         },
