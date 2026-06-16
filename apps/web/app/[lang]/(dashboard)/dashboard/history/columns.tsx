@@ -187,14 +187,18 @@ export function createColumns({
       ),
     },
     {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => <ActionsCell file={row.original} />,
+      id: 'Credits',
+      header: 'Credits',
+      accessorKey: 'credits_used',
     },
   ];
 
   if (!showApiColumns) {
-    return baseColumns;
+    return [...baseColumns, {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => <ActionsCell file={row.original} />,
+    }];
   }
 
   const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
@@ -228,21 +232,12 @@ export function createColumns({
           </code>
         );
       },
-    },
-    {
-      id: 'api cost',
-      accessorFn: (row) => getUsageData(row.usage)?.dollarAmount ?? null,
-      header: 'API Cost',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const dollarAmount = usage?.dollarAmount;
-        if (typeof dollarAmount !== 'number') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return <span>${dollarAmount.toFixed(4)}</span>;
-      },
-    },
+    }
   ];
 
-  return [...baseColumns, ...apiColumns];
+  return [...baseColumns, ...apiColumns, {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row }) => <ActionsCell file={row.original} />,
+  },];
 }
