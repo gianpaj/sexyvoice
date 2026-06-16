@@ -792,6 +792,7 @@ describe('Generate Voice API Route', () => {
         unit: 'chars',
         quantity: text.length,
         creditsUsed: 26,
+        dollarAmount: 0.000_251,
         metadata: {
           voiceId: 'voice-kore-id',
           voiceName: 'kore',
@@ -875,7 +876,9 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should use flash model directly for free Gemini users', async () => {
-      const { saveAudioFile } = await import('@/lib/supabase/queries');
+      const { insertUsageEvent, saveAudioFile } = await import(
+        '@/lib/supabase/queries'
+      );
 
       let callCount = 0;
 
@@ -946,6 +949,15 @@ describe('Generate Voice API Route', () => {
         userId: 'test-user-id',
         voiceId: 'voice-kore-id',
       });
+
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dollarAmount: 0.000_126,
+          metadata: expect.objectContaining({
+            model: 'gemini-2.5-flash-preview-tts',
+          }),
+        }),
+      );
 
       expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
         'gemini-2.5-pro-preview-tts failed, retrying with gemini-2.5-flash-preview-tts',

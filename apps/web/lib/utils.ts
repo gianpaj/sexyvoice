@@ -141,6 +141,45 @@ export function calculateGrokTtsDollarAmount(text: string): number {
   return Number.parseFloat(rawAmount.toFixed(6));
 }
 
+const GEMINI_TTS_FLASH_INPUT_DOLLARS_PER_MILLION_TOKENS = 0.5;
+const GEMINI_TTS_FLASH_OUTPUT_DOLLARS_PER_MILLION_TOKENS = 10;
+const GEMINI_TTS_PRO_INPUT_DOLLARS_PER_MILLION_TOKENS = 1;
+const GEMINI_TTS_PRO_OUTPUT_DOLLARS_PER_MILLION_TOKENS = 20;
+
+function normalizeTokenCount(tokenCount: number | string): number {
+  const parsedCount =
+    typeof tokenCount === 'number' ? tokenCount : Number.parseFloat(tokenCount);
+
+  if (!Number.isFinite(parsedCount)) {
+    return 0;
+  }
+
+  return Math.max(0, parsedCount);
+}
+
+export function calculateGeminiTtsDollarAmount({
+  model,
+  promptTokenCount,
+  candidatesTokenCount,
+}: {
+  candidatesTokenCount: number | string;
+  model: string;
+  promptTokenCount: number | string;
+}): number {
+  const isFlashModel = model.startsWith('gemini-2.5-flash');
+  const inputRate = isFlashModel
+    ? GEMINI_TTS_FLASH_INPUT_DOLLARS_PER_MILLION_TOKENS
+    : GEMINI_TTS_PRO_INPUT_DOLLARS_PER_MILLION_TOKENS;
+  const outputRate = isFlashModel
+    ? GEMINI_TTS_FLASH_OUTPUT_DOLLARS_PER_MILLION_TOKENS
+    : GEMINI_TTS_PRO_OUTPUT_DOLLARS_PER_MILLION_TOKENS;
+  const inputCost = normalizeTokenCount(promptTokenCount) * inputRate;
+  const outputCost = normalizeTokenCount(candidatesTokenCount) * outputRate;
+  const microDollarAmount = Math.round(inputCost + outputCost);
+
+  return Number.parseFloat((microDollarAmount / 1_000_000).toFixed(6));
+}
+
 export function estimateCredits(
   text: string,
   voice: string,

@@ -27,6 +27,7 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
+  calculateGeminiTtsDollarAmount,
   calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
@@ -648,9 +649,16 @@ export async function POST(request: Request) {
         );
       }
 
-      const grokDollarAmount = isGrokVoice
-        ? calculateGrokTtsDollarAmount(text)
-        : undefined;
+      let dollarAmount: number | undefined;
+      if (isGrokVoice) {
+        dollarAmount = calculateGrokTtsDollarAmount(text);
+      } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
+        dollarAmount = calculateGeminiTtsDollarAmount({
+          model: modelUsed,
+          promptTokenCount: usage.promptTokenCount,
+          candidatesTokenCount: usage.candidatesTokenCount,
+        });
+      }
 
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
@@ -693,9 +701,7 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
-        ...(grokDollarAmount === undefined
-          ? {}
-          : { dollarAmount: grokDollarAmount }),
+        ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voiceObj.name,

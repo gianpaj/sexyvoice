@@ -7,3 +7,4 @@ audio-downloads/
 generated-speech/
 
 *.json
+!package.json

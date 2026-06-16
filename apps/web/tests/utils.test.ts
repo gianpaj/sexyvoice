@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  calculateGeminiTtsDollarAmount,
   calculateGrokTtsDollarAmount,
   calculateReadingTime,
   capitalizeFirstLetter,
@@ -98,6 +99,38 @@ describe('calculateGrokTtsDollarAmount', () => {
 
   test('calculates Grok TTS cost per character', () => {
     expect(calculateGrokTtsDollarAmount('Hello [laugh]')).toBe(0.000_055);
+  });
+});
+
+describe('calculateGeminiTtsDollarAmount', () => {
+  test('calculates Gemini 2.5 Pro TTS cost from input and output tokens', () => {
+    expect(
+      calculateGeminiTtsDollarAmount({
+        model: 'gemini-2.5-pro-preview-tts',
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+      }),
+    ).toBe(0.000_251);
+  });
+
+  test('calculates Gemini 3.1 Flash TTS cost at Pro TTS rates', () => {
+    expect(
+      calculateGeminiTtsDollarAmount({
+        model: 'gemini-3.1-flash-tts-preview',
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+      }),
+    ).toBe(0.000_726);
+  });
+
+  test('calculates Gemini 2.5 Flash TTS cost at flash rates', () => {
+    expect(
+      calculateGeminiTtsDollarAmount({
+        model: 'gemini-2.5-flash-preview-tts',
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+      }),
+    ).toBe(0.000_126);
   });
 });
 
