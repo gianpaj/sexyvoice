@@ -32,6 +32,7 @@ import { cn, getTtsProvider } from '@/lib/utils';
 import type messages from '@/messages/en.json';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
+import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
   generateRetrySeed,
@@ -43,6 +44,7 @@ import {
   AudioPlayerWithContext,
 } from './audio-player-with-context';
 import { GenerateButton } from './generate-button';
+import { StreamingWaveformPlayer } from './streaming-waveform-player';
 
 const NonGrokPromptEditor = dynamic(
   () => import('./non-grok-editor').then((mod) => mod.NonGrokPromptEditor),
@@ -129,21 +131,6 @@ function CreditEstimator({
 }
 
 const STREAM_TEXT_THRESHOLD = 300;
-
-// ── PCM → Float32 conversion ─────────────────────────────────────────────
-function pcmToFloat32(buffer: ArrayBuffer): Float32Array<ArrayBuffer> {
-  const int16 = new Int16Array(buffer);
-  const float32 = new Float32Array(int16.length) as Float32Array<ArrayBuffer>;
-  for (let i = 0; i < int16.length; i++) {
-    float32[i] = int16[i] / 32_768.0;
-  }
-  return float32;
-}
-
-function parseSampleRate(mimeType: string): number {
-  const match = mimeType.match(/rate=(\d+)/);
-  return match ? Number.parseInt(match[1], 10) : 24_000;
-}
 
 // ── SSE client parser ─────────────────────────────────────────────────────
 interface SseAudioEvent {
@@ -285,16 +272,19 @@ export function AudioGenerator({
     useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
-  const [isStreamingAudio, setIsStreamingAudio] = useState(false);
-  // True when the just-finished generation was played live via the streaming
-  // path, so the persisted-file player must NOT auto-play (avoids double audio).
-  const [didStreamPlayback, setDidStreamPlayback] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
   const retryAbortController = useRef<AbortController | null>(null);
-  const streamingAudioContextRef = useRef<AudioContext | null>(null);
-  const streamingSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+
+  // Live waveform + Web Audio engine for the gpro31 streaming path. The methods
+  // are stable (useCallback); destructure them for use in memoized callbacks.
+  const streamingPlayer = useStreamingWaveformPlayer();
+  const {
+    pushChunk: pushStreamChunk,
+    finalize: finalizeStream,
+    reset: resetStream,
+  } = streamingPlayer;
 
   const audio = useAudio();
   const {
@@ -310,6 +300,9 @@ export function AudioGenerator({
   // synthesize the whole clip and return it in a single chunk, so streaming
   // there gives no time-to-first-audio benefit — keep them on the JSON path.
   const isStreamingModel = selectedVoice?.model === 'gpro31';
+  // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
+  // toward the expected total length before the exact duration is known.
+  const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
   const showEnhanceButton =
     provider === 'replicate' ||
     (provider === 'gemini' && selectedVoice?.model === 'gpro31');
@@ -368,24 +361,6 @@ export function AudioGenerator({
   } else if (showEnhanceButton) {
     textareaRightPadding = 'pr-20';
   }
-
-  const stopStreamingAudio = useCallback(() => {
-    for (const source of streamingSourcesRef.current) {
-      try {
-        source.stop();
-      } catch {
-        // source may already be stopped
-      }
-    }
-    streamingSourcesRef.current = [];
-    try {
-      streamingAudioContextRef.current?.close();
-    } catch {
-      // already closed
-    }
-    streamingAudioContextRef.current = null;
-    setIsStreamingAudio(false);
-  }, []);
 
   const requestGenerateVoiceJson = useCallback(
     async (
@@ -459,91 +434,37 @@ export function AudioGenerator({
         throw new APIError(data.error || data.serverMessage, response);
       }
 
-      // Set up AudioContext for real-time PCM playback.
-      const sampleRate = 24_000;
-      const audioCtx = new AudioContext({ sampleRate });
-      streamingAudioContextRef.current = audioCtx;
-      streamingSourcesRef.current = [];
-      // The context is created after `await fetch(...)`, i.e. outside the
-      // original click handler, so browsers start it in the `suspended` state.
-      // Without resuming, `currentTime` never advances and scheduled chunks
-      // are silently dropped — explicitly resume before scheduling anything.
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-      let nextStartTime = audioCtx.currentTime;
-      setIsStreamingAudio(true);
-
-      const schedulePcmChunk = (samples: Float32Array<ArrayBuffer>) => {
-        const audioBuffer = audioCtx.createBuffer(
-          1,
-          samples.length,
-          sampleRate,
-        );
-        audioBuffer.copyToChannel(samples, 0);
-
-        const source = audioCtx.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioCtx.destination);
-
-        const startAt = Math.max(audioCtx.currentTime, nextStartTime);
-        source.start(startAt);
-        nextStartTime = startAt + audioBuffer.duration;
-        streamingSourcesRef.current.push(source);
-      };
-
+      // The streaming player owns the Web Audio engine, peak accumulation, and
+      // the live→file handoff. Here we just feed it PCM chunks as they arrive.
       return new Promise<string>((resolve, reject) => {
         parseSseStream(response, {
           onAudio: ({ data, mimeType }) => {
             if (signal.aborted) return;
-            try {
-              // Use atob for browser-compatible base64 decoding
-              const binaryStr = atob(data);
-              const bytes = new Uint8Array(binaryStr.length);
-              for (let i = 0; i < binaryStr.length; i++) {
-                bytes[i] = binaryStr.charCodeAt(i);
-              }
-              const rawBuffer = bytes.buffer as ArrayBuffer;
-              const chunkSampleRate = parseSampleRate(mimeType);
-              // Re-create context if sample rate differs from first chunk
-              if (
-                chunkSampleRate !== sampleRate &&
-                streamingAudioContextRef.current
-              ) {
-                // keep playing at original rate; re-sampling not needed for typical TTS
-              }
-              const samples = pcmToFloat32(rawBuffer);
-              schedulePcmChunk(samples);
-              // Real audio played live → suppress the player's auto-play later.
-              // (A cache hit sends only a `done` event with no audio chunks,
-              // so this stays false and the player auto-plays the cached file.)
-              setDidStreamPlayback(true);
-            } catch {
-              // non-fatal: skip malformed chunk
-            }
+            pushStreamChunk(data, mimeType);
           },
           onDone: ({ url }) => {
-            // `done` arrives after the upload finishes, but PCM chunks are
-            // scheduled ahead of real time and may still be playing. Keep the
-            // streaming state (and its Stop control) alive until the last
-            // buffered chunk actually ends.
-            const remainingMs = Math.max(
-              0,
-              (nextStartTime - audioCtx.currentTime) * 1000,
-            );
-            window.setTimeout(() => {
-              setIsStreamingAudio(false);
-            }, remainingMs);
+            // Assemble the WAV and arrange the handoff; live playback continues
+            // until the buffered tail finishes (see the hook). A cache hit sends
+            // no audio chunks, so `finalize` is a no-op and the standard file
+            // player handles the persisted URL instead.
+            finalizeStream();
             resolve(url);
           },
           onError: ({ error }) => {
-            stopStreamingAudio();
+            resetStream();
             reject(new APIError(error, new Response(null, { status: 500 })));
           },
         }).catch(reject);
       });
     },
-    [dict, selectedStyle, selectedVoice, stopStreamingAudio],
+    [
+      dict,
+      finalizeStream,
+      pushStreamChunk,
+      resetStream,
+      selectedStyle,
+      selectedVoice,
+    ],
   );
 
   const requestGenerateVoice = useCallback(
@@ -707,7 +628,9 @@ export function AudioGenerator({
     }
 
     setIsGenerating(true);
-    setDidStreamPlayback(false);
+    // Clear any previous result/streaming player before a new generation.
+    setAudioURL('');
+    resetStream();
     try {
       if (shouldUseSplitMode) {
         await generateSplitAudios();
@@ -727,6 +650,7 @@ export function AudioGenerator({
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
+    resetStream,
     selectedVoice,
     shouldUseSplitMode,
     splitSegmentTexts.length,
@@ -736,8 +660,8 @@ export function AudioGenerator({
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-    stopStreamingAudio();
-  }, [stopStreamingAudio]);
+    resetStream();
+  }, [resetStream]);
 
   const handleRetrySegment = useCallback(
     async (segmentIndex: number) => {
@@ -1222,53 +1146,76 @@ export function AudioGenerator({
                 variant="outline"
               />
             )}
-            {!isGenerating && isStreamingAudio && (
-              <Button
-                aria-label={dict.cancel}
-                className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
-                icon={() => <CircleStop className="size-8!" name="stop" />}
-                iconPlacement="right"
-                onClick={stopStreamingAudio}
-                size="icon"
-                title={dict.cancel}
-                variant="outline"
-              />
-            )}
           </div>
 
           <div className="flex justify-start gap-2 sm:w-full">
-            {!shouldUseSplitMode && audioURL && (
+            {!shouldUseSplitMode && streamingPlayer.phase !== 'idle' && (
               <>
-                <AudioPlayerWithContext
-                  autoPlay={!didStreamPlayback}
+                <StreamingWaveformPlayer
                   className="rounded-md"
+                  controller={streamingPlayer}
+                  estimatedDurationSec={estimatedStreamDurationSec}
                   onControlsReady={handleControlsReady}
-                  onPlaybackStart={stopStreamingAudio}
                   playAudioTitle={dict.playAudio}
                   progressColor="#8b5cf6"
-                  showWaveform
-                  url={audioURL}
                   waveColor="#888888"
                   waveformClassName="w-48"
                 />
-                <Button
-                  onClick={resetPlayer}
-                  size="icon"
-                  title={dict.resetPlayer}
-                  variant="secondary"
-                >
-                  <RotateCcw className="size-6" />
-                </Button>
-                <Button
-                  onClick={downloadAudio}
-                  size="icon"
-                  title={dict.downloadAudio}
-                  variant="secondary"
-                >
-                  <Download className="size-6" />
-                </Button>
+                {streamingPlayer.phase === 'file' && (
+                  <>
+                    <Button
+                      onClick={resetPlayer}
+                      size="icon"
+                      title={dict.resetPlayer}
+                      variant="secondary"
+                    >
+                      <RotateCcw className="size-6" />
+                    </Button>
+                    <Button
+                      onClick={downloadAudio}
+                      size="icon"
+                      title={dict.downloadAudio}
+                      variant="secondary"
+                    >
+                      <Download className="size-6" />
+                    </Button>
+                  </>
+                )}
               </>
             )}
+            {!shouldUseSplitMode &&
+              streamingPlayer.phase === 'idle' &&
+              audioURL && (
+                <>
+                  <AudioPlayerWithContext
+                    autoPlay
+                    className="rounded-md"
+                    onControlsReady={handleControlsReady}
+                    playAudioTitle={dict.playAudio}
+                    progressColor="#8b5cf6"
+                    showWaveform
+                    url={audioURL}
+                    waveColor="#888888"
+                    waveformClassName="w-48"
+                  />
+                  <Button
+                    onClick={resetPlayer}
+                    size="icon"
+                    title={dict.resetPlayer}
+                    variant="secondary"
+                  >
+                    <RotateCcw className="size-6" />
+                  </Button>
+                  <Button
+                    onClick={downloadAudio}
+                    size="icon"
+                    title={dict.downloadAudio}
+                    variant="secondary"
+                  >
+                    <Download className="size-6" />
+                  </Button>
+                </>
+              )}
           </div>
         </div>
         {shouldUseSplitMode && (

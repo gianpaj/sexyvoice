@@ -58,6 +58,19 @@ vi.mock('@/components/audio-player-with-context', () => ({
   ),
 }));
 
+vi.mock('@/components/streaming-waveform-player', () => ({
+  StreamingWaveformPlayer: ({
+    controller,
+  }: {
+    controller: { phase: string };
+  }) => (
+    <div
+      data-phase={controller.phase}
+      data-testid="streaming-waveform-player"
+    />
+  ),
+}));
+
 vi.mock('@/components/grok-tts-editor', () => ({
   GrokTTSEditor: ({
     charactersLimit,
@@ -1444,14 +1457,20 @@ describe('AudioGenerator', () => {
 
     vi.stubGlobal('AudioContext', MockAudioContext);
 
-    return { MockAudioContext, mockCreateBuffer, mockCreateBufferSource, mockStart, mockClose };
+    return {
+      MockAudioContext,
+      mockCreateBuffer,
+      mockCreateBufferSource,
+      mockStart,
+      mockClose,
+    };
   }
 
   it('sends stream: true when Gemini voice and text exceeds threshold', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue(
-      makeSseStreamResponse([SSE_DONE_FRAME]),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(makeSseStreamResponse([SSE_DONE_FRAME]));
     vi.stubGlobal('fetch', fetchMock);
     setupAudioContextMock();
 
@@ -1459,10 +1478,14 @@ describe('AudioGenerator', () => {
       selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
-    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
     fireEvent.change(textarea, { target: { value: LONG_TEXT } });
 
-    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
@@ -1484,10 +1507,14 @@ describe('AudioGenerator', () => {
       selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
-    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
     fireEvent.change(textarea, { target: { value: SHORT_TEXT } });
 
-    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
@@ -1510,10 +1537,14 @@ describe('AudioGenerator', () => {
       selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
     });
 
-    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
     fireEvent.change(textarea, { target: { value: LONG_TEXT } });
 
-    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
@@ -1534,10 +1565,14 @@ describe('AudioGenerator', () => {
       selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
     });
 
-    const textarea = screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder });
+    const textarea = screen.getByRole('textbox', {
+      name: baseDict.textAreaPlaceholder,
+    });
     fireEvent.change(textarea, { target: { value: LONG_TEXT } });
 
-    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
@@ -1546,22 +1581,29 @@ describe('AudioGenerator', () => {
     expect(body.stream).toBeUndefined();
   });
 
-  it('schedules audio chunks and sets final URL after SSE done event', async () => {
+  it('schedules audio chunks via Web Audio and shows the streaming player', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue(
-      makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_DONE_FRAME]),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_DONE_FRAME]),
+      );
     vi.stubGlobal('fetch', fetchMock);
-    const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } = setupAudioContextMock();
+    const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } =
+      setupAudioContextMock();
 
     renderAudioGenerator({
       selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
-    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
     fireEvent.change(textarea, { target: { value: LONG_TEXT } });
 
-    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(
@@ -1569,22 +1611,28 @@ describe('AudioGenerator', () => {
       { timeout: 3000 },
     );
 
+    // The streamed PCM chunk is decoded + scheduled through the Web Audio engine.
     expect(MockAudioContext).toHaveBeenCalledOnce();
     expect(mockCreateBuffer).toHaveBeenCalledOnce();
     expect(mockCreateBufferSource).toHaveBeenCalledOnce();
 
-    // Player should receive the final R2 URL
+    // The single streaming player (waveform + play/pause) is shown — not the
+    // standard file player. After the `done` event the full clip exists, so it
+    // hands off to the seekable `file` phase immediately.
     await waitFor(() => {
-      const player = screen.getByTestId('audio-player');
-      expect(player).toHaveAttribute('data-url', R2_AUDIO_URL);
+      const player = screen.getByTestId('streaming-waveform-player');
+      expect(player).toHaveAttribute('data-phase', 'file');
     });
+    expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
   });
 
   it('shows error toast on SSE error event', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue(
-      makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_ERROR_FRAME]),
-    );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_ERROR_FRAME]),
+      );
     vi.stubGlobal('fetch', fetchMock);
     setupAudioContextMock();
 
@@ -1592,14 +1640,20 @@ describe('AudioGenerator', () => {
       selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
     });
 
-    const textarea = await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
     fireEvent.change(textarea, { target: { value: LONG_TEXT } });
 
-    await waitFor(() => expect(screen.getByTestId('generate-button')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(() =>
-      expect(mockToastFn.error).toHaveBeenCalledWith('Voice generation blocked (500)'),
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        'Voice generation blocked (500)',
+      ),
     );
   });
 });

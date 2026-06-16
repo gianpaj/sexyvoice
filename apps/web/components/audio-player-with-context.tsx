@@ -20,8 +20,6 @@ interface AudioPlayerWithContextProps {
   buttonClassName?: string;
   className?: string;
   onControlsReady?: (controls: AudioPlayerControls) => void;
-  /** Fired whenever this player begins playback (autoplay or user-initiated). */
-  onPlaybackStart?: () => void;
   playAudioTitle: string;
   progressColor?: string;
   showWaveform?: boolean;
@@ -43,7 +41,6 @@ export function AudioPlayerWithContext({
   progressColor = '#7c3aed',
   autoPlay = false,
   onControlsReady,
-  onPlaybackStart,
 }: AudioPlayerWithContextProps) {
   const audio = useAudio();
 
@@ -90,8 +87,7 @@ export function AudioPlayerWithContext({
 
   const onPlay = useCallback(() => {
     setIsWaveformPlaying(true);
-    onPlaybackStart?.();
-  }, [onPlaybackStart]);
+  }, []);
 
   const onPause = useCallback(() => {
     setIsWaveformPlaying(false);
