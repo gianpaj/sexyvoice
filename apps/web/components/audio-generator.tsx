@@ -329,18 +329,30 @@ export function AudioGenerator({
     abortController.current = new AbortController();
     setAudioURL('');
 
-    // Only surface the progress toast when more than one segment will be
-    // generated. A single segment doesn't warrant a progress indicator.
-    const showProgress = currentSegmentTexts.length > 1;
-
     let latestSegments = [...splitSegments];
     let encounteredFailure = false;
+
+    // Only surface the progress toast when more than one segment will actually
+    // be generated. Segments that already succeeded are skipped below, so a
+    // retry-via-generate run that resolves to a single pending segment must
+    // not show the progress modal.
+    const pendingSegmentCount = currentSegmentTexts.reduce(
+      (count, _segmentText, segmentIndex) => {
+        const existing = latestSegments[segmentIndex];
+        const willSkip = existing?.status === 'success' && !!existing.audioUrl;
+        return willSkip ? count : count + 1;
+      },
+      0,
+    );
+    const showProgress = pendingSegmentCount > 1;
+    let pendingProgressIndex = 0;
 
     for (let index = 0; index < currentSegmentTexts.length; index++) {
       const existing = latestSegments[index];
       if (existing?.status === 'success' && existing.audioUrl) {
         continue;
       }
+      pendingProgressIndex += 1;
 
       latestSegments = latestSegments.map((segment, segmentIndex) =>
         segmentIndex === index
@@ -348,9 +360,9 @@ export function AudioGenerator({
           : segment,
       );
       markSegmentGenerating(index);
-      const isLastSegment = index === currentSegmentTexts.length - 1;
+      const isLastPendingSegment = pendingProgressIndex === pendingSegmentCount;
       if (showProgress) {
-        showGenerationProgressToast(index + 1, currentSegmentTexts.length);
+        showGenerationProgressToast(pendingProgressIndex, pendingSegmentCount);
       }
 
       try {
@@ -365,10 +377,10 @@ export function AudioGenerator({
             : segment,
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
-        if (isLastSegment && showProgress) {
+        if (isLastPendingSegment && showProgress) {
           showGenerationProgressToast(
-            index + 1,
-            currentSegmentTexts.length,
+            pendingProgressIndex,
+            pendingSegmentCount,
             true,
           );
         }
