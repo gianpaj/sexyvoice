@@ -194,8 +194,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText =
-      isGeminiVoice && styleVariant ? `${styleVariant}: ${text}` : text;
+    // The gemini-3.1 (gpro31) model follows direction best when the style and
+    // transcript are sent as labelled sections rather than an inline prefix.
+    let finalText = text;
+    if (isGeminiVoice && styleVariant) {
+      finalText =
+        voiceObj.model === 'gpro31'
+          ? `### DIRECTOR'S NOTES\nStyle: ${styleVariant}\n\n## TRANSCRIPT\n${text}`
+          : `${styleVariant}: ${text}`;
+    }
     text = finalText;
 
     // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
