@@ -369,9 +369,11 @@ describe('audio-converter', () => {
         const mp3Buffer = Buffer.from([0xff, 0xfb, 0x10, 0x00]);
         await expect(
           convertToWav(mp3Buffer, 'audio/mpeg', 'invalid.mp3'),
-        ).rejects.toThrow(
-          'Decoded mp3 audio did not contain valid channel data',
-        );
+        ).rejects.toMatchObject({
+          decoderMessage:
+            'Decoded mp3 audio did not contain valid channel data',
+          name: 'AudioDecodeError',
+        });
       } finally {
         mockMPEGDecoder.prototype.decode = originalDecode;
       }

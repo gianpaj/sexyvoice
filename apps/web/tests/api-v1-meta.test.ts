@@ -5,7 +5,8 @@ import { GET as getOpenApi } from '@/app/api/v1/openapi/route';
 import { GET as getVoices } from '@/app/api/v1/voices/route';
 import { createClient } from '@/lib/supabase/server';
 
-const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_API_KEY = `sk_live_${TEST_API_KEY_SUFFIX}`;
 const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 
 describe('/api/v1 metadata endpoints', () => {
@@ -103,6 +104,14 @@ describe('/api/v1 metadata endpoints', () => {
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
     ).toBe('gpro');
+    const voicesExample =
+      json.paths['/api/v1/voices'].get.responses[200].content[
+        'application/json'
+      ].examples.available_voices.value.data;
+    expect(voicesExample).toHaveLength(20);
+    expect(
+      voicesExample.some((voice: { model: string }) => voice.model === 'xai'),
+    ).toBe(true);
     const speechSchema = JSON.stringify(
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .schema,

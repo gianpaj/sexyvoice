@@ -1,7 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
-
 import { TrackRow } from './track-row';
 
 interface TrackItem {
@@ -35,40 +33,32 @@ interface TrackListProps {
  * sequence.  The returned value is passed directly to `TrackRow`'s
  * `playheadPct` prop and used as a CSS `left` percentage.
  */
-function usePlayheadPercents(
+function computePlayheadPercents(
   tracks: TrackItem[],
+  globalOffsets: number[],
   currentTimeSec: number,
 ): (number | null)[] {
-  return useMemo(() => {
-    let globalOffset = 0;
+  return tracks.map((track, index) => {
+    const trimmedDuration = track.endSec - track.startSec;
 
-    return tracks.map((track) => {
-      const trimmedDuration = track.endSec - track.startSec;
+    if (trimmedDuration <= 0 || track.durationSec <= 0) {
+      return null;
+    }
 
-      if (trimmedDuration <= 0 || track.durationSec <= 0) {
-        globalOffset += Math.max(0, trimmedDuration);
-        return null;
-      }
+    const trackGlobalStart = globalOffsets[index];
+    const trackGlobalEnd = trackGlobalStart + trimmedDuration;
 
-      const trackGlobalStart = globalOffset;
-      const trackGlobalEnd = globalOffset + trimmedDuration;
-      globalOffset = trackGlobalEnd;
+    // Playhead is not yet in this track, or has already passed it.
+    if (currentTimeSec < trackGlobalStart || currentTimeSec > trackGlobalEnd) {
+      return null;
+    }
 
-      // Playhead is not yet in this track, or has already passed it.
-      if (
-        currentTimeSec < trackGlobalStart ||
-        currentTimeSec > trackGlobalEnd
-      ) {
-        return null;
-      }
+    // How far into the trimmed region is the playhead?
+    const localSec = track.startSec + (currentTimeSec - trackGlobalStart);
 
-      // How far into the trimmed region is the playhead?
-      const localSec = track.startSec + (currentTimeSec - trackGlobalStart);
-
-      // Express as a percentage of the full (untrimmed) waveform width.
-      return (localSec / track.durationSec) * 100;
-    });
-  }, [tracks, currentTimeSec]);
+    // Express as a percentage of the full (untrimmed) waveform width.
+    return (localSec / track.durationSec) * 100;
+  });
 }
 
 /**
@@ -76,16 +66,14 @@ function usePlayheadPercents(
  * trimmed region begins — i.e. the sum of trimmed durations of all preceding
  * tracks.
  */
-function useGlobalOffsets(tracks: TrackItem[]): number[] {
-  return useMemo(() => {
-    const offsets: number[] = [];
-    let accumulated = 0;
-    for (const track of tracks) {
-      offsets.push(accumulated);
-      accumulated += Math.max(0, track.endSec - track.startSec);
-    }
-    return offsets;
-  }, [tracks]);
+function computeGlobalOffsets(tracks: TrackItem[]): number[] {
+  return tracks.reduce<{ offsets: number[]; sum: number }>(
+    (acc, track) => ({
+      offsets: [...acc.offsets, acc.sum],
+      sum: acc.sum + Math.max(0, track.endSec - track.startSec),
+    }),
+    { offsets: [], sum: 0 },
+  ).offsets;
 }
 
 export function TrackList({
@@ -99,8 +87,12 @@ export function TrackList({
   onDurationReady,
   onSeek,
 }: TrackListProps) {
-  const playheadPercents = usePlayheadPercents(tracks, currentTimeSec);
-  const globalOffsets = useGlobalOffsets(tracks);
+  const globalOffsets = computeGlobalOffsets(tracks);
+  const playheadPercents = computePlayheadPercents(
+    tracks,
+    globalOffsets,
+    currentTimeSec,
+  );
 
   return (
     <div className="space-y-4">

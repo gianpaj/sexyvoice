@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+
 import { getMessages } from 'next-intl/server';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -80,7 +82,9 @@ export default async function UsagePage(props: {
       </div>
 
       {/* Data Table */}
-      <DataTable dict={dict} />
+      <Suspense>
+        <DataTable dict={dict} />
+      </Suspense>
     </div>
   );
 }

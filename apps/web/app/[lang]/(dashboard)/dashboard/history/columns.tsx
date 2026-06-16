@@ -16,20 +16,18 @@ import {
 import { downloadUrl } from '@/lib/download';
 import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
+import type langDict from '@/messages/en.json';
 import { DeleteButton } from './delete-button';
 
-const downloadFile = async (url: string) => {
-  const anchorElement = document.createElement('a');
-  anchorElement.href = url;
-  const filename = url.split('/').pop()?.split('?')[0];
-  anchorElement.download = filename || 'generated_audio.mp3';
-  anchorElement.target = '_blank';
+type HistoryDict = (typeof langDict)['history'];
+
+const downloadFile = async (url: string, errorMessage: string) => {
   if (!url) return;
 
   try {
-    await downloadUrl(url, anchorElement);
+    await downloadUrl(url, document.createElement('a'));
   } catch {
-    toast.error('errorCloning'); // TODO: translate - passing
+    toast.error(errorMessage);
   }
 };
 
@@ -49,6 +47,45 @@ const getBadgeClasses = (name: string) => {
   return `${COLOR_PAIRS[index].bg} ${COLOR_PAIRS[index].text}`;
 };
 
+function ActionsCell({ file }: { file: AudioFileAndVoicesRes }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleCloseDropdown = () => {
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+            size="icon"
+            variant="ghost"
+          >
+            <MoreVerticalIcon />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DeleteButton
+            handleCloseDropdown={handleCloseDropdown}
+            id={file.id}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function DateTimeCell({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {formatDate(value, { withTime: true })}
+    </time>
+  );
+}
+
 interface AudioUsageData {
   apiKeyId?: string;
   dollarAmount?: number;
@@ -64,8 +101,10 @@ function getUsageData(value: unknown): AudioUsageData | null {
 
 export function createColumns({
   showApiColumns,
+  dict,
 }: {
   showApiColumns: boolean;
+  dict: HistoryDict;
 }): ColumnDef<AudioFileAndVoicesRes>[] {
   const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
     {
@@ -118,11 +157,10 @@ export function createColumns({
           variant="ghost"
         >
           Created At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 size-4" />
         </Button>
       ),
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at!), { withTime: true }),
+      cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
     },
     {
       id: 'Preview',
@@ -139,7 +177,7 @@ export function createColumns({
       cell: ({ row }) => (
         <Button
           className="ml-2"
-          onClick={() => downloadFile(row.original.url)}
+          onClick={() => downloadFile(row.original.url, dict.downloadError)}
           size="icon"
           title="Download"
           variant="outline"
@@ -149,45 +187,18 @@ export function createColumns({
       ),
     },
     {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => {
-        const file = row.original;
-
-        const [isOpen, setIsOpen] = useState(false);
-
-        const handleCloseDropdown = () => {
-          setIsOpen(false);
-        };
-
-        return (
-          <div className="flex items-center gap-2">
-            <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                  variant="ghost"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DeleteButton
-                  handleCloseDropdown={handleCloseDropdown}
-                  id={file.id}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        );
-      },
+      id: 'Credits',
+      header: 'Credits',
+      accessorKey: 'credits_used',
     },
   ];
 
   if (!showApiColumns) {
-    return baseColumns;
+    return [...baseColumns, {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => <ActionsCell file={row.original} />,
+    }];
   }
 
   const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
@@ -221,21 +232,12 @@ export function createColumns({
           </code>
         );
       },
-    },
-    {
-      id: 'api cost',
-      accessorFn: (row) => getUsageData(row.usage)?.dollarAmount ?? null,
-      header: 'API Cost',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const dollarAmount = usage?.dollarAmount;
-        if (typeof dollarAmount !== 'number') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return <span>${dollarAmount.toFixed(4)}</span>;
-      },
-    },
+    }
   ];
 
-  return [...baseColumns, ...apiColumns];
+  return [...baseColumns, ...apiColumns, {
+    id: 'actions',
+    header: 'Actions',
+    cell: ({ row }) => <ActionsCell file={row.original} />,
+  },];
 }

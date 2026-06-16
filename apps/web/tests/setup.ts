@@ -32,6 +32,32 @@ export const handlers = [
       },
     });
   }),
+  // fal.ai billing events API mock
+  http.get('https://api.fal.ai/v1/models/billing-events', ({ request }) => {
+    const auth = request.headers.get('authorization');
+    if (!auth?.startsWith('Key ')) {
+      return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const requestId = new URL(request.url).searchParams.get('request_id');
+    if (!requestId) {
+      return HttpResponse.json({ error: 'Missing request_id' }, { status: 400 });
+    }
+    return HttpResponse.json({
+      billing_events: [
+        {
+          request_id: requestId,
+          endpoint_id: 'fal-ai/deepfilternet3',
+          timestamp: '2026-06-13T03:44:17.164745000Z',
+          output_units: 2.6006458333333335,
+          unit_price: 0.001,
+          percent_discount: 0,
+          cost_estimate_nano_usd: 2600646,
+        },
+      ],
+      next_cursor: null,
+      has_more: false,
+    });
+  }),
   // fal.ai audio file fetch mock
   http.get('https://fal-cdn.com/test-audio.mp3', () => {
     // Return a minimal valid audio buffer
@@ -182,6 +208,7 @@ process.env.R2_BUCKET_NAME = 'test-bucket';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+process.env.FAL_ADMIN_KEY = 'test-fal-admin-key';
 process.env.CLI_LOGIN_ENCRYPTION_SECRET =
   'test-cli-login-secret-do-not-use-in-production';
 

@@ -262,15 +262,16 @@ export default function AudioJoinerClient({ dict }: Props) {
     tracksRef.current = tracks;
   }, [tracks]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       for (const track of tracksRef.current) {
         URL.revokeObjectURL(track.url);
       }
       stopPlayback(true);
       audioContextRef.current?.close().catch(() => undefined);
-    };
-  }, [stopPlayback]);
+    },
+    [stopPlayback],
+  );
 
   useEffect(() => {
     if (error) {

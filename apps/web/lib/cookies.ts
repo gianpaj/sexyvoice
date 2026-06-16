@@ -99,35 +99,6 @@ function parseDocumentCookies(): Map<string, string> {
 }
 
 /**
- * Sets a cookie with fallback support for older browsers.
- */
-export async function setCookie(options: CookieOptions): Promise<void> {
-  const cookieStore = getCookieStore();
-
-  if (cookieStore) {
-    try {
-      const expires =
-        options.expires instanceof Date
-          ? options.expires.getTime()
-          : options.expires;
-
-      await cookieStore.set({
-        name: options.name,
-        value: options.value,
-        expires,
-        path: options.path ?? '/',
-        sameSite: options.sameSite ?? 'lax',
-      });
-      return;
-    } catch {
-      // Fall through to document.cookie fallback
-    }
-  }
-
-  setDocumentCookie(buildCookieString(options));
-}
-
-/**
  * Gets a cookie value with fallback support for older browsers.
  * Returns null if the cookie is not found.
  */
@@ -145,29 +116,4 @@ export async function getCookie(name: string): Promise<string | null> {
 
   const cookies = parseDocumentCookies();
   return cookies.get(name) ?? null;
-}
-
-/**
- * Deletes a cookie with fallback support for older browsers.
- */
-export async function deleteCookie(name: string, path = '/'): Promise<void> {
-  const cookieStore = getCookieStore();
-
-  if (cookieStore) {
-    try {
-      await cookieStore.delete({ name, path });
-      return;
-    } catch {
-      // Fall through to document.cookie fallback
-    }
-  }
-
-  // Set cookie with expired date to delete it
-  const expiredCookie = buildCookieString({
-    name,
-    value: '',
-    expires: new Date(0),
-    path,
-  });
-  setDocumentCookie(expiredCookie);
 }

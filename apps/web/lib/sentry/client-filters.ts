@@ -36,17 +36,49 @@ const rscConnectionClosedPattern = /^Connection closed\.$/i;
 
 const reactCommitDeletionFramePattern =
   /commitDeletionEffectsOnFiber|commitMutationEffectsOnFiber|recursivelyTraverseMutationEffects|react-dom-client|react-server-dom/i;
+const thirdPartyScriptFramePattern = /posthog-recorder\.js|addEL_hook/i;
+const localAppFramePattern = /apps\/web|\/_next\/static\/chunks\/app\//i;
+const browserMediaNoisePattern =
+  /Track has ended|WASM_OR_WORKER_NOT_READY|Lock was stolen by another request/i;
+const opaqueBrowserEventRejectionPattern =
+  /Event `Event` \(type=error\) captured as promise rejection/i;
+const injectedBrowserGlobalPattern =
+  /(?:Can't find variable: __firefox__|window\.__firefox__|window\.ethereum\.selectedAddress)/i;
+const externalWorkerImportPattern =
+  /Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https?:\/\/(?!([^/]+\.)?sexyvoice\.ai\/)[^']+' failed to load/i;
+const webViewBridgeNoisePattern =
+  /WKWebView API client did not respond to this postMessage/i;
+const transientBrowserNetworkPattern =
+  /(?:^|\s)(?:NetworkError:\s*)?Load failed$|(?:^|\s)network error$/i;
+const browserSecurityNoisePattern =
+  /Permission to call 'get parentNode' denied|The request was denied/i;
+const nullTagNamePattern =
+  /Cannot read properties of null \(reading 'tagName'\)/i;
+
+function getExceptionText(exception: SentryException): string {
+  return [exception.type, exception.value].filter(Boolean).join(' ');
+}
+
+function getFrameText(frame: SentryStackFrame): string {
+  return [frame.filename, frame.function, frame.module]
+    .filter(Boolean)
+    .join(' ');
+}
 
 function frameMatchesReactInternals(frame: SentryStackFrame): boolean {
-  return reactCommitDeletionFramePattern.test(
-    [frame.filename, frame.function, frame.module].filter(Boolean).join(' '),
-  );
+  return reactCommitDeletionFramePattern.test(getFrameText(frame));
+}
+
+function frameMatchesThirdPartyScript(frame: SentryStackFrame): boolean {
+  return thirdPartyScriptFramePattern.test(getFrameText(frame));
+}
+
+function frameMatchesLocalApp(frame: SentryStackFrame): boolean {
+  return localAppFramePattern.test(getFrameText(frame));
 }
 
 function isReactDomNoiseException(exception: SentryException): boolean {
-  const exceptionText = [exception.type, exception.value]
-    .filter(Boolean)
-    .join(' ');
+  const exceptionText = getExceptionText(exception);
 
   if (
     !reactDomMutationNoisePatterns.some((pattern) =>
@@ -61,6 +93,41 @@ function isReactDomNoiseException(exception: SentryException): boolean {
   return frames.length === 0 || frames.some(frameMatchesReactInternals);
 }
 
+function isThirdPartyScriptNoiseException(exception: SentryException): boolean {
+  const exceptionText = getExceptionText(exception);
+  const frames = exception.stacktrace?.frames ?? [];
+
+  if (nullTagNamePattern.test(exceptionText)) {
+    return frames.some(frameMatchesThirdPartyScript);
+  }
+
+  if (browserSecurityNoisePattern.test(exceptionText)) {
+    return frames.length === 0 || frames.some(frameMatchesThirdPartyScript);
+  }
+
+  return false;
+}
+
+function isBrowserRuntimeNoiseException(exception: SentryException): boolean {
+  const exceptionText = getExceptionText(exception);
+
+  if (
+    !(
+      browserMediaNoisePattern.test(exceptionText) ||
+      opaqueBrowserEventRejectionPattern.test(exceptionText) ||
+      injectedBrowserGlobalPattern.test(exceptionText) ||
+      externalWorkerImportPattern.test(exceptionText) ||
+      webViewBridgeNoisePattern.test(exceptionText) ||
+      transientBrowserNetworkPattern.test(exceptionText)
+    )
+  ) {
+    return false;
+  }
+
+  const frames = exception.stacktrace?.frames ?? [];
+  return frames.length === 0 || !frames.some(frameMatchesLocalApp);
+}
+
 export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
   const exceptions = event.exception?.values ?? [];
 
@@ -68,9 +135,21 @@ export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
     return true;
   }
 
+  if (exceptions.some(isThirdPartyScriptNoiseException)) {
+    return true;
+  }
+
+  if (exceptions.some(isBrowserRuntimeNoiseException)) {
+    return true;
+  }
+
   const message = event.message ?? '';
+  const isMessageOnlyReactDomNoise =
+    exceptions.length === 0 &&
+    reactDomMutationNoisePatterns.some((pattern) => pattern.test(message));
 
   return (
+    isMessageOnlyReactDomNoise ||
     reactHydrationRecoverablePattern.test(message) ||
     rscConnectionClosedPattern.test(message)
   );

@@ -1,3 +1,27 @@
+import type { GenerateContentResponse } from '@google/genai';
+
+/**
+ * Gemini may return a text/safety part before the audio part, so scan all
+ * candidates and parts for the first one carrying inline audio data instead
+ * of hard-indexing candidates[0].content.parts[0].
+ */
+export function extractInlineAudio(response: GenerateContentResponse | null): {
+  data: string | undefined;
+  mimeType: string | undefined;
+} {
+  for (const candidate of response?.candidates ?? []) {
+    for (const part of candidate.content?.parts ?? []) {
+      if (part.inlineData?.data) {
+        return {
+          data: part.inlineData.data,
+          mimeType: part.inlineData.mimeType,
+        };
+      }
+    }
+  }
+  return { data: undefined, mimeType: undefined };
+}
+
 // Emotion tags for each voice based on language
 export const getEmotionTags = (language: string) => {
   if (language.startsWith('it-')) {

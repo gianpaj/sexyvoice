@@ -23,7 +23,7 @@ const sessionConfigSchema = z.object({
 });
 
 const createOrUpdateSchema = z.object({
-  id: z.string().uuid('Invalid character ID').optional(),
+  id: z.uuid().optional(),
   name: z
     .string()
     .trim()
@@ -45,7 +45,7 @@ const createOrUpdateSchema = z.object({
 });
 
 const deleteSchema = z.object({
-  id: z.string().uuid('Character ID is required'),
+  id: z.uuid(),
 });
 
 type CreateOrUpdateBody = z.infer<typeof createOrUpdateSchema>;

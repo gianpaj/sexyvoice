@@ -94,6 +94,7 @@ function AvatarButton({
                   isConnected && !isSelected ? 'opacity-40 grayscale' : ''
                 }`}
                 fill
+                sizes="(min-width: 640px) 64px, 56px"
                 src={`/characters/${image}`}
               />
             ) : (
@@ -126,9 +127,11 @@ interface PresetSelectorProps {
   isPaidUser?: boolean;
 }
 
+const EMPTY_ITEMS: DBVoice[] = [];
+
 export function PresetSelector({
   isPaidUser = false,
-  callVoices = [],
+  callVoices = EMPTY_ITEMS,
 }: PresetSelectorProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
   const { disconnect, connect, shouldConnect, dict } = useConnection();
@@ -533,8 +536,9 @@ export function PresetSelector({
                       maxLength={50}
                       onBlur={handleSaveNameOrDescription}
                       onChange={(e) => setEditableName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter')
+                          await handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
                       value={editableName}
@@ -562,8 +566,9 @@ export function PresetSelector({
                       maxLength={200}
                       onBlur={handleSaveNameOrDescription}
                       onChange={(e) => setEditableDescription(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter')
+                          await handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
                       placeholder={dict.addDescriptionPlaceholder}
@@ -620,6 +625,7 @@ export function PresetSelector({
                       </SelectContent>
                     </Select>
                     <VoicePlayButton
+                      key={resolvedVoiceName}
                       sampleUrl={resolvedVoice?.sample_url ?? null}
                       size="md"
                       voiceName={resolvedVoiceName}

@@ -1,7 +1,7 @@
 'use client';
 
 import { Pause, Play } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { attemptPlayback } from '@/lib/media-playback';
@@ -39,6 +39,12 @@ export function AudioPlayer({
     }
   };
 
+  const onTimeUpdateEvent = useEffectEvent(() => {
+    if (audioRef.current && onTimeUpdate) {
+      onTimeUpdate(audioRef.current.currentTime);
+    }
+  });
+
   useEffect(() => {
     // Initialize audio element
     audioRef.current = new Audio(url);
@@ -48,9 +54,7 @@ export function AudioPlayer({
     };
 
     const handleTimeUpdate = () => {
-      if (audioRef.current && onTimeUpdate) {
-        onTimeUpdate(audioRef.current.currentTime);
-      }
+      onTimeUpdateEvent();
     };
 
     audioRef.current.addEventListener('ended', handleEnded);
@@ -67,7 +71,7 @@ export function AudioPlayer({
         audioRef.current = null;
       }
     };
-  }, [url, onTimeUpdate]);
+  }, [url]);
 
   return (
     <Button

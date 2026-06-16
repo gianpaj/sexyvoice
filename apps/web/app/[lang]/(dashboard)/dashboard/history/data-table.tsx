@@ -56,8 +56,9 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
     queryFn: () => getMyAudioFiles(supabase, userId),
     enabled: !!userId,
   });
-  const columns = createColumns({ showApiColumns });
+  const columns = createColumns({ showApiColumns, dict });
 
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable<AudioFileAndVoicesRes>({
     data: (data as AudioFileAndVoicesRes[]) ?? [],
     columns,

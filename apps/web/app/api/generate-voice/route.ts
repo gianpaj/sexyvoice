@@ -12,7 +12,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { getCharactersLimit } from '@/lib/ai';
+import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -37,8 +37,12 @@ import {
   getErrorStatusCode,
   getTtsProvider,
 } from '@/lib/utils';
-import { getGoogleApiErrorStatus } from '@/utils/google-rpc-status';
-import { type GoogleApiError, parseGoogleApiError } from '@/utils/googleErrors';
+import {
+  getGoogleApiErrorStatus,
+  isGoogleQuotaError,
+  isGoogleTransientProviderError,
+} from '@/utils/google-rpc-status';
+import { parseGoogleApiError } from '@/utils/googleErrors';
 
 const { logger, captureException } = Sentry;
 
@@ -52,19 +56,6 @@ function isAbortError(error: unknown): boolean {
   if (error.name === 'AbortError') return true;
   const msg = error.message.toLowerCase();
   return /\babort(?:ed| ?error)\b/.test(msg);
-}
-
-function isGoogleQuotaError(errorPayload: GoogleApiError): boolean {
-  return getGoogleApiErrorStatus(errorPayload) === 'RESOURCE_EXHAUSTED';
-}
-
-function isGoogleTransientProviderError(errorPayload: GoogleApiError): boolean {
-  const status = getGoogleApiErrorStatus(errorPayload);
-  return (
-    status === 'INTERNAL' ||
-    status === 'UNAVAILABLE' ||
-    status === 'DEADLINE_EXCEEDED'
-  );
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration
@@ -281,7 +272,7 @@ export async function POST(request: Request) {
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
-            contents: [{ parts: [{ text }] }],
+            contents: [{ role: 'user', parts: [{ text }] }],
             config: geminiTTSConfig,
           });
         } catch (error) {
@@ -326,7 +317,7 @@ export async function POST(request: Request) {
           try {
             genAIResponse = await ai.models.generateContent({
               model: modelUsed,
-              contents: [{ parts: [{ text }] }],
+              contents: [{ role: 'user', parts: [{ text }] }],
               config: geminiTTSConfig,
             });
 
@@ -368,20 +359,20 @@ export async function POST(request: Request) {
         modelUsed = 'gemini-2.5-flash-preview-tts';
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
-          contents: [{ parts: [{ text }] }],
+          contents: [{ role: 'user', parts: [{ text }] }],
           config: geminiTTSConfig,
         });
       }
-      const data =
-        genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      const mimeType =
-        genAIResponse?.candidates?.[0]?.content?.parts?.[0]?.inlineData
-          ?.mimeType;
+      const { data, mimeType } = extractInlineAudio(genAIResponse);
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
       const blockReason = genAIResponse?.promptFeedback?.blockReason;
       const isProhibitedContent =
         finishReason === FinishReason.PROHIBITED_CONTENT ||
         blockReason === 'PROHIBITED_CONTENT';
+      // Finished normally but no audio came back — transient provider glitch
+      // rather than a content block, so surface it as retryable.
+      const isNoAudioData =
+        finishReason === FinishReason.STOP && !(data && mimeType);
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
         if (isProhibitedContent) {
@@ -397,6 +388,21 @@ export async function POST(request: Request) {
               responseId: genAIResponse?.responseId,
               blockReason,
               finishReason,
+            },
+          });
+        } else if (isNoAudioData) {
+          logger.warn('Gemini voice generation returned no audio data', {
+            user: { id: user.id, email: user.email },
+            extra: {
+              voice,
+              styleVariant,
+              model: modelUsed,
+              provider,
+              textLength: text.length,
+              textPreview: text.slice(0, 500),
+              responseId: genAIResponse?.responseId,
+              finishReason,
+              blockReason,
             },
           });
         } else {
@@ -432,15 +438,16 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Only capture non-PROHIBITED_CONTENT errors to Sentry.
-        // PROHIBITED_CONTENT is an expected user input block, not an error to report.
-        if (!isProhibitedContent) {
+        // Only capture unexpected Gemini blocks to Sentry. PROHIBITED_CONTENT
+        // and no-audio STOP responses are handled user/provider states.
+        if (!(isProhibitedContent || isNoAudioData)) {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
               finishReason,
               blockReason,
               hasData: !!data,
               mimeType,
+              isNoAudioData,
               model: modelUsed,
               textPreview: text.slice(0, 200),
               voice,
@@ -448,16 +455,15 @@ export async function POST(request: Request) {
             user: { id: user.id },
           });
         }
-        throw new Error(
-          isProhibitedContent
-            ? getErrorMessage('PROHIBITED_CONTENT', 'voice-generation')
-            : getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-          {
-            cause: isProhibitedContent
-              ? 'PROHIBITED_CONTENT'
-              : 'OTHER_GEMINI_BLOCK',
-          },
-        );
+        let noAudioErrorCode: keyof typeof ERROR_CODES = 'OTHER_GEMINI_BLOCK';
+        if (isProhibitedContent) {
+          noAudioErrorCode = 'PROHIBITED_CONTENT';
+        } else if (isNoAudioData) {
+          noAudioErrorCode = 'NO_AUDIO_DATA';
+        }
+        throw new Error(getErrorMessage(noAudioErrorCode, 'voice-generation'), {
+          cause: noAudioErrorCode,
+        });
       }
       logger.info('Gemini voice generation succeeded', {
         user: {
@@ -560,14 +566,7 @@ export async function POST(request: Request) {
       }
 
       // Convert ReadableStream to Buffer before uploading
-      const chunks: Uint8Array[] = [];
-      const reader = output.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        if (value) chunks.push(value);
-      }
-      const audioBuffer = Buffer.concat(chunks);
+      const audioBuffer = Buffer.from(await new Response(output).arrayBuffer());
 
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
     }
@@ -702,6 +701,15 @@ export async function POST(request: Request) {
       );
     }
 
+    if (Error.isError(error) && error.cause === 'NO_AUDIO_DATA') {
+      return NextResponse.json(
+        {
+          error: error.message || 'Voice generation returned no audio',
+        },
+        { status: getErrorStatusCode(error.cause) },
+      );
+    }
+
     const googleApiError = parseGoogleApiError(error);
     if (googleApiError) {
       const googleStatus = getGoogleApiErrorStatus(googleApiError);
@@ -748,6 +756,28 @@ export async function POST(request: Request) {
             ),
           },
           { status: 503 },
+        );
+      }
+
+      if (googleStatus === 'INVALID_ARGUMENT') {
+        logger.warn('Gemini rejected TTS request', {
+          user: user ? { id: user.id, email: user.email } : undefined,
+          extra: {
+            textLength: text.length,
+            voice,
+            googleStatus,
+            googleCode: googleApiError.code,
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: getErrorMessage(
+              ERROR_CODES.OTHER_GEMINI_BLOCK,
+              'voice-generation',
+            ),
+          },
+          { status: 422 },
         );
       }
     }

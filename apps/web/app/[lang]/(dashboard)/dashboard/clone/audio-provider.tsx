@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, use, useEffect, useRef, useState } from 'react';
 
 import { attemptPlayback } from '@/lib/media-playback';
 
@@ -14,7 +14,7 @@ interface AudioContextType {
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export const useAudio = () => {
-  const context = useContext(AudioContext);
+  const context = use(AudioContext);
   if (!context && typeof window !== 'undefined') {
     throw new Error('useAudio must be used within an AudioContext');
   }

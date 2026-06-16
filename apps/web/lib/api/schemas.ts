@@ -52,95 +52,8 @@ export const VoiceGenerationRequestSchema = z.strictObject({
     ),
 });
 
-export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
-  'model',
-  [
-    z.strictObject({
-      model: z.literal('gpro').describe('The voice model to use'),
-      input: z
-        .string()
-        .min(1)
-        .max(1000)
-        .describe('The text to synthesize (max 1000 chars for gpro)'),
-      voice: z
-        .string()
-        .min(1)
-        .describe('Voice name (see GET /api/v1/voices for available voices)'),
-      response_format: z
-        .enum(['wav', 'mp3'])
-        .optional()
-        .describe('Audio format. Default depends on model'),
-      style: z
-        .string()
-        .optional()
-        .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
-      seed: z
-        .number()
-        .int()
-        .optional()
-        .describe(
-          'Optional deterministic seed for providers that support it (e.g. Gemini)',
-        ),
-    }),
-    z.strictObject({
-      model: z.literal('orpheus').describe('The voice model to use'),
-      input: z
-        .string()
-        .min(1)
-        .max(500)
-        .describe('The text to synthesize (max 500 chars for orpheus)'),
-      voice: z
-        .string()
-        .min(1)
-        .describe('Voice name (see GET /api/v1/voices for available voices)'),
-      response_format: z
-        .enum(['wav', 'mp3'])
-        .optional()
-        .describe('Audio format. Default depends on model'),
-      style: z
-        .string()
-        .optional()
-        .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
-      seed: z
-        .number()
-        .int()
-        .optional()
-        .describe(
-          'Optional deterministic seed for providers that support it (e.g. Gemini)',
-        ),
-    }),
-    z.strictObject({
-      model: z.literal('grok').describe('The voice model to use'),
-      input: z
-        .string()
-        .min(1)
-        .max(1000)
-        .describe('The text to synthesize (max 1000 chars for grok)'),
-      voice: z
-        .string()
-        .min(1)
-        .describe('Voice name (see GET /api/v1/voices for available voices)'),
-      response_format: z
-        .enum(['wav', 'mp3'])
-        .optional()
-        .describe('Audio format. Default depends on model'),
-      style: z
-        .string()
-        .optional()
-        .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
-      seed: z
-        .number()
-        .int()
-        .optional()
-        .describe(
-          'Optional deterministic seed for providers that support it (e.g. Gemini)',
-        ),
-    }),
-  ],
-);
-
 export const VoiceGenerationResponseSchema = z.object({
-  url: z.string().url().describe('URL to generated audio'),
+  url: z.url().describe('URL to generated audio'),
   credits_used: z
     .number()
     .int()
@@ -161,7 +74,7 @@ export const VoiceInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'orpheus', 'grok']),
+  model: z.enum(['gpro', 'orpheus', 'xai']),
   formats: z.array(z.enum(['wav', 'mp3'])),
   supports_style: z
     .boolean()

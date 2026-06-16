@@ -1,4 +1,4 @@
-export const FEATURED_VOICE_SORT_ORDER = 0;
+const FEATURED_VOICE_SORT_ORDER = 0;
 
 export function isFeaturedVoice(
   voice: Pick<Tables<'voices'>, 'sort_order'>,

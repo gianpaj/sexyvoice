@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Credits kaufen",
-      "description": "Füllen Sie Ihre Credits sofort mit einem einmaligen Kauf auf",
+      "description": "Füllen Sie Ihre Credits sofort auf oder abonnieren Sie und erhalten Sie mehr Credits",
       "buyCredits": "Credits kaufen",
       "onetimePurchase": "Einmaliger Kauf",
       "processing": "Wird verarbeitet...",
@@ -758,7 +758,7 @@
     "profile": "Profil",
     "signOut": "Abmelden",
     "freeTools": "Kostenlose Tools",
-    "subscriptionDiscount": "Erhalte {discount}% zusätzliche Credits mit einem Abonnement"
+    "subscriptionDiscount": "Erhalte {extraCredits}% zusätzliche Credits und {discount}% Rabatt im ersten Monat!"
   },
   "header": {
     "generate": "Generieren",
@@ -768,6 +768,7 @@
   "history": {
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
+    "downloadError": "Audio konnte nicht heruntergeladen werden",
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",
@@ -1034,5 +1035,9 @@
       "audioConverterLink": "Kostenloses Audio-Konverter-Tool",
       "madeWith": "Mit ♡ von SexyVoice.ai – Kostenlos den KI-Audiogenerator ausprobieren"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
   }
 }

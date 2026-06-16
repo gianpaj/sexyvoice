@@ -116,7 +116,7 @@ export function getProfileUsername(
   profileRelation: DailyStatsProfileRelation,
 ): string | undefined {
   if (!profileRelation) {
-    return undefined;
+    return;
   }
 
   if (Array.isArray(profileRelation)) {

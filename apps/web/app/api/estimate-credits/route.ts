@@ -160,12 +160,12 @@ export async function POST(request: Request) {
       return userResult.response;
     }
 
-    const isPaidUser = await hasUserPaid(userResult.data.id);
-
     const voiceResult = await validateVoice(voice);
     if (!voiceResult.ok) {
       return voiceResult.response;
     }
+
+    const isPaidUser = await hasUserPaid(userResult.data.id);
 
     const textError = validateTextLength(
       text,

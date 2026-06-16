@@ -1,8 +1,6 @@
-import { memo } from 'react';
-
 type SvgProps = React.ComponentPropsWithoutRef<'svg'>;
 
-export const TypeIcon = memo(({ className, ...props }: SvgProps) => {
+export const TypeIcon = ({ className, ...props }: SvgProps) => {
   return (
     <svg
       className={className}
@@ -19,6 +17,6 @@ export const TypeIcon = memo(({ className, ...props }: SvgProps) => {
       />
     </svg>
   );
-});
+};
 
 TypeIcon.displayName = 'TypeIcon';

@@ -21,11 +21,11 @@ import {
   formatIdList,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
+  getClonedAudioFilesInRange,
   getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
   getUsageEventsInRange,
-  VOICE_CLONING_MODELS,
 } from './queries';
 import {
   _timed,
@@ -260,21 +260,20 @@ export async function GET(request: NextRequest) {
         })(),
       ),
 
-      // (clonesResult) Cloned audio files last 14 days (includes yesterday)
+      // (clonesResult) Cloned audio files last 14 days (includes yesterday).
+      // Paginated so the count isn't silently capped at PostgREST's 1000-row
+      // default — the 14d clone total can exceed that.
       _timed(
-        `audio_files:clones ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        (() => {
-          let q = supabase
-            .from('audio_files')
-            .select('id, created_at')
-            .in('model', VOICE_CLONING_MODELS)
-            .gte('created_at', fourteenDaysAgo.toISOString())
-            .lt('created_at', today.toISOString());
-          if (hasInternalUserIds) {
-            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
-          }
-          return q.then((result) => result);
-        })(),
+        `audio_files:clones paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getClonedAudioFilesInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then(
+          (data) => ({ data, error: null }),
+          (error) => ({ data: null, error }),
+        ),
       ),
 
       // (profilesTotalCountResult) Total profiles count
@@ -622,6 +621,16 @@ export async function GET(request: NextRequest) {
   );
   const paidCalls14dCount = calls14dCount - freeCalls14dCount;
   const paidCallsDuration14d = callsDuration14d - freeCallsDuration14d;
+
+  // Average duration per free vs paid call (guarded against divide-by-zero)
+  const freeCallsAvgDurationYesterday =
+    Math.round(freeCallsDurationYesterday / freeCallsYesterdayCount) || 0;
+  const paidCallsAvgDurationYesterday =
+    Math.round(paidCallsDurationYesterday / paidCallsYesterdayCount) || 0;
+  const freeCallsAvgDuration14d =
+    Math.round(freeCallsDuration14d / freeCalls14dCount) || 0;
+  const paidCallsAvgDuration14d =
+    Math.round(paidCallsDuration14d / paidCalls14dCount) || 0;
 
   // Platform infra cost at $0.05 per minute — covers all calls (free included),
   // not billable revenue, so free-call duration is intentionally part of this.
@@ -1403,8 +1412,8 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${calls14dCount} (avg ${(calls14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
-    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)})`,
-    `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)})`,
+    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
+    `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
     `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDuration14d)} vs ${ROLLING_WINDOW_LABEL}) | ${ROLLING_WINDOW_LABEL}: ${formatDuration(callsDuration14d)} (avg ${formatDuration(callsAvgDuration14d)})`,
     `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,

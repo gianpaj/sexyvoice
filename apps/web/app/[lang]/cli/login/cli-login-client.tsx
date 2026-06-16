@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,39 @@ interface ApiKeyRow {
   name: string;
 }
 
+function DateTimeText({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {new Date(value).toLocaleString()}
+    </time>
+  );
+}
+
+interface CliLoginState {
+  error: string | null;
+  isCreatingNew: boolean;
+  isLoading: boolean;
+  newKeyName: string;
+  selectedKeyId: string;
+}
+
+interface CliLoginAction {
+  patch: Partial<CliLoginState>;
+  type: 'patch';
+}
+
+function cliLoginReducer(
+  state: CliLoginState,
+  action: CliLoginAction,
+): CliLoginState {
+  switch (action.type) {
+    case 'patch':
+      return { ...state, ...action.patch };
+    default:
+      return state;
+  }
+}
+
 export function CliLoginClient({
   callbackUrl,
   dict,
@@ -37,11 +70,15 @@ export function CliLoginClient({
   keys: ApiKeyRow[];
   state: string;
 }) {
-  const [selectedKeyId, setSelectedKeyId] = useState(keys[0]?.id ?? '');
-  const [newKeyName, setNewKeyName] = useState('CLI');
-  const [isCreatingNew, setIsCreatingNew] = useState(keys.length === 0);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [cliLoginState, dispatch] = useReducer(cliLoginReducer, {
+    error: null,
+    isCreatingNew: keys.length === 0,
+    isLoading: false,
+    newKeyName: 'CLI',
+    selectedKeyId: keys[0]?.id ?? '',
+  });
+  const { error, isCreatingNew, isLoading, newKeyName, selectedKeyId } =
+    cliLoginState;
 
   useEffect(() => {
     const handlePageShow = (event: PageTransitionEvent) => {
@@ -59,8 +96,13 @@ export function CliLoginClient({
     : selectedKeyId.length > 0;
 
   const handleContinue = async () => {
-    setIsLoading(true);
-    setError(null);
+    dispatch({
+      type: 'patch',
+      patch: {
+        isLoading: true,
+        error: null,
+      },
+    });
 
     try {
       const response = await fetch('/api/cli-login-sessions', {
@@ -75,20 +117,37 @@ export function CliLoginClient({
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? dict.errors.startFailed);
+        dispatch({
+          type: 'patch',
+          patch: { error: json.error ?? dict.errors.startFailed, isLoading: false },
+        });
+        return;
       }
       const redirectUrl = new URL(json.redirect_url);
-      if (!['127.0.0.1', 'localhost'].includes(redirectUrl.hostname)) {
-        throw new Error('Invalid redirect target');
+      const isAllowedHost = ['127.0.0.1', 'localhost'].includes(
+        redirectUrl.hostname,
+      );
+      const isAllowedProtocol =
+        redirectUrl.protocol === 'http:' || redirectUrl.protocol === 'https:';
+      if (!(isAllowedHost && isAllowedProtocol)) {
+        dispatch({
+          type: 'patch',
+          patch: { error: 'Invalid redirect target', isLoading: false },
+        });
+        return;
       }
       window.location.assign(json.redirect_url);
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : dict.errors.startFailed,
-      );
-      setIsLoading(false);
+      dispatch({
+        type: 'patch',
+        patch: {
+          error:
+            caughtError instanceof Error
+              ? caughtError.message
+              : dict.errors.startFailed,
+          isLoading: false,
+        },
+      });
     }
   };
 
@@ -120,8 +179,13 @@ export function CliLoginClient({
                     id={key.id}
                     name="api-key"
                     onChange={() => {
-                      setSelectedKeyId(key.id);
-                      setIsCreatingNew(false);
+                      dispatch({
+                        type: 'patch',
+                        patch: {
+                          selectedKeyId: key.id,
+                          isCreatingNew: false,
+                        },
+                      });
                     }}
                     type="radio"
                   />
@@ -132,9 +196,11 @@ export function CliLoginClient({
                     </div>
                     <div className="text-muted-foreground text-xs">
                       {dict.existingKeys.lastUsedLabel}{' '}
-                      {key.last_used_at
-                        ? new Date(key.last_used_at).toLocaleString()
-                        : dict.existingKeys.never}
+                      {key.last_used_at ? (
+                        <DateTimeText value={key.last_used_at} />
+                      ) : (
+                        dict.existingKeys.never
+                      )}
                     </div>
                   </div>
                 </label>
@@ -157,11 +223,15 @@ export function CliLoginClient({
                   return;
                 }
 
-                setIsCreatingNew(next);
-
-                if (!next && selectedKeyId.length === 0 && keys[0]?.id) {
-                  setSelectedKeyId(keys[0].id);
-                }
+                dispatch({
+                  type: 'patch',
+                  patch: {
+                    isCreatingNew: next,
+                    ...(!next && selectedKeyId.length === 0 && keys[0]?.id
+                      ? { selectedKeyId: keys[0].id }
+                      : {}),
+                  },
+                });
               }}
             />
             <div className="space-y-1">
@@ -173,7 +243,12 @@ export function CliLoginClient({
           </div>
           <Input
             disabled={!(isCreatingNew && hasCreateAccess)}
-            onChange={(event) => setNewKeyName(event.target.value)}
+            onChange={(event) => {
+              dispatch({
+                type: 'patch',
+                patch: { newKeyName: event.target.value },
+              });
+            }}
             placeholder={dict.createNew.placeholder}
             value={newKeyName}
           />

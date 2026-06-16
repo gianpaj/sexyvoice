@@ -23,7 +23,7 @@ export type GoogleApiErrorWithStatus = GoogleApiError & {
   status?: GoogleRpcStatus;
 };
 
-export function mapHttpToGoogleRpcStatus(
+function mapHttpToGoogleRpcStatus(
   httpStatus: number | undefined,
 ): GoogleRpcStatus {
   switch (httpStatus) {
@@ -59,4 +59,19 @@ export function getGoogleApiErrorStatus(
   error: GoogleApiErrorWithStatus,
 ): GoogleRpcStatus {
   return error.status ?? mapHttpToGoogleRpcStatus(error.code);
+}
+
+export function isGoogleQuotaError(error: GoogleApiErrorWithStatus): boolean {
+  return getGoogleApiErrorStatus(error) === 'RESOURCE_EXHAUSTED';
+}
+
+export function isGoogleTransientProviderError(
+  error: GoogleApiErrorWithStatus,
+): boolean {
+  const status = getGoogleApiErrorStatus(error);
+  return (
+    status === 'INTERNAL' ||
+    status === 'UNAVAILABLE' ||
+    status === 'DEADLINE_EXCEEDED'
+  );
 }

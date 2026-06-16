@@ -253,7 +253,15 @@ describe('createOrRetrieveCustomer()', () => {
       const result = await createOrRetrieveCustomer(userId, email);
 
       expect(result).toBe('cus_1');
-      expect(Sentry.captureMessage).toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Multiple Stripe customers found for Supabase user',
+        expect.objectContaining({
+          customerCount: 2,
+          customerIds: ['cus_1', 'cus_2'],
+          user: { id: userId, email },
+        }),
+      );
     });
   });
 
@@ -330,7 +338,18 @@ describe('createOrRetrieveCustomer()', () => {
       const result = await createOrRetrieveCustomer(userId, email);
 
       expect(result).toBe('cus_email_1');
-      expect(Sentry.captureMessage).toHaveBeenCalled();
+      expect(Sentry.captureMessage).not.toHaveBeenCalledWith(
+        expect.stringContaining('Multiple customers found for email'),
+        expect.anything(),
+      );
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Multiple Stripe customers found for email',
+        expect.objectContaining({
+          customerCount: 2,
+          customerIds: ['cus_email_1', 'cus_email_2'],
+          user: { id: userId, email },
+        }),
+      );
     });
   });
 

@@ -1,6 +1,4 @@
-'use server';
-
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -267,7 +265,7 @@ export const insertUsageEvent = async (
       .single();
 
     if (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         extra: {
           params,
           context: 'insertUsageEvent',
@@ -279,7 +277,7 @@ export const insertUsageEvent = async (
 
     return data?.id ?? null;
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: {
         params,
         context: 'insertUsageEvent',
@@ -379,12 +377,19 @@ export const insertSubscriptionCreditTransaction = async (
     metadata: {
       dollarAmount,
       isFirstSubscription,
-      // Figure out how to send promo metadata with a Stripe pricing table
-      // ...(promo && { promo }),
     },
   });
 
   if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Subscription transaction already exists', {
+        userId,
+        paymentIntentId,
+        subscriptionId,
+      });
+      return;
+    }
+
     console.error('Error inserting subscription transaction:', {
       userId,
       subscriptionId,
@@ -454,11 +459,28 @@ export const insertTopupCreditTransaction = async (
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Topup transaction already exists', {
+        userId,
+        paymentIntentId,
+      });
+      return;
+    }
+
+    throw error;
+  }
 
   // Update user's credit balance using the database function
   await updateUserCredits(userId, creditAmount);
 };
+
+const isCreditTransactionReferenceConflict = (error: {
+  code?: string;
+  message?: string;
+}): boolean =>
+  error.code === '23505' &&
+  /unique_reference|reference_id/i.test(error.message ?? '');
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
@@ -518,7 +540,7 @@ export const getTotalCallDurationSeconds = async (
     .eq('user_id', userId);
 
   if (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: { userId, context: 'getTotalCallDurationSeconds' },
     });
     throw error;

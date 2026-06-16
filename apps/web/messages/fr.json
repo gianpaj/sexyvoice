@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Acheter des crédits",
-      "description": "Rechargez vos crédits instantanément avec un achat unique",
+      "description": "Rechargez vos crédits instantanément ou abonnez-vous et obtenez plus de crédits",
       "buyCredits": "Acheter des crédits",
       "onetimePurchase": "Achat unique",
       "processing": "Traitement...",
@@ -758,7 +758,7 @@
     "profile": "Profil",
     "signOut": "Déconnexion",
     "freeTools": "Outils gratuits",
-    "subscriptionDiscount": "Obtenez {discount}% de crédits supplémentaires avec un abonnement"
+    "subscriptionDiscount": "Obtenez {extraCredits}% de crédits supplémentaires et {discount}% de réduction sur le premier mois !"
   },
   "header": {
     "generate": "Générer",
@@ -768,6 +768,7 @@
   "history": {
     "header": "Historique des générations",
     "empty": "Aucun historique pour le moment",
+    "downloadError": "Échec du téléchargement de l'audio",
     "ui": {
       "filterText": "Filtrer le texte...",
       "customizeColumns": "Personnaliser les colonnes",
@@ -1034,5 +1035,9 @@
       "audioConverterLink": "Convertisseur Audio Gratuit",
       "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
+    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes."
   }
 }

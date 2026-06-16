@@ -1,7 +1,7 @@
 'use client';
 
 import { FileAudio, Music, Upload } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import type langDict from '@/messages/en.json';
@@ -15,45 +15,39 @@ interface Props {
 export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file?.type.startsWith('audio/')) {
-        onFileSelect(file);
-      }
-    },
-    [onFileSelect],
-  );
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file?.type.startsWith('audio/')) {
+      onFileSelect(file);
+    }
+  };
 
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        onFileSelect(file);
-      }
-    },
-    [onFileSelect],
-  );
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileSelect(file);
+    }
+  };
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
+  const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-  }, []);
+  };
 
-  const handleDragIn = useCallback((e: React.DragEvent) => {
+  const handleDragIn = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
       setIsDragging(true);
     }
-  }, []);
+  };
 
-  const handleDragOut = useCallback((e: React.DragEvent) => {
+  const handleDragOut = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-  }, []);
+  };
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: we need a div, not a button

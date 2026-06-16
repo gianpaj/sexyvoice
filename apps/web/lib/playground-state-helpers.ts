@@ -193,5 +193,3 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
 
   return helpers;
 };
-
-export const playgroundStateHelpers = createPlaygroundStateHelpers();

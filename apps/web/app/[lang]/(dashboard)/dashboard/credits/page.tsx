@@ -1,31 +1,54 @@
+import { Suspense } from 'react';
+
 import { captureException } from '@sentry/nextjs';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import Script from 'next/script';
-import { getMessages } from 'next-intl/server';
-import type Stripe from 'stripe';
+import { getMessages, getTranslations } from 'next-intl/server';
 
+import PricingTable from '@/components/pricing-table';
 import { Button } from '@/components/ui/button';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getCustomerData } from '@/lib/redis/queries';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
-  createCustomerSession,
   createOrRetrieveCustomer,
+  hasAnySubscriptionHistory,
+  isStripeCouponUsable,
   refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
-import { CreditTopup } from './credit-topup';
-import { TopupStatus } from './topup-status';
+import { PaymentStatus } from './payment-status';
+
+async function canApplyFirstMonthSubscriptionDiscount(stripeId: string) {
+  const subscriptionDiscountCouponId =
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+
+  if (!subscriptionDiscountCouponId) {
+    return false;
+  }
+
+  const hasExistingSubscriptionHistory =
+    await hasAnySubscriptionHistory(stripeId);
+
+  if (hasExistingSubscriptionHistory) {
+    return false;
+  }
+
+  return isStripeCouponUsable(subscriptionDiscountCouponId);
+}
 
 export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const tSidebar = await getTranslations({
+    locale: lang,
+    namespace: 'sidebar',
+  });
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
@@ -34,8 +57,8 @@ export default async function CreditsPage(props: {
     throw new Error('User not found');
   }
 
-  let shouldShowPricingTable = false;
-  let clientSecret: Stripe.Response<Stripe.CustomerSession> | null = null;
+  let shouldShowSubscriptionPlans = false;
+  let isEligibleForSubscriptionDiscount = false;
   let existingTransactions:
     | Pick<
         Tables<'credit_transactions'>,
@@ -65,20 +88,22 @@ export default async function CreditsPage(props: {
     userData.stripe_id = stripeId;
 
     let customerData = await getCustomerData(stripeId);
-    shouldShowPricingTable = !customerData || customerData.status !== 'active';
+    shouldShowSubscriptionPlans =
+      !customerData || customerData.status !== 'active';
 
-    if (shouldShowPricingTable) {
+    if (shouldShowSubscriptionPlans) {
       try {
         customerData = await refreshCustomerSubscriptionData(stripeId);
-        shouldShowPricingTable = customerData.status !== 'active';
+        shouldShowSubscriptionPlans = customerData.status !== 'active';
       } catch (error) {
         console.error('Failed to refresh Stripe subscription data', error);
-        shouldShowPricingTable = false;
+        shouldShowSubscriptionPlans = false;
       }
     }
 
-    if (shouldShowPricingTable) {
-      clientSecret = await createCustomerSession(userData.id, stripeId);
+    if (shouldShowSubscriptionPlans) {
+      isEligibleForSubscriptionDiscount =
+        await canApplyFirstMonthSubscriptionDiscount(stripeId);
     }
 
     ({ data: existingTransactions } = await supabase
@@ -89,9 +114,19 @@ export default async function CreditsPage(props: {
       .limit(100));
   }
 
+  const subscriptionDiscountPercent =
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
+  const shouldShowSubscriptionDiscountBanner =
+    shouldShowSubscriptionPlans &&
+    isEligibleForSubscriptionDiscount &&
+    !!subscriptionDiscountPercent &&
+    Number.parseFloat(subscriptionDiscountPercent) > 0;
+
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <TopupStatus dict={dict.credits} />
+      <Suspense>
+        <PaymentStatus />
+      </Suspense>
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
           <h3 className="mb-4 font-semibold text-lg">
@@ -111,9 +146,27 @@ export default async function CreditsPage(props: {
         </Button>
       </div>
 
-      <CreditTopup
-        dict={{ credits: dict.credits, promos: dict.promos }}
+      {shouldShowSubscriptionDiscountBanner ? (
+        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
+          <Sparkles className="size-5 shrink-0 text-yellow-500" />
+          <span>
+            {tSidebar('subscriptionDiscount', {
+              discount: subscriptionDiscountPercent,
+              extraCredits: String(
+                Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100),
+              ),
+            })}
+          </span>
+        </div>
+      ) : null}
+
+      <PricingTable
+        applyFirstMonthSubscriptionDiscount={isEligibleForSubscriptionDiscount}
+        checkoutEnabled
+        className="py-0 pb-16 xl:px-0"
+        hideFreePlan
         lang={lang}
+        shouldShowSubscriptionPlans={shouldShowSubscriptionPlans}
       />
 
       <div className="my-8">
@@ -125,48 +178,6 @@ export default async function CreditsPage(props: {
           transactions={existingTransactions}
         />
       </div>
-
-      {shouldShowPricingTable && (
-        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm">
-          <Sparkles className="size-5 shrink-0 text-yellow-500" />
-          <span>
-            {dict.sidebar.subscriptionDiscount.replace(
-              '{discount}',
-              String(Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)),
-            )}
-          </span>
-        </div>
-      )}
-
-      {shouldShowPricingTable && clientSecret && (
-        <NextStripePricingTable clientSecret={clientSecret} />
-      )}
     </div>
   );
 }
-
-const NextStripePricingTable = ({
-  clientSecret,
-}: {
-  clientSecret: Stripe.Response<Stripe.CustomerSession> | null;
-}) => {
-  const pricingTableId = process.env.STRIPE_PRICING_ID;
-  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
-
-  if (!(pricingTableId && publishableKey && clientSecret)) return null;
-
-  return (
-    <>
-      <Script
-        src="https://js.stripe.com/v3/pricing-table.js"
-        strategy="lazyOnload"
-      />
-      {/* @ts-ignore */}
-      <stripe-pricing-table
-        customer-session-client-secret={clientSecret.client_secret}
-        pricing-table-id={pricingTableId}
-        publishable-key={publishableKey}
-      />
-    </>
-  );
-};
