@@ -21,6 +21,7 @@ import {
   getDefaultFormat,
   isFormatSupported,
   isModelCompatibleWithVoice,
+  resolveExternalModelId,
 } from '@/lib/api/model';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
@@ -30,6 +31,7 @@ import { convertToWav } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
+  getVoiceByIdAdmin,
   getVoiceIdByNameAdmin,
   hasUserPaidAdmin,
   insertUsageEvent,
@@ -204,16 +206,27 @@ export async function POST(request: Request) {
       return respond(zodErrorToApiError(parsed.error), { status: 400 });
     }
 
-    const { model, input, voice, response_format, style, seed } = parsed.data;
+    const { input, response_format, style, seed } = parsed.data;
+    const requestedVoice = parsed.data.voice;
+    const requestedVoiceId = parsed.data.voiceId;
+    let model = parsed.data.model;
 
     const userId = authResult.userId;
 
     let voiceObj: Awaited<ReturnType<typeof getVoiceIdByNameAdmin>> | null =
       null;
-    try {
-      voiceObj = await getVoiceIdByNameAdmin(voice);
-    } catch {
-      voiceObj = null;
+    if (requestedVoiceId) {
+      try {
+        voiceObj = await getVoiceByIdAdmin(requestedVoiceId);
+      } catch {
+        voiceObj = null;
+      }
+    } else if (requestedVoice) {
+      try {
+        voiceObj = await getVoiceIdByNameAdmin(requestedVoice);
+      } catch {
+        voiceObj = null;
+      }
     }
 
     if (!voiceObj) {
@@ -222,15 +235,44 @@ export async function POST(request: Request) {
         errorCode: 'voice_not_found',
         userId,
         apiKeyId: authResult.apiKeyId,
-        voice,
+        voice: requestedVoice,
+        voiceId: requestedVoiceId,
         model,
       });
       return respond(
         createApiError({
-          message: `Voice "${voice}" was not found`,
+          message: requestedVoiceId
+            ? `Voice ID "${requestedVoiceId}" was not found`
+            : `Voice "${requestedVoice}" was not found`,
           type: 'not_found_error',
           code: 'voice_not_found',
-          param: 'voice',
+          param: requestedVoiceId ? 'voiceId' : 'voice',
+        }),
+        { status: 404 },
+      );
+    }
+
+    const voice = voiceObj.name;
+    if (requestedVoiceId) {
+      model = resolveExternalModelId(voiceObj.model) ?? undefined;
+    }
+
+    if (!model) {
+      await log({
+        status: 404,
+        errorCode: 'voice_not_found',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        voiceId: requestedVoiceId,
+        model: voiceObj.model,
+      });
+      return respond(
+        createApiError({
+          message: `Voice ID "${requestedVoiceId}" was not found`,
+          type: 'not_found_error',
+          code: 'voice_not_found',
+          param: 'voiceId',
         }),
         { status: 404 },
       );
@@ -607,7 +649,9 @@ export async function POST(request: Request) {
           ? usageMetadata.promptTokenCount
           : null,
       candidatesTokenCount:
-        isGeminiVoice && usageMetadata && 'candidatesTokenCount' in usageMetadata
+        isGeminiVoice &&
+        usageMetadata &&
+        'candidatesTokenCount' in usageMetadata
           ? usageMetadata.candidatesTokenCount
           : null,
     });

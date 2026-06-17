@@ -175,6 +175,47 @@ describe('V1 Speech API Route', () => {
       expect(json.error.code).toBe('voice_not_found');
     });
 
+    it('should return 404 when voiceId is not found', async () => {
+      const response = await POST(
+        speechRequest({
+          input: 'Hello',
+          voiceId: 'nonexistent-voice-id',
+        }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(json.error.code).toBe('voice_not_found');
+      expect(json.error.param).toBe('voiceId');
+    });
+
+    it('should return 400 when voiceId is combined with voice and model', async () => {
+      const response = await POST(
+        speechRequest({
+          model: 'xai',
+          input: 'Hello',
+          voice: 'eve',
+          voiceId: 'voice-eve-id',
+        }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error.code).toBe('invalid_request');
+      expect(json.error.param).toBe('voiceId');
+    });
+
+    it('should return 400 when voice is missing model', async () => {
+      const response = await POST(
+        speechRequest({ input: 'Hello', voice: 'eve' }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error.code).toBe('invalid_request');
+      expect(json.error.param).toBe('model');
+    });
+
     it('should return 400 when voice model does not match requested model', async () => {
       // eve is a grok voice, but requesting orpheus model
       const response = await POST(
@@ -258,6 +299,57 @@ describe('V1 Speech API Route', () => {
       );
       expect(json.url).toContain('.wav');
       expect(json.usage.model).toBe(expectedGeminiModel);
+    });
+
+    it('should generate Gemini speech from voiceId without voice or model', async () => {
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      });
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          countTokens: vi.fn(),
+          generateContent,
+        },
+      }));
+
+      const response = await POST(
+        speechRequest({
+          input: 'Hello from a voice ID',
+          voiceId: 'voice-achernar-31-id',
+        }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'gemini-3.1-flash-tts-preview',
+          contents: [
+            { parts: [{ text: 'Hello from a voice ID' }], role: 'user' },
+          ],
+        }),
+      );
+      expect(json.url).toContain('achernar-');
+      expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
     });
 
     it('should generate Orpheus speech for model "orpheus"', async () => {

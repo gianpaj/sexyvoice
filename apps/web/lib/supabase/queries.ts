@@ -622,6 +622,24 @@ export async function getVoiceIdByNameAdmin(
   return data;
 }
 
+export async function getVoiceByIdAdmin(
+  voiceId: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('id', voiceId)
+    .eq('feature', 'tts')
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
 export async function reduceCreditsAdmin({
   userId,
   amount,
