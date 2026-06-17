@@ -24,14 +24,14 @@ export const ErrorResponseSchema = z.object({
 
 export const VoiceGenerationRequestSchema = z.strictObject({
   model: z
-    .enum(['gpro', 'g31', 'orpheus', 'xai'])
+    .enum(['gpro', 'gpro31', 'orpheus', 'xai'])
     .describe('The voice model to use'),
   input: z
     .string()
     .min(1)
     .max(1000)
     .describe(
-      'The text to synthesize (max 1000 chars for gpro/g31/xai, 500 for orpheus)',
+      'The text to synthesize (max 1000 chars for gpro/gpro31/xai, 500 for orpheus)',
     ),
   voice: z
     .string()
@@ -85,13 +85,13 @@ export const VoiceGenerationRequestOpenApiSchema = z.discriminatedUnion(
         ),
     }),
     z.strictObject({
-      model: z.literal('g31').describe('The voice model to use'),
+      model: z.literal('gpro31').describe('The voice model to use'),
       input: z
         .string()
         .min(1)
         .max(1000)
         .describe(
-          'The text to synthesize (max 1000 chars for g31). Supports inline audio tags like [cheerfully], [whispering], [pause].',
+          'The text to synthesize (max 1000 chars for gpro31). Supports inline audio tags like [cheerfully], [whispering], [pause].',
         ),
       voice: z
         .string()
@@ -186,7 +186,7 @@ export const VoiceInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'g31', 'orpheus', 'xai']),
+  model: z.enum(['gpro', 'gpro31', 'orpheus', 'xai']),
   formats: z.array(z.enum(['wav', 'mp3'])),
   supports_style: z
     .boolean()
@@ -198,7 +198,7 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'g31', 'orpheus', 'xai']),
+  id: z.enum(['gpro', 'gpro31', 'orpheus', 'xai']),
   name: z.string(),
   max_input_length: z.number().int().positive(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),

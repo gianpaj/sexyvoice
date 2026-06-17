@@ -362,7 +362,7 @@ describe('/api/v1/speech', () => {
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
   });
 
-  it('accepts a Gemini voice with model g31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
+  it('accepts a Gemini voice with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -396,7 +396,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'g31',
+        model: 'gpro31',
         input: 'Hello world',
         voice: 'kore',
       }),
@@ -457,7 +457,7 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
-  it('falls back to gemini-2.5-flash-preview-tts when g31 primary call fails', async () => {
+  it('falls back to gemini-2.5-flash-preview-tts when gpro31 primary call fails', async () => {
     let callCount = 0;
     const generateContent = vi.fn().mockImplementation(() => {
       callCount++;
@@ -496,7 +496,7 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'g31',
+        model: 'gpro31',
         input: 'Hello world',
         voice: 'kore',
       }),

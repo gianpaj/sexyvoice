@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       if (model === 'gpro') {
         return [
           entry,
-          { ...entry, model: 'g31' as const, supports_style: true },
+          { ...entry, model: 'gpro31' as const, supports_style: true },
         ];
       }
       return [entry];

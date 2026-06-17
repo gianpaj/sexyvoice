@@ -53,7 +53,7 @@ Environment:
   SEXYVOICE_API_BASE_URL  Optional API host (default: https://sexyvoice.ai)
 
 Options:
-  --model <gpro|g31>      Gemini API model alias (default: gpro)
+  --model <gpro|gpro31>      Gemini API model alias (default: gpro)
   --text <text>           Text to synthesize
   --style <style>         Gemini style prompt prepended by the API
   --voices <a,b,c>        Comma-separated voice names
@@ -65,7 +65,7 @@ Options:
   -h, --help              Show this help
 
 Notes:
-  The current external API supports WAV output for gpro/g31, so this script
+  The current external API supports WAV output for gpro/gpro31, so this script
   downloads WAV files from the API and converts them to MP3 with ffmpeg.`);
 }
 
@@ -90,8 +90,8 @@ function parseArgs(args) {
   }
 
   const model = readFlag(args, '--model') ?? 'gpro';
-  if (model !== 'gpro' && model !== 'g31') {
-    throw new Error('--model must be either "gpro" or "g31"');
+  if (model !== 'gpro' && model !== 'gpro31') {
+    throw new Error('--model must be either "gpro" or "gpro31"');
   }
 
   const voicesFlag = readFlag(args, '--voices');

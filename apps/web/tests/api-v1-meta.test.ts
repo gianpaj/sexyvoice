@@ -22,7 +22,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(response.status).toBe(200);
     expect(json.data).toHaveLength(4);
     expect(json.data[0].id).toBe('gpro');
-    expect(json.data[1].id).toBe('g31');
+    expect(json.data[1].id).toBe('gpro31');
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
@@ -80,7 +80,7 @@ describe('/api/v1 metadata endpoints', () => {
     expect(response.status).toBe(200);
     expect(json.data).toHaveLength(4);
     expect(json.data[0].model).toBe('gpro');
-    expect(json.data[1].model).toBe('g31');
+    expect(json.data[1].model).toBe('gpro31');
     expect(json.data[2].model).toBe('orpheus');
     expect(json.data[0].supports_style).toBe(true);
     expect(json.data[1].supports_style).toBe(true);

@@ -33,7 +33,7 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perMinute: 0,
     perRequest: 0,
   },
-  'api_tts:google:g31': {
+  'api_tts:google:gpro31': {
     perInputChar: 0.000_02,
     perOutputChar: 0,
     perMinute: 0,

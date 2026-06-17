@@ -13,14 +13,38 @@ describe('external API pricing', () => {
     expect(amount).toBe(0.02);
   });
 
-  it('calculates g31 tts pricing', () => {
+  it('calculates gpro31 tts pricing', () => {
     const amount = calculateExternalApiDollarAmount({
       sourceType: 'api_tts',
       provider: 'google',
-      model: 'g31',
+      model: 'gpro31',
       inputChars: 1000,
     });
     expect(amount).toBe(0.02);
+  });
+
+  it('calculates Gemini API TTS pricing from provider token usage when available', () => {
+    const amount = calculateExternalApiDollarAmount({
+      sourceType: 'api_tts',
+      provider: 'google',
+      model: 'gemini-3.1-flash-tts-preview',
+      inputChars: 1000,
+      promptTokenCount: 6,
+      candidatesTokenCount: 36,
+    });
+    expect(amount).toBe(0.000_726);
+  });
+
+  it('calculates Gemini 2.5 Flash fallback API TTS pricing from provider token usage', () => {
+    const amount = calculateExternalApiDollarAmount({
+      sourceType: 'api_tts',
+      provider: 'google',
+      model: 'gemini-2.5-flash-preview-tts',
+      inputChars: 1000,
+      promptTokenCount: 5,
+      candidatesTokenCount: 10,
+    });
+    expect(amount).toBe(0.000_103);
   });
 
   it('calculates orpheus tts pricing', () => {

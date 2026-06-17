@@ -5,8 +5,8 @@ export const EXTERNAL_API_MODELS = {
     maxInputLength: 1000,
     supportedFormats: ['wav'] as const,
   },
-  g31: {
-    id: 'g31',
+  gpro31: {
+    id: 'gpro31',
     name: 'Gemini 3.1 Flash TTS',
     maxInputLength: 1000,
     supportedFormats: ['wav'] as const,
@@ -31,6 +31,7 @@ export const EXTERNAL_API_MODELS = {
  */
 export const DB_MODEL_TO_EXTERNAL_ID: Record<string, string> = {
   gpro: 'gpro',
+  gpro31: 'gpro31',
   'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f':
     'orpheus',
   'gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650':

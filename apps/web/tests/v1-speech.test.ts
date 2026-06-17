@@ -209,7 +209,7 @@ describe('V1 Speech API Route', () => {
   describe('Model body parameter', () => {
     it.each([
       ['gpro', 'gemini-2.5-pro-preview-tts'],
-      ['g31', 'gemini-3.1-flash-tts-preview'],
+      ['gpro31', 'gemini-3.1-flash-tts-preview'],
     ] as const)('should generate Gemini speech for model "%s" using %s', async (model, expectedGeminiModel) => {
       const generateContent = vi.fn().mockResolvedValue({
         candidates: [

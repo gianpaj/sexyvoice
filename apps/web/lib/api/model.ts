@@ -14,7 +14,7 @@ export function resolveExternalModelId(
   return;
 }
 
-const GEMINI_FAMILY = new Set<ExternalApiModelId>(['gpro', 'g31']);
+const GEMINI_FAMILY = new Set<ExternalApiModelId>(['gpro', 'gpro31']);
 
 export function isModelCompatibleWithVoice(
   requestedModel: ExternalApiModelId,
@@ -25,7 +25,7 @@ export function isModelCompatibleWithVoice(
 }
 
 export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
-  return model === 'gpro' || model === 'g31' ? 'wav' : 'mp3';
+  return model === 'gpro' || model === 'gpro31' ? 'wav' : 'mp3';
 }
 
 export function isFormatSupported(

@@ -18,10 +18,10 @@ default. Gemini 3.1 is offered as an opt-in toggle when voices are compatible
 
 ## 2. Model Reference
 
-| Model ID | Quality | Input | Output | Audio tags | Locales |
-|---|---|---|---|---|---|
-| `gemini-2.5-flash-preview-tts` | Good | $0.50/1M | $10/1M | No | 24 languages |
-| `gemini-2.5-pro-preview-tts` | Better | $1.00/1M | $20/1M | No | 24 languages |
+| Model ID                       | Quality                           | Input    | Output | Audio tags     | Locales                         |
+| ------------------------------ | --------------------------------- | -------- | ------ | -------------- | ------------------------------- |
+| `gemini-2.5-flash-preview-tts` | Good                              | $0.50/1M | $10/1M | No             | 24 languages                    |
+| `gemini-2.5-pro-preview-tts`   | Better                            | $1.00/1M | $20/1M | No             | 24 languages                    |
 | `gemini-3.1-flash-tts-preview` | **Best** (Elo 1,211, #2 globally) | $1.00/1M | $20/1M | **Yes (200+)** | **80+ locales / 70+ languages** |
 
 All three models share the same 30 voice names. The API request format is identical.
@@ -36,11 +36,11 @@ The previous implementation commit mistakenly replaced `gemini-2.5-pro-preview-t
 with `gemini-3.1-flash-tts-preview` as the paid-user default. This must be reverted
 before the toggle is added.
 
-| File | Revert |
-|---|---|
+| File                                       | Revert                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------- |
 | `apps/web/app/api/generate-voice/route.ts` | `gemini-3.1-flash-tts-preview` → `gemini-2.5-pro-preview-tts` (line ~241) |
-| `apps/web/app/api/v1/speech/route.ts` | Same (line ~295) |
-| `apps/web/lib/api/constants.ts` | `name: 'GPro (Gemini 3.1)'` → `'GPro (Gemini 2.5)'` |
+| `apps/web/app/api/v1/speech/route.ts`      | Same (line ~295)                                                          |
+| `apps/web/lib/api/constants.ts`            | `name: 'GPro (Gemini 3.1)'` → `'GPro (Gemini 2.5)'`                       |
 
 ---
 
@@ -62,14 +62,14 @@ as `components/ui/checkbox.tsx` (uses `radix-ui` umbrella import, which already 
 
 Add one new key to the `generate.voiceSelector` object in **all 6 locale files**:
 
-| Locale | File | Key | Value |
-|---|---|---|---|
-| en | `messages/en.json` | `useNewModelLabel` | `"Use new AI model (Gemini 3.1)"` |
-| es | `messages/es.json` | `useNewModelLabel` | `"Usar nuevo modelo de IA (Gemini 3.1)"` |
-| fr | `messages/fr.json` | `useNewModelLabel` | `"Utiliser le nouveau modèle IA (Gemini 3.1)"` |
-| de | `messages/de.json` | `useNewModelLabel` | `"Neues KI-Modell verwenden (Gemini 3.1)"` |
-| it | `messages/it.json` | `useNewModelLabel` | `"Usa il nuovo modello AI (Gemini 3.1)"` |
-| da | `messages/da.json` | `useNewModelLabel` | `"Brug ny AI-model (Gemini 3.1)"` |
+| Locale | File               | Key                | Value                                          |
+| ------ | ------------------ | ------------------ | ---------------------------------------------- |
+| en     | `messages/en.json` | `useNewModelLabel` | `"Use new AI model (Gemini 3.1)"`              |
+| es     | `messages/es.json` | `useNewModelLabel` | `"Usar nuevo modelo de IA (Gemini 3.1)"`       |
+| fr     | `messages/fr.json` | `useNewModelLabel` | `"Utiliser le nouveau modèle IA (Gemini 3.1)"` |
+| de     | `messages/de.json` | `useNewModelLabel` | `"Neues KI-Modell verwenden (Gemini 3.1)"`     |
+| it     | `messages/it.json` | `useNewModelLabel` | `"Usa il nuovo modello AI (Gemini 3.1)"`       |
+| da     | `messages/da.json` | `useNewModelLabel` | `"Brug ny AI-model (Gemini 3.1)"`              |
 
 Insert the key immediately after `grokInfo` in each file's `voiceSelector` block.
 
@@ -86,6 +86,7 @@ const [useNewModel, setUseNewModel] = useState(false);
 ```
 
 Pass it down:
+
 - `<VoiceSelector … useNewModel={isGeminiVoice ? useNewModel : undefined} setUseNewModel={setUseNewModel} />`
 - `<AudioGenerator … useNewModel={isGeminiVoice ? useNewModel : undefined} />`
 
@@ -96,6 +97,7 @@ Pass it down:
 **`apps/web/components/voice-selector.tsx`**
 
 Add props:
+
 ```tsx
 useNewModel?: boolean;
 setUseNewModel: Dispatch<SetStateAction<boolean>>;
@@ -105,18 +107,16 @@ Render the Switch directly below the voice dropdown (before the style textarea),
 visible only when `isGeminiVoice`:
 
 ```tsx
-{isGeminiVoice && (
-  <div className="flex items-center gap-2">
-    <Switch
-      id="use-new-model"
-      checked={useNewModel ?? false}
-      onCheckedChange={setUseNewModel}
-    />
-    <Label htmlFor="use-new-model" className="text-sm cursor-pointer">
-      {dict.voiceSelector.useNewModelLabel}
-    </Label>
-  </div>
-)}
+{
+  isGeminiVoice && (
+    <div className="flex items-center gap-2">
+      <Switch id="use-new-model" checked={useNewModel ?? false} onCheckedChange={setUseNewModel} />
+      <Label htmlFor="use-new-model" className="text-sm cursor-pointer">
+        {dict.voiceSelector.useNewModelLabel}
+      </Label>
+    </div>
+  );
+}
 ```
 
 ---
@@ -169,17 +169,17 @@ Free users always get `gemini-2.5-flash-preview-tts` regardless of the toggle.
 
 ---
 
-### 3.8 v1/speech/route.ts — external API (`g31` model)
+### 3.8 v1/speech/route.ts — external API (`gpro31` model)
 
-The external API exposes Gemini 3.1 via a dedicated model ID `g31`.
+The external API exposes Gemini 3.1 via a dedicated model ID `gpro31`.
 
 - `model: 'gpro'` → `gemini-2.5-pro-preview-tts` (unchanged default)
-- `model: 'g31'` → `gemini-3.1-flash-tts-preview`
+- `model: 'gpro31'` → `gemini-3.1-flash-tts-preview`
 
-Both `gpro` and `g31` share the same 30 Gemini voice names (same DB rows, model `'gpro'`).
+Both `gpro` and `gpro31` share the same 30 Gemini voice names (same DB rows, model `'gpro'`).
 Voice-model compatibility is handled by `isModelCompatibleWithVoice()` in `lib/api/model.ts`.
 The `GET /api/v1/voices` endpoint emits each Gemini voice twice — once as `model: 'gpro'` and
-once as `model: 'g31'` — so API consumers can discover which voices work with the new model.
+once as `model: 'gpro31'` — so API consumers can discover which voices work with the new model.
 
 ---
 
@@ -225,6 +225,7 @@ Gemini 2.5 baseline. **Verify the complete list against Google's official docs a
 before writing the FAQ copy.**
 
 Known additions (not exhaustive):
+
 - Afrikaans, Albanian, Amharic, Armenian, Azerbaijani, Basque, Bosnian, Bulgarian,
   Catalan, Chinese (Simplified / Traditional), Croatian, Czech, Danish, Estonian,
   Filipino (Tagalog), Finnish, Galician, Georgian, Greek, Gujarati, Hausa, Hebrew,
@@ -242,9 +243,11 @@ Known additions (not exhaustive):
 ### 4.4 voiceSelector.geminiInfo tooltip update
 
 Current value (en.json):
+
 > "It supports 24 languages: …"
 
 New value:
+
 > "Supports 24 languages by default.\nEnable \"Use new AI model\" for 70+ languages with Gemini 3.1."
 
 Update in all 6 locale files (`en`, `es`, `fr`, `de`, `it`, `da`).
@@ -265,34 +268,34 @@ Both `landing.faq.groups[0].questions[0].answer` (speech generation FAQ) and
 
 ## 5. Files Changed Summary
 
-| File | Change |
-|---|---|
-| `apps/web/components/ui/switch.tsx` | **New** — Radix UI Switch component |
-| `apps/web/components/voice-selector.tsx` | Add Switch toggle for Gemini voices |
-| `apps/web/components/audio-generator.tsx` | Add `useNewModel` prop + request field |
-| `apps/web/app/[lang]/(dashboard)/dashboard/generate/generateui.client.tsx` | Add `useNewModel` state, wire to children |
-| `apps/web/app/api/generate-voice/route.ts` | Revert to 2.5 Pro; add `useNewModel` model selection |
-| `apps/web/app/api/v1/speech/route.ts` | Revert to 2.5 Pro (no toggle for external API yet) |
-| `apps/web/lib/api/constants.ts` | Revert display name to `'GPro (Gemini 2.5)'` |
-| `apps/web/messages/en.json` | Add toggle label; update FAQ + geminiInfo |
-| `apps/web/messages/es.json` | Same |
-| `apps/web/messages/fr.json` | Same |
-| `apps/web/messages/de.json` | Same |
-| `apps/web/messages/it.json` | Same |
-| `apps/web/messages/da.json` | Same |
+| File                                                                       | Change                                               |
+| -------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `apps/web/components/ui/switch.tsx`                                        | **New** — Radix UI Switch component                  |
+| `apps/web/components/voice-selector.tsx`                                   | Add Switch toggle for Gemini voices                  |
+| `apps/web/components/audio-generator.tsx`                                  | Add `useNewModel` prop + request field               |
+| `apps/web/app/[lang]/(dashboard)/dashboard/generate/generateui.client.tsx` | Add `useNewModel` state, wire to children            |
+| `apps/web/app/api/generate-voice/route.ts`                                 | Revert to 2.5 Pro; add `useNewModel` model selection |
+| `apps/web/app/api/v1/speech/route.ts`                                      | Revert to 2.5 Pro (no toggle for external API yet)   |
+| `apps/web/lib/api/constants.ts`                                            | Revert display name to `'GPro (Gemini 2.5)'`         |
+| `apps/web/messages/en.json`                                                | Add toggle label; update FAQ + geminiInfo            |
+| `apps/web/messages/es.json`                                                | Same                                                 |
+| `apps/web/messages/fr.json`                                                | Same                                                 |
+| `apps/web/messages/de.json`                                                | Same                                                 |
+| `apps/web/messages/it.json`                                                | Same                                                 |
+| `apps/web/messages/da.json`                                                | Same                                                 |
 
 ---
 
 ## 6. Files NOT Changed
 
-| File | Reason |
-|---|---|
-| `lib/utils.ts` (`getTtsProvider`) | `model === 'gpro'` → `'gemini'` covers 3.1 too |
-| `lib/ai.ts` (`getCharactersLimit`) | 1000-char paid limit unchanged |
-| `lib/api/pricing.ts` | Pricing key is provider-level (`'api_tts:google:gpro'`) |
-| Supabase `voices` table | Same 30 voice names, no new rows needed |
-| `@google/genai` package (v1.19.0) | Already supports 3.1 model IDs |
-| `app/api/v1/speech/route.ts` (toggle) | External API toggle deferred to a separate task |
+| File                                  | Reason                                                  |
+| ------------------------------------- | ------------------------------------------------------- |
+| `lib/utils.ts` (`getTtsProvider`)     | `model === 'gpro'` → `'gemini'` covers 3.1 too          |
+| `lib/ai.ts` (`getCharactersLimit`)    | 1000-char paid limit unchanged                          |
+| `lib/api/pricing.ts`                  | Pricing key is provider-level (`'api_tts:google:gpro'`) |
+| Supabase `voices` table               | Same 30 voice names, no new rows needed                 |
+| `@google/genai` package (v1.19.0)     | Already supports 3.1 model IDs                          |
+| `app/api/v1/speech/route.ts` (toggle) | External API toggle deferred to a separate task         |
 
 ---
 

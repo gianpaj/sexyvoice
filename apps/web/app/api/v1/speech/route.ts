@@ -366,7 +366,7 @@ export async function POST(request: Request) {
 
       try {
         modelUsed =
-          model === 'g31'
+          model === 'gpro31'
             ? 'gemini-3.1-flash-tts-preview'
             : 'gemini-2.5-pro-preview-tts';
         geminiResponse = await ai.models.generateContent({
