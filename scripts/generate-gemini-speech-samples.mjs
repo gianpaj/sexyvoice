@@ -89,22 +89,19 @@ function parseArgs(args) {
     process.exit(0);
   }
 
-  const model = readFlag(args, '--model') ?? 'gpro';
-  if (model !== 'gpro' && model !== 'gpro31') {
+  const model = readFlag(args, '--model');
+  if (model !== undefined && model !== 'gpro' && model !== 'gpro31') {
     throw new Error('--model must be either "gpro" or "gpro31"');
   }
 
   const voicesFlag = readFlag(args, '--voices');
   const voices = voicesFlag
-    ? voicesFlag
+    && voicesFlag
         .split(',')
         .map((voice) => voice.trim())
-        .filter(Boolean)
-    : DEFAULT_VOICES;
+        .filter(Boolean);
 
-  if (voices.length === 0) {
-    throw new Error('--voices must contain at least one voice');
-  }
+  const voiceId = readFlag(args, '--voiceId');
 
   const seedFlag = readFlag(args, '--seed');
   const seed = seedFlag === undefined ? undefined : Number(seedFlag);
@@ -127,6 +124,7 @@ function parseArgs(args) {
     style: readFlag(args, '--style') ?? process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN,
     text: readFlag(args, '--text') ?? DEFAULT_TEXT,
     voices,
+    voiceId,
   };
 }
 
@@ -143,45 +141,61 @@ async function postSpeech({
   baseUrl,
   model,
   voice,
+  voiceId,
   text,
   style,
   seed,
 }) {
-  console.log({}, `${baseUrl.replace(/\/$/, '')}/api/v1/speech`);
-  const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/v1/speech`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      voice,
-      input: text,
-      style,
-      ...(seed === undefined ? {} : { seed }),
-    }),
-  });
+  // The API requires EITHER voiceId OR (voice + model), never both. Build the
+  // payload accordingly so we don't send `voice: null` / `model: undefined`,
+  // which would fail server-side validation (JSON.stringify keeps `null`).
+  const payload = {
+    input: text,
+    ...(style ? { style } : {}),
+    ...(seed === undefined ? {} : { seed }),
+    ...(voiceId ? { voiceId } : { voice, model }),
+  };
 
-  const requestId = response.headers.get('request-id');
-  const bodyText = await response.json();
+  const url = `${baseUrl.replace(/\/$/, '')}/api/v1/speech`;
+  const label = voice ?? voiceId;
+  console.log(`  POST ${url}`);
 
-  let body = null;
+  let response;
   try {
-    body = bodyText ? JSON.parse(bodyText) : null;
-  } catch {
-    body = null;
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    // Node's `fetch failed` hides the real reason on `error.cause`
+    // (e.g. ENOTFOUND, ECONNREFUSED, self-signed cert). Surface it.
+    const cause = error?.cause;
+    const detail = cause
+      ? `${cause.code ?? cause.name ?? ''} ${cause.message ?? cause}`.trim()
+      : (error?.message ?? String(error));
+    throw new Error(`Could not reach Speech API at ${url}: ${detail}`, {
+      cause: error,
+    });
   }
 
+  const requestId = response.headers.get('request-id');
+  // `response.json()` already parses the body; never JSON.parse it again.
+  const body = await response.json().catch(() => null);
+
   if (!response.ok) {
-    const message = body?.error?.message ?? bodyText ?? response.statusText;
+    const message =
+      body?.error?.message ?? JSON.stringify(body) ?? response.statusText;
     throw new Error(
-      `Speech API failed for ${voice} (${response.status}${requestId ? `, request-id: ${requestId}` : ''}): ${message}`,
+      `Speech API failed for ${label} (${response.status}${requestId ? `, request-id: ${requestId}` : ''}): ${message}`,
     );
   }
 
   if (!body?.url) {
-    throw new Error(`Speech API response for ${voice} did not include a url`);
+    throw new Error(`Speech API response for ${label} did not include a url`);
   }
 
   return { ...body, requestId };
@@ -250,13 +264,15 @@ async function convertWavToMp3(wavPath, mp3Path) {
   ]);
 }
 
-async function generateForVoice(options, voice) {
-  const basename = `${scriptStartedAt}-${options.model}_${slugify(voice)}`;
+async function generateForVoice(options, voice, voiceId) {
+  const prefix = options.model ?? 'speech';
+  // const basename = `${slugify(voice || voiceId)}-g31-deep`;
+  const basename = `${scriptStartedAt}-${prefix}_${slugify(voice || voiceId)}`;
   const wavPath = path.join(options.outDir, `${basename}.wav`);
   const mp3Path = path.join(options.outDir, `${basename}.mp3`);
 
-  console.log(`\n▶ Generating ${voice} (${options.model})`);
-  const result = await postSpeech({ ...options, voice });
+  console.log(`\n▶ Generating ${voice||voiceId} (${options.model})`);
+  const result = await postSpeech({ ...options, voice, voiceId });
   console.log(
     `  API ok: ${result.usage?.model ?? options.model}, ${result.credits_used} credits${result.requestId ? `, request-id ${result.requestId}` : ''}`,
   );
@@ -269,7 +285,7 @@ async function generateForVoice(options, voice) {
   }
 
   console.log(`  MP3: ${mp3Path}`);
-  return { voice, mp3Path, url: result.url };
+  return { voice, voiceId, mp3Path, url: result.url };
 }
 
 async function main() {
@@ -283,25 +299,44 @@ async function main() {
   await assertFfmpegAvailable();
   await mkdir(options.outDir, { recursive: true });
 
-  console.log(
-    `Generating ${options.voices.length} sample(s) via ${options.baseUrl}`,
-  );
-  console.log(`Model: ${options.model}`);
+
+  if (options.voices) {
+    console.log(
+      `Generating ${options.voices.length} sample(s) via ${options.baseUrl}`
+    );
+  }
+  if (options.voiceId) console.log(`VoiceId: ${options.voiceId}`);
+  if (options.model) console.log(`Model: ${options.model}`);
   console.log(`Style: ${options.style}`);
   console.log(`Output: ${options.outDir}`);
 
   const results = [];
-  for (const voice of options.voices) {
-    results.push(await generateForVoice(options, voice));
+  if (options.voiceId) {
+    results.push(await generateForVoice(options, null, options.voiceId));
+  } else {
+    const voices = options.voices ?? DEFAULT_VOICES;
+    for (const voice of voices) {
+      results.push(await generateForVoice(options, voice));
+    }
   }
 
   console.log('\nDone. Generated MP3 files:');
   for (const result of results) {
-    console.log(`- ${result.voice}: ${result.mp3Path}`);
+    console.log(`- ${result.voice || result.voiceId}: ${result.mp3Path}`);
   }
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  if (error instanceof Error) {
+    console.error(error.message);
+    if (error.cause) {
+      console.error('Caused by:', error.cause);
+    }
+    if (process.env.DEBUG) {
+      console.error(error.stack);
+    }
+  } else {
+    console.error(error);
+  }
   process.exit(1);
 });
