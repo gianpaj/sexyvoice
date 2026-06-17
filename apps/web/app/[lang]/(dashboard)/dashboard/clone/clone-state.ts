@@ -62,8 +62,18 @@ export function cloneStateReducer(
   action: CloneStateAction,
 ): CloneState {
   switch (action.type) {
-    case 'patch':
+    case 'patch': {
+      const hasChanges = Object.entries(action.patch).some(([key, value]) => {
+        const stateKey = key as keyof CloneState;
+        return !Object.is(state[stateKey], value);
+      });
+
+      if (!hasChanges) {
+        return state;
+      }
+
       return { ...state, ...action.patch };
+    }
     default:
       return state;
   }
