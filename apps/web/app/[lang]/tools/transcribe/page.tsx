@@ -81,7 +81,8 @@ export default async function TranscribePage({ params }: Props) {
   const { lang } = await params;
   const t = await getTranslations({ locale: lang, namespace: 'transcribe' });
   const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
-  const faqItems = t.raw('faq.items') as Array<{
+  const rawFaqItems = t.raw('faq.items');
+  const faqItems = (Array.isArray(rawFaqItems) ? rawFaqItems : []) as Array<{
     question: string;
     answer: string;
   }>;
