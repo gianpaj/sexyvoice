@@ -96,13 +96,12 @@ const getCloneErrorMessage = (
     return fallbackMessage || t('errorCloning');
   }
 
-  let message: string;
-  try {
-    message = t(code as Parameters<CloneTranslator>[0]);
-  } catch {
+  const messageKey = code as Parameters<CloneTranslator>[0];
+  if (!t.has(messageKey)) {
     return fallbackMessage || t('errorCloning');
   }
 
+  const message = t(messageKey);
   return formatCloneMessage(message, details ?? {});
 };
 
