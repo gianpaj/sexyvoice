@@ -22,35 +22,82 @@ export const ErrorResponseSchema = z.object({
   }),
 });
 
-export const VoiceGenerationRequestSchema = z.strictObject({
-  model: z.enum(['gpro', 'orpheus', 'xai']).describe('The voice model to use'),
-  input: z
-    .string()
-    .min(1)
-    .max(1000)
-    .describe(
-      'The text to synthesize (max 1000 chars for gpro/grok, 500 for orpheus)',
+const ExternalApiModelSchema = z.enum(['gpro', 'gpro31', 'orpheus', 'xai']);
+
+export const VoiceGenerationRequestSchema = z
+  .strictObject({
+    model: ExternalApiModelSchema.optional().describe(
+      'The voice model to use when selecting a voice by name. Omit when using voiceId.',
     ),
-  voice: z
-    .string()
-    .min(1)
-    .describe('Voice name (see GET /api/v1/voices for available voices)'),
-  response_format: z
-    .enum(['wav', 'mp3'])
-    .optional()
-    .describe('Audio format. Default depends on model'),
-  style: z
-    .string()
-    .optional()
-    .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
-  seed: z
-    .number()
-    .int()
-    .optional()
-    .describe(
-      'Optional deterministic seed for providers that support it (e.g. Gemini)',
-    ),
-});
+    input: z
+      .string()
+      .min(1)
+      .max(1000)
+      .describe(
+        'The text to synthesize (max 1000 chars for gpro/gpro31/xai, 500 for orpheus)',
+      ),
+    voice: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Voice name. Use with model, or pass voiceId instead. See GET /api/v1/voices for available voices.',
+      ),
+    voiceId: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Voice ID from GET /api/v1/voices. Use instead of voice + model.',
+      ),
+    response_format: z
+      .enum(['wav', 'mp3'])
+      .optional()
+      .describe('Audio format. Default depends on model'),
+    style: z
+      .string()
+      .optional()
+      .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
+    seed: z
+      .number()
+      .int()
+      .optional()
+      .describe(
+        'Optional deterministic seed for providers that support it (e.g. Gemini)',
+      ),
+  })
+  .superRefine((data, ctx) => {
+    const hasVoiceId = data.voiceId !== undefined;
+    const hasVoice = data.voice !== undefined;
+    const hasModel = data.model !== undefined;
+
+    if (hasVoiceId && (hasVoice || hasModel)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Use either voiceId or voice + model, not both',
+        path: ['voiceId'],
+      });
+      return;
+    }
+
+    if (!(hasVoiceId || hasVoice)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Required when voiceId is not provided',
+        path: ['voice'],
+      });
+    }
+
+    if (!(hasVoiceId || hasModel)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Required when voiceId is not provided',
+        path: ['model'],
+      });
+    }
+  });
+
+export const VoiceGenerationRequestOpenApiSchema = VoiceGenerationRequestSchema;
 
 export const VoiceGenerationResponseSchema = z.object({
   url: z.url().describe('URL to generated audio'),
@@ -74,7 +121,7 @@ export const VoiceInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'orpheus', 'xai']),
+  model: z.enum(['gpro', 'gpro31', 'orpheus', 'xai']),
   formats: z.array(z.enum(['wav', 'mp3'])),
   supports_style: z
     .boolean()
@@ -86,11 +133,10 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'orpheus', 'grok']),
+  id: z.enum(['gpro', 'gpro31', 'orpheus', 'xai']),
   name: z.string(),
   max_input_length: z.number().int().positive(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),
-  supported_styles: z.array(z.string()),
 });
 
 export const ModelsResponseSchema = z.object({

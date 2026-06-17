@@ -171,7 +171,6 @@ Used for:
 ### AI provider credentials
 
 - `FAL_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 - `MISTRAL_API_KEY`
 - `REPLICATE_API_TOKEN`
@@ -179,8 +178,7 @@ Used for:
 
 Notes:
 
-- `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
+- `GOOGLE_GENERATIVE_AI_API_KEY` is the Gemini key.
   for free-user Gemini flows where configured in code.
 - `MISTRAL_API_KEY` is required for voice cloning requests that use the
   Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
@@ -484,7 +482,6 @@ Check:
 Check:
 
 - `GOOGLE_GENERATIVE_AI_API_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - provider quotas
 - request logs
 - R2 upload configuration

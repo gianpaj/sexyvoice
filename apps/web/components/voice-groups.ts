@@ -13,7 +13,7 @@ interface VoiceGroupLabels {
 const grokGroupLabel = 'Grok ✨';
 
 function isMultilingualVoice(voice: Tables<'voices'>) {
-  return voice.model === 'gpro';
+  return voice.model === 'gpro' || voice.model === 'gpro31';
 }
 
 function isGrokVoice(voice: Tables<'voices'>) {

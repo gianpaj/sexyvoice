@@ -20,9 +20,10 @@ import { createLogger } from '@/lib/api/logger';
 import {
   getDefaultFormat,
   isFormatSupported,
+  isModelCompatibleWithVoice,
   resolveExternalModelId,
 } from '@/lib/api/model';
-import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
+import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
@@ -30,6 +31,7 @@ import { convertToWav } from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
+  getVoiceByIdAdmin,
   getVoiceIdByNameAdmin,
   hasUserPaidAdmin,
   insertUsageEvent,
@@ -204,16 +206,27 @@ export async function POST(request: Request) {
       return respond(zodErrorToApiError(parsed.error), { status: 400 });
     }
 
-    const { model, input, voice, response_format, style, seed } = parsed.data;
+    const { input, response_format, style, seed } = parsed.data;
+    const requestedVoice = parsed.data.voice;
+    const requestedVoiceId = parsed.data.voiceId;
+    let model = parsed.data.model;
 
     const userId = authResult.userId;
 
     let voiceObj: Awaited<ReturnType<typeof getVoiceIdByNameAdmin>> | null =
       null;
-    try {
-      voiceObj = await getVoiceIdByNameAdmin(voice);
-    } catch {
-      voiceObj = null;
+    if (requestedVoiceId) {
+      try {
+        voiceObj = await getVoiceByIdAdmin(requestedVoiceId);
+      } catch {
+        voiceObj = null;
+      }
+    } else if (requestedVoice) {
+      try {
+        voiceObj = await getVoiceIdByNameAdmin(requestedVoice);
+      } catch {
+        voiceObj = null;
+      }
     }
 
     if (!voiceObj) {
@@ -222,15 +235,44 @@ export async function POST(request: Request) {
         errorCode: 'voice_not_found',
         userId,
         apiKeyId: authResult.apiKeyId,
-        voice,
+        voice: requestedVoice,
+        voiceId: requestedVoiceId,
         model,
       });
       return respond(
         createApiError({
-          message: `Voice "${voice}" was not found`,
+          message: requestedVoiceId
+            ? `Voice ID "${requestedVoiceId}" was not found`
+            : `Voice "${requestedVoice}" was not found`,
           type: 'not_found_error',
           code: 'voice_not_found',
-          param: 'voice',
+          param: requestedVoiceId ? 'voiceId' : 'voice',
+        }),
+        { status: 404 },
+      );
+    }
+
+    const voice = voiceObj.name;
+    if (requestedVoiceId) {
+      model = resolveExternalModelId(voiceObj.model) ?? undefined;
+    }
+
+    if (!model) {
+      await log({
+        status: 404,
+        errorCode: 'voice_not_found',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        voiceId: requestedVoiceId,
+        model: voiceObj.model,
+      });
+      return respond(
+        createApiError({
+          message: `Voice ID "${requestedVoiceId}" was not found`,
+          type: 'not_found_error',
+          code: 'voice_not_found',
+          param: 'voiceId',
         }),
         { status: 404 },
       );
@@ -239,10 +281,15 @@ export async function POST(request: Request) {
     const ttsProvider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
-    const finalText = isGeminiVoice && style ? `${style}: ${input}` : input;
+    let finalText = input;
+    if (isGeminiVoice && style) {
+      finalText =
+        voiceObj.model === 'gpro31'
+          ? `### DIRECTOR'S NOTES\nStyle: ${style}\n\n## TRANSCRIPT\n${input}`
+          : `${style}: ${input}`;
+    }
 
-    const resolvedModel = resolveExternalModelId(voiceObj.model);
-    if (model !== resolvedModel) {
+    if (!isModelCompatibleWithVoice(model, voiceObj.model)) {
       await log({
         status: 400,
         errorCode: 'model_not_found',
@@ -289,9 +336,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const defaultFormat = getDefaultFormat(resolvedModel);
+    const defaultFormat = getDefaultFormat(model);
     const chosenFormat = response_format ?? defaultFormat;
-    if (!isFormatSupported(resolvedModel, chosenFormat)) {
+    if (!isFormatSupported(model, chosenFormat)) {
       await log({
         status: 400,
         errorCode: 'unsupported_response_format',
@@ -366,7 +413,10 @@ export async function POST(request: Request) {
       };
 
       try {
-        modelUsed = 'gemini-2.5-pro-preview-tts';
+        modelUsed =
+          model === 'gpro31'
+            ? 'gemini-3.1-flash-tts-preview'
+            : 'gemini-2.5-pro-preview-tts';
         geminiResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ role: 'user', parts: [{ text: finalText }] }],
@@ -589,11 +639,21 @@ export async function POST(request: Request) {
     }
 
     await reduceCreditsAdmin({ userId, amount: creditsUsed });
-    const dollarAmount = calculateExternalApiDollarAmount({
+    const dollarAmount = calculateGenerateApiDollarAmount({
       sourceType: 'api_tts',
       provider,
-      model,
+      model: modelUsed,
       inputChars: finalText.length,
+      promptTokenCount:
+        isGeminiVoice && usageMetadata && 'promptTokenCount' in usageMetadata
+          ? usageMetadata.promptTokenCount
+          : null,
+      candidatesTokenCount:
+        isGeminiVoice &&
+        usageMetadata &&
+        'candidatesTokenCount' in usageMetadata
+          ? usageMetadata.candidatesTokenCount
+          : null,
     });
     const [audioFileResult, updatedCredits] = await Promise.all([
       saveAudioFileAdmin({

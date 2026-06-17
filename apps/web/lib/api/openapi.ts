@@ -225,6 +225,13 @@ export function createExternalApiOpenApiDocument() {
                       style: 'happy',
                     },
                   },
+                  by_voice_id: {
+                    summary: 'Generate with a voice ID from /api/v1/voices',
+                    value: {
+                      input: 'Hello, world!',
+                      voiceId: '390f5864-111b-4795-81ea-7026a1e64cfc',
+                    },
+                  },
                   orpheus_voice: {
                     summary: 'Orpheus model with English voice',
                     value: {
